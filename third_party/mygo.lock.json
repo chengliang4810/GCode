@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "module": "github.com/egoist/mygo",
+  "upstreamVersion": "v0.6.4",
+  "upstreamSum": "h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o=",
+  "revision": "zeron-native-ui.2",
+  "sourceDir": "third_party/mygo",
+  "treeSha256": "fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e",
+  "fileCount": 1830,
+  "patches": [
+    {
+      "sha256": "8fa72a733547c893bfd7c24e015523ef08a19dd5262de4bc7403a38eba03606f",
+      "path": "patches/mygo-v0.6.4-motion.patch"
+    },
+    {
+      "sha256": "093dc4b5bb0a78e7adfb7ba1d6332eaa1c6c3e5ab0b86e3b80d94e153e96fd9b",
+      "path": "patches/mygo-v0.6.4-hover.patch"
+    },
+    {
+      "sha256": "216f0edada22d085830160f7af7cd2a222f4617e8fcaa2a5a73b104c88160a24",
+      "path": "patches/mygo-v0.6.4-files-drop.patch"
+    },
+    {
+      "sha256": "8416b7be5bb94e5751068a33b78f9fc07351902945e81cb3fae891f7931c213a",
+      "path": "patches/mygo-v0.6.4-markdown-line-height.patch"
+    },
+    {
+      "sha256": "54e8631331fd2389eda4b7bc37eced6a54b5f8323be54d9176398c8c81556aea",
+      "path": "patches/mygo-v0.6.4-coexistence.patch"
+    }
+  ]
+}

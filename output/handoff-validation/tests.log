@@ -1,0 +1,12 @@
+?   	gcode/cmd/parity	[no test files]
+ok  	gcode/cmd/zeron	0.040s
+ok  	gcode/internal/assets	0.233s
+ok  	gcode/internal/contracts	0.031s
+ok  	gcode/internal/design	0.038s
+ok  	gcode/internal/desktop	4.426s
+ok  	gcode/internal/mock	1.036s
+ok  	gcode/internal/visual	0.017s
+ok  	gcode/internal/workbench	0.282s
+ok  	gcode/scripts/distribution	0.027s
+ok  	gcode/scripts/frameworkpin	0.029s
+ok  	gcode/scripts/licenseresources	0.219s

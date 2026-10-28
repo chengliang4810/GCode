@@ -2,7 +2,6 @@ package text
 
 import (
 	"slices"
-	"unicode"
 
 	"github.com/go-text/typesetting/segmenter"
 )
@@ -146,16 +145,28 @@ func (l *Layout) SelectionOn(start, end int, on bool) []Rect {
 // the minimum and maximum caret would highlight intervening unselected text.
 // on includes the paragraph's following newline, as SelectionOn does.
 func (l *Layout) SelectionVisual(start, end int, on bool) []Rect {
+	return l.AppendSelection(nil, start, end, on)
+}
+
+// AppendSelection appends the rectangles of SelectionVisual to dst, for
+// callers that keep them frame after frame.
+func (l *Layout) AppendSelection(dst []Rect, start, end int, on bool) []Rect {
 	if start > end {
 		start, end = end, start
 	}
 	if on {
 		end = len(l.Runes) + 1
 	}
-	var out []Rect
+	out := dst
+	var buf [16]Rect
 	for li := range l.Lines {
 		line := &l.Lines[li]
-		var pieces []Rect
+		// A range can include the newline at End, so keep that boundary's
+		// line even when none of its glyphs are selected.
+		if line.End < start || line.Start >= end {
+			continue
+		}
+		pieces := buf[:0]
 		for i := 0; i < len(line.Glyphs); {
 			first := line.Glyphs[i]
 			x0, x1 := first.X, first.X+first.Advance
@@ -173,7 +184,13 @@ func (l *Layout) SelectionVisual(start, end int, on bool) []Rect {
 			if first.RTL {
 				left, right = 1-right, 1-left
 			}
-			pieces = append(pieces, Rect{x0 + left*width, line.Y, (right - left) * width, line.Height})
+			r := Rect{x0 + left*width, line.Y, (right - left) * width, line.Height}
+			// Clusters following each other join as they come, as most do.
+			if n := len(pieces); n > 0 && pieces[n-1].X+pieces[n-1].W >= r.X-0.01 && pieces[n-1].X <= r.X+0.01 {
+				pieces[n-1].W = max(pieces[n-1].X+pieces[n-1].W, r.X+r.W) - pieces[n-1].X
+				continue
+			}
+			pieces = append(pieces, r)
 		}
 		if start <= line.End && end > line.End && (li < len(l.Lines)-1 && l.Lines[li+1].Start > line.End || li == len(l.Lines)-1 && on) {
 			x, width := line.X+line.Width, l.Params.Style.FontSize()/3
@@ -182,20 +199,17 @@ func (l *Layout) SelectionVisual(start, end int, on bool) []Rect {
 			}
 			pieces = append(pieces, Rect{x, line.Y, width, line.Height})
 		}
-		slices.SortFunc(pieces, func(a, b Rect) int {
-			if a.X < b.X {
-				return -1
+		// By x, insertion sorted: pieces are mostly in order already.
+		for i := 1; i < len(pieces); i++ {
+			for j := i; j > 0 && pieces[j-1].X > pieces[j].X; j-- {
+				pieces[j-1], pieces[j] = pieces[j], pieces[j-1]
 			}
-			if a.X > b.X {
-				return 1
-			}
-			return 0
-		})
+		}
 		for _, r := range pieces {
 			if r.W <= 0 {
 				continue
 			}
-			if n := len(out); n > 0 && out[n-1].Y == r.Y && out[n-1].X+out[n-1].W >= r.X-0.01 {
+			if n := len(out); n > len(dst) && out[n-1].Y == r.Y && out[n-1].X+out[n-1].W >= r.X-0.01 {
 				out[n-1].W = max(out[n-1].X+out[n-1].W, r.X+r.W) - out[n-1].X
 			} else {
 				out = append(out, r)
@@ -251,45 +265,53 @@ func (b *Boundaries) PrevGrapheme(i int) int {
 	return prev
 }
 
-func isWordRune(r rune) bool { return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' }
-
 // NextWord returns the end of the word after i, skipping what is between.
+// Each ideograph and kana is a word (see WordBoundary).
 func (b *Boundaries) NextWord(i int) int {
 	n := len(b.runes)
-	for i < n && !isWordRune(b.runes[i]) {
+	for i < n && !IsWordRune(b.runes[i]) {
 		i++
 	}
-	for i < n && isWordRune(b.runes[i]) {
+	if i < n {
 		i++
+		for i < n && !WordBoundary(b.runes[i-1], b.runes[i]) {
+			i++
+		}
 	}
 	return i
 }
 
 // PrevWord returns the start of the word before i.
 func (b *Boundaries) PrevWord(i int) int {
-	for i > 0 && !isWordRune(b.runes[i-1]) {
+	for i > 0 && !IsWordRune(b.runes[i-1]) {
 		i--
 	}
-	for i > 0 && isWordRune(b.runes[i-1]) {
+	if i > 0 {
 		i--
+		for i > 0 && !WordBoundary(b.runes[i-1], b.runes[i]) {
+			i--
+		}
 	}
 	return i
 }
 
-// WordAt returns the word, or the run of other runes, around i.
+// WordAt returns the word, or the run of other runes, around i, within
+// its line: an ideograph or a kana is a word alone.
 func (b *Boundaries) WordAt(i int) (start, end int) {
 	n := len(b.runes)
 	if n == 0 {
 		return 0, 0
 	}
 	i = min(i, n-1)
-	word := isWordRune(b.runes[i])
 	start, end = i, i
-	for start > 0 && isWordRune(b.runes[start-1]) == word && b.runes[start-1] != '\n' {
+	for start > 0 && b.runes[start-1] != '\n' && !WordBoundary(b.runes[start-1], b.runes[start]) {
 		start--
 	}
-	for end < n && isWordRune(b.runes[end]) == word && b.runes[end] != '\n' {
-		end++
+	if b.runes[i] != '\n' {
+		end = i + 1
+		for end < n && b.runes[end] != '\n' && !WordBoundary(b.runes[end-1], b.runes[end]) {
+			end++
+		}
 	}
 	return start, end
 }

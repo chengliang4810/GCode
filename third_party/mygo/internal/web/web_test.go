@@ -41,6 +41,18 @@ func TestKeyOf(t *testing.T) {
 	}
 }
 
+func TestCodeKey(t *testing.T) {
+	// The key by position, whatever the layout types: ы is on S.
+	for code, want := range map[string]platform.Key{
+		"KeyS": platform.KeyS, "Digit1": platform.Key1, "Semicolon": platform.KeySemicolon,
+		"IntlBackslash": platform.KeyUnknown, "": platform.KeyUnknown,
+	} {
+		if got := codeKey(code); got != want {
+			t.Errorf("codeKey(%q) = %v, want %v", code, got, want)
+		}
+	}
+}
+
 func TestAccelText(t *testing.T) {
 	for _, tc := range []struct {
 		accel string
@@ -133,5 +145,14 @@ func TestDroppedFiles(t *testing.T) {
 	}
 	if _, err := os.Stat(paths[0]); err == nil {
 		t.Error("the files of the oldest drop stay")
+	}
+}
+
+// TestWebViewAvailable: browsers have no system webview, so the call says
+// so, and an app opens a window of native UI instead of one showing a page
+// it could not show.
+func TestWebViewAvailable(t *testing.T) {
+	if New().WebViewAvailable() {
+		t.Error("WebViewAvailable = true in a browser, which has no webview")
 	}
 }

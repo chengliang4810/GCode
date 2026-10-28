@@ -1,0 +1,3647 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "excluded": [
+    "mobile",
+    "linux",
+    "voice",
+    "dictation"
+  ],
+  "defaultViewport": [
+    1320,
+    880
+  ],
+  "boundaryViewports": [
+    [
+      900,
+      600
+    ],
+    [
+      1600,
+      1000
+    ]
+  ],
+  "windowsScaleFactors": [
+    1,
+    1.25,
+    1.5,
+    2
+  ],
+  "macosScaleFactors": [
+    1,
+    2
+  ],
+  "themeVariants": 30,
+  "scenes": [
+    {
+      "id": "shell/default",
+      "area": "shell",
+      "state": "default",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "shell/sidebar-hidden",
+      "area": "shell",
+      "state": "sidebar-hidden",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/files-open",
+      "area": "shell",
+      "state": "files-open",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/right-open",
+      "area": "shell",
+      "state": "right-open",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/all-panels",
+      "area": "shell",
+      "state": "all-panels",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/right-takeover",
+      "area": "shell",
+      "state": "right-takeover",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/minimum-size",
+      "area": "shell",
+      "state": "minimum-size",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/maximized",
+      "area": "shell",
+      "state": "maximized",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "shell/resize-sidebar",
+      "area": "shell",
+      "state": "resize-sidebar",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/resize-files",
+      "area": "shell",
+      "state": "resize-files",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/resize-right",
+      "area": "shell",
+      "state": "resize-right",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "shell/resize-terminal",
+      "area": "shell",
+      "state": "resize-terminal",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "sidebar/detailed",
+      "area": "sidebar",
+      "state": "detailed",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/compact",
+      "area": "sidebar",
+      "state": "compact",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/hover",
+      "area": "sidebar",
+      "state": "hover",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "sidebar/pinned",
+      "area": "sidebar",
+      "state": "pinned",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/reorder-pins",
+      "area": "sidebar",
+      "state": "reorder-pins",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/projects",
+      "area": "sidebar",
+      "state": "projects",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/devices",
+      "area": "sidebar",
+      "state": "devices",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/collapsed",
+      "area": "sidebar",
+      "state": "collapsed",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/filter",
+      "area": "sidebar",
+      "state": "filter",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "sidebar/search",
+      "area": "sidebar",
+      "state": "search",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/archived",
+      "area": "sidebar",
+      "state": "archived",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-sidebar.md"
+      ]
+    },
+    {
+      "id": "sidebar/remote-offline",
+      "area": "sidebar",
+      "state": "remote-offline",
+      "source": "crates/ui/src/shell/sidebar_sections.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/empty",
+      "area": "new-session",
+      "state": "empty",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/project-picker",
+      "area": "new-session",
+      "state": "project-picker",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/device-picker",
+      "area": "new-session",
+      "state": "device-picker",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/branch-picker",
+      "area": "new-session",
+      "state": "branch-picker",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/worktree-picker",
+      "area": "new-session",
+      "state": "worktree-picker",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/new-project",
+      "area": "new-session",
+      "state": "new-project",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/background",
+      "area": "new-session",
+      "state": "background",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/background-adjust",
+      "area": "new-session",
+      "state": "background-adjust",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/dither",
+      "area": "new-session",
+      "state": "dither",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/ascii",
+      "area": "new-session",
+      "state": "ascii",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/halftone",
+      "area": "new-session",
+      "state": "halftone",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "new-session/scanlines",
+      "area": "new-session",
+      "state": "scanlines",
+      "source": "crates/ui/src/shell.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/empty",
+      "area": "composer",
+      "state": "empty",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/typing",
+      "area": "composer",
+      "state": "typing",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/multiline",
+      "area": "composer",
+      "state": "multiline",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/ime-composition",
+      "area": "composer",
+      "state": "ime-composition",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/attachments",
+      "area": "composer",
+      "state": "attachments",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/attachment-wrap",
+      "area": "composer",
+      "state": "attachment-wrap",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/model-picker",
+      "area": "composer",
+      "state": "model-picker",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-model-picker.md"
+      ]
+    },
+    {
+      "id": "composer/compact-model-picker",
+      "area": "composer",
+      "state": "compact-model-picker",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-model-picker.md"
+      ]
+    },
+    {
+      "id": "composer/reasoning",
+      "area": "composer",
+      "state": "reasoning",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-model-picker.md"
+      ]
+    },
+    {
+      "id": "composer/queue",
+      "area": "composer",
+      "state": "queue",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/queue-edit",
+      "area": "composer",
+      "state": "queue-edit",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/sending",
+      "area": "composer",
+      "state": "sending",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/stopped",
+      "area": "composer",
+      "state": "stopped",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "composer/retry",
+      "area": "composer",
+      "state": "retry",
+      "source": "crates/ui/src/composer.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/markdown",
+      "area": "transcript",
+      "state": "markdown",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/code",
+      "area": "transcript",
+      "state": "code",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/table",
+      "area": "transcript",
+      "state": "table",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/math-inline",
+      "area": "transcript",
+      "state": "math-inline",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/math-block",
+      "area": "transcript",
+      "state": "math-block",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/mermaid",
+      "area": "transcript",
+      "state": "mermaid",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/reasoning-open",
+      "area": "transcript",
+      "state": "reasoning-open",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/reasoning-collapsed",
+      "area": "transcript",
+      "state": "reasoning-collapsed",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/tool-running",
+      "area": "transcript",
+      "state": "tool-running",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/tool-complete",
+      "area": "transcript",
+      "state": "tool-complete",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/tool-error",
+      "area": "transcript",
+      "state": "tool-error",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/permission",
+      "area": "transcript",
+      "state": "permission",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/question",
+      "area": "transcript",
+      "state": "question",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/todo",
+      "area": "transcript",
+      "state": "todo",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/subagent",
+      "area": "transcript",
+      "state": "subagent",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/side-chat",
+      "area": "transcript",
+      "state": "side-chat",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/images",
+      "area": "transcript",
+      "state": "images",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/unavailable-attachment",
+      "area": "transcript",
+      "state": "unavailable-attachment",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/streaming",
+      "area": "transcript",
+      "state": "streaming",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/scroll-paused",
+      "area": "transcript",
+      "state": "scroll-paused",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/jump-to-end",
+      "area": "transcript",
+      "state": "jump-to-end",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "transcript/selection",
+      "area": "transcript",
+      "state": "selection",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-transcript.md"
+      ]
+    },
+    {
+      "id": "transcript/long-history",
+      "area": "transcript",
+      "state": "long-history",
+      "source": "crates/ui/src/transcript.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/tree",
+      "area": "files",
+      "state": "tree",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "files/search",
+      "area": "files",
+      "state": "search",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "files/context-menu",
+      "area": "files",
+      "state": "context-menu",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/rename",
+      "area": "files",
+      "state": "rename",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "files/drag",
+      "area": "files",
+      "state": "drag",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/text",
+      "area": "files",
+      "state": "text",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/code",
+      "area": "files",
+      "state": "code",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/markdown",
+      "area": "files",
+      "state": "markdown",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/image",
+      "area": "files",
+      "state": "image",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/edited",
+      "area": "files",
+      "state": "edited",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "files/saving",
+      "area": "files",
+      "state": "saving",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/readonly",
+      "area": "files",
+      "state": "readonly",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/conflict",
+      "area": "files",
+      "state": "conflict",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "files/unsaved-close",
+      "area": "files",
+      "state": "unsaved-close",
+      "source": "crates/ui/src/files/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "automated-regression-only",
+      "evidence": [
+        "docs/audit-workbench.md"
+      ]
+    },
+    {
+      "id": "git/changes",
+      "area": "git",
+      "state": "changes",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/diff-unified",
+      "area": "git",
+      "state": "diff-unified",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/diff-split",
+      "area": "git",
+      "state": "diff-split",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/diff-comment",
+      "area": "git",
+      "state": "diff-comment",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/history",
+      "area": "git",
+      "state": "history",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/commit",
+      "area": "git",
+      "state": "commit",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/refs",
+      "area": "git",
+      "state": "refs",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/empty",
+      "area": "git",
+      "state": "empty",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "git/error",
+      "area": "git",
+      "state": "error",
+      "source": "crates/ui/src/changes.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/board",
+      "area": "pull-requests",
+      "state": "board",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/loading",
+      "area": "pull-requests",
+      "state": "loading",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/empty",
+      "area": "pull-requests",
+      "state": "empty",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/error",
+      "area": "pull-requests",
+      "state": "error",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/detail",
+      "area": "pull-requests",
+      "state": "detail",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/checks",
+      "area": "pull-requests",
+      "state": "checks",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/discussion",
+      "area": "pull-requests",
+      "state": "discussion",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/code",
+      "area": "pull-requests",
+      "state": "code",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/comment",
+      "area": "pull-requests",
+      "state": "comment",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "pull-requests/destination",
+      "area": "pull-requests",
+      "state": "destination",
+      "source": "crates/ui/src/pull_requests.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/output",
+      "area": "terminal",
+      "state": "output",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/input",
+      "area": "terminal",
+      "state": "input",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/ansi",
+      "area": "terminal",
+      "state": "ansi",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/tabs",
+      "area": "terminal",
+      "state": "tabs",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/selection",
+      "area": "terminal",
+      "state": "selection",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/search",
+      "area": "terminal",
+      "state": "search",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/resize",
+      "area": "terminal",
+      "state": "resize",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/long-scrollback",
+      "area": "terminal",
+      "state": "long-scrollback",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "terminal/closed",
+      "area": "terminal",
+      "state": "closed",
+      "source": "crates/ui/src/terminal/panel.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/fixture-page",
+      "area": "browser",
+      "state": "fixture-page",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/public-page",
+      "area": "browser",
+      "state": "public-page",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/tabs",
+      "area": "browser",
+      "state": "tabs",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/navigation",
+      "area": "browser",
+      "state": "navigation",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/loading",
+      "area": "browser",
+      "state": "loading",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/error",
+      "area": "browser",
+      "state": "error",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/zoom",
+      "area": "browser",
+      "state": "zoom",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/menu-over-page",
+      "area": "browser",
+      "state": "menu-over-page",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/dialog-over-page",
+      "area": "browser",
+      "state": "dialog-over-page",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/focus-return",
+      "area": "browser",
+      "state": "focus-return",
+      "source": "crates/ui/src/browser/mod.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/general",
+      "area": "settings",
+      "state": "general",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/appearance",
+      "area": "settings",
+      "state": "appearance",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/notifications",
+      "area": "settings",
+      "state": "notifications",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/shortcuts",
+      "area": "settings",
+      "state": "shortcuts",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/providers",
+      "area": "settings",
+      "state": "providers",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/devices",
+      "area": "settings",
+      "state": "devices",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/cloud",
+      "area": "settings",
+      "state": "cloud",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/billing",
+      "area": "settings",
+      "state": "billing",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/files",
+      "area": "settings",
+      "state": "files",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/archived",
+      "area": "settings",
+      "state": "archived",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/search",
+      "area": "settings",
+      "state": "search",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/search-result",
+      "area": "settings",
+      "state": "search-result",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/search-empty",
+      "area": "settings",
+      "state": "search-empty",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/theme-picker",
+      "area": "settings",
+      "state": "theme-picker",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/theme-library",
+      "area": "settings",
+      "state": "theme-library",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/theme-import",
+      "area": "settings",
+      "state": "theme-import",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/font-picker",
+      "area": "settings",
+      "state": "font-picker",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/shortcut-recording",
+      "area": "settings",
+      "state": "shortcut-recording",
+      "source": "crates/ui/src/settings.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/settings",
+      "area": "appshots",
+      "state": "settings",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/cards",
+      "area": "appshots",
+      "state": "cards",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/image-viewer",
+      "area": "appshots",
+      "state": "image-viewer",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/queue",
+      "area": "appshots",
+      "state": "queue",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/transferring",
+      "area": "appshots",
+      "state": "transferring",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "appshots/unavailable",
+      "area": "appshots",
+      "state": "unavailable",
+      "source": "crates/ui/src/appshots.rs",
+      "platforms": [
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/command-palette",
+      "area": "global",
+      "state": "command-palette",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/onboarding",
+      "area": "global",
+      "state": "onboarding",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/account-signed-out",
+      "area": "global",
+      "state": "account-signed-out",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/account-signed-in",
+      "area": "global",
+      "state": "account-signed-in",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/update-available",
+      "area": "global",
+      "state": "update-available",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/update-progress",
+      "area": "global",
+      "state": "update-progress",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/tooltip",
+      "area": "global",
+      "state": "tooltip",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/toast",
+      "area": "global",
+      "state": "toast",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/confirmation",
+      "area": "global",
+      "state": "confirmation",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "global/keyboard-focus",
+      "area": "global",
+      "state": "keyboard-focus",
+      "source": "crates/ui/src/shell/command_palette.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "settings/smooth-scrolling",
+      "area": "settings",
+      "state": "smooth-scrolling",
+      "source": "crates/ui/src/settings/appearance.rs",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    },
+    {
+      "id": "browser/annotation",
+      "area": "browser",
+      "state": "annotation",
+      "source": "crates/ui/src/browser/annotate.js",
+      "platforms": [
+        "windows-amd64",
+        "darwin-amd64",
+        "darwin-arm64"
+      ],
+      "appearance": [
+        "light",
+        "dark"
+      ],
+      "viewport": [
+        1320,
+        880
+      ],
+      "referenceStatus": "pending-native-capture",
+      "implementationStatus": "unverified",
+      "evidence": []
+    }
+  ]
+}

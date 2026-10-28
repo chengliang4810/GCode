@@ -66,8 +66,8 @@ export interface Config {
   out?: string;
   /**
    * Where `mygo generate` writes the TypeScript client (default:
-   * `src/mygo.ts` when package.json is at the project root; an app
-   * without a frontend gets no client).
+   * `src/mygo.ts` when package.json at the project root depends on
+   * mygo-runtime; an app without a frontend gets no client).
    */
   bindings?: string;
 
@@ -97,6 +97,11 @@ export interface Config {
   urlSchemes?: string[];
   /** The types of files the app opens, which reach `App.OnOpenFile`. */
   fileAssociations?: FileAssociation[];
+  /**
+   * The catalogs of the app's messages, which make the languages it ships.
+   * Without it, the app ships English only.
+   */
+  i18n?: I18nConfig;
   /** Signed updates, which `mygo.Updater` installs. */
   updates?: UpdatesConfig;
   /** macOS packaging. */
@@ -107,13 +112,25 @@ export interface Config {
   linux?: LinuxConfig;
 }
 
+/**
+ * The catalogs of the app's messages: a JSON file per language in `dir`,
+ * named after its BCP 47 tag (`de.json`, `zh-Hant.json`), whose messages
+ * `mygo generate` writes typed Go and TypeScript functions for.
+ */
+export interface I18nConfig {
+  /** The directory of the catalogs, a Go package of its own (default `locales`). */
+  dir?: string;
+  /** The language the app is written in, which the others fall back to (default `en`). */
+  source?: string;
+}
+
 /** A type of file the app opens. */
 export interface FileAssociation {
   /** The file name extensions, without dots, e.g. `["md"]`. */
   ext: string[];
   /** What the files are, e.g. `"Markdown Document"`. */
   name?: string;
-  /** The MIME type of the files, by which Linux identifies them (default: `application/x-<app>-<ext>`). */
+  /** The MIME type of the files, by which Linux identifies them; the app defines an unregistered one (`x-`) (default: `application/x-<app>-<ext>`). */
   mimeType?: string;
   /** The app's role for the files on macOS (default: `"Editor"`). */
   role?: "Editor" | "Viewer";
@@ -164,12 +181,28 @@ export interface S3Config {
 
 /** macOS packaging. */
 export interface MacOSConfig {
+  /** The .app filename without its extension; does not rename the executable or UI (default: app name). */
+  bundleName?: string;
+  /**
+   * The icon as an asset catalog: an `Assets.car` compiled with actool (its
+   * app icon named `AppIcon`, unless `infoPlist` sets `CFBundleIconName`), or
+   * an Icon Composer `.icon`, which builds compile on a Mac with Xcode 26 or
+   * later and skip elsewhere. The `.icns` made from `icon` remains the
+   * fallback.
+   */
+  icon?: string;
   /** The oldest macOS the app runs on (default: `12.0`). */
   minimumSystemVersion?: string;
   /** The identity that signs the app and its disk image, e.g. `Developer ID Application: Jane Doe (TEAMID)` (default: `-`, ad hoc). */
   signingIdentity?: string;
   /** A property list of entitlements to sign the app with. */
   entitlements?: string;
+  /**
+   * A provisioning profile embedded before signing, for restricted entitlements.
+   * Must match the app's identifier, entitlements and signing identity.
+   * Cannot be used with ad-hoc signing. Paths are relative to the project.
+   */
+  provisioningProfile?: string;
   /**
    * Property lists of entitlements for code among the resources, by its path
    * there, e.g. `{ "bin/server": "server.entitlements.plist" }` for a helper
@@ -195,6 +228,8 @@ export interface NotarizeConfig {
 
 /** Windows packaging. */
 export interface WindowsConfig {
+  /** Install directory, shortcuts and uninstall display name; does not rename the executable or UI (default: app name). */
+  installName?: string;
   /** A code signing certificate (.pfx); its password comes from `MYGO_WINDOWS_CERTIFICATE_PASSWORD`. */
   certificate?: string;
   /** Instead of `certificate`, a command that signs a file, with `%1` for its path. */
@@ -213,6 +248,12 @@ export interface LinuxConfig {
   categories?: string[];
   /** Debian packages the app needs besides GTK and WebKitGTK. */
   depends?: string[];
+  /**
+   * `false` for an app that shows no web page, in a window or a `ui.WebView`,
+   * as an app of native UI: its Debian package depends on GTK alone, and
+   * install.sh and `mygo doctor` do not ask for WebKitGTK (default: `true`).
+   */
+  webview?: boolean;
   /**
    * A command that runs the app, such as `my-app`: a link in `/usr/bin` from
    * the Debian package, and in `~/.local/bin` from install.sh (default: none;

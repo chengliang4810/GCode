@@ -1,0 +1,1682 @@
+[
+  {
+    "assetRef": "asset://artifacts/diagram-zeron-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-zeron-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-zeron-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-zeron-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-zeron-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-zeron-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-zeron-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-zeron-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-zeron-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-zeron-dark.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-zeron-dark",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-zeron-dark.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-zeron-dark.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-zeron-dark.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-zeron-dark.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-zeron-dark.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-zeron-dark.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-zeron-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-vscode-light-plus.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-vscode-light-plus",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-vscode-light-plus.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-vscode-light-plus.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-vscode-light-plus.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-vscode-light-plus.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-vscode-light-plus.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-vscode-light-plus.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-vscode-light-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-vscode-dark-plus.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-vscode-dark-plus",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-vscode-dark-plus.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-vscode-dark-plus.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-vscode-dark-plus.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-vscode-dark-plus.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-vscode-dark-plus.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-vscode-dark-plus.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-vscode-dark-plus",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-catppuccin-latte.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-catppuccin-latte",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-catppuccin-latte.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-catppuccin-latte.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-catppuccin-latte.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-catppuccin-latte.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-catppuccin-latte.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-catppuccin-latte.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-catppuccin-latte",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-catppuccin-mocha.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-catppuccin-mocha",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-catppuccin-mocha.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-catppuccin-mocha.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-catppuccin-mocha.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-catppuccin-mocha.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-catppuccin-mocha.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-catppuccin-mocha.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-catppuccin-mocha",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-tokyo-night-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-tokyo-night-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-tokyo-night-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-tokyo-night-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-tokyo-night-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-tokyo-night-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-tokyo-night-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-tokyo-night-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-tokyo-night-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-tokyo-night.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-tokyo-night",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-tokyo-night.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-tokyo-night.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-tokyo-night.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-tokyo-night.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-tokyo-night.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-tokyo-night.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-tokyo-night",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-dracula.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-dracula",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-dracula.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-dracula.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-dracula.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-dracula.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-dracula.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-dracula.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-dracula",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-github-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-github-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-github-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-github-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-github-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-github-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-github-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-github-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-github-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-github-dark.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-github-dark",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-github-dark.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-github-dark.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-github-dark.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-github-dark.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-github-dark.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-github-dark.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-github-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-ayu-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-ayu-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-ayu-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-ayu-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-ayu-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-ayu-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-ayu-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-ayu-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-ayu-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-ayu-dark.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-ayu-dark",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-ayu-dark.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-ayu-dark.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-ayu-dark.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-ayu-dark.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-ayu-dark.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-ayu-dark.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-ayu-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-ayu-mirage.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-ayu-mirage",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-ayu-mirage.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-ayu-mirage.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-ayu-mirage.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-ayu-mirage.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-ayu-mirage.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-ayu-mirage.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-ayu-mirage",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-gruvbox-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-gruvbox-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-gruvbox-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-gruvbox-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-gruvbox-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-gruvbox-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-gruvbox-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-gruvbox-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-gruvbox-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-gruvbox-dark.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-gruvbox-dark",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-gruvbox-dark.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-gruvbox-dark.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-gruvbox-dark.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-gruvbox-dark.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-gruvbox-dark.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-gruvbox-dark.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-gruvbox-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-rose-pine-dawn.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-rose-pine-dawn",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-rose-pine-dawn.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-rose-pine-dawn.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-rose-pine-dawn.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-rose-pine-dawn.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-rose-pine-dawn.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-rose-pine-dawn.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-rose-pine-dawn",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-rose-pine-moon.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-rose-pine-moon",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-rose-pine-moon.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-rose-pine-moon.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-rose-pine-moon.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-rose-pine-moon.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-rose-pine-moon.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-rose-pine-moon.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-rose-pine-moon",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-nord.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-nord",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-nord.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-nord.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-nord.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-nord.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-nord.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-nord.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-nord",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-one-dark-pro.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-one-dark-pro",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-one-dark-pro.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-one-dark-pro.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-one-dark-pro.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-one-dark-pro.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-one-dark-pro.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-one-dark-pro.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-one-dark-pro",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-atom-one-dark.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-atom-one-dark",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-atom-one-dark.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-atom-one-dark.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-atom-one-dark.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-atom-one-dark.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-atom-one-dark.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-atom-one-dark.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-atom-one-dark",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-night-owl-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-night-owl-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-night-owl-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-night-owl-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-night-owl-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-night-owl-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-night-owl-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-night-owl-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-night-owl-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-night-owl.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-night-owl",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-night-owl.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-night-owl.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-night-owl.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-night-owl.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-night-owl.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-night-owl.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-night-owl",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-winter-light.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-winter-light",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-winter-light.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-winter-light.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-winter-light.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-winter-light.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-winter-light.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-winter-light.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-winter-light",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-winter-dark-blue.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-winter-dark-blue",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-winter-dark-blue.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-winter-dark-blue.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-winter-dark-blue.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-winter-dark-blue.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-winter-dark-blue.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-winter-dark-blue.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-winter-dark-blue",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-palenight.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-palenight",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-palenight.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-palenight.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-palenight.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-palenight.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-palenight.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-palenight.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-palenight",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-synthwave-84.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-synthwave-84",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-synthwave-84.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-synthwave-84.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-synthwave-84.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-synthwave-84.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-synthwave-84.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-synthwave-84.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-synthwave-84",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-shades-of-purple.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-shades-of-purple",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-shades-of-purple.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-shades-of-purple.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-shades-of-purple.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-shades-of-purple.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-shades-of-purple.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-shades-of-purple.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-shades-of-purple",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-cobalt2.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-cobalt2",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-cobalt2.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-cobalt2.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-cobalt2.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-cobalt2.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-cobalt2.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-cobalt2.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-cobalt2",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  },
+  {
+    "assetRef": "asset://artifacts/diagram-andromeda.svg",
+    "baseline": 0.0,
+    "height": 139.9095,
+    "id": "diagram-andromeda",
+    "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+    "width": 381.6848
+  },
+  {
+    "assetRef": "asset://artifacts/math-fira-andromeda.svg",
+    "baseline": 28.820640563964844,
+    "height": 46.10063934326172,
+    "id": "math-fira-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 129.34292602539062
+  },
+  {
+    "assetRef": "asset://artifacts/math-stixTwo-andromeda.svg",
+    "baseline": 26.856000900268555,
+    "height": 42.50400161743164,
+    "id": "math-stixTwo-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 139.81173706054688
+  },
+  {
+    "assetRef": "asset://artifacts/math-computerModern-andromeda.svg",
+    "baseline": 26.855998992919922,
+    "height": 43.58399963378906,
+    "id": "math-computerModern-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 149.0997314453125
+  },
+  {
+    "assetRef": "asset://artifacts/math-libertinus-andromeda.svg",
+    "baseline": 31.043996810913086,
+    "height": 48.0839958190918,
+    "id": "math-libertinus-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 131.99732971191406
+  },
+  {
+    "assetRef": "asset://artifacts/math-pagella-andromeda.svg",
+    "baseline": 29.51831817626953,
+    "height": 45.93431854248047,
+    "id": "math-pagella-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 138.6021270751953
+  },
+  {
+    "assetRef": "asset://artifacts/math-euler-andromeda.svg",
+    "baseline": 27.43199920654297,
+    "height": 44.13600158691406,
+    "id": "math-euler-andromeda",
+    "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
+    "width": 147.97174072265625
+  }
+]

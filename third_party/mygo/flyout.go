@@ -82,8 +82,10 @@ type FlyoutOptions struct {
 	// hear it, and may keep it open, except on Wayland, whose compositor
 	// dismisses it. On Linux and Windows the press only closes it, as it
 	// closes their menus; on macOS it goes on to what is under the
-	// pointer. Menus, lists to choose from and popovers are focusable,
-	// and handle their own keys.
+	// pointer, but on Anchor, as AppKit's popovers: so a click on the
+	// button that opened it closes it, and does not open it again.
+	// Menus, lists to choose from and popovers are focusable, and handle
+	// their own keys.
 	//
 	// Without it, the flyout never takes the keyboard, which stays in
 	// the parent, and stays until it is closed: tooltips, hover cards,
@@ -112,8 +114,18 @@ type FlyoutOptions struct {
 	// the keyboard while it shows, Focusable or not, which makes it close
 	// as the user clicks elsewhere. Its content draws no background there
 	// (ui.Context.Vibrancy reports the material): elsewhere, where Popover
-	// changes nothing, it draws its own.
+	// changes nothing, it draws its own. A Tray's icon is highlighted while
+	// its popover shows, as a status item is while its menu does.
 	Popover bool
+	// Vibrancy puts a translucent, blurred material behind the flyout's
+	// content, as WindowOptions.Vibrancy does behind a window's: the
+	// content draws no background where the material shows
+	// (ui.Context.Vibrancy reports it). A Popover has its own.
+	Vibrancy Vibrancy
+	// CornerRadius rounds the flyout's corners on macOS, in DIPs: its
+	// material and content are cut to them, and its Shadow follows them.
+	// Windows 11 rounds flyouts as it rounds its menus; Linux does not.
+	CornerRadius int
 
 	// URL is loaded right after the flyout is created, as
 	// WindowOptions.URL.
@@ -156,6 +168,7 @@ func NewFlyout(opts FlyoutOptions) *Window {
 		Page:              opts.Page,
 		Content:           opts.Content,
 		Hidden:            opts.Hidden,
+		Vibrancy:          opts.Vibrancy,
 	}, nil, &flyoutOptions{fo, opts.Tray})
 }
 
@@ -178,6 +191,7 @@ func (o *FlyoutOptions) platform() (*platform.Flyout, error) {
 		Gap:       o.Gap,
 		Focusable: o.Focusable,
 		Popover:   o.Popover,
+		Radius:    o.CornerRadius,
 	}, nil
 }
 
@@ -227,12 +241,12 @@ func (w *Window) setFlyoutSize(width, height int) bool {
 	return true
 }
 
-// escape closes a flyout on an Escape its page or native UI did not
-// handle, as the user closing it: menus and popovers close so. Its
-// content may be building a frame: the flyout closes after it. Main
-// thread only.
+// escape closes a flyout or a panel on an Escape its page or native UI
+// did not handle, as the user closing it: menus, popovers and launchers
+// close so. Its content may be building a frame: the window closes after
+// it. Main thread only.
 func (w *Window) escape() {
-	if w.flyout != nil {
+	if w.flyout != nil || w.panel {
 		postMain(func() { w.close() })
 	}
 }

@@ -71,6 +71,10 @@ WebAssembly, named by its content: a static site, to serve from anywhere.`)
 	if *out != "" {
 		c.Out = *out
 	}
+	// The catalogs name the languages the packages declare.
+	if _, err := c.languages(); err != nil {
+		return err
+	}
 	if *upload {
 		if err := checkUpload(c); err != nil {
 			return err
@@ -83,11 +87,24 @@ WebAssembly, named by its content: a static site, to serve from anywhere.`)
 	if c.MacOS.Notarize != nil && !opts.skipNotarize && opts.sign == "-" {
 		return fmt.Errorf("notarization needs a Developer ID signing identity: set macos.signingIdentity or pass -sign")
 	}
+	if c.MacOS.ProvisioningProfile != "" && opts.sign == "-" && slices.ContainsFunc(splitList(*platforms), func(p string) bool { return strings.HasPrefix(p, "darwin/") }) {
+		// Before building anything, as codesign would.
+		return errProfileAdHoc
+	}
 
 	con.startBanner("build")
 	started := time.Now()
-	// The TypeScript client comes first: the frontend build type-checks and
-	// bundles it.
+	// The accessors of the catalogs come first, which the app calls, then
+	// the TypeScript client: the frontend build type-checks and bundles
+	// them.
+	if err := generateI18n(c); err != nil {
+		return err
+	}
+	if c.I18n != nil {
+		if dirs := compiledDirs(c); dirs != nil {
+			checkCatalogImported(c, dirs)
+		}
+	}
 	if err := writeClient(context.Background(), c, false); err != nil {
 		return err
 	}
@@ -200,6 +217,7 @@ func buildPlatform(c *Config, goos, goarch string, opts buildOptions) ([]string,
 		// A GUI app, not a console one.
 		ldflags += " -H=windowsgui"
 	}
+	ldflags += extraLDFlags()
 	compile := func(arch, out string) error {
 		t := con.start("Compiling " + goos + "/" + arch)
 		err := func() error {
@@ -245,11 +263,17 @@ func buildPlatform(c *Config, goos, goarch string, opts buildOptions) ([]string,
 		} else if err := compile(goarch, bin); err != nil {
 			return nil, err
 		}
-		icns, err := appIcon(c)
+		car, err := appCatalog(c)
 		if err != nil {
 			return nil, err
 		}
-		app, err := writeBundle(c, stage, bin, icns, res)
+		var icns []byte
+		if car != nil && car.icns != nil {
+			icns = car.icns // the .icon's own rendering for older macOS
+		} else if icns, err = appIcon(c); err != nil {
+			return nil, err
+		}
+		app, err := writeBundle(c, stage, bin, icns, car, res)
 		if err != nil {
 			return nil, err
 		}
@@ -404,6 +428,16 @@ func productionTags(debug bool) []string {
 	return []string{"-tags", strings.Join(append(tags, inspectorTag), ",")}
 }
 
+// extraLDFlags returns the -ldflags of MYGO_LDFLAGS, which a build adds
+// after its own, so that its -X flags win: GOFLAGS cannot give any, as
+// the -ldflags of mygo build override those of GOFLAGS.
+func extraLDFlags() string {
+	if f := strings.TrimSpace(os.Getenv("MYGO_LDFLAGS")); f != "" {
+		return " " + f
+	}
+	return ""
+}
+
 // packageFlags are the -ldflags that link what mygo.json says about the app
 // into it: Linux executables carry no metadata of their own, and the URL
 // schemes tell every platform which launch arguments are deep links.
@@ -534,17 +568,35 @@ func writeLinuxDesktop(c *Config, dir, name string) ([]string, error) {
 }
 
 // linuxDesktopEntry renders the desktop entry of the app, which runs exec
-// and shows icon.
+// and shows icon, with its name and comment in the languages its catalogs
+// have them in (mygo.appName, mygo.appDescription), which launchers show
+// for the system's locale.
 func linuxDesktopEntry(c *Config, exec, icon string) string {
 	categories := c.Linux.Categories
 	if len(categories) == 0 {
 		categories = []string{"Utility"}
 	}
+	langs, _ := c.languages()
+	// localized writes the key of each language whose value is its own,
+	// once a locale.
+	localized := func(b *strings.Builder, key, value string, of func(l appLanguage) string) {
+		seen := map[string]bool{}
+		for _, l := range langs {
+			v, locale := of(l), desktopTag(l.Tag)
+			if v == "" || v == value || seen[locale] {
+				continue
+			}
+			seen[locale] = true
+			b.WriteString(key + "[" + locale + "]=" + v + "\n")
+		}
+	}
 	var b strings.Builder
 	b.WriteString("[Desktop Entry]\nType=Application\nName=" + c.Name + "\n")
+	localized(&b, "Name", c.Name, func(l appLanguage) string { return l.Name })
 	if c.Linux.Comment != "" {
 		b.WriteString("Comment=" + c.Linux.Comment + "\n")
 	}
+	localized(&b, "Comment", c.Linux.Comment, func(l appLanguage) string { return l.Description })
 	var mime []string
 	for _, fa := range c.FileAssociations {
 		t, _ := c.mimeType(fa)

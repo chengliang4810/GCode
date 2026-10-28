@@ -1,0 +1,26 @@
+2026-10-28 command palette / project picker / workspace search validation
+Reference: Zeron v0.2.128 ab189159f10cf8e63c0502be75a59bbc487e0eaf
+Framework: MyGo v0.6.4 + zeron-native-ui.2 (unmodified this task)
+Evidence kind: MyGo ui.NewTester implementation renders, not reference goldens.
+
+PASS: focused desktop and workbench/contracts/mock tests:
+go test ./internal/desktop ./internal/workbench ./internal/contracts ./internal/mock -run 'TestCommandPalette|TestNewProject|TestProjectFilter|TestProjectPicker|TestExplorerAndOfflinePickerEvidence|TestExplorer|TestOpenSearch|TestRevealDirectory|TestClosingSide|TestSearchRanges|TestProjectCreate|TestWorkspaceSearch|TestDirectoryBrowse' -count=1
+
+PASS: go vet ./internal/desktop ./internal/workbench ./internal/contracts ./internal/mock
+PASS: go run ./scripts/check-framework.go
+Verified .2 SHA256 fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e (1830 files)
+
+RACE: default CGO_ENABLED=0 cannot run race; this is not recorded as a pass.
+Subsequently temporary CGO_ENABLED=1, CC=output/tools/w64devkit-v2.10.1/w64devkit/bin/gcc.exe, PATH prepended compiler directory:
+PASS: go test -race -count=1 -p 1 ./internal/workbench ./internal/contracts ./internal/mock
+  workbench 2.012s; contracts 1.033s; mock 3.061s
+PASS: go test -race -count=1 ./internal/desktop -run 'TestCommandPalette|TestNewProject|TestProjectFilter|TestProjectPicker|TestExplorerAndOfflinePickerEvidence|TestSidebarCommand|TestSidebarProject'
+  desktop 3.669s
+CGO/CC/PATH restored in finally. No native window was launched by this task.
+
+NOT A FINAL FULL-SUITE PASS:
+Full desktop run during parallel edits failed TestFilePickerAdapterUsesSameImportPath and TestSideNativePickerStagesOnlyChildAttachments (attachment removal). Root owns final unified rerun.
+Unified golangci-lint 2.15.0 had 16 findings in parallel composer/integrations files; none in this task's command_palette/project_picker/sidebar_projects/workbench/contracts search files. Root owns final lint closure.
+No native screenshots, source screenshot diffs, DPI/IME acceptance, release rebuild, install test or visual parity conclusion from this task.
+
+FINAL HANDOFF CLOSURE (2026-10-28): After all parallel edits were frozen, the root reran the complete Go test suite, Go vet, MyGo vet, golangci-lint (0 issues), and full contracts/mock/desktop/workbench race tests successfully. A fresh export of the staged Git source also passed the full suite, both vet tools and windows/amd64, darwin/amd64, darwin/arm64 compilation. Earlier integration failures above are preserved as intermediate observations and are superseded by these final source checks. Logs: output/handoff-validation/. Native/reference visual acceptance remains pending.

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "installerSha256": "082d5b30838c1b7dad72e346ec450edc708e07b1131c6eed02a4f1ece652259f",
+  "originalShortcutUnchanged": true,
+  "captures": [
+    {
+      "sha256": "a55512bfd440b53fb6a201f6dcca05f765772fb9d8e0262552a2aacfd0b53b1c",
+      "file": "chat.png",
+      "kind": "application-self-capture",
+      "route": "chat/chat-0"
+    },
+    {
+      "sha256": "d2a16a74e22df13b92e275bdbfab977b21d4e37f885570ba05a1eb77a84b6592",
+      "file": "terminal.png",
+      "kind": "application-self-capture",
+      "route": "terminal"
+    },
+    {
+      "sha256": "8cd44d6eb99dcec7ad3d330d600cf56332f86ff8bfb2d61e143d6630ae592185",
+      "file": "browser.png",
+      "kind": "application-self-capture",
+      "route": "browser"
+    }
+  ],
+  "nativeVisualAcceptance": false,
+  "uninstallExitCode": 0,
+  "shortcutRemoved": true,
+  "registryRemoved": true,
+  "status": "passed-install-start-capture"
+}

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image/color"
 	"runtime"
 	"slices"
 	"testing"
@@ -482,6 +483,68 @@ func TestRouterTransition(t *testing.T) {
 	}
 }
 
+// TestRouterRebuiltElementShowsOwnColors checks issue #206: an element that
+// comes back after a route change, in a place another element took (and so
+// with an element ID the other one showed), shows its own colors at once,
+// not the colors that element left there.
+func TestRouterRebuiltElementShowsOwnColors(t *testing.T) {
+	gray, accent := RGBA(127, 127, 127, 0.13), RGB(37, 99, 235)
+	r := NewRouter("/a")
+	r.Transition = TransitionNone
+	var id uint64
+	view := func(c *context) {
+		coreColumn(c).Children(func() {
+			// The row is outside the pages, as an app's toolbar is: the
+			// element in it is not one the pages keep apart.
+			coreRow(c).Height(40).Children(func() {
+				b := coreBox(c).Size(28, 28).Radius(7).Role(RoleButton)
+				if r.Path() == "/a" {
+					b.Label("flat").Background(gray)
+				} else {
+					b.Label("primary").Background(accent)
+				}
+				b.Transition(ElementTransition{Colors: true, Duration: 120 * time.Millisecond})
+				id = b.id
+			})
+			r.coreView(c, func(route *Route) {
+				coreText(c, "Page "+route.Path())
+			})
+		})
+	}
+	now := time.Unix(1_000_000, 0)
+	tt := coreNewTester(view, 300, 200)
+	tt.rt.clock = func() time.Time { return now }
+	// The clock is stepped by hand, and frames run directly: Frame() settles
+	// the transition, and shows the color it ends on.
+	frame := func(ms int) {
+		now = now.Add(time.Duration(ms) * time.Millisecond)
+		tt.rt.runFrame()
+	}
+	pixel := func() color.RGBA {
+		s := tt.rt.states[id]
+		if s == nil {
+			t.Fatal("the button has no state")
+		}
+		return tt.Image().RGBAAt(int(s.x)+14, int(s.y)+14)
+	}
+	frame(0)
+	want := pixel()
+	// Another element takes the place, and its colour: a primary button.
+	r.Push("/b")
+	frame(0)
+	frame(200)
+	if got := pixel(); got == want {
+		t.Fatalf("the element in the place did not change colour: %v", got)
+	}
+	// The flat one comes back. It must not be painted the accent of the
+	// element that took its place while it was away.
+	r.Back()
+	frame(0)
+	if got := pixel(); got != want {
+		t.Fatalf("a rebuilt element is painted %v, want its own %v", got, want)
+	}
+}
+
 // children returns the children of an element.
 func (e *node) children() []*node {
 	var out []*node
@@ -625,8 +688,7 @@ func TestRouterLayouts(t *testing.T) {
 	}, 500, 300)
 	pages := func(e *node) int { return len(e.children()) }
 	settle := func() {
-		time.Sleep(300 * time.Millisecond)
-		tt.Frame()
+		tt.Advance(300 * time.Millisecond)
 	}
 	tt.Click("Layout 0")
 	if !tt.HasText("General page") || !tt.HasText("Layout 1") || section != "general" {
@@ -689,4 +751,47 @@ func TestRouterLayouts(t *testing.T) {
 	}()
 	rt := &Route{router: r, entry: r.current(), rest: -1}
 	rt.coreView(&tt.rt.c, func(*Route) {})
+}
+
+func TestRouterAnimation(t *testing.T) {
+	r := NewRouter("/notes")
+	r.Animation = &Animation{Duration: 100 * time.Millisecond, Ease: Linear}
+	tt, now := clockTester(func(c *context) {
+		r.coreView(c, func(rt *Route) { coreText(c, "Page "+rt.Path()) })
+	}, 400, 300)
+	at := func(s string) float32 {
+		for _, n := range tt.rt.labels {
+			if n.text == s {
+				return tt.rt.states[n.id].x
+			}
+		}
+		t.Fatalf("no %q among %q", s, tt.Texts())
+		return 0
+	}
+	r.Push("/notes/1")
+	tt.Frame()
+	*now = now.Add(50 * time.Millisecond)
+	tt.Frame()
+	if x := at("Page /notes/1"); x < 195 || x > 205 {
+		t.Errorf("halfway along its curve, the page is at %v", x)
+	}
+	*now = now.Add(60 * time.Millisecond)
+	tt.Frame()
+	if x := at("Page /notes/1"); x != 0 || len(tt.rt.c.root.first.children()) != 1 {
+		t.Errorf("once in, the page is at %v", x)
+	}
+	// A spring slides the page as long as it takes to settle.
+	r.Animation = &Snappy
+	r.Push("/notes/1/2")
+	tt.Frame()
+	*now = now.Add(150 * time.Millisecond)
+	tt.Frame()
+	if x := at("Page /notes/1/2"); x <= 0 || x >= 200 {
+		t.Errorf("sprung partway, the page is at %v", x)
+	}
+	*now = now.Add(2 * time.Second)
+	tt.Frame()
+	if x := at("Page /notes/1/2"); x != 0 || tt.rt.animating {
+		t.Errorf("sprung in, the page is at %v", x)
+	}
 }

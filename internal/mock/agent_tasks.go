@@ -1,0 +1,47 @@
+package mock
+
+import (
+	"hash/fnv"
+	"strings"
+)
+
+type agentTask struct {
+	index                                                       int
+	path, language, before, after, prompt, thought, note, final string
+	write, failure, review                                      bool
+}
+
+func taskDefinition(i int) agentTask {
+	tasks := []agentTask{
+		{path: "internal/layout.go", language: "go", before: "package layout\n\nconst SidebarWidth = 240\nconst PanelWidth = 480\n", after: "package layout\n\nconst SidebarWidth = 256\nconst PanelWidth = 520\n", prompt: "Keep the Fieldnotes conversation anchored when the file pane opens. Fix the width calculation and verify the panel tests.", thought: "I’ll trace how the available width is calculated before changing the panel constraints.", note: "The right pane is measured after the conversation width is cached. I’ll update that boundary and preserve the minimum chat width.", final: "Updated `internal/layout.go` so opening the file pane keeps the conversation anchored.\n\nThe sidebar remains **256 px**, the right pane remains **520 px**, and the conversation retains its scroll position.\n\n`go test ./internal/layout` passed."},
+		{path: "internal/palette.go", language: "go", before: "package palette\n\nfunc move(selected, count int) int { return selected + 1 }\n", after: "package palette\n\nfunc move(selected, count int) int {\n\tif count == 0 { return -1 }\n\treturn (selected + 1) % count\n}\n", prompt: "Polish command-palette keyboard navigation. Arrow Down should wrap, and empty results must not select a missing row.", thought: "I’ll inspect the selection reducer and its empty-results case before changing the keyboard handler.", note: "The reducer increments the index without checking the result count. Empty results need an explicit sentinel.", final: "The command palette now wraps Arrow Down and uses `-1` when no result is selected.\n\n| Case | Result |\n|---|---|\n| Last result → Arrow Down | First result |\n| Empty list | No selection |\n| Enter with no selection | No action |\n\nPalette checks passed."},
+		{path: "internal/auth/redirect.go", language: "go", before: "package auth\n\nfunc redirect(returnTo string) string { return \"/\" }\n", after: "package auth\n\nfunc redirect(returnTo string) string {\n\tif len(returnTo)>0 && returnTo[0]=='/' && (len(returnTo)<2 || returnTo[1]!='/') { return returnTo }\n\treturn \"/\"\n}\n", prompt: "After signing in, a user always lands on the home page. Preserve a safe local returnTo path and cover the regression.", thought: "I’ll reproduce the callback with a nested project URL and check where returnTo is discarded.", note: "The callback always returns `/`. The failing assertion confirms that the destination is lost before writing the response.", final: "Fixed the sign-in callback to preserve local `returnTo` paths. External and protocol-relative destinations fall back to `/`.\n\n```text\n/projects/fieldnotes → /projects/fieldnotes\nhttps://other.example → /\n//other.example      → /\n```\n\nThe redirect regression passes after the initial failing run.", failure: true},
+		{path: "internal/deploy/status.go", language: "go", before: "", after: "package deploy\n\ntype Status struct {\n\tRevision string\n\tPhase string\n\tURL string\n}\n", prompt: "Add deployment status to the overview. Keep queued, building, ready and failed states distinct.", thought: "I’ll inspect the deployment response shape and define the states the overview can display.", note: "Phase and revision are independent fields. The URL remains empty until a deployment becomes ready.", final: "Added a deployment status record with `revision`, `phase` and `url`.\n\nThe overview distinguishes **queued**, **building**, **ready** and **failed**. A failed build retains its revision and does not display a successful deployment link.\n\nDeployment-state checks passed.", write: true},
+		{path: "internal/review/comments.go", language: "go", before: "package review\n\nfunc target(path string, line int) string { return path }\n", prompt: "Review PR #412 for stale comment targets. Ask a subagent to inspect keyboard navigation; do not change files.", thought: "I’ll compare changed lines with stored comment targets and cross-check keyboard behavior independently.", note: "The target stores only a path. I’m checking whether a rebase can leave a comment attached to the wrong hunk.", final: "Found one issue in PR #412:\n\n1. **Stale comment targets after a rebase.** `internal/review/comments.go` drops the diff-side line identity. Preserve the original revision and side before posting an inline comment.\n\nThe keyboard review found no additional blocker. No files were changed.", review: true},
+		{path: "internal/focus.go", language: "go", before: "package focus\n\nfunc closedPanel() string { return \"sidebar\" }\n", after: "package focus\n\nfunc closedPanel(previous string) string {\n\tif previous != \"\" { return previous }\n\treturn \"composer\"\n}\n", prompt: "Closing the right pane moves focus to the sidebar. Restore the previous control and check keyboard navigation.", thought: "I’ll follow the focus owner through pane close and session switch. Closing should restore the previous control.", note: "The close path always selects the sidebar. I’ll retain the previous owner and use the composer only when that control is gone.", final: "Closing the right pane restores the previous focus owner. If that control no longer exists, focus returns to the composer.\n\nChecked Escape, the close button and returning to a saved panel layout. Focus regression checks passed."},
+		{path: "README.md", language: "markdown", before: "# Zeron\n\n## Build\n\nRun the desktop application.\n", after: "# Zeron\n\n## Build\n\n```sh\ngo run ./cmd/zeron\n```\n\n## Checks\n\n```sh\ngo test ./...\n```\n", prompt: "Document the actual Go entry point and test command. Remove outdated build instructions.", thought: "I’ll compare the README with the module entry point and keep only commands the project provides.", note: "The old paragraph never names the executable package. I’ll give build and checks their own code blocks.", final: "Updated `README.md` with the current commands:\n\n```sh\ngo run ./cmd/zeron\ngo test ./...\n```\n\nRemoved the outdated build paragraph and checked whitespace with `git diff --check`."},
+		{path: "internal/composer.go", language: "go", before: "package composer\n\nconst ControlGap = 7\nconst InputPadding = 14\n", after: "package composer\n\nconst ControlGap = 8\nconst InputPadding = 16\n", prompt: "Align the attachment button, model picker and Send button without changing composer controls.", thought: "I’ll compare control padding and baseline offsets rather than adjusting every button independently.", note: "Two local constants override the common spacing scale. I’ll align them and check one-line and multiline input.", final: "Aligned the composer controls with an **8 px** gap and **16 px** input padding. Attachment, model and Send controls now share their baseline.\n\nOne-line and multiline composer checks passed."},
+		{path: "internal/sync/replay.go", language: "go", before: "package sync\n\nfunc accept(last, next uint64) bool { return next >= last }\n", after: "package sync\n\nfunc accept(last, next uint64) bool { return next > last }\n", prompt: "Audit reconnect replay: duplicated and older events must not append another copy of a message.", thought: "I’ll replay a disconnect around acknowledgement and inspect the revision gate.", note: "The gate accepts the already-applied sequence with `>=`, allowing the replayed event to append twice.", final: "The replay gate now accepts only newer sequences:\n\n```go\nfunc accept(last, next uint64) bool { return next > last }\n```\n\nReconnect checks confirm that duplicate and older events are ignored while unseen messages remain available."},
+		{path: "internal/settings/search.go", language: "go", before: "package settings\n\nvar SearchFields = []string{\"title\"}\n", after: "package settings\n\nvar SearchFields = []string{\"title\", \"description\", \"keywords\"}\n", prompt: "Find settings by descriptions and keywords, then focus the matched control when opening a search result.", thought: "I’ll inspect row indexing and how a search result locates its control after navigation.", note: "Only titles enter the index. Descriptions and keywords already exist on the row model.", final: "Settings search indexes titles, descriptions and keywords. Opening a result navigates to its page and locates the matching control.\n\nVerified “font”, “background” and “shortcut”; each resolves to the expected row."},
+	}
+	task := tasks[i%len(tasks)]
+	task.index = i % len(tasks)
+	return task
+}
+
+func taskIndex(prompt string) int {
+	lower := strings.ToLower(prompt)
+	for _, entry := range []struct {
+		words []string
+		index int
+	}{{[]string{"palette"}, 1}, {[]string{"auth", "redirect", "sign in"}, 2}, {[]string{"deploy"}, 3}, {[]string{"pull request", "pr #", "review pr"}, 4}, {[]string{"keyboard", "focus"}, 5}, {[]string{"documentation", "readme", "docs"}, 6}, {[]string{"composer", "spacing"}, 7}, {[]string{"sync", "reconnect", "replay"}, 8}, {[]string{"settings"}, 9}, {[]string{"workspace", "panel", "layout"}, 0}} {
+		for _, word := range entry.words {
+			if strings.Contains(lower, word) {
+				return entry.index
+			}
+		}
+	}
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(lower))
+	return int(h.Sum32() % 10)
+}

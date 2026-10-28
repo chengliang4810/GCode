@@ -1,0 +1,3048 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "files": [
+    {
+      "path": "app-icon.png",
+      "source": "dist/zeron.png",
+      "bytes": 1803905,
+      "sha256": "aba989a0bd17d13bb2067a610add39dd57211566c66072296c7dd62925c40191"
+    },
+    {
+      "path": "file-icons.json",
+      "source": "crates/ui/src/file-icons.json",
+      "bytes": 66523,
+      "sha256": "2d85b86cdafa42f2c44179bcf80f79c6920163c327bc7fd76ff421b6224f07e1"
+    },
+    {
+      "path": "LICENSE.zeron",
+      "source": "LICENSE",
+      "bytes": 1082,
+      "sha256": "2c46b021915b3fd3dafc4e87b5c0ad38afb7f4e95cdd9fab1fd9e71c1f7c2a83"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.zeron.md",
+      "source": "THIRD_PARTY_NOTICES.md",
+      "bytes": 27005,
+      "sha256": "8fe7b797106dbfa078beb16f9e5ffd416b7b21a18f0a77eef61db60dfa08fb99"
+    },
+    {
+      "path": "file-icons/LICENSE.symbols",
+      "source": "crates/ui/assets/file-icons/LICENSE.symbols",
+      "bytes": 1095,
+      "sha256": "1560fd1c2965e331018fd96d5b76eaa31877c1170dd58da31f14090a921d03d0"
+    },
+    {
+      "path": "file-icons/README.md",
+      "source": "crates/ui/assets/file-icons/README.md",
+      "bytes": 431,
+      "sha256": "52ca49d29801ce059a5db6427b0919ed726e663be1b60d281c766325b920a047"
+    },
+    {
+      "path": "file-icons/files/angular-component.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-component.svg",
+      "bytes": 406,
+      "sha256": "b2f9692692fc5d9b4ffd88a4acb48d2a737147bb78f60936db12b8c2988e39ac"
+    },
+    {
+      "path": "file-icons/files/angular-directive.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-directive.svg",
+      "bytes": 410,
+      "sha256": "2f5e2d9309b79b002650c1d15d446ca2774292f3cec0923bb110ad38f7fae23e"
+    },
+    {
+      "path": "file-icons/files/angular-guard.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-guard.svg",
+      "bytes": 410,
+      "sha256": "d35b38f2d0c95a59d1812cdbef4f45032fc33a794f8f7281c751e2a08b663c4b"
+    },
+    {
+      "path": "file-icons/files/angular-module.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-module.svg",
+      "bytes": 410,
+      "sha256": "ec51d03fb2803aba588853fbca059e53960b61b2a6787c2e44244bd4de778580"
+    },
+    {
+      "path": "file-icons/files/angular-pipe.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-pipe.svg",
+      "bytes": 410,
+      "sha256": "00ea68c0d8f2c0c014ffa0685e4e12f954bcaa529bf8856a67f8f2662a0c88f9"
+    },
+    {
+      "path": "file-icons/files/angular-service.svg",
+      "source": "crates/ui/assets/file-icons/files/angular-service.svg",
+      "bytes": 406,
+      "sha256": "3082a3d3bf3b89f56608650ba0c0e114e1ca9cca5ff9c4d8a2899096fd19e30e"
+    },
+    {
+      "path": "file-icons/files/angular.svg",
+      "source": "crates/ui/assets/file-icons/files/angular.svg",
+      "bytes": 406,
+      "sha256": "9a6df41908020585bebb8c5815be291573a6ee0b7fb494d96dcf029d58aab9b2"
+    },
+    {
+      "path": "file-icons/files/animate.svg",
+      "source": "crates/ui/assets/file-icons/files/animate.svg",
+      "bytes": 3219,
+      "sha256": "4afd3433e2c37027e6a56c7805374bcc4356801d7ba11e3512130a4c939ecd45"
+    },
+    {
+      "path": "file-icons/files/astro.svg",
+      "source": "crates/ui/assets/file-icons/files/astro.svg",
+      "bytes": 2425,
+      "sha256": "8d919368ebee1d05773a5f4c06cc12accb94fcced15467756b3b911455f0db7c"
+    },
+    {
+      "path": "file-icons/files/audio.svg",
+      "source": "crates/ui/assets/file-icons/files/audio.svg",
+      "bytes": 431,
+      "sha256": "3ee1c5b14399ec353cecd93e5a87dd34c52e481be93f022d49f635c2fc4316af"
+    },
+    {
+      "path": "file-icons/files/babel.svg",
+      "source": "crates/ui/assets/file-icons/files/babel.svg",
+      "bytes": 1895,
+      "sha256": "8cec948facb03e4fa3fc96b410410504deb37fddc17bfb36487500d8a4252999"
+    },
+    {
+      "path": "file-icons/files/biome.svg",
+      "source": "crates/ui/assets/file-icons/files/biome.svg",
+      "bytes": 390,
+      "sha256": "c82b59f8acae402c9febf744ecb415034512f181bd8ecb472ce4c81ed804a02a"
+    },
+    {
+      "path": "file-icons/files/brackets-blue.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-blue.svg",
+      "bytes": 1493,
+      "sha256": "8b382c2c83ff4722a816ee883a287f030162b3d2e56845e96a8ad27704a8ee58"
+    },
+    {
+      "path": "file-icons/files/brackets-gray.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-gray.svg",
+      "bytes": 1493,
+      "sha256": "46b5f007e737b883ea3ffe81605825cd3e73525d096966d0b591be7eae11c903"
+    },
+    {
+      "path": "file-icons/files/brackets-green.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-green.svg",
+      "bytes": 1493,
+      "sha256": "f62f55f57ab4be490002b3e1569ca079aa316a930a82eef93219c35bb4e82e23"
+    },
+    {
+      "path": "file-icons/files/brackets-orange.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-orange.svg",
+      "bytes": 1493,
+      "sha256": "cce0684aa3244f33769507c3dac8492b07954c8cb1cc169f37ebeb84411a4675"
+    },
+    {
+      "path": "file-icons/files/brackets-pink.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-pink.svg",
+      "bytes": 1493,
+      "sha256": "1909cb8473aa5cc8bcf4018007c8ec53c492dbfcecb929fc9a3d6ba613577abb"
+    },
+    {
+      "path": "file-icons/files/brackets-purple.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-purple.svg",
+      "bytes": 1493,
+      "sha256": "e0b3f82801a204e6c7351437043be26d197e03e68ae3e4562f6cf661e0fc90b9"
+    },
+    {
+      "path": "file-icons/files/brackets-red.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-red.svg",
+      "bytes": 1493,
+      "sha256": "ac0bb6314e5612f3128f1c5e8ff832a7ada940f110a2ccb3aac65e0606e708a3"
+    },
+    {
+      "path": "file-icons/files/brackets-sky.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-sky.svg",
+      "bytes": 1493,
+      "sha256": "f5e658014d879eebce70b6db646b1be5fc297e82fbd32bb49e40ce3ef6e2c10f"
+    },
+    {
+      "path": "file-icons/files/brackets-yellow.svg",
+      "source": "crates/ui/assets/file-icons/files/brackets-yellow.svg",
+      "bytes": 1493,
+      "sha256": "160a0dd11501b4b6582cd859337b21da8332f9f2ab56db1312ae19a32ac614ff"
+    },
+    {
+      "path": "file-icons/files/browserslist.svg",
+      "source": "crates/ui/assets/file-icons/files/browserslist.svg",
+      "bytes": 3209,
+      "sha256": "601ca86c5899158e17116d09950b8f0359df401231fd87c18f2639c168ac0cca"
+    },
+    {
+      "path": "file-icons/files/bruno.svg",
+      "source": "crates/ui/assets/file-icons/files/bruno.svg",
+      "bytes": 3922,
+      "sha256": "a13fcbc5dfa9096c7ce29128300ea4c814337b8d7599d4d16b4b067b44946746"
+    },
+    {
+      "path": "file-icons/files/bun.svg",
+      "source": "crates/ui/assets/file-icons/files/bun.svg",
+      "bytes": 9114,
+      "sha256": "aea4db52fcbbb4bb6ab52c99fcf26b96245b3488d31df0a41c80ab47315ac7a3"
+    },
+    {
+      "path": "file-icons/files/c.svg",
+      "source": "crates/ui/assets/file-icons/files/c.svg",
+      "bytes": 1495,
+      "sha256": "10d00b8ba6044640f2d3406ab970e0dff91d0cf867d8ce61b9b3ba4b1d0d71be"
+    },
+    {
+      "path": "file-icons/files/caddy.svg",
+      "source": "crates/ui/assets/file-icons/files/caddy.svg",
+      "bytes": 4013,
+      "sha256": "d83372de965a93b36e27a1676f24d119e1f309c9f9565695f138957db4171792"
+    },
+    {
+      "path": "file-icons/files/capacitor.svg",
+      "source": "crates/ui/assets/file-icons/files/capacitor.svg",
+      "bytes": 445,
+      "sha256": "7f6bfb7cf9a802209ef18345ce33202010fbc1ee2533f184d39008f0f050ac3e"
+    },
+    {
+      "path": "file-icons/files/clapper.svg",
+      "source": "crates/ui/assets/file-icons/files/clapper.svg",
+      "bytes": 485,
+      "sha256": "ff6b879b061110f8eb947b3cb72d1bb879b088d6dc6f5b8ca90704bf17ecfeb8"
+    },
+    {
+      "path": "file-icons/files/claude.svg",
+      "source": "crates/ui/assets/file-icons/files/claude.svg",
+      "bytes": 9520,
+      "sha256": "d01d2d0510e51a70ff2b8d73957fae83e1381a723456ae5d8c8c1d2c07b6b1e4"
+    },
+    {
+      "path": "file-icons/files/clojure.svg",
+      "source": "crates/ui/assets/file-icons/files/clojure.svg",
+      "bytes": 2646,
+      "sha256": "3caed2d6818a797bf8a3fa2500a95422336efa752067a6e44e1ca3fcdedf2f08"
+    },
+    {
+      "path": "file-icons/files/cloudflare-workers.svg",
+      "source": "crates/ui/assets/file-icons/files/cloudflare-workers.svg",
+      "bytes": 1521,
+      "sha256": "8199561f3367c32b500a9ffe24677a72093e3197a80b8d75e3206f65a655a0dd"
+    },
+    {
+      "path": "file-icons/files/cmake.svg",
+      "source": "crates/ui/assets/file-icons/files/cmake.svg",
+      "bytes": 361,
+      "sha256": "ba3dc70a0275d64fc80f60a1031e5df6a6a3a8d16ebf6a0cb1e2571560cce055"
+    },
+    {
+      "path": "file-icons/files/code-blue.svg",
+      "source": "crates/ui/assets/file-icons/files/code-blue.svg",
+      "bytes": 507,
+      "sha256": "683731b60c46a384011cc10aa1c53da6f62c7e16761ca6be013cbc3135991d14"
+    },
+    {
+      "path": "file-icons/files/code-gray.svg",
+      "source": "crates/ui/assets/file-icons/files/code-gray.svg",
+      "bytes": 507,
+      "sha256": "dc936cd3493cdf38ca5cbb6ed2e8b1a922f76f487c357f9127c3a8732f90e2fe"
+    },
+    {
+      "path": "file-icons/files/code-green.svg",
+      "source": "crates/ui/assets/file-icons/files/code-green.svg",
+      "bytes": 507,
+      "sha256": "728b9a6149ea097a4ed7a0905411e5cf0039e831c053628ba99961e3c34970fa"
+    },
+    {
+      "path": "file-icons/files/code-orange.svg",
+      "source": "crates/ui/assets/file-icons/files/code-orange.svg",
+      "bytes": 501,
+      "sha256": "a1de13fe83b0f3d7f97b88f96658d9bb97dc0308b038b55094a687d08ec1affe"
+    },
+    {
+      "path": "file-icons/files/code-pink.svg",
+      "source": "crates/ui/assets/file-icons/files/code-pink.svg",
+      "bytes": 507,
+      "sha256": "cf1b5ed25cf68a40d392abcf44855563022b3fd545efc90de1b4dd5f8e36f4ca"
+    },
+    {
+      "path": "file-icons/files/code-purple.svg",
+      "source": "crates/ui/assets/file-icons/files/code-purple.svg",
+      "bytes": 507,
+      "sha256": "5d39acded8371d3baef47968b27f61377d071f6ee03d70757f558d7a3e3df945"
+    },
+    {
+      "path": "file-icons/files/code-red.svg",
+      "source": "crates/ui/assets/file-icons/files/code-red.svg",
+      "bytes": 501,
+      "sha256": "9165d3c7e121936513cc4ff9fef703dc26934b5ea7ee7ed2e65d4873b03f1989"
+    },
+    {
+      "path": "file-icons/files/code-sky.svg",
+      "source": "crates/ui/assets/file-icons/files/code-sky.svg",
+      "bytes": 507,
+      "sha256": "3596d4f06e593defdf5051e0e83cdb7951b81f294d122f511c4c05d9e2510abb"
+    },
+    {
+      "path": "file-icons/files/code-yellow.svg",
+      "source": "crates/ui/assets/file-icons/files/code-yellow.svg",
+      "bytes": 501,
+      "sha256": "aee0ec19dce87ae120a723dd5c95c296d0c39b7d50ed091a3f69c0a06f46de1f"
+    },
+    {
+      "path": "file-icons/files/coffeescript.svg",
+      "source": "crates/ui/assets/file-icons/files/coffeescript.svg",
+      "bytes": 791,
+      "sha256": "0f0b96159d34fcc4ce4a2fc8d47d6a0a39c922f4d8571f5de126053150ffa497"
+    },
+    {
+      "path": "file-icons/files/coldfusion.svg",
+      "source": "crates/ui/assets/file-icons/files/coldfusion.svg",
+      "bytes": 2062,
+      "sha256": "24dde5af173c2ca6e4e81f22de237c0932d0756e0281b13b9dab7d59b2cd12af"
+    },
+    {
+      "path": "file-icons/files/compressed.svg",
+      "source": "crates/ui/assets/file-icons/files/compressed.svg",
+      "bytes": 1006,
+      "sha256": "532b6e1bb3a7446323a4b44468061f93de1b862ec7000de75fd5a980afba93a9"
+    },
+    {
+      "path": "file-icons/files/contentlayer.svg",
+      "source": "crates/ui/assets/file-icons/files/contentlayer.svg",
+      "bytes": 2711,
+      "sha256": "401ec56da04fbf36dc24c7ae7af20b0260455a36eb431029c5109e7751bee4b8"
+    },
+    {
+      "path": "file-icons/files/cplus.svg",
+      "source": "crates/ui/assets/file-icons/files/cplus.svg",
+      "bytes": 1920,
+      "sha256": "39b286a2f91e3d8677f5f4cfeb1b3f27d5cf5a5a4545b08227c80982de45573b"
+    },
+    {
+      "path": "file-icons/files/crystal.svg",
+      "source": "crates/ui/assets/file-icons/files/crystal.svg",
+      "bytes": 303,
+      "sha256": "50e7b6f41e34fe881a556510bfc960ac476b08e636893d7993ccf754c2d0f6fc"
+    },
+    {
+      "path": "file-icons/files/csharp.svg",
+      "source": "crates/ui/assets/file-icons/files/csharp.svg",
+      "bytes": 1775,
+      "sha256": "754d4a20577f8bce1d8c9ed65b87906dd91ca7f2231d3abe6388018233124838"
+    },
+    {
+      "path": "file-icons/files/csv.svg",
+      "source": "crates/ui/assets/file-icons/files/csv.svg",
+      "bytes": 6321,
+      "sha256": "fea34aefa6a9a2f9de5e9692ce7eda110addb396b931454c8c86d2e9acc6568d"
+    },
+    {
+      "path": "file-icons/files/cucumber.svg",
+      "source": "crates/ui/assets/file-icons/files/cucumber.svg",
+      "bytes": 4135,
+      "sha256": "9d7314a604b7c81d2e435a6ad87a3b590fbc5e7f8911f2fb2e718ce296b7f58d"
+    },
+    {
+      "path": "file-icons/files/cuda.svg",
+      "source": "crates/ui/assets/file-icons/files/cuda.svg",
+      "bytes": 1400,
+      "sha256": "5e6a7be30f17b472ee4fed0cb6f6551834f54c2953d3e4b0c74e2f84ecd52160"
+    },
+    {
+      "path": "file-icons/files/cursor.svg",
+      "source": "crates/ui/assets/file-icons/files/cursor.svg",
+      "bytes": 797,
+      "sha256": "08395ba6a1b43d6721c250f4f0dbfb80ad3935fd37bf9f189092c21a7007a150"
+    },
+    {
+      "path": "file-icons/files/cypress.svg",
+      "source": "crates/ui/assets/file-icons/files/cypress.svg",
+      "bytes": 1635,
+      "sha256": "55df1fdf5ce7732384ee349c811c4a3f351b6c57738bb08353513a254f9df63b"
+    },
+    {
+      "path": "file-icons/files/dart.svg",
+      "source": "crates/ui/assets/file-icons/files/dart.svg",
+      "bytes": 847,
+      "sha256": "1a87240a979489575f9384566e23ce0df271faf491a119d7434579ac9e40b89e"
+    },
+    {
+      "path": "file-icons/files/database.svg",
+      "source": "crates/ui/assets/file-icons/files/database.svg",
+      "bytes": 4869,
+      "sha256": "345b6b72d99b95d0ecb93fda4e12ce8c2745ef0924a51435f51b8557db7ab83d"
+    },
+    {
+      "path": "file-icons/files/deno.svg",
+      "source": "crates/ui/assets/file-icons/files/deno.svg",
+      "bytes": 2030,
+      "sha256": "af6121e8e488f9a603cdfebc92b7118f4d370f4249a65c3374bba769d1e1df92"
+    },
+    {
+      "path": "file-icons/files/docker-green.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-green.svg",
+      "bytes": 5285,
+      "sha256": "cd70062abe30b4441f1e48b8698ef9731a10bb4006a2e604297a8ef7ade77d20"
+    },
+    {
+      "path": "file-icons/files/docker-orange.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-orange.svg",
+      "bytes": 5285,
+      "sha256": "12bcde3775307448001c88423b30557e9e6100f880f266888c34468a4658cf25"
+    },
+    {
+      "path": "file-icons/files/docker-pink.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-pink.svg",
+      "bytes": 5284,
+      "sha256": "c3e32ed3fbaaeacb7c48914ae1be92dc09b08c4a0c14f21408841f63b3d3fec1"
+    },
+    {
+      "path": "file-icons/files/docker-purple.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-purple.svg",
+      "bytes": 5285,
+      "sha256": "d91b5ac5d349a0464dcf57ba19c511f5c483041940fc78370fce106dc8b03fd6"
+    },
+    {
+      "path": "file-icons/files/docker-red.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-red.svg",
+      "bytes": 5283,
+      "sha256": "306d61d48814ea9fa5c32046c422a632d9599845a65ffe5112b1d892fd233c79"
+    },
+    {
+      "path": "file-icons/files/docker-yellow.svg",
+      "source": "crates/ui/assets/file-icons/files/docker-yellow.svg",
+      "bytes": 5286,
+      "sha256": "b0e7e68a1baa70adce4afdca101b67ec67fc030beee9c81213304d87b748924b"
+    },
+    {
+      "path": "file-icons/files/docker.svg",
+      "source": "crates/ui/assets/file-icons/files/docker.svg",
+      "bytes": 3574,
+      "sha256": "ef65b693118557ac8573f059e1eb1a8038bd3e33a0e75c18e8c0323c5faeeb71"
+    },
+    {
+      "path": "file-icons/files/document.svg",
+      "source": "crates/ui/assets/file-icons/files/document.svg",
+      "bytes": 441,
+      "sha256": "358d08781a1678b8b29b2c03b742347a70858a64ae0476aaa52dc92b8895c9ac"
+    },
+    {
+      "path": "file-icons/files/docusaurus.svg",
+      "source": "crates/ui/assets/file-icons/files/docusaurus.svg",
+      "bytes": 19677,
+      "sha256": "2848ac760c972accfdc2e7dbe095a2f7952df6574b49c83a6f0dc0fd0e4c8390"
+    },
+    {
+      "path": "file-icons/files/drawio.svg",
+      "source": "crates/ui/assets/file-icons/files/drawio.svg",
+      "bytes": 546,
+      "sha256": "18f37116cf6ccf3a3118ef95bf9f76e2c706803a9d5827ca4706f1a63e39550f"
+    },
+    {
+      "path": "file-icons/files/drizzle.svg",
+      "source": "crates/ui/assets/file-icons/files/drizzle.svg",
+      "bytes": 1172,
+      "sha256": "d708c425c50ff6830e5d27284705c807bebb825bd187fec766594c919a88e2cc"
+    },
+    {
+      "path": "file-icons/files/dts.svg",
+      "source": "crates/ui/assets/file-icons/files/dts.svg",
+      "bytes": 2904,
+      "sha256": "aeafa66d516c2b226888f1b7245f014880fb5201f21246d7be21d371971dfb53"
+    },
+    {
+      "path": "file-icons/files/dune.svg",
+      "source": "crates/ui/assets/file-icons/files/dune.svg",
+      "bytes": 1010,
+      "sha256": "d465f985a344d2545f5f5f0249e9bfec84acba6ad4cd96108c18faf5d9377cd5"
+    },
+    {
+      "path": "file-icons/files/earthfile.svg",
+      "source": "crates/ui/assets/file-icons/files/earthfile.svg",
+      "bytes": 3364,
+      "sha256": "fefa3ca37935646d53394ba1c4047af2fa4e28e61bb389779c351921b260bfa9"
+    },
+    {
+      "path": "file-icons/files/editorconfig.svg",
+      "source": "crates/ui/assets/file-icons/files/editorconfig.svg",
+      "bytes": 8966,
+      "sha256": "2a71bea8c0717a716087f092d7fdafbbf3bca8de43d7a6b45576c50870ce66f6"
+    },
+    {
+      "path": "file-icons/files/elixir.svg",
+      "source": "crates/ui/assets/file-icons/files/elixir.svg",
+      "bytes": 782,
+      "sha256": "bdd5afc0de3caa66c9b74dad7655591929c77566357cc4ebe17a1342344eacef"
+    },
+    {
+      "path": "file-icons/files/erlang.svg",
+      "source": "crates/ui/assets/file-icons/files/erlang.svg",
+      "bytes": 842,
+      "sha256": "fa4d4a551f2b02780bb4700e58aa480a2e00833090e7cf3633759fc04caf01a4"
+    },
+    {
+      "path": "file-icons/files/eslint.svg",
+      "source": "crates/ui/assets/file-icons/files/eslint.svg",
+      "bytes": 1527,
+      "sha256": "3f83a98be0c9a66df3f34096d8b3d1aa84d0433fcdd6f91f5c5fe7c323a0a71a"
+    },
+    {
+      "path": "file-icons/files/exe.svg",
+      "source": "crates/ui/assets/file-icons/files/exe.svg",
+      "bytes": 1332,
+      "sha256": "1b8cce970678e60739cba2a384c51079f6867839e5d509e1f54103f81dfa0f3f"
+    },
+    {
+      "path": "file-icons/files/expressive-code.svg",
+      "source": "crates/ui/assets/file-icons/files/expressive-code.svg",
+      "bytes": 48247,
+      "sha256": "a036b11e9df67677759537f2e0a0222ef40201da75aca035d9b3534d55123f3b"
+    },
+    {
+      "path": "file-icons/files/firebase.svg",
+      "source": "crates/ui/assets/file-icons/files/firebase.svg",
+      "bytes": 1375,
+      "sha256": "ded68903412e3d40d4b9fe057cabb3f4a1533640ec3178f7dd7d936314622d97"
+    },
+    {
+      "path": "file-icons/files/font.svg",
+      "source": "crates/ui/assets/file-icons/files/font.svg",
+      "bytes": 3725,
+      "sha256": "df675ae550218405e1a413d8f1b0e51069a7b71ccf957877588e9d6f372e1d5f"
+    },
+    {
+      "path": "file-icons/files/fortran.svg",
+      "source": "crates/ui/assets/file-icons/files/fortran.svg",
+      "bytes": 2629,
+      "sha256": "4b5d971f2cfa90168f46910429471c4c285d643d3ce885c54b5fa6369b04a057"
+    },
+    {
+      "path": "file-icons/files/fresh.svg",
+      "source": "crates/ui/assets/file-icons/files/fresh.svg",
+      "bytes": 3040,
+      "sha256": "6526a20d7fc00030c33ce5edcc46b24763c567e3b46119125265be51c6066c82"
+    },
+    {
+      "path": "file-icons/files/fsharp.svg",
+      "source": "crates/ui/assets/file-icons/files/fsharp.svg",
+      "bytes": 657,
+      "sha256": "85786b3e7ae45e0dbfe1c10b8dae5c8378dc79a3c65e2e10ed79578acf5ab34b"
+    },
+    {
+      "path": "file-icons/files/func.svg",
+      "source": "crates/ui/assets/file-icons/files/func.svg",
+      "bytes": 803,
+      "sha256": "be84302dc1ad640a12450ec73520947c0a92c30ce72decdf0ac9691f5c0ecddc"
+    },
+    {
+      "path": "file-icons/files/gatsby.svg",
+      "source": "crates/ui/assets/file-icons/files/gatsby.svg",
+      "bytes": 835,
+      "sha256": "bc7fc0a2781af17881d21403a30eb84d70821ae601ec7ee7216cdc4c680add5f"
+    },
+    {
+      "path": "file-icons/files/gdextension.svg",
+      "source": "crates/ui/assets/file-icons/files/gdextension.svg",
+      "bytes": 1369,
+      "sha256": "9f903308098125a34c148df5529e9083b3710d52158edb3cbe2f11545baf9eb8"
+    },
+    {
+      "path": "file-icons/files/gdignore.svg",
+      "source": "crates/ui/assets/file-icons/files/gdignore.svg",
+      "bytes": 1369,
+      "sha256": "275b2e13d376215c7049346773876c2aa735c2a9f20eb6cd12fdb09555bedf13"
+    },
+    {
+      "path": "file-icons/files/gdproject.svg",
+      "source": "crates/ui/assets/file-icons/files/gdproject.svg",
+      "bytes": 1369,
+      "sha256": "5affa880fa09ee2a23267608c14c4f16beeeb38a59e157e5fafcbfd3256c3c37"
+    },
+    {
+      "path": "file-icons/files/gdscript.svg",
+      "source": "crates/ui/assets/file-icons/files/gdscript.svg",
+      "bytes": 1369,
+      "sha256": "5e7deba72c0be86abfe06d3fd28d8fa91d4cfd76812daa1c92dd77e4c938df9d"
+    },
+    {
+      "path": "file-icons/files/gdshader.svg",
+      "source": "crates/ui/assets/file-icons/files/gdshader.svg",
+      "bytes": 1369,
+      "sha256": "952435d8bd8ca692cbc4554aec5fc59ed60b6bfb3bdd38d60c938dfa125ffe62"
+    },
+    {
+      "path": "file-icons/files/gear.svg",
+      "source": "crates/ui/assets/file-icons/files/gear.svg",
+      "bytes": 1171,
+      "sha256": "cf46755e9026c9ec0d0762b037fdcb146d9dfe21d32b3ceaa54495ce6ed1c559"
+    },
+    {
+      "path": "file-icons/files/gif.svg",
+      "source": "crates/ui/assets/file-icons/files/gif.svg",
+      "bytes": 1295,
+      "sha256": "cd45fa23d5201308b03ceff33bbe0c15fc72580c2ce69d762b292b46d6da7fc1"
+    },
+    {
+      "path": "file-icons/files/git.svg",
+      "source": "crates/ui/assets/file-icons/files/git.svg",
+      "bytes": 1122,
+      "sha256": "de24738e255b360d9dfff8bbf5e4ca40f0cb8eaf13ab827c18c875f663785726"
+    },
+    {
+      "path": "file-icons/files/github.svg",
+      "source": "crates/ui/assets/file-icons/files/github.svg",
+      "bytes": 1410,
+      "sha256": "cecb2b94980d2e1baf4ca40f004e5dc5d4cfbe634ac6e2b1bc1097ab1932bbe3"
+    },
+    {
+      "path": "file-icons/files/gitlab.svg",
+      "source": "crates/ui/assets/file-icons/files/gitlab.svg",
+      "bytes": 1939,
+      "sha256": "6664c349f4a53ef7b3add87dac630ae75ba7713f1ede07f885080772e4e4aa26"
+    },
+    {
+      "path": "file-icons/files/gleam.svg",
+      "source": "crates/ui/assets/file-icons/files/gleam.svg",
+      "bytes": 5304,
+      "sha256": "66ec15d9a9e8763d71d0b0145bd7aa8d109fa9c7fab297d66aed437d6e79e5c6"
+    },
+    {
+      "path": "file-icons/files/globe.svg",
+      "source": "crates/ui/assets/file-icons/files/globe.svg",
+      "bytes": 673,
+      "sha256": "56403e648a5b07ea64bde760935378cee85a0490c305fbcef5591fc0686f7989"
+    },
+    {
+      "path": "file-icons/files/go-green.svg",
+      "source": "crates/ui/assets/file-icons/files/go-green.svg",
+      "bytes": 3212,
+      "sha256": "f845c95af3b318d6f0a16d7e56cb6bb438cd2d9cd7fc870993bd6f159a07005a"
+    },
+    {
+      "path": "file-icons/files/go-orange.svg",
+      "source": "crates/ui/assets/file-icons/files/go-orange.svg",
+      "bytes": 3212,
+      "sha256": "ce6f5c0db2116b0526e72fe669d083f766e6b33e95fab841b78d4af1706e4621"
+    },
+    {
+      "path": "file-icons/files/go-pink.svg",
+      "source": "crates/ui/assets/file-icons/files/go-pink.svg",
+      "bytes": 3212,
+      "sha256": "deedfdbec0db84a4296c3302f418477635ff78a959f6c4adff51b6a155a90334"
+    },
+    {
+      "path": "file-icons/files/go-purple.svg",
+      "source": "crates/ui/assets/file-icons/files/go-purple.svg",
+      "bytes": 3212,
+      "sha256": "9290e5f677bf6eda2be28031abcbbe3214a0270083b7a53410f52338a50e34f0"
+    },
+    {
+      "path": "file-icons/files/go-red.svg",
+      "source": "crates/ui/assets/file-icons/files/go-red.svg",
+      "bytes": 3212,
+      "sha256": "8e7b68136af3f96b588e6f2fbbbe118558b4f010dcef38bcc3fb1ab128629be0"
+    },
+    {
+      "path": "file-icons/files/go-yellow.svg",
+      "source": "crates/ui/assets/file-icons/files/go-yellow.svg",
+      "bytes": 3212,
+      "sha256": "6ae6f6fa6bbf68f6f952aec243e49c73b80a784605cbbe6aac777ad8e6f0f8f6"
+    },
+    {
+      "path": "file-icons/files/go.svg",
+      "source": "crates/ui/assets/file-icons/files/go.svg",
+      "bytes": 3237,
+      "sha256": "bd08aaa6ca2cef111c61ab6b7bd25cf592931c3bbe2398ad87f72fec396be6d2"
+    },
+    {
+      "path": "file-icons/files/gradle.svg",
+      "source": "crates/ui/assets/file-icons/files/gradle.svg",
+      "bytes": 3218,
+      "sha256": "6ad4e90170630b2762d9c444cd5d076ed10c722f49b0d667f6fc671c728378b4"
+    },
+    {
+      "path": "file-icons/files/graphql.svg",
+      "source": "crates/ui/assets/file-icons/files/graphql.svg",
+      "bytes": 2105,
+      "sha256": "e5a85e1c3b769114fa8861279644edb6619a869c1bf3841e2183f0c6c657a868"
+    },
+    {
+      "path": "file-icons/files/gulp.svg",
+      "source": "crates/ui/assets/file-icons/files/gulp.svg",
+      "bytes": 546,
+      "sha256": "5633cb8e8713bd56b719b10ab56e832a0e2f8a3d31cf58d618d061b25f3080fb"
+    },
+    {
+      "path": "file-icons/files/h.svg",
+      "source": "crates/ui/assets/file-icons/files/h.svg",
+      "bytes": 697,
+      "sha256": "c85b03f417469106440b692904893dc9aca511b572a04250735e34e2fde5f334"
+    },
+    {
+      "path": "file-icons/files/haml.svg",
+      "source": "crates/ui/assets/file-icons/files/haml.svg",
+      "bytes": 2902,
+      "sha256": "c78bec4c2eb3d5e558c396635530255af94fd206a8836e5f8a12b9c6a1ba8561"
+    },
+    {
+      "path": "file-icons/files/haskell.svg",
+      "source": "crates/ui/assets/file-icons/files/haskell.svg",
+      "bytes": 492,
+      "sha256": "0d9f1b8c6fcb5df7bb98defbf431c421a355f1c53fc444de1fa2f32407fe7a53"
+    },
+    {
+      "path": "file-icons/files/http.svg",
+      "source": "crates/ui/assets/file-icons/files/http.svg",
+      "bytes": 1945,
+      "sha256": "83e6b0b43e5e8e9724308f6e1e382adf62e9c5aaab32fd95932fdced8b1dd146"
+    },
+    {
+      "path": "file-icons/files/hugo.svg",
+      "source": "crates/ui/assets/file-icons/files/hugo.svg",
+      "bytes": 62152,
+      "sha256": "868b4abd5b7564ab6ad356ebba17ed6c1eb82895ef4ba892d0a3e062d1e019ef"
+    },
+    {
+      "path": "file-icons/files/i18n.svg",
+      "source": "crates/ui/assets/file-icons/files/i18n.svg",
+      "bytes": 677,
+      "sha256": "a19178601f7b8ebc0626bbcdd20ce0146b200f25235539c3d84c3fe36fa3d11b"
+    },
+    {
+      "path": "file-icons/files/ignore.svg",
+      "source": "crates/ui/assets/file-icons/files/ignore.svg",
+      "bytes": 1040,
+      "sha256": "cd824de078233ed798aa0be8c0533d66ea866776a405a36e04db95914b1968d2"
+    },
+    {
+      "path": "file-icons/files/illustrator.svg",
+      "source": "crates/ui/assets/file-icons/files/illustrator.svg",
+      "bytes": 852,
+      "sha256": "1781334240bb396d9382a681fd5d2aa6907a7394626e631dbd20b58175881528"
+    },
+    {
+      "path": "file-icons/files/image.svg",
+      "source": "crates/ui/assets/file-icons/files/image.svg",
+      "bytes": 408,
+      "sha256": "494e31455f3bea728016f96bcbe96501cbb26446751800fed1d49ea013198f22"
+    },
+    {
+      "path": "file-icons/files/ionic.svg",
+      "source": "crates/ui/assets/file-icons/files/ionic.svg",
+      "bytes": 1219,
+      "sha256": "d56fbfd272ab5563947bfe125434ad958e6c4bc000fed05b7e29e9fb68edfa55"
+    },
+    {
+      "path": "file-icons/files/java.svg",
+      "source": "crates/ui/assets/file-icons/files/java.svg",
+      "bytes": 845,
+      "sha256": "b57140fdf990e62f83173ba2f5a55133b28474bf46fcda0b65bdb68a24b6c590"
+    },
+    {
+      "path": "file-icons/files/jenkins.svg",
+      "source": "crates/ui/assets/file-icons/files/jenkins.svg",
+      "bytes": 22408,
+      "sha256": "3f71fc7189851d3a3ec95b97cf1addbd3679d65ec40f5d7580c753efc95a4828"
+    },
+    {
+      "path": "file-icons/files/jest.svg",
+      "source": "crates/ui/assets/file-icons/files/jest.svg",
+      "bytes": 3920,
+      "sha256": "d416d546ceaf551461d63a5ba5101a98ad178e92882e750abd6950b5d55a6113"
+    },
+    {
+      "path": "file-icons/files/js-test.svg",
+      "source": "crates/ui/assets/file-icons/files/js-test.svg",
+      "bytes": 2521,
+      "sha256": "2cac0ad0a4033b7032b9b81a4939209c639b59aa85315904a4f005df3f3cabea"
+    },
+    {
+      "path": "file-icons/files/js.svg",
+      "source": "crates/ui/assets/file-icons/files/js.svg",
+      "bytes": 2521,
+      "sha256": "50087cde6c0c949ef3fb86f51b4e8b962564231bdb95f5e08c7525274bb59b33"
+    },
+    {
+      "path": "file-icons/files/julia-markdown.svg",
+      "source": "crates/ui/assets/file-icons/files/julia-markdown.svg",
+      "bytes": 726,
+      "sha256": "1763bdc8ec9fadb7c2da780d5a7659ec5c20e72ba8c504d55b773e415e692940"
+    },
+    {
+      "path": "file-icons/files/julia.svg",
+      "source": "crates/ui/assets/file-icons/files/julia.svg",
+      "bytes": 794,
+      "sha256": "81253b32149894248d9ad9b68e91d64f0a391eb99c3bb439bde261fd9d8add90"
+    },
+    {
+      "path": "file-icons/files/keystatic.svg",
+      "source": "crates/ui/assets/file-icons/files/keystatic.svg",
+      "bytes": 479,
+      "sha256": "8fded1d5ced096199a337525ee7900d2ec06eab3292f122b8e8756db94fbbeea"
+    },
+    {
+      "path": "file-icons/files/knip.svg",
+      "source": "crates/ui/assets/file-icons/files/knip.svg",
+      "bytes": 3195,
+      "sha256": "5c839853438331b4a67d8d629927f1e44e089d36b89ec476a4e9abb7ba30c0a1"
+    },
+    {
+      "path": "file-icons/files/kotlin.svg",
+      "source": "crates/ui/assets/file-icons/files/kotlin.svg",
+      "bytes": 237,
+      "sha256": "3fa9c764dc33e67a3f340bd36c7b428ca6252e5e35bec19ad51cbe72d915447e"
+    },
+    {
+      "path": "file-icons/files/kubb.svg",
+      "source": "crates/ui/assets/file-icons/files/kubb.svg",
+      "bytes": 92739,
+      "sha256": "c6c1b5fe9d280e6da78802ed0f5e77f27c4bdd89b93d0067c59394716cdde85d"
+    },
+    {
+      "path": "file-icons/files/laravel.svg",
+      "source": "crates/ui/assets/file-icons/files/laravel.svg",
+      "bytes": 3159,
+      "sha256": "5ac055487082d2cd5016ce42321352caffbf147b2ad96a116d1045a3f56ba2b9"
+    },
+    {
+      "path": "file-icons/files/license.svg",
+      "source": "crates/ui/assets/file-icons/files/license.svg",
+      "bytes": 812,
+      "sha256": "d5ac40f4b07677c2f0740db155080a02510cd29a46950258ee1900b51342dad6"
+    },
+    {
+      "path": "file-icons/files/link.svg",
+      "source": "crates/ui/assets/file-icons/files/link.svg",
+      "bytes": 1054,
+      "sha256": "7eb277ea4722cffc8510b2ba4c808ddba21ea0f4a74964000c6e2d6e8edfddd1"
+    },
+    {
+      "path": "file-icons/files/liquid.svg",
+      "source": "crates/ui/assets/file-icons/files/liquid.svg",
+      "bytes": 327,
+      "sha256": "b987dfda5041468bc4adc801f919425b1a5205a2f1f1385e5d4af048fdfc25d3"
+    },
+    {
+      "path": "file-icons/files/lock.svg",
+      "source": "crates/ui/assets/file-icons/files/lock.svg",
+      "bytes": 1154,
+      "sha256": "1cc87436dbd816e843703a7c1fef1b22047faa17de703ebf730af8ad8b93a47a"
+    },
+    {
+      "path": "file-icons/files/lua.svg",
+      "source": "crates/ui/assets/file-icons/files/lua.svg",
+      "bytes": 784,
+      "sha256": "a4469fbbc295601ae85e8f49ad0cc5ae16d0db290ad45706b162a0bdd160941b"
+    },
+    {
+      "path": "file-icons/files/luau.svg",
+      "source": "crates/ui/assets/file-icons/files/luau.svg",
+      "bytes": 773,
+      "sha256": "7a64fb41b05a2b5850b35c91ec6b91c7ade43f018547b2dbf7d86d820d21ebdf"
+    },
+    {
+      "path": "file-icons/files/lunaria.svg",
+      "source": "crates/ui/assets/file-icons/files/lunaria.svg",
+      "bytes": 5387,
+      "sha256": "71fb038167b475adb4ad72b37ee7c699ecedd7465d6ee6a93711904b15801ebc"
+    },
+    {
+      "path": "file-icons/files/markdoc.svg",
+      "source": "crates/ui/assets/file-icons/files/markdoc.svg",
+      "bytes": 852,
+      "sha256": "c235fe96035adeadbc9b0f2aa63151a5eee63a1100ff7bc424ed4426d1aed561"
+    },
+    {
+      "path": "file-icons/files/markdown.svg",
+      "source": "crates/ui/assets/file-icons/files/markdown.svg",
+      "bytes": 333,
+      "sha256": "5dcce7aad153b49c843c48bc49d00e439770485f5f703b11309d9cb282474c8f"
+    },
+    {
+      "path": "file-icons/files/maven.svg",
+      "source": "crates/ui/assets/file-icons/files/maven.svg",
+      "bytes": 2934,
+      "sha256": "4ec3eed14886476ed7882bf89c720082a95427d96bbe2c7d894012ca7566c2bc"
+    },
+    {
+      "path": "file-icons/files/mdx.svg",
+      "source": "crates/ui/assets/file-icons/files/mdx.svg",
+      "bytes": 366,
+      "sha256": "3fc6d75c9bdb85a79459fc2b3ec85db43bf4e47203f9583bf5c53379f0b94d33"
+    },
+    {
+      "path": "file-icons/files/minecraft.svg",
+      "source": "crates/ui/assets/file-icons/files/minecraft.svg",
+      "bytes": 564,
+      "sha256": "6c49505f6506d04697c4c88658b67cdd49d843d76a0fcaad2d2a83093952cd45"
+    },
+    {
+      "path": "file-icons/files/mongo.svg",
+      "source": "crates/ui/assets/file-icons/files/mongo.svg",
+      "bytes": 718,
+      "sha256": "f0ff81cb2d6e703eda16c3dd60c14bb4a4cd60bd67d30ab458e88e583d00003d"
+    },
+    {
+      "path": "file-icons/files/nest-controller.svg",
+      "source": "crates/ui/assets/file-icons/files/nest-controller.svg",
+      "bytes": 12526,
+      "sha256": "f26ebc6ee76d573784343a8dfdcdfa248799552924d9f6d42e79891f06c0f5e6"
+    },
+    {
+      "path": "file-icons/files/nest-decorator.svg",
+      "source": "crates/ui/assets/file-icons/files/nest-decorator.svg",
+      "bytes": 12526,
+      "sha256": "06effc602f49fcb27df733800f4ab54a34a4b4adfd3cf6f4e64dbbd316c052cd"
+    },
+    {
+      "path": "file-icons/files/nest-guard.svg",
+      "source": "crates/ui/assets/file-icons/files/nest-guard.svg",
+      "bytes": 12526,
+      "sha256": "db98c3fb9f8ddbdde9f75c81d685aa0d9af1f5a7a33605f91958278ce1d2ea38"
+    },
+    {
+      "path": "file-icons/files/nest-middleware.svg",
+      "source": "crates/ui/assets/file-icons/files/nest-middleware.svg",
+      "bytes": 12526,
+      "sha256": "a1dfab8057d64b7f74ea3b44d77d4169a4f8f4cd8d4ddc97001e639d9f62410b"
+    },
+    {
+      "path": "file-icons/files/nest-service.svg",
+      "source": "crates/ui/assets/file-icons/files/nest-service.svg",
+      "bytes": 12526,
+      "sha256": "c369a47cce372897d951b1c5b3c3a81e9ceb6237733dbdf84c9b1b3f0ba6f196"
+    },
+    {
+      "path": "file-icons/files/nest.svg",
+      "source": "crates/ui/assets/file-icons/files/nest.svg",
+      "bytes": 12526,
+      "sha256": "3072cbe269815362d7b19fc2f4134bf9a9da34bddc7542f189378d4f2f05751e"
+    },
+    {
+      "path": "file-icons/files/netlify.svg",
+      "source": "crates/ui/assets/file-icons/files/netlify.svg",
+      "bytes": 1484,
+      "sha256": "3c7739297d00982e3121ae15c6d10cad16d2fa312380e3312681f063668f0731"
+    },
+    {
+      "path": "file-icons/files/next.svg",
+      "source": "crates/ui/assets/file-icons/files/next.svg",
+      "bytes": 745,
+      "sha256": "23d68497e1ec8a1b92b79792b33d62bacef351998d32564f70c3ebbeffe2e4c1"
+    },
+    {
+      "path": "file-icons/files/nim.svg",
+      "source": "crates/ui/assets/file-icons/files/nim.svg",
+      "bytes": 1210,
+      "sha256": "04df63af916b0739f22caa2753b46b5bc4ce57ae26efe6107bf39907800dcce0"
+    },
+    {
+      "path": "file-icons/files/nix.svg",
+      "source": "crates/ui/assets/file-icons/files/nix.svg",
+      "bytes": 1064,
+      "sha256": "794ff1c7b3f4e8ef014551b24ed4de4f7a0209d5ff999d8c13557845b211800e"
+    },
+    {
+      "path": "file-icons/files/node.svg",
+      "source": "crates/ui/assets/file-icons/files/node.svg",
+      "bytes": 2449,
+      "sha256": "1b13943dc3f65c1edd9e4d1f4ae162b1eadb2bdbf37715c695150692f1fbd61b"
+    },
+    {
+      "path": "file-icons/files/nodemon.svg",
+      "source": "crates/ui/assets/file-icons/files/nodemon.svg",
+      "bytes": 2119,
+      "sha256": "2997e74872d9e256b0c3b85615b8d51e69b5e8a4699894434827e9f9ce041dca"
+    },
+    {
+      "path": "file-icons/files/notebook.svg",
+      "source": "crates/ui/assets/file-icons/files/notebook.svg",
+      "bytes": 363,
+      "sha256": "5a5de3c2b812a8815f9707408034da376719db5675c66bd2079c26d38e846488"
+    },
+    {
+      "path": "file-icons/files/npm.svg",
+      "source": "crates/ui/assets/file-icons/files/npm.svg",
+      "bytes": 624,
+      "sha256": "529e65a7ab3d924d7c9dde1c20482395a8f619a323f7c96cb57df792270fb290"
+    },
+    {
+      "path": "file-icons/files/nunjucks.svg",
+      "source": "crates/ui/assets/file-icons/files/nunjucks.svg",
+      "bytes": 575,
+      "sha256": "8de438ad2a75bdb128ff8f50caaadfae21bb749bfb433519fc358f1666873e83"
+    },
+    {
+      "path": "file-icons/files/nuxt.png",
+      "source": "crates/ui/assets/file-icons/files/nuxt.png",
+      "bytes": 567,
+      "sha256": "643014eca6953ce72cd23f138564c5906e8956a4d4bf89cf2fbfe9ffb183db4b"
+    },
+    {
+      "path": "file-icons/files/nuxt.svg",
+      "source": "crates/ui/assets/file-icons/files/nuxt.svg",
+      "bytes": 1227,
+      "sha256": "cdb9166399fe860b686805da992a4c948bed9381479822ce9b4755fa6c55911b"
+    },
+    {
+      "path": "file-icons/files/nx.svg",
+      "source": "crates/ui/assets/file-icons/files/nx.svg",
+      "bytes": 2733,
+      "sha256": "eb1a17649c1aeb3ab22a222533f56f308ca428fd08065e2c540b85de6ab01187"
+    },
+    {
+      "path": "file-icons/files/ocaml.svg",
+      "source": "crates/ui/assets/file-icons/files/ocaml.svg",
+      "bytes": 4459,
+      "sha256": "a851a375bc7d34135f1c17251124da9ec034f6cd3a9c2204a8375b2f8c565266"
+    },
+    {
+      "path": "file-icons/files/orval.svg",
+      "source": "crates/ui/assets/file-icons/files/orval.svg",
+      "bytes": 12465,
+      "sha256": "05f0728264f76dca04a975d2844a5bf9640d65d61c1ba5effdaa4ebab2deb557"
+    },
+    {
+      "path": "file-icons/files/oxc.svg",
+      "source": "crates/ui/assets/file-icons/files/oxc.svg",
+      "bytes": 1148,
+      "sha256": "4ffcdf6501d0b55a9ab0a5afd26892a5215106b23578b87652061f5f4e717cd4"
+    },
+    {
+      "path": "file-icons/files/panda.svg",
+      "source": "crates/ui/assets/file-icons/files/panda.svg",
+      "bytes": 2023,
+      "sha256": "0361a1ca2e7695fa9952885d92b0f363e12e39633a493a9d2ca693cdadf39911"
+    },
+    {
+      "path": "file-icons/files/patch.svg",
+      "source": "crates/ui/assets/file-icons/files/patch.svg",
+      "bytes": 1741,
+      "sha256": "2012f8529ad55785d1dee0182c6665ba45d0dd88490234135ada6127a8a94c5b"
+    },
+    {
+      "path": "file-icons/files/pdf.svg",
+      "source": "crates/ui/assets/file-icons/files/pdf.svg",
+      "bytes": 7629,
+      "sha256": "2d46ae367699327cef27f1d7347779461cad5483950f7f4ce226bfcc4993fa81"
+    },
+    {
+      "path": "file-icons/files/perl.svg",
+      "source": "crates/ui/assets/file-icons/files/perl.svg",
+      "bytes": 4714,
+      "sha256": "bd02393e3d07fe3e62f6e6dd92832adbf3753c01594007db93452a06d176ac80"
+    },
+    {
+      "path": "file-icons/files/photoshop.svg",
+      "source": "crates/ui/assets/file-icons/files/photoshop.svg",
+      "bytes": 1323,
+      "sha256": "b56dbaef87d27cca122db48a93d117907a3ec12aedc669df4cdcfae7a07dc924"
+    },
+    {
+      "path": "file-icons/files/php.svg",
+      "source": "crates/ui/assets/file-icons/files/php.svg",
+      "bytes": 2877,
+      "sha256": "145115d52b14eebfe2b3f52136754c122c3a1e0a629679dba8264674836d8f91"
+    },
+    {
+      "path": "file-icons/files/pkl.svg",
+      "source": "crates/ui/assets/file-icons/files/pkl.svg",
+      "bytes": 3530,
+      "sha256": "e5faedb2881fa822be4c0b420556e646cf969793b98cb5b0d0c1e6c0c7ec1fa6"
+    },
+    {
+      "path": "file-icons/files/pnpm.svg",
+      "source": "crates/ui/assets/file-icons/files/pnpm.svg",
+      "bytes": 1925,
+      "sha256": "6450bc54132553ce76906e2c02f1cb83f52a20fbecb2210c928709987098b2c0"
+    },
+    {
+      "path": "file-icons/files/postcss.svg",
+      "source": "crates/ui/assets/file-icons/files/postcss.svg",
+      "bytes": 847,
+      "sha256": "2475137b5d1861330dca4a7d6d006d62f8c30bbff1c89c7bec08d0c7bd8c2803"
+    },
+    {
+      "path": "file-icons/files/prettier.svg",
+      "source": "crates/ui/assets/file-icons/files/prettier.svg",
+      "bytes": 5239,
+      "sha256": "ffb1b11686f521554c8bf328e96efc37fc56b97f030e6f383c15aaab15fdd791"
+    },
+    {
+      "path": "file-icons/files/prisma.svg",
+      "source": "crates/ui/assets/file-icons/files/prisma.svg",
+      "bytes": 644,
+      "sha256": "4a74de8bf74638c69ff2a547b729ec0a99e920220d410db15a59b5201c0ce9e1"
+    },
+    {
+      "path": "file-icons/files/proto.svg",
+      "source": "crates/ui/assets/file-icons/files/proto.svg",
+      "bytes": 1331,
+      "sha256": "df335fc16d99fc70c632699b4dec612a639face5dead08ab024e43eb095741c9"
+    },
+    {
+      "path": "file-icons/files/pug.svg",
+      "source": "crates/ui/assets/file-icons/files/pug.svg",
+      "bytes": 9894,
+      "sha256": "54386906de08e0bcf44c8cf85e1ec72985195211032d95bc4bdde911ce904c3b"
+    },
+    {
+      "path": "file-icons/files/pulumi.svg",
+      "source": "crates/ui/assets/file-icons/files/pulumi.svg",
+      "bytes": 2765,
+      "sha256": "7179d26babb4135b58841451f0872975b5b1518a56977e5f8c69aa8903bb9991"
+    },
+    {
+      "path": "file-icons/files/puppeteer.svg",
+      "source": "crates/ui/assets/file-icons/files/puppeteer.svg",
+      "bytes": 13789,
+      "sha256": "99fc879045c9eb05435abf776b84d749542351a7ea26937261e241c2480cbe3c"
+    },
+    {
+      "path": "file-icons/files/puzzle.svg",
+      "source": "crates/ui/assets/file-icons/files/puzzle.svg",
+      "bytes": 965,
+      "sha256": "b4bea9052db1ecad0ef1f8c9c3b03463c91406b418e2d57ba738758f2fe22baa"
+    },
+    {
+      "path": "file-icons/files/python.svg",
+      "source": "crates/ui/assets/file-icons/files/python.svg",
+      "bytes": 1682,
+      "sha256": "579eeccafc26c3e6440ac03b06dbc1d246f0c0c90689ff199f29b8757d1b7033"
+    },
+    {
+      "path": "file-icons/files/r.svg",
+      "source": "crates/ui/assets/file-icons/files/r.svg",
+      "bytes": 1267,
+      "sha256": "a33fd9097efede2aadec59c27b0f9a3bc0454e1e5d54a76ef5855a2134cbc9da"
+    },
+    {
+      "path": "file-icons/files/razor.svg",
+      "source": "crates/ui/assets/file-icons/files/razor.svg",
+      "bytes": 1306,
+      "sha256": "888fc6e3962bd67f93b2aa84b6549053778403a496bb14042f982886c92f3101"
+    },
+    {
+      "path": "file-icons/files/react-test.svg",
+      "source": "crates/ui/assets/file-icons/files/react-test.svg",
+      "bytes": 1010,
+      "sha256": "4d859e11cedbc080a53a547dc5aa6331ee21528c90f022058377219a07fda306"
+    },
+    {
+      "path": "file-icons/files/react-ts.svg",
+      "source": "crates/ui/assets/file-icons/files/react-ts.svg",
+      "bytes": 962,
+      "sha256": "c2dea3ae358650904ce6067861bca30cceae0a42ab8c37f9cde311a5c1a681d3"
+    },
+    {
+      "path": "file-icons/files/react.svg",
+      "source": "crates/ui/assets/file-icons/files/react.svg",
+      "bytes": 962,
+      "sha256": "b51a1be36a347bfd455caf95e99d2d2c945c8142f65000252aca39c18c2deb72"
+    },
+    {
+      "path": "file-icons/files/redux-actions.svg",
+      "source": "crates/ui/assets/file-icons/files/redux-actions.svg",
+      "bytes": 2172,
+      "sha256": "dc33f9b5764f30555904a82835a8e3dc6be227d3a4a21b617e206a67da511184"
+    },
+    {
+      "path": "file-icons/files/redux-effects.svg",
+      "source": "crates/ui/assets/file-icons/files/redux-effects.svg",
+      "bytes": 2172,
+      "sha256": "f8af808f283e19e079cb170b274dba918405507dac8ffe12cc4a9b6404e2fd29"
+    },
+    {
+      "path": "file-icons/files/redux-facade.svg",
+      "source": "crates/ui/assets/file-icons/files/redux-facade.svg",
+      "bytes": 2172,
+      "sha256": "3c31970de577a8825717e46179a37b943fc43b688983ffb6810b838d6c569d37"
+    },
+    {
+      "path": "file-icons/files/redux-reducer.svg",
+      "source": "crates/ui/assets/file-icons/files/redux-reducer.svg",
+      "bytes": 2172,
+      "sha256": "68202ed0b2c21b1b41375937e26e2c643c4b7b21b414d4f5f0399b1d4165e9be"
+    },
+    {
+      "path": "file-icons/files/redux-selector.svg",
+      "source": "crates/ui/assets/file-icons/files/redux-selector.svg",
+      "bytes": 2172,
+      "sha256": "865319ff7bb57f5a8c9e10519d207cfc65704e5eda9ac2ba6c0e9d05fe10587a"
+    },
+    {
+      "path": "file-icons/files/rescript-interface.svg",
+      "source": "crates/ui/assets/file-icons/files/rescript-interface.svg",
+      "bytes": 2384,
+      "sha256": "b627871e3ac5fbe136bf87430ddf1b76043b9b830b6ecb22dd3257f4e0f3ee22"
+    },
+    {
+      "path": "file-icons/files/rescript.svg",
+      "source": "crates/ui/assets/file-icons/files/rescript.svg",
+      "bytes": 1824,
+      "sha256": "7d3082e2623be26ee2e8f627544fa2ab73eed33b22c5670fafd999332ce0126d"
+    },
+    {
+      "path": "file-icons/files/resource.svg",
+      "source": "crates/ui/assets/file-icons/files/resource.svg",
+      "bytes": 632,
+      "sha256": "c622371cd0e78d16d5571d31434cb56382ecbf96a2d023153beee55a711f133f"
+    },
+    {
+      "path": "file-icons/files/robot.svg",
+      "source": "crates/ui/assets/file-icons/files/robot.svg",
+      "bytes": 1329,
+      "sha256": "a0c5843815a787747ace6c0f8ee172993003e6be1a83548a095eaede95734336"
+    },
+    {
+      "path": "file-icons/files/rolldown.svg",
+      "source": "crates/ui/assets/file-icons/files/rolldown.svg",
+      "bytes": 552,
+      "sha256": "4cb1093a13b22e7756fbdd57e3adab1d11a95e300265e50a009ac2d7cc055ea0"
+    },
+    {
+      "path": "file-icons/files/rome.svg",
+      "source": "crates/ui/assets/file-icons/files/rome.svg",
+      "bytes": 2274,
+      "sha256": "039ffdedc4462a4ed7091348dbfb002a949667729e5ff71522df72b89943f3b5"
+    },
+    {
+      "path": "file-icons/files/rsbuild.svg",
+      "source": "crates/ui/assets/file-icons/files/rsbuild.svg",
+      "bytes": 68777,
+      "sha256": "a1d659a0ce1bcc52ecf4cfbe4eaae0ab15707f400f5d9c2cbfc89e02c452b592"
+    },
+    {
+      "path": "file-icons/files/rslib.svg",
+      "source": "crates/ui/assets/file-icons/files/rslib.svg",
+      "bytes": 141178,
+      "sha256": "32ca37335017ee47796631ac3ba23e7ee0e4fd15e33eafd05bdca6408cd58adc"
+    },
+    {
+      "path": "file-icons/files/rspack.svg",
+      "source": "crates/ui/assets/file-icons/files/rspack.svg",
+      "bytes": 92206,
+      "sha256": "7f01a29d7408ed6bcae637eadea0bbf5fa1b510f70b663d7cdb84f477738f66c"
+    },
+    {
+      "path": "file-icons/files/ruby.svg",
+      "source": "crates/ui/assets/file-icons/files/ruby.svg",
+      "bytes": 1295,
+      "sha256": "71b259f92cea96bdb2fc7a1b18f11d867de74a7a0ecd588c97711577fa690be2"
+    },
+    {
+      "path": "file-icons/files/rust.svg",
+      "source": "crates/ui/assets/file-icons/files/rust.svg",
+      "bytes": 9933,
+      "sha256": "680a15cc603315fab5343d3371c727e621f04a0cb152b6239486cde371a3a574"
+    },
+    {
+      "path": "file-icons/files/sanity.svg",
+      "source": "crates/ui/assets/file-icons/files/sanity.svg",
+      "bytes": 831,
+      "sha256": "7ead23703b32b908512cbf1110f8e3b9fd64115aa63128745b855f8d1b54141f"
+    },
+    {
+      "path": "file-icons/files/sass.svg",
+      "source": "crates/ui/assets/file-icons/files/sass.svg",
+      "bytes": 5439,
+      "sha256": "70aaa30e5a62b70e560c01978d64bc094af0f444a352f86b1364e302e95a1e91"
+    },
+    {
+      "path": "file-icons/files/sbt.svg",
+      "source": "crates/ui/assets/file-icons/files/sbt.svg",
+      "bytes": 581,
+      "sha256": "7ddd3eb97361aa6fe0b8adc7d6874587eb7301ada3fc6b403f528cd53defaefd"
+    },
+    {
+      "path": "file-icons/files/scala.svg",
+      "source": "crates/ui/assets/file-icons/files/scala.svg",
+      "bytes": 2000,
+      "sha256": "c6e99afe81eab9275b5dd9dd409f0e2e9f3e2269609e6511b3f494e42f096950"
+    },
+    {
+      "path": "file-icons/files/severless.svg",
+      "source": "crates/ui/assets/file-icons/files/severless.svg",
+      "bytes": 470,
+      "sha256": "2194c994f25432ce0a8fff82dc182b0fff91ed0eaa8cf539f0ab90c6c2e915a0"
+    },
+    {
+      "path": "file-icons/files/shadcn.svg",
+      "source": "crates/ui/assets/file-icons/files/shadcn.svg",
+      "bytes": 335,
+      "sha256": "511ec75ed6ce9f590b664cbaa83098469e26c32364b60c50592b382c654954d4"
+    },
+    {
+      "path": "file-icons/files/shell.svg",
+      "source": "crates/ui/assets/file-icons/files/shell.svg",
+      "bytes": 346,
+      "sha256": "089ab384c7a737e68ed5fac307fe3233004275198d4825b044b3d60f9adad15c"
+    },
+    {
+      "path": "file-icons/files/slint.svg",
+      "source": "crates/ui/assets/file-icons/files/slint.svg",
+      "bytes": 869,
+      "sha256": "498e3b2101e1eab478144d73309b21955556c61bc0193b557daf06ce2a4cc4fb"
+    },
+    {
+      "path": "file-icons/files/solidity.svg",
+      "source": "crates/ui/assets/file-icons/files/solidity.svg",
+      "bytes": 1074,
+      "sha256": "18541518410a88759d47a9b443a7de92d3c56035f112277a29e19fb1aba00250"
+    },
+    {
+      "path": "file-icons/files/statamic-antlers.svg",
+      "source": "crates/ui/assets/file-icons/files/statamic-antlers.svg",
+      "bytes": 1494,
+      "sha256": "aafbbb3e1e50463b80e181a7cc1c812bd7b4b951176762c784aa7156471d5d1d"
+    },
+    {
+      "path": "file-icons/files/storybook.svg",
+      "source": "crates/ui/assets/file-icons/files/storybook.svg",
+      "bytes": 2001,
+      "sha256": "c6bf2246c19cbc1199024f1540c9e452395ddbb553167dcc31e86c30578b93e6"
+    },
+    {
+      "path": "file-icons/files/stylelint.svg",
+      "source": "crates/ui/assets/file-icons/files/stylelint.svg",
+      "bytes": 2387,
+      "sha256": "01ad569bd36c081785bbfd269f2144bf3a89e8184345fc7a644b8ebd30dee214"
+    },
+    {
+      "path": "file-icons/files/stylus.svg",
+      "source": "crates/ui/assets/file-icons/files/stylus.svg",
+      "bytes": 701,
+      "sha256": "fd8b84183bc8f8f655cab5a33373c216d26da34721e99a99e9cf2468686dc688"
+    },
+    {
+      "path": "file-icons/files/supabase.svg",
+      "source": "crates/ui/assets/file-icons/files/supabase.svg",
+      "bytes": 1132,
+      "sha256": "301608374c815a6996aac383c191c84f64cc1e8f9832b2f4ef44d259bcad0496"
+    },
+    {
+      "path": "file-icons/files/svelte-service.svg",
+      "source": "crates/ui/assets/file-icons/files/svelte-service.svg",
+      "bytes": 16734,
+      "sha256": "0eff110985aa445211b39ef19b973bedd67d5bf5f44b0f24975ca39e0f37e9cb"
+    },
+    {
+      "path": "file-icons/files/svelte-ts.svg",
+      "source": "crates/ui/assets/file-icons/files/svelte-ts.svg",
+      "bytes": 14733,
+      "sha256": "29cd623d399577a3ba6ce64528a678e9079603b2596922e634866f8c8a149547"
+    },
+    {
+      "path": "file-icons/files/svelte.svg",
+      "source": "crates/ui/assets/file-icons/files/svelte.svg",
+      "bytes": 14681,
+      "sha256": "9c67c7f27903a4beb4f4ef16430e21ae5afd186b5e834a73f944ba1edb0de4e5"
+    },
+    {
+      "path": "file-icons/files/svg.svg",
+      "source": "crates/ui/assets/file-icons/files/svg.svg",
+      "bytes": 445,
+      "sha256": "8ed2e853e7288bdd5eb0a339cd79cc1e3e3f1095bc3ee302ff6a3c2900614e78"
+    },
+    {
+      "path": "file-icons/files/svx.svg",
+      "source": "crates/ui/assets/file-icons/files/svx.svg",
+      "bytes": 366,
+      "sha256": "97db3ca7446227c506077173574b2da3590c6d99a50700b3cc7f94bc62349a5b"
+    },
+    {
+      "path": "file-icons/files/swc.svg",
+      "source": "crates/ui/assets/file-icons/files/swc.svg",
+      "bytes": 3084,
+      "sha256": "250fbebf67a88913b415ad292d8ebc674e91cb4f0d890098438d58ce17d58c40"
+    },
+    {
+      "path": "file-icons/files/swift.svg",
+      "source": "crates/ui/assets/file-icons/files/swift.svg",
+      "bytes": 1627,
+      "sha256": "ca0b9382c9268298f19a4ccbadc102969c8f1effbfc2a642497fe15281c8bb1a"
+    },
+    {
+      "path": "file-icons/files/tailwind.svg",
+      "source": "crates/ui/assets/file-icons/files/tailwind.svg",
+      "bytes": 919,
+      "sha256": "6dd5fb7896050ce53ca9391d11e00183d6365bb935b9357d891423b0e7e797c2"
+    },
+    {
+      "path": "file-icons/files/taskfile.svg",
+      "source": "crates/ui/assets/file-icons/files/taskfile.svg",
+      "bytes": 393,
+      "sha256": "138517db411d3b4ba8c2274286c4b016e2320a22fd416944f5774baa89b95e10"
+    },
+    {
+      "path": "file-icons/files/tauri.svg",
+      "source": "crates/ui/assets/file-icons/files/tauri.svg",
+      "bytes": 1886,
+      "sha256": "aa4f3930c703d4523a4ff9bb0f50a8968bdeec9152203f853b09e489e470e307"
+    },
+    {
+      "path": "file-icons/files/terraform.svg",
+      "source": "crates/ui/assets/file-icons/files/terraform.svg",
+      "bytes": 362,
+      "sha256": "decd86f8f051f726943131d4d9ae9323af2063a27c728261811f41e8b4b5a18f"
+    },
+    {
+      "path": "file-icons/files/tex.svg",
+      "source": "crates/ui/assets/file-icons/files/tex.svg",
+      "bytes": 647,
+      "sha256": "93b8bd100d07b13d1f4c17b96148dc8ce902ace3b1de1dd3c2a27ff44ce1e6c9"
+    },
+    {
+      "path": "file-icons/files/text.svg",
+      "source": "crates/ui/assets/file-icons/files/text.svg",
+      "bytes": 302,
+      "sha256": "769a9f0d07d057e62c1dbc66de972dc69f06f6dd0d316bf8f6d625275b44fbe5"
+    },
+    {
+      "path": "file-icons/files/ts-test.svg",
+      "source": "crates/ui/assets/file-icons/files/ts-test.svg",
+      "bytes": 1980,
+      "sha256": "ea743292ad02ebc9a71d90bd90ea050e7823348ab7763a8a4fbbca24be2f34b2"
+    },
+    {
+      "path": "file-icons/files/ts-types.svg",
+      "source": "crates/ui/assets/file-icons/files/ts-types.svg",
+      "bytes": 1980,
+      "sha256": "5389a516fbdd71fb19ec2b77a3235e3046eb84c8a05804b3955e1e11b472b5f5"
+    },
+    {
+      "path": "file-icons/files/ts.svg",
+      "source": "crates/ui/assets/file-icons/files/ts.svg",
+      "bytes": 1980,
+      "sha256": "735085a4092ffa24a8f54e9bfa2b9c275af3e766439d0a2fb63bbc0421507f99"
+    },
+    {
+      "path": "file-icons/files/tsconfig.svg",
+      "source": "crates/ui/assets/file-icons/files/tsconfig.svg",
+      "bytes": 2273,
+      "sha256": "0e98fb1f307a2fc70415ea61c249f5db158830184dc2a3802965feb4afa9d87d"
+    },
+    {
+      "path": "file-icons/files/turborepo.svg",
+      "source": "crates/ui/assets/file-icons/files/turborepo.svg",
+      "bytes": 1239,
+      "sha256": "2728b1b6a291d7c6d4f35272645e9d64c6fd2e1bfb748f7067e43421bc9973ac"
+    },
+    {
+      "path": "file-icons/files/twig.svg",
+      "source": "crates/ui/assets/file-icons/files/twig.svg",
+      "bytes": 1081,
+      "sha256": "ab43928220ad4b9f56d30709ede54f667cacb3e77fdb0b350705ecfb5babd6d7"
+    },
+    {
+      "path": "file-icons/files/typst.svg",
+      "source": "crates/ui/assets/file-icons/files/typst.svg",
+      "bytes": 347,
+      "sha256": "4dbee67bf0be628d3765a60ad3e50dc4f02791c0c73fb2b523377e1f9b4fcc90"
+    },
+    {
+      "path": "file-icons/files/unocss.svg",
+      "source": "crates/ui/assets/file-icons/files/unocss.svg",
+      "bytes": 1043,
+      "sha256": "a33105d16dd94117d9522b62740e282c45e87ac3f4a6687e9350d9b53cd5285c"
+    },
+    {
+      "path": "file-icons/files/uv.svg",
+      "source": "crates/ui/assets/file-icons/files/uv.svg",
+      "bytes": 476,
+      "sha256": "c4c1f78e1389935580c0e3d14af5de9294eefc8f231350535c7a32878e6c339b"
+    },
+    {
+      "path": "file-icons/files/v.svg",
+      "source": "crates/ui/assets/file-icons/files/v.svg",
+      "bytes": 1387,
+      "sha256": "712559b2ca0ffe2171c296718f171f727c0304263743890429effdc9884148de"
+    },
+    {
+      "path": "file-icons/files/vanilla-extract.svg",
+      "source": "crates/ui/assets/file-icons/files/vanilla-extract.svg",
+      "bytes": 6644,
+      "sha256": "698194157a2a9ee54e9ceed04d0dea1b66b1573ed316aa9324ce82089e44f198"
+    },
+    {
+      "path": "file-icons/files/vercel.svg",
+      "source": "crates/ui/assets/file-icons/files/vercel.svg",
+      "bytes": 158,
+      "sha256": "408ea4fc629086ceb6f04ebc6a809fb26091adaf20a728886c77e34c5acd1d07"
+    },
+    {
+      "path": "file-icons/files/video.svg",
+      "source": "crates/ui/assets/file-icons/files/video.svg",
+      "bytes": 493,
+      "sha256": "24c14503f4fedd0996f2a13780ef8d70452a78cde45048e8b25aca8c7843d145"
+    },
+    {
+      "path": "file-icons/files/visual-studio.svg",
+      "source": "crates/ui/assets/file-icons/files/visual-studio.svg",
+      "bytes": 2987,
+      "sha256": "8528d9d345d84c5972e828b80587e400a9c2553cdd62a2c5653dd5a50e7f8912"
+    },
+    {
+      "path": "file-icons/files/vite.svg",
+      "source": "crates/ui/assets/file-icons/files/vite.svg",
+      "bytes": 714,
+      "sha256": "5fbaa9926ae9864e044a89f78710aa1ca01a291a7e1ea5635618e99960c58728"
+    },
+    {
+      "path": "file-icons/files/vitest.svg",
+      "source": "crates/ui/assets/file-icons/files/vitest.svg",
+      "bytes": 519,
+      "sha256": "0614c7450f1a03e85e0eacacde60f9a63efe6e46bed8d3f6f457f87b94d3b4c5"
+    },
+    {
+      "path": "file-icons/files/vue.svg",
+      "source": "crates/ui/assets/file-icons/files/vue.svg",
+      "bytes": 318,
+      "sha256": "acbf7838553497dd67a82f100452e2b0af3cfaa081e664c52bfa5968e057c865"
+    },
+    {
+      "path": "file-icons/files/webgpu.svg",
+      "source": "crates/ui/assets/file-icons/files/webgpu.svg",
+      "bytes": 396,
+      "sha256": "c08dc0502b1b1cfbdf827b1a12224159ba8e401b3b2ed58158e1acb3eecf7560"
+    },
+    {
+      "path": "file-icons/files/webpack.svg",
+      "source": "crates/ui/assets/file-icons/files/webpack.svg",
+      "bytes": 2670,
+      "sha256": "d0704f6158453e8a327d26602e0b01b13b4adb50b0499ffa90386722866350f0"
+    },
+    {
+      "path": "file-icons/files/xml.svg",
+      "source": "crates/ui/assets/file-icons/files/xml.svg",
+      "bytes": 719,
+      "sha256": "3760b7d16c89bb7c5a8b0064d2bd55c7745cf29c8f98581d7656090409311457"
+    },
+    {
+      "path": "file-icons/files/yaml.svg",
+      "source": "crates/ui/assets/file-icons/files/yaml.svg",
+      "bytes": 258,
+      "sha256": "f729da1a4ad9b14044c2f287a23b2f3447cef3c1040dcac0af9452909ef9aa1d"
+    },
+    {
+      "path": "file-icons/files/yarn.svg",
+      "source": "crates/ui/assets/file-icons/files/yarn.svg",
+      "bytes": 8514,
+      "sha256": "71f3851286a1c0daa7110cc57701c77c7df84f0a8a4e6ac34966259e740dd162"
+    },
+    {
+      "path": "file-icons/files/yummacss.svg",
+      "source": "crates/ui/assets/file-icons/files/yummacss.svg",
+      "bytes": 878,
+      "sha256": "77116cd043857bd76492ec813737ab703e80083a92fb52325f18dc50bf57f6fd"
+    },
+    {
+      "path": "file-icons/files/zig.svg",
+      "source": "crates/ui/assets/file-icons/files/zig.svg",
+      "bytes": 371,
+      "sha256": "40faf1a8704a2794d60ef1f7ce9e5418b2734b4afdc28bb119bf1b73d4469094"
+    },
+    {
+      "path": "file-icons/folders/folder-actions.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-actions.svg",
+      "bytes": 2695,
+      "sha256": "83aad43bc8247bf29f54e9aff3d88aa20e6905d2b88edae61c723b8c795b2efa"
+    },
+    {
+      "path": "file-icons/folders/folder-android.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-android.svg",
+      "bytes": 6283,
+      "sha256": "abac960d07d1367170ad28ff8483729812a69902ed2b90beafca22e373c66102"
+    },
+    {
+      "path": "file-icons/folders/folder-angular.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-angular.svg",
+      "bytes": 850,
+      "sha256": "4b1f373c4ff52773f387c9ab79114d032f8da8f322c7c03ac04339312e0882ab"
+    },
+    {
+      "path": "file-icons/folders/folder-app.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-app.svg",
+      "bytes": 1405,
+      "sha256": "cba1b98e03cbc3aaa8c6ba17cf7e8f73f6328d3a8b91896e79d3acb3311b52c0"
+    },
+    {
+      "path": "file-icons/folders/folder-assets.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-assets.svg",
+      "bytes": 1267,
+      "sha256": "fe69ea3f9b74fb063b3f5b2517e77b4780f66f8e2314c59a0fb6f79f868714e3"
+    },
+    {
+      "path": "file-icons/folders/folder-aws.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-aws.svg",
+      "bytes": 2827,
+      "sha256": "a5803831d1d808b43c10c25c35ec550e0600d36f4ebda06b7c53415ecf6c9fa6"
+    },
+    {
+      "path": "file-icons/folders/folder-azure.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-azure.svg",
+      "bytes": 1334,
+      "sha256": "a3652333713422433b42ed01ea475a7c09ea218635876f6470f6b5aa0c59adce"
+    },
+    {
+      "path": "file-icons/folders/folder-blue-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-blue-code.svg",
+      "bytes": 1006,
+      "sha256": "91a0df74ca0b4d97e8b3d328663ae87962709d519f3179248369d2ab6d1d00ea"
+    },
+    {
+      "path": "file-icons/folders/folder-blue-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-blue-outline.svg",
+      "bytes": 659,
+      "sha256": "75de324cb7dbfdf00bbca8cc4efa8adbea8e3244a707e7fae402f4a7bb2a6916"
+    },
+    {
+      "path": "file-icons/folders/folder-blue.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-blue.svg",
+      "bytes": 640,
+      "sha256": "b7b8e9fd807d17f314b54474f030f4fb3304f831cd4563f5e6963ca2b9469048"
+    },
+    {
+      "path": "file-icons/folders/folder-bruno.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-bruno.svg",
+      "bytes": 4258,
+      "sha256": "1f52d0a3d26e3b5e961facc68a07bdb3ddf6520c3d1f9156b68dcade95778772"
+    },
+    {
+      "path": "file-icons/folders/folder-build.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-build.svg",
+      "bytes": 1279,
+      "sha256": "160021e5c02ab125813da6ec82dd8cd0898e5a62f8e2513f23edb3c49de907da"
+    },
+    {
+      "path": "file-icons/folders/folder-changeset.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-changeset.svg",
+      "bytes": 1363,
+      "sha256": "5b054ccde224f98344223be2587e543ac2f5e529f79104fdec34763e2acbd9ff"
+    },
+    {
+      "path": "file-icons/folders/folder-claude.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-claude.svg",
+      "bytes": 10106,
+      "sha256": "89d66ee004d8f8d86cec2c95c5010a51beef710ff1cc50fdbd93db173aab59f0"
+    },
+    {
+      "path": "file-icons/folders/folder-config.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-config.svg",
+      "bytes": 1641,
+      "sha256": "229fdedf479d23e08731bc70c7d4d9e626cf6c546bd738ac354304e15ed44777"
+    },
+    {
+      "path": "file-icons/folders/folder-constants.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-constants.svg",
+      "bytes": 790,
+      "sha256": "6269fb947d99707a660214f88300952714d82323f9c015250fa5473e8dbab276"
+    },
+    {
+      "path": "file-icons/folders/folder-context.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-context.svg",
+      "bytes": 784,
+      "sha256": "3e6ac7e108ad36be6335edbf631af7515cee17748799edd6b07744ddccb0e86b"
+    },
+    {
+      "path": "file-icons/folders/folder-core.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-core.svg",
+      "bytes": 3837,
+      "sha256": "a4fce9caebe3d4dcb99eaedc5966db4655dc02509d0e88b233763f211efccd82"
+    },
+    {
+      "path": "file-icons/folders/folder-cursor.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-cursor.svg",
+      "bytes": 1251,
+      "sha256": "e9d8c4d1c4c4573c44fab530b523b7f87dc752484fa4562572f3fb8f0d5d735c"
+    },
+    {
+      "path": "file-icons/folders/folder-cypress.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-cypress.svg",
+      "bytes": 4646,
+      "sha256": "fe8edb8b846c27b3d2c2a66fcee150faee9bd3267862f60c273c55f429eba0f0"
+    },
+    {
+      "path": "file-icons/folders/folder-database.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-database.svg",
+      "bytes": 1538,
+      "sha256": "7781070516ec9be6bce284a359e60469d3c956428c47270cd9dbdb6f773d33e0"
+    },
+    {
+      "path": "file-icons/folders/folder-docker.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-docker.svg",
+      "bytes": 4066,
+      "sha256": "b4df14876835232284ac87bb140f960c5f13f8e974d6244e7e970504347fb2f3"
+    },
+    {
+      "path": "file-icons/folders/folder-documents.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-documents.svg",
+      "bytes": 1095,
+      "sha256": "2bdc0ad9244c8d1c2dff4821521fae5babe12490a6dcf5bd0a34cc7f6b58c5b5"
+    },
+    {
+      "path": "file-icons/folders/folder-drizzle.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-drizzle.svg",
+      "bytes": 1616,
+      "sha256": "ac20a38061180e46d9d8422b2dceb574b6e0ef0c88aebe641073d28a21bdefce"
+    },
+    {
+      "path": "file-icons/folders/folder-effects.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-effects.svg",
+      "bytes": 2695,
+      "sha256": "009897a5e271f8ad58244f089ce83df0391be99c36cd1c37d5090149a29819ab"
+    },
+    {
+      "path": "file-icons/folders/folder-expo.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-expo.svg",
+      "bytes": 1282,
+      "sha256": "68ebf57fea928b85ae39f1fe882ae2c21a04e681be63ebaee68671f4a14e9c80"
+    },
+    {
+      "path": "file-icons/folders/folder-facade.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-facade.svg",
+      "bytes": 2695,
+      "sha256": "2cff8c4e7e624cda2f7094101d05f2d9c64b92e691f69a65bda2f81065c84c86"
+    },
+    {
+      "path": "file-icons/folders/folder-firebase.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-firebase.svg",
+      "bytes": 1829,
+      "sha256": "0c1dc33a510d572af0515ecdf0e3fa84a9c5536b6c585c2edc75b6713e079d5d"
+    },
+    {
+      "path": "file-icons/folders/folder-fonts.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-fonts.svg",
+      "bytes": 4431,
+      "sha256": "60d7d3e965395439797d49b568cf4c61b5aee9210fd483139bd3c9d0644e1129"
+    },
+    {
+      "path": "file-icons/folders/folder-github.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-github.svg",
+      "bytes": 1869,
+      "sha256": "df9af57731b6196d4f313bbcd4d1694a847cb1cb64b8bcd11c0ef675c7fab7ba"
+    },
+    {
+      "path": "file-icons/folders/folder-gitlab.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-gitlab.svg",
+      "bytes": 2433,
+      "sha256": "19219fbec355f0fbbd59b42fa8d3d5b973cedc3d3e85653e904cabebcd20af4f"
+    },
+    {
+      "path": "file-icons/folders/folder-globe.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-globe.svg",
+      "bytes": 1151,
+      "sha256": "ba95c6e9456334538969af4097887d4c7b43f3cfe6a38006c52573f62322032b"
+    },
+    {
+      "path": "file-icons/folders/folder-godot.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-godot.svg",
+      "bytes": 1584,
+      "sha256": "425e8b0fb2181694c7b15284d018fd6c2b7f778be53a9447a450be287288e5d4"
+    },
+    {
+      "path": "file-icons/folders/folder-gradle.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-gradle.svg",
+      "bytes": 3668,
+      "sha256": "eca6ec22d75ba6b0dc326d0358c8f5e6f98019ed8d1c9c6f6e7f50b899bd207a"
+    },
+    {
+      "path": "file-icons/folders/folder-graphql.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-graphql.svg",
+      "bytes": 2595,
+      "sha256": "b7436c0270edf81a54d6f7126654ea8b9c2f955a39dd2e42fd6831195cd4faa5"
+    },
+    {
+      "path": "file-icons/folders/folder-gray-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-gray-code.svg",
+      "bytes": 1006,
+      "sha256": "4281dd8cd8b48fe4c10163f84f537299ecbc37d51540082487c1c32fa173ecfd"
+    },
+    {
+      "path": "file-icons/folders/folder-gray-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-gray-outline.svg",
+      "bytes": 659,
+      "sha256": "dc6563ce6066bb54113cc2a0fa7369629394b12518950518bf4421097d0056ac"
+    },
+    {
+      "path": "file-icons/folders/folder-gray.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-gray.svg",
+      "bytes": 640,
+      "sha256": "d48ce5c9196c08c893c629986917eec7032a3069f55ca6f939a911a39f3b8d6c"
+    },
+    {
+      "path": "file-icons/folders/folder-green-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-green-code.svg",
+      "bytes": 1006,
+      "sha256": "e9a90b90cf06ca5d6bbb7b6012faa3043810d9918401d60f11f668ff6da332f1"
+    },
+    {
+      "path": "file-icons/folders/folder-green-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-green-outline.svg",
+      "bytes": 659,
+      "sha256": "28dd675e14f1674a343d76d4282744813519b190e108ccbe7352e5d220b35ca2"
+    },
+    {
+      "path": "file-icons/folders/folder-green.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-green.svg",
+      "bytes": 640,
+      "sha256": "333121d43148857bf30478a68e2f28f41564a0687e5bd9608b38cfef94518f90"
+    },
+    {
+      "path": "file-icons/folders/folder-helpers.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-helpers.svg",
+      "bytes": 2689,
+      "sha256": "cdcb0a154d36858fdfcd805ed3364c993770fdb8cba37a69149db700e7813e7e"
+    },
+    {
+      "path": "file-icons/folders/folder-hooks.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-hooks.svg",
+      "bytes": 1090,
+      "sha256": "f1ddb260ee077b54b26b729eb43e5c87dfcaccd4d9061846324d34f0221b218d"
+    },
+    {
+      "path": "file-icons/folders/folder-i18n.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-i18n.svg",
+      "bytes": 1178,
+      "sha256": "f46be15884698c11084f35b7860f179133b8a9e880dee06c7c0cda8fa1007dc4"
+    },
+    {
+      "path": "file-icons/folders/folder-images.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-images.svg",
+      "bytes": 933,
+      "sha256": "f12831d842ee5d380e75f3bd239588cbad5348c27f0e4da8cfdf9ddb6d1c5e71"
+    },
+    {
+      "path": "file-icons/folders/folder-interceptors.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-interceptors.svg",
+      "bytes": 720,
+      "sha256": "94ef2dc9ae9662ff349f4c595eaf5dafd49deeb6cacc08c0b81d4b0bb6490516"
+    },
+    {
+      "path": "file-icons/folders/folder-interfaces.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-interfaces.svg",
+      "bytes": 1604,
+      "sha256": "aeff172909359526828f708a35c45568c6a713ae931ff2497e4730d7fae6c2bf"
+    },
+    {
+      "path": "file-icons/folders/folder-ios.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-ios.svg",
+      "bytes": 1553,
+      "sha256": "436644d748a99aceea46271b193b9aa0f355ca723dcb39069c120a91dfff94b8"
+    },
+    {
+      "path": "file-icons/folders/folder-js.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-js.svg",
+      "bytes": 3027,
+      "sha256": "35c702f0ab32d97261520bf2ba874bb8746e0773a5842f6eb666015bb307af70"
+    },
+    {
+      "path": "file-icons/folders/folder-layout.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-layout.svg",
+      "bytes": 1288,
+      "sha256": "717d019cf7e0ec798f4eeae60a6343450149283c123bed003437073d935a61d1"
+    },
+    {
+      "path": "file-icons/folders/folder-lock.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-lock.svg",
+      "bytes": 1722,
+      "sha256": "796fa33f97fbd3327f85a98e0c32e773c881160970170e36a3944632825e0c7f"
+    },
+    {
+      "path": "file-icons/folders/folder-mail.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-mail.svg",
+      "bytes": 915,
+      "sha256": "1021e8eca2a0017cbab8a5bdcc5c30cd641c56bc928350b4e00f1ca9f96a1121"
+    },
+    {
+      "path": "file-icons/folders/folder-maven.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-maven.svg",
+      "bytes": 3401,
+      "sha256": "2b6a52e3f9ddba6a9969235c002d1d3bc013f67d71f42aad083988b5fcfe1cd7"
+    },
+    {
+      "path": "file-icons/folders/folder-middleware.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-middleware.svg",
+      "bytes": 1433,
+      "sha256": "f21a99b8dd94bee7f5f3fc02c76a569992943192cacaffa162b16d72f6689f44"
+    },
+    {
+      "path": "file-icons/folders/folder-models.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-models.svg",
+      "bytes": 1604,
+      "sha256": "b83fff1ecc42ad1f426e71b077f39850fb70ee01dfb92ca14a56188794e3c2b0"
+    },
+    {
+      "path": "file-icons/folders/folder-modules.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-modules.svg",
+      "bytes": 1485,
+      "sha256": "857814de79e4a1e6355483f6be549a8ee41310a24384fac7cbde8cc997080c59"
+    },
+    {
+      "path": "file-icons/folders/folder-mongo.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-mongo.svg",
+      "bytes": 1202,
+      "sha256": "ac0e662d4d2b94c180892350a012b5d9fa5ad26e1abec1e21c6b0ede88e432be"
+    },
+    {
+      "path": "file-icons/folders/folder-netlify.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-netlify.svg",
+      "bytes": 1899,
+      "sha256": "00011948901ba1a85d5e77eeb7e02a2659a058c63a79d0756366e67cddad0b13"
+    },
+    {
+      "path": "file-icons/folders/folder-next.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-next.svg",
+      "bytes": 2027,
+      "sha256": "26ab3649c7800924b9308982f7fce5db6f1e21d89ec958e6f6cb412175c27dd7"
+    },
+    {
+      "path": "file-icons/folders/folder-nginx.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-nginx.svg",
+      "bytes": 1960,
+      "sha256": "31a63a6714eeb022102d456a127906be5c93ffbfa8e3faf6c403a3169d5a4c3c"
+    },
+    {
+      "path": "file-icons/folders/folder-node-modules.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-node-modules.svg",
+      "bytes": 3094,
+      "sha256": "9171a8b7b89c94d64cc0f64724ea5936461334321878d76b61d39061bd783328"
+    },
+    {
+      "path": "file-icons/folders/folder-open.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-open.svg",
+      "bytes": 410,
+      "sha256": "d3d096c31f14e96fe37a3c11db5a1947df394b0873a4fd71266adbab90fac18d"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-code-1.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-code-1.svg",
+      "bytes": 1014,
+      "sha256": "bb65e9e2cba91ab567c4a25dcbf9e7ef6f8ec68a5b9a495e6eca6de74ca38bdb"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-code-2.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-code-2.svg",
+      "bytes": 1014,
+      "sha256": "a9b7736a43e9087f98338225c463dd4930f31d360c78b4a760c62e6593583ea7"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-code-3.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-code-3.svg",
+      "bytes": 1014,
+      "sha256": "6d635c7bed0a25ecf94df723911586aa097cab5300d6c42598a588ba47c17f60"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-code-4.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-code-4.svg",
+      "bytes": 1014,
+      "sha256": "b8f850bbde08615c9fb17ef6cdecf0510eb422899dc4525b418980d4f14b5394"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-code.svg",
+      "bytes": 1006,
+      "sha256": "2948dadaec709eff9731af064b505846197bb73c8a5c5f4988faccd1f5a981b7"
+    },
+    {
+      "path": "file-icons/folders/folder-orange-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange-outline.svg",
+      "bytes": 659,
+      "sha256": "1815e2add7548e7a82f73e39f27e958593b58d1824f4a9a5311f706ad711966a"
+    },
+    {
+      "path": "file-icons/folders/folder-orange.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-orange.svg",
+      "bytes": 640,
+      "sha256": "b77f8f75b82104092cc94edbb996e155d949817b5152f08be30a032d4f690c5b"
+    },
+    {
+      "path": "file-icons/folders/folder-pink-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-pink-code.svg",
+      "bytes": 1006,
+      "sha256": "c1f1ceb8354de3621e237db203a8dee116bceb1cd1597b72b28327b119675fa4"
+    },
+    {
+      "path": "file-icons/folders/folder-pink-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-pink-outline.svg",
+      "bytes": 657,
+      "sha256": "ba1bf958e63e911d82af7d3fa20b58b7220da27db755d9cc77e1c510385a7e9d"
+    },
+    {
+      "path": "file-icons/folders/folder-pink.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-pink.svg",
+      "bytes": 640,
+      "sha256": "930b0266b7a701e974f57a9c86e1169c33c81c40018c9068c967558c4232a2af"
+    },
+    {
+      "path": "file-icons/folders/folder-pipes.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-pipes.svg",
+      "bytes": 1224,
+      "sha256": "35420ac0e519faaa985d4f272644d439bd74f967d911dc575d6147387fdff1d9"
+    },
+    {
+      "path": "file-icons/folders/folder-prisma.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-prisma.svg",
+      "bytes": 1137,
+      "sha256": "4adaa705dcf6ed64b0c2765db03c8bf9ea9f7a54745a578566593bd0f278a8ef"
+    },
+    {
+      "path": "file-icons/folders/folder-providers.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-providers.svg",
+      "bytes": 1641,
+      "sha256": "9cc307c6cf850dfb6f7bb1205c324f9888c0ef2afa8b8acdbd7e2a888e8c89c7"
+    },
+    {
+      "path": "file-icons/folders/folder-purple-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-purple-code.svg",
+      "bytes": 1006,
+      "sha256": "de8a6c89b6f12b4089f4891fb259757946c701f2d01c41267b990eb6c14c3829"
+    },
+    {
+      "path": "file-icons/folders/folder-purple-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-purple-outline.svg",
+      "bytes": 659,
+      "sha256": "2702b7ec544a8037f5cab588818e70bb9b751f92abcd517d17af7362b3663a4e"
+    },
+    {
+      "path": "file-icons/folders/folder-purple.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-purple.svg",
+      "bytes": 640,
+      "sha256": "3a383261e03ba5f44f98782646db12186dac362ccbc6dd7dbd5f7fef2c16c23d"
+    },
+    {
+      "path": "file-icons/folders/folder-react.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-react.svg",
+      "bytes": 1658,
+      "sha256": "0051b09dc2d19eea1c40e81a69f3cce553debd8eaffb1c918ebeebbed3253788"
+    },
+    {
+      "path": "file-icons/folders/folder-red-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-red-code.svg",
+      "bytes": 1006,
+      "sha256": "79bd661b4e671eb443e4cd56dfcf28b2ef308cc6c2d9ca7c641529e0af567d0c"
+    },
+    {
+      "path": "file-icons/folders/folder-red-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-red-outline.svg",
+      "bytes": 659,
+      "sha256": "5d98ec4f8db9ee5852d64b4b9086cd67b8b005adf4f13a19491f5d72dc1271ba"
+    },
+    {
+      "path": "file-icons/folders/folder-red.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-red.svg",
+      "bytes": 640,
+      "sha256": "d7d3d6c9f9b714b7acd6f9860fd578d940ff64db7a03dfd7362e835b93f87bc2"
+    },
+    {
+      "path": "file-icons/folders/folder-redis.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-redis.svg",
+      "bytes": 107102,
+      "sha256": "5be6a1d0cb904c629e9ed3558b4c91bb86045d20488aab5a9c6a8db1a571fa7b"
+    },
+    {
+      "path": "file-icons/folders/folder-reducer.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-reducer.svg",
+      "bytes": 2695,
+      "sha256": "446e0e9575114bf94442041a1fb8465aef8fdf495346dd29b0115306e882b135"
+    },
+    {
+      "path": "file-icons/folders/folder-router.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-router.svg",
+      "bytes": 988,
+      "sha256": "a30258036b9b72126a42eb9c17137b2b34405ffe981e59e218597fb8c37a910f"
+    },
+    {
+      "path": "file-icons/folders/folder-sass.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-sass.svg",
+      "bytes": 5937,
+      "sha256": "ee0b0ab93a8752d5e79bef03a9d78c19e9049b212b18d09b2ec8278bb798f456"
+    },
+    {
+      "path": "file-icons/folders/folder-selector.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-selector.svg",
+      "bytes": 2695,
+      "sha256": "cf5d8777a38f84ea4d2b16aa8102b0ded17f5bb5dc177ee1c404296ca33b9f0c"
+    },
+    {
+      "path": "file-icons/folders/folder-services.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-services.svg",
+      "bytes": 1641,
+      "sha256": "4be0e3034cf7882b20a66375285fa921525c0f9f9acc69089a78b36ca8349831"
+    },
+    {
+      "path": "file-icons/folders/folder-shared.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-shared.svg",
+      "bytes": 2098,
+      "sha256": "20db7ebd22a156800dcf9bb91b90b7f30d68f8ee6c1afc03ab9d79e0bd14908f"
+    },
+    {
+      "path": "file-icons/folders/folder-sky-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-sky-code.svg",
+      "bytes": 1006,
+      "sha256": "40e5b38af5e068ec69476460ec4229f2f254f852fa570c1b31f3f491a029afcd"
+    },
+    {
+      "path": "file-icons/folders/folder-sky-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-sky-outline.svg",
+      "bytes": 659,
+      "sha256": "c81bd1b179ed28ca75e9f2b590bc6740b4dbb55e08a5d3034af499181dc2bac5"
+    },
+    {
+      "path": "file-icons/folders/folder-sky.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-sky.svg",
+      "bytes": 640,
+      "sha256": "aa4e193a9f0b53d9bfc4e4df25bd80f4d1378365fa1bbffbad59b2f20bc8e5f1"
+    },
+    {
+      "path": "file-icons/folders/folder-src.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-src.svg",
+      "bytes": 1014,
+      "sha256": "b8f850bbde08615c9fb17ef6cdecf0510eb422899dc4525b418980d4f14b5394"
+    },
+    {
+      "path": "file-icons/folders/folder-supabase.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-supabase.svg",
+      "bytes": 1630,
+      "sha256": "59df460c25652ae0ed0dbae4350565716bc9d568f4a1209cfa477f44d5a4d00c"
+    },
+    {
+      "path": "file-icons/folders/folder-target.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-target.svg",
+      "bytes": 1401,
+      "sha256": "afcce3ed73b130d00933cd5fece0ffbfe21f48b24090b6fb7ab310ad18999839"
+    },
+    {
+      "path": "file-icons/folders/folder-tauri.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-tauri.svg",
+      "bytes": 2322,
+      "sha256": "266d090382183f05d49d5bb96f278fc1d2cd81fb1bff809dc474947e8f17d61d"
+    },
+    {
+      "path": "file-icons/folders/folder-tina.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-tina.svg",
+      "bytes": 1736,
+      "sha256": "e63964bb20de6a4bb72db0bbcc2064a636d5573abf7bd2cea257016072f5d5f0"
+    },
+    {
+      "path": "file-icons/folders/folder-utils.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-utils.svg",
+      "bytes": 1580,
+      "sha256": "92b1925db830a7c45d8cfad29d58a4506f09e917b16183b5e122d00b8cbee955"
+    },
+    {
+      "path": "file-icons/folders/folder-vercel.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-vercel.svg",
+      "bytes": 653,
+      "sha256": "c59b70e3b0578c0e811f294126ac23cf9c0665bd6a81f0af2c49692f1c151fff"
+    },
+    {
+      "path": "file-icons/folders/folder-vscode.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-vscode.svg",
+      "bytes": 5093,
+      "sha256": "b40f7d5f86e162f0c16ac2452316cac9003ca42de9539bf921ee1780fa113d8b"
+    },
+    {
+      "path": "file-icons/folders/folder-yellow-code.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-yellow-code.svg",
+      "bytes": 1006,
+      "sha256": "98d7114f9bfc67982e3b3a3eb4d547fd2b3637dbcd3e191d138dd60fdc125d9c"
+    },
+    {
+      "path": "file-icons/folders/folder-yellow-outline.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-yellow-outline.svg",
+      "bytes": 659,
+      "sha256": "7c4c68281d4e91e8816c15497d26ceea488b45955d18ed22a66543909a8147ec"
+    },
+    {
+      "path": "file-icons/folders/folder-yellow.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-yellow.svg",
+      "bytes": 640,
+      "sha256": "1dcc6a5203c31605888121ad842243045f37ff6947b56e0bbfa3213b45ca3d0f"
+    },
+    {
+      "path": "file-icons/folders/folder-zed.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder-zed.svg",
+      "bytes": 1408,
+      "sha256": "0f67f6b8e8c272a84f92928f831af53317035b4bc5177b7156f8053a4b4eb056"
+    },
+    {
+      "path": "file-icons/folders/folder.svg",
+      "source": "crates/ui/assets/file-icons/folders/folder.svg",
+      "bytes": 395,
+      "sha256": "6331507f6b4e234bcd3b898e6f9f38366555911f644d0f7e77a7ba1a4de309b0"
+    },
+    {
+      "path": "fonts/Geist-Bold.ttf",
+      "source": "crates/ui/assets/fonts/Geist-Bold.ttf",
+      "bytes": 128824,
+      "sha256": "e866b423b755233cae8bce6a37519f6fe630be9772fa08fc3114bff15bc8580f"
+    },
+    {
+      "path": "fonts/Geist-BoldItalic.ttf",
+      "source": "crates/ui/assets/fonts/Geist-BoldItalic.ttf",
+      "bytes": 130600,
+      "sha256": "d0420f50612a7e8c2b697834555fbd5f92abc6f20b9ba6d96c0ffd5ab23b1a90"
+    },
+    {
+      "path": "fonts/Geist-Italic.ttf",
+      "source": "crates/ui/assets/fonts/Geist-Italic.ttf",
+      "bytes": 128284,
+      "sha256": "d4b95dddb27051775acefc49a6c25122d748400316b651e3cb85f0afd121a1f8"
+    },
+    {
+      "path": "fonts/Geist-Medium.ttf",
+      "source": "crates/ui/assets/fonts/Geist-Medium.ttf",
+      "bytes": 127660,
+      "sha256": "0090e004725f6f64b841715b4167920580f883fcf9b67fc6d744089103fec101"
+    },
+    {
+      "path": "fonts/Geist-MediumItalic.ttf",
+      "source": "crates/ui/assets/fonts/Geist-MediumItalic.ttf",
+      "bytes": 129904,
+      "sha256": "05eb42694fe891d2b9265c66bd4e9d5cfa052c50076310921f116e675580e799"
+    },
+    {
+      "path": "fonts/Geist-SemiBold.ttf",
+      "source": "crates/ui/assets/fonts/Geist-SemiBold.ttf",
+      "bytes": 127872,
+      "sha256": "612ec98df33935354f39e81e54101656961ab6e5549f64b63eb57868ba7bab8d"
+    },
+    {
+      "path": "fonts/Geist-SemiBoldItalic.ttf",
+      "source": "crates/ui/assets/fonts/Geist-SemiBoldItalic.ttf",
+      "bytes": 130840,
+      "sha256": "8dbf944c1cbb8c9b9074faccac2d34869bc839d03c9446e5148eaf547ebf45fa"
+    },
+    {
+      "path": "fonts/Geist.ttf",
+      "source": "crates/ui/assets/fonts/Geist.ttf",
+      "bytes": 126048,
+      "sha256": "5c8968eafb98a4c4f47033daf29e38e284a6f2a82eb017d171ab040fe7c4b615"
+    },
+    {
+      "path": "fonts/GeistMono-Bold.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-Bold.ttf",
+      "bytes": 150492,
+      "sha256": "ea1cabb4d152088721b5e0b1865bb43c75c1b2d468384a551e0958e53d4fa370"
+    },
+    {
+      "path": "fonts/GeistMono-BoldItalic.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-BoldItalic.ttf",
+      "bytes": 157016,
+      "sha256": "c063203f13080b71aa5416ec5f5a0e30bc0a0d9a8a33335479c676f5809b6d5d"
+    },
+    {
+      "path": "fonts/GeistMono-Italic.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-Italic.ttf",
+      "bytes": 154508,
+      "sha256": "27b5e991397af74bbb90c3137869967bed796b3792e269f1c294ef53bfbf8a33"
+    },
+    {
+      "path": "fonts/GeistMono-Medium.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-Medium.ttf",
+      "bytes": 149328,
+      "sha256": "90b15711dc3779b2e64e8aff5228154dd019a90bce4947549c4a8a8a43f2ac25"
+    },
+    {
+      "path": "fonts/GeistMono-MediumItalic.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-MediumItalic.ttf",
+      "bytes": 155824,
+      "sha256": "432b920fce692d76c8f4315f46bbe2e726436ec959c279727cd4ff7d979cdeed"
+    },
+    {
+      "path": "fonts/GeistMono-SemiBold.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-SemiBold.ttf",
+      "bytes": 149700,
+      "sha256": "8b6e127117b03046495b40d4227de66bf5f81f7fe2f4546ee578e89738052314"
+    },
+    {
+      "path": "fonts/GeistMono-SemiBoldItalic.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono-SemiBoldItalic.ttf",
+      "bytes": 156584,
+      "sha256": "4fde4f470bd18aa6846a1fce20b1413f99abc7991c145e86118c2350bc8c10d7"
+    },
+    {
+      "path": "fonts/GeistMono.ttf",
+      "source": "crates/ui/assets/fonts/GeistMono.ttf",
+      "bytes": 148516,
+      "sha256": "42d8ad2e610238e64e8abfcde3037c63f7850a73928742b7ab7229d897bcb155"
+    },
+    {
+      "path": "fonts/licenses/Geist-OFL.txt",
+      "source": "crates/ui/assets/fonts/licenses/Geist-OFL.txt",
+      "bytes": 4476,
+      "sha256": "dbc009cef0eae803f38a627911ea08fd96a283702b0302bb4d47067952ae3f95"
+    },
+    {
+      "path": "fonts/licenses/THIRD_PARTY_NOTICES.md",
+      "source": "crates/ui/assets/fonts/licenses/THIRD_PARTY_NOTICES.md",
+      "bytes": 371,
+      "sha256": "7ffc918629f61b5c90986ce06f540ecf8b61d04c355fb2f071d55c1a6289f236"
+    },
+    {
+      "path": "icons/action-build.svg",
+      "source": "crates/ui/assets/icons/action-build.svg",
+      "bytes": 328,
+      "sha256": "4beb1be1d9459e41136c42385f8e216393cc08d60aefb4ad619b842f9a22c3da"
+    },
+    {
+      "path": "icons/action-configure.svg",
+      "source": "crates/ui/assets/icons/action-configure.svg",
+      "bytes": 410,
+      "sha256": "87717a98713bde84b9364731adcb93914394b07fffd8193587ffe915d93d6e00"
+    },
+    {
+      "path": "icons/action-debug.svg",
+      "source": "crates/ui/assets/icons/action-debug.svg",
+      "bytes": 390,
+      "sha256": "77feed457b451baccfa56b524e9b17c4b12ea55821fcbd14327c7a9a9380d270"
+    },
+    {
+      "path": "icons/action-lint.svg",
+      "source": "crates/ui/assets/icons/action-lint.svg",
+      "bytes": 330,
+      "sha256": "532e4ced1f3a81284e125899185a88918bfed264d7fee0da4bf451b5d3d3bd23"
+    },
+    {
+      "path": "icons/action-play.svg",
+      "source": "crates/ui/assets/icons/action-play.svg",
+      "bytes": 297,
+      "sha256": "52d00727a78ec5d46c630f2cf8d21ecdfbc72b90130818f56549651afc7bd162"
+    },
+    {
+      "path": "icons/action-test.svg",
+      "source": "crates/ui/assets/icons/action-test.svg",
+      "bytes": 387,
+      "sha256": "463bdee54c515a538f134731c2aee59ab7e060e808cdd80bd4c6a10a34b99dd9"
+    },
+    {
+      "path": "icons/add-circle.svg",
+      "source": "crates/ui/assets/icons/add-circle.svg",
+      "bytes": 233,
+      "sha256": "2f8c80d90ebfff8727565cd349a62862e6e8fe098a02522ff878549d73aa3066"
+    },
+    {
+      "path": "icons/alt-arrow-down.svg",
+      "source": "crates/ui/assets/icons/alt-arrow-down.svg",
+      "bytes": 209,
+      "sha256": "f6cbece4bea7966ea5a7c2f1fbc99c84832feba9aa487d44b7a3b766e1f826a1"
+    },
+    {
+      "path": "icons/alt-arrow-left.svg",
+      "source": "crates/ui/assets/icons/alt-arrow-left.svg",
+      "bytes": 210,
+      "sha256": "37fbac677f4ae4a5bd06ae2d04106933cee3bebf400d3750b68d024157da91c1"
+    },
+    {
+      "path": "icons/alt-arrow-right.svg",
+      "source": "crates/ui/assets/icons/alt-arrow-right.svg",
+      "bytes": 209,
+      "sha256": "ac35fd0a7bc068d4ffdf49355e4eb15cc17ba8a9e12847b1f64553e4ac3f94ca"
+    },
+    {
+      "path": "icons/alt-arrow-up.svg",
+      "source": "crates/ui/assets/icons/alt-arrow-up.svg",
+      "bytes": 210,
+      "sha256": "aca69ff6fea55aa88676cb69923820551ed0dcc9f1a9d25712ccfd7f8407d968"
+    },
+    {
+      "path": "icons/antigravity-mark.svg",
+      "source": "crates/ui/assets/icons/antigravity-mark.svg",
+      "bytes": 358,
+      "sha256": "0570089c81cf3de4e35250d8e6508e381e9b640d11a37a44d08f9ae8bc97b91b"
+    },
+    {
+      "path": "icons/archive-minimalistic.svg",
+      "source": "crates/ui/assets/icons/archive-minimalistic.svg",
+      "bytes": 615,
+      "sha256": "2347a2fd2d5e5c60113f5f4ff0d5d7f84e4e662ec7d45f55f213e53b701bc12e"
+    },
+    {
+      "path": "icons/archive-up-minimalistic.svg",
+      "source": "crates/ui/assets/icons/archive-up-minimalistic.svg",
+      "bytes": 628,
+      "sha256": "71c6cec59d3dd6841ded52930918a984eaaab63ea04e06ecfd45f2d573d74e65"
+    },
+    {
+      "path": "icons/arrow-down.svg",
+      "source": "crates/ui/assets/icons/arrow-down.svg",
+      "bytes": 231,
+      "sha256": "86e28101959d73b1286a2d3be6e5c2f29d0ed6647c084ab1324ad1d4048fcbe2"
+    },
+    {
+      "path": "icons/arrow-left.svg",
+      "source": "crates/ui/assets/icons/arrow-left.svg",
+      "bytes": 210,
+      "sha256": "eea6efe94706720359fd2025460c70f8747a370f75a6d031966612efd359630f"
+    },
+    {
+      "path": "icons/arrow-right.svg",
+      "source": "crates/ui/assets/icons/arrow-right.svg",
+      "bytes": 213,
+      "sha256": "e02a7b2109059afb0ccd54d58b19b4f5dcfa3dc60649d841a9a0ab96fc44b337"
+    },
+    {
+      "path": "icons/arrow-up-right.svg",
+      "source": "crates/ui/assets/icons/arrow-up-right.svg",
+      "bytes": 240,
+      "sha256": "14997ff7d91f9408e009c447a243d0e17048a74161f5f976b1e32ee8fd099f62"
+    },
+    {
+      "path": "icons/arrow-up.svg",
+      "source": "crates/ui/assets/icons/arrow-up.svg",
+      "bytes": 229,
+      "sha256": "beb60b98b452649e4b0155d7ace191e9f6a8ca9015dd12a94b83024db5ad7457"
+    },
+    {
+      "path": "icons/bell.svg",
+      "source": "crates/ui/assets/icons/bell.svg",
+      "bytes": 487,
+      "sha256": "4b0e66f9e7147f9a548697c6aaf45487bb24b6aa36a74b29956d82ffaa357b8f"
+    },
+    {
+      "path": "icons/bot.svg",
+      "source": "crates/ui/assets/icons/bot.svg",
+      "bytes": 964,
+      "sha256": "a54fba38eb4ce981a49a5368b335a144c3b65bcf67d18c7c7d7d7c060fe63b62"
+    },
+    {
+      "path": "icons/calendar.svg",
+      "source": "crates/ui/assets/icons/calendar.svg",
+      "bytes": 340,
+      "sha256": "6db912fa1ab5dc0337e9e5844cb8f8a198d75f95acd6d6c2852107102d37229f"
+    },
+    {
+      "path": "icons/chat-round-line.svg",
+      "source": "crates/ui/assets/icons/chat-round-line.svg",
+      "bytes": 588,
+      "sha256": "4a5d187e9354ab7d0753f74204e60f49eb04e5490ef335eafa9865c0e8395114"
+    },
+    {
+      "path": "icons/check.svg",
+      "source": "crates/ui/assets/icons/check.svg",
+      "bytes": 196,
+      "sha256": "9cd0d8548a7b5468f0b5234e2c46ffeef109029d664a98238f15f4696f32b315"
+    },
+    {
+      "path": "icons/checklist.svg",
+      "source": "crates/ui/assets/icons/checklist.svg",
+      "bytes": 313,
+      "sha256": "538c92128ce0eec393d7cfc30f32070cf5ee1c57fa959f612c41253b15452098"
+    },
+    {
+      "path": "icons/claude-mark.svg",
+      "source": "crates/ui/assets/icons/claude-mark.svg",
+      "bytes": 1950,
+      "sha256": "bf611e1fdf533ea782208a2cec8972177b782024e2c8ec337d8ddac1799831a4"
+    },
+    {
+      "path": "icons/clock-circle.svg",
+      "source": "crates/ui/assets/icons/clock-circle.svg",
+      "bytes": 257,
+      "sha256": "128a24491ed80b77c873f1da3fc42cf1f25c7d674f09e0f99ce0c2d683e54b7b"
+    },
+    {
+      "path": "icons/close-circle.svg",
+      "source": "crates/ui/assets/icons/close-circle.svg",
+      "bytes": 240,
+      "sha256": "80773937af3b3f0532c667b9880f3e0f37fde1abd0e62d12329218c681f789ea"
+    },
+    {
+      "path": "icons/close.svg",
+      "source": "crates/ui/assets/icons/close.svg",
+      "bytes": 189,
+      "sha256": "1ecbdbc9bd61280af40c5a014d6044e53e3271b1b289d5f0c895630345119c96"
+    },
+    {
+      "path": "icons/cloud.svg",
+      "source": "crates/ui/assets/icons/cloud.svg",
+      "bytes": 276,
+      "sha256": "bd48e5253466bade2dac7eb809628ce0782a97e7d87680e98a93174a5f742a1c"
+    },
+    {
+      "path": "icons/collapse-arrows.svg",
+      "source": "crates/ui/assets/icons/collapse-arrows.svg",
+      "bytes": 217,
+      "sha256": "ef8ce350c6964058fad7e4b7c28aa1219e508bc4295a6afb7d9bc7a45a3a6d1c"
+    },
+    {
+      "path": "icons/command.svg",
+      "source": "crates/ui/assets/icons/command.svg",
+      "bytes": 267,
+      "sha256": "d8398eee05a0fdca229f4f480317fd9ecf2db10d736f880284ba370bd54cca12"
+    },
+    {
+      "path": "icons/copy.svg",
+      "source": "crates/ui/assets/icons/copy.svg",
+      "bytes": 630,
+      "sha256": "e0e4ed71602ffa96c656d26c89555655d35b74eedb120f1327744a809a55377a"
+    },
+    {
+      "path": "icons/cursor-mark.svg",
+      "source": "crates/ui/assets/icons/cursor-mark.svg",
+      "bytes": 547,
+      "sha256": "2a67464511cbe5f12fd32e7ce6a667573366a138233f844cb467184527aa51c4"
+    },
+    {
+      "path": "icons/cursor-square.svg",
+      "source": "crates/ui/assets/icons/cursor-square.svg",
+      "bytes": 1156,
+      "sha256": "13f8391207962e3fa99015cd17ad46f7dc6153b85c19fde5bac9a2b8912e177a"
+    },
+    {
+      "path": "icons/cursor.svg",
+      "source": "crates/ui/assets/icons/cursor.svg",
+      "bytes": 926,
+      "sha256": "165e502e778d0f76adb1139556741dfbf08e3719a12cc077560f2b1be2895995"
+    },
+    {
+      "path": "icons/danger-triangle.svg",
+      "source": "crates/ui/assets/icons/danger-triangle.svg",
+      "bytes": 479,
+      "sha256": "cf0a3b769d6338a8afd424308380940f4ba77cd50cc941c4feb2649df46c94b2"
+    },
+    {
+      "path": "icons/devin-mark.svg",
+      "source": "crates/ui/assets/icons/devin-mark.svg",
+      "bytes": 1454,
+      "sha256": "02eef3c3ae717a8f0d134510070404c1e67cf4319238335ba1579821e56c83bf"
+    },
+    {
+      "path": "icons/document-add.svg",
+      "source": "crates/ui/assets/icons/document-add.svg",
+      "bytes": 815,
+      "sha256": "084c2c86f72b14145f522e8c2121a438c49840a6157d00e062ffc569eb0740fc"
+    },
+    {
+      "path": "icons/document.svg",
+      "source": "crates/ui/assets/icons/document.svg",
+      "bytes": 396,
+      "sha256": "88cf7e4f389de4230ca0a706a7706cb3b7433612f7587f4fa34f37bf3301cd05"
+    },
+    {
+      "path": "icons/drag-handle.svg",
+      "source": "crates/ui/assets/icons/drag-handle.svg",
+      "bytes": 373,
+      "sha256": "4ad1f24c0e99df900c25b1f4123fb970eca348cd7e682722f2f5a06c50c448d6"
+    },
+    {
+      "path": "icons/expand-arrows.svg",
+      "source": "crates/ui/assets/icons/expand-arrows.svg",
+      "bytes": 215,
+      "sha256": "3b05a26c90655cee570977c21ddf644e95a836f92c19b24c2cb8d87d748dea07"
+    },
+    {
+      "path": "icons/eye-closed.svg",
+      "source": "crates/ui/assets/icons/eye-closed.svg",
+      "bytes": 306,
+      "sha256": "e5864fb40a3adfa9d26843c28c706cc9b9465f1c92570fbe231afe0868aa45dc"
+    },
+    {
+      "path": "icons/eye.svg",
+      "source": "crates/ui/assets/icons/eye.svg",
+      "bytes": 294,
+      "sha256": "4718d167ce1dbce7390a7812bbc10dc79f42e9a3e30d42edb009131842f4e67f"
+    },
+    {
+      "path": "icons/fast-tier-bold.svg",
+      "source": "crates/ui/assets/icons/fast-tier-bold.svg",
+      "bytes": 200,
+      "sha256": "6b878d682f572a5f41710a397246bc2f76e610b1562b25f6bac421aca2cde836"
+    },
+    {
+      "path": "icons/fast-tier.svg",
+      "source": "crates/ui/assets/icons/fast-tier.svg",
+      "bytes": 202,
+      "sha256": "248a2d0d8248066eddda8af647c92dd20993f89685116e8bbedc12771eb941bf"
+    },
+    {
+      "path": "icons/file-code.svg",
+      "source": "crates/ui/assets/icons/file-code.svg",
+      "bytes": 299,
+      "sha256": "b7137db92ad2ba9b52368ab41ae60fd8f4cc16b23571d0d977f1d1d72215cf2d"
+    },
+    {
+      "path": "icons/file-data.svg",
+      "source": "crates/ui/assets/icons/file-data.svg",
+      "bytes": 308,
+      "sha256": "38b4f548eb438beb17a2832163873a3931868e5404f3491d2c266ae5690c6e65"
+    },
+    {
+      "path": "icons/file-image.svg",
+      "source": "crates/ui/assets/icons/file-image.svg",
+      "bytes": 317,
+      "sha256": "c76a30eb981bc239065791bbdf072d01732ea49908411edc5596705a38dbd8c0"
+    },
+    {
+      "path": "icons/file-markdown.svg",
+      "source": "crates/ui/assets/icons/file-markdown.svg",
+      "bytes": 301,
+      "sha256": "1e31d404e01481c7cac711c73d5e503103db6679c2f934663e637c3f82359907"
+    },
+    {
+      "path": "icons/file-style.svg",
+      "source": "crates/ui/assets/icons/file-style.svg",
+      "bytes": 299,
+      "sha256": "eb920288f552bad7571a8481c7c8ea5fe337f1458d6f4e4effbb06ede7c67cdb"
+    },
+    {
+      "path": "icons/file-tree.svg",
+      "source": "crates/ui/assets/icons/file-tree.svg",
+      "bytes": 337,
+      "sha256": "014afcc525c2facfa7297e95d41ef18fbd2b2ad1a539a00e577b38747d19861e"
+    },
+    {
+      "path": "icons/floppy-disk.svg",
+      "source": "crates/ui/assets/icons/floppy-disk.svg",
+      "bytes": 314,
+      "sha256": "71a36ca85865f7d940607ca9d2fa9869f68a9aaa767180dcd6fab52421679815"
+    },
+    {
+      "path": "icons/fold-vertical.svg",
+      "source": "crates/ui/assets/icons/fold-vertical.svg",
+      "bytes": 250,
+      "sha256": "298505abe217d072f57918d52933d4908279a6b81b110e350b8df9d26fd2cdc3"
+    },
+    {
+      "path": "icons/folder-tree.svg",
+      "source": "crates/ui/assets/icons/folder-tree.svg",
+      "bytes": 1881,
+      "sha256": "d99950d4f0d15beb27c56006ed9217bf43377583d4ca47f23d42cd2ffd93f00b"
+    },
+    {
+      "path": "icons/folder-with-files.svg",
+      "source": "crates/ui/assets/icons/folder-with-files.svg",
+      "bytes": 689,
+      "sha256": "d36ed0f836ff379d90b9d2d7ea6e5b29a4e3c0102b0ddde5c4fdf15b443db648"
+    },
+    {
+      "path": "icons/folder.svg",
+      "source": "crates/ui/assets/icons/folder.svg",
+      "bytes": 273,
+      "sha256": "27e0e91c36d7f3d5318438532b731d2cd78e14623232867edd55164d235b1b9e"
+    },
+    {
+      "path": "icons/fork.svg",
+      "source": "crates/ui/assets/icons/fork.svg",
+      "bytes": 343,
+      "sha256": "71df00ffbac970aa2ba6752f6efd4356702d639351a48c1e058661aea0279971"
+    },
+    {
+      "path": "icons/gallery.svg",
+      "source": "crates/ui/assets/icons/gallery.svg",
+      "bytes": 335,
+      "sha256": "98b7ad14a33de1dd863e13e94ad96e9f97b99d9634da932cc3c68db535bc8753"
+    },
+    {
+      "path": "icons/git-branch.svg",
+      "source": "crates/ui/assets/icons/git-branch.svg",
+      "bytes": 322,
+      "sha256": "d25ac7700c86deb509d828c90c6dcd7b3e4eb8e8e0c78c0d62096a9504021932"
+    },
+    {
+      "path": "icons/github-mark.svg",
+      "source": "crates/ui/assets/icons/github-mark.svg",
+      "bytes": 671,
+      "sha256": "c4c1e0c359f5c393168df82c7a8cd4344fa7ca54530863516586f5c844739641"
+    },
+    {
+      "path": "icons/global.svg",
+      "source": "crates/ui/assets/icons/global.svg",
+      "bytes": 717,
+      "sha256": "3a9ae366b8fb81a9e92e1911d7f9142a4c1dd5b3134eb8f69812aa204b5b4fa8"
+    },
+    {
+      "path": "icons/globe.svg",
+      "source": "crates/ui/assets/icons/globe.svg",
+      "bytes": 1077,
+      "sha256": "2ec2a6c3cdda11dfc70624954f459da3a4cb1aa1661eb72aaad4998e7fbaa45f"
+    },
+    {
+      "path": "icons/grok-mark.svg",
+      "source": "crates/ui/assets/icons/grok-mark.svg",
+      "bytes": 979,
+      "sha256": "645aad7c24381c0ddcff60a499228f94ed311f466ce96d6f24df04bb68af01d6"
+    },
+    {
+      "path": "icons/hard-drive.svg",
+      "source": "crates/ui/assets/icons/hard-drive.svg",
+      "bytes": 499,
+      "sha256": "ba0e6200edf9410efa6c2a3096c63f81ec72f329a6135301a17a03c335f6f41e"
+    },
+    {
+      "path": "icons/hermes-mark.svg",
+      "source": "crates/ui/assets/icons/hermes-mark.svg",
+      "bytes": 19789,
+      "sha256": "614fad4dc0a309f7713f06174099ddbb107672350f4e4e1d3ba700f111e339d3"
+    },
+    {
+      "path": "icons/home.svg",
+      "source": "crates/ui/assets/icons/home.svg",
+      "bytes": 415,
+      "sha256": "f9aca184d39c887e4a1f9b2d7e01a32e6a5972abe603e0cc100e9373d81ca266"
+    },
+    {
+      "path": "icons/info-circle.svg",
+      "source": "crates/ui/assets/icons/info-circle.svg",
+      "bytes": 275,
+      "sha256": "27f89b132b292b452fa9675b9f5159cebc99b1995ffb55617585ed83ab9347b0"
+    },
+    {
+      "path": "icons/key-minimalistic.svg",
+      "source": "crates/ui/assets/icons/key-minimalistic.svg",
+      "bytes": 1812,
+      "sha256": "cc32ff8c48d69abb89e98fe2df0aa8c7893e7abed33ea91d2c3954239b30ee15"
+    },
+    {
+      "path": "icons/keyboard.svg",
+      "source": "crates/ui/assets/icons/keyboard.svg",
+      "bytes": 813,
+      "sha256": "6518b23103bdf89c3fd00e8d8a357a1001c2f327e18491c8724ead50ee28e5b1"
+    },
+    {
+      "path": "icons/laptop.svg",
+      "source": "crates/ui/assets/icons/laptop.svg",
+      "bytes": 666,
+      "sha256": "1f15017d2f89e816aa53b1084c6f6ff50e200f67293a0dccfba7e9d45ba4710b"
+    },
+    {
+      "path": "icons/list.svg",
+      "source": "crates/ui/assets/icons/list.svg",
+      "bytes": 199,
+      "sha256": "97850a4ee38b80b24b9041f985da3444573a2f6af0fba54ac8661e73d519ff38"
+    },
+    {
+      "path": "icons/logout-2.svg",
+      "source": "crates/ui/assets/icons/logout-2.svg",
+      "bytes": 483,
+      "sha256": "8c59680b06c68e1fdec35b3859a589d7f5549e4a1510c69ca70d5581b96f5717"
+    },
+    {
+      "path": "icons/magic-stick-3.svg",
+      "source": "crates/ui/assets/icons/magic-stick-3.svg",
+      "bytes": 2055,
+      "sha256": "9c8b8ba356cdef3618a29d90e372cb03960f4ac9f7eedc0e810412d9b16ca52b"
+    },
+    {
+      "path": "icons/magnifer.svg",
+      "source": "crates/ui/assets/icons/magnifer.svg",
+      "bytes": 239,
+      "sha256": "8b545e66aadfdf923cc877a45a09352ebca2bd1af3ee736f3c2259f4042dfcbc"
+    },
+    {
+      "path": "icons/microphone-off.svg",
+      "source": "crates/ui/assets/icons/microphone-off.svg",
+      "bytes": 357,
+      "sha256": "40e877718652286d1692ce5825751c4cb33a2ef69bd65461fb1815ab7b1fc393"
+    },
+    {
+      "path": "icons/microphone.svg",
+      "source": "crates/ui/assets/icons/microphone.svg",
+      "bytes": 286,
+      "sha256": "de3fc8d3986182778314234887902b78016f3f4a1270d07d74657f144d67e8d9"
+    },
+    {
+      "path": "icons/minus.svg",
+      "source": "crates/ui/assets/icons/minus.svg",
+      "bytes": 168,
+      "sha256": "b528abf78c51d7030e05b4d6cc030bb158b68f32b7562cd2c009816da72a8df8"
+    },
+    {
+      "path": "icons/monitor.svg",
+      "source": "crates/ui/assets/icons/monitor.svg",
+      "bytes": 419,
+      "sha256": "641770dd5413cc74475ab6e6378714dec25d9efcf6a0cfcf30930ee59c3e9874"
+    },
+    {
+      "path": "icons/moon.svg",
+      "source": "crates/ui/assets/icons/moon.svg",
+      "bytes": 1392,
+      "sha256": "7265da13b84870d430d5e20dcd4f4ee881545a50ac20f031ef5b8427af7afc1e"
+    },
+    {
+      "path": "icons/more-horizontal.svg",
+      "source": "crates/ui/assets/icons/more-horizontal.svg",
+      "bytes": 279,
+      "sha256": "2dec8205c861f5d4b4128ebe8fd8ab3b5b2b1f03d7342e6a2944de4216f63c4c"
+    },
+    {
+      "path": "icons/muse-mark.svg",
+      "source": "crates/ui/assets/icons/muse-mark.svg",
+      "bytes": 1587,
+      "sha256": "f3ebec03ee4116c0a3552befa8c51d9b30f79f75047c84f1bde903a7344e759f"
+    },
+    {
+      "path": "icons/openai-mark.svg",
+      "source": "crates/ui/assets/icons/openai-mark.svg",
+      "bytes": 1656,
+      "sha256": "fc418b32bf5625e1ab9ceb70cc8b2fa22e611dfe5773e82e8720ecf90477b797"
+    },
+    {
+      "path": "icons/opencode-mark.svg",
+      "source": "crates/ui/assets/icons/opencode-mark.svg",
+      "bytes": 259,
+      "sha256": "b3dd4cbf329f699d214e208c43ee1b3bbc67d8386c76a3c5b22f8774b3b1897d"
+    },
+    {
+      "path": "icons/palette-search.svg",
+      "source": "crates/ui/assets/icons/palette-search.svg",
+      "bytes": 227,
+      "sha256": "2befe35ef7e2ede1b093c222091aa608757d4b1236d0ed2ed7dc16e7a5175ff3"
+    },
+    {
+      "path": "icons/paperclip.svg",
+      "source": "crates/ui/assets/icons/paperclip.svg",
+      "bytes": 393,
+      "sha256": "38183a2be306a016ecc8f81ddd6df017b0a0bf3893c0023214c334762bf46110"
+    },
+    {
+      "path": "icons/pen-new-square.svg",
+      "source": "crates/ui/assets/icons/pen-new-square.svg",
+      "bytes": 785,
+      "sha256": "d5561f6b6287b40cdb66a7d727647b50fafe398c55579ce7e053fa91d7017e39"
+    },
+    {
+      "path": "icons/pen.svg",
+      "source": "crates/ui/assets/icons/pen.svg",
+      "bytes": 605,
+      "sha256": "355c54d20c22d014e9a74b155ffcbfc9b853a302a884b643541aa0598e615983"
+    },
+    {
+      "path": "icons/phone-hang-up.svg",
+      "source": "crates/ui/assets/icons/phone-hang-up.svg",
+      "bytes": 384,
+      "sha256": "1dad4e0a559d744ae3bb3e25a1495af93c6d25da66b7998e37886b856d2d2fb6"
+    },
+    {
+      "path": "icons/pi-mark.svg",
+      "source": "crates/ui/assets/icons/pi-mark.svg",
+      "bytes": 274,
+      "sha256": "102784ea6d06c522dfbc57875922c978790d8667a3d466afdb1c0cbcc13d6a38"
+    },
+    {
+      "path": "icons/pin.svg",
+      "source": "crates/ui/assets/icons/pin.svg",
+      "bytes": 259,
+      "sha256": "72b1b0633dfbdb3640406c90cc4a1110edb1d9a4558cba71522b1599ef2eec39"
+    },
+    {
+      "path": "icons/plus.svg",
+      "source": "crates/ui/assets/icons/plus.svg",
+      "bytes": 197,
+      "sha256": "4cc72553c06d46f498903ac6f00e7c1d62d428a994794117795651b6723a9cf4"
+    },
+    {
+      "path": "icons/project-default.svg",
+      "source": "crates/ui/assets/icons/project-default.svg",
+      "bytes": 355,
+      "sha256": "4614ad6a58e7eaa5c93d79d9e586d55e8395ec594a34132c22e705bb9c7586db"
+    },
+    {
+      "path": "icons/pull-request-draft.svg",
+      "source": "crates/ui/assets/icons/pull-request-draft.svg",
+      "bytes": 523,
+      "sha256": "4f711d1660d382711aba2e73f0f4420fbc275addaa3da8e41db6ef09db8b31f4"
+    },
+    {
+      "path": "icons/pull-request.svg",
+      "source": "crates/ui/assets/icons/pull-request.svg",
+      "bytes": 359,
+      "sha256": "02b6e2217c55d0448d17d90481e21ef704bd5da14ee591d648222badd27ae4a6"
+    },
+    {
+      "path": "icons/queue-check.svg",
+      "source": "crates/ui/assets/icons/queue-check.svg",
+      "bytes": 237,
+      "sha256": "0041249d24aa90e0abda48563e0862afc82e0e9d605d730d2fcd0832145078be"
+    },
+    {
+      "path": "icons/queue-close.svg",
+      "source": "crates/ui/assets/icons/queue-close.svg",
+      "bytes": 223,
+      "sha256": "b70a20906374caae66d18f7ca4f21e22a32fdfca06c3fd7c300362190df7c4aa"
+    },
+    {
+      "path": "icons/queue-drag-handle.svg",
+      "source": "crates/ui/assets/icons/queue-drag-handle.svg",
+      "bytes": 450,
+      "sha256": "e2e2987e8782b4a8030fd0dc887ed9de13ebef9ba889d07cfc230134454d4cb0"
+    },
+    {
+      "path": "icons/queue-paperclip.svg",
+      "source": "crates/ui/assets/icons/queue-paperclip.svg",
+      "bytes": 533,
+      "sha256": "bc0e02402c5fb38f80395a5e3b690313222f76f332c6a2a5afd8d1b4a392fcb4"
+    },
+    {
+      "path": "icons/queue-send.svg",
+      "source": "crates/ui/assets/icons/queue-send.svg",
+      "bytes": 335,
+      "sha256": "5eba164c0977268ddae33bbbeed7c48bc88eec41dc9080915bbaef66cba44041"
+    },
+    {
+      "path": "icons/refresh.svg",
+      "source": "crates/ui/assets/icons/refresh.svg",
+      "bytes": 566,
+      "sha256": "4bc3ae391df9804da82fdf8a3c175a53a7c01baff6c0b73916bdf8b964e05781"
+    },
+    {
+      "path": "icons/remote-server.svg",
+      "source": "crates/ui/assets/icons/remote-server.svg",
+      "bytes": 1720,
+      "sha256": "2f92eebb58f83f659af5d22f9c28f92cd55db68024dc7ece1b38f7526c3f3371"
+    },
+    {
+      "path": "icons/restart.svg",
+      "source": "crates/ui/assets/icons/restart.svg",
+      "bytes": 282,
+      "sha256": "09c3af07db6b4db44e1816e61ac6d489fd308fe8b8de267fe52246fe3e246265"
+    },
+    {
+      "path": "icons/return.svg",
+      "source": "crates/ui/assets/icons/return.svg",
+      "bytes": 245,
+      "sha256": "1c65d6a466978629b2138e81d7f2b5d5c365c70bde24788e6db7dc8f25ee7d08"
+    },
+    {
+      "path": "icons/settings-minimalistic.svg",
+      "source": "crates/ui/assets/icons/settings-minimalistic.svg",
+      "bytes": 648,
+      "sha256": "cf60b9de64c9e4b08b38cc8f7e43b302b11fbfba9527b2a7e90edd240b4a31ed"
+    },
+    {
+      "path": "icons/settings.svg",
+      "source": "crates/ui/assets/icons/settings.svg",
+      "bytes": 1683,
+      "sha256": "d3c82aea72e9a0eefc2645010b9df89c4b30f2c61aa01e00ec667ea22271123c"
+    },
+    {
+      "path": "icons/smartphone.svg",
+      "source": "crates/ui/assets/icons/smartphone.svg",
+      "bytes": 385,
+      "sha256": "c904a1e51e92889f0c200bb9096b419143c6460f1ea8adcacf7ac454d8a4a52f"
+    },
+    {
+      "path": "icons/sort-vertical.svg",
+      "source": "crates/ui/assets/icons/sort-vertical.svg",
+      "bytes": 270,
+      "sha256": "34b197d69a2c48e4b2ef88fb594939b19fe98b5054559736fdf95a068799991f"
+    },
+    {
+      "path": "icons/sort.svg",
+      "source": "crates/ui/assets/icons/sort.svg",
+      "bytes": 202,
+      "sha256": "3ef12b53672105dedcba981f448e67bd4fe6925deebe73d5a590f76175ca8673"
+    },
+    {
+      "path": "icons/split-columns.svg",
+      "source": "crates/ui/assets/icons/split-columns.svg",
+      "bytes": 392,
+      "sha256": "aae8b57242ecb4dbcb4e0e5a77f3926bb17d9690fe2343e90a5264444110750a"
+    },
+    {
+      "path": "icons/star-bold.svg",
+      "source": "crates/ui/assets/icons/star-bold.svg",
+      "bytes": 310,
+      "sha256": "f0e37d803f7007425ae427ca140ced7e440417de1aeb7ae12ca71cd0dcea8158"
+    },
+    {
+      "path": "icons/star.svg",
+      "source": "crates/ui/assets/icons/star.svg",
+      "bytes": 302,
+      "sha256": "b58373f11a87cc1d61a2e8ece4115d71e3d468d59f5bf538cf93fcf5180fb247"
+    },
+    {
+      "path": "icons/stop.svg",
+      "source": "crates/ui/assets/icons/stop.svg",
+      "bytes": 135,
+      "sha256": "08b7f37cd199244903fb98756602374d7b46722cb77fee15c7ea1f86e3cb2bfe"
+    },
+    {
+      "path": "icons/sun.svg",
+      "source": "crates/ui/assets/icons/sun.svg",
+      "bytes": 965,
+      "sha256": "1695e34d2449cd9aadda1fa7c0fffaa9b9fbd13dbf2594f2e583d949d46fc112"
+    },
+    {
+      "path": "icons/tag.svg",
+      "source": "crates/ui/assets/icons/tag.svg",
+      "bytes": 402,
+      "sha256": "7ea9d7e39b0013d7c3b4491a01e752257ccc527675e366309a447c34d9015a33"
+    },
+    {
+      "path": "icons/terminal.svg",
+      "source": "crates/ui/assets/icons/terminal.svg",
+      "bytes": 401,
+      "sha256": "05877ed5372c8de4269793791593c3455095e5df50bef532b239f7ca3cdec5f1"
+    },
+    {
+      "path": "icons/trash-bin-minimalistic.svg",
+      "source": "crates/ui/assets/icons/trash-bin-minimalistic.svg",
+      "bytes": 391,
+      "sha256": "eb1b8d71e9a53d6eb03cbfd29d8fba5018ea9cad7da8dc6405513c83c8071139"
+    },
+    {
+      "path": "icons/tuning.svg",
+      "source": "crates/ui/assets/icons/tuning.svg",
+      "bytes": 307,
+      "sha256": "e32e9cd6b55f6df08adfedd66c3bd773f04503bd7495f6f31b706fdeca3bd094"
+    },
+    {
+      "path": "icons/volume-loud.svg",
+      "source": "crates/ui/assets/icons/volume-loud.svg",
+      "bytes": 596,
+      "sha256": "bba59afb1e6a8134204b0670ca57487da378831e6b6f28f48880fc695e7729c3"
+    },
+    {
+      "path": "icons/wallet.svg",
+      "source": "crates/ui/assets/icons/wallet.svg",
+      "bytes": 392,
+      "sha256": "0376e540037f102e247a1c09dd6a071cbdca3e9068298d9985f87360964e8dff"
+    },
+    {
+      "path": "icons/widget.svg",
+      "source": "crates/ui/assets/icons/widget.svg",
+      "bytes": 847,
+      "sha256": "445ea6b6d7d69a7683a6b072fc6e9cc1cb199169f8c5d8af660c1c9f922990ad"
+    },
+    {
+      "path": "icons/wifi-off.svg",
+      "source": "crates/ui/assets/icons/wifi-off.svg",
+      "bytes": 460,
+      "sha256": "9d70d5d922fd520fc7a2a8222a393361602ac002371bf8d4d8afddb4604b1316"
+    },
+    {
+      "path": "icons/window-maximize.svg",
+      "source": "crates/ui/assets/icons/window-maximize.svg",
+      "bytes": 204,
+      "sha256": "67ced2b224a3692bfc1bfc4dcd4611ac7c18a98bce0105073f99747403955cf7"
+    },
+    {
+      "path": "icons/window-minimize.svg",
+      "source": "crates/ui/assets/icons/window-minimize.svg",
+      "bytes": 168,
+      "sha256": "392b0b27fc16907f719f829f6042ee4bf959e920e2ff662d3f9babd9e9f89584"
+    },
+    {
+      "path": "icons/window-restore.svg",
+      "source": "crates/ui/assets/icons/window-restore.svg",
+      "bytes": 318,
+      "sha256": "89d970ac36bb5c7712a3ddc845eccd4532cfea57bff38575ea7b2e33d60db295"
+    },
+    {
+      "path": "icons/worktree.svg",
+      "source": "crates/ui/assets/icons/worktree.svg",
+      "bytes": 329,
+      "sha256": "97b2c02f06d78427e0bf2233e8f578cdafd2fd854505b26f90c0166f6c1e0031"
+    },
+    {
+      "path": "icons/wrap-text.svg",
+      "source": "crates/ui/assets/icons/wrap-text.svg",
+      "bytes": 570,
+      "sha256": "01b943a4c67d568f0633f206877910f4a1ef8dd8bc22a598d3761de2b0b08f77"
+    },
+    {
+      "path": "icons/zeron-logo.svg",
+      "source": "crates/ui/assets/icons/zeron-logo.svg",
+      "bytes": 1982,
+      "sha256": "ebe6d980be6c76503c18d99f2c9e7ceba9ffb695fab72d0f75a45d9bcb69ce8a"
+    }
+  ]
+}

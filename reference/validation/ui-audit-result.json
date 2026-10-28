@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-10-28T05:30:34.1463904Z",
+  "referenceComparison": "pending",
+  "schemaVersion": 1,
+  "sourceFiles": 158,
+  "files": [
+    {
+      "path": "build/ui-audit/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "6ce841018008cd159db4f4edae19af764d111d82843cd3b2f72cc8ce5f23f1be"
+    },
+    {
+      "path": "build/ui-audit/Zeron-0.1.0-windows-amd64.zip",
+      "sha256": "b7676f0c7922e457269fa4a61ffd1450b69abacbd92e28a2e8742c70d412c5b3"
+    },
+    {
+      "path": "build/ui-audit/Zeron-0.1.0-darwin-amd64.zip",
+      "sha256": "f77986a164993df1dc0ba2f2f5064e0bfef3fb26bb19982cbaa4b263e3c57373"
+    },
+    {
+      "path": "build/ui-audit/Zeron-0.1.0-darwin-arm64.zip",
+      "sha256": "1fd95410978e08255e82f2d3f5d049d9bc0e336519cedf095e651e4d47b5e566"
+    },
+    {
+      "path": "build/ui-audit/Zeron-0.1.0-darwin-universal.zip",
+      "sha256": "21a818ee5eb8c8469841c8a85b15cb025eb9e7e438e45b8314376897b08fab48"
+    },
+    {
+      "path": "build/ui-audit/windows-amd64/Zeron.exe",
+      "sha256": "985e8bc8107946781acea040f2eaba76f3b9c27d7a8a45ff904900f68d1b12c3"
+    },
+    {
+      "path": "output/audit-validation/build.log",
+      "sha256": "efd45a739c7c1dcbf16f6c022dea317c0c230958a72c488454862aa3229f9b70"
+    },
+    {
+      "path": "output/audit-validation/lint.log",
+      "sha256": "bc1988bf921b4da8e4a985cb6772edad177c0e408118ea21fcf3a645e1fdc016"
+    },
+    {
+      "path": "output/audit-validation/race.log",
+      "sha256": "25687d77c33793cc5fbff841f439283761db00f5812f2e32c824b4c38fc21750"
+    },
+    {
+      "path": "output/install-smoke-20261028-132918/result.json",
+      "sha256": "50043c061ee828695b3caacee4a4b9eae2ab8d7bacf7414359b7a635b48c551c"
+    }
+  ],
+  "knownLimits": "See five granular audits and acceptance-report.md",
+  "nativeVisualAcceptance": false,
+  "sourceUnchangedDuringFinalBuildAndRace": true,
+  "macNativeRuntime": "pending on both architectures",
+  "implementationCaptures": 79,
+  "checks": {
+    "packages": "passed / windows amd64, darwin amd64, arm64, universal",
+    "lint": "passed / 0 issues",
+    "goTest": "passed",
+    "windowsInstall": "passed-install-start-capture",
+    "goVet": "passed",
+    "mygoVet": "passed",
+    "race": "passed / contracts, mock, desktop, workbench",
+    "originalShortcutUnchanged": true
+  },
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "frameworkPatchRevision": "zeron-native-ui.2",
+  "reviewProcess": {
+    "processId": 15216,
+    "sha256": "985e8bc8107946781acea040f2eaba76f3b9c27d7a8a45ff904900f68d1b12c3",
+    "status": "process-running",
+    "executable": "build/ui-audit/windows-amd64/Zeron.exe",
+    "scenario": "default"
+  }
+}

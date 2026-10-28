@@ -1,0 +1,20 @@
+{
+  "diagramOutlines": {
+    "manifest": "internal/assets/data/artifacts/diagram-manifest.json",
+    "rasterized": false,
+    "rawOutputs": "reference/mermaid/raw",
+    "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+    "textToPaths": "original usvg0.46.0/fontdb0.23.0 pipeline with all16 original Geist/GeistMono faces"
+  },
+  "generatedAgainstCommit": "bf6d71aaaf00cc1e6f97d8daf4ccb2bbd0b4414f",
+  "nativeVisualAcceptance": "pending",
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "sourceUnchangedOnBaselineUpdate": true,
+  "sourceVersion": "0.2.128",
+  "verification": "git diff between the two commits returned no changes for these paths",
+  "verifiedPaths": [
+    "crates/zatex",
+    "crates/ui/src/markdown/mermaid.rs",
+    "crates/theme/src/builtins.rs"
+  ]
+}

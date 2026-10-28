@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "version": "0.2.128",
+  "platform": "windows-amd64",
+  "status": "compiled-only",
+  "example": "sidebar-fixture",
+  "features": [
+    "project-palette-fixture"
+  ],
+  "executable": "output/reference-native/target/debug/examples/sidebar-fixture.exe",
+  "bytes": 237471744,
+  "sha256": "e02e8caaf1c8b4f37ee355d5d0af2b733ca329529206adcdb295e2d680ea9bdc",
+  "compiledAt": "2026-10-28T03:36:11.2299162Z",
+  "launched": false,
+  "nativeReferenceCapture": "pending",
+  "log": "output/reference-native-0.2.128-build.log",
+  "limitations": [
+    "Fixture is unmodified source, default window1100x800/sidebar310.",
+    "No native window was launched or automated.",
+    "Compilation alone does not establish screenshot parity."
+  ]
+}

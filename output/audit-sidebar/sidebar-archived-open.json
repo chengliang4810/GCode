@@ -1,0 +1,13 @@
+{
+  "kind": "MyGo ui.NewTester implementation render",
+  "Width": 1320,
+  "Height": 880,
+  "geometry": {
+    "Conversation pane": {
+      "X": 256,
+      "Y": 38,
+      "W": 1064,
+      "H": 842
+    }
+  }
+}

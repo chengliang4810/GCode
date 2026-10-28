@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -440,6 +441,8 @@ func TestRecycledStateIsFresh(t *testing.T) {
 	if !gone[a] {
 		t.Fatal("a's state is not free")
 	}
+	// Away from where b shows, which would hover, building it again.
+	tt.Move(150, 150)
 	key = "b"
 	tt.Frame()
 	if !gone[st] {
@@ -447,6 +450,32 @@ func TestRecycledStateIsFresh(t *testing.T) {
 	}
 	if st.scrollY != 0 || st.clicks != 0 || inits != 2 || *st.locals["n"].(*int) != 2 {
 		t.Errorf("b took a's scroll offset %v, clicks %d, or local (%d inits)", st.scrollY, st.clicks, inits)
+	}
+}
+
+// TestKeyLeavesNoStateBehind checks that elements Key gives an identity
+// keep no state in their places among their siblings: a frame of keyed
+// rows makes no state, and keeps none, but theirs.
+func TestKeyLeavesNoStateBehind(t *testing.T) {
+	keys := make([]any, 400) // more than the engine keeps free
+	for i := range keys {
+		keys[i] = i
+	}
+	tt := coreNewTester(func(c *context) {
+		for _, k := range keys {
+			coreRow(c).Key(k).Size(10, 1)
+		}
+	}, 200, 200)
+	tt.Frame()
+	n := len(tt.rt.states)
+	if n > len(keys)+2 { // the rows, the root and the overlay at most
+		t.Errorf("%d states for %d keyed rows", n, len(keys))
+	}
+	if allocs := testing.AllocsPerRun(10, tt.Frame); allocs >= float64(len(keys)-maxFree) {
+		t.Errorf("a frame of %d keyed rows allocates %v times", len(keys), allocs)
+	}
+	if len(tt.rt.states) != n {
+		t.Errorf("%d states, then %d", n, len(tt.rt.states))
 	}
 }
 
@@ -523,5 +552,48 @@ func TestHoverWhilePressed(t *testing.T) {
 	tt.Frame()
 	if removes != 1 {
 		t.Errorf("%d clicks of the button, released away from it", removes)
+	}
+}
+
+// TestHoverFollowsLayout checks that what the frame moves under a pointer
+// standing still hovers, with no event from the pointer: a row removed,
+// the one taking its place hovers (#585).
+func TestHoverFollowsLayout(t *testing.T) {
+	items := []int{1, 2, 3}
+	hovered := map[int]bool{}
+	tt := coreNewTester(func(c *context) {
+		remove := -1
+		clear(hovered)
+		coreColumn(c).Children(func() {
+			for i, id := range items {
+				row := coreRow(c).Key(id).Size(200, 40)
+				hovered[id] = row.Hovered()
+				row.Children(func() {
+					coreText(c, fmt.Sprint("Item ", id)).Grow(1)
+					if hovered[id] && coreButton(c, fmt.Sprint("Delete ", id)).Cursor(CursorPointer).Clicked() {
+						remove = i
+					}
+				})
+			}
+		})
+		if remove >= 0 {
+			items = slices.Delete(items, remove, remove+1)
+			c.Invalidate()
+		}
+	}, 300, 200)
+	tt.Move(150, 20)
+	r, ok := tt.Find("Delete 1")
+	if !ok {
+		t.Fatalf("no button on the hovered row; texts %q", tt.Texts())
+	}
+	tt.ClickAt(r.X+r.W/2, r.Y+r.H/2)
+	if len(items) != 2 || items[0] != 2 {
+		t.Fatalf("items %v after the click", items)
+	}
+	if !hovered[2] || !tt.HasText("Delete 2") {
+		t.Error("the row moved under the pointer does not hover")
+	}
+	if tt.Cursor() != CursorPointer {
+		t.Errorf("cursor %v over the button moved under the pointer", tt.Cursor())
 	}
 }

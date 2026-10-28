@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "noticeSha256": "410dec01b54f729026003bf25c5c8356be84a87408cf6fd6ce2f8d9c36945d67",
+  "files": [
+    {
+      "path": "OPEN-ITEMS.md",
+      "bytes": 1958,
+      "sha256": "a1b90a8037ffd6bbe2ea4e142b2b64d4a77048c83756c113f127287e14796b5f",
+      "source": "project-maintained unresolved provenance inventory; no license grant"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4844,
+      "sha256": "ca832fe72db673afd7b8335faa72823e94a321b92a1f68f3b0addbdfafaf0472",
+      "source": "project-maintained component/source index; no substituted license terms"
+    },
+    {
+      "path": "artwork/image-thumbnail-MIT.txt",
+      "bytes": 1036,
+      "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3",
+      "source": "internal/assets/data/artifacts/notices/image-thumbnail.MIT (verbatim supplied source text)"
+    },
+    {
+      "path": "fonts/GUST-FONT-LICENSE.txt",
+      "bytes": 1486,
+      "sha256": "8f74cd02b30bfbe11953b5b4f48f1b90d54aceef5b93abc3898b82652e5858e1",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/zatex/fonts/GUST-FONT-LICENSE.txt"
+    },
+    {
+      "path": "fonts/GUST-font-metadata.json",
+      "bytes": 983,
+      "sha256": "6a64d06c3c285a71e51b6a7b67a520467910b8d015fd7bc385f5da3f58a4bd5a",
+      "source": "verbatim sfnt name-table fields from the two reference GUST OTFs; paths and font hashes recorded inside"
+    },
+    {
+      "path": "fonts/Geist-NOTICE.md",
+      "bytes": 371,
+      "sha256": "7ffc918629f61b5c90986ce06f540ecf8b61d04c355fb2f071d55c1a6289f236",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/ui/assets/fonts/licenses/THIRD_PARTY_NOTICES.md"
+    },
+    {
+      "path": "fonts/Geist-OFL.txt",
+      "bytes": 4476,
+      "sha256": "dbc009cef0eae803f38a627911ea08fd96a283702b0302bb4d47067952ae3f95",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/ui/assets/fonts/licenses/Geist-OFL.txt"
+    },
+    {
+      "path": "fonts/LPPL-1.3c.txt",
+      "bytes": 19102,
+      "sha256": "3d262cdf34dafa6955f703c634a8c238ec44109bc8dd6ef34fb7aa54809f7e66",
+      "source": "https://www.latex-project.org/lppl/lppl-1-3c.txt"
+    },
+    {
+      "path": "fonts/OFL-EulerMath.txt",
+      "bytes": 4598,
+      "sha256": "35d5cd8d010ac8193ed52db877887a1d7e06069a161294852df42d4fd2fb5e81",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/zatex/fonts/OFL-EulerMath.txt"
+    },
+    {
+      "path": "fonts/OFL-FiraMath.txt",
+      "bytes": 4459,
+      "sha256": "7fb0519c8c0260b29dea27a20d96e5d8a7e15c2412850eafd01a063067dab296",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/zatex/fonts/OFL-FiraMath.txt"
+    },
+    {
+      "path": "fonts/OFL-LibertinusMath.txt",
+      "bytes": 4520,
+      "sha256": "311f0767d94c7490a5553682e4b701deb14072dd9bd1c67f80eb637f5575f866",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/zatex/fonts/OFL-LibertinusMath.txt"
+    },
+    {
+      "path": "fonts/OFL-STIXTwoMath.txt",
+      "bytes": 4990,
+      "sha256": "712fef1963774a9f9048377de899d0dfbcafbf3d9800bd70c79d7e55f7c73390",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/zatex/fonts/OFL-STIXTwoMath.txt"
+    },
+    {
+      "path": "go/Go-runtime-BSD-3-Clause.txt",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "go1.27.3 selected toolchain/LICENSE"
+    },
+    {
+      "path": "go/Go-runtime-PATENTS.txt",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "source": "go1.27.3 selected toolchain/PATENTS"
+    },
+    {
+      "path": "go/go-text-harfbuzz-MIT.txt",
+      "bytes": 1674,
+      "sha256": "e45d96558ba3d406f95dffed6f22c3be07093475ef617bcfddf88444d6b66788",
+      "source": "github.com/go-text/typesetting@v0.3.5/harfbuzz/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/go-text-typesetting-LICENSE.txt",
+      "bytes": 3006,
+      "sha256": "6b1bf94c77d7faa0ce94f8745595bfaf4c404f8b3873f5c2ce55ca15f8e44eca",
+      "source": "github.com/go-text/typesetting@v0.3.5/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/go-text-typesetting-utils-test-only-LICENSE.txt",
+      "bytes": 3005,
+      "sha256": "a1e5b69b12756927cfe3b3a373df05a55c1aaa69c6b259e06d8746257cb17d06",
+      "source": "github.com/go-text/typesetting-utils@v0.0.0-20260419141703-4ffe8874dabc/LICENSE (local module cache; test only)"
+    },
+    {
+      "path": "go/purego-Apache-2.0.txt",
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "source": "github.com/ebitengine/purego@v0.11.1/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/x-image-BSD-3-Clause.txt",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "golang.org/x/image@v0.46.0/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/x-image-PATENTS.txt",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "source": "golang.org/x/image@v0.46.0/PATENTS (local module cache)"
+    },
+    {
+      "path": "go/x-net-BSD-3-Clause.txt",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "golang.org/x/net@v0.59.0/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/x-net-PATENTS.txt",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "source": "golang.org/x/net@v0.59.0/PATENTS (local module cache)"
+    },
+    {
+      "path": "go/x-text-BSD-3-Clause.txt",
+      "bytes": 1453,
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+      "source": "golang.org/x/text@v0.43.0/LICENSE (local module cache)"
+    },
+    {
+      "path": "go/x-text-PATENTS.txt",
+      "bytes": 1303,
+      "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+      "source": "golang.org/x/text@v0.43.0/PATENTS (local module cache)"
+    },
+    {
+      "path": "icons/CC-BY-4.0.txt",
+      "bytes": 18657,
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "source": "https://creativecommons.org/licenses/by/4.0/legalcode.txt"
+    },
+    {
+      "path": "icons/Solar-ATTRIBUTION.md",
+      "bytes": 722,
+      "sha256": "8046606b3940a7d0bd9aff5eda562f96baff40d5516c74a7ab4c65c915f573c2",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/ui/src/icons.rs attribution, with replica drawing changes stated"
+    },
+    {
+      "path": "icons/Symbols-LICENSE.txt",
+      "bytes": 1095,
+      "sha256": "1560fd1c2965e331018fd96d5b76eaa31877c1170dd58da31f14090a921d03d0",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/crates/ui/assets/file-icons/LICENSE.symbols"
+    },
+    {
+      "path": "mygo/LICENSE.txt",
+      "bytes": 1074,
+      "sha256": "f0b56f4ab53beb6e18c5e155219c2e2b6000b5475c0ae3ddb3af3894fd9349b4",
+      "source": "github.com/egoist/mygo@v0.6.4/LICENSE (fixed local source copy)"
+    },
+    {
+      "path": "native/Ghostty-MIT.txt",
+      "bytes": 1097,
+      "sha256": "386211873e5b7a02f663ae4d7adf96285999f91608f8f9f31fecfd0f4095e6f1",
+      "source": "https://raw.githubusercontent.com/ghostty-org/ghostty/befcdfd2c3a1cb24d9ec886e93c95b2b5daa7028/LICENSE"
+    },
+    {
+      "path": "native/Highway-Apache-2.0.txt",
+      "bytes": 11356,
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+      "source": "https://raw.githubusercontent.com/google/highway/66486a10623fa0d72fe91260f96c892e41aceb06/LICENSE"
+    },
+    {
+      "path": "native/PROVENANCE.md",
+      "bytes": 2628,
+      "sha256": "ead9d52c1cc8a0d650c973f01eaa99af2f7da204bcffc663e919ec9c185f696d",
+      "source": "project-maintained source inspection record; pinned Ghostty build source paths recorded inside"
+    },
+    {
+      "path": "native/Wuffs-Apache-2.0.txt",
+      "bytes": 10174,
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "source": "https://raw.githubusercontent.com/google/wuffs-mirror-release-c/7411f488fe2e2c205c3d3b3d28638b7356522930/LICENSE-APACHE"
+    },
+    {
+      "path": "native/Wuffs-MIT.txt",
+      "bytes": 1057,
+      "sha256": "bb811a4b485eac3caeb8bdc58bbafb355fbcb6116010a7ea9179e5c70b0bc878",
+      "source": "https://raw.githubusercontent.com/google/wuffs-mirror-release-c/7411f488fe2e2c205c3d3b3d28638b7356522930/LICENSE-MIT"
+    },
+    {
+      "path": "native/ghostty-vt-manifest.json",
+      "bytes": 1934,
+      "sha256": "2d7c464140e016bf4790671bcd4e61af8995c75a86e491f347297b1a637a29a4",
+      "source": "github.com/egoist/mygo@v0.6.4/plugins/terminal/mygo-plugin.json (verbatim local source)"
+    },
+    {
+      "path": "native/simdutf-9.0.0-Apache-2.0.txt",
+      "bytes": 11330,
+      "sha256": "3d34610fc6b5e1b0bfe4e2f36171c2d62c28ef05cb8d704f5a0073be41a43b3d",
+      "source": "https://raw.githubusercontent.com/simdutf/simdutf/v9.0.0/LICENSE-APACHE"
+    },
+    {
+      "path": "native/simdutf-9.0.0-MIT.txt",
+      "bytes": 1059,
+      "sha256": "fc8dbc04e03ad4efc08a647ffe7f995b811a95bc04c0e85a56d5277c6593fa5f",
+      "source": "https://raw.githubusercontent.com/simdutf/simdutf/v9.0.0/LICENSE-MIT"
+    },
+    {
+      "path": "native/uucode-Bjoern-Hoehrmann-MIT.txt",
+      "bytes": 1140,
+      "sha256": "de219cece932aad5a817bf763393d8d149d378a15d2ad5320e3331eac07626dd",
+      "source": "https://raw.githubusercontent.com/jacobsandlund/uucode/9d55524551411b493cca41ca06363625d90aff1e/licenses/LICENSE_Bjoern_Hoehrmann"
+    },
+    {
+      "path": "native/uucode-LICENSE.md",
+      "bytes": 1298,
+      "sha256": "312e901e142be2477b4ca859e9311f9e3f80d33372991759b7921c1893605f33",
+      "source": "https://raw.githubusercontent.com/jacobsandlund/uucode/9d55524551411b493cca41ca06363625d90aff1e/LICENSE.md"
+    },
+    {
+      "path": "native/uucode-Unicode.txt",
+      "bytes": 2032,
+      "sha256": "1eda5a3b026870c737b22e8bcd4954338612c790db688242e003f41a4fa95175",
+      "source": "https://raw.githubusercontent.com/jacobsandlund/uucode/9d55524551411b493cca41ca06363625d90aff1e/licenses/LICENSE_unicode"
+    },
+    {
+      "path": "renderers/PROVENANCE.md",
+      "bytes": 1572,
+      "sha256": "4a46c48dfc4132ea7fbec3ce945a8c7017dfc207e406f9b141f58fc383ef3c95",
+      "source": "project-maintained vector generation record, based on frozen reference source and artifact manifests"
+    },
+    {
+      "path": "renderers/fontdb-0.23.0-MIT.txt",
+      "bytes": 1083,
+      "sha256": "59a1fdac3bd550043599bd159fd70f09a1108c2b09e3751d39b11e1ff8e51f00",
+      "source": "fontdb-0.23.0/LICENSE (local Cargo registry)"
+    },
+    {
+      "path": "renderers/mermaid-rs-renderer-0.3.1-MIT.txt",
+      "bytes": 1089,
+      "sha256": "57ed7943c34463678a150769d4a4f6c95d2a190fe2c1977f74bc883492c94b86",
+      "source": "mermaid-rs-renderer-0.3.1/LICENSE (local Cargo registry)"
+    },
+    {
+      "path": "renderers/rustybuzz-0.20.1-MIT.txt",
+      "bytes": 1117,
+      "sha256": "3a7c3f0b887abb7c638faf022d29257418458614c6724b120ceeffb279f9c7d2",
+      "source": "rustybuzz-0.20.1/LICENSE (local Cargo registry)"
+    },
+    {
+      "path": "renderers/ttf-parser-0.25.1-Apache-2.0.txt",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "source": "ttf-parser-0.25.1/LICENSE-APACHE (local Cargo registry)"
+    },
+    {
+      "path": "renderers/ttf-parser-0.25.1-MIT.txt",
+      "bytes": 1061,
+      "sha256": "f3c9fe731c701ed77fd5fbaac573872af04dc5869385eb9bd5e3c73c42713814",
+      "source": "ttf-parser-0.25.1/LICENSE-MIT (local Cargo registry)"
+    },
+    {
+      "path": "renderers/usvg-0.46.0-Apache-2.0.txt",
+      "bytes": 10173,
+      "sha256": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+      "source": "usvg-0.46.0/LICENSE-APACHE (local Cargo registry)"
+    },
+    {
+      "path": "renderers/usvg-0.46.0-MIT.txt",
+      "bytes": 1057,
+      "sha256": "f5d934dc281b44e0003ee461ac740b18b6629a454decd872c774d34e4ee0b21d",
+      "source": "usvg-0.46.0/LICENSE-MIT (local Cargo registry)"
+    },
+    {
+      "path": "themes/Zeron-theme-adaptations-NOTICES.md",
+      "bytes": 6082,
+      "sha256": "a9ce4c030e279e949122aea72e592e13025174fc6c6ebb8c9a9cc12ab0eb1ee6",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/THIRD_PARTY_NOTICES.md, complete Bundled theme palette adaptations section"
+    },
+    {
+      "path": "themes/iTerm2-Color-Schemes-MIT.txt",
+      "bytes": 1244,
+      "sha256": "bddc663c9774e998502e82633e5b7a436e1bbebcbc3ec1314d80e0360b08d805",
+      "source": "github.com/egoist/mygo@v0.6.4/plugins/terminal/ghostty_themes.go, original complete license comment with comment markers removed"
+    },
+    {
+      "path": "zeron/LICENSE.txt",
+      "bytes": 1082,
+      "sha256": "2c46b021915b3fd3dafc4e87b5c0ad38afb7f4e95cdd9fab1fd9e71c1f7c2a83",
+      "source": "Zeron@ab189159f10cf8e63c0502be75a59bbc487e0eaf/LICENSE"
+    }
+  ]
+}

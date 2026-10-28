@@ -2,7 +2,20 @@
 <img width="800" height="360" alt="MyGo!!!!!" src="https://github.com/user-attachments/assets/c3eee9bc-5f22-4032-95b6-776e8381910a" />
 </p>
 
-**Desktop apps in Go, with a web frontend or a native UI.**
+**Desktop apps in Go, with native UI or a web frontend.**
+
+Sponsored by:
+
+<p align="center">
+  <a href="https://openuptime.app/?utm_source=github&utm_medium=sponsor&utm_campaign=mygo">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://openuptime.app/sponsor/banner-dark.png">
+      <img width="600" alt="OpenUptime: open-source uptime monitoring and status pages" src="https://openuptime.app/sponsor/banner-light.png">
+    </picture>
+  </a>
+</p>
+
+---
 
 Each MyGo window shows one of two kinds of interface, and one app, or one
 window, can mix them:
@@ -27,7 +40,8 @@ memory and CPU use.
   on every platform with the glass plugin; web pages inside native UI, under
   the menus and dialogs it shows over them.
 - **Desktop APIs** for both: windows, menus, tray, dialogs, notifications,
-  global shortcuts, deep links, file associations and more.
+  global shortcuts, deep links, file associations, recent documents, the
+  system accent color and accessibility settings, watching files, and more.
 - **Ready to ship**: app bundles and disk images, Windows installers, Debian
   packages and a Linux install script, code signing, notarization, and signed
   auto-updates with delta updates and an update window in the manner of
@@ -88,7 +102,7 @@ func main() {
 
 ## Getting started
 
-With [Go](https://go.dev/dl/) 1.27+ and [Bun](https://bun.sh), create an app
+With [Go](https://go.dev/dl/) 1.27.3+ and [Bun](https://bun.sh), create an app
 with a web frontend:
 
 ```sh

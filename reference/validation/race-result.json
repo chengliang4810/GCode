@@ -1,0 +1,13 @@
+{
+  "command": "go test -race -count=1 -p 1 ./internal/contracts ./internal/mock ./internal/desktop ./internal/workbench",
+  "goVersion": "go version go1.27.3 windows/amd64",
+  "compiler": "C:\\Users\\chengliang\\.codex\\worktrees\\isolated-worktree\\GCode\\output\\tools\\w64devkit-v2.10.1\\w64devkit\\bin\\gcc.exe",
+  "compilerVersion": "16.2.0",
+  "target": "x86_64-w64-mingw32",
+  "cgoEnabled": "1",
+  "startedAt": "2026-10-28T04:14:49.3705293Z",
+  "finishedAt": "2026-10-28T04:15:50.3083350Z",
+  "elapsedSeconds": 60.81,
+  "exitCode": 0,
+  "testedGoSourcesUnchanged": true
+}

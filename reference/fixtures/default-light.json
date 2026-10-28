@@ -1,0 +1,1748 @@
+{
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "scenario": "default",
+  "snapshot": {
+    "appshotCapabilities": {
+      "platform": "windows",
+      "globalShortcut": "unavailable",
+      "windowCapture": "unavailable",
+      "applicationText": "unavailable"
+    },
+    "themeLibrary": null,
+    "schemaVersion": 1,
+    "revision": 2,
+    "user": {
+      "id": "alex",
+      "name": "Alex",
+      "email": "alex@example.test",
+      "initials": "A",
+      "signedIn": true
+    },
+    "capabilities": {
+      "appshots": false,
+      "cloud": true,
+      "browser": true,
+      "voice": false
+    },
+    "projects": [
+      {
+        "actions": null,
+        "id": "fieldnotes",
+        "name": "Fieldnotes",
+        "path": "~/projects/fieldnotes",
+        "deviceId": "local",
+        "icon": "",
+        "branch": "main",
+        "branches": [
+          "main",
+          "fieldnotes/workspace",
+          "fieldnotes/settings-search",
+          "fieldnotes/build-the-fieldnotes-workspace",
+          "fieldnotes/polish-the-command-palette",
+          "fieldnotes/fix-authentication-redirects",
+          "fieldnotes/add-deployment-status",
+          "fieldnotes/review-pull-request-comments",
+          "fieldnotes/improve-keyboard-navigation",
+          "fieldnotes/build-settings-search"
+        ],
+        "worktrees": [
+          {
+            "id": "checkout",
+            "name": "Current checkout",
+            "path": "~/projects/fieldnotes",
+            "branch": "main"
+          },
+          {
+            "id": "workspace-tree",
+            "name": "Workspace design",
+            "path": "~/worktrees/fieldnotes-workspace",
+            "branch": "fieldnotes/workspace"
+          }
+        ]
+      },
+      {
+        "actions": null,
+        "id": "zeron",
+        "name": "Zeron",
+        "path": "~/projects/zeron",
+        "deviceId": "local",
+        "icon": "",
+        "branch": "main",
+        "branches": [
+          "main",
+          "refine-composer",
+          "native-workspace",
+          "fieldnotes/update-project-documentation",
+          "fieldnotes/refine-composer-spacing"
+        ],
+        "worktrees": null
+      },
+      {
+        "actions": null,
+        "id": "backend",
+        "name": "API server",
+        "path": "/projects/backend",
+        "deviceId": "remote",
+        "icon": "",
+        "branch": "main",
+        "branches": [
+          "main",
+          "api/auth",
+          "fieldnotes/audit-chat-sync"
+        ],
+        "worktrees": null
+      }
+    ],
+    "devices": [
+      {
+        "id": "local",
+        "name": "This device",
+        "platform": "windows",
+        "architecture": "amd64",
+        "status": "connected",
+        "current": true,
+        "lastSeen": "2026-10-28T08:00:00Z"
+      },
+      {
+        "id": "macbook",
+        "name": "MacBook Pro",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "status": "connected",
+        "current": false,
+        "lastSeen": "2026-10-28T07:58:00Z"
+      },
+      {
+        "id": "remote",
+        "name": "Build server",
+        "platform": "linux",
+        "architecture": "amd64",
+        "status": "offline",
+        "current": false,
+        "lastSeen": "2026-10-28T06:00:00Z"
+      }
+    ],
+    "sessions": [
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-0",
+        "title": "Build the Fieldnotes workspace",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/build-the-fieldnotes-workspace",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": true,
+        "archived": false,
+        "pinOrder": 0,
+        "createdAt": "2026-10-28T07:00:00Z",
+        "updatedAt": "2026-10-28T08:00:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 412
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-1",
+        "title": "Polish the command palette",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/polish-the-command-palette",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": true,
+        "archived": false,
+        "pinOrder": 1,
+        "createdAt": "2026-10-28T06:43:00Z",
+        "updatedAt": "2026-10-28T07:43:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 413
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-2",
+        "title": "Fix authentication redirects",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/fix-authentication-redirects",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 2,
+        "createdAt": "2026-10-28T06:26:00Z",
+        "updatedAt": "2026-10-28T07:26:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 414
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-3",
+        "title": "Add deployment status",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/add-deployment-status",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": true,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 3,
+        "createdAt": "2026-10-28T06:09:00Z",
+        "updatedAt": "2026-10-28T07:09:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-4",
+        "title": "Review pull request comments",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/review-pull-request-comments",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 4,
+        "createdAt": "2026-10-28T05:52:00Z",
+        "updatedAt": "2026-10-28T06:52:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-5",
+        "title": "Improve keyboard navigation",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/improve-keyboard-navigation",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 5,
+        "createdAt": "2026-10-28T05:35:00Z",
+        "updatedAt": "2026-10-28T06:35:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-6",
+        "title": "Update project documentation",
+        "projectId": "zeron",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/update-project-documentation",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 6,
+        "createdAt": "2026-10-28T05:18:00Z",
+        "updatedAt": "2026-10-28T06:18:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-7",
+        "title": "Refine composer spacing",
+        "projectId": "zeron",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/refine-composer-spacing",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 7,
+        "createdAt": "2026-10-28T05:01:00Z",
+        "updatedAt": "2026-10-28T06:01:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-8",
+        "title": "Audit chat sync",
+        "projectId": "backend",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/audit-chat-sync",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": false,
+        "pinOrder": 8,
+        "createdAt": "2026-10-28T04:44:00Z",
+        "updatedAt": "2026-10-28T05:44:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      },
+      {
+        "accessMode": "full-access",
+        "plan": false,
+        "sideChat": false,
+        "id": "chat-9",
+        "title": "Build settings search",
+        "projectId": "fieldnotes",
+        "deviceId": "local",
+        "modelId": "claude-opus-4-6",
+        "reasoningLevel": "High",
+        "branch": "fieldnotes/build-settings-search",
+        "worktreeId": "",
+        "status": "idle",
+        "unread": false,
+        "pinned": false,
+        "archived": true,
+        "pinOrder": 9,
+        "createdAt": "2026-10-28T04:27:00Z",
+        "updatedAt": "2026-10-28T05:27:00Z",
+        "lastOutcome": "completed",
+        "runningSubagents": 0,
+        "pullRequestNumber": 0
+      }
+    ],
+    "messages": {
+      "chat-0": [
+        {
+          "id": "chat-0-user",
+          "sessionId": "chat-0",
+          "turnId": "chat-0-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T08:00:00Z",
+          "blocks": [
+            {
+              "id": "chat-0-prompt",
+              "kind": "text",
+              "text": "Build a calm workspace for Fieldnotes. Keep the sidebar compact, make the content easy to read, and preserve the current layout when switching between files."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-0-assistant",
+          "sessionId": "chat-0",
+          "turnId": "chat-0-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T08:00:01Z",
+          "blocks": [
+            {
+              "id": "reasoning-1",
+              "kind": "reasoning",
+              "text": "I’ll review the current structure and keep the existing typography, spacing, and interaction patterns. The workspace should preserve focus and scroll position as panels change."
+            },
+            {
+              "id": "tool-1",
+              "kind": "tool",
+              "tool": {
+                "id": "tool-1",
+                "name": "Read",
+                "summary": "Read workspace layout",
+                "command": "",
+                "path": "internal/layout.go",
+                "status": "completed",
+                "output": "package layout\n\nconst SidebarWidth = 256\nconst PanelWidth = 520",
+                "startedAt": "2026-10-28T07:56:00Z",
+                "finishedAt": "2026-10-28T08:00:00Z"
+              }
+            },
+            {
+              "id": "text-1",
+              "kind": "text",
+              "text": "I've refined the workspace around a consistent layout.\n\nThe sidebar stays compact, the conversation keeps a comfortable reading width, and the right pane opens without disrupting your place.\n\n### What changed\n\n- **Sidebar** — project groups and clear session status.\n- **Workspace** — independent file, diff, browser, and terminal tabs.\n- **Composer** — aligned controls with a compact model picker.\n\n```go\nconst (\n    SidebarWidth = 256\n    ContentWidth = 736\n    PanelWidth   = 520\n)\n```\n\nThe panels now preserve their state when you switch sessions."
+            },
+            {
+              "id": "todos-1",
+              "kind": "todo",
+              "todos": [
+                {
+                  "id": "todo-1",
+                  "text": "Review the existing workspace",
+                  "status": "completed"
+                },
+                {
+                  "id": "todo-2",
+                  "text": "Refine panel layout and spacing",
+                  "status": "completed"
+                },
+                {
+                  "id": "todo-3",
+                  "text": "Verify keyboard and focus behavior",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": "subagent-1",
+              "kind": "subagent",
+              "subagent": {
+                "id": "agent-layout",
+                "sessionId": "chat-5",
+                "name": "Explorer",
+                "task": "Review keyboard navigation",
+                "status": "completed",
+                "summary": "Keyboard navigation and focus restoration are consistent across panels."
+              }
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-1": [
+        {
+          "id": "chat-1-user",
+          "sessionId": "chat-1",
+          "turnId": "chat-1-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T07:43:00Z",
+          "blocks": [
+            {
+              "id": "chat-1-prompt",
+              "kind": "text",
+              "text": "Polish the command palette and improve keyboard navigation."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-1-assistant",
+          "sessionId": "chat-1",
+          "turnId": "chat-1-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T07:43:01Z",
+          "blocks": [
+            {
+              "id": "block-1-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-2": [
+        {
+          "id": "chat-2-user",
+          "sessionId": "chat-2",
+          "turnId": "chat-2-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T07:26:00Z",
+          "blocks": [
+            {
+              "id": "chat-2-prompt",
+              "kind": "text",
+              "text": "Review the authentication flow and fix the redirect."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-2-assistant",
+          "sessionId": "chat-2",
+          "turnId": "chat-2-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T07:26:01Z",
+          "blocks": [
+            {
+              "id": "block-2-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-3": [
+        {
+          "id": "chat-3-user",
+          "sessionId": "chat-3",
+          "turnId": "chat-3-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T07:09:00Z",
+          "blocks": [
+            {
+              "id": "chat-3-prompt",
+              "kind": "text",
+              "text": "Add deployment status to the project overview."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-3-assistant",
+          "sessionId": "chat-3",
+          "turnId": "chat-3-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T07:09:01Z",
+          "blocks": [
+            {
+              "id": "block-3-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-4": [
+        {
+          "id": "chat-4-user",
+          "sessionId": "chat-4",
+          "turnId": "chat-4-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T06:52:00Z",
+          "blocks": [
+            {
+              "id": "chat-4-prompt",
+              "kind": "text",
+              "text": "Review the pull request comments and suggest changes."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-4-assistant",
+          "sessionId": "chat-4",
+          "turnId": "chat-4-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T06:52:01Z",
+          "blocks": [
+            {
+              "id": "block-4-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-5": [
+        {
+          "id": "chat-5-user",
+          "sessionId": "chat-5",
+          "turnId": "chat-5-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T06:35:00Z",
+          "blocks": [
+            {
+              "id": "chat-5-prompt",
+              "kind": "text",
+              "text": "Improve keyboard navigation across the workspace."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-5-assistant",
+          "sessionId": "chat-5",
+          "turnId": "chat-5-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T06:35:01Z",
+          "blocks": [
+            {
+              "id": "block-5-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-6": [
+        {
+          "id": "chat-6-user",
+          "sessionId": "chat-6",
+          "turnId": "chat-6-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T06:18:00Z",
+          "blocks": [
+            {
+              "id": "chat-6-prompt",
+              "kind": "text",
+              "text": "Update the project documentation."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-6-assistant",
+          "sessionId": "chat-6",
+          "turnId": "chat-6-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T06:18:01Z",
+          "blocks": [
+            {
+              "id": "block-6-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-7": [
+        {
+          "id": "chat-7-user",
+          "sessionId": "chat-7",
+          "turnId": "chat-7-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T06:01:00Z",
+          "blocks": [
+            {
+              "id": "chat-7-prompt",
+              "kind": "text",
+              "text": "Refine the composer spacing and model picker."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-7-assistant",
+          "sessionId": "chat-7",
+          "turnId": "chat-7-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T06:01:01Z",
+          "blocks": [
+            {
+              "id": "block-7-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-8": [
+        {
+          "id": "chat-8-user",
+          "sessionId": "chat-8",
+          "turnId": "chat-8-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T05:44:00Z",
+          "blocks": [
+            {
+              "id": "chat-8-prompt",
+              "kind": "text",
+              "text": "Audit chat sync and offline recovery."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-8-assistant",
+          "sessionId": "chat-8",
+          "turnId": "chat-8-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T05:44:01Z",
+          "blocks": [
+            {
+              "id": "block-8-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ],
+      "chat-9": [
+        {
+          "id": "chat-9-user",
+          "sessionId": "chat-9",
+          "turnId": "chat-9-turn",
+          "role": "user",
+          "createdAt": "2026-10-28T05:27:00Z",
+          "blocks": [
+            {
+              "id": "chat-9-prompt",
+              "kind": "text",
+              "text": "Build settings search with direct navigation."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedTokens": 0,
+            "contextTokens": 0,
+            "contextLimit": 0,
+            "cost": 0
+          }
+        },
+        {
+          "id": "chat-9-assistant",
+          "sessionId": "chat-9",
+          "turnId": "chat-9-turn",
+          "role": "assistant",
+          "createdAt": "2026-10-28T05:27:01Z",
+          "blocks": [
+            {
+              "id": "block-9-text",
+              "kind": "text",
+              "text": "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions:\n\n1. **Sidebar** — projects, sessions, and navigation.\n2. **Conversation** — messages, tools, and the composer.\n3. **Workspace** — files, changes, and terminal tabs.\n\n```go\nfunc (app *App) OpenSession(id string) {\n    app.activeSession = id\n    app.restorePanels(id)\n}\n```\n\nEach region keeps its own state, so switching sessions restores the layout without interrupting your work."
+            }
+          ],
+          "streaming": false,
+          "usage": {
+            "inputTokens": 3420,
+            "outputTokens": 1248,
+            "cachedTokens": 2400,
+            "contextTokens": 18420,
+            "contextLimit": 200000,
+            "cost": 0.034
+          }
+        }
+      ]
+    },
+    "models": [
+      {
+        "id": "claude-opus-4-6",
+        "providerId": "claude",
+        "label": "Opus 4.6",
+        "description": "Most capable for complex work",
+        "reasoningLevels": [
+          "Low",
+          "Medium",
+          "High",
+          "Max"
+        ],
+        "contextLimit": 200000,
+        "options": null
+      },
+      {
+        "id": "claude-sonnet-4-6",
+        "providerId": "claude",
+        "label": "Sonnet 4.6",
+        "description": "Fast and capable for everyday work",
+        "reasoningLevels": [
+          "Low",
+          "Medium",
+          "High"
+        ],
+        "contextLimit": 200000,
+        "options": null
+      },
+      {
+        "id": "gpt-5.4",
+        "providerId": "openai",
+        "label": "GPT-5.4",
+        "description": "Reasoning and coding",
+        "reasoningLevels": [
+          "Low",
+          "Medium",
+          "High",
+          "Extra high"
+        ],
+        "contextLimit": 1000000,
+        "options": null
+      },
+      {
+        "id": "gpt-5.3-codex",
+        "providerId": "openai",
+        "label": "GPT-5.3 Codex",
+        "description": "Designed for agentic coding",
+        "reasoningLevels": [
+          "Low",
+          "Medium",
+          "High",
+          "Extra high"
+        ],
+        "contextLimit": 400000,
+        "options": null
+      },
+      {
+        "id": "cursor-auto",
+        "providerId": "cursor",
+        "label": "Auto",
+        "description": "A model selected for the task",
+        "reasoningLevels": [
+          "Auto"
+        ],
+        "contextLimit": 200000,
+        "options": null
+      }
+    ],
+    "providers": [
+      {
+        "accessModes": [
+          "supervised",
+          "auto-accept-edits",
+          "full-access"
+        ],
+        "supportsPlan": true,
+        "id": "claude",
+        "name": "Claude Code",
+        "icon": "claude-mark",
+        "status": "connected",
+        "account": "alex@example.test",
+        "enabled": true,
+        "models": [
+          "claude-opus-4-6",
+          "claude-sonnet-4-6"
+        ]
+      },
+      {
+        "accessModes": [
+          "supervised",
+          "auto-accept-edits",
+          "full-access"
+        ],
+        "supportsPlan": true,
+        "id": "openai",
+        "name": "Codex",
+        "icon": "openai-mark",
+        "status": "connected",
+        "account": "alex@example.test",
+        "enabled": true,
+        "models": [
+          "gpt-5.4",
+          "gpt-5.3-codex"
+        ]
+      },
+      {
+        "accessModes": [
+          "full-access"
+        ],
+        "supportsPlan": false,
+        "id": "cursor",
+        "name": "Cursor",
+        "icon": "cursor-mark",
+        "status": "notConnected",
+        "account": "",
+        "enabled": false,
+        "models": [
+          "cursor-auto"
+        ]
+      }
+    ],
+    "settings": {
+      "modelPicker": {
+        "favorites": null,
+        "providerId": "",
+        "options": null
+      },
+      "appearance": {
+        "motionPreference": "system",
+        "smoothScrolling": true,
+        "pauseInBackground": false,
+        "wallpaperColors": false,
+        "renderMath": true,
+        "mathFont": "Fira Math",
+        "mathScale": 100,
+        "mode": "light",
+        "themeId": "",
+        "lightThemeId": "zeron-light",
+        "darkThemeId": "zeron-dark",
+        "accent": "theme",
+        "surface": "theme",
+        "font": "Geist",
+        "fontSize": 16,
+        "codeFont": "Geist Mono",
+        "codeFontSize": 12.5,
+        "terminalFont": "Geist Mono",
+        "terminalFontSize": 13,
+        "transcriptWidth": 736,
+        "background": "",
+        "backgroundName": "",
+        "backgroundAssetRef": "",
+        "backgroundAdjustment": {
+          "focalX": 0.5,
+          "focalY": 0.5,
+          "zoom": 1
+        },
+        "backgroundEffect": "none",
+        "reduceMotion": false
+      },
+      "general": {
+        "sendBehavior": "enter",
+        "compactMode": false,
+        "compactModelPicker": true,
+        "stopWithEscape": false,
+        "prDestination": "pullRequest",
+        "threadNamingModel": "Automatic",
+        "customWorktreeLocation": false,
+        "worktreePath": "~/worktrees",
+        "creditZeron": true,
+        "launchAtLogin": false,
+        "restoreWindows": true
+      },
+      "notifications": {
+        "agentUpdates": true,
+        "errors": true,
+        "enabled": true,
+        "completion": true,
+        "questions": true,
+        "sound": true,
+        "whenFocused": false
+      },
+      "files": {
+        "autosave": false,
+        "autosaveDelay": 900,
+        "showHidden": false,
+        "wordWrap": false,
+        "lineNumbers": true,
+        "fontSize": 12.5
+      },
+      "appshots": {
+        "enabled": false,
+        "destination": "automatic",
+        "shortcut": "Cmd+Shift+2",
+        "includeCursor": false,
+        "sound": true
+      },
+      "shortcuts": [
+        {
+          "id": "newSession",
+          "label": "New session",
+          "keys": "Mod+N",
+          "group": "Navigation"
+        },
+        {
+          "id": "commandPalette",
+          "label": "Command palette",
+          "keys": "Mod+K",
+          "group": "Navigation"
+        },
+        {
+          "id": "settings",
+          "label": "Open settings",
+          "keys": "Mod+,",
+          "group": "Navigation"
+        },
+        {
+          "id": "toggleSidebar",
+          "label": "Toggle sidebar",
+          "keys": "Mod+B",
+          "group": "Panels"
+        },
+        {
+          "id": "files",
+          "label": "Toggle files",
+          "keys": "Mod+Shift+E",
+          "group": "Panels"
+        },
+        {
+          "id": "terminal",
+          "label": "Toggle terminal",
+          "keys": "Mod+J",
+          "group": "Panels"
+        },
+        {
+          "id": "find",
+          "label": "Find in conversation",
+          "keys": "Mod+F",
+          "group": "Conversation"
+        },
+        {
+          "id": "stop",
+          "label": "Stop agent",
+          "keys": "Escape",
+          "group": "Conversation"
+        }
+      ],
+      "sidebarWidth": 256,
+      "filesWidth": 286,
+      "rightPaneWidth": 520,
+      "terminalHeight": 280,
+      "sidebarCompact": false,
+      "sidebarGrouping": "project",
+      "sidebarSort": "updated",
+      "showProjectLabels": true,
+      "showIcons": true
+    },
+    "files": [
+      {
+        "id": "dir-cmd",
+        "projectId": "fieldnotes",
+        "path": "cmd",
+        "name": "cmd",
+        "kind": "directory",
+        "language": "",
+        "content": "",
+        "version": 0,
+        "readOnly": false,
+        "modified": false,
+        "parentId": ""
+      },
+      {
+        "id": "dir-app",
+        "projectId": "fieldnotes",
+        "path": "cmd/fieldnotes",
+        "name": "fieldnotes",
+        "kind": "directory",
+        "language": "",
+        "content": "",
+        "version": 0,
+        "readOnly": false,
+        "modified": false,
+        "parentId": "dir-cmd"
+      },
+      {
+        "id": "file-main",
+        "projectId": "fieldnotes",
+        "path": "cmd/fieldnotes/main.go",
+        "name": "main.go",
+        "kind": "file",
+        "language": "go",
+        "content": "package main\n\nimport \"fmt\"\n\nfunc main() {\n\tfmt.Println(\"Make room for good ideas.\")\n}\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": false,
+        "parentId": "dir-app"
+      },
+      {
+        "id": "dir-internal",
+        "projectId": "fieldnotes",
+        "path": "internal",
+        "name": "internal",
+        "kind": "directory",
+        "language": "",
+        "content": "",
+        "version": 0,
+        "readOnly": false,
+        "modified": false,
+        "parentId": ""
+      },
+      {
+        "id": "file-layout",
+        "projectId": "fieldnotes",
+        "path": "internal/layout.go",
+        "name": "layout.go",
+        "kind": "file",
+        "language": "go",
+        "content": "package layout\n\nconst (\n\tSidebarWidth = 256\n\tContentWidth = 736\n\tPanelWidth = 520\n)\n\nfunc ContentWidthFor(viewport float64) float64 {\n\treturn viewport - SidebarWidth - PanelWidth\n}\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": true,
+        "parentId": "dir-internal"
+      },
+      {
+        "id": "file-theme",
+        "projectId": "fieldnotes",
+        "path": "internal/theme.go",
+        "name": "theme.go",
+        "kind": "file",
+        "language": "go",
+        "content": "package theme\n\nconst Accent = \"#8b84ff\"\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": true,
+        "parentId": "dir-internal"
+      },
+      {
+        "id": "dir-resources",
+        "projectId": "fieldnotes",
+        "path": "resources",
+        "name": "resources",
+        "kind": "directory",
+        "language": "",
+        "content": "",
+        "version": 0,
+        "readOnly": false,
+        "modified": false,
+        "parentId": ""
+      },
+      {
+        "id": "file-readme",
+        "projectId": "fieldnotes",
+        "path": "README.md",
+        "name": "README.md",
+        "kind": "file",
+        "language": "markdown",
+        "content": "# Fieldnotes\n\nMake room for good ideas.\n\n## A calmer workspace\n\nCollect your thoughts in one place.\n\n- Organize work by project\n- Keep context close\n- Review changes with confidence\n\n| Feature | Status |\n| --- | --- |\n| Native workspace | Ready |\n| Keyboard navigation | Ready |\n| Project groups | Ready |\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": true,
+        "parentId": ""
+      },
+      {
+        "id": "file-gomod",
+        "projectId": "fieldnotes",
+        "path": "go.mod",
+        "name": "go.mod",
+        "kind": "file",
+        "language": "go",
+        "content": "module fieldnotes\n\ngo 1.27.3\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": false,
+        "parentId": ""
+      },
+      {
+        "id": "file-lock",
+        "projectId": "fieldnotes",
+        "path": "go.sum",
+        "name": "go.sum",
+        "kind": "file",
+        "language": "text",
+        "content": "# Dependency checksums are managed by the package manager.\n",
+        "version": 1,
+        "readOnly": true,
+        "modified": false,
+        "parentId": ""
+      },
+      {
+        "id": "file-gitignore",
+        "projectId": "fieldnotes",
+        "path": ".gitignore",
+        "name": ".gitignore",
+        "kind": "file",
+        "language": "text",
+        "content": "build/\n*.exe\n",
+        "version": 1,
+        "readOnly": false,
+        "modified": false,
+        "parentId": ""
+      }
+    ],
+    "changes": [
+      {
+        "id": "change-layout",
+        "projectId": "fieldnotes",
+        "path": "internal/layout.go",
+        "status": "modified",
+        "additions": 9,
+        "deletions": 2,
+        "oldContent": "package layout\n\nconst SidebarWidth = 240\nconst PanelWidth = 480\n",
+        "newContent": "package layout\n\nconst (\n\tSidebarWidth = 256\n\tContentWidth = 736\n\tPanelWidth = 520\n)\n\nfunc ContentWidthFor(viewport float64) float64 {\n\treturn viewport - SidebarWidth - PanelWidth\n}\n",
+        "hunks": [
+          {
+            "header": "@@ -1,4 +1,11 @@",
+            "oldStart": 1,
+            "newStart": 1,
+            "lines": [
+              {
+                "kind": "context",
+                "text": "package layout",
+                "oldLine": 1,
+                "newLine": 1
+              },
+              {
+                "kind": "context",
+                "text": "",
+                "oldLine": 2,
+                "newLine": 2
+              },
+              {
+                "kind": "remove",
+                "text": "const SidebarWidth = 240",
+                "oldLine": 3,
+                "newLine": 0
+              },
+              {
+                "kind": "remove",
+                "text": "const PanelWidth = 480",
+                "oldLine": 4,
+                "newLine": 0
+              },
+              {
+                "kind": "add",
+                "text": "const (",
+                "oldLine": 0,
+                "newLine": 3
+              },
+              {
+                "kind": "add",
+                "text": "\tSidebarWidth = 256",
+                "oldLine": 0,
+                "newLine": 4
+              },
+              {
+                "kind": "add",
+                "text": "\tContentWidth = 736",
+                "oldLine": 0,
+                "newLine": 5
+              },
+              {
+                "kind": "add",
+                "text": "\tPanelWidth = 520",
+                "oldLine": 0,
+                "newLine": 6
+              },
+              {
+                "kind": "add",
+                "text": ")",
+                "oldLine": 0,
+                "newLine": 7
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 8
+              },
+              {
+                "kind": "add",
+                "text": "func ContentWidthFor(viewport float64) float64 {",
+                "oldLine": 0,
+                "newLine": 9
+              },
+              {
+                "kind": "add",
+                "text": "\treturn viewport - SidebarWidth - PanelWidth",
+                "oldLine": 0,
+                "newLine": 10
+              },
+              {
+                "kind": "add",
+                "text": "}",
+                "oldLine": 0,
+                "newLine": 11
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "change-readme",
+        "projectId": "fieldnotes",
+        "path": "README.md",
+        "status": "modified",
+        "additions": 15,
+        "deletions": 1,
+        "oldContent": "# Fieldnotes\n\nA place for ideas.\n",
+        "newContent": "# Fieldnotes\n\nMake room for good ideas.\n\n## A calmer workspace\n\nCollect your thoughts in one place.\n\n- Organize work by project\n- Keep context close\n- Review changes with confidence\n\n| Feature | Status |\n| --- | --- |\n| Native workspace | Ready |\n| Keyboard navigation | Ready |\n| Project groups | Ready |\n",
+        "hunks": [
+          {
+            "header": "@@ -1,3 +1,17 @@",
+            "oldStart": 1,
+            "newStart": 1,
+            "lines": [
+              {
+                "kind": "context",
+                "text": "# Fieldnotes",
+                "oldLine": 1,
+                "newLine": 1
+              },
+              {
+                "kind": "context",
+                "text": "",
+                "oldLine": 2,
+                "newLine": 2
+              },
+              {
+                "kind": "remove",
+                "text": "A place for ideas.",
+                "oldLine": 3,
+                "newLine": 0
+              },
+              {
+                "kind": "add",
+                "text": "Make room for good ideas.",
+                "oldLine": 0,
+                "newLine": 3
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 4
+              },
+              {
+                "kind": "add",
+                "text": "## A calmer workspace",
+                "oldLine": 0,
+                "newLine": 5
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 6
+              },
+              {
+                "kind": "add",
+                "text": "Collect your thoughts in one place.",
+                "oldLine": 0,
+                "newLine": 7
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 8
+              },
+              {
+                "kind": "add",
+                "text": "- Organize work by project",
+                "oldLine": 0,
+                "newLine": 9
+              },
+              {
+                "kind": "add",
+                "text": "- Keep context close",
+                "oldLine": 0,
+                "newLine": 10
+              },
+              {
+                "kind": "add",
+                "text": "- Review changes with confidence",
+                "oldLine": 0,
+                "newLine": 11
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 12
+              },
+              {
+                "kind": "add",
+                "text": "| Feature | Status |",
+                "oldLine": 0,
+                "newLine": 13
+              },
+              {
+                "kind": "add",
+                "text": "| --- | --- |",
+                "oldLine": 0,
+                "newLine": 14
+              },
+              {
+                "kind": "add",
+                "text": "| Native workspace | Ready |",
+                "oldLine": 0,
+                "newLine": 15
+              },
+              {
+                "kind": "add",
+                "text": "| Keyboard navigation | Ready |",
+                "oldLine": 0,
+                "newLine": 16
+              },
+              {
+                "kind": "add",
+                "text": "| Project groups | Ready |",
+                "oldLine": 0,
+                "newLine": 17
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "change-theme",
+        "projectId": "fieldnotes",
+        "path": "internal/theme.go",
+        "status": "added",
+        "additions": 3,
+        "deletions": 0,
+        "oldContent": "",
+        "newContent": "package theme\n\nconst Accent = \"#8b84ff\"\n",
+        "hunks": [
+          {
+            "header": "@@ -0,0 +1,3 @@",
+            "oldStart": 0,
+            "newStart": 1,
+            "lines": [
+              {
+                "kind": "add",
+                "text": "package theme",
+                "oldLine": 0,
+                "newLine": 1
+              },
+              {
+                "kind": "add",
+                "text": "",
+                "oldLine": 0,
+                "newLine": 2
+              },
+              {
+                "kind": "add",
+                "text": "const Accent = \"#8b84ff\"",
+                "oldLine": 0,
+                "newLine": 3
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "commits": [
+      {
+        "sha": "00000000000000000000000000000000000003e8",
+        "parents": [
+          "00000000000000000000000000000000000003e7"
+        ],
+        "subject": "Refine workspace panel layout",
+        "author": "Alex",
+        "authoredAt": "2026-10-28T07:00:00Z",
+        "refs": [
+          "main",
+          "origin/main"
+        ]
+      },
+      {
+        "sha": "00000000000000000000000000000000000003e7",
+        "parents": [
+          "00000000000000000000000000000000000003e6"
+        ],
+        "subject": "Preserve focus when switching tabs",
+        "author": "Alex",
+        "authoredAt": "2026-10-28T06:00:00Z",
+        "refs": []
+      },
+      {
+        "sha": "00000000000000000000000000000000000003e6",
+        "parents": [
+          "00000000000000000000000000000000000003e5"
+        ],
+        "subject": "Add session search",
+        "author": "Alex",
+        "authoredAt": "2026-10-28T05:00:00Z",
+        "refs": []
+      },
+      {
+        "sha": "00000000000000000000000000000000000003e5",
+        "parents": [
+          "00000000000000000000000000000000000003e4"
+        ],
+        "subject": "Update theme tokens",
+        "author": "Alex",
+        "authoredAt": "2026-10-28T04:00:00Z",
+        "refs": []
+      },
+      {
+        "sha": "00000000000000000000000000000000000003e4",
+        "parents": [],
+        "subject": "Initial workspace",
+        "author": "Alex",
+        "authoredAt": "2026-10-28T03:00:00Z",
+        "refs": []
+      }
+    ],
+    "pullRequests": [
+      {
+        "id": "pr-412",
+        "number": 412,
+        "repository": "zeronsh/fieldnotes",
+        "title": "Refine the workspace layout",
+        "author": "alex",
+        "status": "open",
+        "draft": false,
+        "baseBranch": "main",
+        "headBranch": "fieldnotes/workspace",
+        "body": "## Summary\n\nKeep the workspace calm and consistent while opening files, reviewing changes, and switching sessions.\n\n- Preserve panel state per session\n- Improve keyboard navigation\n- Align the composer and content widths",
+        "checks": [
+          {
+            "name": "Build",
+            "status": "success",
+            "detail": "All platforms passed"
+          },
+          {
+            "name": "Tests",
+            "status": "success",
+            "detail": "124 tests passed"
+          },
+          {
+            "name": "Review",
+            "status": "pending",
+            "detail": "Awaiting review"
+          }
+        ],
+        "comments": [
+          {
+            "id": "comment-1",
+            "author": "sam",
+            "body": "The panel transitions feel much better. Could we keep the existing keyboard focus when closing a tab?",
+            "createdAt": "2026-10-28T07:00:00Z"
+          }
+        ],
+        "changeIds": [
+          "change-layout",
+          "change-readme",
+          "change-theme"
+        ],
+        "updatedAt": "2026-10-28T07:00:00Z"
+      },
+      {
+        "id": "pr-413",
+        "number": 413,
+        "repository": "zeronsh/fieldnotes",
+        "title": "Polish the command palette",
+        "author": "alex",
+        "status": "open",
+        "draft": true,
+        "baseBranch": "main",
+        "headBranch": "fieldnotes/command-palette",
+        "body": "Improve keyboard navigation and search result spacing.",
+        "checks": [
+          {
+            "name": "Tests",
+            "status": "success",
+            "detail": "All checks passed"
+          }
+        ],
+        "comments": null,
+        "changeIds": null,
+        "updatedAt": "2026-10-28T05:00:00Z"
+      },
+      {
+        "id": "pr-405",
+        "number": 405,
+        "repository": "zeronsh/fieldnotes",
+        "title": "Add project grouping",
+        "author": "sam",
+        "status": "merged",
+        "draft": false,
+        "baseBranch": "main",
+        "headBranch": "project-groups",
+        "body": "Group sessions by project.",
+        "checks": null,
+        "comments": null,
+        "changeIds": null,
+        "updatedAt": "2026-10-27T08:00:00Z"
+      }
+    ],
+    "terminals": [
+      {
+        "id": "terminal-1",
+        "projectId": "fieldnotes",
+        "title": "Terminal",
+        "cwd": "~/projects/fieldnotes",
+        "columns": 80,
+        "rows": 24,
+        "status": "idle",
+        "output": "\u001b[38;2;139;132;255m~/projects/fieldnotes\u001b[0m \u001b[32mmain\u001b[0m\r\n❯ go test ./...\r\n\u001b[32mok\u001b[0m  fieldnotes/internal/layout  0.012s\r\n\u001b[32mok\u001b[0m  fieldnotes/internal/session  0.008s\r\n\r\n\u001b[38;2;139;132;255m❯\u001b[0m "
+      }
+    ],
+    "queue": null,
+    "runs": null,
+    "account": {
+      "plan": "Pro",
+      "cloudStatus": "connected",
+      "storageUsed": 214748364,
+      "storageLimit": 10737418240,
+      "credits": 24.5,
+      "usage": [
+        {
+          "label": "5 hour",
+          "usedPercent": 24,
+          "resetsAt": "2026-10-28T11:00:00Z"
+        },
+        {
+          "label": "Weekly",
+          "usedPercent": 38,
+          "resetsAt": "2026-11-02T08:00:00Z"
+        }
+      ],
+      "invoices": [
+        {
+          "id": "invoice-202610",
+          "date": "2026-10-08T08:00:00Z",
+          "amount": 20,
+          "status": "paid"
+        },
+        {
+          "id": "invoice-202609",
+          "date": "2026-09-08T08:00:00Z",
+          "amount": 20,
+          "status": "paid"
+        }
+      ]
+    },
+    "appshots": null,
+    "attachments": null,
+    "update": {
+      "currentVersion": "0.1.0",
+      "availableVersion": "",
+      "status": "upToDate",
+      "progress": 0
+    }
+  }
+}

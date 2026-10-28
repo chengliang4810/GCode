@@ -1,0 +1,14 @@
+{
+  "originalExample": "crates/ui/examples/compact-picker-fixture.rs",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "adapterSha256": "481e7631eee03a0e5102f8d0923657187397c0a6860f8d62128dba44b765966a",
+  "productionComponentsModified": false,
+  "modifications": [
+    "Replace unsupported Windows render_to_image export with async scene-ready/acknowledgment transport for Computer Use window capture",
+    "Optional opaque surface and reduced motion selected as test configuration"
+  ],
+  "schemaVersion": 1,
+  "originalSha256": "1819ef4c2cce728769ff26480a97b045a4c1083053e8d099baa09c5fedf510a3",
+  "productionRendererModified": false,
+  "adapter": "output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-parity.rs"
+}

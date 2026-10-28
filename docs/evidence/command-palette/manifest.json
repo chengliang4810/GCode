@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "kind": "MyGo ui.NewTester implementation evidence, not reference goldens",
+  "referenceVersion": "v0.2.128",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "frameworkRevision": "zeron-native-ui.2",
+  "frameworkSha256": "fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e",
+  "source": [
+    {
+      "path": "internal/desktop/command_palette.go",
+      "sha256": "a5b96fa0a9316f324af7c96fe0a4f82925c3e55656bc43be8ade9554795ed221"
+    },
+    {
+      "path": "internal/desktop/command_palette_test.go",
+      "sha256": "93a1d975d6e89728353b42e2e14519dd855a8cbd91102e0946cdd48b8fa1fd73"
+    },
+    {
+      "path": "internal/desktop/project_picker.go",
+      "sha256": "746a2fa6be307e6e31d976603514eb4613ce500d6b7ecb4f350fba616f653a2f"
+    },
+    {
+      "path": "internal/desktop/project_picker_test.go",
+      "sha256": "dd3fb245d29e652657c9c91efb71432ab75a7b746d2a2079a3dcb2abe5cb2305"
+    },
+    {
+      "path": "internal/desktop/sidebar_projects.go",
+      "sha256": "e5586278537f585a05ba0f431abb2def6f27c972a2f559acb2953eec1986d930"
+    },
+    {
+      "path": "internal/workbench/workbench.go",
+      "sha256": "8ff2c970def13669fa45b698a687bcb90852232818a83814a71b3885a5cf5f25"
+    },
+    {
+      "path": "internal/workbench/scopes.go",
+      "sha256": "fdf4bc54f5a5076235412313a446b986a0feb7cc0ec2bb66766ef2d6d5f4e043"
+    },
+    {
+      "path": "internal/workbench/file_navigation.go",
+      "sha256": "e01f305955425904c022b3d8274ae5fd602622098cdba3ace9f7174fe394e3f0"
+    },
+    {
+      "path": "internal/workbench/file_search.go",
+      "sha256": "476f2163297e27d5f3916739517d92895c4d7cdf226e38533a823ec2f8ea7186"
+    },
+    {
+      "path": "internal/workbench/file_search_test.go",
+      "sha256": "d2cb8fe088bdd33eac3d072f035770ccc45fbb7d90a95a71dc3d8cfae8567f56"
+    },
+    {
+      "path": "internal/contracts/workspace_search.go",
+      "sha256": "7611a74ca0a74564652dfbd252150a12bfc694e51f69143f63d05bf857320ab9"
+    },
+    {
+      "path": "internal/contracts/search_ranges.go",
+      "sha256": "6f9215edbb8a767885268c45ef9682abd6afa961dba36fe3367aea9e65c314c8"
+    },
+    {
+      "path": "internal/contracts/search_ranges_test.go",
+      "sha256": "c2a5d068fb8d643867b73fd8a4a4ddb5bbfb0f0ca12b7d97d67afb57b00c2462"
+    },
+    {
+      "path": "internal/mock/workspace_search.go",
+      "sha256": "46997d53fd40026c5aa07c1ece79f1c9fe186d5b9d1d413cb367950ca8214662"
+    },
+    {
+      "path": "internal/mock/workspace_search_test.go",
+      "sha256": "486583b4a058c4f27f61889050344c14028619832ce1b7d324e9942ebf9b7716"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "files-search-dark.json",
+      "bytes": 300,
+      "sha256": "19566eb60794738bd8f482cb81b2e3602cfadbe204eae6cce329eac29ded421c"
+    },
+    {
+      "name": "files-search-dark.png",
+      "bytes": 114582,
+      "sha256": "64efc8496eb6d7b967823eefe5e4b4544a290473a78e8ee9f1c230a553dc208b"
+    },
+    {
+      "name": "files-search-light.json",
+      "bytes": 300,
+      "sha256": "19566eb60794738bd8f482cb81b2e3602cfadbe204eae6cce329eac29ded421c"
+    },
+    {
+      "name": "files-search-light.png",
+      "bytes": 114208,
+      "sha256": "a8a6b4f0f545108c516b1980c89fe3c348fd0ea1c3156169322716a6bec85576"
+    },
+    {
+      "name": "palette-dark-all.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-dark-all.png",
+      "bytes": 124813,
+      "sha256": "67683cb23efe8ae9963d11cf0c33409043de4002199dc73bfb6765aea2489038"
+    },
+    {
+      "name": "palette-dark-commands.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-dark-commands.png",
+      "bytes": 114032,
+      "sha256": "4ce28d1f5adc51cbfc08ad0fa0ef6faea3b04c3c064d4b13cba9880507ef1234"
+    },
+    {
+      "name": "palette-dark-files.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-dark-files.png",
+      "bytes": 108310,
+      "sha256": "c3334409763ec82f13227529d23141709a82390118fd0ad380dc505f6db1fee5"
+    },
+    {
+      "name": "palette-dark-threads.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-dark-threads.png",
+      "bytes": 129047,
+      "sha256": "4f5f18e7277a6b2436f23867ed873c554f2fb89f69ef71600a044084ccfe02f9"
+    },
+    {
+      "name": "palette-light-all.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-light-all.png",
+      "bytes": 126666,
+      "sha256": "4e67be3608c0d57da9796a5c86b3ce74cb5e559b0603ad79ecd87cedd9c58300"
+    },
+    {
+      "name": "palette-light-commands.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-light-commands.png",
+      "bytes": 115713,
+      "sha256": "145e551a5ce94140357d702a7337404ba4578d003ef1f1f5332eb5d2ff8bcf3c"
+    },
+    {
+      "name": "palette-light-files.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-light-files.png",
+      "bytes": 110202,
+      "sha256": "91c422fc1f6e5ae18e9aa1dc1a4526cc00217c675ac6a6e4e62aaeaa75654db5"
+    },
+    {
+      "name": "palette-light-threads.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "palette-light-threads.png",
+      "bytes": 130808,
+      "sha256": "83f4464854af32ce39d03c22de43936835cab157758e7d3a0f02158986cabbe0"
+    },
+    {
+      "name": "project-devices.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "project-devices.png",
+      "bytes": 78935,
+      "sha256": "1c320a721d7f2599898e879d461f592b4db60bef5bd4bd4c8e99dd8be04f48a7"
+    },
+    {
+      "name": "project-filter-dark.json",
+      "bytes": 300,
+      "sha256": "19566eb60794738bd8f482cb81b2e3602cfadbe204eae6cce329eac29ded421c"
+    },
+    {
+      "name": "project-filter-dark.png",
+      "bytes": 130420,
+      "sha256": "02c4682398b89fa2fad4176014385f91dd9890c6a4103df2361ff869f352aba7"
+    },
+    {
+      "name": "project-filter-light.json",
+      "bytes": 300,
+      "sha256": "19566eb60794738bd8f482cb81b2e3602cfadbe204eae6cce329eac29ded421c"
+    },
+    {
+      "name": "project-filter-light.png",
+      "bytes": 131954,
+      "sha256": "829d503403c261733516bbbccc2921f90323d7abaed2ec65a4333e5ef67605b0"
+    },
+    {
+      "name": "project-folders.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "project-folders.png",
+      "bytes": 79299,
+      "sha256": "9434908755475d00bf15a440bec70d9c9f67acb205c0f8ef288e8fa87f4b21b4"
+    },
+    {
+      "name": "project-locations.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "project-locations.png",
+      "bytes": 76349,
+      "sha256": "289ee14118da67f86ab3e5642a198a2c1148e4eea25d8646282a9fe4c2b4e813"
+    },
+    {
+      "name": "project-nested-folders.json",
+      "bytes": 207,
+      "sha256": "01adb2e1dd94b8333101b9b300e8e5efec427d8aba12acd0cdc9e6af0b4f029a"
+    },
+    {
+      "name": "project-nested-folders.png",
+      "bytes": 78547,
+      "sha256": "e4622054924ac7479c0d47cde39a13521ca554ee39c8b6661d27909818aa559e"
+    },
+    {
+      "name": "project-offline-error-900.json",
+      "bytes": 205,
+      "sha256": "13a16b21b82876c578e11661fdec6583b761f1af84017e2f7418da6e517dc8e7"
+    },
+    {
+      "name": "project-offline-error-900.png",
+      "bytes": 61706,
+      "sha256": "5c6bb1cd3e27da199149dcb8af59a25b736276b7ebbc9e0d225812b8ead1cd84"
+    }
+  ]
+}

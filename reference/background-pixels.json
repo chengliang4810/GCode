@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "source": "crates/ui/src/new_thread_background_effects.rs",
+  "sourceSha256": "0f8669ef450139e820e097d80aa3c744a188a56f33a4f4986ac3cf2fe7a215bc",
+  "exporterSourceSha256": "623d6e225ecc203808d0fcfc8600a4baa6e7d3edc62c18dc04bb344645fb82aa",
+  "imageCrate": "0.25.10",
+  "moxcmsCrate": "0.8.1",
+  "rgbaSourceSize": [
+    33,
+    19
+  ],
+  "classification": "original-raster-algorithm-unit-reference",
+  "nativeScreenshot": false,
+  "files": [
+    {
+      "name": "ascii-dark.rgba",
+      "bytes": 2508,
+      "sha256": "e3b5d0bf9cc292a3c2bba79534373398de564e3b4e6735c60269aa502816fd08"
+    },
+    {
+      "name": "ascii-light.rgba",
+      "bytes": 2508,
+      "sha256": "aeb11d8f1c568afc560c1fe3133260cf76c7e2ed54eccc746322cfaa1a7a8ff4"
+    },
+    {
+      "name": "dither-dark.rgba",
+      "bytes": 2508,
+      "sha256": "5ba3372c74caec1bc487076a5ec4da2cf5230e59fe46197ab1f70a22cd573b44"
+    },
+    {
+      "name": "dither-light.rgba",
+      "bytes": 2508,
+      "sha256": "5ba3372c74caec1bc487076a5ec4da2cf5230e59fe46197ab1f70a22cd573b44"
+    },
+    {
+      "name": "halftone-dark.rgba",
+      "bytes": 2508,
+      "sha256": "cc03644db662a77925b9c3d85428698bb37fabf33ff569bb971635051b3b250d"
+    },
+    {
+      "name": "halftone-light.rgba",
+      "bytes": 2508,
+      "sha256": "429eec17c2cbc08a3f0a335a5062559769b636d76483ab1ecda4d6b49d9f69be"
+    },
+    {
+      "name": "none-dark.rgba",
+      "bytes": 2508,
+      "sha256": "9d6c7373b7549738e2d109c8a9db223a911105874aa2c02eab17a75cf122f6e3"
+    },
+    {
+      "name": "none-light.rgba",
+      "bytes": 2508,
+      "sha256": "9d6c7373b7549738e2d109c8a9db223a911105874aa2c02eab17a75cf122f6e3"
+    },
+    {
+      "name": "scanlines-dark.rgba",
+      "bytes": 2508,
+      "sha256": "3e44db79b35c6a59a9bf83f4973ed0529e4cbeba079dbdf7248d2c2bd974b7d6"
+    },
+    {
+      "name": "scanlines-light.rgba",
+      "bytes": 2508,
+      "sha256": "cc80a9145cfd1e8959dfef44686c565bed3739b04f2c389ae18b5b808661ce28"
+    },
+    {
+      "name": "source-luma.gray",
+      "bytes": 627,
+      "sha256": "8cb5844fa1f45a275b65669f8f1a7ca9dd46c11078ef7ae6e44523f7381e9e62"
+    },
+    {
+      "name": "thumbnail-1-1-9.rgba",
+      "bytes": 324,
+      "sha256": "7119f314d3837dac54bf984118de657f6f1e6dfd2a2b2a20510454f762dddf11"
+    },
+    {
+      "name": "thumbnail-19-11-7.rgba",
+      "bytes": 112,
+      "sha256": "a3391cd3efeb34b61761580626642484d80812c3acd21af3ca79c2eacef0ac8d"
+    },
+    {
+      "name": "thumbnail-2-9-7.rgba",
+      "bytes": 56,
+      "sha256": "e54123e0b30a740e4896060b0109db068336d2dfce6b08b6d440e52f773e6eba"
+    },
+    {
+      "name": "thumbnail-3-2-8.rgba",
+      "bytes": 160,
+      "sha256": "e590821f9edc94f4010e6ff1c3bc20cb63fc20ca09afde9ae74b72ca0d918149"
+    },
+    {
+      "name": "thumbnail-9-3-5.rgba",
+      "bytes": 40,
+      "sha256": "1f8e10b3b116c7509cd51df50be3414aef47927059cd1338dda8d19567231af1"
+    }
+  ]
+}

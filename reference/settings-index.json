@@ -1,0 +1,588 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "source": "crates/ui/src/settings/search.rs:settings_index",
+  "note": "Extracted source index, not a UI completion claim. Feature shortcuts and provider-expanded rows require their own cases.",
+  "rows": [
+    {
+      "id": "SendMessagesWith",
+      "section": "General",
+      "displaySection": "General",
+      "group": "",
+      "title": "Send messages with",
+      "terms": "enter return submit modifier keyboard composer",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CompactMode",
+      "section": "General",
+      "displaySection": "General",
+      "group": "",
+      "title": "Compact mode",
+      "terms": "collapse thinking tools transcript dense density",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CompactModelPicker",
+      "section": "General",
+      "displaySection": "General",
+      "group": "",
+      "title": "Compact model picker",
+      "terms": "effort reasoning slider model list",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "EscapeStopsAgent",
+      "section": "General",
+      "displaySection": "General",
+      "group": "",
+      "title": "Stop agent with Escape",
+      "terms": "esc interrupt cancel halt run keyboard",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "PullRequestDestination",
+      "section": "General",
+      "displaySection": "General",
+      "group": "Links",
+      "title": "Open pull requests in",
+      "terms": "pr pull request badges board browser github",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ThreadNaming",
+      "section": "General",
+      "displaySection": "General",
+      "group": "",
+      "title": "Thread naming",
+      "terms": "titles rename sessions model",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "WorktreeLocation",
+      "section": "General",
+      "displaySection": "General",
+      "group": "Git",
+      "title": "Custom worktree location",
+      "terms": "folder directory path checkout branches",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CommitCredit",
+      "section": "General",
+      "displaySection": "General",
+      "group": "Git",
+      "title": "Credit Zeron in commits",
+      "terms": "co-author coauthor attribution bot commit message",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ColorScheme",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Color scheme",
+      "terms": "system light dark mode",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "LightTheme",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Light theme",
+      "terms": "palette colors",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "DarkTheme",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Dark theme",
+      "terms": "palette colors",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "AccentColor",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Accent color",
+      "terms": "tint highlight swatch",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "WallpaperColors",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Match wallpaper colors",
+      "terms": "tint accent surface desktop",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Glass",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Material and background",
+      "title": "Glass",
+      "terms": "frosted translucent opaque transparency blur vibrancy surface",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "NewThreadBackground",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Material and background",
+      "title": "New thread background",
+      "terms": "image picture wallpaper composer",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "WallpaperFolder",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Material and background",
+      "title": "Wallpaper folder",
+      "terms": "random shuffle images directory",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "BackgroundEffect",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Material and background",
+      "title": "Background effect",
+      "terms": "blur dim image",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ReduceMotion",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Motion",
+      "title": "Reduce motion",
+      "terms": "animations accessibility",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "PauseAnimations",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Motion",
+      "title": "Pause animations in background",
+      "terms": "focus unfocused inactive window battery",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "SmoothScrolling",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Motion",
+      "title": "Smooth scrolling",
+      "terms": "mouse wheel glide ease",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ThemeLibrary",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "",
+      "title": "Theme library",
+      "terms": "import add custom themes",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "InterfaceFont",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Interface font",
+      "terms": "typeface text size menus conversations",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "TerminalFont",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Terminal font",
+      "terms": "monospace typeface size",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CodeFont",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Code & diff font",
+      "terms": "monospace typeface editor files size",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ConversationWidth",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Conversation width",
+      "terms": "transcript messages composer column maximum",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "RenderMath",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Render math",
+      "terms": "latex formulas equations markdown typeset",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "MathFont",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Math font",
+      "terms": "latex formulas typeface",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "MathSize",
+      "section": "Appearance",
+      "displaySection": "Appearance",
+      "group": "Fonts and layout",
+      "title": "Math size",
+      "terms": "latex formulas scale",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "DesktopNotifications",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Desktop",
+      "title": "Desktop notifications",
+      "terms": "alerts banners system",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "AgentUpdates",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Desktop",
+      "title": "Agent updates",
+      "terms": "cli banner new version",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "BackgroundOnly",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Desktop",
+      "title": "Only when in the background",
+      "terms": "focus unfocused",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "SessionSounds",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Sounds",
+      "title": "Session sounds",
+      "terms": "audio chime mute",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "TaskCompletedSound",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Sounds",
+      "title": "Task completed",
+      "terms": "done finished audio sound",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "InputRequiredSound",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Sounds",
+      "title": "Input required",
+      "terms": "question waiting approval audio sound",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ErrorSound",
+      "section": "Notifications",
+      "displaySection": "Notifications",
+      "group": "Sounds",
+      "title": "Errors and disconnections",
+      "terms": "failure offline audio sound",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CodexVoiceDevice",
+      "section": "Voice",
+      "displaySection": "Voice",
+      "group": "",
+      "title": "Codex voice device",
+      "terms": "remote host machine",
+      "scope": "excluded",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CodexVoiceStyle",
+      "section": "Voice",
+      "displaySection": "Voice",
+      "group": "",
+      "title": "Codex voice style",
+      "terms": "speech tone",
+      "scope": "excluded",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Dictation",
+      "section": "Voice",
+      "displaySection": "Voice",
+      "group": "",
+      "title": "Dictation",
+      "terms": "speech to text transcribe talk",
+      "scope": "excluded",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Microphone",
+      "section": "Voice",
+      "displaySection": "Voice",
+      "group": "",
+      "title": "Microphone",
+      "terms": "input audio mic",
+      "scope": "excluded",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "SpeechModel",
+      "section": "Voice",
+      "displaySection": "Voice",
+      "group": "",
+      "title": "Speech model",
+      "terms": "parakeet download remove",
+      "scope": "excluded",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "SkillDollar",
+      "section": "Harnesses",
+      "displaySection": "Providers",
+      "group": "Completion",
+      "title": "Use $ for skills",
+      "terms": "dollar skill picker composer autocomplete",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "SkillSlash",
+      "section": "Harnesses",
+      "displaySection": "Providers",
+      "group": "Completion",
+      "title": "Separate / commands",
+      "terms": "slash menu skills autocomplete",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "NativeSubagents",
+      "section": "Harnesses",
+      "displaySection": "Providers",
+      "group": "Delegation",
+      "title": "Native subagents",
+      "terms": "subagent delegate side chats tasks spawn",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "UpdatePolicy",
+      "section": "Harnesses",
+      "displaySection": "Providers",
+      "group": "Updates",
+      "title": "Update policy",
+      "terms": "automatic upgrade version cli",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CloudUsage",
+      "section": "Cloud",
+      "displaySection": "Cloud",
+      "group": "",
+      "title": "Usage",
+      "terms": "hours consumption range",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CloudGitHub",
+      "section": "Cloud",
+      "displaySection": "Cloud",
+      "group": "",
+      "title": "GitHub",
+      "terms": "connect repositories account",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Credits",
+      "section": "Billing",
+      "displaySection": "Billing",
+      "group": "",
+      "title": "Credits",
+      "terms": "balance",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Plan",
+      "section": "Billing",
+      "displaySection": "Billing",
+      "group": "",
+      "title": "Plan",
+      "terms": "subscription upgrade manage stripe",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ExtraCredits",
+      "section": "Billing",
+      "displaySection": "Billing",
+      "group": "",
+      "title": "Extra credits",
+      "terms": "buy packs top up",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "Autosave",
+      "section": "Files",
+      "displaySection": "Files",
+      "group": "",
+      "title": "Autosave",
+      "terms": "save automatically",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "AutosaveDelay",
+      "section": "Files",
+      "displaySection": "Files",
+      "group": "",
+      "title": "Autosave delay",
+      "terms": "debounce wait",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "WordWrap",
+      "section": "Files",
+      "displaySection": "Files",
+      "group": "",
+      "title": "Word wrap",
+      "terms": "soft wrap long lines editor",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ShowAllFiles",
+      "section": "Files",
+      "displaySection": "Files",
+      "group": "",
+      "title": "Show hidden and ignored files",
+      "terms": "dotfiles gitignore tree",
+      "scope": "included",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "CaptureAppshots",
+      "section": "Appshots",
+      "displaySection": "Appshots",
+      "group": "",
+      "title": "Capture Appshots",
+      "terms": "screenshot screen",
+      "scope": "macOS-only",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "AppshotSound",
+      "section": "Appshots",
+      "displaySection": "Appshots",
+      "group": "",
+      "title": "Capture sound",
+      "terms": "shutter audio",
+      "scope": "macOS-only",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "AppshotDestination",
+      "section": "Appshots",
+      "displaySection": "Appshots",
+      "group": "",
+      "title": "Destination",
+      "terms": "session composer where",
+      "scope": "macOS-only",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "WindowCapture",
+      "section": "Appshots",
+      "displaySection": "Appshots",
+      "group": "",
+      "title": "Window capture",
+      "terms": "screen recording permission",
+      "scope": "macOS-only",
+      "acceptance": "pending-reference-capture"
+    },
+    {
+      "id": "ApplicationText",
+      "section": "Appshots",
+      "displaySection": "Appshots",
+      "group": "",
+      "title": "Application text",
+      "terms": "accessibility semantic permission",
+      "scope": "macOS-only",
+      "acceptance": "pending-reference-capture"
+    }
+  ]
+}

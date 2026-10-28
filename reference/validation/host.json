@@ -1,0 +1,30 @@
+{
+  "gpus": [
+    {
+      "Name": "OrayIddDriver Device",
+      "DriverVersion": "17.50.19.949",
+      "CurrentHorizontalResolution": null,
+      "CurrentVerticalResolution": null
+    },
+    {
+      "Name": "AMD Radeon(TM) Graphics",
+      "DriverVersion": "31.0.21925.1001",
+      "CurrentHorizontalResolution": 2560,
+      "CurrentVerticalResolution": 1440
+    },
+    {
+      "Name": "GameViewer Virtual Display Adapter",
+      "DriverVersion": "15.6.5.199",
+      "CurrentHorizontalResolution": 4096,
+      "CurrentVerticalResolution": 2560
+    }
+  ],
+  "version": "10.0.26300",
+  "logicalProcessors": 16,
+  "cpu": "AMD Ryzen 7 5700G with Radeon Graphics         ",
+  "recordedAt": "2026-10-28T04:28:13.2225910Z",
+  "purpose": "test environment metadata; no latency/fps acceptance inferred",
+  "build": "26300",
+  "architecture": "64 位",
+  "os": "Microsoft Windows 11 专业版"
+}

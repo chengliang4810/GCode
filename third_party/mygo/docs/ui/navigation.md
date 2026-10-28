@@ -83,7 +83,8 @@ link (`mygo.App.OnOpenURL`) pushes its page.
 
 Users go back and forward as in browsers and Finder: Cmd+[ and Cmd+] on
 macOS, Alt+Left and Alt+Right on Linux and Windows, the back and forward
-buttons of a mouse and the keys of keyboards that have them, and the
+buttons of a mouse and the keys of keyboards that have them, swiping
+between pages on a touchpad on macOS, and the
 [back and forward buttons](history-buttons.md), which a toolbar holds, and
 whose right click lists the pages to go back or forward to, by their
 titles. The keys go to the router holding the keyboard focus, else to the
@@ -151,3 +152,11 @@ the right over the page it leaves, and back up from the left; others fade
 in. With less motion asked of the desktop, all fade, and
 `router.Transition = ui.TransitionNone` shows them at once. The page going
 away takes neither the pointer nor the keyboard as it slides.
+
+`router.Animation` sets how pages move, as a spring or a curve (see
+[Motion](motion.md)), in place of easing out over 250 ms as they slide and
+150 ms as they fade:
+
+```go
+router.Animation = &ui.Snappy
+```

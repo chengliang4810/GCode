@@ -1,0 +1,141 @@
+package desktop
+
+import (
+	"gcode/internal/contracts"
+	"gcode/internal/design"
+	"github.com/egoist/mygo/ui"
+)
+
+func (a *App) billingSettings(c *ui.Context) {
+	a.integrationSubtitle(c, "Credits run your Cloud sessions.")
+	b := a.state.Integrations.Billing
+	if b.LoadState == contracts.LoadLoading {
+		a.integrationLoading(c, "Loading billing")
+		return
+	}
+	if b.LoadState == contracts.LoadError {
+		a.settingsCard(c, func() { a.integrationError(c, "Couldn't load billing: "+b.Error, "billing.refresh", nil) })
+		return
+	}
+	if !b.Available {
+		a.settingsCard(c, func() {
+			a.settingsRow(c, "Billing isn't set up on this server yet, so plans and credits can't be bought here.", "", func() {})
+		})
+	}
+	if b.Notice != "" {
+		ui.Text(c, b.Notice).FontSize(design.UISize(c, 12)).TextColor(a.palette.Success).Padding(8, 16)
+	}
+	if b.Checkout != nil && b.Checkout.State == "waiting" {
+		a.settingsCard(c, func() {
+			a.settingsRow(c, "Finish in your browser — this page updates when it's done.", "", func() {
+				textButton(c, "Dismiss").OnClick(func() { a.dispatch(contracts.Command{Kind: "billing.checkout.dismiss"}) })
+			})
+		})
+	}
+	sectionTitle(c, "Credits")
+	a.settingsCard(c, func() {
+		credits := b.Credits
+		ui.Column(c).FillWidth().Padding(16).Gap(14).Children(func() {
+			ui.Row(c).FillWidth().AlignItems(ui.End).Children(func() {
+				ui.Text(c, integrationCredits(credits.Total)).FontSize(design.UISize(c, 26)).FontWeight(500)
+				ui.Text(c, "credits").FontSize(design.UISize(c, 13)).TextColor(a.palette.Muted).Margin(0, 0, 3, 5)
+				ui.Spacer(c)
+				label := integrationHours(credits.Total)
+				if credits.Total <= 0 {
+					label = "Choose a plan or buy credits to run Cloud"
+				}
+				ui.Text(c, label).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted).Margin(0, 0, 3, 0)
+			})
+			if credits.Monthly+credits.Extra > 0 {
+				ui.Box(c).FillWidth().Height(4).Radius(2).Clip().Draw(func(p *ui.Painter, r ui.Rect) {
+					fraction := float32(credits.Monthly / max(1, credits.Monthly+credits.Extra))
+					p.Fill(ui.Rect{X: r.X, Y: r.Y, W: r.W * fraction, H: r.H}, a.palette.Text.Alpha(.7), 0)
+					p.Fill(ui.Rect{X: r.X + r.W*fraction, Y: r.Y, W: r.W * (1 - fraction), H: r.H}, a.palette.Text.Alpha(.3), 0)
+				})
+			}
+		})
+		line(c)
+		description, value := "No plan yet — choose one below", "—"
+		if credits.MonthlyTotal > 0 {
+			description = "Of " + integrationCredits(credits.MonthlyTotal)
+			if !credits.MonthlyEndsAt.IsZero() {
+				description += " · resets " + credits.MonthlyEndsAt.Local().Format("Jan 2")
+			}
+			value = integrationCredits(credits.Monthly)
+		}
+		a.settingsRow(c, "Plan credits", description, func() { ui.Text(c, value).FontSize(design.UISize(c, 13)) })
+		line(c)
+		a.settingsRow(c, "Extra credits", "Never expire · used once plan credits run out", func() { ui.Text(c, integrationCredits(credits.Extra)).FontSize(design.UISize(c, 13)) })
+	})
+	sectionTitle(c, "Plan")
+	ui.Row(c).FillWidth().Gap(12).Children(func() {
+		for _, plan := range b.Plans {
+			a.billingPlanCard(c, b, plan)
+		}
+	})
+	if b.Subscription != nil {
+		plan := contracts.BillingPlan{}
+		for _, p := range b.Plans {
+			if p.ID == b.Subscription.PlanID {
+				plan = p
+			}
+		}
+		detail := "Renews " + b.Subscription.PeriodEnd.Local().Format("Jan 2") + "."
+		if b.Subscription.CancelAtPeriodEnd {
+			detail = "Ends " + b.Subscription.PeriodEnd.Local().Format("Jan 2") + ". You keep its credits until then."
+		}
+		if b.Subscription.Status == "past_due" {
+			detail = "Your last payment didn't go through — update your card to keep your plan."
+		}
+		a.settingsCard(c, func() {
+			a.settingsRow(c, plan.Name+" · "+integrationPrice(plan.PriceCents)+" a month", detail, func() {
+				textButton(c, "Manage subscription").Disabled(b.Checkout != nil && b.Checkout.State == "waiting").OnClick(func() { a.dispatch(contracts.Command{Kind: "billing.manage"}) })
+			})
+		})
+	}
+	sectionTitle(c, "Extra credits")
+	if a.integrationUI.Packs < 1 {
+		a.integrationUI.Packs = 1
+	}
+	packs := a.integrationUI.Packs
+	a.settingsCard(c, func() {
+		a.settingsRow(c, integrationCredits(b.Pack.Credits*float64(packs))+" credits", "Never expire · "+integrationHours(b.Pack.Credits*float64(packs)), func() {
+			ui.Row(c).Height(32).Radius(8).Background(a.palette.Text.Alpha(.04)).AlignItems(ui.Center).Children(func() {
+				iconButton(c, "minus", "Fewer packs").Size(32, 32).Disabled(packs <= 1).OnClick(func() { a.integrationUI.Packs = max(1, packs-1) })
+				ui.Text(c, integrationCredits(float64(packs))).MinWidth(24).TextAlign(ui.Center).FontSize(design.UISize(c, 13))
+				iconButton(c, "plus", "More packs").Size(32, 32).Disabled(packs >= 20).OnClick(func() { a.integrationUI.Packs = min(20, packs+1) })
+			})
+			textButton(c, "Buy for "+integrationPrice(b.Pack.PriceCents*packs)).MinWidth(96).Disabled(!b.Available || b.Checkout != nil && b.Checkout.State == "waiting").OnClick(func() {
+				a.dispatch(contracts.Command{Kind: "billing.buy", Integration: &contracts.IntegrationRequest{Packs: packs}})
+			})
+		})
+	})
+}
+
+func (a *App) billingPlanCard(c *ui.Context, b contracts.BillingState, plan contracts.BillingPlan) {
+	current := b.Subscription != nil && b.Subscription.PlanID == plan.ID
+	ui.Column(c.Key("billing-plan-"+plan.ID)).Grow(1).MinWidth(0).Padding(16).Gap(8).Radius(12).Background(a.palette.Card).Border(1, a.palette.Border).Children(func() {
+		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
+			ui.Text(c, plan.Name).FontSize(design.UISize(c, 13)).FontWeight(500)
+			ui.Spacer(c)
+			if current {
+				ui.Text(c, "Current").FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
+			}
+		})
+		ui.Row(c).AlignItems(ui.End).Gap(3).Children(func() {
+			ui.Text(c, integrationPrice(plan.PriceCents)).FontSize(design.UISize(c, 24)).FontWeight(500)
+			ui.Text(c, "/ month").FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+		})
+		ui.Text(c, integrationCredits(plan.MonthlyCredits)+" credits").FontSize(design.UISize(c, 13))
+		ui.Text(c, integrationHours(plan.MonthlyCredits)).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+		label := "Choose " + plan.Name
+		if current {
+			label = "Current plan"
+		} else if b.Subscription != nil {
+			label = "Switch"
+		}
+		textButton(c, label).Label(label + " " + plan.Name).FillWidth().Disabled(!b.Available || current || b.Checkout != nil && b.Checkout.State == "waiting").Background(a.palette.Text.Alpha(.06)).OnClick(func() {
+			a.dispatch(contracts.Command{Kind: "billing.subscribe", Integration: &contracts.IntegrationRequest{Value: plan.ID}})
+		})
+	})
+}

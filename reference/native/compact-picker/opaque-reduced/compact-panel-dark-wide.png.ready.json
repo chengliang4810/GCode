@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "compact-panel-dark-wide.png",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "renderer": "original GPUI Windows native window",
+  "scale": 1.0,
+  "clientOrigin": [
+    40.0,
+    52.0
+  ],
+  "clientSize": [
+    840.0,
+    560.0
+  ],
+  "surface": "opaque",
+  "reducedMotion": true
+}

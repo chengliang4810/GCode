@@ -1,0 +1,2291 @@
+{
+  "diagrams": [
+    {
+      "asset": "artifacts/diagram-zeron-light.svg",
+      "backgroundColor": "#ffffff",
+      "height": 139.9095,
+      "id": "zeron-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-zeron-light.svg",
+      "rawSha256": "90a6bf55253db3ab611ff14c81d765c8a886b5c8131eb449d9bdbfbe34b75a60",
+      "sha256": "298e9151b71feebadc7d10a1dd93074eeb88f56b6eb0f74cd17bb47d539e7196",
+      "textColor": "#303035",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-zeron-dark.svg",
+      "backgroundColor": "#060606",
+      "height": 139.9095,
+      "id": "zeron-dark",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-zeron-dark.svg",
+      "rawSha256": "6b7110d748d2b248b514d92d293c39b7e96d895ff73e4581c5302a7f5c74bcf1",
+      "sha256": "d7b863fc176eecf75fb45112ab6e3698d3dcd29bce4ff8f98cbe891f51ff6a12",
+      "textColor": "#e8e8ea",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-vscode-light-plus.svg",
+      "backgroundColor": "#ffffff",
+      "height": 139.9095,
+      "id": "vscode-light-plus",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-vscode-light-plus.svg",
+      "rawSha256": "f0f77eed4c211da51b47b8aa351f434a162a8ab9a705da14ffe52365bc5642f5",
+      "sha256": "12853ef363ec041051d45cd9aa508350174427ef4b3e309158c492015fbac4be",
+      "textColor": "#1f1f1f",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-vscode-dark-plus.svg",
+      "backgroundColor": "#1e1e1e",
+      "height": 139.9095,
+      "id": "vscode-dark-plus",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-vscode-dark-plus.svg",
+      "rawSha256": "b7c153e4f53e2b6a0a4d89a25aba810c9860a683c371943959f4cb38d4997a0c",
+      "sha256": "83568676692e295f3f0230b92c19d7971754b6d9561f1453da98976deae73ffc",
+      "textColor": "#d4d4d4",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-catppuccin-latte.svg",
+      "backgroundColor": "#eff1f5",
+      "height": 139.9095,
+      "id": "catppuccin-latte",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-catppuccin-latte.svg",
+      "rawSha256": "f2553423dd0f788d8d2cab1b9bf62d9ba6f7ad1eb3d8681c0fc130487d10c665",
+      "sha256": "c1341db203774473db39f3f28469afb5e0a52f211fecf8a4fbe1efeb4fa6b2a9",
+      "textColor": "#4c4f69",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-catppuccin-mocha.svg",
+      "backgroundColor": "#1e1e2e",
+      "height": 139.9095,
+      "id": "catppuccin-mocha",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-catppuccin-mocha.svg",
+      "rawSha256": "ca6b5bbc473ef2604de7d82b60585076c398f4b3b86b8fb8a4e6c07c5336602c",
+      "sha256": "d375579b79266584b4522927117be679d680764fd4d4b225872fcdb1b05a5d54",
+      "textColor": "#cdd6f4",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-tokyo-night-light.svg",
+      "backgroundColor": "#d5d6db",
+      "height": 139.9095,
+      "id": "tokyo-night-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-tokyo-night-light.svg",
+      "rawSha256": "22569499e621d96ff354d4b4cd080f2683b37431fa74c113eed358ffd3dba16a",
+      "sha256": "891f839a7307fa0ddf8f462789ab1b802418a1d0c4b81ccc90d82ef463f1bb81",
+      "textColor": "#343b59",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-tokyo-night.svg",
+      "backgroundColor": "#1a1b26",
+      "height": 139.9095,
+      "id": "tokyo-night",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-tokyo-night.svg",
+      "rawSha256": "ccf8df0ef231615d490189b12f0e194b664b4682bd0766c86d2dbb84bea77678",
+      "sha256": "d8db12f16d8a3acdb3649cb50b3b34e9c60772b2f8662f94055a229de002d517",
+      "textColor": "#c0caf5",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-dracula.svg",
+      "backgroundColor": "#282a36",
+      "height": 139.9095,
+      "id": "dracula",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-dracula.svg",
+      "rawSha256": "c35cf97a4542d50dd0423e5f9883a52d07171ed618e2cd2bf28edf124a78bfd8",
+      "sha256": "9e7e7e064a15c58c873184c6e424cab59a73f3bf6849ce12c5445a509ce97f31",
+      "textColor": "#f8f8f2",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-github-light.svg",
+      "backgroundColor": "#ffffff",
+      "height": 139.9095,
+      "id": "github-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-github-light.svg",
+      "rawSha256": "404c5411e6ae2a780004485da0ded539ac53fb6fa1a192bf83bdf41aa0234663",
+      "sha256": "36647aa4574616641de6797e45ffdd45ccc9ff2e96804b0a48d1381cb2443150",
+      "textColor": "#1f2328",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-github-dark.svg",
+      "backgroundColor": "#0d1117",
+      "height": 139.9095,
+      "id": "github-dark",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-github-dark.svg",
+      "rawSha256": "1768db145ed946ac7b44e2da148f6e8abcc6a1d8a154ab7fbe3033e6bb5515aa",
+      "sha256": "d98e7ef69e3783043ca02f644a8db1ef4afc014b8e74daf6be2574d2d773e415",
+      "textColor": "#e6edf3",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-ayu-light.svg",
+      "backgroundColor": "#fcfcfc",
+      "height": 139.9095,
+      "id": "ayu-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-ayu-light.svg",
+      "rawSha256": "a114b6437dd58858b80dd1843d322a26e6a743e7929a5395109fc300eca7e557",
+      "sha256": "38a4c42e53556500c1b41d9f8a3d6a1175cbe417a7b9a342426f3e77f995165e",
+      "textColor": "#5c6166",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-ayu-dark.svg",
+      "backgroundColor": "#10141c",
+      "height": 139.9095,
+      "id": "ayu-dark",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-ayu-dark.svg",
+      "rawSha256": "04f223cedb033379c747c296b4e529a655991b5ec8a91d37b642d6c769a8a2c1",
+      "sha256": "d3a11dbdb2d34e83fca072eaf8c77cf56ba5115c313db7270d17c1ea84eb6c54",
+      "textColor": "#bfbdb6",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-ayu-mirage.svg",
+      "backgroundColor": "#242936",
+      "height": 139.9095,
+      "id": "ayu-mirage",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-ayu-mirage.svg",
+      "rawSha256": "6bd0bad030689652e10a21dd74c4654e08ef7a45e2099fe3c3e6d68733e8eddf",
+      "sha256": "4d99efe5f246709d5982ebbafa58e305c297c8533c579ce8ba8b8642b856def5",
+      "textColor": "#cccac2",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-gruvbox-light.svg",
+      "backgroundColor": "#fbf1c7",
+      "height": 139.9095,
+      "id": "gruvbox-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-gruvbox-light.svg",
+      "rawSha256": "daec94f301e289c205f6ad668fb12905dfb2ec834e86bd5577f948cef8c68178",
+      "sha256": "a4b2aeaa8ee8bb0c2631399d56554a544facfeb3ad1e577ee1baba84e85e6f9b",
+      "textColor": "#3c3836",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-gruvbox-dark.svg",
+      "backgroundColor": "#282828",
+      "height": 139.9095,
+      "id": "gruvbox-dark",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-gruvbox-dark.svg",
+      "rawSha256": "9cb59b6799bf4f4b70f47a6736baacf005b404af4c8cc7a316ef24572da40df1",
+      "sha256": "59aca413bf06b55bd4d3123773d6fbf28676f856cfeafa68c21f42677d9695b1",
+      "textColor": "#ebdbb2",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-rose-pine-dawn.svg",
+      "backgroundColor": "#faf4ed",
+      "height": 139.9095,
+      "id": "rose-pine-dawn",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-rose-pine-dawn.svg",
+      "rawSha256": "af3a51a0f1a264ef0e37d91bb6dabb69c548d30389f3e078f26cadf9f5354888",
+      "sha256": "02e8fd35ecddbe949dc52dfffc8d805c30a6780bb085f03ab5db2b19be155488",
+      "textColor": "#575279",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-rose-pine-moon.svg",
+      "backgroundColor": "#232136",
+      "height": 139.9095,
+      "id": "rose-pine-moon",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-rose-pine-moon.svg",
+      "rawSha256": "35d9c0dbc50c803755c8231d38d729fcbb9b418261711882e3b34db5789e41a6",
+      "sha256": "f2e5b06565970b88e079c9426e5fa3a8a469e12adee5ed47b6f9e979d174a419",
+      "textColor": "#e0def4",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-nord.svg",
+      "backgroundColor": "#2e3440",
+      "height": 139.9095,
+      "id": "nord",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-nord.svg",
+      "rawSha256": "94b33206f5aa464aa7d35983da329b4436387c133ab76c11d961311fdacd1849",
+      "sha256": "28302bfe7817e570ad70b544d9d0ec4119036df7769585895f18182f47b4a243",
+      "textColor": "#d8dee9",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-one-dark-pro.svg",
+      "backgroundColor": "#282c34",
+      "height": 139.9095,
+      "id": "one-dark-pro",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-one-dark-pro.svg",
+      "rawSha256": "48c1dd2bd12108ef3f492f23e65092bf39cfbe174146f1ce86590a5d9a278690",
+      "sha256": "8f6ad7327e1ac31414be4e7ae724eb2da9efa7354c5a9375dc21d03c0cfc5fd4",
+      "textColor": "#abb2bf",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-atom-one-dark.svg",
+      "backgroundColor": "#282c34",
+      "height": 139.9095,
+      "id": "atom-one-dark",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-atom-one-dark.svg",
+      "rawSha256": "d01a27342cdcd090e2e0ebd2fb83bbb9428418cacf625ab4af6ced2ef00cd3d5",
+      "sha256": "6d9d659bad288ddd1af9e5328b87d90b8f23dba5789fcdf0313be78f1edb7a2a",
+      "textColor": "#abb2bf",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-night-owl-light.svg",
+      "backgroundColor": "#fbfbfb",
+      "height": 139.9095,
+      "id": "night-owl-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-night-owl-light.svg",
+      "rawSha256": "7bda813b7d2c5a85c7fdb89b5d33c6ee422b15491c849e539cf03079722a574a",
+      "sha256": "cadf5570d7e19446d0d1588726e0f755685899e2688d2bd0133fb6cab6f5865c",
+      "textColor": "#403f53",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-night-owl.svg",
+      "backgroundColor": "#011627",
+      "height": 139.9095,
+      "id": "night-owl",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-night-owl.svg",
+      "rawSha256": "aefb2880e0e660ecf9af1e6abeb1d9c31aae74007620b14fe92e5f0292e037b9",
+      "sha256": "bf568e22efbd0d52304c1dd18412539d5f1953c315106cd106d67dc568c2eb77",
+      "textColor": "#d6deeb",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-winter-light.svg",
+      "backgroundColor": "#ffffff",
+      "height": 139.9095,
+      "id": "winter-light",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-winter-light.svg",
+      "rawSha256": "e87b9bc2cad1fb1b6436cffedcdc258d299bbce852aaabba06c94f61a6c4c794",
+      "sha256": "d996a8ae4e0cc55724d4a42e5b2ae27052e8582e9c438e4930a4142ae5651778",
+      "textColor": "#1857a4",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-winter-dark-blue.svg",
+      "backgroundColor": "#011627",
+      "height": 139.9095,
+      "id": "winter-dark-blue",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-winter-dark-blue.svg",
+      "rawSha256": "ecf77d267037183db2d0a20f2d865cdfcade31e343cf4f0debba884b968d92e0",
+      "sha256": "f6efd6280af04a3180bccae97dad7b5c846c2bef630d2bcf6887cfa023e2a4e1",
+      "textColor": "#d6deeb",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-palenight.svg",
+      "backgroundColor": "#292d3e",
+      "height": 139.9095,
+      "id": "palenight",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-palenight.svg",
+      "rawSha256": "9f6488b39c922cc751565ae2831d09d3b90d070bf661a16cf723ae2cbd2acfae",
+      "sha256": "94a5b4679a9ab00e50dc568d4aef7fa02f24a9abffb593ea27bb850d8199aea6",
+      "textColor": "#eeffff",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-synthwave-84.svg",
+      "backgroundColor": "#262335",
+      "height": 139.9095,
+      "id": "synthwave-84",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-synthwave-84.svg",
+      "rawSha256": "941d0d0af5e882af193c8d68a1cd65a86e367985dda51cb7eb7f6cdbedf4f691",
+      "sha256": "00e199ba52f64566eea4fb9ceee2dad3b0cf26ef685f2b0ca3d35e85571f7a2b",
+      "textColor": "#ffffff",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-shades-of-purple.svg",
+      "backgroundColor": "#2d2b55",
+      "height": 139.9095,
+      "id": "shades-of-purple",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-shades-of-purple.svg",
+      "rawSha256": "def3633f91233bdbf98b6519bc56c89480a8b4965325f06965f2e3609e11151d",
+      "sha256": "5ed3983779e339d6d85eac3f0c919093947b46dcaaeaaaf4c39c0d2f8479ed8a",
+      "textColor": "#ffffff",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-cobalt2.svg",
+      "backgroundColor": "#193549",
+      "height": 139.9095,
+      "id": "cobalt2",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-cobalt2.svg",
+      "rawSha256": "d00ffd96b39b3d65ff9900ecf7946b63fb2fd16f1b4c0acf767174cfd7edbe53",
+      "sha256": "84e3da28000680bd50b301f4909ac356035962373722e237db8231559ad2fd7f",
+      "textColor": "#ffffff",
+      "width": 381.6848
+    },
+    {
+      "asset": "artifacts/diagram-andromeda.svg",
+      "backgroundColor": "#23262e",
+      "height": 139.9095,
+      "id": "andromeda",
+      "labels": [
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 22.0780029296875,
+            "x": 226.01100158691406,
+            "y": 21.330001831054688
+          },
+          "outlinePaths": 1,
+          "text": "Yes"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 18.28399658203125,
+            "x": 230.3679962158203,
+            "y": 98.20999908447266
+          },
+          "outlinePaths": 1,
+          "text": "No"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 53.256004333496094,
+            "x": 26.81199836730957,
+            "y": 52.660003662109375
+          },
+          "outlinePaths": 1,
+          "text": "Request"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 48.313995361328125,
+            "x": 148.94300842285156,
+            "y": 52.62999725341797
+          },
+          "outlinePaths": 1,
+          "text": "Ready?"
+        },
+        {
+          "bounds": {
+            "height": 18.200000762939453,
+            "width": 63.1259765625,
+            "x": 284.0870056152344,
+            "y": 17.93000030517578
+          },
+          "outlinePaths": 1,
+          "text": "Response"
+        },
+        {
+          "bounds": {
+            "height": 18.199996948242188,
+            "width": 28.55999755859375,
+            "x": 285.010009765625,
+            "y": 92.84000396728516
+          },
+          "outlinePaths": 1,
+          "text": "Wait"
+        }
+      ],
+      "rawSVG": "reference/mermaid/raw/diagram-andromeda.svg",
+      "rawSha256": "e93eb159b66d1b2d14fdc9fa796acd98555db62e8d9fe9aa4b8eb1c4dcb5b05f",
+      "sha256": "c443be1460c926185776e989fe9b2fa6f97315b2cdb07c573ead9240f2a0144d",
+      "textColor": "#d5ced9",
+      "width": 381.6848
+    }
+  ],
+  "exporterLockSha256": "b97837afe6818df58e54f0bcd47f979aded6b18f26330ab2e2e993901fb204d9",
+  "fontLicense": "fonts/licenses/Geist-OFL.txt",
+  "fontOptionsSource": "crates/ui/src/image_media.rs:svg_options/decode_image",
+  "fontOptionsSourceSha256": "bd9cd4da953c585eefd597d9d34d531a92c7aab465e4ee05c5d6d97e76e8b7f5",
+  "fontdb": "0.23.0",
+  "fonts": [
+    {
+      "name": "Geist.ttf",
+      "selectedForNormalFamily": true,
+      "sha256": "5c8968eafb98a4c4f47033daf29e38e284a6f2a82eb017d171ab040fe7c4b615",
+      "source": "crates/ui/assets/fonts/Geist.ttf"
+    },
+    {
+      "name": "Geist-Italic.ttf",
+      "sha256": "d4b95dddb27051775acefc49a6c25122d748400316b651e3cb85f0afd121a1f8",
+      "source": "crates/ui/assets/fonts/Geist-Italic.ttf"
+    },
+    {
+      "name": "Geist-Medium.ttf",
+      "sha256": "0090e004725f6f64b841715b4167920580f883fcf9b67fc6d744089103fec101",
+      "source": "crates/ui/assets/fonts/Geist-Medium.ttf"
+    },
+    {
+      "name": "Geist-MediumItalic.ttf",
+      "sha256": "05eb42694fe891d2b9265c66bd4e9d5cfa052c50076310921f116e675580e799",
+      "source": "crates/ui/assets/fonts/Geist-MediumItalic.ttf"
+    },
+    {
+      "name": "Geist-SemiBold.ttf",
+      "sha256": "612ec98df33935354f39e81e54101656961ab6e5549f64b63eb57868ba7bab8d",
+      "source": "crates/ui/assets/fonts/Geist-SemiBold.ttf"
+    },
+    {
+      "name": "Geist-SemiBoldItalic.ttf",
+      "sha256": "8dbf944c1cbb8c9b9074faccac2d34869bc839d03c9446e5148eaf547ebf45fa",
+      "source": "crates/ui/assets/fonts/Geist-SemiBoldItalic.ttf"
+    },
+    {
+      "name": "Geist-Bold.ttf",
+      "sha256": "e866b423b755233cae8bce6a37519f6fe630be9772fa08fc3114bff15bc8580f",
+      "source": "crates/ui/assets/fonts/Geist-Bold.ttf"
+    },
+    {
+      "name": "Geist-BoldItalic.ttf",
+      "sha256": "d0420f50612a7e8c2b697834555fbd5f92abc6f20b9ba6d96c0ffd5ab23b1a90",
+      "source": "crates/ui/assets/fonts/Geist-BoldItalic.ttf"
+    },
+    {
+      "name": "GeistMono.ttf",
+      "selectedForNormalFamily": true,
+      "sha256": "42d8ad2e610238e64e8abfcde3037c63f7850a73928742b7ab7229d897bcb155",
+      "source": "crates/ui/assets/fonts/GeistMono.ttf"
+    },
+    {
+      "name": "GeistMono-Italic.ttf",
+      "sha256": "27b5e991397af74bbb90c3137869967bed796b3792e269f1c294ef53bfbf8a33",
+      "source": "crates/ui/assets/fonts/GeistMono-Italic.ttf"
+    },
+    {
+      "name": "GeistMono-Medium.ttf",
+      "sha256": "90b15711dc3779b2e64e8aff5228154dd019a90bce4947549c4a8a8a43f2ac25",
+      "source": "crates/ui/assets/fonts/GeistMono-Medium.ttf"
+    },
+    {
+      "name": "GeistMono-MediumItalic.ttf",
+      "sha256": "432b920fce692d76c8f4315f46bbe2e726436ec959c279727cd4ff7d979cdeed",
+      "source": "crates/ui/assets/fonts/GeistMono-MediumItalic.ttf"
+    },
+    {
+      "name": "GeistMono-SemiBold.ttf",
+      "sha256": "8b6e127117b03046495b40d4227de66bf5f81f7fe2f4546ee578e89738052314",
+      "source": "crates/ui/assets/fonts/GeistMono-SemiBold.ttf"
+    },
+    {
+      "name": "GeistMono-SemiBoldItalic.ttf",
+      "sha256": "4fde4f470bd18aa6846a1fce20b1413f99abc7991c145e86118c2350bc8c10d7",
+      "source": "crates/ui/assets/fonts/GeistMono-SemiBoldItalic.ttf"
+    },
+    {
+      "name": "GeistMono-Bold.ttf",
+      "sha256": "ea1cabb4d152088721b5e0b1865bb43c75c1b2d468384a551e0958e53d4fa370",
+      "source": "crates/ui/assets/fonts/GeistMono-Bold.ttf"
+    },
+    {
+      "name": "GeistMono-BoldItalic.ttf",
+      "sha256": "c063203f13080b71aa5416ec5f5a0e30bc0a0d9a8a33335479c676f5809b6d5d",
+      "source": "crates/ui/assets/fonts/GeistMono-BoldItalic.ttf"
+    }
+  ],
+  "mermaidRenderer": "0.3.1",
+  "mermaidSourceSha256": "a673591a2aa18fcf42dc1dc2b6849071448da8e3ef7506b8d5834f8e11d31a9b",
+  "nativeVisualAcceptance": "pending",
+  "outlineAdapterSha256": "72c3018c6e04a7145ff488f7ea25417af7bdd188734014e5b1b42ec6a2c42afc",
+  "schemaVersion": 1,
+  "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "usvg": "0.46.0"
+}

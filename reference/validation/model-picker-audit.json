@@ -1,0 +1,120 @@
+{
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "nativeVisualAcceptance": false,
+  "files": [
+    {
+      "path": "output/model-audit/after/catalog-empty-dark.png",
+      "sha256": "8ce749d4421aa354adfc068313f4ada36d5e2647211ad5f132629c4b2eebe46e"
+    },
+    {
+      "path": "output/model-audit/after/catalog-empty-light.png",
+      "sha256": "a66a18fd25eceeb83587187e9093972583bd2e860a39562c31eb3dfe6bed35f6"
+    },
+    {
+      "path": "output/model-audit/after/catalog-error-dark.png",
+      "sha256": "5b1ea5a884fab844d3162a089a2cc4f078540e89033027f0d57695ccce488128"
+    },
+    {
+      "path": "output/model-audit/after/catalog-error-light.png",
+      "sha256": "ca0c29f4cf455bb35a82a929092e1876fc7fa3703845d2453eda475186bd1930"
+    },
+    {
+      "path": "output/model-audit/after/catalog-loading-dark.png",
+      "sha256": "3d0b5c36bbb5980c79450c61e13790713ea78de851498d73b6060a9e1364c6e4"
+    },
+    {
+      "path": "output/model-audit/after/catalog-loading-light.png",
+      "sha256": "1a12cfbf107f68086c1b58ebbd709eeae2631ba44152b547da70311c0ffb17b7"
+    },
+    {
+      "path": "output/model-audit/after/catalog-noAgents-dark.png",
+      "sha256": "b5e50be4833a9a5858b3e92412a35a3b633c21323ad23026a50f46ea62ffeb4e"
+    },
+    {
+      "path": "output/model-audit/after/catalog-noAgents-light.png",
+      "sha256": "0a1b49df5c1119df1e8e3d1c8db1738da708de50462e9c8b9c97872d9a342cb4"
+    },
+    {
+      "path": "output/model-audit/after/compact-dark.png",
+      "sha256": "78bb326c1f7de09eb96604c37da86a9db2b0d18f38f2104ad43b1a3b9466a859"
+    },
+    {
+      "path": "output/model-audit/after/compact-light.png",
+      "sha256": "895767986dccdf76c1fb39738248d5a1b811a342b4cf866bdd58a431bbc84b10"
+    },
+    {
+      "path": "output/model-audit/after/focus-compact-light.png",
+      "sha256": "c788244d9d2a0187cb965008b686d8274b66dc12df5d3707a15e51c47f7181c2"
+    },
+    {
+      "path": "output/model-audit/after/focus-list-light.png",
+      "sha256": "2ecbf809d74264de004f38e19dc5a17600dd35e95b6715ed612d407a0fb4db22"
+    },
+    {
+      "path": "output/model-audit/after/full-dark.png",
+      "sha256": "5f3fd2100c147b41ad76ee8e8e1cc08787920800418a0c6f103717dbdd81178a"
+    },
+    {
+      "path": "output/model-audit/after/full-light.png",
+      "sha256": "d6c61534a97743671536c4b7154f53f1af79eb46b42d775e54d62c8a9561eb9d"
+    },
+    {
+      "path": "output/model-audit/after/list-dark.png",
+      "sha256": "4d7324c2aeb5cb3a489aed801862d7ded9c8e11b3362742209f03851fc0c786d"
+    },
+    {
+      "path": "output/model-audit/after/list-light.png",
+      "sha256": "72954e314bb680ff0b593b3c7c4e5eae4a72c5ac6cc8eb07a4521df081825adf"
+    },
+    {
+      "path": "output/model-audit/before/compact-dark.png",
+      "sha256": "7046aac14bd010cac7edda7534c5c114cdf44ba276a4d47b08aaa50874b0e5cb"
+    },
+    {
+      "path": "output/model-audit/before/compact-light.png",
+      "sha256": "5f9f9fc442054f2e5d3ee881faebe8905aa3ae56dd17ffe5371d5b052336880c"
+    },
+    {
+      "path": "output/model-audit/before/full-dark.png",
+      "sha256": "c017e88a29598ca37def86cabfcc7a306c67517ee44abce1d1c6064f87cec3f7"
+    },
+    {
+      "path": "output/model-audit/before/full-light.png",
+      "sha256": "577c7300976e53660670685468c5363e2f4ab50d52bb8387afb7d7dbbe2f2588"
+    },
+    {
+      "path": "output/model-audit/before/list-dark.png",
+      "sha256": "6fadfa2ee721a503cf68b53457f4fe4fa9d01955eea8e7bc87222a6e4dfc3be8"
+    },
+    {
+      "path": "output/model-audit/before/list-light.png",
+      "sha256": "066449c0f6e12b2314a9410ff070db489090f7857bf6e823973f17c05eaf5173"
+    },
+    {
+      "path": "internal/desktop/model_picker.go",
+      "sha256": "104df0af5a966b51aa54841b5ec34fa0d40b0460f051f170ecca55ed5d5eb39c"
+    },
+    {
+      "path": "internal/desktop/model_catalog.go",
+      "sha256": "582c766884aa86dcd097935cd4e78749d9e835b9daf55c7e5bc75a1206bbe8eb"
+    },
+    {
+      "path": "internal/desktop/model_picker_test.go",
+      "sha256": "e23297ea6a2d22ecf4d9e0ea591d6342439951356a2649e37f6eac3b089eb075"
+    },
+    {
+      "path": "internal/desktop/chat.go",
+      "sha256": "0b490777ed40a7dbb1b438fa93f0abf73d9d7d990f9aaa98cad23c1910405714"
+    },
+    {
+      "path": "internal/desktop/access.go",
+      "sha256": "89fe6e9c3e6bda1934db3f90abb6f8eb8eedfd8a32a2cd73c11bac700e46f813"
+    },
+    {
+      "path": "internal/desktop/session_state.go",
+      "sha256": "bd7ab5d914830046004f550e6be8bb3b84fef49649918bfdecc05d9e259e0004"
+    }
+  ],
+  "schemaVersion": 1,
+  "kind": "MyGo Tester implementation"
+}

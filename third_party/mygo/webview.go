@@ -92,6 +92,7 @@ func (w *Window) newWebView(opts WebViewOptions, bg *background) (*WebView, erro
 		return nil, fmt.Errorf("mygo: cannot create a web view: %w", err)
 	}
 	pw.native = &webViewNative{Window: w.native, web: nv}
+	startContentRules(nv, opts.Page.ContentRules)
 	v := &WebView{pw}
 	pw.webView = v
 
@@ -121,6 +122,12 @@ func (v *WebView) Focus() {
 		}
 	})
 }
+
+// SetBackgroundColor sets the color filling the web view until its page
+// paints, in the syntax of WebViewOptions.BackgroundColor, as when the
+// app's own theme changes; one given with light-dark follows the
+// appearance by itself.
+func (v *WebView) SetBackgroundColor(color string) error { return v.w.SetBackgroundColor(color) }
 
 // CapturePage returns a PNG screenshot of the web view's page.
 func (v *WebView) CapturePage() ([]byte, error) { return v.w.CapturePage() }
@@ -269,6 +276,10 @@ func (n *webViewNative) CanGoForward() bool                  { return n.web.CanG
 func (n *webViewNative) URL() string                         { return n.web.URL() }
 func (n *webViewNative) IsLoading() bool                     { return n.web.IsLoading() }
 func (n *webViewNative) Eval(js string)                      { n.web.Eval(js) }
+func (n *webViewNative) SetUserScripts(scripts []platform.UserScript) {
+	n.web.SetUserScripts(scripts)
+}
+func (n *webViewNative) SetContentRules(lists []any) { n.web.SetContentRules(lists) }
 func (n *webViewNative) CallAsyncFunction(body string, cb func(string, error)) {
 	n.web.CallAsyncFunction(body, cb)
 }

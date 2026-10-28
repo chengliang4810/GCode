@@ -1,0 +1,12 @@
+[package]
+name = "zeron-background-reference"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+image = { version = "=0.25.10", default-features = false, features = ["png"] }
+
+moxcms = "=0.8.1"

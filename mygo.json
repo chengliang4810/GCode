@@ -1,11 +1,10 @@
 {
-  "name": "GCode",
-  "identifier": "app.gcode.desktop",
+  "name": "Zeron",
+  "identifier": "dev.gcode.zeronui",
   "version": "0.1.0",
-  "main": "./cmd/gcode",
+  "main": "./cmd/zeron",
   "out": "build",
-  "resources": ["LICENSE"],
-  "macos": {
-    "minimumSystemVersion": "13.0"
-  }
+  "icon": "internal/assets/data/app-icon.png",
+  "macos": { "minimumSystemVersion": "13.0", "bundleName": "Zeron Native UI" },
+  "windows": { "installName": "Zeron Native UI" }
 }

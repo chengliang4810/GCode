@@ -1,0 +1,14 @@
+[package]
+name = "zeron-reference-artifacts"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+zatex = { path = "D:/zeron/crates/zatex", features = ["bundled"] }
+mermaid-rs-renderer = { version = "=0.3.1", default-features = false }
+serde_json = "1"
+usvg = "=0.46.0"
+sha2 = "0.10"

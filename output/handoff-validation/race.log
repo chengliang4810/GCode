@@ -1,0 +1,4 @@
+ok  	gcode/internal/contracts	1.045s
+ok  	gcode/internal/mock	3.150s
+ok  	gcode/internal/desktop	40.809s
+ok  	gcode/internal/workbench	2.150s

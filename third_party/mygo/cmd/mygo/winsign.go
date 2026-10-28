@@ -17,6 +17,9 @@ import (
 
 // Windows configures Windows packaging.
 type Windows struct {
+	// InstallName names the install directory, Start menu/desktop shortcuts
+	// and uninstall display entry. Name still names the app and executable.
+	InstallName string `json:"installName"`
 	// Certificate is a code signing certificate (.pfx) to sign the
 	// executable, the installer and its uninstaller with, which keeps
 	// SmartScreen from warning users; signing the uninstaller needs NSIS

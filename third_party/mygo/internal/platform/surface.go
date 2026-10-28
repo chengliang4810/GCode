@@ -90,6 +90,28 @@ type MaterialSurface interface {
 	ShowsMaterial() bool
 }
 
+// PacedSurface is a Surface whose frames following each other come at the
+// display's refreshes, marked Paced: a renderer that waits for the display
+// lets such a frame draw once the display can take it, with FrameNow.
+type PacedSurface interface {
+	// FrameNow sends a SurfaceFrame at once, as a refresh would, for a
+	// frame a Paced one left to draw.
+	FrameNow()
+}
+
+// MaximizeButtonSurface is a Surface whose window makes the maximize
+// button its content draws (in a window without its own, as
+// WindowOptions.HideWindowButtons) the system's for the pointer: Windows
+// shows the snap layouts over it. Package ui reaches it only once a view
+// marks such a button (ui.Element.MaximizeButton), for apps that mark none
+// not to link it.
+type MaximizeButtonSurface interface {
+	// SetMaximizeButton tells where the content shows the window's
+	// maximize button, in DIPs from the top-left corner of the content.
+	// The zero RectF is nowhere.
+	SetMaximizeButton(r RectF)
+}
+
 // IdleSurface is a Surface that can give back memory once frames stop.
 type IdleSurface interface {
 	// Idle tells that no frame came for a while: the surface may give
@@ -113,6 +135,11 @@ type TextInputState struct {
 	// Client supplies full text and geometry for a custom text element. The
 	// Text/Start/End snapshot remains the plain-widget and TextCaret fallback.
 	Client TextInputClient
+	// NoInputMethod keeps input methods out while Active: keys type the
+	// characters of the keyboard's layout as TextInput, and nothing is
+	// composed, as winit's set_ime_allowed(false). Browsers cannot turn
+	// input methods off, and ignore it.
+	NoInputMethod bool
 }
 
 // SurfaceNative holds the native objects of a Surface.
@@ -155,7 +182,9 @@ const (
 	// PointerMove reports the pointer at X, Y.
 	PointerMove
 	// PointerDown and PointerUp report Button pressed or released at X,
-	// Y; Clicks counts quick successive presses (2 for a double click).
+	// Y; Clicks counts quick successive presses (2 for a double click),
+	// by the system's double-click settings. A release may leave it 0, for
+	// its press's.
 	PointerDown
 	PointerUp
 	// PointerLeave reports the pointer left the surface.
@@ -163,6 +192,9 @@ const (
 	// PointerScroll scrolls by DX, DY DIPs at X, Y: positive DY moves the
 	// view down the content, as dragging a scroll bar's thumb down does.
 	PointerScroll
+	// PointerZoom zooms by Scale at X, Y, as pinching a touchpad does: 2
+	// shows the content twice as large as it was.
+	PointerZoom
 	// KeyPressed and KeyReleased report Key with Mods; Repeat marks
 	// auto-repeat.
 	KeyPressed
@@ -180,7 +212,10 @@ const (
 	SurfaceFocus
 	SurfaceBlur
 	// SurfaceCommand performs the edit command Text: "copy", "cut",
-	// "paste", "selectAll", "undo", "redo" or "delete" (Edit menu roles).
+	// "paste", "pasteAndMatchStyle", "selectAll", "undo", "redo" or
+	// "delete" (Edit menu roles), or a Format menu role's: "bold",
+	// "italic", "underline", "strikethrough", "alignLeft", "alignCenter"
+	// or "alignRight".
 	SurfaceCommand
 	// FileDragOver reports files of another app dragged over X, Y, and
 	// FileDragLeave that they left. FileDrop drops Files at X, Y.
@@ -229,14 +264,22 @@ type SurfaceEvent struct {
 	Button int
 	Clicks int
 	// DX and DY are scroll distances in DIPs; Precise marks touchpads and
-	// other devices that scroll by pixels rather than by lines.
-	DX, DY  float64
-	Precise bool
-	Key     Key
-	Mods    Modifiers
-	Repeat  bool
-	Text    string
-	Caret   int
+	// other devices that scroll by pixels rather than by lines. Momentum
+	// marks scrolling that continues after the fingers leave a touchpad.
+	DX, DY   float64
+	Precise  bool
+	Momentum bool
+	// Scale is PointerZoom's.
+	Scale float64
+	Key   Key
+	// PhysicalKey is the key by its position on an ANSI US keyboard,
+	// whatever the active layout types; KeyUnknown where the backend does
+	// not report it. Key and PhysicalKey agree on a US layout.
+	PhysicalKey Key
+	Mods        Modifiers
+	Repeat      bool
+	Text        string
+	Caret       int
 	// Replace makes TextInput replace, and TextComposition compose over,
 	// the runes From to To of the last TextInputState.Text, instead of the
 	// selection.
@@ -251,6 +294,11 @@ type SurfaceEvent struct {
 	Action AccessActionKind
 	// WebView is WebViewTabOut's.
 	WebView WebView
+	// Paced marks a SurfaceFrame of frames following each other at the
+	// display's refreshes (PacedSurface): the content may draw it later,
+	// once the display can take it, which it tells by returning true from
+	// SurfaceEvent; the refreshes go on meanwhile.
+	Paced bool
 }
 
 // Modifiers are the modifier keys held during an event.
@@ -346,7 +394,8 @@ const (
 	KeyY
 	KeyZ
 	// KeyBack and KeyForward go back and forward in a history: the side
-	// buttons of a mouse, and the keys of keyboards that have them.
+	// buttons of a mouse, the keys of keyboards that have them, and on
+	// macOS swipes between pages.
 	KeyBack
 	KeyForward
 )
@@ -388,6 +437,35 @@ func KeyForRune(r rune) Key {
 		return KeySpace
 	}
 	return KeyUnknown
+}
+
+// scancodeKeys maps the scancodes of the letter, digit and punctuation keys
+// of an ANSI US keyboard to the key at that position. The main block's
+// codes are the same in Linux's evdev and in XT set 1, which Windows
+// reports.
+var scancodeKeys = map[uint16]Key{
+	2: Key1, 3: Key2, 4: Key3, 5: Key4, 6: Key5, 7: Key6, 8: Key7, 9: Key8, 10: Key9, 11: Key0,
+	12: KeyMinus, 13: KeyEqual,
+	16: KeyQ, 17: KeyW, 18: KeyE, 19: KeyR, 20: KeyT, 21: KeyY, 22: KeyU, 23: KeyI, 24: KeyO, 25: KeyP,
+	26: KeyBracketLeft, 27: KeyBracketRight,
+	30: KeyA, 31: KeyS, 32: KeyD, 33: KeyF, 34: KeyG, 35: KeyH, 36: KeyJ, 37: KeyK, 38: KeyL,
+	39: KeySemicolon, 40: KeyQuote, 41: KeyBackquote, 43: KeyBackslash,
+	44: KeyZ, 45: KeyX, 46: KeyC, 47: KeyV, 48: KeyB, 49: KeyN, 50: KeyM,
+	51: KeyComma, 52: KeyPeriod, 53: KeySlash,
+}
+
+// KeyForScancode returns the key at a scancode's position on an ANSI US
+// keyboard, whatever the layout types (SurfaceEvent.PhysicalKey), or
+// KeyUnknown for a key it does not map. A scancode is Linux's evdev code
+// (the X keycode less 8) or Windows's XT set 1 code without the extended
+// flag.
+func KeyForScancode(code uint16) Key { return scancodeKeys[code] }
+
+// KeyByPosition reports whether a key press whose layout key is key may
+// stand for its physical key: only when the layout types no US key, and a
+// shortcut modifier is held, so that typing stays on the layout.
+func KeyByPosition(key, physical Key, mods Modifiers) bool {
+	return key == KeyUnknown && physical != KeyUnknown && mods&(ModCtrl|ModAlt|ModSuper) != 0
 }
 
 // Cursor is a pointer shape.

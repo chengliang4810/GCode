@@ -1,0 +1,43 @@
+{
+  "kind": "MyGo ui.NewTester implementation render",
+  "Width": 900,
+  "Height": 600,
+  "geometry": {
+    "Conversation pane": {
+      "X": 0,
+      "Y": 38,
+      "W": 300,
+      "H": 562
+    },
+    "Files explorer": {
+      "X": 661,
+      "Y": 38,
+      "W": 239,
+      "H": 562
+    },
+    "New surface": {
+      "X": 628,
+      "Y": 8.5,
+      "W": 24,
+      "H": 24
+    },
+    "Scroll workspace tabs": {
+      "X": 308,
+      "Y": 8.5,
+      "W": 288,
+      "H": 24
+    },
+    "Tools workspace": {
+      "X": 301,
+      "Y": 38,
+      "W": 359,
+      "H": 562
+    },
+    "Workspace tabs": {
+      "X": 300,
+      "Y": 0,
+      "W": 360,
+      "H": 38
+    }
+  }
+}

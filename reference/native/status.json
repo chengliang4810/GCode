@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "referenceVersion": "0.2.128",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "platform": "windows/amd64",
+  "officialCompactFixture": {
+    "compiled": true,
+    "captureSucceeded": false,
+    "diagnostic": "render_to_image not implemented for this platform",
+    "exitCodeAloneProvesCapture": false
+  },
+  "captureTransportAdapter": {
+    "compiled": true,
+    "readyMetadataProduced": true,
+    "nativeReferencePNGProduced": false,
+    "interruption": "Computer Use reported physical Escape stop; no subsequent UI operations performed",
+    "nextAttemptRequiresFreshOutputDirectory": true,
+    "productionUIAndRendererModified": false
+  },
+  "pairedVisualAcceptance": "pending"
+}

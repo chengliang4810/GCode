@@ -1,0 +1,207 @@
+diff --git a/ui/element.go b/ui/element.go
+index 5108ccd..21875e9 100644
+--- a/ui/element.go
++++ b/ui/element.go
+@@ -332,13 +332,14 @@ type node struct {
+ 
+ 	// Input the element takes itself (HandleInput), and where the caret of
+ 	// the text it takes is (TextCaret).
+-	inputFn    func(InputEvent) bool
+-	hoverFn    func(bool)
+-	textClient TextInputClient
+-	caret      Rect
+-	takesText  bool
+-	noIME      bool // InputMethod(false)
+-	copyData   func(parts []SelectedText) transfer.Data
++	inputFn     func(InputEvent) bool
++	hoverFn     func(bool)
++	filesDropFn func([]string)
++	textClient  TextInputClient
++	caret       Rect
++	takesText   bool
++	noIME       bool // InputMethod(false)
++	copyData    func(parts []SelectedText) transfer.Data
+ 
+ 	// Content.
+ 	spans    []Span // of a RichText
+diff --git a/ui/context.go b/ui/context.go
+index 28bc054..1bdf5e5 100644
+--- a/ui/context.go
++++ b/ui/context.go
+@@ -634,6 +634,7 @@ type state struct {
+ 	// (HandleInput, TextCaret).
+ 	input       func(InputEvent) bool
+ 	onHover     func(bool)
++	onFilesDrop func([]string)
+ 	hovered     bool
+ 	textClient  TextInputClient
+ 	textAdapter *textInputAdapter
+diff --git a/ui/runtime.go b/ui/runtime.go
+index 6efefee..917f124 100644
+--- a/ui/runtime.go
++++ b/ui/runtime.go
+@@ -1031,6 +1031,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
+ 		rt.changeHover(s, false)
+ 	}
+ 	s.onHover = e.hoverFn
++	s.onFilesDrop = e.filesDropFn
+ 	s.copyData = e.copyData
+ 	if s.textClient != e.textClient {
+ 		if s.textAdapter != nil {
+diff --git a/ui/drop.go b/ui/drop.go
+index f5a99b0..06ed5e9 100644
+--- a/ui/drop.go
++++ b/ui/drop.go
+@@ -1,10 +1,26 @@
+ package ui
+ 
++import "slices"
++
+ // Files dragged from other apps, such as Finder or Explorer, drop on the
+ // elements that ask for them with DroppedFiles. The window takes them only
+ // over such an element, or anywhere when the window has OnFileDrop
+ // listeners, which get what no element takes.
+ 
++// OnFilesDrop receives files dropped from another application, on the main
++// thread while handling the native drop event, never while building the view.
++// The callback belongs to the latest committed element and receives its own
++// copy of the paths. It consumes the drop instead of delivering DroppedFiles.
++// Disabled, removed and hidden elements receive no drops. Keep a stable Key
++// when rows reorder, and do not retain Element or Context in the callback.
++func (e *node) OnFilesDrop(fn func([]string)) *node {
++	if e.hasState() && fn != nil {
++		e.flags |= flagDropTarget
++		e.filesDropFn = fn
++	}
++	return e
++}
++
+ // DroppedFiles returns the paths of the files dropped on the element since
+ // the last frame, nil when none, and makes the element take files dragged
+ // over it.
+@@ -56,7 +72,11 @@ func (rt *engine) fileDrop(x, y float32, files []string) bool {
+ 	if s == nil || len(files) == 0 {
+ 		return false
+ 	}
+-	s.dropped = append(s.dropped, files...)
+ 	rt.requestFrame()
++	if fn := s.onFilesDrop; fn != nil {
++		fn(slices.Clone(files))
++	} else {
++		s.dropped = append(s.dropped, files...)
++	}
+ 	return true
+ }
+diff --git a/ui/files_drop_callback_test.go b/ui/files_drop_callback_test.go
+new file mode 100644
+index 0000000..4863a25
+--- /dev/null
++++ b/ui/files_drop_callback_test.go
+@@ -0,0 +1,67 @@
++package ui
++
++import (
++	"reflect"
++	"testing"
++)
++
++func TestFilesDropCallbackUsesCommittedIdentityAndOwnedPaths(t *testing.T) {
++	show, disabled, building := true, false, false
++	version := 1
++	var got []int
++	var paths []string
++	tt := NewTester(func(c *Context) {
++		building = true
++		defer func() { building = false }()
++		if show {
++			v := version
++			Box(c).Key("zone").Size(100, 100).Disabled(disabled).OnFilesDrop(func(files []string) {
++				if building {
++					t.Fatal("drop callback ran during construction")
++				}
++				got = append(got, v)
++				paths = files
++				files[0] = "owned"
++			})
++		}
++	}, 200, 200)
++	input := []string{"a.txt", "b.txt"}
++	if !tt.DropFiles(50, 50, input...) {
++		t.Fatal("drop target did not accept files")
++	}
++	if input[0] != "a.txt" || !reflect.DeepEqual(paths, []string{"owned", "b.txt"}) {
++		t.Fatal("paths were not copied for the callback")
++	}
++	tt.Frame()
++	version = 2
++	tt.Frame()
++	tt.DropFiles(50, 50, input...)
++	disabled = true
++	tt.Frame()
++	if tt.DropFiles(50, 50, input...) {
++		t.Fatal("disabled element accepted files")
++	}
++	show = false
++	tt.Frame()
++	if tt.DropFiles(50, 50, input...) {
++		t.Fatal("removed element accepted files")
++	}
++	if !reflect.DeepEqual(got, []int{1, 2}) {
++		t.Fatalf("drop callback calls = %v", got)
++	}
++}
++
++func TestFilesDropCallbackDoesNotRepeatAsViewQuery(t *testing.T) {
++	calls := 0
++	queried := 0
++	tt := NewTester(func(c *Context) {
++		zone := Box(c).Size(100, 100).OnFilesDrop(func(files []string) { calls++ })
++		queried += len(zone.DroppedFiles())
++	}, 200, 200)
++	tt.DropFiles(50, 50, "a.txt")
++	tt.Frame()
++	tt.Frame()
++	if calls != 1 || queried != 0 {
++		t.Fatalf("callback calls %d, queried duplicate paths %d", calls, queried)
++	}
++}
+diff --git a/ui/layoutcache_test.go b/ui/layoutcache_test.go
+index 9ae42ad..1ca6de1 100644
+--- a/ui/layoutcache_test.go
++++ b/ui/layoutcache_test.go
+@@ -451,7 +451,7 @@ func TestLayoutInputs(t *testing.T) {
+ 	other := "epoch key valueInput id depth track transform originX originY originSet world content contentSet " +
+ 		"pose poseAnim poseSet poseM poseFade reposed ink noCull backface bg fill grad stripes borderC borderStyle radius " +
+ 		"shadows material effect effecting grads blur opacity opacitySet cursor paintFn styleFn paintAfterFn " +
+-		"inputFn hoverFn textClient caret takesText noIME copyData webView maximizeButton fit gray dismissed rotate label widget role " +
++		"inputFn hoverFn filesDropFn textClient caret takesText noIME copyData webView maximizeButton fit gray dismissed rotate label widget role " +
+ 		"checked expanded vertical tip highlighted accValue accRange hasRange accFill accStep barInset scrollBase " +
+ 		"listRow rowIndex rowsOf focusGroup groupSelects segment activeDescendant nameFrom nameJoin " +
+ 		"setPos setSize choosesItems search description invalid followX sort level expandable " +
+diff --git a/ui/api_gen.go b/ui/api_gen.go
+index 1b890fe..2d3b4db 100644
+--- a/ui/api_gen.go
++++ b/ui/api_gen.go
+@@ -4636,6 +4636,22 @@ func (_handle Element) NoWrap() Element {
+ 	return wrapElement(_node.NoWrap())
+ }
+ 
++// OnFilesDrop receives files dropped from another application, on the main
++// thread while handling the native drop event, never while building the view.
++// The callback belongs to the latest committed element and receives its own
++// copy of the paths. It consumes the drop instead of delivering DroppedFiles.
++// Disabled, removed and hidden elements receive no drops. Keep a stable Key
++// when rows reorder, and do not retain Element or Context in the callback.
++func (_handle Element) OnFilesDrop(fn func(arg0 []string)) Element {
++	_node := _handle.node()
++	if _node == nil {
++		return Element{}
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return wrapElement(_node.OnFilesDrop(fn))
++}
++
+ // OnHover calls fn when the pointer enters or leaves this element, including
+ // when it disappears, is disabled, or a layout change moves it away. It follows
+ // Hovered's press behavior. Calls run on the main thread after input or a

@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "sourceRoot": "D:/zeron",
+  "sourceCommit": "bf6d71aaaf00cc1e6f97d8daf4ccb2bbd0b4414f",
+  "capturedAt": "2026-10-28",
+  "sourceFiles": [
+    {
+      "path": "crates/ui/src/settings.rs",
+      "sha256": "86dda7fb525b7c6f0a8e19a26dfeba6c608ea5aea31fd1b84f1f6579d5e412e2"
+    },
+    {
+      "path": "crates/ui/src/theme.rs",
+      "sha256": "215f3a729f86c8ee69adb80d5260cbf79235e5d43c4adfdf40f115f30bf90b45"
+    },
+    {
+      "path": "crates/ui/src/typography.rs",
+      "sha256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f"
+    },
+    {
+      "path": "crates/ui/src/shell.rs",
+      "sha256": "fae379fd4bf1c8b6c77a0dc3b21ce6f361a8744ce26a8440c75a77725f82b34a"
+    },
+    {
+      "path": "crates/ui/src/lib.rs",
+      "sha256": "582bd667383f991388fbef3aa77bf231509148d6ef9eeb13c4ea78bd690f15ae"
+    },
+    {
+      "path": "crates/ui/src/shell/panel_layout.rs",
+      "sha256": "21d50d1d3951de14fc49866c78bcf2e094f0e56f3b2d7785a6de0cc4758e312e"
+    },
+    {
+      "path": "crates/ui/src/icons.rs",
+      "sha256": "19e7f78c9326bf79ff4c16aef13820159ad6b54c0ad3eb98947e7e56139519f0"
+    },
+    {
+      "path": "crates/theme/src/lib.rs",
+      "sha256": "9fb06d06a9171111e6ef50673150c872b0ba2a5802e08a552e67f4d91cf19cf6"
+    },
+    {
+      "path": "crates/theme/src/builtins.rs",
+      "sha256": "dac9579646834852f485e9212028266dd4258952d9a682d5eb978a3b78a34f11"
+    },
+    {
+      "path": "crates/ui/src/browser/mod.rs",
+      "sha256": "f670338d7dca4e28f6564948c7ff5e587e8c0911d48255079b0b595057ec1f75"
+    }
+  ],
+  "repositoryEvidence": [
+    {
+      "id": "sidebar-layout/detailed.png",
+      "source": "docs/screenshots/sidebar-layout/detailed.png",
+      "copy": "reference/historical/sidebar-layout--detailed.png",
+      "sha256": "1456eedbdabac33c11f10e5d7bb9b1f092e1f348fad337265c61afc539728a37",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "sidebar-layout/compact.png",
+      "source": "docs/screenshots/sidebar-layout/compact.png",
+      "copy": "reference/historical/sidebar-layout--compact.png",
+      "sha256": "b0961bb8349cbc454036704770305a026d85e81a04cb89b4d3b14c7e89ae9b77",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "sidebar-layout/view-options.png",
+      "source": "docs/screenshots/sidebar-layout/view-options.png",
+      "copy": "reference/historical/sidebar-layout--view-options.png",
+      "sha256": "4713d82a592b6401781ef93f26d8598dd47fa8d66cd11e823dd4cbee0aeca004",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "sidebar-layout/project-groups.png",
+      "source": "docs/screenshots/sidebar-layout/project-groups.png",
+      "copy": "reference/historical/sidebar-layout--project-groups.png",
+      "sha256": "20bdf0aad00ffde0ee06a7a5a481c528cf4652d614e974b775e06f44e1a38837",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "sidebar-layout/archived-hover.png",
+      "source": "docs/screenshots/sidebar-layout/archived-hover.png",
+      "copy": "reference/historical/sidebar-layout--archived-hover.png",
+      "sha256": "b6f50c5bc24e805fd050f6f6a3ee8245204172e293e2df04676c6a6c1cd2c4e5",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "settings-search/idle.png",
+      "source": "docs/screenshots/settings-search/idle.png",
+      "copy": "reference/historical/settings-search--idle.png",
+      "sha256": "69f0c42fa0a7d43551bd849cacdefe514886f7291383e5ce81ccb98645b2cdc3",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "settings-search/theme.png",
+      "source": "docs/screenshots/settings-search/theme.png",
+      "copy": "reference/historical/settings-search--theme.png",
+      "sha256": "1f24a414edf879219f2183c2a9591b57f173cae267cb9548e0348cab81e56728",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "settings-search/light-theme.png",
+      "source": "docs/screenshots/settings-search/light-theme.png",
+      "copy": "reference/historical/settings-search--light-theme.png",
+      "sha256": "6db0b5a47e4a815993b1388858d03a22b29fad465b84e65770767affcdda25c6",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "settings-search/no-results.png",
+      "source": "docs/screenshots/settings-search/no-results.png",
+      "copy": "reference/historical/settings-search--no-results.png",
+      "sha256": "9a4e04540b5c345ce3a7414a171d8ea59aa65120026080bd2fa86815fcd2d9ce",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "appshots/appshots-chat-dark-1100.png",
+      "source": "docs/screenshots/appshots/appshots-chat-dark-1100.png",
+      "copy": "reference/historical/appshots--appshots-chat-dark-1100.png",
+      "sha256": "a5c4fbb4506c78b0be0cd1e13e07e518054c2268be8cd338e9dffdc0b3082c3a",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "appshots/appshots-chat-light-1100.png",
+      "source": "docs/screenshots/appshots/appshots-chat-light-1100.png",
+      "copy": "reference/historical/appshots--appshots-chat-light-1100.png",
+      "sha256": "4bfe374e2c6d46d15ad33db331a3909ea79997ddd7ae4402773851c6c39e267c",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    },
+    {
+      "id": "appshots/appshots-settings-dark-1100.png",
+      "source": "docs/screenshots/appshots/appshots-settings-dark-1100.png",
+      "copy": "reference/historical/appshots--appshots-settings-dark-1100.png",
+      "sha256": "8e0a39b2835d80479fc5d78b3a03661400b2d0deeba135eaf3181f2d8900278f",
+      "classification": "historical-repository-evidence",
+      "platform": "see-source-readme",
+      "usableAsCurrentWindowsGolden": false
+    }
+  ],
+  "nativeReferenceCapture": {
+    "windows": "pending",
+    "darwinAmd64": "pending",
+    "darwinArm64": "pending"
+  },
+  "approvedDifferences": [
+    "Voice, dictation, their entry points and settings are removed.",
+    "Independent application identity and data directory."
+  ],
+  "referenceBuild": "output/reference-native-build.log"
+}

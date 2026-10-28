@@ -1,3 +1,12 @@
-*.go text eol=lf
-*.mod text eol=lf
-*.sum text eol=lf
+* text=auto eol=lf
+.agents/** -text
+third_party/mygo/** -text
+internal/assets/data/** -text
+reference/** -text
+docs/evidence/** -text
+output/** -text
+third_party/mygo.lock.json text eol=lf
+patches/*.patch -text
+scripts/*.sh text eol=lf
+resources/licenses/** -text
+resources/THIRD_PARTY_NOTICES.md -text

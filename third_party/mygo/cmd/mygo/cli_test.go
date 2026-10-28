@@ -21,7 +21,7 @@ func TestConfigDefaults(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "frontend"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "frontend", "package.json"), []byte("{}"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "frontend", "package.json"), []byte(`{"dependencies": {"mygo-runtime": "^1"}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	c, err := loadConfig(dir)
@@ -57,19 +57,27 @@ func TestConfigDefaults(t *testing.T) {
 		t.Errorf("invalid devUrl accepted: %v", err)
 	}
 
-	// A frontend at the project root.
-	root := t.TempDir()
-	if err := os.WriteFile(filepath.Join(root, "package.json"), []byte("{}"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if c, err := loadConfig(root); err != nil || c.Bindings != filepath.Join("src", "mygo.ts") {
-		t.Errorf("bindings with package.json at the root = %q, %v", c.Bindings, err)
+	// A frontend at the project root, and a package.json that is not one:
+	// it does not depend on mygo-runtime, which the client imports.
+	for _, tc := range []struct{ pkg, want string }{
+		{`{"dependencies": {"mygo-runtime": "^1"}}`, filepath.Join("src", "mygo.ts")},
+		{`{"devDependencies": {"mygo-runtime": "workspace:*"}}`, filepath.Join("src", "mygo.ts")},
+		{`{"devDependencies": {"mygo-cli": "^1"}}`, ""},
+		{`{}`, ""},
+	} {
+		root := t.TempDir()
+		if err := os.WriteFile(filepath.Join(root, "package.json"), []byte(tc.pkg), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if c, err := loadConfig(root); err != nil || c.Bindings != tc.want {
+			t.Errorf("bindings with package.json %s at the root = %q, %v; want %q", tc.pkg, c.Bindings, err, tc.want)
+		}
 	}
 }
 
 func TestInfoPlist(t *testing.T) {
 	c := &Config{Name: "A & B", Identifier: "com.example.ab", Version: "1.2.3", MacOS: MacOS{MinimumSystemVersion: "12.0"}, URLSchemes: []string{"ab"}}
-	plist := string(infoPlist(c, "A & B", "icon.icns"))
+	plist := string(infoPlist(c, "A & B", "icon.icns", ""))
 	for _, want := range []string{
 		"<string>A &amp; B</string>",
 		"<key>CFBundleIdentifier</key>\n\t<string>com.example.ab</string>",
@@ -95,21 +103,22 @@ func TestIcons(t *testing.T) {
 	if string(icns[:4]) != "icns" || int(binary.BigEndian.Uint32(icns[4:])) != len(icns) {
 		t.Fatalf("bad icns header")
 	}
-	// Walk the entries and decode one of them.
-	found := 0
+	// Walk the entries and decode each: every one is a PNG of its size.
+	// icp4 and icp5 must not be among them, since IconServices draws
+	// their PNG payloads as noise.
+	sizes := map[string]int{"ic11": 32, "ic12": 64, "ic07": 128, "ic13": 256, "ic08": 256, "ic14": 512, "ic09": 512, "ic10": 1024}
+	var kinds []string
 	for off := 8; off < len(icns); {
 		kind, size := string(icns[off:off+4]), int(binary.BigEndian.Uint32(icns[off+4:]))
-		if kind == "ic07" {
-			img, err := png.Decode(bytes.NewReader(icns[off+8 : off+size]))
-			if err != nil || img.Bounds().Dx() != 128 {
-				t.Errorf("ic07 entry: %v", err)
-			}
+		img, err := png.Decode(bytes.NewReader(icns[off+8 : off+size]))
+		if err != nil || img.Bounds().Dx() != sizes[kind] {
+			t.Errorf("%s entry: %v, want a %d pixel PNG", kind, err, sizes[kind])
 		}
 		off += size
-		found++
+		kinds = append(kinds, kind)
 	}
-	if found != 10 {
-		t.Errorf("icns has %d entries", found)
+	if len(kinds) != len(sizes) {
+		t.Errorf("icns has entries %v", kinds)
 	}
 	ico, err := pngToICO(src)
 	if err != nil {
@@ -327,6 +336,17 @@ func TestModuleSpecifier(t *testing.T) {
 	}
 }
 
+func TestExtraLDFlags(t *testing.T) {
+	t.Setenv("MYGO_LDFLAGS", "")
+	if f := extraLDFlags(); f != "" {
+		t.Errorf("extraLDFlags = %q without MYGO_LDFLAGS", f)
+	}
+	t.Setenv("MYGO_LDFLAGS", " -buildid= -X example.com/app.DSN=https://key@example.com/1 ")
+	if f, want := extraLDFlags(), " -buildid= -X example.com/app.DSN=https://key@example.com/1"; f != want {
+		t.Errorf("extraLDFlags = %q, want %q", f, want)
+	}
+}
+
 func TestPackageFlags(t *testing.T) {
 	c := &Config{Name: "Bob's App", Version: "1.0.0", Identifier: "com.example.bob", URLSchemes: []string{"bob", "bob-dev"}}
 	got := packageFlags(c)
@@ -537,19 +557,21 @@ func TestFileAssociations(t *testing.T) {
 		FileAssociations: []FileAssociation{
 			{Ext: []string{"md", "markdown"}, Name: "Markdown Document", MimeType: "text/markdown"},
 			{Ext: []string{"note"}, Name: "Note", Role: "Viewer"},
+			{Ext: []string{"sketch"}, Name: "Sketch", MimeType: "application/x-notes-sketch"},
 		}}
-	plist := string(infoPlist(c, "Notes", ""))
+	plist := string(infoPlist(c, "Notes", "", ""))
 	for _, want := range []string{"<key>CFBundleDocumentTypes</key>", "<string>Markdown Document</string>", "<string>markdown</string>", "<string>Viewer</string>", "<string>text/markdown</string>"} {
 		if !strings.Contains(plist, want) {
 			t.Errorf("Info.plist lacks %q", want)
 		}
 	}
 	entry := linuxDesktopEntry(c, "notes", "notes")
-	if !strings.Contains(entry, "Exec=notes %U\n") || !strings.Contains(entry, "MimeType=text/markdown;application/x-notes-note;x-scheme-handler/notes;\n") {
+	if !strings.Contains(entry, "Exec=notes %U\n") || !strings.Contains(entry, "MimeType=text/markdown;application/x-notes-note;application/x-notes-sketch;x-scheme-handler/notes;\n") {
 		t.Errorf("desktop entry:\n%s", entry)
 	}
 	xml := mimePackage(c)
-	if !strings.Contains(xml, `<mime-type type="application/x-notes-note">`) || !strings.Contains(xml, `<glob pattern="*.note"/>`) || strings.Contains(xml, "text/markdown") {
+	if !strings.Contains(xml, `<mime-type type="application/x-notes-note">`) || !strings.Contains(xml, `<glob pattern="*.note"/>`) || strings.Contains(xml, "text/markdown") ||
+		!strings.Contains(xml, "<mime-type type=\"application/x-notes-sketch\">\n    <comment>Sketch</comment>\n    <glob pattern=\"*.sketch\"/>") {
 		t.Errorf("MIME package:\n%s", xml)
 	}
 	reg, unreg := nsisAssociations(c, "Notes.exe")
@@ -582,7 +604,7 @@ func TestInfoPlistExtraKeys(t *testing.T) {
 			"MyDict":                               map[string]any{"a": "b"},
 		},
 	}}
-	plist := infoPlist(c, "Cam", "")
+	plist := infoPlist(c, "Cam", "", "")
 	for _, want := range []string{
 		"<key>NSCameraUsageDescription</key>\n\t<string>Scan &lt;documents&gt; &amp; more.</string>",
 		"<key>LSUIElement</key>\n\t<true/>",
@@ -599,5 +621,68 @@ func TestInfoPlistExtraKeys(t *testing.T) {
 		if out, err := exec.Command("plutil", "-lint", path).CombinedOutput(); err != nil {
 			t.Errorf("plutil: %v\n%s", err, out)
 		}
+	}
+}
+
+// TestAssetCatalog puts macos.icon's Assets.car into the bundle, named in
+// Info.plist beside the .icns, and compiles a .icon with actool on a Mac.
+func TestAssetCatalog(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "Assets.car"), []byte("car"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c := &Config{Name: "Car", Identifier: "com.example.car", Version: "1.0.0", root: dir, MacOS: MacOS{Icon: "Assets.car"}}
+	c.applyDefaults()
+	bin := filepath.Join(dir, "exe")
+	if err := os.WriteFile(bin, nil, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	car, err := appCatalog(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app, err := writeBundle(c, dir, bin, []byte("icns"), car, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(filepath.Join(app, "Contents", "Resources", "Assets.car")); string(data) != "car" {
+		t.Errorf("Assets.car = %q, %v", data, err)
+	}
+	plist, _ := os.ReadFile(filepath.Join(app, "Contents", "Info.plist"))
+	for _, want := range []string{"<key>CFBundleIconName</key>\n\t<string>AppIcon</string>", "<key>CFBundleIconFile</key>\n\t<string>AppIcon.icns</string>"} {
+		if !strings.Contains(string(plist), want) {
+			t.Errorf("Info.plist lacks %q", want)
+		}
+	}
+	if err := (&Config{MacOS: MacOS{Icon: "icon.png"}}).validate(); err == nil {
+		t.Error("macos.icon accepts a PNG")
+	}
+
+	// An Icon Composer document, a directory, which actool compiles where
+	// it can.
+	if err := os.WriteFile(filepath.Join(dir, "File.icon"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c.MacOS.Icon = "File.icon"
+	if _, err := appCatalog(c); err == nil {
+		t.Error("macos.icon accepts a file named .icon")
+	}
+	writeFiles(t, filepath.Join(dir, "Mark.icon"), map[string]string{
+		"Assets/mark.png": string(defaultIcon()),
+		"icon.json":       `{"groups":[{"layers":[{"image-name":"mark.png","name":"mark"}]}],"supported-platforms":{"squares":"shared"}}`,
+	})
+	c.MacOS.Icon = "Mark.icon"
+	car, err = appCatalog(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if exec.Command("xcrun", "--find", "actool").Run() != nil {
+		if car != nil {
+			t.Error("compiled a .icon without actool")
+		}
+		return
+	}
+	if car == nil || len(car.data) == 0 || !bytes.HasPrefix(car.icns, []byte("icns")) {
+		t.Errorf("catalog of Mark.icon = %+v", car)
 	}
 }

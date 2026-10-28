@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T07:29:36.2799194Z",
+  "branch": "codex/isolated-worktree",
+  "reference": {
+    "version": "0.2.128",
+    "commit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+    "mygoExamplesCommit": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609"
+  },
+  "application": {
+    "goVersion": "1.27.3",
+    "mygoVersion": "v0.6.4",
+    "frameworkRevision": "zeron-native-ui.2",
+    "frameworkSourceSHA256": "fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e",
+    "frameworkFileCount": 1830,
+    "sourceManifest": "handoff-source-hashes.json",
+    "sourceFileCount": 191,
+    "artifactManifest": "handoff-artifacts.json"
+  },
+  "checks": {
+    "fullGoTests": "passed",
+    "goVet": "passed",
+    "mygoVet": "passed",
+    "golangciLint": "passed: 0 issues",
+    "raceContractsMockDesktopWorkbench": "passed",
+    "freshStagedExportHashes": "passed: 191 source hashes",
+    "freshStagedExportFramework": "passed: 1830 files",
+    "freshStagedExportTestsAndBothVets": "passed",
+    "freshStagedExportCompileTargets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64"
+    ],
+    "referenceProvenance": "passed: fixed source, 507 assets, 12 historical images",
+    "cleanReferenceCheckouts": "passed",
+    "logDirectory": "output/handoff-validation"
+  },
+  "delivery": {
+    "sourceAndPinnedDependencies": "included",
+    "skills": "preserved",
+    "resourcesLicensesPatches": "included",
+    "curatedAuditEvidence": "included",
+    "referenceRepositories": "reproducible via scripts/bootstrap-references.ps1",
+    "compilerCachesAndPersonalProfiles": "excluded",
+    "previousReviewPackage": "build/ui-audit is superseded by handoff source; rebuild on new machine",
+    "currentReleasePackage": "not built in handoff; source export compilation only"
+  },
+  "acceptance": {
+    "officialWindowsReferenceCapture": "blocked by unsupported render_to_image",
+    "captureAdapter": "compiled, scene ready metadata only; native reference PNG pending",
+    "samePlatformMatchedReferenceComparison": "pending",
+    "windowsNativeIMEClipboardDPIMaterialsBrowserLayering": "pending",
+    "fullPerformanceGates": "pending",
+    "macOSIntelNative": "pending",
+    "macOSARMNative": "pending",
+    "completeUIParity": false
+  },
+  "goal": {
+    "complete": false,
+    "userRequestedPauseAfterVerifiedPush": true,
+    "resume": "explicit user instruction on new machine",
+    "details": "docs/machine-handoff.md"
+  }
+}

@@ -2,134 +2,121 @@ package desktop
 
 import (
 	"context"
+	"errors"
 	"testing"
-	"time"
 
-	"gcode/internal/appmodel"
+	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
 
-type composerControlsProbe struct {
-	desktopServiceStub
-	providers chan [2]string
-	stops     chan string
-}
-
-func (p *composerControlsProbe) SetProvider(_ context.Context, sessionID, providerID string) error {
-	p.providers <- [2]string{sessionID, providerID}
-	return nil
-}
-
-func (p *composerControlsProbe) Stop(_ context.Context, sessionID string) error {
-	p.stops <- sessionID
-	return nil
-}
-
-func TestComposerKeyboardModelChoiceKeepsRunningConfigAndSeparateActions(t *testing.T) {
-	initial := SampleSnapshot()
-	initial.Sessions[0].ActiveRun = &appmodel.RunConfig{Model: "captured-running-model", ProviderID: "provider-openai"}
-	providerCalls := make(chan [2]string, 1)
-	stopCalls := make(chan string, 1)
-	type submission struct {
-		sessionID, text string
-		mode            appmodel.SendMode
+func TestSharedComposerSideModelAccessAndPlanStayIndependent(t *testing.T) {
+	a, tt, child := sideViewTester(t)
+	mainModel, mainReason, mainAccess, mainPlan := a.modelID, a.reasoning, a.accessMode, a.plan
+	recorder := &sideRecordingService{Service: a.service}
+	a.service = recorder
+	if err := tt.Click("Select model in " + child.Title); err != nil {
+		t.Fatal(err)
 	}
-	sendCalls := make(chan submission, 1)
-	service := &composerControlsProbe{providers: providerCalls, stops: stopCalls}
-	service.sendFn = func(_ context.Context, sessionID, text string, mode appmodel.SendMode) error {
-		sendCalls <- submission{sessionID: sessionID, text: text, mode: mode}
-		return nil
+	if err := tt.Click("Change model in " + child.Title); err != nil {
+		t.Fatal(err)
 	}
-	app := Open(service, OpenOptions{Initial: initial})
-	t.Cleanup(func() { _ = app.Close() })
-	tester := ui.NewTester(app.view, 1024, 700)
-	if err := tester.Click("下一任务模型"); err != nil {
-		t.Fatalf("open model popup: %v", err)
+	if err := tt.Click("Search models in " + child.Title); err != nil {
+		t.Fatal(err)
 	}
-	if !tester.HasText("本地评审") {
-		t.Fatalf("model popup did not expose choices: %v", tester.Texts())
+	tt.Type("GPT-5.3")
+	tt.Key(0, ui.KeyEnter)
+	state := a.sideComposer(child.ID)
+	if state.modelID != "gpt-5.3-codex" || state.modelListPage || !state.modelMenu {
+		t.Fatalf("side model picker state %+v", state.composerControls)
 	}
-	tester.Key(0, ui.KeyEnd)
-	tester.Key(0, ui.KeyEnter)
-	select {
-	case got := <-providerCalls:
-		if want := [2]string{initial.Sessions[0].ID, "provider-local"}; got != want {
-			t.Fatalf("model change = %v, want %v", got, want)
+	if a.modelID != mainModel || a.reasoning != mainReason || a.modelMenu {
+		t.Fatal("side model choice mutated central controls")
+	}
+	tt.Key(0, ui.KeyEscape)
+	if err := tt.Click("Access mode in " + child.Title); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Supervised"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Access mode in " + child.Title); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Plan mode"); err != nil {
+		t.Fatal(err)
+	}
+	if state.accessMode != contracts.AccessSupervised || !state.plan {
+		t.Fatal("side access/Plan native menu did not update")
+	}
+	if a.accessMode != mainAccess || a.plan != mainPlan {
+		t.Fatal("side access/Plan changed central configuration")
+	}
+	tt.Key(0, ui.KeyEscape)
+	snapshot, err := a.service.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, session := range snapshot.Sessions {
+		if session.ID == child.ID {
+			if session.ModelID != state.modelID || session.AccessMode != state.accessMode || session.Plan != state.plan {
+				t.Fatalf("side backend config differs: %+v", session)
+			}
 		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("keyboard selection did not reach the service")
 	}
-	updated := cloneSnapshot(initial)
-	updated.Sessions[0].ProviderID = "provider-local"
-	app.Update(updated)
-	tester.Frame()
-	if !tester.HasText("本地评审") {
-		t.Fatalf("selected next model missing: %v", tester.Texts())
+	if err := tt.Click("Message to " + child.Title); err != nil {
+		t.Fatal(err)
 	}
-	app.mu.RLock()
-	captured := app.data.Sessions[0].ActiveRun
-	app.mu.RUnlock()
-	if captured.Model != "captured-running-model" || captured.ProviderID != "provider-openai" {
-		t.Fatalf("next model choice changed current run: %#v", captured)
-	}
-	if err := tester.Click("队列"); err != nil {
-		t.Fatalf("choose queue mode: %v", err)
-	}
-	if err := tester.Click("任务输入"); err != nil {
-		t.Fatalf("focus task input: %v", err)
-	}
-	tester.Type("保留当前任务，排队验证中文输入 🙂")
-	if err := tester.Click("发送"); err != nil {
-		t.Fatalf("submit queued task: %v", err)
-	}
-	select {
-	case got := <-sendCalls:
-		if got.sessionID != initial.Sessions[0].ID || got.text != "保留当前任务，排队验证中文输入 🙂" || got.mode != appmodel.Queue {
-			t.Fatalf("submission = %#v", got)
+	tt.Type("Plan a schema review")
+	tt.Key(0, ui.KeyEnter)
+	var sent *contracts.SendRequest
+	for _, command := range recorder.commands {
+		if command.Kind == "message.send" {
+			sent = command.Send
 		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("queue submission did not reach the service")
 	}
-	select {
-	case sessionID := <-stopCalls:
-		t.Fatalf("queue submission also stopped session %q", sessionID)
-	default:
-	}
-	if err := tester.Click("停止"); err != nil {
-		t.Fatalf("explicit stop action missing: %v", err)
-	}
-	select {
-	case sessionID := <-stopCalls:
-		if sessionID != initial.Sessions[0].ID {
-			t.Fatalf("stopped session = %q", sessionID)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("explicit stop did not reach the service")
+	if sent == nil || sent.SessionID != child.ID || sent.ModelID != state.modelID || sent.ReasoningLevel != state.reasoning || sent.AccessMode != contracts.AccessSupervised || !sent.Plan {
+		t.Fatalf("side send lost selected config: %+v", sent)
 	}
 }
 
-func TestComposerSelectsProviderByIDWithDuplicateDisplayLabels(t *testing.T) {
-	initial := SampleSnapshot()
-	for i := range initial.Settings.Providers {
-		initial.Settings.Providers[i].Name = "同名服务"
-		initial.Settings.Providers[i].Model = "same-model"
+func TestSharedComposerSideConfigFailureRestoresItsSnapshot(t *testing.T) {
+	a, tt, child := sideViewTester(t)
+	recorder := &sideRecordingService{Service: a.service, updateErr: errors.New("Unable to update this conversation")}
+	a.service = recorder
+	if err := tt.Click("Access mode in " + child.Title); err != nil {
+		t.Fatal(err)
 	}
-	providerCalls := make(chan [2]string, 1)
-	service := &composerControlsProbe{providers: providerCalls}
-	app := Open(service, OpenOptions{Initial: initial})
-	t.Cleanup(func() { _ = app.Close() })
-	tester := ui.NewTester(app.view, 1024, 700)
-	if err := tester.Click("下一任务模型"); err != nil {
-		t.Fatalf("open duplicate-name model popup: %v", err)
+	if err := tt.Click("Supervised"); err != nil {
+		t.Fatal(err)
 	}
-	tester.Key(0, ui.KeyEnd)
-	tester.Key(0, ui.KeyEnter)
-	select {
-	case got := <-providerCalls:
-		if want := [2]string{initial.Sessions[0].ID, "provider-local"}; got != want {
-			t.Fatalf("duplicate-name model change = %v, want %v", got, want)
+	state := a.sideComposer(child.ID)
+	if len(state.configPending) != 0 || state.accessMode != child.AccessMode || state.Failure == "" || a.errorText != "" {
+		t.Fatalf("failed side update leaked or failed to restore %+v, %q", state.composerControls, a.errorText)
+	}
+}
+
+func TestSharedComposerRunningSideLocksItsProviderOnly(t *testing.T) {
+	a, tt, child := sideViewTester(t)
+	for i := range a.state.Sessions {
+		if a.state.Sessions[i].ID == child.ID {
+			a.state.Sessions[i].Status = contracts.Working
 		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("second provider with duplicate label was not selected")
+	}
+	tt.Frame()
+	state := a.sideComposer(child.ID)
+	side := a.sideControls(child.ID, state)
+	if !side.modelProviderLocked() || a.modelProviderLocked() {
+		t.Fatal("provider lock used the other composer's session")
+	}
+	current := side.selectedModel().ProviderID
+	for _, row := range side.modelRows() {
+		if row.provider.ID != current {
+			t.Fatal("running side offered another provider")
+		}
+	}
+	old := state.modelID
+	side.selectModelProvider("openai")
+	if state.modelID != old {
+		t.Fatal("running side changed provider")
 	}
 }
