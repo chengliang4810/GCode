@@ -11,22 +11,22 @@ func (a *App) sidebarView(c *ui.Context) {
 	if a.palette.Dark {
 		wash = ui.Hex("#ffffff").Alpha(.05)
 	}
-	ui.Column(c).Label("Session sidebar").Fill().Background(wash).Children(func() {
+	ui.Column(c).Label(tr(c, "Session sidebar")).Fill().Background(wash).Children(func() {
 		bar := c.TitleBar()
 		ui.Row(c).Height(38).Padding(4, 8, 0, max(10, bar.Left)).Gap(4).AlignItems(ui.Center).DragWindow().Children(func() {
-			iconButton(c, "sidebar-minimalistic", "Toggle sidebar").Size(24, 24).OnClick(func() { a.setPanel(0, false) })
-			iconButton(c, "alt-arrow-left", "Back").Size(24, 24).Disabled(a.historyIndex <= 0).OnClick(func() { a.back(-1) })
-			iconButton(c, "alt-arrow-right", "Forward").Size(24, 24).Disabled(a.historyIndex+1 >= len(a.history)).OnClick(func() { a.back(1) })
+			iconButton(c, "sidebar-minimalistic", tr(c, "Toggle sidebar")).Size(24, 24).OnClick(func() { a.setPanel(0, false) })
+			iconButton(c, "alt-arrow-left", tr(c, "Back")).Size(24, 24).Disabled(a.historyIndex <= 0).OnClick(func() { a.back(-1) })
+			iconButton(c, "alt-arrow-right", tr(c, "Forward")).Size(24, 24).Disabled(a.historyIndex+1 >= len(a.history)).OnClick(func() { a.back(1) })
 			ui.Spacer(c)
-			iconButton(c, "plus", "New session").Size(24, 24).OnClick(a.newConversation)
-			iconButton(c, "menu-dots", "Sidebar view options").Size(24, 24).Menu(a.sidebarViewMenu)
+			iconButton(c, "plus", tr(c, "New session")).Size(24, 24).OnClick(a.newConversation)
+			iconButton(c, "menu-dots", tr(c, "Sidebar view options")).Size(24, 24).Menu(a.sidebarViewMenu)
 		})
 		if a.route == "settings" {
 			a.settingsNavigation(c)
 		} else {
 			if a.state.Settings.SidebarShowProjectFilter {
 				ui.Row(c).Padding(8, 8, 4, 8).Children(func() {
-					label := "All projects"
+					label := tr(c, "All projects")
 					if a.sidebarProjectID != "" {
 						label = a.projectNameFor(a.sidebarProjectID)
 					}
@@ -55,13 +55,13 @@ func (a *App) sidebarView(c *ui.Context) {
 				if row.Header != "" {
 					a.sidebarHeader(c, row, i)
 				} else if row.More {
-					textButton(c, "Show more").FillWidth().OnClick(func() { a.sidebarUI.archiveLimit = max(10, a.sidebarUI.archiveLimit) + 25 })
+					textButton(c, tr(c, "Show more")).FillWidth().OnClick(func() { a.sidebarUI.archiveLimit = max(10, a.sidebarUI.archiveLimit) + 25 })
 				} else {
 					a.sessionRow(c, row.Session)
 				}
 				c.SetTheme(&listTheme)
 				restoreRoot()
-			}).Label("Sessions list").Grow(1).FillWidth().Padding(4, 8).Gap(2)
+			}).Label(tr(c, "Sessions list")).Grow(1).FillWidth().Padding(4, 8).Gap(2)
 			c.SetTheme(baseTheme)
 			restoreRoot()
 			list.OnChange(func() { a.openSidebarSelection(rows) }).OnSubmit(func() { a.openSidebarSelection(rows) })
@@ -75,26 +75,57 @@ func (a *App) sidebarView(c *ui.Context) {
 				}
 			})
 			if len(rows) == 0 {
-				ui.Text(c, "No sessions").TextColor(a.palette.Muted).Padding(16)
+				ui.Text(c, tr(c, "No sessions")).TextColor(a.palette.Muted).Padding(16)
 			}
 		}
 		ui.Row(c).Height(54).Padding(10, 12).Gap(4).AlignItems(ui.Center).Children(func() {
-			account := ui.ButtonBase(c).Label("Account menu: "+a.state.User.Name).Height(28).MinWidth(0).Padding(0, 8).Gap(8).Radius(8).AlignItems(ui.Center).Menu(func(m *ui.Menu) {
-				if m.Item("Settings").Chosen() {
-					a.navigate("settings")
-				}
-				if m.Item("Sign out").Chosen() {
-					a.dispatch(contracts.Command{Kind: "account.signout"})
-				}
-			})
+			account := ui.ButtonBase(c.Key("sidebar-account")).Label(tr(c, "Account menu: ")+a.state.User.Name).
+				Expanded(a.sidebarUI.accountOpen).
+				Height(28).MinWidth(0).Padding(0, 8).Gap(8).Radius(8).AlignItems(ui.Center).
+				OnClick(func() {
+					a.sidebarUI.accountOpen = !a.sidebarUI.accountOpen
+					a.sidebarUI.accountSelection = 0
+				})
 			account.Children(func() {
 				ui.Box(c).Size(16, 16).Shrink(0).Radius(8).Background(ui.RGB(255, 255, 255)).TextColor(ui.RGB(20, 20, 20)).Center().Children(func() { ui.Text(c, a.state.User.Initials).FontSize(design.UISize(c, 10)).FontWeight(600) })
 				ui.Text(c, a.state.User.Name).SingleLine().MinWidth(0)
 			})
+			a.accountPopover(c, account)
 			ui.Spacer(c)
-			iconButton(c, "pull-request", "Pull requests").Size(28, 28).OnClick(func() { a.navigate("pull-requests") })
-			iconButton(c, "settings", "Settings").Size(28, 28).OnClick(func() { a.navigate("settings") })
+			iconButton(c, "pull-request", tr(c, "Pull requests")).Size(28, 28).OnClick(func() { a.navigate("pull-requests") })
+			iconButton(c, "settings", tr(c, "Settings")).Size(28, 28).OnClick(func() { a.navigate("settings") })
 		})
 	})
 	a.sidebarDeleteDialog(c)
+}
+
+func (a *App) accountPopover(c *ui.Context, anchor ui.Element) {
+	state := &a.sidebarUI
+	labels := []string{tr(c, "Settings"), tr(c, "Sign out")}
+	choose := func(index int) {
+		state.accountOpen = false
+		switch index {
+		case 0:
+			a.navigate("settings")
+		case 1:
+			a.dispatch(contracts.Command{Kind: "account.signout"})
+		}
+	}
+	ui.PopoverBase(c, anchor, &state.accountOpen, func(panel ui.Element) {
+		// Native system menus fit the display, not the application window.
+		panel.Label(tr(c, "Account menu")).AttachTo(anchor, ui.AnchorTopLeft, ui.AnchorBottomLeft).
+			Margin(0, 0, 6, 0).SnapToWindow(8).Width(180).Padding(4).Radius(8).
+			Background(a.palette.Overlay).Border(1, a.palette.Border)
+		state.accountList.Selected = &state.accountSelection
+		state.accountList.Label = func(index int) string { return labels[index] }
+		panel.Children(func() {
+			ui.List(c.Key("account-actions"), &state.accountList, len(labels), func(index int) {
+				button := textButton(c, labels[index]).FillWidth().Height(30).
+					OnClick(func() { choose(index) })
+				if state.accountSelection == index {
+					button.Background(a.palette.Hover)
+				}
+			}).Height(60).AutoFocus().OnSubmit(func() { choose(state.accountSelection) })
+		})
+	})
 }

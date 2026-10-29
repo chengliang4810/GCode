@@ -30,8 +30,10 @@ type context struct {
 	titleBar TitleBar
 	vibrancy bool
 	overlay  *node
-	nextKey  any
-	keySet   bool
+	// placePoint is linked by AttachAtPoint, rather than by shared layout.
+	placePoint func(*node, *node, float32, float32)
+	nextKey    any
+	keySet     bool
 	// tree is the Tree being built, for its items.
 	tree *treeBuild
 	// buttons is how the buttons being built look, in a toolbar or a
@@ -341,6 +343,9 @@ func (c *context) SetTheme(t *Theme) {
 // Size returns the size of the window's content in DIPs.
 func (c *context) Size() (width, height float32) { return c.w, c.h }
 
+// DeviceScale returns the device pixels per DIP used to paint this frame.
+func (c *context) DeviceScale() float32 { return c.rt.painted[2] }
+
 // TitleBar is the room the window controls take at the top of a window
 // with a hidden title bar, in DIPs: they sit in a band of Height along the
 // top edge, Left wide from the left edge and Right wide from the right.
@@ -546,6 +551,9 @@ type state struct {
 	pressX, pressY float32
 	dragX, dragY   float32
 	pressed        bool
+	// primaryDownEpoch records an opt-in, received primary press's actual
+	// target until any received pointer release or blur invalidates its epoch.
+	primaryDownEpoch uint64
 	// drag follows the press's moves; released tells that it ended since
 	// the last frame, going at releaseVX and releaseVY in the element's
 	// axes, releaseWX and releaseWY in the window's.
@@ -567,7 +575,7 @@ type state struct {
 	// barsShown reports whether the last frame painted the element's
 	// scroll bars: they show only while it is hovered or a bar is
 	// dragged.
-	barsShown bool
+	barsShown, hideScrollbars bool
 	// track is the ScrollState of the last frame's element, which events
 	// that scroll it update (scrollTo).
 	track *ScrollState

@@ -1,5 +1,10 @@
 # 文件浏览器与桌面工作区逐项审查
 
+最新R16已修非选中文件图片`.78`和无详情标签的错误标题提示；五门槛与四目标包
+校验通过。计时原图和GPU控制实验见 `audit-tabstrip-file-tooltip.md`；Tooltip
+位置/样式、浅色实际UI适配器与完整视觉仍待验收。下方旧路径和`.2`检查保留
+各原始阶段范围；当前为`.6`。
+
 审查日期：2026-10-28。事实源为只读 `D:/zeron` 的 **v0.2.128 / ab189159f10cf8e63c0502be75a59bbc487e0eaf**。
 同时检查官方 `D:/projects/mygo` 的组件与 gallery（本次读取提交 `43199d0b0fb95fd0b71e5a225d2807c04ebcc609`），实际使用 API 再对仓库固定的 MyGo v0.6.4 源码确认。
 
@@ -67,19 +72,69 @@
 | 编号 | 小项 | 当前结果 | 验证 |
 | --- | --- | --- | --- |
 | T01 | 标签固定 112×24 DIP，间距 4 DIP | 已按 source 移植，不缩成拥挤文字 | `TestOverflowTabsKeepFixedGeometryAndKeyboardReveal` |
-| T02 | 溢出时水平滚动，+ 和展开按钮保持独立位置 | 已修复 | 同上，360 DIP 独立工作区 |
+| T02 | 溢出时水平滚动，加号随标签滚动、展开按钮固定 | R11 按冻结 source 修正顺序与位置；旧“加号独立固定”结论为历史 | `TestOverflowTabsKeepFixedGeometryAndKeyboardReveal`、`TestTabStripControlsKeepIdentityAndExpandSlotAtOverflow` |
 | T03 | 新建/切换/键盘选择主动显示选中标签 | 已接 `ScrollIntoView`，不是每帧强制吸回 | End 键和自主滚轮测试 |
 | T04 | Left/Right/Home/End 的官方焦点选择行为 | 使用 `TabsBase`；End 与选中标签显露通过 | 同上 |
 | T05 | 每个标签有独立关闭槽，悬停显示 ×，未保存时显示点 | 已实现；关闭按钮不改变标签尺寸 | UI 渲染与关闭行为测试 |
 | T06 | 关闭非当前标签保留当前 surface identity | 通过 | `TestReorderAndClosingInactiveTabsPreserveActiveIdentity` |
 | T07 | 拖动重排，保留当前 surface identity | 通过实际原生 Tester drag/drop；按 kind/id 定位，构建循环结束后再应用移动 | `TestTabsDragAndWheelKeepSelection` |
 | T08 | 右键关闭/关闭其他标签 | 已接真实关闭路径；未保存文件沿用确认流程 | 关闭/未保存既有测试 |
-| T09 | 新标签按钮原生菜单 | Files/Browser/Terminal/Diffs/History；Git 项按能力禁用 | 编译、渲染检查；菜单完整实机流程待验 |
+| T09 | 新标签按钮原生菜单 | R11 无 Git 时省略 Diffs/History；读取所选项目 typed `GitDetected`，旧“按能力禁用”结论为历史 | `TestTabStripSourceEmptyAndNonGitMenu`、`TestTabStripGitDetectionDoesNotBorrowAnotherProject`；原生菜单视觉/完整流程待验 |
 | T10 | 浏览器页面标题更新标签 | 既有 OnPageTitleUpdated 保留，长标题固定宽度省略 | 原生命中、favicon、悬停提示待实机验 |
 | T11 | 文件重命名更新标签/路径，保留未保存缓冲区 | 已修复 | `TestFileRenameUpdatesTabAndRetainsUnsavedBuffer` |
 | T12 | 溢出边缘渐隐及拖动滑动动画 | 未宣称完成 | 当前为官方原生滚动/拖放，source 的渐隐和 150ms sibling slide 尚需补齐/视觉验收 |
 | T13 | 每个会话独立的工具标签/编辑器/滚动恢复 | 已补齐会话 scope；保存 tabs、编辑器缓冲区/选区、diff、文件树、搜索、标签滚动；切换停止旧 autosave 计时器并恢复当前 surface 的焦点请求。App 同时恢复该会话 takeover 和 fit 优先级，新建画布不恢复底部终端 | `TestSessionWorkspaceRestoresTabsAndUnsavedEditorIndependently`、`TestConversationSwitchRestoresOwnedWorkspaceAndTakeover` |
 | T14 | 子会话/子代理在原生侧栏标签显示 | 已提供 `OpenSession` 与 `RenderSession`；没有 renderer 时沿原中央跳转，避免空标签 | `TestSideSessionRendererAndCentralFallback`；主任务接线与子代理卡片另验 |
+
+### R11 TabStrip 源码更正与实施边界
+
+本节对应 [R11 独立审计](../output/tabstrip-r11-audit/result.json)，事实源仍固定为
+`ab189159f10cf8e63c0502be75a59bbc487e0eaf`。此前 T02 的加号固定占位、T09 的
+非 Git 项禁用，以及 R8 复用 24px 展开按钮的记录保留为阶段历史，不能作为当前实现结论。
+
+冻结 `shell.rs:13586–13633` 的展开按钮是 **28×28 DIP、16px muted 图标、radius6**；
+`shell.rs:12944–13076` 的加号则是 **24×24 DIP、13px muted 图标、radius6**，并非两者都为28。
+加号仅在已有标签时出现，位于同一水平滚动内容末尾，右侧才是固定展开按钮。
+`shell/tabs.rs:36–41,497–535,634–641,684–687` 给出 expanded 时的 collapse 图标、
+一次 top4、left8/right4/gap4，以及透明且无独立底线的标题栏。R11 已接入这些稳定态事实。
+两按钮使用 wash(.11) 的150ms hover，effective reduced motion 立即切换；展开/菜单打开本身
+不增加常驻选中底色。无项目、失效项目和非 Git 项目均不借用其他项目的 Git 状态；
+已检测 Git 但分支列表尚未加载时仍保留 Git 入口。
+
+`CGO_ENABLED=0 go test ./internal/workbench -count=1 -v` 的45个本包顶层测试通过
+（1.038s），scoped Go vet、MyGo vet 均 exit0。审计保存了修复前失败日志、360/520 DIP
+与 light/dark 的实际 Tester 几何，以及滚动后点击、End、Tab/Enter、展开/收回、关闭前序标签
+后的焦点和固定槽回归。这些是实现侧回归，**不是原生或像素一致性验收**；R11 主线全包构建与
+原生验证在本节写入时仍由主 agent 执行，不能据本节记为通过。
+
+剩余边界：MyGo 默认水平滚动条仍可见。34px 滚动区域避开了标签中心，但可见 hit track 的
+`y26..38` 仍覆盖 chip/plus 底部 `y26..33`，约 **7 DIP**，未宣称完整矩形点击一致。
+冻结源码的 **36px 边缘渐隐**、**150ms 拖动 sibling slide** 尚未补齐；加号菜单仍使用现有
+MyGo 原生菜单，未移植源码的 **168px 自绘菜单、下方10px间距**及其完整焦点/重复按压语义。
+这些项目和多 DPI/平台原生视觉验收继续待办。
+
+### R12 滚动条与渐隐更正
+
+上述7DIP遮挡和缺失渐隐是R11时的状态。R12只在TabStrip设置原生
+`Scrollbars(false)`，相同y32的1x/2x底部点击4项修复后均通过；不透明背景的
+36px全高shell渐隐已实现。绘制时读取本轮ScrollState还修复了6种MaxX变化但
+无额外host frame时留下旧渐隐的问题，8项idle回归与51项workbench测试通过。
+完整五项主线检查、四目标r2包和DPI192的确切Windows EXE原生底部点击/菜单/
+展开收回观察分别封存于 `reference/validation/scrollbars-r12-result.json`。
+
+原生还发现History插入和面板收回后活动标签可保持裁切，手动wheel能滚入；该项
+继续修复，不能把既有键盘回归解释成所有自动滚入路径通过。玻璃alpha遮罩、
+拖动/滚入动画、自绘菜单、配对原版像素与完整跨平台验收仍待完成。详细证据与
+源码时序限制见 [本阶段审计](audit-tabstrip-scrollbars.md)。
+
+### R13 菜单滚入后续
+
+R12的History菜单路径已单独修复：入口消费旧reveal请求，让构建后段Chosen产生的
+新请求留给重建。8项原失败菜单回归和6项direct/End对照均通过，手动wheel不被拉回。
+53项本包测试、五项主线门槛、默认diffcheck及四目标包通过；确切Windows EXE在
+DPI192的同一路径无需补救输入即可完整显示活动History，actualexit0/stderr空。
+缩窄/收回没有新selection请求，原版自动揭示要求尚未建立，R13未改变此语义；
+plus常驻可见也不是本修复的要求。见 [R13审计](audit-tabstrip-reveal.md)。
 
 ## 文件树和编辑器
 

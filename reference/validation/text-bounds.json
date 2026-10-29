@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T10:38:54.825186+00:00",
+  "status": "actual-native-production-wrapper-bounds-exported-via-public-inspector",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "gpuiCommit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+  "scope": "Independent instrumented example; production Pickers/Popover/Compact/typography and GPUI renderer unchanged. Not an unmodified reference screenshot.",
+  "componentHashChecks": [
+    {
+      "path": "crates/ui/src/pickers.rs",
+      "frozenSHA256": "fb88f1cd966f3e089af6d52363edfe06fbbe998aabb73c250ab5b496b898d560",
+      "exportedSHA256": "fb88f1cd966f3e089af6d52363edfe06fbbe998aabb73c250ab5b496b898d560",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/pickers/compact.rs",
+      "frozenSHA256": "dab709e36041c0d4799bc1e83c7cde8e991f2534801cafe222f937083983d31e",
+      "exportedSHA256": "dab709e36041c0d4799bc1e83c7cde8e991f2534801cafe222f937083983d31e",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/popover.rs",
+      "frozenSHA256": "28dbac8e64a1c7c95bc1f9cababc223d84822c2a89bfcc9ae511d57d2134f206",
+      "exportedSHA256": "28dbac8e64a1c7c95bc1f9cababc223d84822c2a89bfcc9ae511d57d2134f206",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/typography.rs",
+      "frozenSHA256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f",
+      "exportedSHA256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f",
+      "identical": true
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "output/text-bounds-audit/_source/src/main.rs",
+      "sha256": "e2a8efae84b6b3cfdaf80becbdaa2e7af7f334604007cf2022c1f9d6f082ec72"
+    },
+    {
+      "path": "output/text-bounds-audit/_source/Cargo.toml",
+      "sha256": "316103601d45245c88e21895c78145948b11d2e23a0b873fda6041447affc2bf"
+    },
+    {
+      "path": "output/text-bounds-audit/build.log",
+      "sha256": "1b379ce620d6e603e8a25d995266a65245d8a65e8f1fe058d43f653077e39f07"
+    },
+    {
+      "path": "output/text-bounds-audit/run-01/inspector-bounds.json",
+      "sha256": "3ec124002eb67d3245a0bda192843c71f5210c18a4e2862d55e587ef56889825"
+    },
+    {
+      "path": "output/text-bounds-audit/run-01/result.txt",
+      "sha256": "957a27845d52d40951673c28368d5f75c24bf2cd11535af1f2c13b48093cd7ac"
+    },
+    {
+      "path": "output/text-bounds-audit/run-01/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/text-bounds-audit/run-01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/reference-native-0.2.128/crates/ui/examples/text-bounds-audit.rs",
+      "sha256": "e2a8efae84b6b3cfdaf80becbdaa2e7af7f334604007cf2022c1f9d6f082ec72"
+    },
+    {
+      "path": "output/reference-native/target/debug/examples/text-bounds-audit.exe",
+      "sha256": "1fa0b30da98bd9107da03ee8c9f78c53768c4cd4b240d6d08e3542a5140853ed"
+    }
+  ],
+  "build": {
+    "command": "cargo build --offline --locked -j 2 --manifest-path output/reference-native-0.2.128/Cargo.toml -p zeron-ui --example text-bounds-audit --features compact-picker-fixture",
+    "commandSHA256UTF8": "30f7a8d9f4612c9bc64312ea427cb39ba519e008c0a650dec6eafeea0eb1f48f",
+    "CARGO_TARGET_DIR": "output/reference-native/target",
+    "exitCode": 0,
+    "secondsReportedByCargo": 17.14,
+    "sourceCopy": "Canonical _source/src/main.rs copied byte-for-byte to exported workspace examples/text-bounds-audit.rs; existing manifest and component sources not modified.",
+    "abortedAlternative": "An isolated Cargo package was not used for runtime; its separate build was stopped after profile settings caused redundant dependency rebuilds. Kept as diagnostic source only."
+  },
+  "runtime": {
+    "processId": 21336,
+    "exitCode": 0,
+    "nativeSlotReleased": true,
+    "surface": "opaque",
+    "scale": 1,
+    "remSize": 16,
+    "viewport": [
+      1320,
+      560
+    ],
+    "inspectorReservedWidth": 480,
+    "contentWidthFromFrameworkRule": 840,
+    "screenshotCaptured": false,
+    "externalServicesUsed": false,
+    "result": "public-inspector-bounds-exported"
+  },
+  "publicAPI": {
+    "usable": [
+      "App::register_inspector_element<DivInspectorState>",
+      "App::set_inspector_renderer",
+      "Inspector::render_inspector_states",
+      "Window::toggle_inspector",
+      "Window::simulate_mouse_move",
+      "WindowTextSystem::shape_line"
+    ],
+    "selection": "Existing model-setting ElementId path plus div() source_location; input coordinates select inspector target but never set observed bounds.",
+    "labelAndValueElementIdentity": "Both wrappers share model-setting=2 ancestor; source lines6190/6197 disambiguate them.",
+    "apiLimits": [
+      "SharedString has no ElementId/source_location and its TextLayout is frame RequestLayoutState, not a public global element-state entry.",
+      "StyledText::layout() only gives layout of a text element constructed and retained by the caller; it cannot index the existing SharedString.",
+      "VisualTestContext::debug_bounds requires debug_selector; existing production wrappers do not set one.",
+      "DivInspectorState.content_size is the union of direct children layout bounds and can include stretch allocation. Label child140px is its allocated width, not intrinsic101.907px.",
+      "Inspector only publishes the active selected element and reserves30rem of viewport; this diagnostic accounts for that reserve.",
+      "Picking intercepts ordinary mouse handling, so this run does not establish business hover appearance."
+    ]
+  },
+  "observed": {
+    "status": "independent-instrumented-inspector-diagnostic",
+    "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+    "gpuiCommit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+    "productionComponentsModified": false,
+    "rendererModified": false,
+    "screenshotAcceptance": "not a screenshot or visual-parity fixture",
+    "processId": 21336,
+    "metrics": {
+      "scale": 1.0,
+      "remSize": 16.0,
+      "viewport": [
+        1320.0,
+        560.0
+      ],
+      "inspectorReservedWidth": 480,
+      "measurements": [
+        {
+          "text": "Context window",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "advance": 101.90699768066406,
+          "ascent": 13.0649995803833,
+          "descent": 3.8350000381469727,
+          "defaultLineHeightSnapped": 21.0
+        },
+        {
+          "text": "Standard",
+          "fontSize": 13,
+          "fontWeight": 500,
+          "advance": 57.13500213623047,
+          "ascent": 13.0649995803833,
+          "descent": 3.8350000381469727,
+          "defaultLineHeightSnapped": 21.0
+        }
+      ]
+    },
+    "observations": [
+      {
+        "phase": "option-label-wrapper",
+        "sourceFile": "crates\\ui\\src\\pickers.rs",
+        "sourceLine": 6190,
+        "sourceColumn": 17,
+        "instanceId": 0,
+        "globalId": "GlobalElementId([View(EntityId(6v1)), Name(\"text-bounds-inspector-diagnostic\"), View(EntityId(3v1)), Name(\"picker-model-4294967299\"), Name(\"model-popover\"), Name(\"compact-options-host\"), Name(\"compact-options\"), NamedInteger(\"model-setting-hover\", 2), NamedInteger(\"model-setting\", 2)])",
+        "bounds": [
+          21.0,
+          461.0,
+          140.0,
+          21.0
+        ],
+        "contentSize": [
+          140.0,
+          21.0
+        ]
+      },
+      {
+        "phase": "option-row-bottom",
+        "sourceFile": "crates\\ui\\src\\popover.rs",
+        "sourceLine": 911,
+        "sourceColumn": 15,
+        "instanceId": 0,
+        "globalId": "GlobalElementId([View(EntityId(6v1)), Name(\"text-bounds-inspector-diagnostic\"), View(EntityId(3v1)), Name(\"picker-model-4294967299\"), Name(\"model-popover\"), Name(\"compact-options-host\"), Name(\"compact-options\"), NamedInteger(\"model-setting-hover\", 2), NamedInteger(\"model-setting\", 2)])",
+        "bounds": [
+          13.0,
+          459.0,
+          246.0,
+          26.0
+        ],
+        "contentSize": [
+          246.0,
+          26.0
+        ]
+      },
+      {
+        "phase": "option-row",
+        "sourceFile": "crates\\ui\\src\\popover.rs",
+        "sourceLine": 911,
+        "sourceColumn": 15,
+        "instanceId": 0,
+        "globalId": "GlobalElementId([View(EntityId(6v1)), Name(\"text-bounds-inspector-diagnostic\"), View(EntityId(3v1)), Name(\"picker-model-4294967299\"), Name(\"model-popover\"), Name(\"compact-options-host\"), Name(\"compact-options\"), NamedInteger(\"model-setting-hover\", 2), NamedInteger(\"model-setting\", 2)])",
+        "bounds": [
+          13.0,
+          459.0,
+          246.0,
+          26.0
+        ],
+        "contentSize": [
+          246.0,
+          26.0
+        ]
+      },
+      {
+        "phase": "option-value-wrapper",
+        "sourceFile": "crates\\ui\\src\\pickers.rs",
+        "sourceLine": 6197,
+        "sourceColumn": 17,
+        "instanceId": 0,
+        "globalId": "GlobalElementId([View(EntityId(6v1)), Name(\"text-bounds-inspector-diagnostic\"), View(EntityId(3v1)), Name(\"picker-model-4294967299\"), Name(\"model-popover\"), Name(\"compact-options-host\"), Name(\"compact-options\"), NamedInteger(\"model-setting-hover\", 2), NamedInteger(\"model-setting\", 2)])",
+        "bounds": [
+          171.0,
+          461.0,
+          58.0,
+          21.0
+        ],
+        "contentSize": [
+          58.0,
+          21.0
+        ]
+      }
+    ]
+  },
+  "verifiedPredictions": {
+    "optionRow": [
+      13,
+      459,
+      246,
+      26
+    ],
+    "labelWrapper": [
+      21,
+      461,
+      140,
+      21
+    ],
+    "labelDirectTextAllocatedSize": [
+      140,
+      21
+    ],
+    "valueWrapper": [
+      171,
+      461,
+      58,
+      21
+    ],
+    "valueDirectTextSize": [
+      58,
+      21
+    ],
+    "standardIntrinsicAdvance": 57.13500213623047,
+    "standardCeilSize": 58,
+    "defaultPhiLineHeightSnapped": 21,
+    "actualWrapperTop": 461,
+    "matchesPriorSourceDerivedTop": true
+  },
+  "baseline": {
+    "directlyExported": false,
+    "sourceDerivedFromActualWrapperAndMatchingFontMetrics": {
+      "textTop": 461,
+      "lineHeight": 21,
+      "ascent": 13.0649995803833,
+      "descent": 3.8350000381469727,
+      "beforeGlyphSnap": 476.11499977111816,
+      "afterSourceGlyphSnap": 476
+    },
+    "limit": "Native wrapper top is now measured rather than guessed. Actual existing SharedString TextLayout/glyph baseline still has no public inspector export; do not call derived baseline a direct measurement."
+  },
+  "acceptance": "This validates intrinsic ceil and absolute wrapper-boundary rounding at the measured scale1/13px/26px-row state. Other sizes/DPI/positions require parameterized public-API regressions before a scoped production adaptation."
+}

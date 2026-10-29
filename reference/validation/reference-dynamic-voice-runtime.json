@@ -1,0 +1,29 @@
+{
+  "productionRendererChanged": false,
+  "schemaVersion": 1,
+  "reason": "ort-sys ONNX archive download stalled at zero-byte DirectML.dll; voice is not exercised in compact-picker fixture",
+  "afterSHA256": "afd06578ced5b62a9fd78410480396d882bef268c2bf97e530c0cf8801f50d35",
+  "changedFile": "output/reference-native-0.2.128/crates/voice/Cargo.toml",
+  "beforeSHA256": "4c8b4b8c9da5e0a4d7a8fd868d2f8df1ad2897b671d6dd06e934b920e6a53f5e",
+  "change": "Enable existing parakeet-rs load-dynamic feature only in exported fixture build",
+  "productionUIChanged": false,
+  "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "frozenSourceCheckoutModified": false,
+  "expectedScope": "native UI/keyboard reference only; no voice validation",
+  "patch": "reference/fixtures/native-capture-dynamic-voice.patch",
+  "patchSHA256": "e4586ce619dd6e5399d4febe767f2c122f88e26498c5a4c74a47fd7622998a8b",
+  "lockDelta": "Add libloading 0.9.0 for ort/load-dynamic; existing package versions remain unchanged",
+  "exportedLockSHA256": "0dae49265c683c99c3269d7ebad5e303e32b9e18a853f025933c9843044c583f",
+  "buildStatus": "Original fixture and capture adapter compiled; final DynamicVoiceRuntime script replay passed",
+  "nativeRun": "8 independent original GPUI layout scenes saved as raw JPEG; frozen fixture keyboard assertion fails because its assumed focus traversal differs from frozen production key handler; no keyboard or pixel pass",
+  "observedEvidence": "output/resume-validation/reference-native-observed/observations.json",
+  "replay": {
+    "status": "forward and reverse checks passed on fresh git archive; normalized text identical to built export",
+    "byteLimit": "Windows git core.autocrlf changes line endings; raw hashes differ from initial manually edited export",
+    "finalBuildScript": "passed with --locked and -DynamicVoiceRuntime",
+    "log": "output/resume-validation/reference-build-script-final.log",
+    "evidence": "output/resume-validation/reference-runtime-patch-replay-archive/result.json"
+  },
+  "sourcePhase": "First dynamic-runtime build and eight JPEG observations; hashes describe the before snapshot retained by the subsequent lossless transport stage, not later exported lock changes",
+  "retainedBuildInputs": "output/reference-lossless/transport-source/before"
+}

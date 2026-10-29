@@ -40,7 +40,7 @@ func drawMedia(c *ui.Context, image media, width, height float32) ui.Element {
 	if image.bitmap != nil {
 		return ui.Image(c, image.bitmap).Size(width, height).Fit(ui.Contain)
 	}
-	return ui.Text(c, "Preview unavailable").TextColor(c.Theme().TextMuted)
+	return ui.Text(c, tr(c, "Preview unavailable")).TextColor(c.Theme().TextMuted)
 }
 func (a *App) imageAttachment(c *ui.Context, item contracts.Attachment) {
 	image := loadMedia(item.AssetRef)
@@ -52,7 +52,7 @@ func (a *App) imageAttachment(c *ui.Context, item contracts.Attachment) {
 	w *= scale
 	h *= scale
 	ui.Column(c).Gap(6).Children(func() {
-		drawMedia(c, image, w, h).Radius(10).Label("Open " + item.Name).OnClick(func() { a.imageRef = item.AssetRef; a.imageZoom = 1; a.imageOpen = true })
+		drawMedia(c, image, w, h).Radius(10).Label(tr(c, "Open ") + item.Name).OnClick(func() { a.imageRef = item.AssetRef; a.imageZoom = 1; a.imageOpen = true })
 		ui.Text(c, item.Name).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 	})
 }
@@ -64,10 +64,10 @@ func (a *App) imageDialog(c *ui.Context) {
 		ui.Column(c).Fill().Gap(8).Children(func() {
 			ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
 				ui.Spacer(c)
-				iconButton(c, "minus", "Zoom out").OnClick(func() { a.imageZoom = max(.25, a.imageZoom-.25) })
-				textButton(c, "Reset zoom").OnClick(func() { a.imageZoom = 1 })
-				iconButton(c, "plus", "Zoom in").OnClick(func() { a.imageZoom = min(4, a.imageZoom+.25) })
-				iconButton(c, "close", "Close image").OnClick(func() { a.imageOpen = false })
+				iconButton(c, "minus", tr(c, "Zoom out")).OnClick(func() { a.imageZoom = max(.25, a.imageZoom-.25) })
+				textButton(c, tr(c, "Reset zoom")).OnClick(func() { a.imageZoom = 1 })
+				iconButton(c, "plus", tr(c, "Zoom in")).OnClick(func() { a.imageZoom = min(4, a.imageZoom+.25) })
+				iconButton(c, "close", tr(c, "Close image")).OnClick(func() { a.imageOpen = false })
 			})
 			ui.Scroll(c).Grow(1).Children(func() { drawMedia(c, loadMedia(a.imageRef), (width-160)*a.imageZoom, (height-190)*a.imageZoom) })
 		})

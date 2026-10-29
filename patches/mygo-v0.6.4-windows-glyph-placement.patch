@@ -1,0 +1,2899 @@
+diff --git a/third_party/mygo/internal/text/glyph_placement.go b/third_party/mygo/internal/text/glyph_placement.go
+new file mode 100644
+index 0000000..f190579
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement.go
+@@ -0,0 +1,59 @@
++package text
++
++import "math"
++
++// GlyphPlacement aliases the internal byte policy carrier. The public UI
++// opt-in remains typed; no named policy type is stored in raster cache keys.
++// Font selection, shaping, advances and offsets do not depend on it.
++type GlyphPlacement = uint8
++
++const (
++	GlyphPlacementNative GlyphPlacement = iota
++	GlyphPlacementWindowsClearTypeQuarter
++)
++
++// RasterGlyph is the opt-in entry; ordinary Glyph retains its native path.
++// Unknown policies, disabled subpixel requests and nonfinite quarter pens use
++// native placement immediately. Backend/AA/color checks run on a quarter
++// placement-cache miss, before quarter insertion or glyph-cache lookup.
++func RasterGlyph(s *System, f *Font, id uint32, scale, x float32, shade Shade, opaque bool, policy uint8) GlyphImage {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	if f == nil {
++		return GlyphImage{}
++	}
++	shade = f.shadeFor(shade)
++	subpixel := opaque && s.subpixel
++	if policy != GlyphPlacementWindowsClearTypeQuarter || !subpixel || !finitePen(x*4) {
++		q, n, carry := s.place(f, scale, subpixel, x)
++		return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
++	}
++	pk := placeKey{font: f, scale: uint32(scale*256 + 0.5), mode: quarterSubpixel}
++	if _, ok := s.places[pk]; !ok {
++		if !s.quarterEligible(f, scale, subpixel, policy) {
++			q, n, carry := s.place(f, scale, subpixel, x)
++			return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
++		}
++		s.places[pk] = placement{n: 4, round: true}
++	}
++	q, carry := quarterPosition(x)
++	return s.glyphAt(f, id, scale, shade, subpixel, q, 4, carry, policy)
++}
++
++func finitePen(x float32) bool { return !math.IsNaN(float64(x)) && !math.IsInf(float64(x), 0) }
++
++// quarterPosition keeps GPUI's float32 arithmetic and signed extraction:
++// quantize, trunc integer origin, then signed fract cast to Rust u8. This is
++// deliberately not floor-based quarter rounding for negative coordinates.
++// Painter adds floor(x) itself; carry restores the source integer origin.
++func quarterPosition(x float32) (q int, carry float32) {
++	v := x * float32(4)
++	magnitude := float32(math.Abs(float64(v))) - float32(.5)
++	rounded := float32(math.Ceil(float64(magnitude)))
++	rounded = float32(math.Copysign(float64(rounded), float64(v)))
++	quantized := rounded / float32(4)
++	integer := float32(math.Trunc(float64(quantized)))
++	signed := (quantized - integer) * float32(4)
++	q = max(0, int(signed)) // signed fract is [-1,1); negative Rust u8 =>0
++	return q, integer - float32(math.Floor(float64(x)))
++}
+diff --git a/third_party/mygo/internal/text/glyph_placement_adapter_windows_test.go b/third_party/mygo/internal/text/glyph_placement_adapter_windows_test.go
+new file mode 100644
+index 0000000..7ab4402
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_adapter_windows_test.go
+@@ -0,0 +1,7 @@
++//go:build windows && (amd64 || arm64)
++
++package text
++
++func quarterRequestedForTest(s *System, f *Font, id uint32, scale, x float32, shade Shade, opaque bool) GlyphImage {
++	return RasterGlyph(s, f, id, scale, x, shade, opaque, GlyphPlacementWindowsClearTypeQuarter)
++}
+diff --git a/third_party/mygo/internal/text/glyph_placement_carrier_test.go b/third_party/mygo/internal/text/glyph_placement_carrier_test.go
+new file mode 100644
+index 0000000..332ec20
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_carrier_test.go
+@@ -0,0 +1,30 @@
++package text
++
++import (
++	"reflect"
++	"testing"
++)
++
++func TestQuarterRasterModeCacheCarriersAreBuiltinByte(t *testing.T) {
++	for _, ty := range []reflect.Type{reflect.TypeFor[glyphKey](), reflect.TypeFor[placeKey]()} {
++		field, ok := ty.FieldByName("mode")
++		if !ok || field.Type != reflect.TypeFor[uint8]() {
++			t.Fatalf("%v.mode uses %v, want the existing builtin uint8 identity", ty, field.Type)
++		}
++		if _, old := ty.FieldByName("policy"); old {
++			t.Fatalf("%v retained the extra policy field", ty)
++		}
++		if _, old := ty.FieldByName("subpixel"); old {
++			t.Fatalf("%v retained the replaced bool field", ty)
++		}
++	}
++	if nativeNonSubpixel != 0 || nativeSubpixel != 1 || quarterSubpixel != 2 {
++		t.Fatal("normalized raster mode identities changed")
++	}
++	if reflect.TypeFor[GlyphPlacement]() != reflect.TypeFor[uint8]() {
++		t.Fatal("internal carrier retained a distinct enum identity")
++	}
++	if GlyphPlacementNative != 0 || GlyphPlacementWindowsClearTypeQuarter != 1 {
++		t.Fatal("public placement policy numeric identities changed")
++	}
++}
+diff --git a/third_party/mygo/internal/text/glyph_placement_control_windows_test.go b/third_party/mygo/internal/text/glyph_placement_control_windows_test.go
+new file mode 100644
+index 0000000..18e7845
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_control_windows_test.go
+@@ -0,0 +1,99 @@
++//go:build windows && (amd64 || arm64)
++
++package text
++
++import (
++	"bytes"
++	"encoding/hex"
++	"encoding/json"
++	"math"
++	"os"
++	"testing"
++)
++
++type quarterVector struct {
++	Name          string
++	PenBits       uint32
++	GlyphID       uint32
++	IntegerOrigin int
++	PhaseIndex    int
++	Bounds        [4]int
++	RGBHex        string
++}
++
++type quarterOracle struct {
++	FontFamily     string
++	SizeDIP, Scale float32
++	Vectors        []quarterVector
++}
++
++func loadQuarterOracle(t *testing.T) quarterOracle {
++	t.Helper()
++	data, err := os.ReadFile("testdata/quarter-coverage.json")
++	if err != nil {
++		t.Fatal(err)
++	}
++	var oracle quarterOracle
++	if err := json.Unmarshal(data, &oracle); err != nil {
++		t.Fatal(err)
++	}
++	if len(oracle.Vectors) != 76 {
++		t.Fatalf("oracle vectors=%d", len(oracle.Vectors))
++	}
++	return oracle
++}
++
++func quarterTestSystem(t *testing.T) (*System, *Font, quarterOracle) {
++	t.Helper()
++	oracle := loadQuarterOracle(t)
++	s := newSystem()
++	s.TextParams()
++	f := s.font(Style{Family: oracle.FontFamily, Size: oracle.SizeDIP, Weight: 400})
++	e := s.engine().(*dwrite)
++	if !s.subpixel || !e.clearType || e.aliased || e.bgr || e.clearLevel != 1 {
++		t.Fatalf("captured ClearType RGB/level1 premise unavailable: subpixel=%v clear=%v aliased=%v bgr=%v level=%v", s.subpixel, e.clearType, e.aliased, e.bgr, e.clearLevel)
++	}
++	return s, f, oracle
++}
++
++func quarterImageRGB(s *System, g GlyphImage) []byte {
++	result := make([]byte, 0, int(g.W)*int(g.H)*3)
++	for y := 0; y < int(g.H); y++ {
++		for x := 0; x < int(g.W); x++ {
++			at := 4 * ((int(g.Y)+y)*s.ColorAtlas.W + int(g.X) + x)
++			result = append(result, s.ColorAtlas.Pix[at:at+3]...)
++		}
++	}
++	return result
++}
++
++// The adapter requests quarter in the candidate and intentionally runs the
++// unmodified native path in C4. The oracle/test itself is byte-identical.
++func TestQuarterCoverageExternalSourceControl(t *testing.T) {
++	s, f, oracle := quarterTestSystem(t)
++	for _, vector := range oracle.Vectors {
++		t.Run(vector.Name, func(t *testing.T) {
++			pen := math.Float32frombits(vector.PenBits)
++			var g GlyphImage
++			for attempt := 0; attempt < 8; attempt++ {
++				g = quarterRequestedForTest(s, f, vector.GlyphID, oracle.Scale, pen, 0, true)
++				if !s.Full() {
++					break
++				}
++				s.MakeRoom()
++			}
++			got := [4]int{int(float32(math.Floor(float64(pen))) + g.Left), int(g.Top), int(float32(math.Floor(float64(pen)))+g.Left) + int(g.W), int(g.Top) + int(g.H)}
++			want := vector.Bounds
++			want[0] += vector.IntegerOrigin
++			want[2] += vector.IntegerOrigin
++			raw, err := hex.DecodeString(vector.RGBHex)
++			if err != nil {
++				t.Fatal(err)
++			}
++			actual := quarterImageRGB(s, g)
++			if (len(raw) > 0 && (!g.Subpixel || got != want)) || !bytes.Equal(actual, raw) {
++				t.Errorf("actual native coverage: bounds=%v want=%v subpixel=%v bytesEqual=%v pen=%v", got, want, g.Subpixel, bytes.Equal(actual, raw), pen)
++			}
++		})
++	}
++}
+diff --git a/third_party/mygo/internal/text/glyph_placement_other.go b/third_party/mygo/internal/text/glyph_placement_other.go
+new file mode 100644
+index 0000000..1196b91
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_other.go
+@@ -0,0 +1,5 @@
++//go:build !windows || (!amd64 && !arm64)
++
++package text
++
++func (*System) quarterEligible(*Font, float32, bool, uint8) bool { return false }
+diff --git a/third_party/mygo/internal/text/glyph_placement_windows.go b/third_party/mygo/internal/text/glyph_placement_windows.go
+new file mode 100644
+index 0000000..761ffbb
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_windows.go
+@@ -0,0 +1,23 @@
++//go:build windows && (amd64 || arm64)
++
++package text
++
++func (s *System) quarterEligible(f *Font, scale float32, subpixel bool, policy uint8) bool {
++	if policy != GlyphPlacementWindowsClearTypeQuarter || !subpixel {
++		return false
++	}
++	e, ok := s.engine().(*dwrite)
++	if !ok {
++		return false
++	}
++	e.settings()
++	if !e.clearType || e.aliased || e.isColor(f.native) {
++		return false
++	}
++	mode, _ := e.mode(f, scale)
++	return quarterRenderingMode(mode)
++}
++
++func quarterRenderingMode(mode uintptr) bool {
++	return mode == renderingModeNatural || mode == renderingModeNaturalSymmetric || mode == renderingModeDownsampled
++}
+diff --git a/third_party/mygo/internal/text/glyph_placement_windows_test.go b/third_party/mygo/internal/text/glyph_placement_windows_test.go
+new file mode 100644
+index 0000000..0e19479
+--- /dev/null
++++ b/third_party/mygo/internal/text/glyph_placement_windows_test.go
+@@ -0,0 +1,249 @@
++//go:build windows && (amd64 || arm64)
++
++package text
++
++import (
++	"bytes"
++	"math"
++	"reflect"
++	"testing"
++	"unsafe"
++)
++
++func renderPlacementTest(t *testing.T, s *System, f *Font, id uint32, scale, x float32, opaque bool, policy GlyphPlacement) GlyphImage {
++	t.Helper()
++	for range 8 {
++		g := RasterGlyph(s, f, id, scale, x, 0, opaque, policy)
++		if !s.Full() {
++			return g
++		}
++		s.MakeRoom()
++	}
++	t.Fatal("atlas did not settle")
++	return GlyphImage{}
++}
++
++func TestQuarterPositionRecordedSignedAndTieVectors(t *testing.T) {
++	oracle := loadQuarterOracle(t)
++	for _, v := range oracle.Vectors {
++		t.Run(v.Name, func(t *testing.T) {
++			x := math.Float32frombits(v.PenBits)
++			q, carry := quarterPosition(x)
++			origin := float32(math.Floor(float64(x))) + carry
++			if q != v.PhaseIndex || origin != float32(v.IntegerOrigin) {
++				t.Fatalf("pen=%v got phase=%v integer=%v, external source phase=%v integer=%v", x, q, origin, v.PhaseIndex, v.IntegerOrigin)
++			}
++		})
++	}
++}
++
++func TestQuarterCachePolicyCollisionOrderAndNormalization(t *testing.T) {
++	for _, quarterFirst := range []bool{false, true} {
++		t.Run(map[bool]string{false: "native-first", true: "quarter-first"}[quarterFirst], func(t *testing.T) {
++			s, f, oracle := quarterTestSystem(t)
++			glyph := s.Layout(Params{Text: "a", Style: Style{Family: oracle.FontFamily, Size: f.Size}}).Lines[0].Glyphs[0]
++			// At .4 the native and quarter phase indices are both2, with
++			// different denominators6/4. An index-only cache aliases them.
++			first, second := GlyphPlacementNative, GlyphPlacementWindowsClearTypeQuarter
++			if quarterFirst {
++				first, second = second, first
++			}
++			for _, policy := range []GlyphPlacement{first, second} {
++				g := renderPlacementTest(t, s, f, glyph.ID, 2, .4, true, policy)
++				if !g.OK || !g.Subpixel {
++					t.Fatalf("no actual ClearType glyph: %+v", g)
++				}
++			}
++			var native, quarter *atlasEntry
++			for key, entry := range s.glyphs {
++				if key.subX == 2 {
++					if key.mode == nativeSubpixel {
++						native = entry
++					} else if key.mode == quarterSubpixel {
++						quarter = entry
++					}
++				}
++			}
++			if native == nil || quarter == nil || native == quarter {
++				t.Fatal("native/quarter phase2 did not retain separate cache identities")
++			}
++			if bytes.Equal(quarterImageRGB(s, native.GlyphImage), quarterImageRGB(s, quarter.GlyphImage)) {
++				t.Fatal("collision control failed to distinguish actual .333/.5 coverage")
++			}
++			before := len(s.glyphs)
++			for _, policy := range []GlyphPlacement{GlyphPlacementNative, GlyphPlacementWindowsClearTypeQuarter, GlyphPlacement(2), GlyphPlacement(255)} {
++				renderPlacementTest(t, s, f, glyph.ID, 2, .4, true, policy)
++			}
++			if len(s.glyphs) != before {
++				t.Fatal("repeat/unknown policy made a duplicate atlas entry")
++			}
++			if len(s.places) != 2 {
++				t.Fatalf("place identities=%d, want native+quarter", len(s.places))
++			}
++		})
++	}
++}
++
++func TestQuarterPreservesShapeAndFontCaches(t *testing.T) {
++	s, _, oracle := quarterTestSystem(t)
++	p := Params{Text: "AV To fi 123 中文 e\u0301", Style: Style{Family: oracle.FontFamily, Size: 10.5, Features: "kern=0"}}
++	layout := s.Layout(p)
++	before := append([]Glyph(nil), layout.Lines[0].Glyphs...)
++	fonts, made := len(s.fonts), s.LayoutsMade()
++	for _, g := range before {
++		renderPlacementTest(t, s, g.Font, g.ID, 2, 40+g.X*2, true, GlyphPlacementWindowsClearTypeQuarter)
++	}
++	if s.Layout(p) != layout || !reflect.DeepEqual(before, layout.Lines[0].Glyphs) || len(s.fonts) != fonts || s.LayoutsMade() != made {
++		t.Fatal("paint policy changed shaped output, font identity or layout cache")
++	}
++}
++
++func TestQuarterUnsupportedPathsNormalizeToNative(t *testing.T) {
++	for _, name := range []string{"transparent", "grayscale-setting", "aliased-setting", "color-face", "unknown-policy"} {
++		t.Run(name, func(t *testing.T) {
++			s, f, oracle := quarterTestSystem(t)
++			opaque, policy := true, GlyphPlacementWindowsClearTypeQuarter
++			e := s.engine().(*dwrite)
++			switch name {
++			case "transparent":
++				opaque = false
++			case "grayscale-setting":
++				e.clearType = false
++				s.subpixel = false
++			case "aliased-setting":
++				e.aliased = true
++				s.subpixel = false
++			case "color-face":
++				g := s.Layout(Params{Text: "🎉", Style: Style{Size: 16}}).Lines[0].Glyphs[0]
++				f = g.Font
++				if !e.isColor(f.native) {
++					t.Fatal("color exclusion control did not resolve a color face")
++				}
++			case "unknown-policy":
++				policy = 255
++			}
++			g := s.Layout(Params{Text: "a", Style: Style{Family: oracle.FontFamily, Size: f.Size}}).Lines[0].Glyphs[0]
++			if name == "color-face" {
++				g = s.Layout(Params{Text: "🎉", Style: Style{Size: 16}}).Lines[0].Glyphs[0]
++			}
++			native := renderPlacementTest(t, s, f, g.ID, 2, .4, opaque, GlyphPlacementNative)
++			count := len(s.glyphs)
++			other := renderPlacementTest(t, s, f, g.ID, 2, .4, opaque, policy)
++			if native != other || len(s.glyphs) != count {
++				t.Fatalf("unsupported policy did not reuse exact native output/cache: native=%+v requested=%+v", native, other)
++			}
++			wantMode := nativeNonSubpixel
++			if opaque && s.subpixel {
++				wantMode = nativeSubpixel
++			}
++			for key := range s.glyphs {
++				if key.mode != wantMode {
++					t.Fatal("unsupported request left a non-native glyph key")
++				}
++			}
++			for key := range s.places {
++				if key.mode != wantMode {
++					t.Fatal("unsupported request left a non-native placement key")
++				}
++			}
++		})
++	}
++}
++
++func TestQuarterRecommendedRenderingModeEligibility(t *testing.T) {
++	for _, tc := range []struct {
++		name string
++		mode uintptr
++		want bool
++	}{
++		{"default", 0, false}, {"aliased", renderingModeAliased, false},
++		{"gdi-classic", renderingModeGDIClassic, false}, {"gdi-natural", renderingModeGDINatural, false},
++		{"natural", renderingModeNatural, true}, {"symmetric", renderingModeNaturalSymmetric, true},
++		{"outline", renderingModeOutline, false}, {"downsampled", renderingModeDownsampled, true},
++		{"unknown", 255, false},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			if got := quarterRenderingMode(tc.mode); got != tc.want {
++				t.Fatalf("mode %v eligible=%v want=%v", tc.mode, got, tc.want)
++			}
++		})
++	}
++}
++
++func TestQuarterCacheKeyPaddingCost(t *testing.T) {
++	// Explicit native baseline layouts: no hidden extra key allocation/word.
++	type nativeGlyphKey struct {
++		font      *Font
++		id, scale uint32
++		subX      uint8
++		shade     Shade
++		subpixel  bool
++	}
++	type nativePlaceKey struct {
++		font     *Font
++		scale    uint32
++		subpixel bool
++	}
++	if unsafe.Sizeof(glyphKey{}) != unsafe.Sizeof(nativeGlyphKey{}) || unsafe.Sizeof(placeKey{}) != unsafe.Sizeof(nativePlaceKey{}) {
++		t.Fatal("normalized mode grew glyph or placement keys from the native baseline")
++	}
++	t.Logf("glyphKey=%d placeKey=%d", unsafe.Sizeof(glyphKey{}), unsafe.Sizeof(placeKey{}))
++}
++
++// All three normalized requests must keep their own raster and placement
++// identities, regardless of which request warms the caches first.
++func TestQuarterThreeRasterModeRequestOrders(t *testing.T) {
++	for _, tc := range []struct {
++		name  string
++		order [3]uint8
++	}{
++		{"non-subpixel-native-quarter", [3]uint8{0, 1, 2}},
++		{"non-subpixel-quarter-native", [3]uint8{0, 2, 1}},
++		{"native-non-subpixel-quarter", [3]uint8{1, 0, 2}},
++		{"native-quarter-non-subpixel", [3]uint8{1, 2, 0}},
++		{"quarter-non-subpixel-native", [3]uint8{2, 0, 1}},
++		{"quarter-native-non-subpixel", [3]uint8{2, 1, 0}},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			s, f, oracle := quarterTestSystem(t)
++			glyph := s.Layout(Params{Text: "a", Style: Style{Family: oracle.FontFamily, Size: f.Size}}).Lines[0].Glyphs[0]
++			var first [3]GlyphImage
++			for _, mode := range tc.order {
++				policy := GlyphPlacementNative
++				if mode == quarterSubpixel {
++					policy = GlyphPlacementWindowsClearTypeQuarter
++				}
++				g := renderPlacementTest(t, s, f, glyph.ID, 2, .4, mode != nativeNonSubpixel, policy)
++				if !g.OK || g.Subpixel != (mode != nativeNonSubpixel) || g.Colored {
++					t.Fatalf("mode=%d actual glyph flags=%+v", mode, g)
++				}
++				first[mode] = g
++			}
++			for _, mode := range tc.order {
++				policy := GlyphPlacementNative
++				if mode == quarterSubpixel {
++					policy = GlyphPlacementWindowsClearTypeQuarter
++				}
++				if got := renderPlacementTest(t, s, f, glyph.ID, 2, .4, mode != nativeNonSubpixel, policy); got != first[mode] {
++					t.Fatalf("mode=%d repeat changed glyph: got=%+v first=%+v", mode, got, first[mode])
++				}
++			}
++			glyphModes, placeModes := [3]int{}, [3]int{}
++			for key := range s.glyphs {
++				if key.mode > quarterSubpixel {
++					t.Fatalf("non-normalized glyph mode %d", key.mode)
++				}
++				glyphModes[key.mode]++
++			}
++			for key := range s.places {
++				if key.mode > quarterSubpixel {
++					t.Fatalf("non-normalized placement mode %d", key.mode)
++				}
++				placeModes[key.mode]++
++			}
++			if glyphModes != [3]int{1, 1, 1} || placeModes != [3]int{1, 1, 1} {
++				t.Fatalf("three states aliased or duplicated: glyphs=%v places=%v", glyphModes, placeModes)
++			}
++		})
++	}
++}
+diff --git a/third_party/mygo/internal/text/raster.go b/third_party/mygo/internal/text/raster.go
+index 1f24b0a..fa4e564 100644
+--- a/third_party/mygo/internal/text/raster.go
++++ b/third_party/mygo/internal/text/raster.go
+@@ -64,14 +64,23 @@ var linear = func() (t [256]float32) {
+ }()
+ 
+ type glyphKey struct {
+-	font     *Font
+-	id       uint32
+-	scale    uint32 // pixels per DIP, in 1/256
+-	subX     uint8  // the position within a pixel, of placement.n
+-	shade    Shade
+-	subpixel bool
++	font  *Font
++	id    uint32
++	scale uint32 // pixels per DIP, in 1/256
++	subX  uint8  // the position within a pixel, of placement.n
++	shade Shade
++	mode  uint8
+ }
+ 
++// Raster modes normalize the cache identity; they do not prescribe the
++// bitmap flags returned by the text engine. Public placement policy values
++// are distinct: quarter policy1 normalizes to quarterSubpixel2.
++const (
++	nativeNonSubpixel uint8 = iota
++	nativeSubpixel
++	quarterSubpixel
++)
++
+ // placement is how the system's text stack places glyphs of a font at a
+ // scale horizontally: at n positions within a pixel, the nearest to their
+ // pen if round, else the one left of it.
+@@ -81,9 +90,9 @@ type placement struct {
+ }
+ 
+ type placeKey struct {
+-	font     *Font
+-	scale    uint32
+-	subpixel bool
++	font  *Font
++	scale uint32
++	mode  uint8
+ }
+ 
+ // GlyphImage is a rasterized glyph in an atlas.
+@@ -241,11 +250,25 @@ func (s *System) Glyph(f *Font, id uint32, scale, x float32, shade Shade, opaque
+ 	shade = f.shadeFor(shade)
+ 	subpixel := opaque && s.subpixel
+ 	q, n, carry := s.place(f, scale, subpixel, x)
+-	key := glyphKey{font: f, id: id, scale: uint32(scale*256 + 0.5), subX: uint8(q), shade: shade, subpixel: subpixel}
++	return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
++}
++
++// glyphAt is called with the System lock held. Policy belongs to the raster
++// key, not the font/shape keys: those outputs remain identical.
++func (s *System) glyphAt(f *Font, id uint32, scale float32, shade Shade, subpixel bool, q, n int, carry float32, policy uint8) GlyphImage {
++	mode := nativeNonSubpixel
++	if subpixel {
++		mode = nativeSubpixel
++		if policy == GlyphPlacementWindowsClearTypeQuarter {
++			mode = quarterSubpixel
++		}
++	}
++	key := glyphKey{font: f, id: id, scale: uint32(scale*256 + 0.5), subX: uint8(q), shade: shade, mode: mode}
++
+ 	e, ok := s.glyphs[key]
+ 	if !ok {
+ 		failed := s.failed
+-		g := s.rasterize(f, id, scale, float32(q)/float32(n), key.shade, key.subpixel)
++		g := s.rasterize(f, id, scale, float32(q)/float32(n), key.shade, key.mode != nativeNonSubpixel)
+ 		e = &atlasEntry{g, s.frame}
+ 		if s.failed == failed { // not left out of a full atlas
+ 			s.glyphs[key] = e
+@@ -261,7 +284,11 @@ func (s *System) Glyph(f *Font, id uint32, scale, x float32, shade Shade, opaque
+ // is at x: at position q of the n within a pixel, carry pixels right of
+ // the pixel x is in.
+ func (s *System) place(f *Font, scale float32, subpixel bool, x float32) (q, n int, carry float32) {
+-	pk := placeKey{f, uint32(scale*256 + 0.5), subpixel}
++	mode := nativeNonSubpixel
++	if subpixel {
++		mode = nativeSubpixel
++	}
++	pk := placeKey{font: f, scale: uint32(scale*256 + 0.5), mode: mode}
+ 	pl, ok := s.places[pk]
+ 	if !ok {
+ 		pl.n, pl.round = s.engine().positions(f, scale, subpixel)
+diff --git a/third_party/mygo/internal/text/raster_mode_test.go b/third_party/mygo/internal/text/raster_mode_test.go
+new file mode 100644
+index 0000000..5d12f05
+--- /dev/null
++++ b/third_party/mygo/internal/text/raster_mode_test.go
+@@ -0,0 +1,263 @@
++package text
++
++import (
++	"bytes"
++	"testing"
++
++	"github.com/egoist/mygo/internal/scene"
++)
++
++// The probe supplies bitmap metadata independently of the requested AA mode.
++// It deliberately is not DirectWrite, so public quarter requests must fall back.
++type rasterModeProbe struct {
++	stubEngine
++	system         *System
++	positionsAA    []bool
++	glyphAA        []bool
++	color, rgb     bool
++	calledUnlocked bool
++}
++
++func newRasterModeProbe() (*System, *Font, *rasterModeProbe) {
++	s := newSystem()
++	p := &rasterModeProbe{system: s}
++	s.eng = p
++	return s, &Font{Size: 13, thin: true}, p
++}
++
++func (p *rasterModeProbe) checkLock() {
++	if p.system.mu.TryLock() {
++		p.system.mu.Unlock()
++		p.calledUnlocked = true
++	}
++}
++
++func (p *rasterModeProbe) positions(_ *Font, _ float32, subpixel bool) (int, bool) {
++	p.checkLock()
++	p.positionsAA = append(p.positionsAA, subpixel)
++	return 4, false
++}
++
++func (p *rasterModeProbe) glyph(_ *Font, _ uint32, _, _ float32, _ Shade, subpixel bool) bitmap {
++	p.checkLock()
++	p.glyphAA = append(p.glyphAA, subpixel)
++	pix := []byte{13}
++	if p.color || p.rgb {
++		pix = []byte{13, 29, 43, 255}
++	}
++	return bitmap{left: 3, top: -2, w: 1, h: 1, pix: pix, color: p.color, subpixel: p.rgb}
++}
++
++func TestRasterModeNativeKeysAndEngineRequests(t *testing.T) {
++	for _, order := range []struct {
++		name   string
++		opaque [2]bool
++	}{
++		{"non-subpixel-first", [2]bool{false, true}},
++		{"subpixel-first", [2]bool{true, false}},
++	} {
++		t.Run(order.name, func(t *testing.T) {
++			s, f, probe := newRasterModeProbe()
++			s.subpixel = true
++			var images [2]GlyphImage
++			for i, opaque := range order.opaque {
++				images[i] = s.Glyph(f, 7, 2, .625, 0, opaque)
++				if !images[i].OK {
++					t.Fatal("probe bitmap was not rasterized")
++				}
++			}
++			if len(s.glyphs) != 2 || len(s.places) != 2 {
++				t.Fatalf("native AA requests aliased: glyphs=%d places=%d", len(s.glyphs), len(s.places))
++			}
++			for _, mode := range []uint8{0, 1} {
++				if _, ok := s.glyphs[glyphKey{font: f, id: 7, scale: 512, subX: 2, mode: mode}]; !ok {
++					t.Fatalf("missing native glyph mode %d", mode)
++				}
++				if _, ok := s.places[placeKey{font: f, scale: 512, mode: mode}]; !ok {
++					t.Fatalf("missing native placement mode %d", mode)
++				}
++			}
++			for i, opaque := range order.opaque {
++				if got := s.Glyph(f, 7, 2, .625, 0, opaque); got != images[i] {
++					t.Fatalf("native mode did not reuse its exact image: got=%+v want=%+v", got, images[i])
++				}
++			}
++			if len(probe.positionsAA) != 2 || len(probe.glyphAA) != 2 {
++				t.Fatalf("cache repeat reached engine: positions=%v glyphs=%v", probe.positionsAA, probe.glyphAA)
++			}
++			for i, want := range order.opaque {
++				if probe.positionsAA[i] != want || probe.glyphAA[i] != want {
++					t.Fatalf("engine AA request %d: positions=%v glyph=%v want=%v", i, probe.positionsAA[i], probe.glyphAA[i], want)
++				}
++			}
++			if probe.calledUnlocked {
++				t.Fatal("engine was called without the System lock")
++			}
++		})
++	}
++}
++
++func TestRasterModeUnsupportedPoliciesNormalizeBeforeCaches(t *testing.T) {
++	if GlyphPlacementNative != 0 || GlyphPlacementWindowsClearTypeQuarter != 1 {
++		t.Fatal("public placement identities changed; they are not the private raster modes")
++	}
++	for _, policy := range []struct {
++		name  string
++		value uint8
++	}{
++		{"unknown-2-first", 2},
++		{"unknown-255-first", 255},
++		{"quarter-on-other-backend-first", GlyphPlacementWindowsClearTypeQuarter},
++	} {
++		for _, aa := range []struct {
++			name     string
++			subpixel bool
++			mode     uint8
++		}{
++			{"non-subpixel", false, 0},
++			{"subpixel", true, 1},
++		} {
++			t.Run(policy.name+"/"+aa.name, func(t *testing.T) {
++				s, f, probe := newRasterModeProbe()
++				s.subpixel = aa.subpixel
++				first := RasterGlyph(s, f, 7, 2, .625, 0, true, policy.value)
++				if !first.OK {
++					t.Fatal("fallback did not rasterize the probe bitmap")
++				}
++				if got := s.Glyph(f, 7, 2, .625, 0, true); got != first {
++					t.Fatalf("unsupported request did not reuse exact native image: got=%+v want=%+v", got, first)
++				}
++				if len(s.glyphs) != 1 || len(s.places) != 1 || len(probe.positionsAA) != 1 || len(probe.glyphAA) != 1 {
++					t.Fatalf("unsupported request made another identity: glyphs=%d places=%d positions=%v raster=%v", len(s.glyphs), len(s.places), probe.positionsAA, probe.glyphAA)
++				}
++				for key := range s.glyphs {
++					if key.mode != aa.mode {
++						t.Fatalf("unsupported public policy %d became glyph mode %d, want %d", policy.value, key.mode, aa.mode)
++					}
++				}
++				for key := range s.places {
++					if key.mode != aa.mode {
++						t.Fatalf("unsupported public policy %d became placement mode %d, want %d", policy.value, key.mode, aa.mode)
++					}
++				}
++				if probe.positionsAA[0] != aa.subpixel || probe.glyphAA[0] != aa.subpixel || probe.calledUnlocked {
++					t.Fatalf("fallback changed engine AA/locking: positions=%v glyphs=%v unlocked=%v", probe.positionsAA, probe.glyphAA, probe.calledUnlocked)
++				}
++			})
++		}
++	}
++}
++
++func TestRasterModeBitmapFlagsComeFromEngine(t *testing.T) {
++	for _, tc := range []struct {
++		name               string
++		opaque, color, rgb bool
++	}{
++		{"subpixel-request-grayscale-bitmap", true, false, false},
++		{"subpixel-request-color-bitmap", true, true, false},
++		{"non-subpixel-request-rgb-bitmap", false, false, true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			s, f, probe := newRasterModeProbe()
++			s.subpixel = true
++			probe.color, probe.rgb = tc.color, tc.rgb
++			g := s.Glyph(f, 7, 2, .625, 0, tc.opaque)
++			if !g.OK || g.Colored != tc.color || g.Subpixel != tc.rgb || g.Thin != !tc.color {
++				t.Fatalf("engine bitmap metadata was replaced by request mode: got=%+v color=%v subpixel=%v", g, tc.color, tc.rgb)
++			}
++			atlas, want := s.MaskAtlas, []byte{13}
++			if tc.color || tc.rgb {
++				atlas, want = s.ColorAtlas, []byte{13, 29, 43, 255}
++			}
++			at := (int(g.Y)*atlas.W + int(g.X)) * atlas.BPP
++			if at+len(want) > len(atlas.Pix) || !bytes.Equal(atlas.Pix[at:at+len(want)], want) {
++				t.Fatal("bitmap was not copied to the engine-selected atlas")
++			}
++			if len(probe.glyphAA) != 1 || probe.glyphAA[0] != tc.opaque || probe.calledUnlocked {
++				t.Fatalf("request AA/locking changed: glyphs=%v unlocked=%v", probe.glyphAA, probe.calledUnlocked)
++			}
++		})
++	}
++}
++
++// This calls the existing locked raster boundary directly. It checks the
++// normalized quarter key without making a fake backend eligible for quarter.
++func rasterModeProbeAt(s *System, f *Font, subpixel bool, policy uint8) GlyphImage {
++	s.mu.Lock()
++	defer s.mu.Unlock()
++	return s.glyphAt(f, 7, 2, 0, subpixel, 2, 4, 0, policy)
++}
++
++func TestRasterModeThreeGlyphIdentities(t *testing.T) {
++	requests := []struct {
++		subpixel bool
++		policy   uint8
++		mode     uint8
++	}{
++		{false, GlyphPlacementNative, 0},
++		{true, GlyphPlacementNative, 1},
++		{true, GlyphPlacementWindowsClearTypeQuarter, 2},
++	}
++	s, f, probe := newRasterModeProbe()
++	var images [3]GlyphImage
++	var entries [3]*atlasEntry
++	for i, request := range requests {
++		images[i] = rasterModeProbeAt(s, f, request.subpixel, request.policy)
++		if !images[i].OK || images[i].Colored || images[i].Subpixel {
++			t.Fatalf("mode %d changed the grayscale probe bitmap: %+v", request.mode, images[i])
++		}
++		entries[i] = s.glyphs[glyphKey{font: f, id: 7, scale: 512, subX: 2, mode: request.mode}]
++		if entries[i] == nil {
++			t.Fatalf("public policy %d and AA=%v did not normalize to glyph mode %d", request.policy, request.subpixel, request.mode)
++		}
++	}
++	if len(s.glyphs) != 3 || entries[0] == entries[1] || entries[0] == entries[2] || entries[1] == entries[2] {
++		t.Fatal("the three normalized raster identities alias")
++	}
++	for i := len(requests) - 1; i >= 0; i-- {
++		request := requests[i]
++		if got := rasterModeProbeAt(s, f, request.subpixel, request.policy); got != images[i] {
++			t.Fatalf("mode %d did not reuse its exact image: got=%+v want=%+v", request.mode, got, images[i])
++		}
++	}
++	if len(probe.glyphAA) != 3 || probe.glyphAA[0] || !probe.glyphAA[1] || !probe.glyphAA[2] || probe.calledUnlocked {
++		t.Fatalf("mode-to-engine AA/locking changed: glyphs=%v unlocked=%v", probe.glyphAA, probe.calledUnlocked)
++	}
++}
++
++func TestRasterModeFullAtlasDoesNotCacheFailedGlyph(t *testing.T) {
++	for _, request := range []struct {
++		name     string
++		subpixel bool
++		policy   uint8
++		mode     uint8
++	}{
++		{"native-non-subpixel", false, GlyphPlacementNative, 0},
++		{"native-subpixel", true, GlyphPlacementNative, 1},
++		{"quarter-subpixel", true, GlyphPlacementWindowsClearTypeQuarter, 2},
++	} {
++		t.Run(request.name, func(t *testing.T) {
++			s, f, probe := newRasterModeProbe()
++			s.MaskAtlas = scene.NewAtlas(1, 4, 4)
++			x, y, ok := s.MaskAtlas.Alloc(3, 3)
++			if !ok {
++				t.Fatal("could not fill the control atlas")
++			}
++			s.MaskAtlas.Put(x, y, 3, 3, bytes.Repeat([]byte{9}, 9), 3)
++			if g := rasterModeProbeAt(s, f, request.subpixel, request.policy); g.OK || !s.Full() || len(s.glyphs) != 0 {
++				t.Fatalf("failed mode %d was cached or not reported full: image=%+v full=%v glyphs=%d", request.mode, g, s.Full(), len(s.glyphs))
++			}
++			s.MakeRoom()
++			if s.Full() {
++				t.Fatal("MakeRoom did not clear the full indication")
++			}
++			g := rasterModeProbeAt(s, f, request.subpixel, request.policy)
++			if !g.OK || len(s.glyphs) != 1 || s.glyphs[glyphKey{font: f, id: 7, scale: 512, subX: 2, mode: request.mode}] == nil {
++				t.Fatalf("mode %d did not rasterize/cache after MakeRoom: %+v", request.mode, g)
++			}
++			if got := rasterModeProbeAt(s, f, request.subpixel, request.policy); got != g || len(probe.glyphAA) != 2 || probe.calledUnlocked {
++				t.Fatalf("post-MakeRoom cache/locking changed: got=%+v want=%+v raster=%v unlocked=%v", got, g, probe.glyphAA, probe.calledUnlocked)
++			}
++		})
++	}
++}
+diff --git a/third_party/mygo/internal/text/testdata/quarter-coverage.json b/third_party/mygo/internal/text/testdata/quarter-coverage.json
+new file mode 100644
+index 0000000..81a0959
+--- /dev/null
++++ b/third_party/mygo/internal/text/testdata/quarter-coverage.json
+@@ -0,0 +1,1150 @@
++{
++  "meaning": "Read-only external executed source-parameter COM coverage, not a generated GUI golden",
++  "source": "D:\\projects\\GCode\\output\\tabstrip-r17-tooltip-phase-com-run-attempt01\\executed-result.json",
++  "sourceSHA256": "9ba3389905b03c31927b94362b2d932ca9b192852a33f1d962ab11a38f997a27",
++  "fontFamily": "Microsoft YaHei UI",
++  "sizeDIP": 10.5,
++  "scale": 2,
++  "vectors": [
++    {
++      "name": "shaped-placement-00616-M0-source-cleartype",
++      "penBits": 1139277824,
++      "glyphID": 55,
++      "integerOrigin": 464,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "55aaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffaa554c97e3e3e3e3e3e3e3e3e3e3e3e3e3ecf6fffffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3974c00000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa55000000000000000000000000000000",
++      "rawSHA256": "e6cc176a926cfc8a06f3535e9ba0e5a6556857c93c0ac36ae0fd36d21ff39dc2"
++    },
++    {
++      "name": "shaped-placement-00621-M0-source-cleartype",
++      "penBits": 1139701711,
++      "glyphID": 68,
++      "integerOrigin": 477,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -11,
++        11,
++        0
++      ],
++      "rgbHex": "0000000000000014336996c3d8ecf6fffffffffffffaf1ddc39669331400000000000000001455aaebfffffffffffff6ece3e3e3e3ecf6ffffffffffffeb9b4605000000054a9ff0fffffffad08434090000000000000005195aaaebffffffffc5701b0000050e181c1c1c1c180e050000000000000000000000002f84d9ffffffffaa5500000000000000091e3c698baec3d8e3e3e3e3e3e3e3e3e3e7f1faffffffffaa55000000052f7bcbf6ffffffffffffffffffffffffffffffffffffffffffffffaa550000358adfffffffffebc0804827130900000000000000002b80d5ffffffffaa5500267bd0ffffffffd9842f0000000000000000000000001469beffffffffffaa55001b70c5fffffffff0af5e190500000000000009285ea5dcfaffffffffffffaa5500001455aaebfffffffffffff6ece3e3e7f1fafffffffadc9b9fbeffffffffaa550000000005235a96c3ddf1fafffffffff6ecd8c3965e28090055aaffffffffaa55",
++      "rawSHA256": "11d343d22b457c2e02efc19da8aab51000e73d6ba1e599b83702466179baefcc"
++    },
++    {
++      "name": "shaped-placement-00626-M0-source-cleartype",
++      "penBits": 1140093256,
++      "glyphID": 69,
++      "integerOrigin": 489,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        12,
++        0
++      ],
++      "rgbHex": "55aaffffffffd5802b00000000000000000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000000000000000055aaffffffffd5802b09285ea1cdecf6fffffffaf1e7cda169331400000000000055aaffffffffd9afaad0fafffaf1e7e3e3e7f1faffffffffffffebaa551400000055aafffffffffffffad084340900000000000005194f9bdcfafffffffab5600f0055aaffffffffffca7520000000000000000000000000053f94e4ffffffffc5701b55aaffffffffd5802b00000000000000000000000000000055aaffffffffffaa5555aaffffffffd5802b0000000000000000000000000000003489deffffffffaa5555aaffffffffd5802b00000000000000000000000000000055aaffffffffffaa5555aaffffffffffca7520000000000000000000000000054a9ff0ffffffffc5701b55aafffffffffffffad084340900000000000005194f9bdcfafffffffab5600f0055aaffffffffebebebfffffffff6ece3e3e7f1faffffffffffffebaa551400000055aaffffffffaa55143f75accdecf6fffffffffaf1ddc3965e2809000000000000",
++      "rawSHA256": "531e030e279056c9688f55e92fc4ccd398169790b52dd3289658d6fdc0fe9828"
++    },
++    {
++      "name": "shaped-placement-00631-M0-source-cleartype",
++      "penBits": 1140504756,
++      "glyphID": 19,
++      "integerOrigin": 501,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "0000000000000005194375accdecf6fffffffffaf1e7cda169331400000000000000000000000000052f7bcbf6fffffffffff6ece3e3e7f1faffffffffffebaa55140000000000000000002b80d5ffffffffebaa5a19050000000000092869b5ebfffffffac570200000000000054a9ff0fffffff0aa550f00000000000000000000001464b9faffffffe48f3a0000000050a5fafffffffaaa5505000000000000000000000000000f64b9ffffffffe48f3a00002b80d5ffffffffc5701b0000000000000000000000000000002b80d5ffffffffc5701b00469bf0ffffffffaa55000000000000000000000000000000000f64b9ffffffffd5802b0055aaffffffffffaa55000000000000000000000000000000000055aaffffffffd5802b00469bf0ffffffffaa55000000000000000000000000000000000f64b9ffffffffd5802b002b80d5ffffffffd07b260000000000000000000000000000002b80d5ffffffffc5701b0000469bf0fffffffaaa5505000000000000000000000000000f64b9ffffffffe48f3a000000054a9ff0fffffff0aa550f00000000000000000000001464b9faffffffe48f3a0000000000002b80d5ffffffffebaa5a19050000000000092869b5ebfffffffac570200000000000000000052f7bcbf6fffffffffff6ece3e3e7f1faffffffffffebaa55140000000000000000000000000005194375accdecf6fffffffffaf1e7cda1693314000000000000000000",
++      "rawSHA256": "0abd0ae49f58adfe07ada6651f53c7be68969c2625f8a10e77b7a2d814f43c54"
++    },
++    {
++      "name": "shaped-placement-00636-M0-source-cleartype",
++      "penBits": 1140884160,
++      "glyphID": 21,
++      "integerOrigin": 514,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        12,
++        0
++      ],
++      "rgbHex": "00000000000000000005234e80accdecf6fffffffffff6ecd8c3965e2809000000000000000000000000143f8fd0fafffffffffff6ece3e3e3ecf6ffffffffffffebaa5514000000000000000f50a5ebfffffffad08f431905000000000000093484d0fafffffffab5600f000000001b70c5ffffffffdf8f3a050000000000000000000000003a8fe4ffffffffaa550000000055aafffffffff09b4600000000000000000000000000002b80d5ffffffffd07b2600001b5188a3a3a3a388511b000000000000000000000000001469befffffffffaa5500000000000000000000000000000000000000000000000001455aaebfffffffff09f4a050000000000000000000000000000000000000000092869b5ebffffffffffebaa5514000000000000000000000000000000000000093475bce6fafffffffffae6b064230500000000000000000000000000000000143f80c0ebfffffffffffae6bc75340900000000000000000000000000000000052364b5ebfffffffffffadca55e28090000000000000000000000000000000000001455aaebfffffffffae6a55a19050000000000000000000000000000000000000000054a9ff0fffffffff0af5a1400000000000000000000000000000000000000000000000555aafafffffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3bd712600002b80d5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5802b",
++      "rawSHA256": "2e702944248e468743695e825c478264fd27d3c5e55bb85775e0632b7104d116"
++    },
++    {
++      "name": "shaped-placement-00641-M0-source-cleartype",
++      "penBits": 1141090599,
++      "glyphID": 17,
++      "integerOrigin": 526,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -3,
++        6,
++        0
++      ],
++      "rgbHex": "0000002b76c6f1fafff6cb7b2f050000002b80d5fffffffffffff6a14c000000052f7bc6f1fafff6cb7b2f0500",
++      "rawSHA256": "f5e2229769cc7494f512a0fef1c2991c0d8f70bc4e7b0e5623a906d23ac5f69e"
++    },
++    {
++      "name": "shaped-placement-00646-M0-source-cleartype",
++      "penBits": 1141184184,
++      "glyphID": 87,
++      "integerOrigin": 532,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        8,
++        0
++      ],
++      "rgbHex": "0000000000000000000000091e2d230f0000000000000000000000000000003682d2f1faffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000055aaffffffffffffffffffffffffffffffffffffaa5500004c97e3e3e3e3ecf6fffffffffaf1e7e3e3e3e3e3974c000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffe48f3a0000000000000000000000000000002075cafffffffffff6ece3e3e3bd7126000000000000000000052f70b7e1f6ffffffffffffd5802b00",
++      "rawSHA256": "c6e9ea0a54bb59a148d7c92be94fc0afe4e1771f82fb2e5c66f44d88a6ca4d80"
++    },
++    {
++      "name": "shaped-placement-00651-M0-source-cleartype",
++      "penBits": 1141308047,
++      "glyphID": 91,
++      "integerOrigin": 540,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -11,
++        12,
++        0
++      ],
++      "rgbHex": "00000000145aaff0ffffffffd5842f050000000000000000145aaff0fffffffad0802f050000000000000000001455aaebffffffffd5842f0500000000145aaff0fffffffad0802f050000000000000000000000000005469bebffffffffd5842f05145aaff0fffffffac57020000000000000000000000000000000000000052f84d5ffffffffd5c5c5f0ffffffebaa551400000000000000000000000000000000000000000000052f80d0faffffffffffffebaa551400000000000000000000000000000000000000000000000000052f84d5fffffffffff0af5a1400000000000000000000000000000000000000000000000005469bebfffffffafafafffffffab9641400000000000000000000000000000000000000001455aaebfffffffad0803f55a5ebfffffffad0802f050000000000000000000000000000001464b9fafffffffad07b2b00000005469bebfffffffad0802f0500000000000000000000052f80d0fafffffffac570200000000000000005469bebffffffffeb9b4605000000000000052f80d0fafffffffab96414000000000000000000000005469bebffffffffebaa55140000",
++      "rawSHA256": "3d1d71d06b428d7317f65cb2d5ae3db99c48d7d5c7589e84c38725590f598a9b"
++    },
++    {
++      "name": "shaped-placement-00656-M0-source-cleartype",
++      "penBits": 1141490401,
++      "glyphID": 87,
++      "integerOrigin": 551,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        8,
++        0
++      ],
++      "rgbHex": "00000000000000000000091e2d230f0000000000000000000000000000003682d2f1faffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000055aaffffffffffffffffffffffffffffffffffffaa5500004c97e3e3e3e3ecf6fffffffffaf1e7e3e3e3e3e3974c000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000055aaffffffffe48f3a0000000000000000000000000000002075cafffffffffff6ece3e3e3bd7126000000000000000000052f70b7e1f6ffffffffffffd5802b0000",
++      "rawSHA256": "70deec89379600cc92b2deffb78a55f0f875a2cf67cf547758658bd2704eb083"
++    },
++    {
++      "name": "shaped-placement-00661-M0-source-cleartype",
++      "penBits": 1139277824,
++      "glyphID": 36,
++      "integerOrigin": 464,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "shaped-placement-00666-M0-source-cleartype",
++      "penBits": 1139741622,
++      "glyphID": 57,
++      "integerOrigin": 478,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0f60b5faffffffffb9640f0000000000000000000000000000000000000000000555aafaffffffffca75200000000f60b5faffffffffc5701b000000000000000000000000000000000000000f60b5faffffffffc5701b00000000000555aafaffffffffc5701b00000000000000000000000000000000000f60b5faffffffffb9640f00000000000000054a9ff0ffffffffc5701b0000000000000000000000000000000f60b5fafffffffab5600f000000000000000000054a9ff0ffffffffca7520000000000000000000000000000f60b5fafffffffab5600f000000000000000000000000469bf0ffffffffca752000000000000000000000000f60b5fafffffff09f4a0500000000000000000000000000003a8fe4ffffffffca75200000000000000000000f64b9fffffffff09f4a0500000000000000000000000000000000358adfffffffffca7520000000000000000f64b9fffffffff09b46000000000000000000000000000000000000002b80d5ffffffffd5802b00000000000f64b9ffffffffe48f3a0000000000000000000000000000000000000000002075caffffffffd5802b0000000f64b9ffffffffdf8a3500000000000000000000000000000000000000000000002075caffffffffd5802b001b70c5ffffffffdf8a35000000000000000000000000000000000000000000000000001b70c5ffffffffd5804670c5ffffffffd5802b0000000000000000000000000000000000000000000000000000000f64b9ffffffffebebebffffffffca752000000000000000000000000000000000000000000000000000000000000f60b5faffffffffffffffffca7520000000000000000000000000000000000000000000000000000000000000000f60b5faffffffffffffc5701b0000000000000000000000000000000000",
++      "rawSHA256": "c7eb211cf3d670a4d570d0d4a120e10fcd49b3cbefcd7a62dc2b2f3053570aa7"
++    },
++    {
++      "name": "shaped-placement-00671-M0-source-cleartype",
++      "penBits": 1140191658,
++      "glyphID": 3,
++      "integerOrigin": 492,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        0,
++        0,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00676-M0-source-cleartype",
++      "penBits": 1140420805,
++      "glyphID": 55,
++      "integerOrigin": 499,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "55aaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffaa554c97e3e3e3e3e3e3e3e3e3e3e3e3e3ecf6fffffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3974c00000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000000000000000000000000000000000055aaffffffffffaa55000000000000000000000000000000",
++      "rawSHA256": "e6cc176a926cfc8a06f3535e9ba0e5a6556857c93c0ac36ae0fd36d21ff39dc2"
++    },
++    {
++      "name": "shaped-placement-00681-M0-source-cleartype",
++      "penBits": 1140844692,
++      "glyphID": 82,
++      "integerOrigin": 511,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -11,
++        13,
++        0
++      ],
++      "rgbHex": "000000000000000014336996c3d8ecf6fffffffffff6eccdac805328090000000000000000000000052f70c0ebfffffffffffff6ece3e3e7f1fafffffffffffae6a55514000000000000053a8fdfffffffffebc075340900000000000005194f9bdcfafffffffab964140000000555aafafffffffab96414000000000000000000000000002b80d5ffffffffdf8a350000469bf0ffffffffb9640f0000000000000000000000000000002f84d9ffffffffc5701b0055aaffffffffffaa5500000000000000000000000000000000095eb3ffffffffd5802b00469bf0ffffffffaf5a050000000000000000000000000000002f84d9ffffffffc5701b000f60b5fafffffffab96414000000000000000000000000002b80d5ffffffffdf8a35000000053a8fdfffffffffebc075340900000000000005194f9bdcfafffffffac57020000000000000052f70c0ebfffffffffffff6ece3e3e7f1fafffffffffffae6a5551400000000000000000000000009285e96c3d8ecf6fffffffffff6eccdac804e230500000000000000",
++      "rawSHA256": "173411712b500f8f1cb3029e1560039a5f5946e0774f6c847fbeb5df0ebb9d55"
++    },
++    {
++      "name": "shaped-placement-00686-M0-source-cleartype",
++      "penBits": 1141053096,
++      "glyphID": 3,
++      "integerOrigin": 524,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        0,
++        0,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00691-M0-source-cleartype",
++      "penBits": 1141167669,
++      "glyphID": 73,
++      "integerOrigin": 531,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        9,
++        0
++      ],
++      "rgbHex": "00000000000000000005194f96cdecf6ffffffffffffffd5802b0000000000000000002075cafffffffffff6ece3e3e3e3e3bd712600000000000000000055aaffffffffd9842f00000000000000000000000000000000000055aaffffffffd5802b000000000000000000002b80d5ffffffffffffffffffffffffffffffffffffffffaa5500002671bde3e3e3e3e3ecf6fffffffffaf1e7e3e3e3e3e3e3974c0000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000055aaffffffffd5802b00000000000000000000",
++      "rawSHA256": "b13f3e01a65d077c00b1f3db64f29ee14d84f195c2bca995bfc0b78dd25b7ab6"
++    },
++    {
++      "name": "shaped-placement-00696-M0-source-cleartype",
++      "penBits": 1141297381,
++      "glyphID": 76,
++      "integerOrigin": 539,
++      "phaseIndex": 1,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "001455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500",
++      "rawSHA256": "59d662d6076a425e696fce27420667fe389d9115ee3e7bf6ab8ad451b02e2606"
++    },
++    {
++      "name": "shaped-placement-00701-M0-source-cleartype",
++      "penBits": 1141390623,
++      "glyphID": 3,
++      "integerOrigin": 545,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        0,
++        0,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00706-M0-source-cleartype",
++      "penBits": 1141505196,
++      "glyphID": 48,
++      "integerOrigin": 552,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        18,
++        0
++      ],
++      "rgbHex": "2b80d5fffffffffffab5600f000000000000000000000000000000000000000000000000000000358adfffffffffffffaa55002b80d5ffffffffffffffca7520000000000000000000000000000000000000000000000000054a9ff0ffffffffffffffaa55002b80d5fffffffffffffffff09f4a050000000000000000000000000000000000000000000f60b5faffffffffffffffffaa55002b80d5fffffffffffffffffffab5600f00000000000000000000000000000000000000358adfffffffffffffffffffffaa55002b80d5fffffffff0f0f0ffffffffca752000000000000000000000000000000000054a9ff0fffffff0d5d5e4ffffffffaa55002b80d5ffffffffd58f8ab5faffffffdf8a3500000000000000000000000000000f60b5faffffffdf8a6080d5ffffffffaa55002b80d5ffffffffd5802f4a9ff0fffffff09f4a0500000000000000000000002075caffffffffca75202b80d5ffffffffaa55002b80d5ffffffffd5802b002075caffffffffca7520000000000000000000358adffffffffab5600f002b80d5ffffffffaa55002b80d5ffffffffd5802b00000f60b5faffffffdf8a350000000000000f55aaf0ffffffdf8f3a0500002b80d5ffffffffaa55002b80d5ffffffffd5802b000000054a9ff0fffffff09f4a050000002075caffffffffca7520000000002b80d5ffffffffaa55002b80d5ffffffffd5802b0000000000358adffffffffab5600f00358adffffffffab5600f00000000002b80d5ffffffffaa55002b80d5ffffffffd5802b0000000000002070c5faffffffd584759ff0fffffff09f4a050000000000002b80d5ffffffffaa55002b80d5ffffffffd5802b00000000000000054a9ff0ffffffffffffffffffdf8a3500000000000000002b80d5ffffffffaa55002b80d5ffffffffd5802b000000000000000000358adffffffffffffffab5600f0000000000000000002b80d5ffffffffaa55002b80d5ffffffffd5802b000000000000000000002075cafffffffff09f4a05000000000000000000002b80d5ffffffffaa5500",
++      "rawSHA256": "734292e97a61067ee4fc9eb8af8a2b1f0da32ab0bff19b06f47e272f4194e529"
++    },
++    {
++      "name": "shaped-placement-00711-M0-source-cleartype",
++      "penBits": 1141814166,
++      "glyphID": 58,
++      "integerOrigin": 570,
++      "phaseIndex": 3,
++      "bounds": [
++        0,
++        -15,
++        21,
++        0
++      ],
++      "rgbHex": "00003a8fe4fffffffffaa5500000000000000000000000000000003a8fe4ffffffffffc5701b00000000000000000000000000000f64b9ffffffffffd5802b000000469bf0ffffffffe48f3a00000000000000000000000000267bd0ffffffffffffffb9640f0000000000000000000000000555aafaffffffffe48f3a000000000555aafaffffffffd07b2600000000000000000000000f64b9fffffffffffffffffaa5500000000000000000000000003a8fe4ffffffffe48f3a0000000000000f64b9ffffffffffb9640f0000000000000000000555aafaffffffebebebffffffe48f3a000000000000000000002b80d5fffffffff09b4600000000000000001b70c5fffffffffaa550000000000000000000469bf0ffffffd580709bf0ffffffd5802b00000000000000000f64b9fffffffffaaa55050000000000000000002b80d5ffffffffe48f3a000000000000002b80d5ffffffe48f3a0555aafaffffffc5701b0000000000000555aafaffffffffb9640f0000000000000000000000358adfffffffffd07b2600000000001b70c5fffffff09b4600000f64b9ffffffffaf5a0500000000003a8fe4ffffffffc5701b000000000000000000000000003a8fe4ffffffffb9640f0000000f64b9ffffffffaf5a050000001b70c5fffffff09b46000000002b80d5ffffffffca7520000000000000000000000000000000469bf0fffffffaa55000000050a5faffffffc5701b00000000002b80d5ffffffe48f3a00000f64b9ffffffffd5802b000000000000000000000000000000000555aafaffffffe48f3a003a8fe4ffffffd5802b00000000000000469bf0ffffffd07b260050a5faffffffe48f3a0000000000000000000000000000000000000f64b9ffffffffd07b5080d5ffffffe48f3a00000000000000000555aafaffffffb964498fe4fffffff09b4600000000000000000000000000000000000000001b70c5ffffffffd5d5d5fffffff09b46000000000000000000000f64b9fffffffad0d0d5fffffffaaa55050000000000000000000000000000000000000000002b80d5ffffffffffffffffffaf5a0500000000000000000000001b70c5ffffffffffffffffffb9640f00000000000000000000000000000000000000000000002b80d5ffffffffffffffc5701b000000000000000000000000002b80d5ffffffffffffffb9640f000000000000000000000000000000000000000000000000003a8fe4ffffffffffd5802b000000000000000000000000000000469bf0ffffffffffc5701b000000000000000000000000",
++      "rawSHA256": "072ed8c02ad6b049362506b84f1b623ccfc33fa179c4ccf8736fc4f4702b6f02"
++    },
++    {
++      "name": "shaped-placement-00716-M0-source-cleartype",
++      "penBits": 1142140338,
++      "glyphID": 3,
++      "integerOrigin": 590,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        0,
++        1,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00721-M0-source-cleartype",
++      "penBits": 1142254912,
++      "glyphID": 19,
++      "integerOrigin": 597,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "000000000000000005194375accdecf6fffffffffaf1e7cda169331400000000000000000000000000052f7bcbf6fffffffffff6ece3e3e7f1faffffffffffebaa55140000000000000000002b80d5ffffffffebaa5a19050000000000092869b5ebfffffffac570200000000000054a9ff0fffffff0aa550f00000000000000000000001464b9faffffffe48f3a0000000050a5fafffffffaaa5505000000000000000000000000000f64b9ffffffffe48f3a00002b80d5ffffffffc5701b0000000000000000000000000000002b80d5ffffffffc5701b00469bf0ffffffffaa55000000000000000000000000000000000f64b9ffffffffd5802b0055aaffffffffffaa55000000000000000000000000000000000055aaffffffffd5802b00469bf0ffffffffaa55000000000000000000000000000000000f64b9ffffffffd5802b002b80d5ffffffffd07b260000000000000000000000000000002b80d5ffffffffc5701b0000469bf0fffffffaaa5505000000000000000000000000000f64b9ffffffffe48f3a000000054a9ff0fffffff0aa550f00000000000000000000001464b9faffffffe48f3a0000000000002b80d5ffffffffebaa5a19050000000000092869b5ebfffffffac570200000000000000000052f7bcbf6fffffffffff6ece3e3e7f1faffffffffffebaa55140000000000000000000000000005194375accdecf6fffffffffaf1e7cda16933140000000000000000",
++      "rawSHA256": "bd3b3459e094e8ac5e0b2d7855a402876ecb511d1f113c276c0c702c07b5138b"
++    },
++    {
++      "name": "shaped-placement-00726-M0-source-cleartype",
++      "penBits": 1142461350,
++      "glyphID": 20,
++      "integerOrigin": 610,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        8,
++        0
++      ],
++      "rgbHex": "000000000000000000000000144a9bdcfaffffffaa550000000000000000000519438acbf6ffffffffffffffaa55000000000f467cb8d7f6ffffffffffffffffffffffffaa55000000002b80d5fffffffff6d7964f6eafffffffffffaa550000000026679d96693c1e0900000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa5500000000000000000000000000000055aaffffffffffaa550000",
++      "rawSHA256": "c7410443bf29d1192dfbda941785fe7aef7429c346efcbb005ccf1a46610af88"
++    },
++    {
++      "name": "shaped-placement-00731-M0-source-cleartype",
++      "penBits": 1142601728,
++      "glyphID": 21,
++      "integerOrigin": 618,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "00000000000000000014336996c3ddf1fafffffffffaf1e7cdac754319050000000000000000000000052364b5ebfffffffffffaf1e7e3e3e7f1fafffffffffffad0802f05000000000000002b7bd0faffffffebb569280900000000000005195aaaebffffffffdf8a350000000000469bf0fffffffab964140000000000000000000000000f64b9ffffffffd5802b0000002b80d5ffffffffc5701b000000000000000000000000000055aafffffffffaa550000000366da3a3a3a3a36d3600000000000000000000000000053f94e4ffffffffd07b260000000000000000000000000000000000000000000000052f80d0faffffffffca752000000000000000000000000000000000000000000519438fd0fafffffffffad0802f05000000000000000000000000000000000005194f96d7f6fffffffffff6cb8a3f140000000000000000000000000000000005235aa5dcfafffffffffff6d7964f190500000000000000000000000000000000143f8fd0faffffffffffebc0804319050000000000000000000000000000000000052f80d0fafffffffff6cb8034090000000000000000000000000000000000000000002075caffffffffffd5842f0500000000000000000000000000000000000000000000002b80d5fffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3974c00000055aaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffaa5500",
++      "rawSHA256": "0756bf68776415842d50d84e898c205fd6eab2cf874f9bb127235f895ecc1d4b"
++    },
++    {
++      "name": "shaped-placement-00736-M0-source-cleartype",
++      "penBits": 1142808166,
++      "glyphID": 22,
++      "integerOrigin": 631,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "0000000000000009285e96c3d8ecf6fffffffffffff6ecd8c3965e280900000000000000000000001455a5e6fafffffffffff6ece3e3e3e3ecf6ffffffffffffebaa55140000000000002070c5fafffffffad08434090000000000000005194394d5fffffffffaaa5505000000267bd0ffffffffca7520000000000000000000000000000f64b9ffffffffe48f3a0000001f3d5c5c5c5c5c3d1f00000000000000000000000000000f64b9ffffffffd5802b000000000000000000000000000000000000000000000005194f9fe0ffffffffd5802b000000000000000000000000000000002671bde3e3e3e7f1fafffffffae6bc803f140000000000000000000000000000000000002b80d5fffffffffffffffffff6e1b78043190500000000000000000000000000000000000000000000000009133269b0e6faffffffebaa55140000000000000000000000000000000000000000000000000000053f94e4ffffffffc5701b00307cc8e3e3e3e3a65b0f0000000000000000000000000000000055aaffffffffd5802b000555aafafffffffab5600f00000000000000000000000000053f94e4ffffffffc5701b000005469bebffffffffebc075340900000000000000092869b5ebfffffffffab5600f00000000000f3a8ad0fafffffffffffff6ece3e3e3ecf6fffffffffffffae6a555140000000000000000000005194375accde7f1fafffffffffffaf1e7cdac7543190500000000000000",
++      "rawSHA256": "fba6869dd7c793783b0a04ecfa1e62a76b09c372512f10437cec28c2b0c2d8e0"
++    },
++    {
++      "name": "shaped-placement-00741-M0-source-cleartype",
++      "penBits": 1143014605,
++      "glyphID": 23,
++      "integerOrigin": 644,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000000053a8fdfffffffffd5802b00000000000000000000000000000000000000000000000000001455aaebffffffffffffd5802b0000000000000000000000000000000000000000000000002b7bd0faffffffffffffffffd5802b000000000000000000000000000000000000000000052f80d0faffffeba5a5b9ffffffffd5802b000000000000000000000000000000000000001455aaebfffffad0802f0555aaffffffffd5802b0000000000000000000000000000000000145aaff0fffff0af5a1400000055aaffffffffd5802b0000000000000000000000000000052f80d0faffffebaa5514000000000055aaffffffffd5802b00000000000000000000000005469bebfffffad0802f050000000000000055aaffffffffd5802b000000000000000000001455aaebfffffad07b2b0000000000000000000055aaffffffffd5802b00000000000000001b6bc0faffffebaa551400000000000000000000000055aaffffffffd5802b00000000000000002b80d5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5802b002671bde3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3ecf6fffffffffaf1e7e3e3e3e3bd7126000000000000000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000000000000000000000000000055aaffffffffd5802b00000000000000000000000000000000000000000000000000000000000055aaffffffffd5802b0000000000000000",
++      "rawSHA256": "29fa36f7ef79d90125bb4400fe7ca5ed4a0601792e9b72f79eb8135252ecd3f8"
++    },
++    {
++      "name": "shaped-placement-00746-M0-source-cleartype",
++      "penBits": 1143221044,
++      "glyphID": 24,
++      "integerOrigin": 656,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "000000002f84d9ffffffffffffffffffffffffffffffffffffffffffffffffd5802b00000000000055aafffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3bd712600000000000f64b9fffffffaa5500000000000000000000000000000000000000000000000000000002b80d5ffffffd5802b00000000000000000000000000000000000000000000000000000050a5faffffffb9640f0000000000000000000000000000000000000000000000000000055aafffffffffaa5a234e80accdecf6fffffffffaf1ddc3965e280900000000000000002b80d5fffffff4f0f0fafffffaf1e7e3e3e3ecf6ffffffffffffffebaa551400000000003a8fe4fffffffffad08f43190500000000000000092869b5ebfffffffff0aa550f0000001f3d5c5c5c5c51331400000000000000000000000000000f60b5faffffffffaf5a050000000000000000000000000000000000000000000000000000267bd0ffffffffd5802b0009131c1c1c1c1c130900000000000000000000000000000000267bd0ffffffffd5802b00267bd0ffffffffd5802b00000000000000000000000000001464b9fafffffffaaa550500002070c5fafffffffad084390e050000000000000519438fd0faffffffffd5842f0500000000001455a5e6fafffffffffff6ece3e3e3e7f1fafffffffffffae6b06423050000000000000000000005194375accde7f1fafffffffffaf1e7cdac8053280900000000000000",
++      "rawSHA256": "475c8bf0e229a90ee37b9dda89ffe0424fce16285e4705631c5e314a25d100da"
++    },
++    {
++      "name": "shaped-placement-00751-M0-source-cleartype",
++      "penBits": 1143427482,
++      "glyphID": 25,
++      "integerOrigin": 669,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "000000000000000000000009285ea1cde7f1fafffffffffaf1e7cdac754319050000000000000000000000000000001455aaebfffffffffff6ece3e3e3ecf6fffffffffffffad0802f05000000000000000000002b7bd0faffffffebaa5a1905000000000000093484d0fafffffffac06b1b00000000000000054a9ff0ffffffd5842f050000000000000000000000003581cce3e3e3e3a2560b00000000000555aafaffffffb9640f00000000000000000000000000000000000000000000000000000000003a8fe4ffffffd9842f05235a96c3ddf1fafffffffff6ecd8b78a4e23050000000000000000000055aaffffffffd9afaad0fafffffff6ece3e3e3ecf6fffffffffffffad0802f050000000000001b70c5ffffffffffffffebb56928090000000000000519438fd0faffffffffdf8a3500000000000f64b9fffffffffffab5600f000000000000000000000000002075caffffffffe48f3a000000000055aaffffffffffb9640f0000000000000000000000000000002f84d9ffffffffaa550000000000267bd0ffffffffb9640f0000000000000000000000000000003a8fe4ffffffffaa55000000000000358adffffffff0aa550f000000000000000000000000053a8fdfffffffffd5802b000000000000002070c5faffffffebb569280900000000000005194f9bdcfafffffffab96414000000000000000000001455aaebfffffffffffff6ece3e3e7f1fafffffffffffadc9b4a1400000000000000000000000000000009285e96c3d8ecf6fffffffffff6eccdac754319050000000000000000",
++      "rawSHA256": "01642c339db422c647179eb81ca9ce6ff92d9aa4a1c6ff64b32179cda66aad45"
++    },
++    {
++      "name": "shaped-placement-00756-M0-source-cleartype",
++      "penBits": 1143633920,
++      "glyphID": 26,
++      "integerOrigin": 681,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        12,
++        0
++      ],
++      "rgbHex": "2b80d5ffffffffffffffffffffffffffffffffffffffffffffffffffffffd5802b2671bde3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e7f1faffffffffd5802b000000000000000000000000000000000000000000000f60b5faffffffdf8a35000000000000000000000000000000000000000000002075caffffffffca752000000000000000000000000000000000000000000000358adfffffffffca7520000000000000000000000000000000000000000000054a9ff0fffffffab5600f0000000000000000000000000000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000000000002075caffffffffdf8a3500000000000000000000000000000000000000000000358adfffffffffd5802b00000000000000000000000000000000000000000000358adfffffffffca7520000000000000000000000000000000000000000000054a9ff0fffffffab5600f0000000000000000000000000000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000000000002075caffffffffe48f3a00000000000000000000000000000000000000000000358adfffffffffdf8a35000000000000000000000000000000000000000000054a9ff0ffffffffca7520000000000000000000000000000000",
++      "rawSHA256": "8830aa86286c89bbcb1c5d75002c5715e674531dcc27859145ac21f6a2859ec4"
++    },
++    {
++      "name": "shaped-placement-00761-M0-source-cleartype",
++      "penBits": 1143823500,
++      "glyphID": 27,
++      "integerOrigin": 693,
++      "phaseIndex": 2,
++      "bounds": [
++        0,
++        -15,
++        13,
++        0
++      ],
++      "rgbHex": "00000000000000000009285380accde7f1fafffffffffffaf1e7cdac804e2305000000000000000000000000001455a5e6fafffffffffffaf1e7e3e3e3e7f1fafffffffffffae6a5551400000000000000000f60b5fafffffffad08f43190500000000000000091e549bdcfaffffffeb9b4605000000000000469bf0ffffffe48f3a0000000000000000000000000000055aafffffffffd5802b0000000000002f84d9fffffff09f4a05000000000000000000000000000f64b9ffffffffc5701b000000000000002b7bd0fafffffae6b06932130900000000050e223c74b5ebfffffff6b560140000000000000000000009285e9fd6f4fffffffffffffffffffffffffffffff4ca8943190500000000000000000000052364b0e6fafffffffffffaf1e7e3e3e3e7f1fafffffffffffadc9b4a1400000000000000053a8fdfffffffffebc075390e05000000000000000519438fd0fafffffffad07b2b000000000050a5fafffffffab5600f0000000000000000000000000000001469befffffffff09b460000002b80d5ffffffffd5802b00000000000000000000000000000000002b80d5ffffffffaa55000000055aaffffffffff09f4a050000000000000000000000000000000f64b9fffffffff09b46000000000f55aaf0ffffffffebb5692d0e0500000000000000050e3975c0ebffffffffeb9b46050000000000001455a5e6fafffffffffffffaf1e7e3e3e3e7f1fafffffffffffffad0802f05000000000000000000000005194375a2c3d8ecf6fffffffffffffaf1e7d8c39669371905000000000000",
++      "rawSHA256": "042f0f9641777591b7ae88e654195f247aa3e534eddaf0848ba91a016a80d3db"
++    },
++    {
++      "name": "shaped-placement-00766-M0-source-cleartype",
++      "penBits": 1144029938,
++      "glyphID": 28,
++      "integerOrigin": 706,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -15,
++        12,
++        0
++      ],
++      "rgbHex": "000000000000000009285e96c3d8ecf6fffffffffff6ecd8c3965e28090000000000000000000000001455a5e6fafffffffffffff6ece3e7f1fafffffffffffae6a55514000000000000002070c5fafffffffad08f43190500000000000519438fd0fafffffff0aa550f000000003a8fe4ffffffffca7520000000000000000000000000001464b9faffffffca752000000f64b9ffffffffd9842f0000000000000000000000000000002b80d5ffffffffc5701b000f64b9ffffffffd9842f0000000000000000000000000000002b80d5fffffffffaa55000003a8fe4ffffffffd5842f050000000000000000000000002075caffffffffffffaa550000002b80d5ffffffffffebb569321309000000050e2d5ea5dcfaffffffffffffffaa5500000000052f7bcbf6fffffffffffffffffffffffffffffffae6a58094d5ffffffffaa55000000000000000009285e8bb8cde3e3e3e3e3e3cdac8053280900469bf0ffffffd5802b00000000000000000000000000000000000000000000000000002b80d5fffffff09b460000000f64b9ffffffffdf8a3500000000000000000000000005469bebfffffff09f4a05000000002070c5fafffffffad084390e050000000000093475c0ebfffffffac5702000000000000000052f80d0fafffffffffffffaf1e7e3ecf6fffffffffffae6a5551400000000000000000000000005194375accde7f1fafffffffffaf1ddc3965e28090000000000000000",
++      "rawSHA256": "d757653524f016fba14558191776bf74248373daabaca84f2e39d344bc87b1f7"
++    },
++    {
++      "name": "shaped-placement-00771-M0-source-cleartype",
++      "penBits": 1139277824,
++      "glyphID": 36,
++      "integerOrigin": 464,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "shaped-placement-00776-M0-source-cleartype",
++      "penBits": 1139741622,
++      "glyphID": 17,
++      "integerOrigin": 478,
++      "phaseIndex": 1,
++      "bounds": [
++        1,
++        -3,
++        6,
++        0
++      ],
++      "rgbHex": "000f509ce1f6fffae6a555140000000055aaffffffffffffffcb76210000001455a1e1f6fffae6a55514000000",
++      "rawSHA256": "f250fdeab1060a2d79fe294677d103ceeabf0b39a689f1cc6e5c2eb409599762"
++    },
++    {
++      "name": "shaped-placement-00781-M0-source-cleartype",
++      "penBits": 1139928793,
++      "glyphID": 76,
++      "integerOrigin": 483,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        6,
++        0
++      ],
++      "rgbHex": "0000052f7bcbf6fffff6cb7b2f050000002b80d5ffffffffffffd5802b000000002b6bbce6fafae6bc6b2b00000000000000000000000000000000000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b0000",
++      "rawSHA256": "ad0c26f51e50a3cf4b4c6301421b9e5d5529e845d4f91435141126ffac888735"
++    },
++    {
++      "name": "shaped-placement-00786-M0-source-cleartype",
++      "penBits": 1140115276,
++      "glyphID": 3,
++      "integerOrigin": 489,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        0,
++        1,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00791-M0-source-cleartype",
++      "penBits": 1140344422,
++      "glyphID": 58,
++      "integerOrigin": 496,
++      "phaseIndex": 2,
++      "bounds": [
++        0,
++        -15,
++        21,
++        0
++      ],
++      "rgbHex": "003a8fe4fffffffffaa5500000000000000000000000000000003a8fe4ffffffffffc5701b00000000000000000000000000000f64b9ffffffffffd5802b000000469bf0ffffffffe48f3a00000000000000000000000000267bd0ffffffffffffffb9640f0000000000000000000000000555aafaffffffffe48f3a000000000555aafaffffffffd07b2600000000000000000000000f64b9fffffffffffffffffaa5500000000000000000000000003a8fe4ffffffffe48f3a0000000000000f64b9ffffffffffb9640f0000000000000000000555aafaffffffebebebffffffe48f3a000000000000000000002b80d5fffffffff09b4600000000000000001b70c5fffffffffaa550000000000000000000469bf0ffffffd580709bf0ffffffd5802b00000000000000000f64b9fffffffffaaa55050000000000000000002b80d5ffffffffe48f3a000000000000002b80d5ffffffe48f3a0555aafaffffffc5701b0000000000000555aafaffffffffb9640f0000000000000000000000358adfffffffffd07b2600000000001b70c5fffffff09b4600000f64b9ffffffffaf5a0500000000003a8fe4ffffffffc5701b000000000000000000000000003a8fe4ffffffffb9640f0000000f64b9ffffffffaf5a050000001b70c5fffffff09b46000000002b80d5ffffffffca7520000000000000000000000000000000469bf0fffffffaa55000000050a5faffffffc5701b00000000002b80d5ffffffe48f3a00000f64b9ffffffffd5802b000000000000000000000000000000000555aafaffffffe48f3a003a8fe4ffffffd5802b00000000000000469bf0ffffffd07b260050a5faffffffe48f3a0000000000000000000000000000000000000f64b9ffffffffd07b5080d5ffffffe48f3a00000000000000000555aafaffffffb964498fe4fffffff09b4600000000000000000000000000000000000000001b70c5ffffffffd5d5d5fffffff09b46000000000000000000000f64b9fffffffad0d0d5fffffffaaa55050000000000000000000000000000000000000000002b80d5ffffffffffffffffffaf5a0500000000000000000000001b70c5ffffffffffffffffffb9640f00000000000000000000000000000000000000000000002b80d5ffffffffffffffc5701b000000000000000000000000002b80d5ffffffffffffffb9640f000000000000000000000000000000000000000000000000003a8fe4ffffffffffd5802b000000000000000000000000000000469bf0ffffffffffc5701b00000000000000000000000000",
++      "rawSHA256": "b82ec4d66dfd5de48bedaa3708c9bc2fe0701d394ac45f96a0b97e85061b102d"
++    },
++    {
++      "name": "shaped-placement-00796-M0-source-cleartype",
++      "penBits": 1140923728,
++      "glyphID": 16,
++      "integerOrigin": 516,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        -6,
++        13,
++        -4
++      ],
++      "rgbHex": "2671bde3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3bd7126002b80d5ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd5802b00",
++      "rawSHA256": "ed266da0f93e88831624c007b95e90b999557062083e2b1bd31d27164a1f4fc8"
++    },
++    {
++      "name": "shaped-placement-00801-M0-source-cleartype",
++      "penBits": 1141131887,
++      "glyphID": 80,
++      "integerOrigin": 529,
++      "phaseIndex": 1,
++      "bounds": [
++        1,
++        -11,
++        18,
++        0
++      ],
++      "rgbHex": "0055aaffffffffd58034346aaccdecf6fffffffaf1ddc3965a2305000009346aaccdecf6fffffffff6e1c3965a2305000000000055aafffffffffaf6f6fafffaf1e7e3e3ecf6ffffffffffffebaa808fd0fafffaf1e7e3e3ecf6ffffffffffffebaa551400000055aaffffffffffffebaa55140000000000052374c4faffffffffffffebaa5a1905000000000014499edffffffffff09b46000055aafffffffffaaa55050000000000000000000050a5faffffffffc5701b00000000000000000000267bd0ffffffffd07b260055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b0055aaffffffffd5802b00000000000000000000002b80d5ffffffffaa5500000000000000000000000055aaffffffffd5802b",
++      "rawSHA256": "199aad3cba6891fb3d25ed47dd6a07b2538ab0c934c23b42ba9cabe090babc37"
++    },
++    {
++      "name": "shaped-placement-00806-M0-source-cleartype",
++      "penBits": 1141433631,
++      "glyphID": 3,
++      "integerOrigin": 547,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        0,
++        1,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00811-M0-source-cleartype",
++      "penBits": 1141548204,
++      "glyphID": 18,
++      "integerOrigin": 554,
++      "phaseIndex": 2,
++      "bounds": [
++        0,
++        -17,
++        11,
++        2
++      ],
++      "rgbHex": "00000000000000000000000000000000000000000000000f64b9ffffffdf8a3500000000000000000000000000000000000000000000002075caffffffca75200000000000000000000000000000000000000000000000358adfffffffc5701b0000000000000000000000000000000000000000000000358adffffffab5600f00000000000000000000000000000000000000000000054a9ff0fffff09f4a05000000000000000000000000000000000000000000000f60b5fafffff09f4a05000000000000000000000000000000000000000000000f60b5faffffdf8a3500000000000000000000000000000000000000000000002075caffffffd5802b00000000000000000000000000000000000000000000002b80d5ffffffca75200000000000000000000000000000000000000000000000358adffffffab5600f00000000000000000000000000000000000000000000054a9ff0fffffab5600f00000000000000000000000000000000000000000000054a9ff0fffff09f4a05000000000000000000000000000000000000000000000f60b5faffffdf8a3500000000000000000000000000000000000000000000002075caffffffdf8a3500000000000000000000000000000000000000000000002075caffffffca75200000000000000000000000000000000000000000000000358adfffffffb9640f0000000000000000000000000000000000000000000000469bf0fffffab5600f00000000000000000000000000000000000000000000054a9ff0fffff09f4a05000000000000000000000000000000000000000000000f60b5fafffff09b4600000000000000000000000000000000000000000000",
++      "rawSHA256": "7bc91cd2d9d55c1d398b1f6403e4990b27f31c3ea45565ab82b797b3508e749d"
++    },
++    {
++      "name": "shaped-placement-00816-M0-source-cleartype",
++      "penBits": 1141720236,
++      "glyphID": 3,
++      "integerOrigin": 565,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        0,
++        0,
++        0
++      ],
++      "rgbHex": "",
++      "rawSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
++    },
++    {
++      "name": "shaped-placement-00821-M0-source-cleartype",
++      "penBits": 1141834809,
++      "glyphID": 62,
++      "integerOrigin": 572,
++      "phaseIndex": 0,
++      "bounds": [
++        0,
++        -17,
++        7,
++        2
++      ],
++      "rgbHex": "002b80d5ffffffffffffffffffffffffffd5802b00002b80d5fffffffaf1e7e3e3e3e3e3e3e3bd712600002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5fffffffaf1e7e3e3e3e3e3e3e3bd712600002b80d5ffffffffffffffffffffffffffd5802b00",
++      "rawSHA256": "89e4148eff148d8d1e240c3065befedf4c96ef16e104ec0af6b7c4bc6451a82c"
++    },
++    {
++      "name": "shaped-placement-00826-M0-source-cleartype",
++      "penBits": 1141949382,
++      "glyphID": 91,
++      "integerOrigin": 579,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -11,
++        12,
++        0
++      ],
++      "rgbHex": "00000000145aaff0ffffffffd5842f050000000000000000145aaff0fffffffad0802f050000000000000000001455aaebffffffffd5842f0500000000145aaff0fffffffad0802f050000000000000000000000000005469bebffffffffd5842f05145aaff0fffffffac57020000000000000000000000000000000000000052f84d5ffffffffd5c5c5f0ffffffebaa551400000000000000000000000000000000000000000000052f80d0faffffffffffffebaa551400000000000000000000000000000000000000000000000000052f84d5fffffffffff0af5a1400000000000000000000000000000000000000000000000005469bebfffffffafafafffffffab9641400000000000000000000000000000000000000001455aaebfffffffad0803f55a5ebfffffffad0802f050000000000000000000000000000001464b9fafffffffad07b2b00000005469bebfffffffad0802f0500000000000000000000052f80d0fafffffffac570200000000000000005469bebffffffffeb9b4605000000000000052f80d0fafffffffab96414000000000000000000000005469bebffffffffebaa55140000",
++      "rawSHA256": "3d1d71d06b428d7317f65cb2d5ae3db99c48d7d5c7589e84c38725590f598a9b"
++    },
++    {
++      "name": "shaped-placement-00831-M0-source-cleartype",
++      "penBits": 1142131736,
++      "glyphID": 64,
++      "integerOrigin": 590,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -17,
++        7,
++        2
++      ],
++      "rgbHex": "00002b80d5ffffffffffffffffffffffffffd5802b00002671bde3e3e3e3e3e3e3e7f1faffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b0000000000000000000000002b80d5ffffffd5802b00002671bde3e3e3e3e3e3e3e7f1faffffffd5802b00002b80d5ffffffffffffffffffffffffffd5802b",
++      "rawSHA256": "70d92aa87354538176faf47c8bf856f7b1a63a394ef12b8e4e19b7f269da200b"
++    },
++    {
++      "name": "signed-tie-00836-M0-source-cleartype",
++      "penBits": 3220176896,
++      "glyphID": 36,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00841-M0-source-cleartype",
++      "penBits": 3218079744,
++      "glyphID": 36,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00846-M0-source-cleartype",
++      "penBits": 3215982592,
++      "glyphID": 36,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00851-M0-source-cleartype",
++      "penBits": 3213885440,
++      "glyphID": 36,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00856-M0-source-cleartype",
++      "penBits": 3210739712,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00861-M0-source-cleartype",
++      "penBits": 3206545408,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00866-M0-source-cleartype",
++      "penBits": 3200253952,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00871-M0-source-cleartype",
++      "penBits": 3187671040,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00876-M0-source-cleartype",
++      "penBits": 1040187392,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00881-M0-source-cleartype",
++      "penBits": 1052770304,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a05",
++      "rawSHA256": "92b47d80f80824e6a4f6a5e629aafd89959b50f74866939edc4e9a64cb9f969e"
++    },
++    {
++      "name": "signed-tie-00886-M0-source-cleartype",
++      "penBits": 1059061760,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 2,
++      "bounds": [
++        0,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "00000000000000000000000000000000003a8fe4fffffffffffab5600f00000000000000000000000000000000000000000000000000000000000000054a9ff0ffffffffffffffffca752000000000000000000000000000000000000000000000000000000000000f60b5faffffffdfdadafaffffffd5802b0000000000000000000000000000000000000000000000000000000f60b5faffffffca75254a9ff0ffffffdf8a35000000000000000000000000000000000000000000000000002075caffffffffc5701b00054a9ff0fffffff09f4a05000000000000000000000000000000000000000000002b80d5fffffffab5600f00000000469bf0fffffffaaa55050000000000000000000000000000000000000000358adffffffffab5600f000000000000358adffffffffab5600f0000000000000000000000000000000000054a9ff0fffffff09f4a050000000000000000358adfffffffffca75200000000000000000000000000000000555aafafffffff09f4a05000000000000000000002075caffffffffca7520000000000000000000000000000f60b5fafffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3ecf6ffffffffffdf8a3500000000000000000000002075cafffffffffffffffffffffffffffffffffffffffffffffffffffffffffff09b460000000000000000002075caffffffffd5802b00000000000000000000000000000000000f60b5fafffffff09f4a05000000000000358adfffffffffca7520000000000000000000000000000000000000000555aafafffffffab5600f00000000469bf0ffffffffca75200000000000000000000000000000000000000000000555aafaffffffffb9640f00054a9ff0ffffffffca75200000000000000000000000000000000000000000000000054a9ff0ffffffffca7520",
++      "rawSHA256": "008bddf9e0f18e3ca8ced9fb3d364078ffa4c30c4a149f4da066ec9775bd29ee"
++    },
++    {
++      "name": "signed-tie-00891-M0-source-cleartype",
++      "penBits": 1063256064,
++      "glyphID": 36,
++      "integerOrigin": 0,
++      "phaseIndex": 3,
++      "bounds": [
++        0,
++        -15,
++        16,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000003a8fe4fffffffffffab5600f00000000000000000000000000000000000000000000000000000000000000000000054a9ff0ffffffffffffffffca752000000000000000000000000000000000000000000000000000000000000000000f60b5faffffffdfdadafaffffffd5802b0000000000000000000000000000000000000000000000000000000000000f60b5faffffffca75254a9ff0ffffffdf8a35000000000000000000000000000000000000000000000000000000002075caffffffffc5701b00054a9ff0fffffff09f4a05000000000000000000000000000000000000000000000000002b80d5fffffffab5600f00000000469bf0fffffffaaa55050000000000000000000000000000000000000000000000358adffffffffab5600f000000000000358adffffffffab5600f0000000000000000000000000000000000000000054a9ff0fffffff09f4a050000000000000000358adfffffffffca75200000000000000000000000000000000000000555aafafffffff09f4a05000000000000000000002075caffffffffca7520000000000000000000000000000000000f60b5fafffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3ecf6ffffffffffdf8a3500000000000000000000000000002075cafffffffffffffffffffffffffffffffffffffffffffffffffffffffffff09b460000000000000000000000002075caffffffffd5802b00000000000000000000000000000000000f60b5fafffffff09f4a05000000000000000000358adfffffffffca7520000000000000000000000000000000000000000555aafafffffffab5600f00000000000000469bf0ffffffffca75200000000000000000000000000000000000000000000555aafaffffffffb9640f00000000054a9ff0ffffffffca75200000000000000000000000000000000000000000000000054a9ff0ffffffffca75200000",
++      "rawSHA256": "69f2b01a9444039f2d5ed56203f5269fca2537a6318f6b315cf9b5cd34554676"
++    },
++    {
++      "name": "signed-tie-00896-M0-source-cleartype",
++      "penBits": 1066401792,
++      "glyphID": 36,
++      "integerOrigin": 1,
++      "phaseIndex": 0,
++      "bounds": [
++        -1,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00000000002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a0500",
++      "rawSHA256": "7dcccb5682728f939f0b8a0a13e165190e28b54ede11a8c7edf8614891c2ceaa"
++    },
++    {
++      "name": "signed-tie-00901-M0-source-cleartype",
++      "penBits": 1068498944,
++      "glyphID": 36,
++      "integerOrigin": 1,
++      "phaseIndex": 1,
++      "bounds": [
++        0,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "000000000000000000000000000000000f64b9ffffffffffffdf8a3500000000000000000000000000000000000000000000000000000000000000002075cafffffffffffffffff09f4a050000000000000000000000000000000000000000000000000000000000358adffffffffadadadffffffffaaa5505000000000000000000000000000000000000000000000000000000358adffffffff09f4a2575cafffffffab5600f000000000000000000000000000000000000000000000000054a9ff0fffffff09b4600002075caffffffffca7520000000000000000000000000000000000000000000000555aafaffffffdf8a35000000001b70c5ffffffffd5802b00000000000000000000000000000000000000000f60b5faffffffdf8a350000000000000f60b5faffffffdf8a350000000000000000000000000000000000002075caffffffffca752000000000000000000f60b5fafffffff09f4a050000000000000000000000000000002b80d5ffffffffca752000000000000000000000054a9ff0fffffff09f4a0500000000000000000000000000358adffffffffffaf1e7e3e3e3e3e3e3e3e3e3e3e3e3e7f1fafffffffffab5600f00000000000000000000054a9ff0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc5701b0000000000000000054a9ff0fffffffaaa55050000000000000000000000000000000000358adfffffffffca75200000000000000f60b5fafffffff09f4a05000000000000000000000000000000000000002b80d5ffffffffdf8a35000000001b70c5fffffffff09f4a050000000000000000000000000000000000000000002b80d5ffffffffe48f3a00002075cafffffffff09f4a0500000000000000000000000000000000000000000000002075cafffffffff09f4a05",
++      "rawSHA256": "92b47d80f80824e6a4f6a5e629aafd89959b50f74866939edc4e9a64cb9f969e"
++    },
++    {
++      "name": "signed-tie-00906-M0-source-cleartype",
++      "penBits": 1070596096,
++      "glyphID": 36,
++      "integerOrigin": 1,
++      "phaseIndex": 2,
++      "bounds": [
++        0,
++        -15,
++        15,
++        0
++      ],
++      "rgbHex": "00000000000000000000000000000000003a8fe4fffffffffffab5600f00000000000000000000000000000000000000000000000000000000000000054a9ff0ffffffffffffffffca752000000000000000000000000000000000000000000000000000000000000f60b5faffffffdfdadafaffffffd5802b0000000000000000000000000000000000000000000000000000000f60b5faffffffca75254a9ff0ffffffdf8a35000000000000000000000000000000000000000000000000002075caffffffffc5701b00054a9ff0fffffff09f4a05000000000000000000000000000000000000000000002b80d5fffffffab5600f00000000469bf0fffffffaaa55050000000000000000000000000000000000000000358adffffffffab5600f000000000000358adffffffffab5600f0000000000000000000000000000000000054a9ff0fffffff09f4a050000000000000000358adfffffffffca75200000000000000000000000000000000555aafafffffff09f4a05000000000000000000002075caffffffffca7520000000000000000000000000000f60b5fafffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3ecf6ffffffffffdf8a3500000000000000000000002075cafffffffffffffffffffffffffffffffffffffffffffffffffffffffffff09b460000000000000000002075caffffffffd5802b00000000000000000000000000000000000f60b5fafffffff09f4a05000000000000358adfffffffffca7520000000000000000000000000000000000000000555aafafffffffab5600f00000000469bf0ffffffffca75200000000000000000000000000000000000000000000555aafaffffffffb9640f00054a9ff0ffffffffca75200000000000000000000000000000000000000000000000054a9ff0ffffffffca7520",
++      "rawSHA256": "008bddf9e0f18e3ca8ced9fb3d364078ffa4c30c4a149f4da066ec9775bd29ee"
++    },
++    {
++      "name": "signed-tie-00911-M0-source-cleartype",
++      "penBits": 1072693248,
++      "glyphID": 36,
++      "integerOrigin": 1,
++      "phaseIndex": 3,
++      "bounds": [
++        0,
++        -15,
++        16,
++        0
++      ],
++      "rgbHex": "0000000000000000000000000000000000003a8fe4fffffffffffab5600f00000000000000000000000000000000000000000000000000000000000000000000054a9ff0ffffffffffffffffca752000000000000000000000000000000000000000000000000000000000000000000f60b5faffffffdfdadafaffffffd5802b0000000000000000000000000000000000000000000000000000000000000f60b5faffffffca75254a9ff0ffffffdf8a35000000000000000000000000000000000000000000000000000000002075caffffffffc5701b00054a9ff0fffffff09f4a05000000000000000000000000000000000000000000000000002b80d5fffffffab5600f00000000469bf0fffffffaaa55050000000000000000000000000000000000000000000000358adffffffffab5600f000000000000358adffffffffab5600f0000000000000000000000000000000000000000054a9ff0fffffff09f4a050000000000000000358adfffffffffca75200000000000000000000000000000000000000555aafafffffff09f4a05000000000000000000002075caffffffffca7520000000000000000000000000000000000f60b5fafffffffff6ece3e3e3e3e3e3e3e3e3e3e3e3e3ecf6ffffffffffdf8a3500000000000000000000000000002075cafffffffffffffffffffffffffffffffffffffffffffffffffffffffffff09b460000000000000000000000002075caffffffffd5802b00000000000000000000000000000000000f60b5fafffffff09f4a05000000000000000000358adfffffffffca7520000000000000000000000000000000000000000555aafafffffffab5600f00000000000000469bf0ffffffffca75200000000000000000000000000000000000000000000555aafaffffffffb9640f00000000054a9ff0ffffffffca75200000000000000000000000000000000000000000000000054a9ff0ffffffffca75200000",
++      "rawSHA256": "69f2b01a9444039f2d5ed56203f5269fca2537a6318f6b315cf9b5cd34554676"
++    },
++    {
++      "name": "signed-tie-00916-M0-source-cleartype",
++      "penBits": 3220176896,
++      "glyphID": 76,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00921-M0-source-cleartype",
++      "penBits": 3218079744,
++      "glyphID": 76,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00926-M0-source-cleartype",
++      "penBits": 3215982592,
++      "glyphID": 76,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00931-M0-source-cleartype",
++      "penBits": 3213885440,
++      "glyphID": 76,
++      "integerOrigin": -1,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00936-M0-source-cleartype",
++      "penBits": 3210739712,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00941-M0-source-cleartype",
++      "penBits": 3206545408,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00946-M0-source-cleartype",
++      "penBits": 3200253952,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00951-M0-source-cleartype",
++      "penBits": 3187671040,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00956-M0-source-cleartype",
++      "penBits": 1040187392,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00961-M0-source-cleartype",
++      "penBits": 1052770304,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 1,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "001455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500",
++      "rawSHA256": "59d662d6076a425e696fce27420667fe389d9115ee3e7bf6ab8ad451b02e2606"
++    },
++    {
++      "name": "signed-tie-00966-M0-source-cleartype",
++      "penBits": 1059061760,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        -15,
++        6,
++        0
++      ],
++      "rgbHex": "00052f7bcbf6fffff6cb7b2f050000002b80d5ffffffffffffd5802b000000002b6bbce6fafae6bc6b2b00000000000000000000000000000000000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b000000",
++      "rawSHA256": "402713aec6374013c6441e0ca845c9388027bf05f196ea741baec8900a845851"
++    },
++    {
++      "name": "signed-tie-00971-M0-source-cleartype",
++      "penBits": 1063256064,
++      "glyphID": 76,
++      "integerOrigin": 0,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        6,
++        0
++      ],
++      "rgbHex": "0000052f7bcbf6fffff6cb7b2f050000002b80d5ffffffffffffd5802b000000002b6bbce6fafae6bc6b2b00000000000000000000000000000000000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b0000",
++      "rawSHA256": "ad0c26f51e50a3cf4b4c6301421b9e5d5529e845d4f91435141126ffac888735"
++    },
++    {
++      "name": "signed-tie-00976-M0-source-cleartype",
++      "penBits": 1066401792,
++      "glyphID": 76,
++      "integerOrigin": 1,
++      "phaseIndex": 0,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "1455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa550000",
++      "rawSHA256": "f347f6df7cf8d050206495da3d5166339f8570f7c978a2181c2f51ba36dbe8c2"
++    },
++    {
++      "name": "signed-tie-00981-M0-source-cleartype",
++      "penBits": 1068498944,
++      "glyphID": 76,
++      "integerOrigin": 1,
++      "phaseIndex": 1,
++      "bounds": [
++        1,
++        -15,
++        5,
++        0
++      ],
++      "rgbHex": "001455a5e6fafffae6a555140055aaffffffffffffffaa55000f4691d7f6fff6d791460f000000000000000000000000000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500000055aaffffffffffaa5500",
++      "rawSHA256": "59d662d6076a425e696fce27420667fe389d9115ee3e7bf6ab8ad451b02e2606"
++    },
++    {
++      "name": "signed-tie-00986-M0-source-cleartype",
++      "penBits": 1070596096,
++      "glyphID": 76,
++      "integerOrigin": 1,
++      "phaseIndex": 2,
++      "bounds": [
++        1,
++        -15,
++        6,
++        0
++      ],
++      "rgbHex": "00052f7bcbf6fffff6cb7b2f050000002b80d5ffffffffffffd5802b000000002b6bbce6fafae6bc6b2b00000000000000000000000000000000000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b000000",
++      "rawSHA256": "402713aec6374013c6441e0ca845c9388027bf05f196ea741baec8900a845851"
++    },
++    {
++      "name": "signed-tie-00991-M0-source-cleartype",
++      "penBits": 1072693248,
++      "glyphID": 76,
++      "integerOrigin": 1,
++      "phaseIndex": 3,
++      "bounds": [
++        1,
++        -15,
++        6,
++        0
++      ],
++      "rgbHex": "0000052f7bcbf6fffff6cb7b2f050000002b80d5ffffffffffffd5802b000000002b6bbce6fafae6bc6b2b00000000000000000000000000000000000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b00000000002b80d5ffffffffd5802b0000",
++      "rawSHA256": "ad0c26f51e50a3cf4b4c6301421b9e5d5529e845d4f91435141126ffac888735"
++    }
++  ]
++}
+diff --git a/third_party/mygo/patch_identity.go b/third_party/mygo/patch_identity.go
+index 8bd3177..6b43532 100644
+--- a/third_party/mygo/patch_identity.go
++++ b/third_party/mygo/patch_identity.go
+@@ -16,7 +16,7 @@ type SourcePatch struct {
+ // These values are also recorded in the executable's Go linker settings.
+ // Development builds keep sourcePatchSHA256 empty; release verification rejects
+ // such builds and requires the complete fixed identity.
+-var sourcePatchRevision = "zeron-native-ui.8"
++var sourcePatchRevision = "zeron-native-ui.9"
+ var sourcePatchSHA256 string
+ var sourcePatchIdentity string
+ 
+@@ -26,7 +26,7 @@ func FrameworkPatch() SourcePatch {
+ }
+ 
+ func init() {
+-	if sourcePatchRevision != "zeron-native-ui.8" {
++	if sourcePatchRevision != "zeron-native-ui.9" {
+ 		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
+ 	}
+ 	if sourcePatchSHA256 != "" {
+diff --git a/third_party/mygo/ui/element.go b/third_party/mygo/ui/element.go
+index 50eae0b..f751ea2 100644
+--- a/third_party/mygo/ui/element.go
++++ b/third_party/mygo/ui/element.go
+@@ -154,8 +154,8 @@ type shadow struct {
+ type textStyle struct {
+ 	set    uint32
+ 	family string
+-	size   float32
+ 	weight int
++	size   float32
+ 	italic bool
+ 	color  Color
+ 	// lineHeight is a multiple of the font size, or DIPs when fixedLine.
+@@ -176,6 +176,8 @@ type textStyle struct {
+ 	background Color
+ 	// selection is the highlight of selected text, the theme's when unset.
+ 	selection Color
++	// placeGlyph is an optional plain-text-run paint hook; nil is native.
++	placeGlyph glyphPlacementPaint
+ }
+ 
+ const (
+@@ -195,9 +197,10 @@ const (
+ 	setBackground
+ 	setSelection
+ 	setLang
++	setGlyphPlacement
+ 
+ 	// setAll has every bit of textStyle.set.
+-	setAll = setLang<<1 - 1
++	setAll = setGlyphPlacement<<1 - 1
+ )
+ 
+ // layoutStyle is what lays an element out, of what the view sets on it:
+diff --git a/third_party/mygo/ui/glyph_placement.go b/third_party/mygo/ui/glyph_placement.go
+new file mode 100644
+index 0000000..0d40202
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement.go
+@@ -0,0 +1,36 @@
++package ui
++
++// GlyphPlacement selects a paint-only horizontal glyph-placement policy.
++// It changes neither font selection, shaping, advances, nor layout geometry.
++type GlyphPlacement uint8
++
++const (
++	// GlyphPlacementNative retains the platform's normal glyph placement.
++	GlyphPlacementNative GlyphPlacement = iota
++	// GlyphPlacementWindowsClearTypeQuarter requests float32 quarter-device-
++	// pixel placement with half ties toward zero on Windows ClearType text.
++	// Negative coordinates retain signed-fraction/truncation extraction.
++	// Transparent/grayscale/aliased text and color-capable font faces keep
++	// native placement, as do all other platforms.
++	GlyphPlacementWindowsClearTypeQuarter
++)
++
++// An alias reuses the existing Draw/DrawOver function identity.
++// The Rect carries the current text origin in X/Y; W/H are unused.
++type glyphPlacementPaint = func(*Painter, Rect)
++
++// WithGlyphPlacement sets an inheritable paint-only policy for plain Text
++// leaves. Only the current kindText layout, without spans, inline children,
++// an inline parent or ContentTransition, uses the requested placement. Rich
++// text, font-only spans, inputs and Painter's custom text keep native painting.
++// Backgrounds, selection and decorations retain their normal paint order.
++// Native (the default), including unknown values, restores native placement.
++// This unpublished opt-in is narrower than the earlier per-glyph experiment.
++// This checked function adds no method to Element or private node.
++func WithGlyphPlacement(e Element, policy GlyphPlacement) Element {
++	if n := e.node(); n != nil {
++		n.ts.placeGlyph = glyphPlacementFor(policy)
++		n.ts.set |= setGlyphPlacement
++	}
++	return e
++}
+diff --git a/third_party/mygo/ui/glyph_placement_default_control_test.go b/third_party/mygo/ui/glyph_placement_default_control_test.go
+new file mode 100644
+index 0000000..cfbd35f
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_default_control_test.go
+@@ -0,0 +1,56 @@
++package ui
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"fmt"
++	"os"
++	"path/filepath"
++	"testing"
++	"unsafe"
++)
++
++// This byte-identical test is run on the sealed C4 default path and candidate.
++// It emits CPU/Tester control evidence only, never a visual-parity reference.
++func TestNativeDefaultPaintControl(t *testing.T) {
++	target := os.Getenv("QUARTER_DEFAULT_CONTROL_OUT")
++	if target == "" {
++		t.Skip("explicit fresh output directory is required")
++	}
++	if err := os.Mkdir(target, 0755); err != nil {
++		t.Fatal(err)
++	}
++	records := []map[string]any{}
++	for _, dark := range []bool{false, true} {
++		for _, scale := range []float32{1, 1.25, 2} {
++			var run *node
++			tt := coreNewTester(func(c *context) {
++				coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++					run = coreText(c, "AV To fi Tab02.txt 中文 e\u0301 🎉").Label("default").Font("Microsoft YaHei UI").FontSize(10.5).
++						FontWeight(400).FontFeatures("kern=0").Absolute().Left(20.2).Top(10)
++				})
++			}, 400, 90)
++			tt.SetDark(dark)
++			tt.SetScale(scale)
++			tt.Frame()
++			image := tt.Image()
++			data := image.Pix
++			hash := sha256.Sum256(data)
++			name := fmt.Sprintf("default-dark%v-scale%v.rgba", dark, scale)
++			if err := os.WriteFile(filepath.Join(target, name), data, 0644); err != nil {
++				t.Fatal(err)
++			}
++			bounds, _ := tt.Find("default")
++			records = append(records, map[string]any{"dark": dark, "scale": scale, "file": name, "sha256": hex.EncodeToString(hash[:]), "width": image.Rect.Dx(), "height": image.Rect.Dy(), "bytes": len(data), "bounds": bounds, "textParams": run.textParams(0)})
++		}
++	}
++	result := map[string]any{"nodeBytes": unsafe.Sizeof(node{}), "textStyleBytes": unsafe.Sizeof(textStyle{}), "records": records, "meaning": "default implementation consistency; not reference UI or visual parity"}
++	data, err := json.MarshalIndent(result, "", "  ")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if err := os.WriteFile(filepath.Join(target, "result.json"), data, 0644); err != nil {
++		t.Fatal(err)
++	}
++}
+diff --git a/third_party/mygo/ui/glyph_placement_layout_probe_test.go b/third_party/mygo/ui/glyph_placement_layout_probe_test.go
+new file mode 100644
+index 0000000..2adc629
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_layout_probe_test.go
+@@ -0,0 +1,48 @@
++package ui
++
++import (
++	"encoding/json"
++	"os"
++	"reflect"
++	"runtime"
++	"testing"
++	"unsafe"
++)
++
++// TestGlyphPlacementTextStyleOffsets is an explicit measurement entry point.
++// Preparation does not run it. Offsets are actual compiler results when run.
++func TestGlyphPlacementTextStyleOffsets(t *testing.T) {
++	fields := []map[string]any{}
++	ty := reflect.TypeFor[textStyle]()
++	for i := range ty.NumField() {
++		field := ty.Field(i)
++		fields = append(fields, map[string]any{"name": field.Name, "type": field.Type.String(), "offset": field.Offset, "size": field.Type.Size(), "align": field.Type.Align()})
++	}
++	result := map[string]any{
++		"GOOS": runtime.GOOS, "GOARCH": runtime.GOARCH,
++		"textStyleBytes": unsafe.Sizeof(textStyle{}), "textStyleAlign": unsafe.Alignof(textStyle{}),
++		"nodeBytes": unsafe.Sizeof(node{}), "nodeAlign": unsafe.Alignof(node{}), "nodeTextStyleOffset": unsafe.Offsetof(node{}.ts),
++		"weightOffset": unsafe.Offsetof(textStyle{}.weight), "sizeOffset": unsafe.Offsetof(textStyle{}.size),
++		"colorBytes": unsafe.Sizeof(Color{}), "colorAlign": unsafe.Alignof(Color{}),
++		"alignBytes": unsafe.Sizeof(Align(0)), "boolBytes": unsafe.Sizeof(false), "intBytes": unsafe.Sizeof(int(0)),
++		"funcBytes": unsafe.Sizeof(glyphPlacementPaint(nil)), "fields": fields,
++	}
++	data, err := json.MarshalIndent(result, "", "  ")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Log(string(data))
++	if path := os.Getenv("QUARTER_LAYOUT_PROBE_OUT"); path != "" {
++		file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if _, err := file.Write(data); err != nil {
++			file.Close()
++			t.Fatal(err)
++		}
++		if err := file.Close(); err != nil {
++			t.Fatal(err)
++		}
++	}
++}
+diff --git a/third_party/mygo/ui/glyph_placement_other.go b/third_party/mygo/ui/glyph_placement_other.go
+new file mode 100644
+index 0000000..4aa5775
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_other.go
+@@ -0,0 +1,5 @@
++//go:build !windows || (!amd64 && !arm64)
++
++package ui
++
++func glyphPlacementFor(GlyphPlacement) glyphPlacementPaint { return nil }
+diff --git a/third_party/mygo/ui/glyph_placement_run_candidate_test.go b/third_party/mygo/ui/glyph_placement_run_candidate_test.go
+new file mode 100644
+index 0000000..ccbd988
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_run_candidate_test.go
+@@ -0,0 +1,110 @@
++//go:build windows && (amd64 || arm64)
++
++package ui
++
++import (
++	"bytes"
++	"fmt"
++	"reflect"
++	"testing"
++	"time"
++)
++
++func TestQuarterRunGhostUsesCurrentGhostInsteadOfLiveReplacement(t *testing.T) {
++	type observed struct {
++		text  string
++		color Color
++		ghost bool
++		ids   []uint32
++	}
++	first := true
++	var seen []observed
++	oldColor, newColor := RGB(220, 50, 60), RGB(45, 195, 120)
++	tt, now := clockTester(func(c *context) {
++		coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++			value, key, ink := "OLD AV To", "old", oldColor
++			if !first {
++				value, key, ink = "NEW WWW", "replacement", newColor
++			}
++			e := coreText(c, value).Key(key).Absolute().Left(20.2).Top(10).Font("Microsoft YaHei UI").FontSize(10.5).
++				FontWeight(400).FontFeatures("kern=0").TextColor(ink).Transition(ElementTransition{Exit: &Motion{Opacity: 0}, Ease: Linear, Duration: 200 * time.Millisecond})
++			WithGlyphPlacement(wrapElement(e), GlyphPlacementWindowsClearTypeQuarter)
++			base := e.ts.placeGlyph
++			e.ts.placeGlyph = func(p *Painter, origin Rect) {
++				current := p.inline
++				record := observed{text: current.text, color: current.resolvedText().color, ghost: current.leaving != 0}
++				for _, line := range current.tl.Lines {
++					for _, glyph := range line.Glyphs {
++						record.ids = append(record.ids, glyph.ID)
++					}
++				}
++				seen = append(seen, record)
++				base(p, origin)
++			}
++		})
++	}, 280, 70)
++	defer tt.rt.close()
++	if len(seen) == 0 {
++		t.Fatal("initial source text was not actually painted")
++	}
++	oldIDs := append([]uint32(nil), seen[len(seen)-1].ids...)
++	first = false
++	tt.Frame()
++	*now = now.Add(50 * time.Millisecond)
++	seen = nil
++	tt.Frame()
++	foundOld, foundNew := false, false
++	for _, record := range seen {
++		if record.ghost && record.text == "OLD AV To" && record.color == oldColor && reflect.DeepEqual(record.ids, oldIDs) {
++			foundOld = true
++		}
++		if !record.ghost && record.text == "NEW WWW" && record.color == newColor && !reflect.DeepEqual(record.ids, oldIDs) {
++			foundNew = true
++		}
++	}
++	if !foundOld || !foundNew {
++		t.Fatalf("paint callbacks did not independently read current ghost/live content: %+v", seen)
++	}
++	colors := map[uint32]bool{}
++	for _, glyph := range tt.h.last.Glyphs {
++		if glyph.Color.A != 0 {
++			colors[uint32(glyph.Color.R)<<16|uint32(glyph.Color.G)<<8|uint32(glyph.Color.B)] = true
++		}
++	}
++	if !colors[uint32(oldColor.R)<<16|uint32(oldColor.G)<<8|uint32(oldColor.B)] || !colors[uint32(newColor.R)<<16|uint32(newColor.G)<<8|uint32(newColor.B)] {
++		t.Fatal("actual scene did not retain both fading ghost and live replacement colors")
++	}
++}
++
++func TestQuarterRunTransformClipOpacityUsesExactNativeFallback(t *testing.T) {
++	for _, scale := range []float32{1, 1.25, 2} {
++		t.Run(fmt.Sprint(scale), func(t *testing.T) {
++			quarter := false
++			tt := coreNewTester(func(c *context) {
++				coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++					parent := coreBox(c).Absolute().Left(35).Top(20).Size(130, 35).Clip().Rotate(9).Opacity(.6)
++					if quarter {
++						WithGlyphPlacement(wrapElement(parent), GlyphPlacementWindowsClearTypeQuarter)
++					}
++					parent.Children(func() {
++						coreText(c, "AV To Tab02.txt clipped ending").Font("Microsoft YaHei UI").FontSize(10.5).TextColor(RGB(230, 230, 232)).
++							TextBackground(RGB(30, 45, 60)).Underline().Strikethrough().DecorationColor(RGB(210, 80, 30)).Width(240)
++					})
++				})
++			}, 280, 120)
++			defer tt.rt.close()
++			tt.SetScale(scale)
++			tt.Frame()
++			if len(tt.h.last.Glyphs) == 0 || clips(tt) == 0 {
++				t.Fatal("no actual clipped text control")
++			}
++			native := bytes.Clone(tt.Image().Pix)
++			before := quarterRunNonGlyphOps(tt)
++			quarter = true
++			tt.Frame()
++			if !bytes.Equal(native, tt.Image().Pix) || !reflect.DeepEqual(before, quarterRunNonGlyphOps(tt)) {
++				t.Fatal("opt-in changed native grayscale/transform/clip/opacity/decor fallback")
++			}
++		})
++	}
++}
+diff --git a/third_party/mygo/ui/glyph_placement_run_test.go b/third_party/mygo/ui/glyph_placement_run_test.go
+new file mode 100644
+index 0000000..9e3b43b
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_run_test.go
+@@ -0,0 +1,245 @@
++package ui
++
++import (
++	"bytes"
++	"fmt"
++	"reflect"
++	"testing"
++	"time"
++
++	"github.com/egoist/mygo/internal/scene"
++)
++
++func TestQuarterRunCallbackReusesExistingDrawType(t *testing.T) {
++	actual := reflect.TypeFor[glyphPlacementPaint]()
++	want := reflect.TypeFor[func(*Painter, Rect)]()
++	if actual != want || actual.Name() != "" {
++		t.Fatalf("callback retained a distinct named/type identity: got %v (%q), want %v", actual, actual.Name(), want)
++	}
++}
++
++func TestQuarterRunDispatchesOncePerActualTextRun(t *testing.T) {
++	if !glyphPlacementTestSupported() {
++		t.Skip("Windows64 candidate")
++	}
++	for _, scale := range []float32{1, 1.25, 2} {
++		t.Run(fmt.Sprint(scale), func(t *testing.T) {
++			calls := 0
++			tt := coreNewTester(func(c *context) {
++				coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++					e := coreText(c, "AV To Tab02.txt").Font("Microsoft YaHei UI").FontSize(10.5).
++						FontWeight(400).FontFeatures("kern=0").FixedLineHeight(17).Absolute().Left(20.2).Top(10)
++					WithGlyphPlacement(wrapElement(e), GlyphPlacementWindowsClearTypeQuarter)
++					base := reflect.ValueOf(e.ts.placeGlyph)
++					// This instrumentation also compiles against the previous7arg
++					// callback, so the old per-glyph dispatch is a real before failure.
++					e.ts.placeGlyph = reflect.MakeFunc(base.Type(), func(args []reflect.Value) []reflect.Value {
++						calls++
++						return base.Call(args)
++					}).Interface().(glyphPlacementPaint)
++				})
++			}, 260, 60)
++			defer tt.rt.close()
++			tt.SetScale(scale)
++			calls = 0
++			tt.Frame()
++			if calls != 1 {
++				t.Fatalf("actual run invoked callback%d times; want1 per text run", calls)
++			}
++		})
++	}
++}
++
++func TestQuarterRunUnsupportedTextPathsPaintNative(t *testing.T) {
++	if !glyphPlacementTestSupported() {
++		t.Skip("Windows64 candidate")
++	}
++	for _, scale := range []float32{1, 1.25, 2} {
++		for _, light := range []bool{false, true} {
++			for _, path := range []string{"font-only-spans", "color-spans", "inline", "content", "input", "painter-text", "painter-rich"} {
++				t.Run(fmt.Sprintf("scale%v/light%v/%s", scale, light, path), func(t *testing.T) {
++					quarter := false
++					bg, ink := RGB(39, 39, 42), RGB(225, 225, 227)
++					if light {
++						bg, ink = RGB(244, 244, 245), RGB(35, 35, 38)
++					}
++					draft := "AV To Tab02.txt"
++					var probe *node
++					tt := coreNewTester(func(c *context) {
++						root := coreBox(c).Fill().Background(bg).Font("Microsoft YaHei UI").FontSize(10.5).
++							FontWeight(400).FontFeatures("kern=0").FixedLineHeight(17).TextColor(ink)
++						if quarter {
++							WithGlyphPlacement(wrapElement(root), GlyphPlacementWindowsClearTypeQuarter)
++						}
++						root.Children(func() {
++							makeContext(c).Key("target")
++							var e *node
++							switch path {
++							case "font-only-spans":
++								e = coreRichText(c, Span{Text: draft, Font: "Microsoft YaHei UI"})
++							case "color-spans":
++								e = coreRichText(c, Span{Text: "AV To", Color: RGB(220, 80, 35), Underline: true}, Span{Text: " Tab02.txt", Weight: 500})
++							case "inline":
++								e = coreText(c, "").Children(func() { coreText(c, "AV To "); coreText(c, "Tab02.txt").FontWeight(500) })
++							case "content":
++								e = coreText(c, draft).ContentTransition(ContentTransition{})
++							case "input":
++								e = coreTextInputBase(c, &draft)
++							case "painter-text":
++								e = coreBox(c).Draw(func(p *Painter, r Rect) { p.Text(r.X, r.Y, draft, 10.5, ink) })
++							case "painter-rich":
++								e = coreBox(c).Draw(func(p *Painter, r Rect) {
++									p.RichText(r.X, r.Y, 220, Span{Text: draft, Size: 10.5, Color: ink, Underline: true})
++								})
++							}
++							probe = e.Absolute().Left(20.2).Top(10).Size(220, 40)
++						})
++					}, 280, 80)
++					defer tt.rt.close()
++					tt.SetScale(scale)
++					tt.Frame()
++					if path == "font-only-spans" {
++						var sp spanPaint
++						if probe.spans == nil || probe.paintSpans(&sp) != nil {
++							t.Fatal("control must have font-only spans with nil spanPaint")
++						}
++					}
++					native := bytes.Clone(tt.Image().Pix)
++					quarter = true
++					tt.Frame()
++					if !bytes.Equal(native, tt.Image().Pix) {
++						t.Fatal("narrowed unsupported path did not retain exact native frame")
++					}
++				})
++			}
++		}
++	}
++}
++
++func quarterRunNonGlyphOps(tt *Tester) []scene.Op {
++	var ops []scene.Op
++	for _, op := range tt.h.last.Ops {
++		if op.Kind != scene.OpGlyphs {
++			ops = append(ops, op)
++		}
++	}
++	return ops
++}
++
++func TestQuarterRunPreservesActualSelectionBackgroundAndDecorations(t *testing.T) {
++	if !glyphPlacementTestSupported() {
++		t.Skip("Windows64 candidate")
++	}
++	for _, scale := range []float32{1, 1.25, 2} {
++		for _, light := range []bool{false, true} {
++			t.Run(fmt.Sprintf("scale%v/light%v", scale, light), func(t *testing.T) {
++				quarter := false
++				var current *node
++				bg, ink := RGB(39, 39, 42), RGB(230, 230, 232)
++				if light {
++					bg, ink = RGB(244, 244, 245), RGB(25, 25, 28)
++				}
++				textBG, selected, decoration := RGB(29, 45, 68), RGB(70, 105, 180), RGB(210, 85, 45)
++				tt := coreNewTester(func(c *context) {
++					coreBox(c).Fill().Background(bg).Children(func() {
++						current = coreText(c, "AV To Tab02.txt").Key("selectable").Font("Microsoft YaHei UI").FontSize(10.5).
++							FontWeight(400).FontFeatures("kern=0").FixedLineHeight(17).TextColor(ink).TextBackground(textBG).
++							SelectionColor(selected).Underline().Strikethrough().DecorationColor(decoration).DecorationThickness(1.25).
++							Absolute().Left(20.2).Top(12).Selectable()
++						if quarter {
++							WithGlyphPlacement(wrapElement(current), GlyphPlacementWindowsClearTypeQuarter)
++						}
++					})
++				}, 280, 70)
++				defer tt.rt.close()
++				tt.SetScale(scale)
++				tt.Frame()
++				point := func(index int) (float32, float32) {
++					ed := current.st.editor
++					x, y, h := ed.layout.Caret(index)
++					return current.LocalToWindow(ed.originX+x, ed.originY+y+h/2)
++				}
++				tt.Press(point(3))
++				tt.Move(point(9))
++				tt.Release(point(9))
++				tt.Frame()
++				a, b := current.st.editor.selection()
++				if a == b || !tt.rt.textSelectionVisible(current.st) {
++					t.Fatal("control has no actual visible text selection")
++				}
++				before := quarterRunNonGlyphOps(tt)
++				counts := [3]int{}
++				for _, op := range before {
++					for i, want := range []Color{textBG, selected, decoration} {
++						if op.Kind == scene.OpFill && op.Color == want.scene() {
++							counts[i]++
++						}
++					}
++				}
++				if counts[0] != 1 || counts[1] == 0 || counts[2] < 2 {
++					t.Fatalf("background/selection/deco control missing or duplicated: %v", counts)
++				}
++				quarter = true
++				tt.Frame()
++				if after := quarterRunNonGlyphOps(tt); !reflect.DeepEqual(before, after) {
++					t.Fatal("optional foreground changed/doubled/reordered actual background, selection, decorations or clips")
++				}
++				if x, y := current.st.editor.selection(); x != a || y != b {
++					t.Fatal("painting changed actual selection")
++				}
++			})
++		}
++	}
++}
++
++func TestQuarterRunContentTransitionKeepsOldColorAndLayout(t *testing.T) {
++	if !glyphPlacementTestSupported() {
++		t.Skip("Windows64 candidate")
++	}
++	for _, numeric := range []bool{false, true} {
++		for _, scale := range []float32{1, 1.25, 2} {
++			t.Run(fmt.Sprintf("numeric%v/scale%v", numeric, scale), func(t *testing.T) {
++				quarter := false
++				value := "120"
++				ink := RGB(225, 50, 60)
++				tt, now := clockTester(func(c *context) {
++					coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++						e := coreText(c, value).Key("changing").Absolute().Left(20.2).Top(10).Font("Microsoft YaHei UI").FontSize(10.5).
++							TextColor(ink).ContentTransition(ContentTransition{Numeric: numeric, Animation: &Animation{Duration: time.Second, Ease: Linear}})
++						if quarter {
++							WithGlyphPlacement(wrapElement(e), GlyphPlacementWindowsClearTypeQuarter)
++						}
++					})
++				}, 280, 70)
++				defer tt.rt.close()
++				tt.SetScale(scale)
++				tt.Frame()
++				value = "130"
++				tt.Frame()
++				*now = now.Add(450 * time.Millisecond)
++				// contentStep captures oldColor when the text changes. Change
++				// the current color later so old/current colors really differ.
++				ink = RGB(40, 200, 120)
++				tt.Frame()
++				native := bytes.Clone(tt.Image().Pix)
++				before := quarterRunNonGlyphOps(tt)
++				colors := map[scene.Color]bool{}
++				for _, glyph := range tt.h.last.Glyphs {
++					if glyph.Color.A != 0 {
++						c := glyph.Color
++						c.A = 255
++						colors[c] = true
++					}
++				}
++				if !colors[RGB(225, 50, 60).scene()] || !colors[RGB(40, 200, 120).scene()] {
++					t.Fatal("transition control did not retain both old/current colors")
++				}
++				quarter = true
++				tt.Frame()
++				if !bytes.Equal(native, tt.Image().Pix) || !reflect.DeepEqual(before, quarterRunNonGlyphOps(tt)) {
++					t.Fatal("opt-in replaced transition's old color/layout or numeric bands")
++				}
++			})
++		}
++	}
++}
+diff --git a/third_party/mygo/ui/glyph_placement_test.go b/third_party/mygo/ui/glyph_placement_test.go
+new file mode 100644
+index 0000000..16750b7
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_test.go
+@@ -0,0 +1,125 @@
++package ui
++
++import (
++	"bytes"
++	"fmt"
++	"reflect"
++	"runtime"
++	"testing"
++	"unsafe"
++
++	"github.com/egoist/mygo/internal/text"
++)
++
++func glyphPlacementTestSupported() bool {
++	return runtime.GOOS == "windows" && (runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64")
++}
++
++func TestGlyphPlacementRepaintLayoutAndRestoration(t *testing.T) {
++	if !glyphPlacementTestSupported() {
++		t.Skip("Windows ClearType candidate")
++	}
++	for _, scale := range []float32{1, 1.25, 2} {
++		t.Run(fmt.Sprint(scale), func(t *testing.T) {
++			policy := GlyphPlacementNative
++			apply := true
++			var current *node
++			tt := coreNewTester(func(c *context) {
++				coreBox(c).Fill().Background(RGB(39, 39, 42)).Children(func() {
++					current = coreText(c, "AV To Tab02.txt 中文 e\u0301").Key("run").Label("run").Font("Microsoft YaHei UI").FontSize(10.5).
++						FontWeight(400).FontFeatures("kern=0").FixedLineHeight(17).Absolute().Left(20.2).Top(10)
++					if apply {
++						WithGlyphPlacement(wrapElement(current), policy)
++					}
++					coreText(c, "unrelated").Label("sibling").Absolute().Left(20).Top(45)
++				})
++			}, 400, 90)
++			tt.SetScale(scale)
++			tt.Frame()
++			bounds, _ := tt.Find("run")
++			params, layout := current.textParams(0), current.tl
++			glyphs := append([]text.Glyph(nil), layout.Lines[0].Glyphs...)
++			native := bytes.Clone(tt.Image().Pix)
++			policy = GlyphPlacementWindowsClearTypeQuarter
++			tt.Frame()
++			quarter := bytes.Clone(tt.Image().Pix)
++			if current.resolvedText().placeGlyph == nil {
++				t.Fatal("public opt-in was not wired into actual text paint")
++			}
++			if current.textParams(0) != params || current.tl != layout || !reflect.DeepEqual(glyphs, current.tl.Lines[0].Glyphs) {
++				t.Fatal("paint-only policy changed text params, retained layout or glyph shapes/advances")
++			}
++			if after, _ := tt.Find("run"); after != bounds {
++				t.Fatalf("paint policy moved layout: before=%v after=%v", bounds, after)
++			}
++			if bytes.Equal(native, quarter) {
++				t.Fatal("test did not observe changed actual glyph placement/coverage")
++			}
++			policy = GlyphPlacementNative
++			tt.Frame()
++			if !bytes.Equal(native, tt.Image().Pix) || current.resolvedText().placeGlyph != nil {
++				t.Fatal("explicit Native did not restore exact original frame")
++			}
++			policy = GlyphPlacementWindowsClearTypeQuarter
++			tt.Frame()
++			apply = false
++			tt.Frame()
++			if !bytes.Equal(native, tt.Image().Pix) || current.resolvedText().placeGlyph != nil {
++				t.Fatal("rebuilt keyed node retained an omitted policy")
++			}
++		})
++	}
++}
++
++func TestGlyphPlacementInheritanceAndPerWindowIsolation(t *testing.T) {
++	var inherited, overridden, unknown, sibling *node
++	build := func(c *context) {
++		root := coreColumn(c)
++		WithGlyphPlacement(wrapElement(root), GlyphPlacementWindowsClearTypeQuarter)
++		root.Children(func() {
++			inherited = coreText(c, "inherited")
++			overridden = coreText(c, "native")
++			WithGlyphPlacement(wrapElement(overridden), GlyphPlacementNative)
++			unknown = coreText(c, "unknown")
++			WithGlyphPlacement(wrapElement(unknown), GlyphPlacement(255))
++		})
++		sibling = coreText(c, "outside")
++	}
++	a := coreNewTester(build, 200, 100)
++	a.Frame()
++	if glyphPlacementTestSupported() && inherited.resolvedText().placeGlyph == nil {
++		t.Fatal("descendant did not inherit the opt-in")
++	}
++	if overridden.resolvedText().placeGlyph != nil || unknown.resolvedText().placeGlyph != nil || sibling.resolvedText().placeGlyph != nil {
++		t.Fatal("native override or unrelated branch inherited the opt-in")
++	}
++	var other *node
++	b := coreNewTester(func(c *context) { other = coreText(c, "independent window") }, 200, 100)
++	b.Frame()
++	if other.resolvedText().placeGlyph != nil {
++		t.Fatal("policy leaked across windows")
++	}
++	a.Frame()
++	if glyphPlacementTestSupported() && inherited.resolvedText().placeGlyph == nil {
++		t.Fatal("other window reset the original opt-in")
++	}
++}
++
++func TestGlyphPlacementCheckedLifetimeAndZero(t *testing.T) {
++	if got := WithGlyphPlacement(Element{}, GlyphPlacementWindowsClearTypeQuarter); got.Valid() {
++		t.Fatal("absent element became valid")
++	}
++	var expired Element
++	tt := coreNewTester(func(c *context) { expired = wrapElement(coreText(c, "lifetime")) }, 100, 50)
++	tt.Frame()
++	defer func() {
++		if recover() == nil {
++			t.Fatal("expired checked Element did not diagnose use")
++		}
++	}()
++	WithGlyphPlacement(expired, GlyphPlacementWindowsClearTypeQuarter)
++}
++
++func TestGlyphPlacementBuildStateSizes(t *testing.T) {
++	t.Logf("node=%d textStyle=%d optionalFunctionWord=%d", unsafe.Sizeof(node{}), unsafe.Sizeof(textStyle{}), unsafe.Sizeof(glyphPlacementPaint(nil)))
++}
+diff --git a/third_party/mygo/ui/glyph_placement_windows.go b/third_party/mygo/ui/glyph_placement_windows.go
+new file mode 100644
+index 0000000..e16d4d6
+--- /dev/null
++++ b/third_party/mygo/ui/glyph_placement_windows.go
+@@ -0,0 +1,111 @@
++//go:build windows && (amd64 || arm64)
++
++package ui
++
++import (
++	"math"
++
++	"github.com/egoist/mygo/internal/scene"
++	"github.com/egoist/mygo/internal/text"
++)
++
++func glyphPlacementFor(policy GlyphPlacement) glyphPlacementPaint {
++	if policy == GlyphPlacementWindowsClearTypeQuarter {
++		return paintQuarterText
++	}
++	return nil
++}
++
++// paintQuarterText runs only from the current kindText paint branch. Ghosts
++// pass their own current node as p.inline; no live-node closure is retained.
++func paintQuarterText(p *Painter, origin Rect) {
++	e := p.inline
++	if e == nil {
++		return
++	}
++	l := e.tl
++	ts := e.resolvedText()
++	var spans spanPaint
++	sp := e.paintSpans(&spans)
++	if l == nil || e.kind != kindText || e.spans != nil || e.first != nil || e.isInline() || e.contentSet || sp != nil {
++		// textLayout never dispatches this hook: unsupported paths paint once,
++		// with their original span colors/decorations and immediately return.
++		p.textLayout(l, origin.X, origin.Y, ts.color, ts, sp)
++		return
++	}
++	x, y, color := origin.X, origin.Y, ts.color
++	p.textBackgrounds(l, x, y, ts, sp)
++	// Content transitions also paint the old layout; only the current text
++	// carries its selection, in the same position, clip and opacity as its glyphs.
++	if e := p.inline; e != nil && e.tl == l {
++		if ed := e.st.editor; ed != nil && e.flags&flagSelectable != 0 && p.rt.textSelectionVisible(e.st) {
++			if a, b := ed.selection(); a != b {
++				for _, r := range l.Selection(a, b) {
++					p.Fill(Rect{x + r.X, y + r.Y, r.W, r.H}, ts.selectionColor(e.c.theme), 0)
++				}
++			}
++		}
++	}
++	sys := p.rt.text
++	s := p.scale
++	deco := decoration{underline: ts.underline, wavy: ts.wavy, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
++	shade := text.ShadeOf(color.R, color.G, color.B)
++	start := int32(len(p.s.Glyphs))
++	// Inline transforms do not change while the text paints; look for them once.
++	moves := p.inlineTransforms()
++	clips := !p.transform.Set && !moves
++	var run *glyphRun
++	if sys.JoinsGlyphs() && !moves {
++		// The engine's, whose buffers each text reuses.
++		run = &p.rt.glyphRun
++		run.ids, run.pens, run.glyphs = run.ids[:0], run.pens[:0], run.glyphs[:0]
++	}
++	for li := range l.Lines {
++		line := &l.Lines[li]
++		if clips && (y+line.Y > p.clip.Y+p.clip.H || y+line.Y+line.Height < p.clip.Y) {
++			continue
++		}
++		baseline := sys.Baseline((y + line.Baseline) * s)
++		for _, g := range line.Glyphs {
++			pen := (x + g.X) * s
++			if g.Object || clips && (pen > (p.clip.X+p.clip.W)*s || pen+(g.Advance+g.Size)*s < p.clip.X*s) {
++				continue
++			}
++			ix := float32(math.Floor(float64(pen)))
++			glyphColor, glyphShade := color, shade
++			if sp != nil {
++				if glyphColor = sp.color(sp.at(g.Cluster), color); glyphColor != color {
++					glyphShade = text.ShadeOf(glyphColor.R, glyphColor.G, glyphColor.B)
++				}
++			}
++			gi := text.RasterGlyph(sys, g.Font, g.ID, s, pen, glyphShade, p.opaque && !moves, text.GlyphPlacementWindowsClearTypeQuarter)
++			if !gi.OK {
++				continue
++			}
++			glyphColor = glyphColor.Alpha(p.opacity)
++			sg := scene.Glyph{
++				X: ix + gi.Left, Y: baseline + gi.Top, W: float32(gi.W), H: float32(gi.H),
++				U: gi.X, V: gi.Y, UW: gi.W, VH: gi.H,
++				Transform: p.inlineTransform(g.Cluster).Pixels(s),
++				Color:     glyphColor.scene(), Wide: p.glyphWide(glyphColor), Colored: gi.Colored, Subpixel: gi.Subpixel, Thin: gi.Thin,
++			}
++			if run != nil {
++				run.add(p, g, gi, pen, sg, glyphShade, baseline)
++				continue
++			}
++			p.s.Glyphs = append(p.s.Glyphs, sg)
++		}
++		if run != nil {
++			run.flush(p, baseline)
++		}
++		if sp != nil {
++			sp.lines(p, l, li, x, y, color, deco)
++		}
++		if deco.underline || deco.strike {
++			p.decorations(l, li, 0, len(line.Glyphs), x, y, deco, color)
++		}
++	}
++	if end := int32(len(p.s.Glyphs)); end > start {
++		p.add(scene.Op{Kind: scene.OpGlyphs, Start: start, End: end})
++	}
++}
+diff --git a/third_party/mygo/ui/layout.go b/third_party/mygo/ui/layout.go
+index f8f14ee..c2115ef 100644
+--- a/third_party/mygo/ui/layout.go
++++ b/third_party/mygo/ui/layout.go
+@@ -253,6 +253,9 @@ func (e *node) resolvedText() textStyle {
+ 		if take&setLang != 0 {
+ 			out.lang = t.lang
+ 		}
++		if take&setGlyphPlacement != 0 {
++			out.placeGlyph = t.placeGlyph
++		}
+ 		if take&setStrike != 0 {
+ 			out.strike = t.strike
+ 		}
+diff --git a/third_party/mygo/ui/paint.go b/third_party/mygo/ui/paint.go
+index 4c46086..950d7dd 100644
+--- a/third_party/mygo/ui/paint.go
++++ b/third_party/mygo/ui/paint.go
+@@ -268,7 +268,11 @@ func (p *Painter) element(e *node) {
+ 			var sp spanPaint
+ 			p.inline = e
+ 			if spans := e.paintSpans(&sp); !e.contentSet || !p.contentText(e, ox, oy, ts, spans) {
+-				p.textLayout(e.tl, ox, oy, ts.color, ts, spans)
++				if ts.placeGlyph != nil && !e.contentSet {
++					ts.placeGlyph(p, Rect{X: ox, Y: oy})
++				} else {
++					p.textLayout(e.tl, ox, oy, ts.color, ts, spans)
++				}
+ 			}
+ 			p.inline = nil
+ 		case kindImage:

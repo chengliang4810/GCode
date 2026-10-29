@@ -370,7 +370,7 @@ func (s *State) terminalView(c *ui.Context, id string) {
 	})
 	if v.showSearch {
 		ui.Row(c).Padding(4, 10).Gap(6).Children(func() {
-			input := ui.TextInputBase(c, &v.search).Label("Search terminal output").Placeholder("Find").Grow(1).OnShortcut(0, ui.KeyEscape, v.toggleSearch).OnChange(func() {
+			input := ui.TextInputBase(c, &v.search).Label(tr(c, "Search terminal output")).Placeholder(tr(c, "Find")).Grow(1).OnShortcut(0, ui.KeyEscape, v.toggleSearch).OnChange(func() {
 				if v.native != nil {
 					v.native.Search(v.search)
 				}
@@ -379,7 +379,7 @@ func (s *State) terminalView(c *ui.Context, id string) {
 				input.Focus()
 				v.focusSearch = false
 			}
-			ui.Button(c, "Close search").OnClick(v.toggleSearch)
+			ui.Button(c, tr(c, "Close search")).OnClick(v.toggleSearch)
 		})
 	}
 	if v.loading {
@@ -388,7 +388,7 @@ func (s *State) terminalView(c *ui.Context, id string) {
 	}
 	if v.err != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Padding(20).Children(func() {
-			ui.Text(c, "Unable to open terminal").FontSize(design.UISize(c, 16))
+			ui.Text(c, tr(c, "Unable to open terminal")).FontSize(design.UISize(c, 16))
 			ui.Text(c, v.err).TextColor(p.Muted).MaxWidth(460)
 		})
 		return

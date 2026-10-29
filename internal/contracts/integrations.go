@@ -68,6 +68,7 @@ type ProviderAccount struct {
 	ProviderID    string        `json:"providerId"`
 	TargetID      string        `json:"targetId"`
 	Email         string        `json:"email"`
+	DisplayName   string        `json:"displayName,omitempty"`
 	Plan          string        `json:"plan"`
 	InUse         bool          `json:"inUse"`
 	AuthStatus    string        `json:"authStatus"`
@@ -199,7 +200,7 @@ func (c Command) validateIntegration() error {
 	if c.Action != nil || c.Adjustment != nil || c.Send != nil || c.Settings != nil || c.Session != nil || c.Attachment != nil || c.Comment != nil || c.TerminalSize != nil || c.ProjectCreate != nil {
 		return errors.New("unexpected payload for integration command")
 	}
-	if strings.HasPrefix(c.Kind, "provider.") && (c.Integration == nil || c.Integration.ProviderID == "") {
+	if strings.HasPrefix(c.Kind, "provider.") && (c.Integration == nil || c.Kind != "provider.accounts.refresh" && c.Integration.ProviderID == "") {
 		return errors.New("provider is required")
 	}
 	if c.Kind == "device.rename" && (c.ID == "" || strings.TrimSpace(c.Name) == "") {

@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T13:35:28.0773189Z",
+  "goalStatus": "active",
+  "completeUIParity": false,
+  "branch": "codex/isolated-worktree",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "changes": [
+    "Accent plate overlay follows source border-box bounds; slider focus/pointer behavior retained",
+    "Header controls and workspace tabs now own non-overlapping flow slots; takeover omits session info; secondary ContextMenu preserves primary pane toggle",
+    "Windows UIA provider options declare ServerSideProvider plus UseComThreading (0x22); Bounds comment corrected without changing clipping behavior"
+  ],
+  "sourceManifest": {
+    "sha256": "443a7345666ee52a5c3302bfdab5bc035953660e738f986afb596f678e22cec1",
+    "path": "output/resume-validation/popup-r8-source-hashes.json"
+  },
+  "sourceFiles": 260,
+  "sourceUnchangedAfterBuildCapturesAndNativeInput": true,
+  "framework": {
+    "patch10": {
+      "sha256": "5372a13aae75d6bb103bf7489cd9e5bfe28d4a099cd9eef9e550080ea323523e",
+      "path": "patches/mygo-v0.6.4-windows-uia-provider.patch"
+    },
+    "replay": {
+      "sha256": "8aaa4c582a8e497e8f15e329426abd4041c6446c66fa482625735706c036cbdd",
+      "path": "output/uia-framework-qa/final-replay.json"
+    },
+    "focusInvestigation": {
+      "sha256": "a487923496ef1521fafc49c9ccc0d2aa793130a368fe75c1282cb75eb98beb41",
+      "path": "output/framework-uia-provider-options-20261028-124947-256/focus-investigation.json"
+    },
+    "orderedPatches": 10,
+    "verification": "Verified MyGo v0.6.4 + zeron-native-ui.5: 282c9e97b03e120d3960f9ee38ebf5f9407075b100f99c2d03ece74c37545e00 (1835 files)",
+    "fileCount": 1835,
+    "providerFixDoesNotResolveObservedFocusMismatch": true,
+    "APIValidation": {
+      "sha256": "8e1dab19abd3e97ac7497d1abbc7d8cb20940a1197854d9ddcc459ff2fb7271e",
+      "path": "output/framework-uia-provider-options-20261028-124947-256/validation.json"
+    },
+    "sourceSHA256": "282c9e97b03e120d3960f9ee38ebf5f9407075b100f99c2d03ece74c37545e00",
+    "sizeProof": {
+      "sha256": "3286c1cda65bea24901878e2f0658ded84edd64f7fced66c9dd105b971312a43",
+      "path": "output/uia-framework-qa/final-size-proof.json"
+    },
+    "upstream": "v0.6.4",
+    "revision": "zeron-native-ui.5"
+  },
+  "checks": [
+    {
+      "sha256": "48ef1bfef92c6889bb98f8aacbdb650954a8fefd66c9b7297a901de3ead5307b",
+      "path": "output/resume-validation/popup-r8-test-checks-r2.json"
+    },
+    {
+      "sha256": "a6c18a67f8e054b30547b09fda72e99753817660a7121990eb261fa3065ce8e0",
+      "path": "output/resume-validation/popup-r8-vet-lint-checks-r2.json"
+    },
+    {
+      "sha256": "a47bfb1771de7b9c06bcd43c09711b99ff6cd04ac561f90cea0525e8d89cffcd",
+      "path": "output/resume-validation/popup-r8-framework-checks.json"
+    }
+  ],
+  "initialFailures": {
+    "lintInvocationCorrection": "No module golangci-lint tool; final gate uses pinned go run v2.15.0, without go.mod/go.sum changes",
+    "correctedBy": "Moving raw backup files under _source; go list ./... now contains only12 intended packages",
+    "logsRetained": [
+      "output/resume-validation/popup-r8-full-tests.log",
+      "output/resume-validation/popup-r8-go-vet.log",
+      "output/resume-validation/popup-r8-mygo-vet.log",
+      "output/resume-validation/popup-r8-lint.log"
+    ],
+    "migration": {
+      "sha256": "706dd65e01fdbe2030c8d853af6a54fdf1de73ca3a49ac03dfdd37a7a4fc07b1",
+      "path": "output/framework-uia-provider-options-20261028-124947-256/source-snapshot-migration.json"
+    },
+    "diagnosticGoFilesWereScanned": true
+  },
+  "applicationAudits": [
+    {
+      "sha256": "707905a0520f92878aafcbba1ebd32ec021741138a84967e4d9d0ba5522b9af1",
+      "path": "output/model-picker-r8-accent/result.json"
+    },
+    {
+      "sha256": "f589dd791af6dae27ff866c2a31c29175e9dffdeb044e4e4e8c47c1e3f7c29ce",
+      "path": "output/native-uia-r7-review/result.json"
+    }
+  ],
+  "fixtureBinary": {
+    "sha256": "d0e20d8ab36e037792d849875b7e588b5f6f4b26e6b008f6818b5f99486fb29d",
+    "path": "output/fixtures/model-picker-fixture-r8.exe"
+  },
+  "fixtureBuild": {
+    "sha256": "43c1a72bcb8c4bdd24de447800648714febea71caa55da0a1f7ccf9714499a8c",
+    "path": "output/fixtures/model-picker-fixture-r8-build.json"
+  },
+  "captureBridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+  "captures": [
+    {
+      "count": 8,
+      "exitCode": 0,
+      "noOSKeyboardOrMouseInput": true,
+      "allPNGsAndSidecarHashesMatch": true,
+      "manifest": {
+        "sha256": "d52aa8e47f05dd2735b306ace60f2fc9f5851ffde193a4a2f0f97c80b2f172de",
+        "path": "output/captures/model-picker-fixture-wgc-20261028-r8-2x/evidence.json"
+      },
+      "nativeWindowAttached": true,
+      "run": {
+        "sha256": "4c28af7b553e7dd6a0ad6c1f9decb2f738a88938f58542774427d167923a28b6",
+        "path": "output/captures/model-picker-fixture-wgc-20261028-r8-2x.run.json"
+      },
+      "dpi": 192,
+      "oneXOptionText": false,
+      "directory": "output/captures/model-picker-fixture-wgc-20261028-r8-2x",
+      "allIHDRDimensionsMatch": true,
+      "scale": 2
+    },
+    {
+      "count": 28,
+      "exitCode": 0,
+      "noOSKeyboardOrMouseInput": true,
+      "allPNGsAndSidecarHashesMatch": true,
+      "manifest": {
+        "sha256": "e5d67c656fb29939be5ab1ae9d5a94a58838db7f5a2b30d163b12be3e01369b2",
+        "path": "output/footer-implementation-r5-2x/evidence.json"
+      },
+      "nativeWindowAttached": true,
+      "run": {
+        "sha256": "c9eaa67938bb2b9c374457973979b7c6a67238fe7784c0ce2abb2eee32a5a55d",
+        "path": "output/footer-implementation-r5-2x.run.json"
+      },
+      "dpi": 192,
+      "oneXOptionText": "not exported by footer fixture",
+      "directory": "output/footer-implementation-r5-2x",
+      "allIHDRDimensionsMatch": true,
+      "scale": 2
+    }
+  ],
+  "originalCompact": {
+    "directory": "output/reference-lossless/capture-native-state-20261028-2x-01",
+    "scale": 2,
+    "run": {
+      "sha256": "1243c968748611eac9b7b580fc46d6009bfb7f37ecec5b3847b669b7a8b0a9d6",
+      "path": "output/reference-lossless/capture-native-state-20261028-2x-01.run.json"
+    },
+    "productionRendererUnmodified": true,
+    "binarySHA256": "cd460f145549aad6d6686b2a6b6b8008936d713cd676d4fff5aa9771152833ba",
+    "count": 8
+  },
+  "compactComparison": {
+    "visuallyAcceptedScenes": 0,
+    "report": {
+      "sha256": "2be74c1154504d9de7a233676020252465b9ac28acc0870f3d0290457b4a80f6",
+      "path": "output/compact-comparison-20261028-r8-2x/comparison.json"
+    },
+    "threshold": 0.995,
+    "numericalThresholdMetCount": 3,
+    "scenes": [
+      {
+        "name": "compact-panel-dark-wide",
+        "ssim": 0.997022119395127,
+        "changedPixels": 28140,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-model-list-dark-wide",
+        "ssim": 0.9950442986491509,
+        "changedPixels": 12125,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-panel-dark-narrow",
+        "ssim": 0.9930952438722151,
+        "changedPixels": 28140,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-model-list-dark-narrow",
+        "ssim": 0.9880871918006088,
+        "changedPixels": 12305,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-panel-light-wide",
+        "ssim": 0.9970843225248581,
+        "changedPixels": 46007,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-model-list-light-wide",
+        "ssim": 0.9948541643886732,
+        "changedPixels": 25412,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-panel-light-narrow",
+        "ssim": 0.9932394731070632,
+        "changedPixels": 46007,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-model-list-light-narrow",
+        "ssim": 0.9885000203514469,
+        "changedPixels": 25232,
+        "thresholdMet": false
+      }
+    ],
+    "imageTransformations": [],
+    "maximumSSIM": 0.9970843225248581,
+    "count": 8,
+    "limitation": "Controlled same2x R7 comparison: panel rim materially improved; list scores unchanged. Text/native frame/caret-phase residuals remain. No full scene acceptance.",
+    "minimumSSIM": 0.9880871918006088,
+    "scale": 2
+  },
+  "footerComparison": {
+    "visuallyAcceptedScenes": 0,
+    "report": {
+      "sha256": "94d92ca4aabb92e39c3cbab3f8312dd92023e7e8944ce136b6e6eac5ce92ee93",
+      "path": "output/footer-comparison-r5-2x/comparison.json"
+    },
+    "threshold": 0.995,
+    "numericalThresholdMetCount": 28,
+    "scenes": [
+      {
+        "name": "footer-known-dark",
+        "ssim": 0.9997009031518788,
+        "changedPixels": 74686,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-known-context-dark",
+        "ssim": 0.9996636374288587,
+        "changedPixels": 79597,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-known-accounts-dark",
+        "ssim": 0.9989532611615628,
+        "changedPixels": 84229,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-unknown-dark",
+        "ssim": 0.9997453574042499,
+        "changedPixels": 74235,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-capacity-dark",
+        "ssim": 0.9997496770059835,
+        "changedPixels": 74604,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-capacity-context-dark",
+        "ssim": 0.9997130175614433,
+        "changedPixels": 79078,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-zero-dark",
+        "ssim": 0.9997488658289212,
+        "changedPixels": 74801,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-zero-context-dark",
+        "ssim": 0.999704590014388,
+        "changedPixels": 78972,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-over-dark",
+        "ssim": 0.9997119008349332,
+        "changedPixels": 74750,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-over-context-dark",
+        "ssim": 0.9996726889355476,
+        "changedPixels": 79367,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-warning-dark",
+        "ssim": 0.9997249164747094,
+        "changedPixels": 74581,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-warning-context-dark",
+        "ssim": 0.9996774937908227,
+        "changedPixels": 79783,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-danger-dark",
+        "ssim": 0.9997015620161039,
+        "changedPixels": 74752,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-danger-context-dark",
+        "ssim": 0.9996582048534421,
+        "changedPixels": 79998,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-known-light",
+        "ssim": 0.9997123053818597,
+        "changedPixels": 74633,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-known-context-light",
+        "ssim": 0.9996113345305483,
+        "changedPixels": 88689,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-known-accounts-light",
+        "ssim": 0.9987967525287049,
+        "changedPixels": 170760,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-unknown-light",
+        "ssim": 0.9997526442305626,
+        "changedPixels": 74252,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-capacity-light",
+        "ssim": 0.9997550609348813,
+        "changedPixels": 74439,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-capacity-context-light",
+        "ssim": 0.9996548830937654,
+        "changedPixels": 88132,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-zero-light",
+        "ssim": 0.9997540426871272,
+        "changedPixels": 74651,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-zero-context-light",
+        "ssim": 0.9996454748768805,
+        "changedPixels": 88164,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-over-light",
+        "ssim": 0.9997182107366732,
+        "changedPixels": 74742,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-over-context-light",
+        "ssim": 0.9996134490950291,
+        "changedPixels": 89058,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-warning-light",
+        "ssim": 0.9997345169926968,
+        "changedPixels": 74611,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-warning-context-light",
+        "ssim": 0.9996213426703673,
+        "changedPixels": 89304,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-danger-light",
+        "ssim": 0.9997087693414617,
+        "changedPixels": 74726,
+        "thresholdMet": true
+      },
+      {
+        "name": "footer-danger-context-light",
+        "ssim": 0.9995983172601125,
+        "changedPixels": 89345,
+        "thresholdMet": true
+      }
+    ],
+    "imageTransformations": [],
+    "maximumSSIM": 0.9997550609348813,
+    "count": 28,
+    "limitation": "Wide blank scaffold dominates. Same R7 scores; full footer/input, native button tint and independently locked active/DWM state remain pending.",
+    "minimumSSIM": 0.9987967525287049,
+    "scale": 2
+  },
+  "comparatorGuards": [
+    {
+      "suite": "compact",
+      "negatives": 53,
+      "result": {
+        "sha256": "f54a314607e7eda3fcac77bee3c34ddf5e3b3fb22b6a3c8171c84e2d4dfe6f1d",
+        "path": "output/compact-comparison-tests-20261028-122534-067/result.json"
+      },
+      "cases": 55,
+      "controls": 2
+    },
+    {
+      "suite": "footer",
+      "negatives": 34,
+      "result": {
+        "sha256": "686028bdc003b8ba9b2327126ca7a953e2ae6dc2a35e0a41bac63320b048d6f3",
+        "path": "output/footer-comparison-tests-20261028-122016-517/result.json"
+      },
+      "cases": 36,
+      "controls": 2
+    }
+  ],
+  "guardScope": "Prior55/36 suites unchanged, hash verified; controls intercept go build and do not execute Go/parity/native. R8 strict comparisons are separate real executions.",
+  "packages": {
+    "macNative": "pending for both architectures",
+    "sourceAfterPackage": {
+      "sha256": "eef28d73b68e59004161cb9cade33a6bade58e4b68a891b486969ceda12eaa49",
+      "path": "output/resume-validation/popup-r8-after-package-source-check.json"
+    },
+    "installerExecuted": false,
+    "windowsExecutableSHA256": "3c860593709bbbf983575c930cf3f7db5e473af9bf95ae04c014b9956bbd4a8e",
+    "manifest": {
+      "sha256": "500f05646fc2465936c9b94e6b99b26808c23ec9e2eb9df5a79cbea78b1b098c",
+      "path": "output/resume-validation/popup-r8-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json"
+    },
+    "buildArchitectureResourcesZIPChecksumsAndStamp": "passed",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ]
+  },
+  "nativeInput": {
+    "actualExitCode": 0,
+    "stderrBytes": 0,
+    "evidence": {
+      "sha256": "52321c263234544bc6408f88b5f50c3d1811642e3b7d8d771ee0e6c8915f96b3",
+      "path": "output/resume-validation/popup-r8-native-input/evidence.json"
+    },
+    "unresolved": [
+      "After fresh settled observations and side editing, external UIA focused_element still reports main Message; provider0x22 contract fix did not close this observed anomaly",
+      "Immediate post-action UIA can precede the rendered frame; acceptance observations used a fresh settled snapshot",
+      "Full visual typography/material/motion, canvas trailing/expand styling, otherDPI, full platform and browser/IME/clipboard/performance acceptance remain pending"
+    ],
+    "captureScope": "Raw Computer Use UIA/JPEG observations and separate Window.CapturePage startup client PNG, not reference pixel acceptance",
+    "scopeFlags": {
+      "realProviderOrAccount": false,
+      "macNative": false,
+      "installerExecuted": false,
+      "sideMessageSent": false,
+      "referenceParity": false,
+      "externalMessageOrURL": false
+    },
+    "allEvidenceHashesMatch": true,
+    "observed": [
+      "Primary click Toggle right pane opened a split workspace without menu",
+      "Secondary click preserved Expand pane / Terminal panel menu, Escape closed it",
+      "Expand workspace entered takeover; settled fresh UIA omitted Session information and title",
+      "Collapse restored Session information in its own visible slot; clicking it opened Branch changes/Add action/side chat card rather than New surface",
+      "Native titlebar drag moved returned screenshot origin from446,225 to606,345 with unchanged1602x1002 returned dimensions",
+      "Actual Agent Schema reviewer card mounted independent workspace side transcript",
+      "Click side editor, controlled non-secret text R8 side focus routing check reached only side; main draft remained empty",
+      "Native Ctrl+Z cleared only side draft"
+    ],
+    "evidenceFiles": 26
+  },
+  "independentOriginalTextBounds": {
+    "sourceIntegrity": {
+      "sha256": "ede452efdd8353a6cb58ae00071b028f4d9af64d74692ce3ef37c69edccd82c0",
+      "path": "output/model-picker-2x-text-audit/r9c/source-integrity.json"
+    },
+    "scope": "Independent original adapter UIFont13/16/20 actual2x, three exit0; no production Go changes; glyph baseline inferred, fractional ancestors not measured. Prior R9 panic and R9b exit101 retained.",
+    "evidence": {
+      "sha256": "fe8e68463ec03a37e44c7b1bc6986298a076b4cd812f65389a6bb9bce9834a67",
+      "path": "output/model-picker-2x-text-audit/r9c/actual-bounds-evidence.json"
+    }
+  },
+  "referenceClones": [
+    {
+      "clean": true,
+      "path": "output/reference-sources/zeron",
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf"
+    },
+    {
+      "clean": true,
+      "path": "output/reference-sources/mygo",
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609"
+    }
+  ],
+  "documentationCorrections": [
+    "CSS inset coordinates use parent padding box while frozen GPUI accent inset uses its border box",
+    "Frozen header comment describes a Git-limited toggle but code renders Files and pane actions for selected sessions",
+    "ProviderOptions comment said ServerSide while0x1 meant ClientSide; now0x22",
+    "AccessNode.Bounds comment said visible box but value is un-clipped transformed border box; comment only corrected",
+    "Git-ignored output is still scanned by Go; diagnostic source snapshots belong under _source"
+  ],
+  "remaining": [
+    "List text baseline/absolute geometry rounding, popup material/shadow/caret phase and complete scenes",
+    "External UIA focus still main while side editor receives keys; provider contract correction alone insufficient",
+    "Canvas trailing controls, expand/plus sizing and full header visual acceptance",
+    "PR tooltip, Git/checkout/ref destinations and full footer behavior",
+    "Windows otherDPI, native keyboard/IME/clipboard/browser/motion/performance and all routes",
+    "Mac Intel/ARM actual runtime and full platform acceptance"
+  ]
+}

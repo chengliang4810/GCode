@@ -140,6 +140,9 @@ const (
 	uiaTextSelectionChangedEvent        = 20014
 	uiaTextChangedEvent                 = 20015
 
+	uiaProviderServerSide      = 0x2
+	uiaProviderUseComThreading = 0x20
+
 	// announcerID identifies the live region holding announcements.
 	announcerID = ^uint64(0)
 
@@ -673,7 +676,7 @@ func initUIA() {
 			if hr, ok := uiaOf(this).pageCall(uiaGetProviderOptions, p); ok {
 				return hr
 			}
-			*(*int32)(native(p)) = 0x1 | 0x20 // ServerSideProvider, UseComThreading
+			*(*int32)(native(p)) = uiaProviderServerSide | uiaProviderUseComThreading
 			return sOK
 		}),
 		cb(func(this, pattern, p uintptr) uintptr { // GetPatternProvider

@@ -1,0 +1,91 @@
+{
+  "branch": "codex/isolated-worktree",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "originalPNGStateAddition": {
+    "verification": "output/reference-lossless/typed-state-image-equivalence.json",
+    "output": "output/reference-lossless/capture-native-state-20261028-01",
+    "allEightByteIdenticalToPriorOriginalSet": true
+  },
+  "goalStatus": "active",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "comparison": {
+    "allThresholdsMet": false,
+    "report": "output/compact-comparison-20261028-r4-reviewed/comparison.json",
+    "maximumSSIM": 0.9933994788846245,
+    "reportSHA256": "f63cdc13632a68fe157e4743a22e42a1420475b1a6ef2760d045b3798eb3c184",
+    "nativeActiveAndDWMState": "not recorded; native frame tint remains an unresolved finding",
+    "minimumSSIM": 0.9767110557070645,
+    "threshold": 0.995
+  },
+  "completeUIParity": false,
+  "checks": {
+    "goVet": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-final-go-vet.log"
+    },
+    "taggedFixtureAndDesktopTests": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-final-tagged.log"
+    },
+    "mygoVet": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-final-mygo-vet.log"
+    },
+    "race": "not rerun in R4",
+    "diffCheck": "passed",
+    "fullGoTests": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-final-tests.log"
+    },
+    "lint": {
+      "log": "output/resume-validation/popup-r4-final-lint.log",
+      "exitCode": 0,
+      "issues": 0
+    }
+  },
+  "remaining": [
+    "Measured kerning/text/baseline residuals",
+    "Footer typed state and source conditions",
+    "Full motion/material and Windows native matrix",
+    "UIA focused-element reporting",
+    "Native Mac Intel/ARM acceptance"
+  ],
+  "sourceManifestSHA256": "374ee369194fefb6355c685477722e5ad21a706b414d0b13d7008d125a3f0fe9",
+  "readOnlyReferenceClean": true,
+  "sourceManifest": "output/resume-validation/popup-r4-source-hashes.json",
+  "schemaVersion": 1,
+  "packages": {
+    "manifest": "output/resume-validation/popup-r4-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+    "installerExecuted": false,
+    "nativeBootEvidence": "output/resume-validation/popup-r4-native-boot-r2/evidence.json",
+    "nativeBootEvidenceSHA256": "c4963e15dda1ed67103d539e996584670ba41b18d8c66954a876ac229d5a5dce",
+    "buildAndArchitectureResourcesChecksums": "passed",
+    "windowsExecutableSHA256": "ed46d3cce18c1699a42f7b9b52ad718dc755fb8f24a09a0560cc306f933160b9",
+    "macNative": "pending for each architecture",
+    "nativeBootScope": "default/dark and transcript/light startup, native client render, exit0; no new key/mouse sequence",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ]
+  },
+  "framework": {
+    "fileCount": 1831,
+    "sourceSHA256": "c6a86278ae261c75b6b195632d97d4d64218ed69189ec45554b85c5826b4d2a6",
+    "upstream": "v0.6.4",
+    "revision": "zeron-native-ui.3"
+  },
+  "recordedAtUTC": "2026-10-28T10:10:11.4035308Z",
+  "sourceFiles": 206,
+  "sourceUnchangedAfterBuildAndNativeBoot": true,
+  "capture": {
+    "fixtureExecutableSHA256": "9d8855f93a1a2a8b9f1d040a10279cfe3c9b5d0f32e384fcef8e06180b031563",
+    "sourceAndBuild": "output/fixtures/model-picker-fixture-r4-build.json",
+    "count": 8,
+    "bridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+    "output": "output/captures/model-picker-fixture-wgc-20261028-r4",
+    "transformations": []
+  },
+  "phase": "R4 frozen compact popup geometry/material/typography/state"
+}

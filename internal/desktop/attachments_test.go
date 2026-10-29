@@ -1,14 +1,48 @@
 package desktop
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"gcode/internal/assets"
+	"gcode/internal/contracts"
 	"github.com/egoist/mygo/transfer"
 	"github.com/egoist/mygo/ui"
 )
+
+type completingAttachmentService struct {
+	contracts.Service
+	importer    contracts.AttachmentImporter
+	afterImport func()
+}
+
+func (s completingAttachmentService) ImportAttachments(ctx context.Context, request contracts.AttachmentImportRequest) ([]contracts.Attachment, error) {
+	items, err := s.importer.ImportAttachments(ctx, request)
+	s.afterImport()
+	return items, err
+}
+
+func TestAttachmentCompletionCannotRecreateDeletedSession(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	path := filepath.Join(t.TempDir(), "r11-owned.txt")
+	if err := os.WriteFile(path, []byte("R11 attachment"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	service := a.service
+	a.service = completingAttachmentService{Service: service, importer: service.(contracts.AttachmentImporter), afterImport: func() {
+		a.dispatch(contracts.Command{Kind: "session.delete", ID: "chat-0"})
+	}}
+	a.importAttachments(contracts.AttachmentImportRequest{Paths: []string{path}})
+	if a.sessionID != "" || len(a.attachments) != 0 || len(a.attachmentImports) != 0 {
+		t.Fatal("late attachment changed the restored canvas or retained busy state")
+	}
+	if _, exists := a.sessionStates["chat-0"]; exists {
+		t.Fatal("late attachment recreated deleted view")
+	}
+}
 
 func TestNativeClipboardImageStagesAnAttachment(t *testing.T) {
 	a := testApp(t, "default")

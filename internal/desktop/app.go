@@ -11,6 +11,8 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
+	localize "gcode/internal/i18n/view"
 	"gcode/internal/workbench"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
@@ -18,10 +20,14 @@ import (
 )
 
 type App struct {
-	now          func() time.Time
-	pendingSends map[string]primaryPendingSend
-	sendSequence uint64
+	cloudPage      cloudSettingsPageState
+	branchCreation *branchCreation
+	now            func() time.Time
+	pendingSends   map[string]primaryPendingSend
+	sendSequence   uint64
 	composerControls
+	footerUsage                                                   composerUsageState
+	footerGit                                                     composerFooterGitState
 	sideComposers                                                 map[string]*sideComposerState
 	background                                                    backgroundSettingsState
 	pickAttachmentFiles                                           func() ([]string, error)
@@ -48,11 +54,16 @@ type App struct {
 	rightExpanded                                                 bool
 	chatWidth                                                     float32
 	sessionStates                                                 map[string]sessionViewState
+	canvasTarget                                                  *canvasTarget
+	chatWorkspacePending                                          bool
 	desiredSettings                                               *contracts.Settings
 	authoritativeSettings                                         contracts.Settings
 	settingsPending                                               int
 	bottom                                                        *workbench.State
 	pendingNew                                                    bool
+	pendingNewRequestID                                           string
+	pendingNewEpoch                                               uint64
+	pendingNewRuns                                                map[string]bool
 	service                                                       contracts.Service
 	ctx                                                           context.Context
 	cancel                                                        context.CancelFunc
@@ -99,6 +110,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 		cancel()
 		return nil, err
 	}
+	snapshot.Settings.General.Language = i18n.Normalize(snapshot.Settings.General.Language)
 	a := &App{service: service, ctx: ctx, cancel: cancel, state: snapshot, jobs: make(chan contracts.Command, 128), panelOpened: [3]uint64{1, 2, 3},
 		sidebar: true, route: "chat", section: "General", checkout: "Current checkout",
 		drafts: make(map[string]string), expanded: make(map[string]bool), history: []string{"chat"}}
@@ -170,6 +182,7 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.RenderSession = a.sideTranscript
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.syncNativeAppearance()
+	a.syncNativeLanguage()
 	a.workspace.OnToggleExpand = func() { a.rightExpanded = !a.rightExpanded; a.setPanel(1, true) }
 	a.workspace.OnAnnotation = a.attachAnnotation
 	events, err := a.service.Subscribe(a.ctx)
@@ -191,7 +204,9 @@ func (a *App) Attach(win *mygo.Window) error {
 					a.commandFinished(command, err)
 					if snapshotErr == nil {
 						a.apply(snapshot)
+						a.creationCommandApplied(command, err)
 					}
+					a.branchSnapshotFailed(command, snapshotErr)
 				})
 			}
 		}
@@ -205,14 +220,11 @@ func (a *App) Attach(win *mygo.Window) error {
 				if !ok {
 					return
 				}
-				if event.Snapshot != nil {
-					snapshot := *event.Snapshot
-					win.Update(func() {
-						if !a.closed {
-							a.apply(snapshot)
-						}
-					})
-				}
+				win.Update(func() {
+					if !a.closed {
+						a.applyEvent(event)
+					}
+				})
 			}
 		}
 	}()
@@ -236,33 +248,81 @@ func (a *App) apply(s contracts.Snapshot) {
 		if a.settingsPending > 0 && a.desiredSettings != nil {
 			s.Settings = *a.desiredSettings
 		}
-		selected := ""
-		if a.pendingNew {
-			existing := make(map[string]bool, len(a.state.Sessions))
-			for _, session := range a.state.Sessions {
-				existing[session.ID] = true
-			}
-			for _, session := range s.Sessions {
-				if !existing[session.ID] {
-					selected = session.ID
-					break
-				}
-			}
-		}
+		languageChanged := a.state.Settings.General.Language != s.Settings.General.Language
 		appearanceChanged := a.state.Settings.Appearance != s.Settings.Appearance
+		a.projectFooterAccountSwitches(&s)
 		a.state = s
 		a.restoreModelSelection()
 		a.prefetchMedia(snapshotMediaRefs(s))
 		a.workspace.Update(s)
 		a.bottom.Update(s)
+		if languageChanged {
+			a.syncNativeLanguage()
+		}
 		if appearanceChanged {
 			a.syncNativeAppearance()
 			a.refreshBackground()
 		}
-		if selected != "" {
-			a.pendingNew = false
-			a.selectSession(selected)
+	}
+	if a.pendingNew && a.pendingNewEpoch == a.draftEpoch {
+		for _, run := range a.state.Runs {
+			if run.RequestID != "" && run.RequestID == a.pendingNewRequestID && !a.pendingNewRuns[run.ID] {
+				a.settleCreatedSession(run.SessionID)
+				break
+			}
 		}
+	}
+	// Reconcile against accepted state, including an unchanged frame that finds
+	// an already dangling selection. Ignored snapshots cannot remove a row.
+	if a.sessionID != "" && !a.hasSession(a.sessionID) {
+		removed := a.sessionID
+		a.setSelectedSession("", a.route == "pull-requests")
+		delete(a.sessionStates, removed)
+		delete(a.drafts, removed)
+		delete(a.pendingSends, removed)
+	}
+	a.reconcileBranchCreation()
+}
+
+func (a *App) applyEvent(event contracts.Event) {
+	if event.Snapshot != nil {
+		a.apply(*event.Snapshot)
+	}
+	if !a.pendingNew || event.RequestID == "" || event.RequestID != a.pendingNewRequestID || a.pendingNewEpoch != a.draftEpoch || a.pendingNewRuns[event.RunID] || event.Kind != "run.started" && event.Kind != "request.created" && event.Kind != "queue.changed" {
+		return
+	}
+	if event.Snapshot != nil || a.hasSession(event.SessionID) {
+		a.settleCreatedSession(event.SessionID)
+	}
+}
+
+func (a *App) settleCreatedSession(id string) {
+	// Durable run/request identity survives the backend's snapshot coalescing.
+	// An older ACK may settle its request, but cannot resurrect a removed row.
+	for _, session := range a.state.Sessions {
+		if session.ID == id {
+			if session.SideChat || session.ParentSessionID != "" {
+				return
+			}
+			a.pendingNew = false
+			a.pendingNewRequestID = ""
+			if a.sessionID == "" && a.route == "chat" {
+				a.selectSession(session.ID)
+			}
+			return
+		}
+	}
+	a.pendingNew = false
+	a.pendingNewRequestID = ""
+}
+
+func (a *App) creationCommandApplied(command contracts.Command, err error) {
+	a.branchCommandApplied(command, err)
+	if err == nil && a.pendingNew && command.Kind == "message.send" && command.Send != nil && command.Send.SessionID == "" && command.Send.RequestID == a.pendingNewRequestID {
+		// A concurrent deletion can remove both the created row and its run
+		// before this complete snapshot. A finished command must still settle.
+		a.pendingNew = false
+		a.pendingNewRequestID = ""
 	}
 }
 
@@ -277,8 +337,11 @@ func (a *App) dispatch(cmd contracts.Command) {
 	if a.win == nil {
 		err := a.service.Execute(a.ctx, cmd)
 		a.commandFinished(cmd, err)
-		if s, err := a.service.Snapshot(a.ctx); err == nil {
+		if s, snapshotErr := a.service.Snapshot(a.ctx); snapshotErr == nil {
 			a.apply(s)
+			a.creationCommandApplied(cmd, err)
+		} else {
+			a.branchSnapshotFailed(cmd, snapshotErr)
 		}
 		return
 	}
@@ -294,13 +357,23 @@ func (a *App) saveSettings() {
 	a.desiredSettings = &s
 	a.settingsPending++
 	a.syncNativeAppearance()
+	a.syncNativeLanguage()
 	a.dispatch(contracts.Command{Kind: "settings.update", Settings: &s})
 	a.refreshBackground()
 }
 func (a *App) OpenRoute(route string) {
+	// A session pick or annotation may leave settings before the next View.
+	// Retire that visit before replacing the old route with Cloud again.
+	if a.cloudPage.active && !a.cloudSettingsVisible() {
+		a.syncCloudSettingsPage()
+	}
+	defer a.syncCloudSettingsPage()
 	a.refreshBackground()
 	if route != "settings" && !strings.HasPrefix(route, "settings/") {
 		a.clearShortcutRecording()
+		if a.chatWorkspacePending && route != "pull-requests" {
+			a.syncChatWorkspace()
+		}
 	}
 	if route == "settings" || strings.HasPrefix(route, "settings/") {
 		a.workspace.StopAnnotations()
@@ -360,18 +433,38 @@ func (a *App) back(delta int) {
 	}
 }
 func (a *App) selectSession(id string) {
+	a.setSelectedSession(id, false)
+	a.route = "chat"
+}
+
+// Background reconciliation changes the chat selection without navigating.
+// A visible PR surface stays in its workspace until explicit chat navigation.
+func (a *App) setSelectedSession(id string, preserveWorkspace bool) {
+	if id != "" && !a.hasSession(id) {
+		id = ""
+	}
 	if id == a.sessionID {
-		a.route = "chat"
+		if !preserveWorkspace && a.chatWorkspacePending {
+			a.syncChatWorkspace()
+		}
 		return
 	}
-	a.storeSessionView()
+	if a.sessionID == "" || a.hasSession(a.sessionID) {
+		a.storeSessionView()
+	}
+	if a.sessionID == "" && id != "" {
+		a.rememberCanvasTarget()
+	} else if id == "" {
+		a.restoreCanvasTarget()
+	}
 	a.workspace.ResetAnnotations()
 	a.sessionID = id
 	a.modelMenu = false
 	a.modelProvider, a.modelQuery = "", ""
-	a.route = "chat"
+	a.projectMenu, a.deviceMenu, a.branchMenu, a.accessMenu = false, false, false, false
 	for _, s := range a.state.Sessions {
 		if s.ID == id {
+			a.invalidateCanvasCloudTarget(s)
 			a.projectID = s.ProjectID
 			a.deviceID = s.DeviceID
 			a.modelID = s.ModelID
@@ -394,14 +487,36 @@ func (a *App) selectSession(id string) {
 			break
 		}
 	}
-	a.workspace.ProjectID = a.projectID
+	if id == "" {
+		a.reconcileComposerCloudDevice()
+	}
+	a.restoreModelSelection()
 	a.normalizeReasoning()
 	if a.bottom != nil {
 		a.bottom.ProjectID = a.projectID
 	}
-	a.workspace.SwitchSession(id)
 	a.bottom.SwitchSession(id)
+	if preserveWorkspace {
+		a.chatWorkspacePending = true
+	} else {
+		a.syncChatWorkspace()
+	}
 	a.restoreSessionView(id)
+}
+
+func (a *App) syncChatWorkspace() {
+	a.workspace.ProjectID = a.projectID
+	a.workspace.SwitchSession(a.sessionID)
+	a.chatWorkspacePending = false
+}
+
+func (a *App) hasSession(id string) bool {
+	for _, session := range a.state.Sessions {
+		if session.ID == id {
+			return true
+		}
+	}
+	return false
 }
 func (a *App) currentSession() contracts.Session {
 	for _, s := range a.state.Sessions {
@@ -417,19 +532,22 @@ func (a *App) projectLabel() string {
 			return p.Name
 		}
 	}
-	return "Don't work in a project"
+	return a.t("Don't work in a project")
 }
 func (a *App) deviceLabel() string {
 	for _, d := range a.state.Devices {
 		if d.ID == a.deviceID {
+			if d.Current && d.Name == "This device" {
+				return a.t("This device")
+			}
 			return d.Name
 		}
 	}
-	return "This device"
+	return a.t("This device")
 }
 func (a *App) modelLabel() string {
 	if a.sessionID == "" && a.modelNoAgents() {
-		return "No agents available"
+		return a.t("No agents available")
 	}
 	for _, m := range a.state.Models {
 		if m.ID == a.modelID {
@@ -437,7 +555,7 @@ func (a *App) modelLabel() string {
 		}
 	}
 	if a.state.ModelCatalog.State == contracts.CatalogLoading {
-		return "Loading models…"
+		return a.t("Loading models…")
 	}
 	if a.modelID != "" {
 		return a.modelID
@@ -447,6 +565,8 @@ func (a *App) modelLabel() string {
 func (a *App) notification(s string) { a.toast = s; a.toastUntil = time.Now().Add(3 * time.Second) }
 
 func (a *App) View(c *ui.Context) {
+	localize.Set(c, a.state.Settings.General.Language)
+	a.syncCloudSettingsPage()
 	a.services = c.Services()
 	a.configureMotion(c)
 	if a.focusComposer {
@@ -479,10 +599,18 @@ func (a *App) View(c *ui.Context) {
 	}
 	c.SetTheme(theme)
 	c.Root().Background(a.palette.Background).Font(theme.Font).FontSize(theme.FontSize).TextColor(theme.Text)
+	design.ApplyReferenceTypography(c)
+	session := a.currentSession()
+	provider := ""
+	if session.ID != "" {
+		provider = a.selectedModel().ProviderID
+	}
+	a.trackFooterUsage(c, &a.footerUsage, session, provider, false)
 	c.Root().Background(design.Glass(a.palette, settings.Surface, c.Vibrancy()))
 	a.registerSettingsShortcuts(c)
 	viewport, _ := c.Size()
-	open := [3]bool{a.sidebar, a.right && a.route == "chat", a.files && a.route == "chat"}
+	showChatPanels := a.route == "chat" && a.currentSession().ID != ""
+	open := [3]bool{a.sidebar, a.right && showChatPanels, a.files && showChatPanels}
 	a.fit = fitPanels(viewport, a.sidebarWidth, open, a.panelOpened, a.rightExpanded)
 	ui.Row(c).Fill().AlignItems(ui.Stretch).Children(func() {
 		if a.fit.Sidebar {
@@ -505,7 +633,7 @@ func (a *App) View(c *ui.Context) {
 	a.imageDialog(c)
 	if a.toast != "" && time.Now().Before(a.toastUntil) {
 		ui.Overlay(c, func() {
-			ui.Text(c, a.toast).Absolute().Bottom(30).AlignSelf(ui.Center).Padding(10, 16).Radius(10).Background(a.palette.Raised).Border(1, a.palette.Border)
+			ui.Text(c, tr(c, a.toast)).Absolute().Bottom(30).AlignSelf(ui.Center).Padding(10, 16).Radius(10).Background(a.palette.Raised).Border(1, a.palette.Border)
 		})
 		c.After(time.Until(a.toastUntil))
 	}
@@ -521,18 +649,9 @@ func (a *App) mainView(c *ui.Context) {
 		width, height := c.Size()
 		columns := allocatePanels(width, a.sidebarWidth, a.filesWidth, a.rightWidth, a.fit, a.rightExpanded)
 		a.chatWidth = columns.Chat
-		ui.Box(c).Height(38).FillWidth().AlignItems(ui.Stretch).Children(func() {
-			a.titlebar(c)
-			if a.fit.Right {
-				stripWidth := columns.Right
-				if !a.fit.Files {
-					stripWidth -= c.TitleBar().Right + 70
-				}
-				ui.Box(c).Absolute().Top(0).Left(columns.Chat).Width(max(0, stripWidth)).Height(38).Clip().Children(func() { a.workspace.TabStrip(c) })
-			}
-		})
+		a.titlebar(c)
 		workspaceView := func() {
-			ui.Column(c).Label("Tools workspace").Fill().MinWidth(0).Children(func() {
+			ui.Column(c).Label(tr(c, "Tools workspace")).Fill().MinWidth(0).Children(func() {
 				if a.fit.Right {
 					a.workspace.Body(c)
 				} else {
@@ -541,7 +660,7 @@ func (a *App) mainView(c *ui.Context) {
 			})
 		}
 		conversation := func() {
-			ui.Column(c).Label("Conversation pane").Fill().Children(func() {
+			ui.Column(c).Label(tr(c, "Conversation pane")).Fill().Children(func() {
 				if !a.terminal {
 					a.chatView(c)
 					return
@@ -549,7 +668,7 @@ func (a *App) mainView(c *ui.Context) {
 				terminalHeight := max(design.TerminalMin, min(a.terminalHeight, height*design.TerminalMaxFraction))
 				topHeight := height - 38 - terminalHeight
 				c.Key("conversation-terminal-split")
-				split := ui.SplitVertical(c, &topHeight, func() { a.chatView(c) }, func() { ui.Column(c).Label("Bottom terminal").Fill().Children(func() { a.bottom.View(c) }) }).Grow(1).FillWidth()
+				split := ui.SplitVertical(c, &topHeight, func() { a.chatView(c) }, func() { ui.Column(c).Label(tr(c, "Bottom terminal")).Fill().Children(func() { a.bottom.View(c) }) }).Grow(1).FillWidth()
 				if split.Changed() {
 					a.terminalHeight = max(design.TerminalMin, min(height*design.TerminalMaxFraction, height-38-topHeight))
 					a.state.Settings.TerminalHeight = float64(a.terminalHeight)
@@ -598,41 +717,6 @@ func (a *App) mainView(c *ui.Context) {
 	})
 }
 
-func (a *App) titlebar(c *ui.Context) {
-	bar := c.TitleBar()
-	ui.Row(c).Height(38).Padding(4, bar.Right+10, 0, 10).Gap(5).AlignItems(ui.Center).DragWindow().Children(func() {
-		if !a.fit.Sidebar {
-			if bar.Left > 0 {
-				ui.Spacer(c).Width(bar.Left)
-			}
-			iconButton(c, "sidebar-minimalistic", "Toggle sidebar").OnClick(func() { a.setPanel(0, true) })
-			iconButton(c, "alt-arrow-left", "Back").OnClick(func() { a.back(-1) })
-		}
-		if a.route == "settings" {
-			ui.Text(c, a.section).FontWeight(600)
-		} else if a.sessionID != "" {
-			ui.Text(c, a.currentSession().Title).FontWeight(600).SingleLine()
-			ui.Text(c, "~ @ "+a.deviceLabel()).TextColor(a.palette.Muted).SingleLine()
-		}
-		ui.Spacer(c)
-		if a.route != "settings" {
-			if a.sessionID != "" {
-				iconButton(c, "info-circle", "Session information").OnClick(a.toggleInfo)
-			}
-			iconButton(c, "split-columns", "Toggle right pane").OnClick(func() { a.togglePanel(1) }).Menu(func(m *ui.Menu) {
-				if m.Item("Expand pane").Checked(a.rightExpanded).Chosen() {
-					a.rightExpanded = !a.rightExpanded
-					a.setPanel(1, true)
-				}
-				if m.Item("Terminal panel").Checked(a.terminal).Chosen() {
-					a.toggleTerminal()
-				}
-			})
-			iconButton(c, "folder-tree", "Files").OnClick(func() { a.togglePanel(2) })
-		}
-	})
-}
-
 func (a *App) send(text string) bool {
 	if a.pendingNew || a.attachmentImports[a.attachmentScope()] > 0 || a.modelID == "" || a.sessionID == "" && a.modelNoAgents() {
 		return false
@@ -650,16 +734,16 @@ func (a *App) send(text string) bool {
 	if a.pendingSends == nil {
 		a.pendingSends = make(map[string]primaryPendingSend)
 	}
-	a.pendingSends[a.sessionID] = primaryPendingSend{RequestID: cmd.Send.RequestID, StartedAt: a.now().UTC(), Queued: a.currentSession().Status == contracts.Working || a.currentSession().Status == contracts.AwaitingInput}
-	if a.checkout != "Current checkout" {
-		for _, p := range a.state.Projects {
-			if p.ID == a.projectID && len(p.Worktrees) > 0 {
-				cmd.Send.WorktreeID = p.Worktrees[len(p.Worktrees)-1].ID
-			}
-		}
-	}
+	a.pendingSends[a.sessionID] = primaryPendingSend{RequestID: cmd.Send.RequestID, DraftEpoch: a.draftEpoch, StartedAt: a.now().UTC(), Queued: a.currentSession().Status == contracts.Working || a.currentSession().Status == contracts.AwaitingInput}
+	cmd.Send.Checkout = a.composerFooterCheckoutPlan()
 	if a.sessionID == "" {
 		a.pendingNew = true
+		a.pendingNewRequestID = cmd.Send.RequestID
+		a.pendingNewEpoch = a.draftEpoch
+		a.pendingNewRuns = make(map[string]bool, len(a.state.Runs))
+		for _, run := range a.state.Runs {
+			a.pendingNewRuns[run.ID] = true
+		}
 	}
 	a.draft = ""
 	a.attachments = nil

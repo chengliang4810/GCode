@@ -268,7 +268,11 @@ func (p *Painter) element(e *node) {
 			var sp spanPaint
 			p.inline = e
 			if spans := e.paintSpans(&sp); !e.contentSet || !p.contentText(e, ox, oy, ts, spans) {
-				p.textLayout(e.tl, ox, oy, ts.color, ts, spans)
+				if ts.placeGlyph != nil && !e.contentSet {
+					ts.placeGlyph(p, Rect{X: ox, Y: oy})
+				} else {
+					p.textLayout(e.tl, ox, oy, ts.color, ts, spans)
+				}
 			}
 			p.inline = nil
 		case kindImage:
@@ -988,7 +992,7 @@ func (p *Painter) scrollbars(e *node) {
 	dragging := rt.scrollDrag.st == st
 	// A press takes the bars only where the window shows them
 	// (scrollbarPress).
-	st.barsShown = hovered || dragging
+	st.barsShown = !e.hideScrollbars && (hovered || dragging)
 	if !st.barsShown {
 		return
 	}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-28T09:46:13.5998227Z",
+  "dll": "output/native-wgc-bridge-r4/zeron_fixture_wgc.dll",
+  "dllSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+  "goCommand": "CGO_ENABLED=0 ZERON_UIFIXTURE_WGC_TEST_DLL=<absolute R4 DLL> ZERON_UIFIXTURE_WGC_TEST_REPARSE_OUTPUT=<isolated junction PNG path> go test -count=1 -v -tags uifixture ./cmd/model-picker-fixture",
+  "goObservedResult": "ok gcode/cmd/model-picker-fixture 0.822s",
+  "goExitCode": 0,
+  "goLog": "output/native-wgc-bridge-r4/go-abi-test-02.log",
+  "goLogSHA256": "a500ce6af41a32bba18f56a6f47f6eb8ec1ff23a9de611b605d551d1b093c84b",
+  "goABIContract": "actual R4 DLL loaded; invalid HWND=0 rejected with bounded UTF8/NUL error and unchanged buffer canaries; reparse output ancestor rejected before window capture; no file or window capture",
+  "loaderSourceSHA256": "a40a3f9798075aa994fc25c6d57a282321576725c6d7b9e181768e07c1241af4",
+  "loaderTestSourceSHA256": "de4b65380d45b52cfd8fa74a4b855aa5d9aa57bb3e159a28883616f0ecd6fcec",
+  "pathGuards": [
+    {
+      "rejected": true,
+      "path": "D:/outside-bridge-output",
+      "reason": "Bridge output must remain in this checkout."
+    },
+    {
+      "rejected": true,
+      "path": "output/reference-sources/zeron/new-bridge-output",
+      "reason": "Bridge output must not write into reference sources."
+    },
+    {
+      "rejected": true,
+      "path": "D:\\projects\\GCode\\output\\native-wgc-bridge-r4\\reparse-contract\\alias\\new-output",
+      "reason": "Bridge writes must not follow reparse paths."
+    }
+  ],
+  "normalCheckoutPathAccepted": true,
+  "fileSymlinkTest": "creation not available: Windows privilege error; no permission or security-setting change attempted",
+  "junctionTest": "existing junction output ancestor rejected through actual DLL C ABI; destination remains empty",
+  "priorStage": "output/native-wgc-bridge/r3-source-before-no-follow; R3 original DLL retained separately as zeron_fixture_wgc-r3.dll",
+  "nativeRuntime": "not started by bridge agent; root/scaffold own serialized R4 fixture run",
+  "visualAcceptance": "pending",
+  "keyboardAcceptance": "pending",
+  "nonclientInvestigation": {
+    "status": "read-only source differences located; cause pending",
+    "record": "reference/fixtures/native-wgc-bridge/README.md#native-title-bar-comparison-limits",
+    "activeOrForegroundRecorded": false,
+    "actualStyleBitsRecorded": false,
+    "dwmBackdropOrCaptionAttributesRecorded": false,
+    "acceptance": "screening scores only; no scene passed visual acceptance; equal activation unverified",
+    "changedDLL": false,
+    "changedFramework": false,
+    "changedProductTheme": false
+  }
+}

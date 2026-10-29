@@ -154,8 +154,8 @@ type shadow struct {
 type textStyle struct {
 	set    uint32
 	family string
-	size   float32
 	weight int
+	size   float32
 	italic bool
 	color  Color
 	// lineHeight is a multiple of the font size, or DIPs when fixedLine.
@@ -176,6 +176,8 @@ type textStyle struct {
 	background Color
 	// selection is the highlight of selected text, the theme's when unset.
 	selection Color
+	// placeGlyph is an optional plain-text-run paint hook; nil is native.
+	placeGlyph glyphPlacementPaint
 }
 
 const (
@@ -195,9 +197,10 @@ const (
 	setBackground
 	setSelection
 	setLang
+	setGlyphPlacement
 
 	// setAll has every bit of textStyle.set.
-	setAll = setLang<<1 - 1
+	setAll = setGlyphPlacement<<1 - 1
 )
 
 // layoutStyle is what lays an element out, of what the view sets on it:
@@ -230,6 +233,11 @@ type layoutStyle struct {
 	basis                  length
 	inset                  [4]length
 	aspect                 float32
+	snapMargin             float32
+	snapToWindow           bool
+	pointX, pointY         float32
+	pointGap               float32
+	pointAttached          bool
 	grid                   bool
 	justifyItems           Align // of a grid
 	cell                   gridCell
@@ -407,11 +415,12 @@ type node struct {
 	// rowsOf is the list whose rows the element holds for assistive
 	// technology, and takes the keys for: the list, or its Table.
 	// popover is the anchor of the panel of a popover.
-	popover  *node
-	list     *listFrame
-	listRow  bool
-	rowIndex int
-	rowsOf   *listFrame
+	popover        *node
+	list           *listFrame
+	listRow        bool
+	hideScrollbars bool
+	rowIndex       int
+	rowsOf         *listFrame
 	// focusGroup makes the element a focus group (FocusGroup), whose
 	// arrows click the element they move to with groupSelects.
 	focusGroup   Orientation
@@ -754,6 +763,13 @@ func (e *node) MarginY(v float32) *node { e.margin[0], e.margin[2] = v, v; retur
 //	ui.Scroll(c).Fill().Padding(64, 16, 16).ScrollbarInsets(64, 0, 0)
 func (e *node) ScrollbarInsets(v ...float32) *node { e.barInset = edges(v); return e }
 
+// Scrollbars controls the overlay indicators and their pointer hit targets on
+// this scroll container. They show on hover by default. With false, scrolling
+// by wheel, TrackScroll, keyboard focus and accessibility remains available.
+// It applies to Scroll, ScrollHorizontal, ScrollBoth and List, not the internal
+// indicators of custom controls such as a code editor, and is not inherited.
+func (e *node) Scrollbars(visible bool) *node { e.hideScrollbars = !visible; return e }
+
 // Width sets the width in DIPs.
 func (e *node) Width(v float32) *node { e.width = px(v); return e }
 
@@ -914,6 +930,7 @@ func (a attachment) anchors() (at, self Anchor) { return Anchor((a - 1) / 15), A
 // Right, Bottom and Left then move it from there; the element keeps its
 // own size.
 func (e *node) Attach(at, self Anchor) *node {
+	e.pointAttached = false
 	e.flags |= flagAbsolute
 	e.attach = attachment(1 + min(at, AnchorBottomEnd)*15 + min(self, AnchorBottomEnd))
 	return e
@@ -932,11 +949,12 @@ func (e *node) Attach(at, self Anchor) *node {
 //
 // The element is target's popover: its elements follow target as Tab
 // moves, and a press on target is not outside it (PressedOutside). Build
-// target before it, in the same frame.
+// target before it, in the same frame. SnapToWindow opts out of flipping.
 func (e *node) AttachTo(target *node, at, self Anchor) *node {
 	if target == nil {
 		return e
 	}
+	e.pointAttached = false
 	e.flags |= flagAbsolute
 	e.attach = attachment(1 + min(at, AnchorBottomEnd)*15 + min(self, AnchorBottomEnd))
 	e.popover = target
@@ -944,6 +962,18 @@ func (e *node) AttachTo(target *node, at, self Anchor) *node {
 		// Built in an Overlay, it reads as what it is attached to.
 		e.setDir(target.rtl(), false)
 	}
+	return e
+}
+
+// SnapToWindow fits an element placed with AttachTo into the window without
+// flipping its anchors. It uses this layout's full margin box, including
+// padding and border: an overflowing right or bottom edge moves to margin
+// inside that window edge, then a negative left or top edge moves to margin.
+// A box larger than the window therefore keeps its left or top edge visible.
+// Edges already inside the window stay where they are, even nearer than margin.
+// Calling this with zero still opts out of AttachTo's default flipping.
+func (e *node) SnapToWindow(margin float32) *node {
+	e.snapToWindow, e.snapMargin = true, margin
 	return e
 }
 

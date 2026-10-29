@@ -19,11 +19,11 @@ func (a *App) prepareSidebarList(rows []sidebarRow) {
 		a.sidebarUI.initialized = true
 	}
 	a.sidebarList.Selected = &a.sidebarUI.selection
-	a.sidebarList.Header = func(i int) bool { return rows[i].Header != "" || rows[i].More }
+	a.sidebarList.Header = func(i int) bool { return a.sidebarHeaderText(rows[i]) != "" || rows[i].More }
 	a.sidebarList.Key = func(i int) any { return rows[i].Key }
 	a.sidebarList.Label = func(i int) string {
 		if rows[i].Header != "" {
-			return rows[i].Header
+			return a.sidebarHeaderText(rows[i])
 		}
 		return rows[i].Session.Title
 	}
@@ -57,7 +57,7 @@ func (a *App) sidebarHeader(c *ui.Context, row sidebarRow, index int) {
 	if !closed {
 		below = 2
 	}
-	ui.ButtonBase(c).Label(row.Header).FillWidth().Height(28).Margin(above, 0, below, 0).Padding(0, 8).Gap(8).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.5)).OnClick(func() {
+	ui.ButtonBase(c).Label(a.sidebarHeaderText(row)).FillWidth().Height(28).Margin(above, 0, below, 0).Padding(0, 8).Gap(8).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.5)).OnClick(func() {
 		if row.Key == "group:archived" {
 			a.sidebarUI.archivedOpen = !a.sidebarUI.archivedOpen
 		} else {
@@ -67,7 +67,7 @@ func (a *App) sidebarHeader(c *ui.Context, row sidebarRow, index int) {
 		if row.ProjectID != "" && a.state.Settings.ShowIcons {
 			icon(c, "folder", 13)
 		}
-		ui.Text(c, row.Header).FontSize(design.UISize(c, 12)).FontWeight(500)
+		ui.Text(c, a.sidebarHeaderText(row)).FontSize(design.UISize(c, 12)).FontWeight(500)
 		if closed {
 			ui.Text(c, fmt.Sprint(row.Count)).FontSize(design.UISize(c, 10)).Font("Geist Mono").Padding(0, 4).Radius(4).Background(a.palette.Hover)
 		}

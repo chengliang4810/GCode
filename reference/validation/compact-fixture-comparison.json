@@ -1,0 +1,446 @@
+{
+  "status": "pixel-differences-remain",
+  "latestReport": "output/compact-comparison-20261028-r8-2x/comparison.json",
+  "historicalBoundaryMismatch": {
+    "schemaVersion": 1,
+    "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+    "status": "not-accepted",
+    "reference": "output/reference-lossless/capture-layout-20261028-02/compact-panel-dark-wide.png",
+    "implementation": "output/captures/model-picker-fixture-native-20261028-r2/compact-panel-dark-wide.png",
+    "referenceBoundary": "complete original GPUI HWND WGC frame, including native nonclient extent",
+    "implementationBoundary": "native MyGo Window.CapturePage client content",
+    "referencePixels": [
+      842,
+      592
+    ],
+    "implementationPixels": [
+      840,
+      560
+    ],
+    "clientLogicalSize": [
+      840,
+      560
+    ],
+    "scale": 1,
+    "strictComparisonExitCode": 1,
+    "strictComparisonDiagnostic": "capture dimensions differ",
+    "strictComparisonLog": "output/resume-validation/comparison-boundary-check.log",
+    "ssim": null,
+    "transformations": [],
+    "observations": [
+      "Dark popup surface is visibly lighter in the original than the implementation",
+      "Effort rail accent/material differs visibly",
+      "Original context option is a flat row with trailing chevron; implementation shows a bordered menu trigger",
+      "Popover placement differs between current fixtures; align capture and anchor geometry before measuring offsets"
+    ],
+    "remaining": "Align native capture boundaries and fixture geometry without cropping/resizing/masking; then fix production visual differences and compare full scenes",
+    "completeUIParity": false
+  },
+  "schemaVersion": 2,
+  "completeUIParity": false,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "matchedPhases": [
+    {
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-01",
+      "nativeFrameState": "Matching frame/client geometry; foreground HWND, actual styles and DWM attributes not recorded. Native tint cause remains unverified.",
+      "transformations": [],
+      "scenes": [
+        {
+          "changedPixels": 35593,
+          "ssim": 0.9903642372071262,
+          "name": "compact-panel-dark-wide"
+        },
+        {
+          "changedPixels": 67309,
+          "ssim": 0.9877146639823728,
+          "name": "compact-model-list-dark-wide"
+        },
+        {
+          "changedPixels": 21197,
+          "ssim": 0.9778005850635237,
+          "name": "compact-panel-dark-narrow"
+        },
+        {
+          "changedPixels": 52913,
+          "ssim": 0.9716950467630039,
+          "name": "compact-model-list-dark-narrow"
+        },
+        {
+          "changedPixels": 40242,
+          "ssim": 0.9913877326732022,
+          "name": "compact-panel-light-wide"
+        },
+        {
+          "changedPixels": 71038,
+          "ssim": 0.9889067438418896,
+          "name": "compact-model-list-light-wide"
+        },
+        {
+          "changedPixels": 25846,
+          "ssim": 0.9801684704029301,
+          "name": "compact-panel-light-narrow"
+        },
+        {
+          "changedPixels": 56642,
+          "ssim": 0.9744514091829912,
+          "name": "compact-model-list-light-narrow"
+        }
+      ],
+      "reportSHA256": "899fa61c67df34ddc8700213ffe27cbc7b03f57060d205587f1948fddd932fc6",
+      "phase": "R3 production surface/geometry stage",
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r3",
+      "allThresholdsMet": false,
+      "report": "output/compact-comparison-20261028-r3-reviewed/comparison.json",
+      "sceneCount": 8,
+      "threshold": 0.995
+    },
+    {
+      "allThresholdsMet": false,
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-01",
+      "threshold": 0.995,
+      "reportSHA256": "f63cdc13632a68fe157e4743a22e42a1420475b1a6ef2760d045b3798eb3c184",
+      "bridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+      "fixtureExecutableSHA256": "9d8855f93a1a2a8b9f1d040a10279cfe3c9b5d0f32e384fcef8e06180b031563",
+      "sceneCount": 8,
+      "report": "output/compact-comparison-20261028-r4-reviewed/comparison.json",
+      "transformations": [],
+      "remaining": [
+        "Option text metrics and baseline",
+        "List text/glyph metrics and small material differences",
+        "Native titlebar composition and active state not measured",
+        "Motion and full keyboard/accessibility/native-DPI acceptance remain pending"
+      ],
+      "phase": "R4 source-confirmed trigger/typography/keyboard-active star",
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r4",
+      "sourceAndBuildEvidence": "output/fixtures/model-picker-fixture-r4-build.json",
+      "scenes": [
+        {
+          "name": "compact-panel-dark-wide",
+          "changedPixels": 32838,
+          "ssim": 0.9933994788846245
+        },
+        {
+          "name": "compact-model-list-dark-wide",
+          "changedPixels": 64642,
+          "ssim": 0.9903005416266631
+        },
+        {
+          "name": "compact-panel-dark-narrow",
+          "changedPixels": 18442,
+          "ssim": 0.9847948376247141
+        },
+        {
+          "name": "compact-model-list-dark-narrow",
+          "changedPixels": 50246,
+          "ssim": 0.9776538082911481
+        },
+        {
+          "name": "compact-panel-light-wide",
+          "changedPixels": 37725,
+          "ssim": 0.9927957464027708
+        },
+        {
+          "name": "compact-model-list-light-wide",
+          "changedPixels": 68652,
+          "ssim": 0.9898873451636574
+        },
+        {
+          "name": "compact-panel-light-narrow",
+          "changedPixels": 23329,
+          "ssim": 0.9834130237797603
+        },
+        {
+          "name": "compact-model-list-light-narrow",
+          "changedPixels": 54256,
+          "ssim": 0.9767110557070645
+        }
+      ]
+    },
+    {
+      "phase": "R5 Windows default Typography",
+      "fixtureExecutableSHA256": "3f4673e8b563b95c0f788428482c6262dba96b0a2771cc6d8a1664f90095462d",
+      "threshold": 0.995,
+      "transformations": [],
+      "allThresholdsMet": false,
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-01",
+      "report": "output/compact-comparison-20261028-r5/comparison.json",
+      "reportSHA256": "7001a808fe318a974f475b36fed29379005b19adc297ddc8ab71df8e11122d35",
+      "remaining": [
+        "Source intrinsic text ceil and absolute-boundary snapping",
+        "Material/glyph and native frame residuals",
+        "Footer implementation and typed context/checkout state",
+        "Full motion/material and Windows native matrix",
+        "UIA focused-element reporting",
+        "Native Mac Intel/ARM acceptance"
+      ],
+      "scenes": [
+        {
+          "ssim": 0.9956816263249391,
+          "changedPixels": 32565,
+          "name": "compact-panel-dark-wide",
+          "thresholdMet": true
+        },
+        {
+          "ssim": 0.9935963170733542,
+          "changedPixels": 64539,
+          "name": "compact-model-list-dark-wide",
+          "thresholdMet": false
+        },
+        {
+          "ssim": 0.9900536991176117,
+          "changedPixels": 18169,
+          "name": "compact-panel-dark-narrow",
+          "thresholdMet": false
+        },
+        {
+          "ssim": 0.9852484212769993,
+          "changedPixels": 50143,
+          "name": "compact-model-list-dark-narrow",
+          "thresholdMet": false
+        },
+        {
+          "ssim": 0.9950219234943845,
+          "changedPixels": 37331,
+          "name": "compact-panel-light-wide",
+          "thresholdMet": true
+        },
+        {
+          "ssim": 0.9932884937793015,
+          "changedPixels": 68553,
+          "name": "compact-model-list-light-wide",
+          "thresholdMet": false
+        },
+        {
+          "ssim": 0.988542910121306,
+          "changedPixels": 22935,
+          "name": "compact-panel-light-narrow",
+          "thresholdMet": false
+        },
+        {
+          "ssim": 0.9845484851257228,
+          "changedPixels": 54157,
+          "name": "compact-model-list-light-narrow",
+          "thresholdMet": false
+        }
+      ],
+      "sourceAndBuildEvidence": "output/fixtures/model-picker-fixture-r5-build.json",
+      "scenesMeetingPixelThreshold": [
+        "compact-panel-dark-wide",
+        "compact-panel-light-wide"
+      ],
+      "bridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+      "sceneCount": 8,
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r5",
+      "acceptedScenes": 0
+    },
+    {
+      "reportSHA256": "a527b7e9e1e65eefca7100c591bec1192a5e6d2165fdb8b64a7ad569e82c2558",
+      "scenesMeetingPixelThreshold": [
+        "compact-panel-dark-wide",
+        "compact-panel-dark-narrow",
+        "compact-panel-light-wide"
+      ],
+      "phase": "R6 Windows1x option text bounds",
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-01",
+      "scenes": [
+        {
+          "thresholdMet": true,
+          "name": "compact-panel-dark-wide",
+          "ssim": 0.997981294556962,
+          "changedPixels": 32140
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-dark-wide",
+          "ssim": 0.9935963170733542,
+          "changedPixels": 64539
+        },
+        {
+          "thresholdMet": true,
+          "name": "compact-panel-dark-narrow",
+          "ssim": 0.9953529346087957,
+          "changedPixels": 17744
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-dark-narrow",
+          "ssim": 0.9852484212769993,
+          "changedPixels": 50143
+        },
+        {
+          "thresholdMet": true,
+          "name": "compact-panel-light-wide",
+          "ssim": 0.9974387559291065,
+          "changedPixels": 36782
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-light-wide",
+          "ssim": 0.9932884937793015,
+          "changedPixels": 68553
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-panel-light-narrow",
+          "ssim": 0.9941121326882733,
+          "changedPixels": 22386
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-light-narrow",
+          "ssim": 0.9845484851257228,
+          "changedPixels": 54157
+        }
+      ],
+      "sourceAndBuildEvidence": "reference/validation/text-bounds-implementation-r6.json",
+      "report": "output/compact-comparison-20261028-r6/comparison.json",
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r6",
+      "threshold": 0.995,
+      "allThresholdsMet": false,
+      "sceneCount": 8,
+      "acceptedScenes": 0,
+      "domain": "Windows1x integer row positions only; arbitrary fractional transforms/negative origins/overhang and non1x remain unproved",
+      "transformations": []
+    },
+    {
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-2x-01",
+      "sceneCount": 8,
+      "allThresholdsMet": false,
+      "scenesMeetingPixelThreshold": [
+        "compact-panel-dark-wide",
+        "compact-model-list-dark-wide"
+      ],
+      "sourceAndBuildEvidence": "output/fixtures/model-picker-fixture-r7-build.json",
+      "domain": "Actual Windows2x; nativeWindowAttached true and oneXOptionText false; earlier1x is a separate domain",
+      "report": "output/compact-comparison-20261028-r7-2x/comparison.json",
+      "phase": "R7 native Window bound actual2x",
+      "scale": 2,
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r7-2x",
+      "transformations": [],
+      "reportSHA256": "a83adafcf82b173112c30f990fb1db9b93fa8ca0348b5d8678127ce1489039d4",
+      "threshold": 0.995,
+      "scenes": [
+        {
+          "thresholdMet": true,
+          "name": "compact-panel-dark-wide",
+          "changedPixels": 28409,
+          "ssim": 0.9966761053765303
+        },
+        {
+          "thresholdMet": true,
+          "name": "compact-model-list-dark-wide",
+          "changedPixels": 12125,
+          "ssim": 0.9950442986491509
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-panel-dark-narrow",
+          "changedPixels": 28409,
+          "ssim": 0.9922929476312935
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-dark-narrow",
+          "changedPixels": 12305,
+          "ssim": 0.9880871918006088
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-panel-light-wide",
+          "changedPixels": 47196,
+          "ssim": 0.9943100278121316
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-light-wide",
+          "changedPixels": 25412,
+          "ssim": 0.9948541643886732
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-panel-light-narrow",
+          "changedPixels": 47196,
+          "ssim": 0.9868067677841457
+        },
+        {
+          "thresholdMet": false,
+          "name": "compact-model-list-light-narrow",
+          "changedPixels": 25232,
+          "ssim": 0.9885000203514469
+        }
+      ],
+      "acceptedScenes": 0
+    },
+    {
+      "report": "output/compact-comparison-20261028-r8-2x/comparison.json",
+      "implementationDirectory": "output/captures/model-picker-fixture-wgc-20261028-r8-2x",
+      "domain": "Actual Windows2x, nativeWindowAttached true and oneXOptionText false; same domain as R7",
+      "transformations": [],
+      "threshold": 0.995,
+      "sourceAndBuildEvidence": "reference/validation/popup-r8-result.json",
+      "acceptedScenes": 0,
+      "allThresholdsMet": false,
+      "reportSHA256": "2be74c1154504d9de7a233676020252465b9ac28acc0870f3d0290457b4a80f6",
+      "scale": 2,
+      "sceneCount": 8,
+      "phase": "R8 accent border and native header/provider",
+      "scenes": [
+        {
+          "name": "compact-panel-dark-wide",
+          "ssim": 0.997022119395127,
+          "changedPixels": 28140,
+          "thresholdMet": true
+        },
+        {
+          "name": "compact-model-list-dark-wide",
+          "ssim": 0.9950442986491509,
+          "changedPixels": 12125,
+          "thresholdMet": true
+        },
+        {
+          "name": "compact-panel-dark-narrow",
+          "ssim": 0.9930952438722151,
+          "changedPixels": 28140,
+          "thresholdMet": false
+        },
+        {
+          "name": "compact-model-list-dark-narrow",
+          "ssim": 0.9880871918006088,
+          "changedPixels": 12305,
+          "thresholdMet": false
+        },
+        {
+          "name": "compact-panel-light-wide",
+          "ssim": 0.9970843225248581,
+          "changedPixels": 46007,
+          "thresholdMet": true
+        },
+        {
+          "name": "compact-model-list-light-wide",
+          "ssim": 0.9948541643886732,
+          "changedPixels": 25412,
+          "thresholdMet": false
+        },
+        {
+          "name": "compact-panel-light-narrow",
+          "ssim": 0.9932394731070632,
+          "changedPixels": 46007,
+          "thresholdMet": false
+        },
+        {
+          "name": "compact-model-list-light-narrow",
+          "ssim": 0.9885000203514469,
+          "changedPixels": 25232,
+          "thresholdMet": false
+        }
+      ],
+      "scenesMeetingPixelThreshold": [
+        "compact-panel-dark-wide",
+        "compact-model-list-dark-wide",
+        "compact-panel-light-wide"
+      ],
+      "referenceDirectory": "output/reference-lossless/capture-native-state-20261028-2x-01"
+    }
+  ],
+  "next": "Fix independently measured material/text residuals; preserve actual display branch and complete original PNGs. Continue native input, full footer and platform matrix."
+}

@@ -11,6 +11,10 @@ import (
 func (c Command) Clone() Command {
 	c.ProjectCreate = copyPointer(c.ProjectCreate)
 	c.Integration = copyPointer(c.Integration)
+	c.Git = copyPointer(c.Git)
+	if c.Git != nil {
+		c.Git.Source = copyPointer(c.Git.Source)
+	}
 	c.Action = copyPointer(c.Action)
 	c.Adjustment = copyPointer(c.Adjustment)
 	if c.Settings != nil {
@@ -23,6 +27,7 @@ func (c Command) Clone() Command {
 	}
 	if c.Send != nil {
 		v := *c.Send
+		v.Checkout = copyPointer(v.Checkout)
 		v.Annotations = slices.Clone(v.Annotations)
 		for i := range v.Annotations {
 			v.Annotations[i] = v.Annotations[i].Bounded()
@@ -61,6 +66,23 @@ func copyPointer[T any](p *T) *T {
 
 // Validate rejects ambiguous tagged payloads before any state is mutated.
 func (c Command) Validate() error {
+	if c.RequestID != "" && c.Kind != "session.sidechat" && c.Kind != "session.fork" {
+		return errors.New("conversation request ID does not match command")
+	}
+	if c.Git != nil && !IsComposerGitCommand(c.Kind) {
+		return errors.New("git payload does not match command")
+	}
+	if IsComposerGitCommand(c.Kind) {
+		if c.Git == nil || c.Integration != nil || c.Send != nil || c.Session != nil || c.Settings != nil || c.Attachment != nil || c.ProjectCreate != nil || c.Action != nil || c.Adjustment != nil || c.Comment != nil || c.TerminalSize != nil {
+			return errors.New("git command requires only its typed git payload")
+		}
+		return c.Git.Validate(c.Kind)
+	}
+	if c.Send != nil && c.Send.Checkout != nil {
+		if err := c.Send.Checkout.Validate(); err != nil {
+			return err
+		}
+	}
 	if c.ProjectCreate != nil && c.Kind != "project.create" {
 		return errors.New("project create payload does not match command")
 	}

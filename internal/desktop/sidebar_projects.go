@@ -21,7 +21,7 @@ func (a *App) sidebarProjects() []contracts.Project {
 func (a *App) sidebarProjectPopover(c *ui.Context, trigger ui.Element) {
 	ui.Popover(c, trigger, &a.sidebarProjectMenu, func() {
 		ui.Column(c).Width(max(200, a.sidebarContentWidth-16)).MaxHeight(420).Padding(6).Gap(2).Children(func() {
-			input := ui.TextInputBase(c, &a.sidebarUI.projectQuery).Bind(&a.sidebarUI.projectInput).Label("Search projects").Placeholder("Search projects").AutoFocus().Padding(6, 8).FontSize(design.UISize(c, 12)).OnChange(func() { a.sidebarUI.projectSelection = 0 })
+			input := ui.TextInputBase(c, &a.sidebarUI.projectQuery).Bind(&a.sidebarUI.projectInput).Label(tr(c, "Search projects")).Placeholder(tr(c, "Search projects")).AutoFocus().Padding(6, 8).FontSize(design.UISize(c, 12)).OnChange(func() { a.sidebarUI.projectSelection = 0 })
 			projects := a.sidebarProjects()
 			showAll := strings.TrimSpace(a.sidebarUI.projectQuery) == ""
 			offset := 0
@@ -59,12 +59,12 @@ func (a *App) sidebarProjectPopover(c *ui.Context, trigger ui.Element) {
 			}
 			a.sidebarUI.projectList.Label = func(i int) string {
 				if showAll && i == 0 {
-					return "All projects"
+					return a.t("All projects")
 				}
 				return projects[i-offset].Name
 			}
 			ui.List(c, &a.sidebarUI.projectList, count, func(i int) {
-				label, detail, projectID, offline := "All projects", "", "", false
+				label, detail, projectID, offline := tr(c, "All projects"), "", "", false
 				if !showAll || i > 0 {
 					project := projects[i-offset]
 					label, detail, projectID = project.Name, project.Path+" @ "+a.deviceNameFor(project.DeviceID), project.ID
@@ -91,12 +91,12 @@ func (a *App) sidebarProjectPopover(c *ui.Context, trigger ui.Element) {
 					icon(c, "folder", 14)
 					paletteHighlight(c, label, a.sidebarUI.projectQuery, a.palette.Accent).SingleLine().MinWidth(0).Grow(1).FontSize(design.UISize(c, 13))
 					if offline {
-						ui.Box(c).Label("Device offline").Children(func() { icon(c, "wifi-off", 12) }).TextColor(a.palette.Warning)
+						ui.Box(c).Label(tr(c, "Device offline")).Children(func() { icon(c, "wifi-off", 12) }).TextColor(a.palette.Warning)
 					}
 				})
 			}).Height(min(float32(count)*32, 224)).FillWidth().OnSubmit(choose)
 			line(c)
-			footer := textButton(c, "New project").Height(30).FillWidth().OnClick(func() { a.sidebarProjectMenu = false; a.sidebarUI.projectQuery = ""; a.openNewProject() })
+			footer := textButton(c, tr(c, "New project")).Height(30).FillWidth().OnClick(func() { a.sidebarProjectMenu = false; a.sidebarUI.projectQuery = ""; a.openNewProject() })
 			if a.sidebarUI.projectSelection == count {
 				footer.Background(a.palette.Hover)
 			}

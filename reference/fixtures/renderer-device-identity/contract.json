@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "stage": "R17",
+  "kind": "new-instrumented-original-gui-diagnostic",
+  "productionHost": "existing original Shell/tabstrip_fixture/render_right_tab_strip path; same baseline36 and optional style scenes",
+  "historicalR16BinaryDeviceBound": false,
+  "nativeExecutionOwner": "parent; this implementation/build does not launch a window",
+  "perCaptureFields": ["rendererDeviceBefore", "rendererDeviceAfter"],
+  "queryRequirements": [
+    "derive HWND from the current typed live gpui::Window, not a supplied arbitrary handle",
+    "actual HWND belongs to this process and query is on its owner UI thread",
+    "look up this window's current DirectXRenderer and existing devices.device",
+    "read actual adapter from device->IDXGIDevice->GetAdapter; never select a substitute adapter/device",
+    "compare canonical IUnknown for actual context, swapchain and RTV GetDevice",
+    "compare actual device adapter LUID to the renderer's stored selected adapter",
+    "if overlay exists, compare its swapchain device; do not claim overlay RTV/texture inspection",
+    "record actual selected feature level, creation flags, target format/sample count/quality and swapchain format/sample/alpha",
+    "driver query uses actual adapter CheckInterfaceSupport(IDXGIDevice::IID), preserving unsupported errors",
+    "retain public gpu_specs output as a separate limited description, not an LUID/FL substitute",
+    "fail capture when the current-device query/crosschecks fail or the before/after observed identity fields differ"
+  ],
+  "snapshotLimit": "canonical IUnknown pointer is a process/lifetime address observation; equal before/after snapshots cannot rule out intervening release/recovery/address reuse. Adapter LUID comparisons are scoped to this machine/boot, not a permanent hardware UUID.",
+  "build": {
+    "mode": "cargo build --offline --locked -j 2",
+    "cache": "new private CARGO_HOME copied only from byte-verified cached locked inputs; old cache remains read-only",
+    "lockDelta": "only gpui_windows source Git->local and zeron-ui direct gpui_windows dependency edge; all package/version/checksum sets unchanged",
+    "productionDelta": "only exact append-guarded child module/reexport plus new diagnostic files; existing renderer method bytes unchanged"
+  },
+  "pending": [
+    "actual LUID/feature level/readback metadata requires parent-coordinated native execution of this new binary",
+    "actual MyGo current-renderer diagnostics must use a separately inventoried mirror only after canonical .7 is frozen",
+    "two extra MyGo diagnostic files must never be counted as canonical .7 source",
+    "the R16 standalone blend probe requested FL11_1; a later controlled probe must explicitly request the actual GUI chosen feature level before interpreting FL differences",
+    "device identity does not establish whole-frame parity, identical render-target pipelines or hardware blend internals"
+  ]
+}

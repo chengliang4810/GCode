@@ -1,0 +1,2728 @@
+{
+  "schemaVersion": 1,
+  "stage": "R17-requested-feature-metadata-and-Cloud-native-R12",
+  "createdUTC": "2026-10-29T01:58:06.167104+00:00",
+  "goalStatus": "active",
+  "status": "Cloud current source2933, five gates and bounded Windows native flow verified; requested Windows feature graph accepted; reference compilation status tracked independently; full acceptance pending",
+  "repository": {
+    "branch": "codex/isolated-worktree",
+    "head": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+    "commitOrPushPerformed": false
+  },
+  "latestSealedReleasePhase": "R16",
+  "latestSealedReleaseIndex": {
+    "path": "reference/validation/tabstrip-r16-result.json",
+    "bytes": 10678,
+    "sha256": "72782137afb79bbd1460c1177b1925e41a138a3f3ae5314e607b807adeb1ec32"
+  },
+  "framework": {
+    "revision": "zeron-native-ui.9",
+    "treeSHA256": "27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9",
+    "files": 1864,
+    "patchCount": 14,
+    "sizeRuleMet": false,
+    "historicalC4CounterGrowthVersusDot6Bytes": 2048,
+    "quarterV5DiagnosticVendorTree": "c18a7313cfbb2400e27f2d150364b3aef17b9d8e1a7cf2348035b8c9c4831165",
+    "quarterV5AllTenUnusedRawNoGrowthRelativeC4": true,
+    "quarterV5WasmCounterDeltaBytes": -425,
+    "exactDot9UnusedExamplesRebuilt": false,
+    "sizeScope": "Executed V5 diagnostic differs from adopted .9 vendor only in two identity literals; raw no-growth does not imply metadata/CPU zero. Historical whole-framework .6 +2048 remains pending.",
+    "unusedCostAttribution": {
+      "readOnlyResult": {
+        "path": "output/framework-unused-c4-dot6-attribution/attempt-01/result.json",
+        "bytes": 5416,
+        "sha256": "0e8adb220161aaa9dc60f17d0cd4dde86125dd0213cdd60b0c011ca89e20c06d"
+      },
+      "sourceOnlyDesign": {
+        "path": "output/framework-unused-no-growth-design/attempt-01/result.json",
+        "bytes": 4234,
+        "sha256": "4634efac1ff9ca45a60235d93ac207ee5d8c51fd551bacc03d21600a120d1f03"
+      },
+      "historicalC4CounterVersusDot6Bytes": 2048,
+      "allNewMethodRecordCount": 18,
+      "allNewMethodRecordBytes": 288,
+      "ownsPrimaryPressMethodRecordBytes": 128,
+      "methodBodiesAllTextOffsetMinusOne": true,
+      "implementationOrPatchProduced": false,
+      "causalOrCandidateBuildExecuted": false,
+      "noGrowthFixAccepted": false,
+      "scope": "Read-only attribution and an unimplemented design.128B of method metadata is one bounded component, not a complete counter +2048B or shared-field solution. Existing interfaces are insufficient for a proven complete minimal isolation; no source or API fix is adopted."
+    }
+  },
+  "sourceScope": {
+    "fixtureAppInputs": 963,
+    "sourceManifest": {
+      "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\current-fixture963-source-audit.json",
+      "bytes": 170166,
+      "sha256": "d8dccd60b29a8b29731eaead10086596ad87f3d5a40addb404e3a080cd32fc08"
+    },
+    "fixtureBinary": null,
+    "fixtureBinaryScope": "Current source audit only; exact current963 fixture EXE has not been built or accepted.",
+    "productionBuildSourceInputs": 2933,
+    "productionSourceManifest": {
+      "path": "D:\\projects\\GCode\\output\\tabstrip-r17-cloud-navigation-native-build\\attempt-01\\source2933.json",
+      "bytes": 497694,
+      "sha256": "02e9e2e66edfdb797f3962d64851afa5af204969913c21c08fa93dca8e504684"
+    },
+    "vendorActualAndSealedVerified": true,
+    "allFiveGatesPassed": true,
+    "formalGateResult": {
+      "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\current-cloud-gates.json",
+      "bytes": 1262,
+      "sha256": "096c57f87dfe11438c2ba54f78c2e30638b4e314a57f895332c9df122e7dcce8"
+    },
+    "inventoryInterpretation": "Selected source audit inventories include tests/platform/supporting files; not compiled or executed unit counts.",
+    "mainPackageBinary": null,
+    "mainPackageBinaryScope": "Prior2931 canonical packages are historical; no canonical current2933 package is claimed.",
+    "mainDevelopmentBinary": {
+      "path": "D:\\projects\\GCode\\output\\tabstrip-r17-cloud-navigation-native-build\\attempt-01\\Zeron.exe",
+      "bytes": 33639936,
+      "sha256": "69a437194fad175805979edc4a2b1a9857a7a6a7deabde2ec8013adc4f0f0090"
+    },
+    "mainDevelopmentBuild": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native-build\\attempt-01\\result.json",
+      "bytes": 2812,
+      "sha256": "796b0edb6adf1f78d4f335288cd82da3c1913039eecb9e0e606fb7a18ed644a6"
+    },
+    "mainDevelopmentSourceInputs": 2933,
+    "mainDevelopmentNativeResult": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native\\attempt-01\\result.json",
+      "bytes": 14552,
+      "sha256": "a5981b8b0445d3950d6eff42993cde2748459e89409cc1638ecc057761163b1c"
+    },
+    "currentNativeScope": "Bounded Windows main sidebar auto-enable/same-visit retention/search re-entry; not complete Cloud/native/reference visual acceptance."
+  },
+  "baseline": {
+    "scenes": 36,
+    "byteIdenticalToPriorC3": 36,
+    "acceptance": false,
+    "comparison": "Historical C3 plus leaf run11 raw PNGs equal all36 earlier C3 PNGs exactly; the historical source comparison is linked transitively, without a fresh comparator/Go parity run for those36. This statement does not relabel them C4.",
+    "scope": "Historical C3 plus leaf36 raw PNGs; not relabeled C4. Current C4 ordinary2 PNGs have their own exact-byte link."
+  },
+  "nativeTooltip": {
+    "c4OrdinaryPairs": 2,
+    "c3PlusLeafEdgePairs": 2,
+    "c3PlusLeafBaselineScenes": 36,
+    "actualScale": 2,
+    "c4OrdinaryPNGsEqualC3PlusLeaf": true,
+    "ordinaryOuterBoundsNowMatch": true,
+    "ordinaryFontInkBoundsNowMatch": true,
+    "shortFittingLTRTextLeafCeilImplemented": true,
+    "wrapPolicyDifferent": true,
+    "sourcePostCaptureFullGeometry": false,
+    "exact350or500msNativeBoundaryProven": false,
+    "currentAppAXContentNamesImplemented": true,
+    "AXV1TwoOrdinaryPNGsEqualPreAXC4": true,
+    "formalQuarterPlacementImplemented": true,
+    "historicalC4PackageAXNames": {
+      "detail": "README.md",
+      "close": "Close tab",
+      "genericLabelsAbsent": true
+    },
+    "ordinaryQuarterDiagnosticInkSupport731ExactReference": true,
+    "ordinaryColorResidualRemains": true,
+    "otherScenarioCoverageAcceptancePending": true,
+    "isolatedV5AXNativeNewPNGs": 40,
+    "isolatedV5AXNativeAllPNGsEqualSeparateV4AX": true,
+    "isolatedV5AXTwoThemesTooltipName": "Tab02.txt",
+    "isolatedV5AXNativeScope": "inherited.8 diagnostic c18 vendor, not a current .9 main-package native run",
+    "ordinaryTextMaxRGBDifference": 1,
+    "fullReferenceDifferentPixelsDark": 22410,
+    "fullReferenceDifferentPixelsLight": 39185,
+    "currentDot9WindowsMainPackageAXNames": {
+      "detail": "README.md",
+      "close": "Close tab",
+      "genericLabelsAbsent": true
+    },
+    "currentDot9WindowsMainNativeResult": {
+      "path": "output/resume-validation/tabstrip-r17-quarter-v5-native/result.json",
+      "bytes": 10228,
+      "sha256": "0d850ab4bebfd6c9a308ea015266321fb64e7028dbcbdda926c77842fbb7767c"
+    },
+    "currentDot9WindowsMainStateCount": 14,
+    "currentDot9WindowsMainOriginalSkyJPEGCount": 15,
+    "currentDot9WindowsMainExitCode": 0,
+    "currentDot9WindowsMainObservedClientPixels": [
+      3200,
+      2000
+    ],
+    "currentDot9WindowsMainRequestedClientSize": [
+      1600,
+      1000
+    ],
+    "currentDot9WindowsMainFreshDPIMeasurement": false,
+    "currentDot9WindowsMainFlow": [
+      "Files explorer",
+      "README and layout.go two tabs",
+      "README reselect",
+      "README.md / Close tab mature tooltips",
+      "right-click Close tab",
+      "README/filetree/session retained",
+      "Alt+F4 normal exit"
+    ],
+    "currentDot9WindowsMainScope": "Exact .9 main EXE9c580... saved14states/15originalSkyJPEG+initialPNG; Sky window ID is not an HWND. No DPI derivation, popup-provider/screen-reader/350ms/visual or Mac acceptance. Not added to controlled fixture ledgerR6."
+  },
+  "packageState": {
+    "currentRevision": "zeron-native-ui.9",
+    "currentProductSourceInputs": 2933,
+    "canonicalFourTargetSuccess": false,
+    "currentActualCanonicalBuildCountBoundInSnapshot": 0,
+    "currentPackageCountBoundInSnapshot": 0,
+    "currentStatus": "Cloud current Windows development main built/native-checked; canonical packages still cover prior2931 source.",
+    "currentDevelopmentBinary": {
+      "path": "D:\\projects\\GCode\\output\\tabstrip-r17-cloud-navigation-native-build\\attempt-01\\Zeron.exe",
+      "bytes": 33639936,
+      "sha256": "69a437194fad175805979edc4a2b1a9857a7a6a7deabde2ec8013adc4f0f0090"
+    },
+    "currentDevelopmentBuild": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native-build\\attempt-01\\result.json",
+      "bytes": 2812,
+      "sha256": "796b0edb6adf1f78d4f335288cd82da3c1913039eecb9e0e606fb7a18ed644a6"
+    },
+    "currentDevelopmentNative": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native\\attempt-01\\result.json",
+      "bytes": 14552,
+      "sha256": "a5981b8b0445d3950d6eff42993cde2748459e89409cc1638ecc057761163b1c"
+    },
+    "currentDevelopmentBuilds": 1,
+    "historicalCanonicalFourTargetBuilds": 7,
+    "historicalCanonicalSuccesses": 3,
+    "historicalCanonicalFailures": 4,
+    "historicalCanonicalRunnerAttempts": 8,
+    "historicalPreCloudCanonicalFinal": {
+      "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt02/final-result.json",
+      "bytes": 9590,
+      "sha256": "8043c0a304287937181fdcdf7c5aba6d29e012b355028e5267ece3e99ced768d"
+    },
+    "nativeMacOS": false,
+    "installerRun": false,
+    "published": false,
+    "scope": "The development go build is separate from seven historical canonical CLI builds; latest sealed release remains R16."
+  },
+  "artifacts": {
+    "frameworkCandidate": {
+      "path": "output/framework-package-rename-r17-candidate01/candidate.json",
+      "bytes": 2932,
+      "sha256": "4339fb2072803d9833b801d9f38f51c584f356f3a22b4e6c9c4b88a087bd2dcb"
+    },
+    "frameworkManifest": {
+      "path": "output/framework-package-rename-r17-candidate01/source-hashes.json",
+      "bytes": 288640,
+      "sha256": "2f307d9869e9deec0c285f5e3af72430d0578bdb6ee80c7dbceacbef6fcbb43f"
+    },
+    "frameworkReplay": {
+      "path": "output/framework-package-rename-r17-candidate01/replay-proof.json",
+      "bytes": 341,
+      "sha256": "e8a8bdea01d2721ecce39e8dee571b4034181a75315fac28ea1a5cb4608dab30"
+    },
+    "frameworkCheck": {
+      "path": "output/mygo-rename-r17-c4-canonical-delivery-attempt01/check-framework.stdout.log",
+      "bytes": 327,
+      "sha256": "ec05689b9e8dfdf314621951fd92d3527933209aeeee913058ab7c946c606696"
+    },
+    "safeRawPointerPatchApplication": {
+      "path": "output/framework-point-r17-safe-c3/result.json",
+      "bytes": 500,
+      "sha256": "b607f022a009286a3a57ca9942692ed4942877ab8c6fd176020b8dc71c9e822b"
+    },
+    "deviceScaleBefore": {
+      "path": "output/framework-point-r17-device-scale/before.log",
+      "bytes": 531,
+      "sha256": "61e096c9a9a4135d171d133d00122444016307e6ecfc0714d7c9f4f580a59a3c"
+    },
+    "deviceScaleAfter": {
+      "path": "output/framework-point-r17-device-scale/after.log",
+      "bytes": 39,
+      "sha256": "2fd4d480380d9c027c20676db362ff6846fc40320a7c93032a82c55888be385f"
+    },
+    "unusedExampleSizes": {
+      "path": "output/framework-unused-c4-baseline-r17/result.json",
+      "bytes": 18414,
+      "sha256": "d8aa46d60fc29321d48d5864ba690e72ec28968c61342d54869ea176f91b6e1f"
+    },
+    "fixtureBuild": {
+      "path": "output/tabstrip-r17-go-fixture/attempt-05/build.json",
+      "bytes": 1139,
+      "sha256": "6d9a8c0ee50ff021ab2b2bc46e2ab814a25bc870dd9fe1720806303af01b94b1"
+    },
+    "fixtureSources": {
+      "path": "output/tabstrip-r17-go-fixture/attempt-05/source-hashes.json",
+      "bytes": 294691,
+      "sha256": "3d04272cc5e9d9548633649213c575162190e8b70d156bc4bb4bcdafc2534404"
+    },
+    "fiveRepositoryGates": {
+      "path": "output/tabstrip-r17-root/final-r6-checks.json",
+      "bytes": 1992,
+      "sha256": "47f504647d67012d08f42bec65942d5e7112bfbc373a7a73267d276380456586"
+    },
+    "nativeTrialLedger": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r5/result.json",
+      "bytes": 218975,
+      "sha256": "2ea2dc3be7a24e8c6adc194dd4dcdecfae4f1e2f461d08741ebd4bc9ec2f994c"
+    },
+    "sourceEdgeNativeReview": {
+      "path": "output/tabstrip-r17-reference-independent-review/attempt-01/result.json",
+      "bytes": 6650,
+      "sha256": "e434b45d6af8c4080ffff68debae350f48321abd541df1aecfd480e60ad09361"
+    },
+    "applicationFontFix": {
+      "path": "output/tabstrip-r17-tooltip-fix/attempt-03/result.json",
+      "bytes": 22102,
+      "sha256": "93c983dde54430ddd90cc9e9066aa3e0da6229fb134aee5d714790b99f6261d5"
+    },
+    "applicationFontPostSeal": {
+      "path": "output/tabstrip-r17-tooltip-fix/attempt-03/post-seal-verification.json",
+      "bytes": 1610,
+      "sha256": "322399fc9036030886135141a565089a097ffd3da90f5b0b63b6c9971ebf6ca5"
+    },
+    "edgeFixtureStabilityFix": {
+      "path": "output/tabstrip-r17-edge-fixture/attempt-02/result.json",
+      "bytes": 5466,
+      "sha256": "12daeee41c63a416fd9fc63ef823a0eb17a521d130ae66c6ad5f5662cba5224a"
+    },
+    "fontSourceStack": {
+      "path": "output/tabstrip-r17-tooltip-font-stack-review/source-stack.json",
+      "bytes": 16542,
+      "sha256": "13a31ad20fb6f1f44ec007e6b2c917ad4f3e221b63e239f8d8a2ff82bd433409"
+    },
+    "fontCOMControl": {
+      "path": "output/tabstrip-r17-tooltip-text-analysis/result.json",
+      "bytes": 13780,
+      "sha256": "008cba22985f0e59835b7918abba4865a302c0ed70d1bcb008ecaa57b9ed3018"
+    },
+    "rawNativeTooltipComparison": {
+      "path": "output/tabstrip-r17-native-file-review-attempt03/result.json",
+      "bytes": 656215,
+      "sha256": "07843d55a2731a9f92ed6ba30a98ca0b205ded3a447ec1f7c7e807d19684caba"
+    },
+    "nativeTooltipComparisonSeal": {
+      "path": "output/tabstrip-r17-leaf-ceil-native-seal/attempt-01/result.json",
+      "bytes": 40829,
+      "sha256": "a281f99d997332ab9d56ffc840061e5a864132d07cf37cdff2bbbc372dbe0851"
+    },
+    "fontAndScaleIndependentReview": {
+      "path": "output/tabstrip-r17-attempt03-independent-review/result.json",
+      "bytes": 17527,
+      "sha256": "191b42eebb0db2e3c8d1ae3675e441282a421e98347383c5d3bb02e0ecac688f"
+    },
+    "wrapSourceReview": {
+      "path": "output/tabstrip-r17-wrap-review/result.json",
+      "bytes": 13571,
+      "sha256": "990d7e732b714010c4d0e46c70a46d35378005bdfcdc183ca58786f2139492b7"
+    },
+    "rendererDeviceAndFeatureLevelControls": {
+      "path": "output/renderer-device-r17-final-diagnostics/result.json",
+      "bytes": 2984,
+      "sha256": "a54ad79895e8cec26d519f29e32b576c0fc66ec2718ba732f0ef628e390fcf86"
+    },
+    "exactWindowsCandidateSmoke": {
+      "path": "output/resume-validation/tabstrip-r17-c4-ax-native/result.json",
+      "bytes": 9909,
+      "sha256": "42590e62dd433fa01f7a3205f5b40629162718f8a2d5c40a2b1bbcba70d59341"
+    },
+    "firstPackageFailureLog": {
+      "path": "output/tabstrip-r17-root/package-c3-build.log",
+      "bytes": 710,
+      "sha256": "6d47e9bda5985c848d990068217caedafec03419f0221c06790b880fd496b69b"
+    },
+    "secondPackageFailureLog": {
+      "path": "output/tabstrip-r17-root/package-c3-retry02-build.log",
+      "bytes": 726,
+      "sha256": "56d6f13fee787ff1d5d927a663c98f581e74bfc1a9aab2251f1319f82bb7c63e"
+    },
+    "documentationSnapshots": {
+      "path": "output/tabstrip-r17-progress-c4-ax-r8/documents.json",
+      "bytes": 2901,
+      "sha256": "f233c649b0393e3de60df510420f670fd31e5b52b320906e1c6020295df0880b"
+    },
+    "priorC3BaselineComparison": {
+      "path": "output/tabstrip-comparison-r17-c3-baseline-01/comparison.json",
+      "bytes": 544747,
+      "sha256": "5e294a5db8dbd718dfaec7b707dffd4b0973469144298932bbec0ce109dd9fc2"
+    },
+    "priorC3GuardAndSourceReview": {
+      "path": "output/tabstrip-r17-c3-baseline-guard-independent-review/attempt-01/result.json",
+      "bytes": 1196,
+      "sha256": "a32c5127615a1fe8dd0c921317f4d2fb375dec5762f07ae2ce17e00a2e529d58"
+    },
+    "applicationLeafCeilCandidate": {
+      "path": "output/tabstrip-r17-leaf-ceil-candidate/attempt-01/result.json",
+      "bytes": 17504,
+      "sha256": "2b317f99e88f4f311ac23103732528125d8a32e46b5f9ba51b07dc06612f925c"
+    },
+    "applicationLeafCeilAdoption": {
+      "path": "output/tabstrip-r17-leaf-ceil-adoption/attempt-01/result.json",
+      "bytes": 4004,
+      "sha256": "9b306d015b471b8e5e998c97e1330a17c54f61b39ccfd1d364f07c4eb6a3a3c2"
+    },
+    "applicationLeafCeilAdoptionIndependentReview": {
+      "path": "output/tabstrip-r17-leaf-ceil-adoption-independent-review/attempt-01/result.json",
+      "bytes": 5993,
+      "sha256": "825ef69b3a9d62265ec281c5fb8a740c8fad1a2a3c121a4aa1c603cd5ef09680"
+    },
+    "rawNativeEdgeComparison": {
+      "path": "output/tabstrip-r17-native-file-review-attempt03/edge-result.json",
+      "bytes": 655494,
+      "sha256": "406e38faec69f1cfbdd150b77185af8150ce6e63813000588af44b7a9d697801"
+    },
+    "thirdCanonicalPackageFailure": {
+      "path": "output/mygo-rename-r17-canonical-retry03/result.json",
+      "bytes": 1612,
+      "sha256": "c64de9a2281562407aceb35fdc04d09d6e4ae883388e816f8748b869a5149731"
+    },
+    "fourthCanonicalPackageFailure": {
+      "path": "output/mygo-rename-r17-canonical-delivery-attempt01/result.json",
+      "bytes": 8149,
+      "sha256": "55fbdef983505020a34015bc9623cb19f4869d17eca799f71a11c4673db27ca1"
+    },
+    "fourthPackagePostFailureClarification": {
+      "path": "output/mygo-rename-r17-canonical-delivery-attempt01/postfailure-result.json",
+      "bytes": 10578,
+      "sha256": "eb99787728dc794f1225acadac04f70cf39d8842815238707123ec8c60d35e08"
+    },
+    "fourthPackageFailureIndependentReview": {
+      "path": "output/mygo-rename-r17-candidate-failure-review/result.json",
+      "bytes": 38399,
+      "sha256": "644f8dba754a3ad20771d2ff03eacadce03b7574b402d6cea8b3212757931afd"
+    },
+    "renameCrossControls": {
+      "path": "output/mygo-rename-r17-cross-controls-attempt01/result.json",
+      "bytes": 3111,
+      "sha256": "ae4f219da5409dbf0188f4b88e70e7a63f897e8c453510d100ad790d831ba2d2"
+    },
+    "exactWindowsCandidateSmokeIndependentReview": {
+      "path": "output/tabstrip-r17-c4-ax-native-independent-review/attempt-01/result.json",
+      "bytes": 34710,
+      "sha256": "7f5e867ff0b697c3c8c62a2816bdbac559348b2f211b9e4e9f069e9995e9ed91"
+    },
+    "frameworkC4IndependentReview": {
+      "path": "output/framework-package-rename-r17-independent-review/attempt-01/result.json",
+      "bytes": 4962,
+      "sha256": "9651bf0c2cd8b6b5bc95d952911f760942dd119421b0e2005920ba559446a566"
+    },
+    "unusedFacadeCandidateNotAdopted": {
+      "path": "output/framework-point-r17-checked-facade-candidate/result.json",
+      "bytes": 42660,
+      "sha256": "d8b34285722d92be6c83a80694ed80020c456a5abef8833b86c711eec434024a"
+    },
+    "c4OrdinaryNativeSeal": {
+      "path": "output/tabstrip-r17-c4-native-seal/attempt-01/result.json",
+      "bytes": 5304,
+      "sha256": "57a97d8fa00e6cef6ee6c43141363a3cef88fcab0ce0ab6e2b68d27191d5092b"
+    },
+    "canonicalC4FourTargetDelivery": {
+      "path": "output/tabstrip-r17-c4-ax-canonical-delivery-attempt01/result.json",
+      "bytes": 14328,
+      "sha256": "49cab3cf802050c3b688e00deff9c3bd83ea90071a810a15825bf0c1d54488db"
+    },
+    "canonicalC4FourTargetIndependentReview": {
+      "path": "output/tabstrip-r17-c4-ax-canonical-independent-review/attempt-01/result.json",
+      "bytes": 3851,
+      "sha256": "6174ca484a2d1ef7131ae641d5f4d4b121633c4983fbac77a6d5a723699b9c0c"
+    },
+    "finalTestedCLIRenamePacket": {
+      "path": "output/mygo-rename-r17-bounded-retry-final/result.json",
+      "bytes": 14421,
+      "sha256": "2eea803c2ea1c7ca55a11fa03d827429a84d396a632afb55a14200f4efc2f50a"
+    },
+    "testedCLIRenameIndependentReview": {
+      "path": "output/mygo-rename-r17-tested-packet-independent-review/attempt-01/result.json",
+      "bytes": 4493,
+      "sha256": "6ec9ff17a2000bb28b193d88519c7666570e23bde67f0e2deee3f091be73d43b"
+    },
+    "newGlyphPhaseSourceAudit": {
+      "path": "output/tabstrip-r17-tooltip-raster-source-audit-attempt01/result.json",
+      "bytes": 42996,
+      "sha256": "d8acd3c41283415301ea08da364c9d0ef5c9ce35f8e8990c0eca347b7ec69485"
+    },
+    "actualNoWindowGlyphPhaseControl": {
+      "path": "output/tabstrip-r17-tooltip-phase-com-analysis-attempt01/final-result.json",
+      "bytes": 3517,
+      "sha256": "49f719bc56c06ddf60a189a5dc2e0dddef4472676cffcfe7fb114921d53df655"
+    },
+    "actualNoWindowGlyphPhaseIndependentReview": {
+      "path": "output/tabstrip-r17-tooltip-phase-com-independent-review-attempt01/result.json",
+      "bytes": 220364,
+      "sha256": "8acde834ffb4cd3f5a32c578c0eeac7d3d4780367c1494c201204361c688d31a"
+    },
+    "wrapOptInSourceAudit": {
+      "path": "output/tabstrip-r17-wrap-optin-source-audit/result.json",
+      "bytes": 5342,
+      "sha256": "fb61b95673e28ea56971fe20c42faafacca0bbfefbfc97182ae0aa5ecf3f24ef"
+    },
+    "r3MetadataScopeReview": {
+      "path": "output/tabstrip-r17-progress-r3-independent-review/attempt-01/result.json",
+      "bytes": 5791,
+      "sha256": "4e98e2fd65fb79cce96ccd0449d4657c3bd7547887eb7297206ccc517e5f7c03"
+    },
+    "r4MetadataCorrection": {
+      "path": "output/tabstrip-r17-progress-c4-r4/correction.json",
+      "bytes": 990,
+      "sha256": "311b9afff2fba52e167c5831247e081f8ab10beaf5092fc3565dade61c5f3011"
+    },
+    "historicalR4_fixtureBuild": {
+      "path": "output/tabstrip-r17-go-fixture/attempt-04/build.json",
+      "bytes": 1139,
+      "sha256": "5f2d82079cc2898a459d44f6b2a13288c774fd651d2cf6a4ac1b8089804512d1"
+    },
+    "historicalR4_fixtureSources": {
+      "path": "output/tabstrip-r17-go-fixture/attempt-04/source-hashes.json",
+      "bytes": 294063,
+      "sha256": "3a436494e8b1183f9fc15588b4ca30f26f4aa0587433609aa7b8d9124d6ef894"
+    },
+    "historicalR4_fiveRepositoryGates": {
+      "path": "output/tabstrip-r17-root/final-r5-checks.json",
+      "bytes": 1992,
+      "sha256": "0b7013a96eb6266ec5c3b74d5fc302766db4e96947f2f89d3855c82db70d5732"
+    },
+    "historicalR4_nativeTrialLedger": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r3/result.json",
+      "bytes": 163664,
+      "sha256": "76c805f9d1069b5bf09a6ae891aae3935573d4f063eea371a3357c1e9feadb7d"
+    },
+    "historicalR4_exactWindowsCandidateSmoke": {
+      "path": "output/resume-validation/tabstrip-r17-c4-native/result.json",
+      "bytes": 9780,
+      "sha256": "24e7d107339dd1caefa8ce3474ad856e7ff17928aeb0ecbf06d2670afea0cb21"
+    },
+    "historicalR4_exactWindowsCandidateSmokeIndependentReview": {
+      "path": "output/tabstrip-r17-c4-native-independent-review/attempt-01/result.json",
+      "bytes": 4055,
+      "sha256": "61d74f0a5194ca97ab9c05ef5f3fcf58692f185667c4d5148e5b9f07b72d2ad8"
+    },
+    "historicalR4_canonicalC4FourTargetDelivery": {
+      "path": "output/mygo-rename-r17-c4-canonical-delivery-attempt01/result.json",
+      "bytes": 14288,
+      "sha256": "1024ffdccf51412b351d316c4956cc8e2c7209e54ccf8a78230eb7d72d71a2f3"
+    },
+    "historicalR4_canonicalC4FourTargetIndependentReview": {
+      "path": "output/mygo-rename-r17-c4-canonical-independent-review/attempt-01/result.json",
+      "bytes": 3696,
+      "sha256": "2e46a81f9788ea11a4b36425cf0e2f1de4d3413b7efd3998aa39dbeb0afd3803"
+    },
+    "historicalR4_documentationSnapshots": {
+      "path": "output/tabstrip-r17-progress-c4-r3/documents.json",
+      "bytes": 2880,
+      "sha256": "b649ee5d70bb164de0b9529962450bf7cc973ca677d44f198d3622b370593389"
+    },
+    "AXCandidateV1": {
+      "path": "output/tabstrip-r17-tooltip-ax-name-candidate/attempt-01/result.json",
+      "bytes": 9066,
+      "sha256": "7c14f615ae5ef8cb2666942b2b667b0c7204a2862fda3cc20b0eb687ec820d44"
+    },
+    "AXCandidateV1Finding": {
+      "path": "output/tabstrip-r17-tooltip-ax-name-independent-review/attempt-01/result.json",
+      "bytes": 31085,
+      "sha256": "9871456e29b64385f6c1f4dec2857682fdbc4441fda63c495c7a3f611341254d"
+    },
+    "AXCandidateV2": {
+      "path": "output/tabstrip-r17-tooltip-ax-name-candidate/attempt-02/result.json",
+      "bytes": 10112,
+      "sha256": "0ae1c77c1b18e44f31c2b14ee027a1711572702cabfa75af15c11fad736b0fde"
+    },
+    "AXCandidateV2IndependentReview": {
+      "path": "output/tabstrip-r17-tooltip-ax-name-independent-review/attempt-02/result.json",
+      "bytes": 27613,
+      "sha256": "cb10f3103fae67fb917a73cfd336e4e1bc25406c5c07baa759347ba046de14ba"
+    },
+    "AXAdoption": {
+      "path": "output/tabstrip-r17-ax-adoption/attempt-01/result.json",
+      "bytes": 4301,
+      "sha256": "e7aee96734aba3943f0b21e61d93ad2effa0333dc4d63c505847cc53e7ee453d"
+    },
+    "AXV1NativeControlledProof": {
+      "path": "output/tabstrip-r17-ax-native-seal/attempt-01/result.json",
+      "bytes": 6360,
+      "sha256": "2daffb0c5f90daee6968dbae86d694e8a292b7d455564cecb36bdd18b1a86cc4"
+    },
+    "quarterV1TestedPacket": {
+      "path": "output/tabstrip-r17-cleartype-quarter-candidate/attempt-01/final-result.json",
+      "bytes": 3092,
+      "sha256": "bdd7b3a01ee5c007f5f3dc6b1aee073c52ac9a72a7d11288c97297a9c991435b"
+    },
+    "quarterV1NativeAnalysis": {
+      "path": "output/tabstrip-r17-quarter-native-analysis/attempt-01/result.json",
+      "bytes": 656405,
+      "sha256": "42d25ff0a075ae5740fb72914da7d2c278cd450dab70c478e09ac4028e82050f"
+    },
+    "quarterV1NativeIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-native-independent-review/attempt-01/final-result.json",
+      "bytes": 10023,
+      "sha256": "fbfa119d3081dc17bf8b516060638a00f0829606e38b34341df2b0d6ab913d7f"
+    },
+    "quarterV2TestedPacket": {
+      "path": "output/tabstrip-r17-cleartype-quarter-candidate/attempt-02/final-result.json",
+      "bytes": 5198,
+      "sha256": "0b89d194b008d02b40a57cb980bc4ba8f81439a567c831f322be808651eff6f4"
+    },
+    "quarterPaddingSourcePrediction": {
+      "path": "output/tabstrip-r17-quarter-padding-review/attempt-01/result.json",
+      "bytes": 2231,
+      "sha256": "14985add4cdf6b72b18298ad8bbe2572630cde732c84c412a6cfdb53a6c25559"
+    },
+    "quarterExtensionSourceReview": {
+      "path": "output/tabstrip-r17-quarter-source-extension-review/attempt-01/result.json",
+      "bytes": 10924,
+      "sha256": "c3952c54a6f1590d924a7b0091a6d650af3a3eb7ce358f26317972a393f5c690"
+    },
+    "quarterRGBOfflineAnalysis": {
+      "path": "output/tabstrip-r17-quarter-rgb-residual-offline-attempt01/final-result.json",
+      "bytes": 48977,
+      "sha256": "1dcca4ee3f50ef0531ffddf1cd7ec38ed2c51cd8f5710d2f31cd0248f54edc87"
+    },
+    "preparedColorAndTextPipelineControl": {
+      "path": "output/tabstrip-r17-text-pipeline-control-design-attempt01/source-only-result.json",
+      "bytes": 25250,
+      "sha256": "7565d1c8fd6a37a57e9dd1017877c0b23df266295c062be154a00d01d147dbf0"
+    },
+    "historicalR5_nativeTrialLedger": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r4/result.json",
+      "bytes": 172103,
+      "sha256": "08650e416bd45da71a72f0aa9c83f96398f545b2a2a64e16cb1cd58869bc85cc"
+    },
+    "historicalR5_documentationSnapshots": {
+      "path": "output/tabstrip-r17-progress-c4-ax-r5/documents.json",
+      "bytes": 2901,
+      "sha256": "f7cf40ca215ab89c04aa3cc1836c6340773e5629df4ad9cecd3eda298f461664"
+    },
+    "quarterV3TestedPacket": {
+      "path": "output/tabstrip-r17-cleartype-quarter-candidate/attempt-03/final-result.json",
+      "bytes": 5250,
+      "sha256": "1452921e09f096384a77b45ffc7014080bd6d37648b01c102df7e6878f844281"
+    },
+    "quarterV2V3IndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v2-v3-independent-review/attempt-01/result.json",
+      "bytes": 45226,
+      "sha256": "451e192076cb9541106881c9a687dfa3f795fca8384c566690e9dd8c1d7370f7"
+    },
+    "quarterResidual512Attribution": {
+      "path": "output/tabstrip-r17-quarter-residual512-review/attempt-01/result.json",
+      "bytes": 17972,
+      "sha256": "48e01c733db902a09df1150862a22681d73023c155dbdcfa419b6734c8719c7a"
+    },
+    "quarterRunCallbackContractReview": {
+      "path": "output/tabstrip-r17-quarter-run-callback-review/attempt-01/result.json",
+      "bytes": 10872,
+      "sha256": "b17ab127729835c0374b17a1053ff927109c179716bd631060e17c9bcc986dae"
+    },
+    "quarterV4TestedPacket": {
+      "path": "output/tabstrip-r17-cleartype-quarter-candidate/attempt-04/final-result.json",
+      "bytes": 5870,
+      "sha256": "417f4cb515d1bd0f76764e9978d7a326a7a539092988b8f73e79f827e83ce5f1"
+    },
+    "quarterV4SourceIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v4-source-independent-review/attempt-01/result.json",
+      "bytes": 20919,
+      "sha256": "cee6812dc0e212dd933b5b19afe0ddd5954806b0bc29feff6cc7eb4b44b8e6bb"
+    },
+    "quarterV4ExecutedIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v4-executed-independent-review/attempt-01/result.json",
+      "bytes": 33215,
+      "sha256": "6a822f34a5732e240bd0d211eb038054ae041557f168bc5f7bbf5916413f1915"
+    },
+    "quarterV4AXIntegrationPrepared": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-integration/attempt-01/prepared-result.json",
+      "bytes": 2115,
+      "sha256": "b48b0bb2156a28888cf0d320b3faa089b05672d292dfffadf950fee4d2834a8b"
+    },
+    "quarterV4AXIntegrationChecksR1": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-integration/attempt-01/checks.json",
+      "bytes": 778,
+      "sha256": "1bd8b6d8a6a7413a206f51cd5ba393ad86de4d6c88a294d2a4e049da4e9d3b42"
+    },
+    "quarterV4AXIntegrationChecksR2": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-integration/attempt-01/checks-r2.json",
+      "bytes": 2706,
+      "sha256": "7c8d8ab28b34fa6ec74965554e319ccbbec0e09189ec4d3703136db9b7a35a5f"
+    },
+    "quarterV4AXFixtureBuild": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-native-inputs/attempt-01/build.json",
+      "bytes": 2733,
+      "sha256": "c4b3c5b3c1a18df553f9d58f55e6c2c8f1d88c6278bbeb234e5e15c44a70ed4e"
+    },
+    "quarterV4AXNativeSeal": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-native-seal/attempt-01/result.json",
+      "bytes": 8453,
+      "sha256": "62f04724246d5507ba7c1daef52e2153b99af2a4be16312f3a9a26dfc371bffe"
+    },
+    "quarterV4AXNativeIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-native-independent-review/attempt-01/result.json",
+      "bytes": 18619,
+      "sha256": "88b8035582adc25a57a4ab10ac73e3ba5fce2ae59888292c57683be9b7a428e6"
+    },
+    "quarterV4AXDefault36NativeSeal": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-baseline-seal/attempt-01/result.json",
+      "bytes": 32453,
+      "sha256": "5a6edbea0168f93a29227dc3e2fdbc0cefa252deac217f5a3e7c9ba07ca183e9"
+    },
+    "colorCPUExecutedModel": {
+      "path": "output/tabstrip-r17-text-color-cpu-model-attempt01/final-result.json",
+      "bytes": 5374,
+      "sha256": "a7207a4c65ab67ce4eb836ba2e152468386a0c0ac8bb7d153bd21dd0cd2e746a"
+    },
+    "colorCPUExecutedModelIndependentReview": {
+      "path": "output/tabstrip-r17-text-color-cpu-independent-review/attempt-01/final-result.json",
+      "bytes": 4761,
+      "sha256": "15c42f34d77940bdd04b4b216c29dc9291ff4172bf1266085b6c74dad2f96348"
+    },
+    "textLeafGPUPreparedV1": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-control-attempt01/source-only-result.json",
+      "bytes": 12078,
+      "sha256": "c5ce4370c7f08e46b349b91e0dc9531c21cb2d897c3b1ff8b88e6251e0800e1f"
+    },
+    "textLeafGPUPreparedV1IndependentReview": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-independent-preflight/attempt-01/result.json",
+      "bytes": 2989,
+      "sha256": "8351534f96ca66d66595aafe13a768b18e994cc0e4516bf30e086736b566c4fc"
+    },
+    "textLeafGPUBuildV1NoExecution": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt01/final-result.json",
+      "bytes": 8799,
+      "sha256": "d3f56ae1d0b7db2049f48ea3f12c4a166a55dda646600eb2b55cf47f532ec662"
+    },
+    "cardCornerCoordinateClassification": {
+      "path": "output/tabstrip-r17-card-corner-residual-attempt01/final-result.json",
+      "bytes": 1832,
+      "sha256": "82c973cd6d513700ac1cb1777fd1f24a715ae543f582918ccf6dd83cadd93a6a"
+    },
+    "cardCornerSourceReview": {
+      "path": "output/tabstrip-r17-card-corner-source-review/attempt-01/result.json",
+      "bytes": 4869,
+      "sha256": "7c8d08b858716104df660c1595c98a2fd811ba74c8a4aa1869876c3d3b1c1beb"
+    },
+    "cardOnOffControlDesign": {
+      "path": "output/tabstrip-r17-card-onoff-control-design/attempt-01/result.json",
+      "bytes": 3369,
+      "sha256": "7425a84595810f1d7525abe5b31237553006d0c700287abfd522e3563b5d1a97"
+    },
+    "glyphWrapPreparedV1": {
+      "path": "output/tabstrip-r17-wrap-candidate/attempt-01/result.json",
+      "bytes": 1633,
+      "sha256": "6598835fab7637e3234dbff1184fcbee9fb7e4966033a66ae48c7ab8c0266e90"
+    },
+    "glyphWrapPreparedV1IndependentReview": {
+      "path": "output/tabstrip-r17-wrap-source-independent-review/attempt-01/result.json",
+      "bytes": 5734,
+      "sha256": "05a3c16cbe0fcd5a15afb4b89db6dd5dd88d5626b1bb58cf9449623d654f0a41"
+    },
+    "historicalR6_documentationSnapshots": {
+      "path": "output/tabstrip-r17-progress-c4-ax-r6/documents.json",
+      "bytes": 2901,
+      "sha256": "167eb7da42c5a172e8633f01e20a19186d1cb91f4841f606e6b98fd2ad652b4e"
+    },
+    "textLeafGPUPreparedV2": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-control-attempt02/source-only-result.json",
+      "bytes": 13989,
+      "sha256": "ff68e19c475d8809300039ca1d5fd63f57159f9870c1e8845a97ab58731c710e"
+    },
+    "textLeafGPUBuildV2": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt02/final-result.json",
+      "bytes": 9764,
+      "sha256": "1e9d6f93ccdee6aea2f06679e80fa6724c0ff0518d3d9fd91de3857ab9f4b085"
+    },
+    "textLeafGPUV2SourceIndependentReview": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-source02-independent-review/attempt-01/result.json",
+      "bytes": 4106,
+      "sha256": "a386df1bcdd779f07d6dac4950c1643280671225f7906fc25153d3abd05b3db7"
+    },
+    "glyphWrapExecutedV2TwoFailedGates": {
+      "path": "output/tabstrip-r17-wrap-candidate/attempt-02/result.json",
+      "bytes": 2688,
+      "sha256": "5893d2884bb8e8473e5505965023b56b39beee9f204339bbb98fa6487607eb5b"
+    },
+    "glyphWrapLFIntegrationIndependentReview": {
+      "path": "output/tabstrip-r17-wrap-lf-integration-review/attempt-01/result.json",
+      "bytes": 33434,
+      "sha256": "0a2448a9fa250a50d78b00e1478878833b9387c9d62187f145dc1061e6df4295"
+    },
+    "glyphWrapV2UnusedCost": {
+      "path": "output/tabstrip-r17-wrap-candidate/attempt-02/cost-analysis/result.json",
+      "bytes": 22045,
+      "sha256": "810de12207ccb09130369f723e5d17daf6416a735aed77232d8aea1a1c0b7ef9"
+    },
+    "quarterV4AdoptionPreparedOnly": {
+      "path": "output/tabstrip-r17-quarter-v4-adoption-prepared/attempt-01/result.json",
+      "bytes": 12789,
+      "sha256": "398b26892b58807db132721d1358d8bc71c09fd6f1e631106dd2e5963a43b097"
+    },
+    "quarterV4CrossPlatformUnusedPrepared": {
+      "path": "output/tabstrip-r17-quarter-v4-cross-unused-size/attempt-01/prepared.json",
+      "bytes": 6696,
+      "sha256": "a3c79fc5aed2851e46b79449dda63b747a2dde1517cd392dbad6abc4ef460338"
+    },
+    "quarterV4AXBaselineLedgerIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v4-ax-baseline-ledger-independent-review/attempt-01/result.json",
+      "bytes": 60655,
+      "sha256": "a46e77cf858bcc9f5c487975e3719300296aa775929e26eed098a47e3f897633"
+    },
+    "historicalR7_documentationSnapshots": {
+      "path": "output/tabstrip-r17-progress-c4-ax-r7/documents.json",
+      "bytes": 2901,
+      "sha256": "8495be75dc99eb96182c219e01b00e1b27a973ce91a8df25e9373160f4bae010"
+    },
+    "quarterV4CrossPlatformUnusedExecuted": {
+      "path": "output/tabstrip-r17-quarter-v4-cross-unused-size/attempt-01/final-result.json",
+      "bytes": 22331,
+      "sha256": "bcff5fd7ff16a3a3865c96c39b14ef59748adf726a35545ef0f3d2321b512db3"
+    },
+    "quarterV4CrossPlatformUnusedAttribution": {
+      "path": "output/tabstrip-r17-quarter-v4-cross-unused-attribution/attempt-01/result.json",
+      "bytes": 3356,
+      "sha256": "e5da73301cf669267cab605636a3276d2d8bf1dc69a32c33512d2505ae750307"
+    },
+    "quarterV4AdoptionProposalIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v4-adoption-independent-review/attempt-01/result.json",
+      "bytes": 7957,
+      "sha256": "df39987f56845a8e13223f1500875dad6ccd7902592b2557e6e16ffed3a5757f"
+    },
+    "quarterV5PreparedOnly": {
+      "path": "output/tabstrip-r17-cleartype-quarter-candidate/attempt-05/result.json",
+      "bytes": 6121,
+      "sha256": "23a4bf56b731beeb949250d06071cf8aad387b7b2da2fce6474aa1b1729d0097"
+    },
+    "quarterV5SourceIndependentReview": {
+      "path": "output/tabstrip-r17-quarter-v5-source-independent-review/attempt-01/result.json",
+      "bytes": 4833,
+      "sha256": "b614d6cc972e56dea19248e22b7ba4d878c238e15092402b1944dec4cc7b5bf3"
+    },
+    "glyphWrapV3PreparedOnly": {
+      "path": "output/tabstrip-r17-wrap-candidate/attempt-03/result.json",
+      "bytes": 1989,
+      "sha256": "abced467101193e52395a3de60402bcb621e1a1b1b21ff7b1becd1fded934167"
+    },
+    "glyphWrapV3ExecutedLimitedValidation": {
+      "path": "output/tabstrip-r17-wrap-candidate/attempt-03/execution/attempt-01/result.json",
+      "bytes": 4915,
+      "sha256": "58ed4cd2c382e3b79d805dbcf7cd3585b36af0609f38cc560e43ea2a44c61793"
+    },
+    "glyphWrapUnusedStructureReview": {
+      "path": "output/tabstrip-r17-wrap-unused-structure-source-review/attempt-01/result.json",
+      "bytes": 1548,
+      "sha256": "4f00141aab81e4655150e4dc5ce069f112699fdf694ff82e0d2d573a8dbe7856"
+    },
+    "textLeafGPURuntime01FailedInitialization": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-analysis-attempt01/final-result.json",
+      "bytes": 4687,
+      "sha256": "c33c5a8b6086d1b063a1cbfad8cf291a5d22aa94daeb8209ae93e07d8a900f68"
+    },
+    "textLeafGPURuntime01IndependentReview": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime01-independent-review/attempt-01/result.json",
+      "bytes": 9374,
+      "sha256": "2855d753f102557d78065f9856db4a102e29e6b50c7ee1e46db6fb443a6539c4"
+    },
+    "textLeafGPUV3ProposalIndependentReview": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-source03-depth-proposal-independent-review/attempt-01/result.json",
+      "bytes": 5624,
+      "sha256": "5f99bc375a27b44f819c7ee50890269b3733caf91f7e9b2763429375b7f0ecbb"
+    },
+    "textLeafGPUPreparedV3": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-control-attempt03/source-only-result.json",
+      "bytes": 5131,
+      "sha256": "76cf348b49e15a6aca2bfbb61f71ba3e35a33056eba221ca3e077de8530f3225"
+    },
+    "textLeafGPUBuildV3": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt03/final-result.json",
+      "bytes": 10588,
+      "sha256": "7d2feee5f312857fefeb88374a2ea13d566c575a026069f607fe7a69c5707fd1"
+    },
+    "textLeafGPUV3SourceBuildIndependentReview": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-source03-independent-review-attempt01/result.json",
+      "bytes": 14029,
+      "sha256": "3cfded24b0d1675eb5c8afd246e332cfe5793d8b0edd308c7f5294f1811339ba"
+    },
+    "textLeafGPUV3LegacyLabelCorrection": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt03/legacy-label-addendum.json",
+      "bytes": 1668,
+      "sha256": "1023d834fae89eead888b7bf783f5081f90b544d0225de8c7614266ba6183d7a"
+    },
+    "textLeafGPURuntime02Prepared": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-prep-attempt02/prepared-result.json",
+      "bytes": 2702,
+      "sha256": "21397a9a7637ef4cd291739fbb180f3123fe13298aba7425b9d9dda0b5041bbe"
+    },
+    "inputAuthNegativePrepared": {
+      "path": "output/tabstrip-r17-text-leaf-input-auth-negative/attempt-01/prepared.json",
+      "bytes": 9711,
+      "sha256": "86da8aa7612da90ddc6139360f58fe81f426334288d9bce7ac554142bbc03024"
+    },
+    "inputAuthNegativeExecutedSeparateBuild": {
+      "path": "output/tabstrip-r17-text-leaf-input-auth-negative/attempt-01/final-result.json",
+      "bytes": 3791,
+      "sha256": "0a73ee1b6dc2fece5262f9808222a14fdb975934e332bf1ec9befb4a745d71e4"
+    },
+    "actualUploadedTextInputsCaptureDesign": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-design/attempt-01/result.json",
+      "bytes": 3758,
+      "sha256": "96d9ea755cc064fc610f0ddb26ec9cb8ff00ed52f73706f182786f3d5278a184"
+    },
+    "quarterV5Executed": {
+      "path": "output/tabstrip-r17-quarter-v5-execution/attempt-01/final-result.json",
+      "bytes": 7188,
+      "sha256": "beb5cacacf7e7a4b2929ffb0f25876888a472df8ee846303012e7deae2943887"
+    },
+    "quarterV5ExecutedIndependent": {
+      "path": "output/tabstrip-r17-quarter-v5-executed-independent-review/attempt-01/result.json",
+      "bytes": 5234,
+      "sha256": "d503c4fd536f2ab8c481700960669628b3282204c24532e696afe4aaefd48b75"
+    },
+    "quarterV5AXPrepared": {
+      "path": "output/tabstrip-r17-quarter-v5-ax-integration/attempt-01/prepared-result.json",
+      "bytes": 4606,
+      "sha256": "2100cd7a92617537bb623b02a289651064ff0435b6fc58778329f2809452de9e"
+    },
+    "quarterV5AXFourChecks": {
+      "path": "output/tabstrip-r17-quarter-v5-ax-integration/attempt-01/execution/attempt-01/result.json",
+      "bytes": 5281,
+      "sha256": "56dc68d7d9cffcb43b3d35d29d6d569474c024d68b65b863aa7e5b7f8e643266"
+    },
+    "quarterV5AXNative": {
+      "path": "output/tabstrip-r17-quarter-v5-ax-native-seal/attempt-01/result.json",
+      "bytes": 45042,
+      "sha256": "45d197f018b3b83fbce0d7881de58be9124e3df43f353b1dafd78a4fb82556dd"
+    },
+    "quarterV5AXNativeIndependent": {
+      "path": "output/tabstrip-r17-quarter-v5-ax-native-independent-review/attempt-01/result.json",
+      "bytes": 4219,
+      "sha256": "67e5db0c626fc4168c433dad91c80a85650a58db725576aed8fe23a785089ca2"
+    },
+    "quarterV5ManifestSerializationFinding": {
+      "path": "output/tabstrip-r17-quarter-v5-ax-manifest-serialization-review/attempt-01/result.json",
+      "bytes": 2497,
+      "sha256": "d0fbd1bda26809459a38b4b460c653fa37f0a7ebb45547e81fb913f24a0b41ff"
+    },
+    "quarterV5AdoptionProposal": {
+      "path": "output/tabstrip-r17-quarter-v5-adoption-prepared/attempt-01/result.json",
+      "bytes": 10593,
+      "sha256": "866e059e7d1a072410a3766dcb4800177121df02af4b854ca0b7be9b8f2ce58e"
+    },
+    "quarterV5AdoptionProposalIndependent": {
+      "path": "output/tabstrip-r17-quarter-v5-adoption-independent-review/attempt-01/result.json",
+      "bytes": 5997,
+      "sha256": "b4def398d731f46f3917280fce4e7da911d4dc714e2f8868977c4feba31291f5"
+    },
+    "quarterV5SourceAdopted": {
+      "path": "output/tabstrip-r17-quarter-v5-adopted/attempt-01/result.json",
+      "bytes": 12212,
+      "sha256": "3f4175e6e41d6820ac8d51d90f322cfad94c07fdd0812c8b3eab70744f9bb07c"
+    },
+    "quarterV5FormalGateAttempt01FailedDiscovery": {
+      "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-01/result.json",
+      "bytes": 2945,
+      "sha256": "7e5d8db86efc2c5f54c5434f5d52f97d0a80d975b88a26d189e298ab79007876"
+    },
+    "quarterV5FormalGateAttempt02PassedFourLintLaunchFailed": {
+      "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/result.json",
+      "bytes": 6821,
+      "sha256": "eecbc607456a2df7736bd1f332fb79628a0f5d9e46bd060de43684f9a7185188"
+    },
+    "quarterV5FormalGatesFinal03": {
+      "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-03/result.json",
+      "bytes": 8672,
+      "sha256": "831c2944ee20348513f0df369c018e0932136a2218a0af93bc565de6a81b151c"
+    },
+    "quarterV5DiscoveryCorrection": {
+      "path": "output/tabstrip-r17-root/v5-gate-discovery-correction.json",
+      "bytes": 830,
+      "sha256": "13c4fed1b2266d7d26dc3926ab403becdf5c30fa28d07bb7fdc8017bb806fa2f"
+    },
+    "diagnosticOutputModuleBoundary": {
+      "path": "output/go.mod",
+      "bytes": 44,
+      "sha256": "ac6d8c510eb3de25fc30c145089df43477b57b1cc807b39a9367c67e0b3d8d20"
+    },
+    "quarterV5Canonical01FailedPreflight": {
+      "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt01/result.json",
+      "bytes": 6700,
+      "sha256": "2ee7194493a41c286987b9a982b82cb32ac79e6fc784e921095a6e5a2b50d9cc"
+    },
+    "nativeFixtureLedgerR6": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r6/result.json",
+      "bytes": 269811,
+      "sha256": "9d20f7280737abb05dfd116a5ff3c7a80326c948c92887e613e349fdd7e11c22"
+    },
+    "textLeafGPURuntime02SamplerFailure": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-analysis-attempt02/final-result.json",
+      "bytes": 4156,
+      "sha256": "6e2bd18e863c54c8c72f245ecc1a2d362b05b0c8b77c03cba30b9411f137d17a"
+    },
+    "textLeafGPURuntime02Independent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime02-independent-review/attempt-01/result.json",
+      "bytes": 3305,
+      "sha256": "47ce9934901f4af8acc65bb0d8c11543badd40d91ac307b94739860866cbe547"
+    },
+    "textLeafGPU04EffectiveStateProposal": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-source04-effective-state-proposal-attempt01/result.json",
+      "bytes": 4532,
+      "sha256": "043d877ded60239a5e3f70a01452e07ae59be051d91757402378e84211c456b7"
+    },
+    "textLeafGPU04EffectiveStateIndependent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-source04-effective-state-independent-review/attempt-01/result.json",
+      "bytes": 3404,
+      "sha256": "8e9a61a874d3f9daa1d09072059bfeb7b1de943b1ee6256f7557e8bb966311cd"
+    },
+    "textLeafGPU04TestCompileFailure": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt04/final-result.json",
+      "bytes": 14926,
+      "sha256": "bb5c5b33695ee081dc1e3b65d0205423b71fe1c5b7b88f410a3e2dd405ed2217"
+    },
+    "textLeafGPU05TestsAndBuild": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-build-attempt05/final-result.json",
+      "bytes": 6779,
+      "sha256": "e00afda0fa2ffb514c59b020126cf67b1c3121e5828061ded0f45c359815a7e3"
+    },
+    "textLeafGPURuntime03Pilot24": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-analysis-attempt03/final-result.json",
+      "bytes": 4097,
+      "sha256": "0ff95f6a07fcbe3b10156c26f58fb768616725d00c02be9692310b0dec966481"
+    },
+    "inputAuthNegativeIndependent": {
+      "path": "output/tabstrip-r17-text-leaf-input-auth-negative-independent-review/attempt-01/result.json",
+      "bytes": 1889,
+      "sha256": "426bf1067231e3c46923c9cddc9defff3c1e05abe3eba708a3dd58a93090e6ae"
+    },
+    "actualUploadCapturePrepared01": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-01/result.json",
+      "bytes": 6082,
+      "sha256": "2cf36987c77fbc72145f398d53aba8d7da1cc7b706fe5de370fb7bc26e36a2eb"
+    },
+    "actualUploadCaptureIndependent01": {
+      "path": "output/tabstrip-r17-text-actual-input-independent-review/result.json",
+      "bytes": 12982,
+      "sha256": "19d719f9521a3ec8a31d421fea0f4741941a3b9225e648278eea7af95ea8c390"
+    },
+    "quarterV5CanonicalFinal02": {
+      "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt02/final-result.json",
+      "bytes": 9590,
+      "sha256": "8043c0a304287937181fdcdf7c5aba6d29e012b355028e5267ece3e99ced768d"
+    },
+    "quarterV5CanonicalRaw02": {
+      "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt02/result.json",
+      "bytes": 86195,
+      "sha256": "e09bf5b3df32c6447f2d8dc34cc5569d681f637664667dea1b7e74ffd0ea1e86"
+    },
+    "quarterV5WindowsMainNative": {
+      "path": "output/resume-validation/tabstrip-r17-quarter-v5-native/result.json",
+      "bytes": 10228,
+      "sha256": "0d850ab4bebfd6c9a308ea015266321fb64e7028dbcbdda926c77842fbb7767c"
+    },
+    "quarterV5PackageAndNativeIndependent": {
+      "path": "output/tabstrip-r17-quarter-v5-package-independent-review/result.json",
+      "bytes": 16413,
+      "sha256": "31591d085afc917ae8646b63c866c9b6e3e2d7cd0b5976210affc08cd7221150"
+    },
+    "quarterV5DocsUpdate01Historical": {
+      "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-01/result.json",
+      "bytes": 3215,
+      "sha256": "3a76c7789d6137be8c19b17c86223f278ec3eeb8f3e130de20f4635a63034444"
+    },
+    "quarterV5DocsUpdate02": {
+      "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-02/result.json",
+      "bytes": 2357,
+      "sha256": "4d3df5bee8fed1a03f92eb7e2120a55eaa1fac8390180b35507596bc5e721474"
+    },
+    "actualUploadCapturePrepared02SourceOnly": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/result.json",
+      "bytes": 9581,
+      "sha256": "85552da2f7140364cba0eed2364188565595b5278049c350fa5a4fa71acde168"
+    },
+    "textLeafGPURuntime03Independent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime03-independent-review/attempt-01/result.json",
+      "bytes": 3448,
+      "sha256": "a0cd6c49105283d1161b2faa6bc0ddae733793502bf1dd47af9200a008e764f4"
+    },
+    "textLeafGPURuntime04PreparedPlan": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-prep-attempt04/final-result.json",
+      "bytes": 7915,
+      "sha256": "5d3499120772f67750ce1468f3a73c1dad5ea542def385c9ea552a381a73cda7"
+    },
+    "textLeafGPURuntime04PlanIndependent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime04-plan-independent-review/attempt-01/result.json",
+      "bytes": 1623,
+      "sha256": "f5ee3de1cbdae8e2950e62db3eb84966a6d47d4ece294224b9faffad2a044fd5"
+    },
+    "textLeafGPURuntime04Execution288": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-attempt04/execution-result.json",
+      "bytes": 8130,
+      "sha256": "bf6571dc589cf318e11ddb9b8370fe6d4fce6d7fc0af94429d11051b57ef58e6"
+    },
+    "progressR9IndependentReview": {
+      "path": "output/tabstrip-r17-progress-v5-r9-independent-review/attempt-01/result.json",
+      "bytes": 3034,
+      "sha256": "b850011e489afd111486d8cb6cb25b2c3ab69cba0a230f04f0488e0d98c3b9f6"
+    },
+    "currentDot9WindowsMainBinary": {
+      "path": "output/resume-validation/tabstrip-r17-quarter-v5-packages/windows-amd64/Zeron.exe",
+      "bytes": 25952256,
+      "sha256": "9c58004289a9da967b3e1b6e1baae03c031374b2f0c3aa6fc272677e0b8ff795"
+    },
+    "actualUploadCaptureControlsIndependent02": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/independent-controls-review.json",
+      "bytes": 9509,
+      "sha256": "14b171a96c652168bb39a0759c5334793c301b9f9e354f8c3f739bdea0102680"
+    },
+    "textLeafGPURuntime04NativeExecuted": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-attempt04/04-derived-288/native-output/executed-result.json",
+      "bytes": 119203,
+      "sha256": "f21be684a1ac5a0465ebb896521727e37daddb3632f423c09dbfdb7afb0fce0a"
+    },
+    "textLeafGPURuntime04StructuralReadbacks": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-attempt04/structural-case-readback-checks.json",
+      "bytes": 244179,
+      "sha256": "860cdfdeb0b8cef17b355c7640045f3b8016f33d3cc3859ac4f4f35410553334"
+    },
+    "currentSevenDocumentsSnapshotR10": {
+      "path": "output/tabstrip-r17-progress-v5-r10/documents-snapshot.json",
+      "bytes": 4459,
+      "sha256": "88260e4b3714eac9c77a5209c8c7f3ac0b82eccffdc27a45b56118ade40f2ef4"
+    },
+    "progressR10RootReadOnlyReview": {
+      "path": "output/tabstrip-r17-progress-v5-r10-root-review/result.json",
+      "bytes": 1117,
+      "sha256": "b1083cfcbf1f136224af331feb51d18c90c19ebb6d720b806d6871ee4328a520"
+    },
+    "textLeafGPURuntime04FinalNumeric": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-analysis-attempt04/final-result.json",
+      "bytes": 16108,
+      "sha256": "146b75cbb590971859e91a55d7ed9239dc870a9db9036f16dbe5dd3557662a85"
+    },
+    "textLeafGPURuntime04Independent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime04-independent-review/attempt-01/result.json",
+      "bytes": 3413,
+      "sha256": "8e9974225644b105ab2545c11743235c17a1155f299a732288a75257e771bfb9"
+    },
+    "p0GoNativeComposite": {
+      "path": "output/tabstrip-r17-p0-go-native-seal/attempt-01/result.json",
+      "bytes": 3277,
+      "sha256": "80d5b4329c4e77fbfc98c428f2d9863c28b527a2699b1d44572bde1551b0dca2"
+    },
+    "p0GoNativeIndependent": {
+      "path": "output/tabstrip-r17-p0-go-native-independent-review/result.json",
+      "bytes": 64192,
+      "sha256": "d802b2e186985626baae559803e7e65ca79921638619ff13e89bb15353c4ebf9"
+    },
+    "nativeFixtureLedgerR7": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r7/result.json",
+      "bytes": 297879,
+      "sha256": "1353468bb196c4876df61cc48ffd1d6ea21d4509688b1d05d90526243199c239"
+    },
+    "p0GoBuildsFinal": {
+      "path": "output/tabstrip-r17-p0-go-builds-sealed-attempt02/result.json",
+      "bytes": 10297,
+      "sha256": "91576031d07f97466a65e014ca3158c06b76706a4b930409bd04e0e83819006e"
+    },
+    "p0GoABIControls": {
+      "path": "output/tabstrip-r17-p0-go-abi-tests-attempt01/result.json",
+      "bytes": 3930,
+      "sha256": "4afd07723491158afe7cf27682e30976af4b78c8c493977a66e02babdb65d49c"
+    },
+    "p0GoUploadedTextCatalog": {
+      "path": "output/tabstrip-r17-p0-go-uploaded-text-catalog/attempt-01/result.json",
+      "bytes": 4688,
+      "sha256": "3c37bec96416ede2b05d8dd199d6af0525fe2a78cbb1240514ca2898616dd3b9"
+    },
+    "p0GoHostLeafSelectedFields": {
+      "path": "output/tabstrip-r17-p0-go-host-leaf-field-comparison/attempt-01/result.json",
+      "bytes": 3370,
+      "sha256": "8b421491cbd9e750dce72f9c9fdd9f3e9656104fbbe94b906f0c119dc5a9cd04"
+    },
+    "p0GoCatalogIndependentWords": {
+      "path": "output/tabstrip-r17-p0-go-catalog-independent-word-check/result.json",
+      "bytes": 1674,
+      "sha256": "f21e60750ae7de34753d1076f7d12fa63502e0089cd4dfab00ccd71d670e9ba6"
+    },
+    "p0GoFirstFailedBaselineIndependent": {
+      "path": "output/tabstrip-r17-text-actual-input-baseline-png-independent-review/attempt-01/result.json",
+      "bytes": 3515,
+      "sha256": "4f21e794710d5e9f7cb52976f397b363680513892e29961f35b59224ec5f60f4"
+    },
+    "p0RustDefaultMetadata03": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/metadata-reference-trace-attempt03/seal.json",
+      "bytes": 149087,
+      "sha256": "c7f90cb2f1fe49d7f28e7c4d364507ddb15728859c6527d07c87b6a186eb14c7"
+    },
+    "p0RustDefaultMetadataIndependent": {
+      "path": "output/tabstrip-r17-rust-metadata-independent-review/attempt-01/result.final.json",
+      "bytes": 10998,
+      "sha256": "472a2838ee876d1b9d03ffacb5bfc3bf4c0f596c672c1c36a79c55fb93fae3db"
+    },
+    "p0DocsUpdate01": {
+      "path": "output/tabstrip-r17-p0-docs-update/attempt-01/result.json",
+      "bytes": 7412,
+      "sha256": "a85563ff8ec14b438f4e70c6bfe44ad37e3fde38e50f2ab5d7e45187c9f9be67"
+    },
+    "unusedC4Dot6ReadOnlyAttribution": {
+      "path": "output/framework-unused-c4-dot6-attribution/attempt-01/result.json",
+      "bytes": 5416,
+      "sha256": "0e8adb220161aaa9dc60f17d0cd4dde86125dd0213cdd60b0c011ca89e20c06d"
+    },
+    "unusedNoGrowthSourceOnlyDesign": {
+      "path": "output/framework-unused-no-growth-design/attempt-01/result.json",
+      "bytes": 4234,
+      "sha256": "4634efac1ff9ca45a60235d93ac207ee5d8c51fd551bacc03d21600a120d1f03"
+    },
+    "p0RustMetadataFailure01": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/metadata-reference-trace-attempt01/failure-seal.json",
+      "bytes": 17744,
+      "sha256": "0903f055b0261b046c9c2611fe419fefd97465e104390a81fa65b52a2c9de20e"
+    },
+    "p0RustMetadataFailure02": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/metadata-reference-trace-attempt02/failure-seal.json",
+      "bytes": 24928,
+      "sha256": "dc8dc16fb9163669c126665ce1eb26fbbd5c9c327aaea763f8f1e2815ac94047"
+    },
+    "p0GoNativeCompositeEvidence": {
+      "path": "output/tabstrip-r17-p0-go-native-seal/attempt-01/native-composite-evidence.json",
+      "bytes": 27577,
+      "sha256": "a0b1a926b262705e67f111304694c224fe729009e3376157b4476aaec0ad832a"
+    },
+    "p0GoNativeBaselineGate": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/native-go-attempt02/baseline/gate.json",
+      "bytes": 6168,
+      "sha256": "ac8f10588aedcc03ac9d09ea00fbec86b303bb3af272cf4eb3c77062cd49caea"
+    },
+    "p0GoNativeTraceOffGate": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/native-go-attempt02/trace-off/gate.json",
+      "bytes": 6171,
+      "sha256": "885b1321a2dfedc9b4d569e3200e43340995772d418b770a7acbc6595c012e7b"
+    },
+    "p0GoNativeTraceOnGate": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/native-go-attempt02/trace-on/gate.json",
+      "bytes": 8623,
+      "sha256": "b8d868a1d6b586d35d295c72d6ced0c745332865db30008a1e62e8b8ea9ecfd4"
+    },
+    "p0GoBaselineBinary": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/build/go-baseline-build-attempt01/tabstrip-fixture.exe",
+      "bytes": 21792256,
+      "sha256": "a39bc83168578ae905c0ef117176a481c26d898d42bc65e621610f1a9cb87e57"
+    },
+    "p0GoTraceBinary": {
+      "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/build/go-trace-build-attempt01/tabstrip-fixture.exe",
+      "bytes": 21842944,
+      "sha256": "4f0bb9edbad839b45824d5330c66dc302841dcfa274296303ed53b0f5ecd1c18"
+    },
+    "p0GoSubpixelProfiles": {
+      "path": "output/tabstrip-r17-p0-go-uploaded-text-catalog/attempt-01/subpixel-profiles.json",
+      "bytes": 22329,
+      "sha256": "f03ac695a04724329024e27691c06f11bcb8fd42aad1a66329dc4b27db84a829"
+    },
+    "p0GoSubpixelRows": {
+      "path": "output/tabstrip-r17-p0-go-uploaded-text-catalog/attempt-01/subpixel-instance-rows.json",
+      "bytes": 901874,
+      "sha256": "5d2faa7db96cebd48696cb664112bf983763c29922d1ce069852d49f2a02e66a"
+    },
+    "p0GoIndependentRawInstances": {
+      "path": "output/tabstrip-r17-p0-go-native-independent-review/actual-instances.json",
+      "bytes": 1116135,
+      "sha256": "5133b79e57abd5254cac775526e15ff30232121da9047c74cad3ba6e514f2d33"
+    },
+    "currentSevenDocumentsSnapshotR11": {
+      "path": "output/tabstrip-r17-progress-p0-r11/documents-snapshot.json",
+      "bytes": 4310,
+      "sha256": "e50e10fea2c6374bece66adf16936994473c1209037170badcb7d953a1818896"
+    }
+  },
+  "gateLogs": {
+    "currentCloudComposite": {
+      "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\current-cloud-gates.json",
+      "bytes": 1262,
+      "sha256": "096c57f87dfe11438c2ba54f78c2e30638b4e314a57f895332c9df122e7dcce8"
+    },
+    "priorR11PreservedInHistory": true
+  },
+  "documentationInconsistencies": [
+    {
+      "finding": "README, patch page and handoff/resume pages described historical .6/11 patches as current while code advanced to .7/12",
+      "resolution": "Current candidate and historical R16 release are distinguished; original artifacts retain original identity"
+    },
+    {
+      "finding": "Frozen GPUI Window::gpu_specs comment says Windows returns None",
+      "resolution": "Frozen implementation and actual new diagnostic return Windows specs; reference source unchanged"
+    },
+    {
+      "finding": "Frozen GPUI GpuSpecs comment only describes Vulkan",
+      "resolution": "Windows implementation actually uses D3D; reference source unchanged"
+    },
+    {
+      "finding": "mygo-patches current candidate label said C2 while its fingerprint was C3; acceptance implementation list left eleven patches unqualified beneath current R17 introduction",
+      "resolution": "Label corrected to C3; eleven-patch inventory explicitly scoped to sealed R16, current C3 twelve-patch inventory stated separately"
+    },
+    {
+      "finding": "Patch reconstruction workflow still listed eleven apply commands and omitted tooltip-primitives while lock had twelve",
+      "resolution": "R2 finding preserved; live workflow gained missing step, then separate thirteenth C4 step and current identity"
+    },
+    {
+      "finding": "Audit complete trial-state link pointed to original ten-trial ledger while a thirteen-trial R2 ledger existed",
+      "resolution": "Link explicitly scoped to R2 historical thirteen trials; current R3 ledger separately binds fourteen trials"
+    },
+    {
+      "finding": "Frozen GPUI text cache comment requires matching wrap width or bothNone, while newwidthNone can reuse old wrapped cache",
+      "resolution": "Implementation used for analysis; frozen reference unchanged"
+    },
+    {
+      "finding": "MyGo public Glyph.X comment describes advance-left but Shape copies internal X including drawing offset",
+      "resolution": "Current implementation used for eligibility analysis; no behavior or pinned source changed merely to match comment"
+    },
+    {
+      "finding": "R3 inherited two R2/pre-C4 notes without historical qualification, despite recording a successful current C4 package/native run.",
+      "resolution": "R3 exact bytes and its nonzero-finding review are preserved. Additive R4 qualifies both notes, the inherited baseline comparison and audit-inventory counts without changing implementation or acceptance."
+    },
+    {
+      "finding": "Frozen shader calls Hsla conversion linear RGBA although this input chain starts with sRGB bytes and performs only HSL inverse algebra.",
+      "resolution": "Linear-light reading is inconsistent; loose terminology remains ambiguous. Reference unchanged; no gamma or pixel-root-cause conclusion."
+    },
+    {
+      "finding": "Unpublished wrap candidate V1 Layout.Width comment says longest line although projection uses a separate source measure.",
+      "resolution": "V1 finding and bytes preserved; isolated V2 corrects comment before execution. No formal wrap adoption."
+    },
+    {
+      "finding": "Audit pending list still said R17 new package pending after fresh C4+AX package build and native smoke existed.",
+      "resolution": "Live text now says R17 release acceptance pending; successful candidate packages retain their specific evidence scope."
+    },
+    {
+      "finding": "R6 frozen audit called GPU01 source-only although the same snapshot bound its successful offline compile/link.",
+      "resolution": "R6 bytes and its P3 review retained; live/new R7 doc now separates source-only historical preparation, actual build01/build02 and runtime authorization/evidence."
+    },
+    {
+      "finding": "R7 actualDWriteOrSizeGatePassed=false conflicts with its independent DWrite success field.",
+      "resolution": "R7 and its P3 retained; R8 removes OR field and uses explicit individual gates plus allRequiredWrapGatesPassed=false."
+    },
+    {
+      "finding": "MyGo gpu.go says thirteen float4s although Instance has fourteen, static224 bytes.",
+      "resolution": "Follow actual struct/input layout; formal pinned vendor unchanged; runtime sizeof/offset proof remains required for capture."
+    },
+    {
+      "finding": "V4 RasterGlyph says all unsupported normalize before cache lookup; backend/AA/color are checked after quarter placement-cache miss.",
+      "resolution": "V4 bytes retained; V5 comment corrected while actual algorithm order remains unchanged."
+    },
+    {
+      "finding": "GPU03 copied launcher key build02ExistedAtCheck labels an actual TestPath of build03.",
+      "resolution": "Original label/finding retained; additive exact-path correction bound separately; it does not assert old build02 absent."
+    },
+    {
+      "finding": "V5 fixture plan predicted an LF-serialized source manifest, but the frozen Windows builder emitted CRLF and used another stamp.",
+      "resolution": "All2825 ordered rows and source bytes match; actual EXE correctly binds actual d143 manifest. Additive P3 review preserves planned34f, actualbuild and original prediction."
+    },
+    {
+      "finding": "R9 pending[9] still required Quarter V4 all-platform unused size results before any .9 adoption, although R9 recorded adopted V5 .9 and its completed independent cost evidence.",
+      "resolution": "R9 c41e and its one-P3 independent review b850 are preserved. R10 marks V4 Darwin+32/+16 as historical and unadopted, V5 relative-C4 gate separately passed, and whole-framework .6 +2048B still pending."
+    },
+    {
+      "finding": "Frozen feature metadata plan graphScope said packages remains all workspace dependencies, while requested Windows-filtered returned packages also narrowed1298->959.",
+      "resolution": "Historical plan retained with additive scope clarification. README workspace-wide remains correct for30 members; no Cargo bug or second README contradiction is claimed."
+    }
+  ],
+  "pending": [
+    "Wrapped-text source-compatible shaped-glyph policy and unsupported Unicode/RTL scope",
+    "Same-position glyph alpha/color residual and compositor/material equivalence",
+    "Unused native example must not grow",
+    "Exact native350/500ms boundaries and full event/drag/blur/exit sequences",
+    "All other source scenes/themes/DPIs and full-window actual-flow comparison",
+    "macOS Intel and ARM actual native acceptance",
+    "Windows glass/frame/accessibility/performance acceptance",
+    "Framework CLI inherited LanguagePackaging symlink-privilege test remains unpassed; installer/signing excluded",
+    "Card underlay off/on or bound-instance control; no radius or color fitting",
+    "Historical V4 Darwin unused-size +32/+16B candidate was not adopted; V5 independent ten-example relative-C4 gate passed. Whole-framework historical .6 counter +2048B still pending.",
+    "Wrap unused +1536B and complete source LF measurement; V3 native LF fallback regression passed",
+    "Private V4AX Go host words and two selected model field matches do not establish actual GPUI inputs, string/glyph/frame association, default PS pointer-to-bytecode join,20 custom shader draws, atlas/clip/fade/underlay, GPU completion/Present/exact WGC producer or one-level screenshot residual cause.",
+    "GPU04 finite288/48actualMRT/672raw offline numeric analysis completed; retained3 nonzero evidence findings and shared BGRA8 differences remain. Actual GUI/pixel parity/root-cause acceptance and full6048 matrix remain unaccepted.",
+    "Historical whole-framework .6 counter +2048B remains unresolved; new read-only attribution and source-only no-growth design contain no implemented patch or causal/candidate build.",
+    "Requested Windows feature metadata P1 closed; reference baseline/trace-off/trace-on whole-PNG, ABI and actual GPUI input capture still pending after compilation.",
+    "Current Cloud963/2933 source needs canonical packages and broader native failure/cancel/rapid-route, failed_action protocol and reference visual acceptance.",
+    "Source focus triage established no new product defect; current full native focus/popup path remains unaccepted after blocked raw probe."
+  ],
+  "notes": [
+    "Current Cloud source and Windows development EXE are separate from historical2931 canonical packages and private V4AX P0 Go inputs.",
+    "Historical R7 fixture ledger remains25trials/214PNGs/20passed/5failed. Cloud main native steps are outside that ledger.",
+    "Metadata includes959 packages and30workspace members, not959 observed compilation units. SDK tool command logs do not prove full OS image/DLL/Present lifetime.",
+    "Latest sealed release remains R16; whole-framework +2048B, pixel/material/wrap and macOS native acceptance remain pending. Goal stays active."
+  ],
+  "previousProgressSnapshot": {
+    "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\before-current.json",
+    "bytes": 117255,
+    "sha256": "dd9b7269a716d7bfbc3aeef3131fb4f6329ef900aece29ba1225fb2c033a53e4"
+  },
+  "previousProgressReview": {
+    "path": "output\\tabstrip-r17-progress-p0-r11-independent-review\\final-result.json",
+    "bytes": 4717,
+    "sha256": "48946720c645f734b1ffcbf35daf547d6e4c4aafe80c250c3bd4980064be081a"
+  },
+  "frameworkCLITests": {
+    "entireOrdinarySuitePassed": false,
+    "inheritedLanguagePackagingFailure": true,
+    "baselineSameCaseFailed": true,
+    "ownedSymlinkProbeErrno": 1314,
+    "integrationTopPassed": 98,
+    "integrationNaturalSkips": 11,
+    "integrationExplicitExclusions": [
+      "TestWindowsInstaller",
+      "TestWindowsSigning",
+      "TestLanguagePackaging"
+    ],
+    "goVetAndIntegrationVetPassed": true,
+    "darwinAndLinuxTestCrossCompilePassed": true
+  },
+  "nativeGlyphParameterControl": {
+    "rawBuffers": 996,
+    "comparisons": 766,
+    "additionalIndependentModelComparisons": 228,
+    "sourceModelSupport": 731,
+    "currentGoModelSupport": 750,
+    "intersection": 728,
+    "sourceOnly": 3,
+    "goOnly": 22,
+    "phaseOnlyCandidateSupport": 731,
+    "phaseOnlyRawIdentityCases": 76,
+    "nativeGUIResidualSolved": false,
+    "formalRendererChanged": false,
+    "scope": "Actual no-window COM buffers under source-derived parameter models; not intercepted GUI renderer or final RGB proof"
+  },
+  "isolatedQuarterNative": {
+    "formalAdopted": false,
+    "candidateVersion": 1,
+    "actualVendorFiles": 1859,
+    "actualVendorTreeSHA256": "52f7b7746950047d30c2aa1b54856c4cf820131db3b8314b16edac418d435e96",
+    "rawPNGs": 2,
+    "inkSupportEach": 731,
+    "sourceAndCandidateSupportSetsExactlyEqual": true,
+    "darkTextDifferentPixels": 268,
+    "lightTextDifferentPixels": 89,
+    "textMaximumChannelDifference": 1,
+    "darkFullDifferentPixels": 22410,
+    "lightFullDifferentPixels": 39185,
+    "darkCardDifferentPixels": 332,
+    "lightCardDifferentPixels": 138,
+    "unusedCounterGrowthVersusC4Bytes": 1536,
+    "perNodeGrowthBytes": 8,
+    "windows386TestConditionFindingRetained": true,
+    "exactNative350or500msBoundary": false
+  },
+  "isolatedQuarterPacking": {
+    "candidateVersion": 2,
+    "formalAdopted": false,
+    "GUIRun": false,
+    "textStyleBytes": 144,
+    "nodeBytes": 1784,
+    "all20FieldOffsetsMatchPrediction": true,
+    "unusedCounterGrowthVersusC4Bytes": 512,
+    "counterReductionVersusV1Bytes": 1024,
+    "helloBytesEqualC4": true,
+    "noGrowthRuleMet": false
+  },
+  "isolatedQuarterRunV4": {
+    "formalAdopted": false,
+    "vendorFiles": 1863,
+    "vendorTreeSHA256": "5718367b41d65723f6c14c733fd4b98bc4e79265a207f811004acf3980df867d",
+    "authorAppInputs": 959,
+    "currentAXIntegrationAppInputs": 961,
+    "integrationTotalInputs": 2824,
+    "counterFileGrowthVersusC4Bytes": 0,
+    "counterSameSHAAsC4": false,
+    "helloBytesEqualC4": true,
+    "textStyleBytes": 144,
+    "nodeBytes": 1784,
+    "typeDataGrowthBytes": 144,
+    "PCDataGrowthBytes": 88,
+    "runtimeZeroCostProven": false,
+    "C4CounterGrowthVersusR16BytesStillPending": 2048,
+    "nativeRun": 15,
+    "nativePNGCount": 2,
+    "allNativePNGsByteEqualHistoricalV1Run13": true,
+    "actualAXNamesBothThemes": "Tab02.txt",
+    "defaultNativeRun": 16,
+    "defaultNativePNGCount": 36,
+    "default36PNGsByteEqualHistoricalC3LeafRun11": true,
+    "fullFrameDifferentPixelsVsSource": {
+      "dark": 22410,
+      "light": 39185
+    },
+    "commonTextDifferentPixelsVsSource": {
+      "dark": 268,
+      "light": 89
+    },
+    "textMaximumChannelDifference": 1,
+    "inkSupportEach": 731,
+    "native350or500msBoundaryProven": false,
+    "crossPlatformUnusedStatusAsOfSnapshot": "16 builds executed;12 BuildInfo reads exit0 and4 Wasm reads silent exit1; sealed results bound; Darwin growth blocks adoption",
+    "adoptionProposalStatus": "not adopted; Darwin +32/+16 blocks V4 no-growth",
+    "originalCounterAndPEMetadataNumbersPlatform": "windows/amd64",
+    "counterGrowthWindowsBytes": 0,
+    "counterGrowthDarwinAMD64Bytes": 32,
+    "counterGrowthDarwinARM64Bytes": 16,
+    "counterGrowthLinuxAMD64Bytes": 0,
+    "counterGrowthJSWasmBytes": -598,
+    "crossPlatformUnusedSizeGatePassed": false,
+    "crossPlatformCompileSuccessCount": 16,
+    "crossPlatformStrictBuildInfoSuccessCount": 12,
+    "crossPlatformRunnerExitCode": 1,
+    "version5Status": "source-only separate candidate; execution/size/acceptance require separate result packets"
+  },
+  "executedColorCPUParameterModel": {
+    "native": false,
+    "actualGUIWordsObserved": false,
+    "arithmetic": "sequential-f32-no-fusion",
+    "lightRGBABitsEqual": true,
+    "darkSourceMinusGoRGBULP": [
+      -1,
+      -1,
+      -1
+    ],
+    "alphaBitsEqual": true,
+    "explainsAllPNGResiduals": false
+  },
+  "textLeafGPUControl": {
+    "sourceVersion1Compiled": true,
+    "buildExitCode": 0,
+    "actualGUIWordsObserved": false,
+    "productionABIReplay": false,
+    "sourceVersion1NativeBlockedByFindings": [
+      "inputs.json entire bytes unbound to trusted identity",
+      "wrapper ancestor reparse containment"
+    ],
+    "sourceVersion2StatusAsOfSnapshot": "executed validation and lane refusals, then initialization failed with0 cases;20 HLSL compilations and12 warning blobs",
+    "sourceVersion1ExecutableEverStarted": false,
+    "version2RuntimeEvidenceBoundInThisSnapshot": true,
+    "version2BuildExitCode": 0,
+    "version2IndependentSourceFindings": 0,
+    "version2RuntimeExecuted": true,
+    "version2RuntimeCaseCount": 0,
+    "version2RuntimeFailure": "created depth mismatch in initialization",
+    "version2HLSLCompileCount": 20,
+    "version2HLSLWarningBlobCount": 12,
+    "version3Built": true,
+    "version3BuildOnlyRecordNotRuntimeProof": true,
+    "runtime02ExecutionBoundInThisSnapshot": true,
+    "sourceVersion3ActualGUIWordsObserved": false,
+    "runtime02CompletedCases": 0,
+    "runtime02Failure": "sampler full-descriptor guard rejected two inactive fields before Draw",
+    "effectiveStatePredicatesImplementedInDiagnostic05": true,
+    "purePredicateTestsPassed": 7,
+    "source04TestCompilationFailed": true,
+    "source05OnlyTestConstantTokenCorrected": true,
+    "runtime03Executed": true,
+    "runtime03CompletedCases": 24,
+    "runtime03SingleRTV": true,
+    "runtime03FullRawBuffers": 48,
+    "runtime03AfterAll24ByteIdentical": true,
+    "runtime03SampleWordsEqualSyntheticGrayQ255": true,
+    "runtime03Scope": "synthetic ramp-gray exact texel centers sampled stage only; no derived color, gamma, blend, MRT, full matrix or actual GUI acceptance",
+    "runtime03IndependentReviewNoNewFindings": true,
+    "runtime04Executed": true,
+    "runtime04Execution": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-attempt04/execution-result.json",
+      "bytes": 8130,
+      "sha256": "bf6571dc589cf318e11ddb9b8370fe6d4fce6d7fc0af94429d11051b57ef58e6"
+    },
+    "runtime04ExpectedCases": 288,
+    "runtime04CompletedCases": 288,
+    "runtime04AuthorizedNativeExitCode": 0,
+    "runtime04ReadbackCount": 672,
+    "runtime04ReadbackPackedBytes": 2457600,
+    "runtime04StructuralChecksPassed": true,
+    "runtime04Protected379PinsUnchanged": true,
+    "runtime04ActualMRTCases": 48,
+    "runtime04MRTActualDistinctOwnedRTVCount": 2,
+    "runtime04MRTPhysicalTwoRTVAndRawStructureVerified": true,
+    "runtime04SampledBrushCorrectedBlendDrawsExecuted": true,
+    "runtime04OfflineNumericAnalysisBoundInSnapshot": true,
+    "runtime04FinalOfflineNumericAnalysisPending": false,
+    "runtime04ActualGUIWordsObserved": false,
+    "runtime04Scope": "Actual288 cases/48actual dual-RTV MRT/672raw2457600B and finite offline math/actualMRT blend reference independently verified. Retained3 nonzero evidence findings and16 shared-brush BGRA8 pairs differing by at most one remain. This is finite control verification, not actual GUI/production ABI replay, full6048 matrix, pixel parity, FMA/OM/gamma cause selection or screenshot-root-cause acceptance.",
+    "historicalMRTIgnoredRT1GuardScope": false,
+    "runtime04FinalNumeric": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime-analysis-attempt04/final-result.json",
+      "bytes": 16108,
+      "sha256": "146b75cbb590971859e91a55d7ed9239dc870a9db9036f16dbe5dd3557662a85"
+    },
+    "runtime04Independent": {
+      "path": "output/tabstrip-r17-text-leaf-gpu-runtime04-independent-review/attempt-01/result.json",
+      "bytes": 3413,
+      "sha256": "8e9974225644b105ab2545c11743235c17a1155f299a732288a75257e771bfb9"
+    },
+    "runtime04FiniteOfflineNumericValidationPassed": true,
+    "runtime04ActualMRTTwoRTVCaseCount": 48,
+    "runtime04ActualMRTFiniteLeafBlendSemanticEvidenceVerified": true,
+    "runtime04IndependentActualMRTBlendModels": 96,
+    "runtime04IndependentCPUCaseModels": 288,
+    "runtime04IndependentPairedMetrics": 624,
+    "runtime04RetainedNonzeroEvidenceFindingCount": 3,
+    "runtime04NewActionableReviewFindingCount": 0,
+    "runtime04MetricOrModelBufferDisagreements": 0,
+    "runtime04SamePipelineSameProfileFlagsExactPairs": 144,
+    "runtime04LoadCenterSampleExactPairs": 144,
+    "runtime04All48BrushCPUColorModelWordExact": true,
+    "runtime04SharedBrushCorrectedPipelineExactPairs": 16,
+    "runtime04SharedBrushBGRA8PairsStillDifferByAtMostOne": 16,
+    "runtime04Full6048Executed": false,
+    "runtime04PixelParityAccepted": false,
+    "runtime04GUIRootCauseAccepted": false,
+    "runtime04FMAOMOrGammaUniqueCauseSelected": false
+  },
+  "isolatedGlyphWrap": {
+    "formalAdopted": false,
+    "version1SourceOnly": true,
+    "version1ReviewFinding": "Layout.Width longest-line comment omits projected source-measure exception",
+    "version2StatusAsOfSnapshot": "actual DWrite and size executed; LF integration and unused cost gates failed; not adopted",
+    "nativeRun": false,
+    "scope": "printable-ASCII plus LF only; unsupported paths native fallback",
+    "actualDWriteContractGroupsPassed": 12,
+    "actualDWriteGatePassed": true,
+    "unusedSizeGatePassed": false,
+    "unusedCounterGrowthBytes": 1536,
+    "unusedHelloGrowthBytes": 0,
+    "LFIntegrationGatePassed": false,
+    "LFNaturalWidthBits": "0x423d35c1",
+    "LFActualConstraintBits": "0x423d35c0",
+    "existingLFRegressionExpectedUnchanged": true,
+    "allRequiredWrapGatesPassed": false,
+    "version3FormalAdopted": false,
+    "version3AppScope": "CR/LF native fallback; single-line eligible details opt in",
+    "version3FiveLimitedCommandsPassed": true,
+    "version3OriginalLFExpectedUnchangedAndPassed": true,
+    "fullSourceLFNaturalMeasurementImplemented": false,
+    "version3NewSizeMeasurementPerformed": false
+  },
+  "cardCornerDiagnostic": {
+    "nativeRunScope": "historical quarter V1 run13 only",
+    "darkNontextDifferentPixels": 64,
+    "lightNontextDifferentPixels": 49,
+    "allIn12PxCornerSquares": true,
+    "light20ConditionalZeroCoveragePointsHaveExistingHoverBackdropDifference": true,
+    "sourceBorderCoverageFormulaDiffers": true,
+    "uniqueRootCauseProven": false,
+    "cardOnOffControlExecuted": false
+  },
+  "inputAuthenticationNegativeControl": {
+    "executed": true,
+    "separateSameSourceBuild": true,
+    "oldBuild02ExactEXEClaim": false,
+    "positiveExit": 0,
+    "negativeExit": 1,
+    "mutatedRawBits": 1,
+    "mutationRestored": false,
+    "negativeRawStdoutBytes": 0,
+    "negativeRawStderrBytes": 255,
+    "nativeOutputSentinelsCreated": false,
+    "noExplicitD3DCallOnValidationPaths": "exact-source control flow and observed early error, not an API hook or DLL-load claim"
+  },
+  "historicalR7MetadataHelperFailure": {
+    "scope": "parent tool-history attestation, not an original stdout/stderr file",
+    "firstAttemptExitCode": 1,
+    "error": "AssertionError at old-doc-byte-match before any doc or snapshot write",
+    "cause": "helper assumed CRLF; actual document has317 LF and0 CRLF",
+    "preservedInitialHelper": {
+      "path": "output/tabstrip-r17-root/seal-progress-c4-ax-r7-before-doc-newline-fix.py",
+      "bytes": 9494,
+      "sha256": "b94a311384f57354aed1e73c86c80e7514f7fb940b436a8904b8a39f87a49cf6"
+    },
+    "correction": "detect and preserve actual document newline bytes; no runtime code or old evidence altered"
+  },
+  "historicalR8FormalState": {
+    "framework": {
+      "revision": "zeron-native-ui.8",
+      "treeSHA256": "a8088f650809d12f13ccb768e915b659b66a45aed1a56aad8eff642e2fbf178a",
+      "files": 1847,
+      "patchCount": 13,
+      "unusedCounterGrowthBytes": 2048,
+      "unusedHelloGrowthBytes": 0,
+      "sizeRuleMet": false
+    },
+    "sourceScope": {
+      "fixtureAppInputs": 961,
+      "sourceManifest": {
+        "path": "output/tabstrip-r17-go-fixture/attempt-05/source-hashes.json",
+        "bytes": 294691,
+        "sha256": "3d04272cc5e9d9548633649213c575162190e8b70d156bc4bb4bcdafc2534404"
+      },
+      "fixtureBinary": {
+        "path": "output/tabstrip-r17-go-fixture/attempt-05/tabstrip-fixture.exe",
+        "bytes": 28303360,
+        "sha256": "58de132d09c155cee3faeab7bd158638fbd16302b899dc390f1ad5147a19c44a"
+      },
+      "productionBuildSourceInputs": 2913,
+      "productionSourceManifest": {
+        "path": "output/tabstrip-r17-c4-ax-canonical-delivery-attempt01/source-before.json",
+        "bytes": 898114,
+        "sha256": "e39179db5164bf81040037355a21b426e7134a57e0cbfb5223c27821b0d817f0"
+      },
+      "vendorActualAndSealedVerified": true,
+      "allFiveGatesPassed": true,
+      "inventoryInterpretation": "Counts are audit input inventories including tests, other-platform files and supporting resources; not compiled translation-unit or executed-path counts."
+    },
+    "nativeTooltip": {
+      "c4OrdinaryPairs": 2,
+      "c3PlusLeafEdgePairs": 2,
+      "c3PlusLeafBaselineScenes": 36,
+      "actualScale": 2,
+      "c4OrdinaryPNGsEqualC3PlusLeaf": true,
+      "ordinaryOuterBoundsNowMatch": true,
+      "ordinaryFontInkBoundsNowMatch": true,
+      "fontCoverageAndColorResidualsRemain": true,
+      "shortFittingLTRTextLeafCeilImplemented": true,
+      "wrapPolicyDifferent": true,
+      "sourcePostCaptureFullGeometry": false,
+      "exact350or500msNativeBoundaryProven": false,
+      "currentAppAXContentNamesImplemented": true,
+      "exactCurrentWindowsPackageAXNames": {
+        "detail": "README.md",
+        "close": "Close tab",
+        "genericLabelsAbsent": true
+      },
+      "AXV1TwoOrdinaryPNGsEqualPreAXC4": true,
+      "formalQuarterPlacementImplemented": false
+    },
+    "packageState": {
+      "canonicalFourTargetAttempts": 6,
+      "canonicalFourTargetSuccess": true,
+      "successfulAttempts": 2,
+      "historicalFailures": 4,
+      "sourceDrift": 0,
+      "verifiedTargets": [
+        "windows/amd64",
+        "darwin/amd64",
+        "darwin/arm64",
+        "darwin/universal"
+      ],
+      "nativeWindowsExecutableSHA256": "ed8aa81bcbb4f8680e0c2e96846eb682c22a04a980ba7a9ea919eebdc6b6db7e",
+      "windowsNativeSmokeExitCode": 0,
+      "windowsNativeStates": 13,
+      "windowsNativeSkyJPEGs": 15,
+      "nativeMacOS": false,
+      "installerRun": false,
+      "published": false,
+      "occupyingActorIdentified": false,
+      "note": "Fresh AX app and unchanged C4 framework build/native evidence; no installer, Mac native, publication or general rename cure established",
+      "appScope": "Current adopted AX app; prior pre-AX C4 package and native identities remain historical"
+    },
+    "gateLogs": [
+      {
+        "path": "output/tabstrip-r17-root/final-r6-full-tests.log",
+        "bytes": 443,
+        "sha256": "a4c86f336ad754725053f6ceb80b89f9b978c5d8cb026f8acfb299af66f5a156"
+      },
+      {
+        "path": "output/tabstrip-r17-root/final-r6-tagged-tests.log",
+        "bytes": 160,
+        "sha256": "ede82bf4963e5e1ef592a7a6d9992412a4355b91a053c8f7a2add4ed655fdc76"
+      },
+      {
+        "path": "output/tabstrip-r17-root/final-r6-go-vet.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-root/final-r6-mygo-vet.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-root/final-r6-lint.log",
+        "bytes": 11,
+        "sha256": "bc1988bf921b4da8e4a985cb6772edad177c0e408118ea21fcf3a645e1fdc016"
+      }
+    ]
+  },
+  "quarterV5": {
+    "sourceAdopted": true,
+    "formalRevision": ".9",
+    "privateTestsAndSizePassed": true,
+    "currentAXIntegrationFourChecksPassed": true,
+    "privateNative40Passed": true,
+    "nativeIndependentReviewPassed": true,
+    "serializationPlanningP3Retained": true,
+    "formalPinAndFiveGatesPassed": true,
+    "firstFullTestDiscoveryFailed": true,
+    "diagnosticModuleBoundaryAdded": true,
+    "initialOfflineLintLaunchFailed": true,
+    "onlyLintResumedUsingLocalFileProxy": true,
+    "passedCommandsReusedFromAttempt02": 5,
+    "currentCanonicalPackageAcceptancePending": false,
+    "currentCanonicalFourTargetBuildPassed": true,
+    "currentCanonicalIndependentReviewNoNewFindings": true,
+    "currentWindowsMainNativeSmokePassed": true,
+    "fullReleaseAndGoalAcceptancePending": true,
+    "MacNativeInstallerStillPending": true
+  },
+  "actualUploadCapture": {
+    "sourcePreparation": {
+      "sourcePreparedResult": {
+        "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/result.json",
+        "bytes": 9581,
+        "sha256": "85552da2f7140364cba0eed2364188565595b5278049c350fa5a4fa71acde168"
+      },
+      "syntheticPythonGoTraceCases": 92,
+      "syntheticPythonGoCLIControls": 6,
+      "syntheticPythonRustTopLevelTests": 21,
+      "syntheticPythonWrapperTests": 7,
+      "collectorOrPayloadChanged": false,
+      "scope": "Source-only and synthetic preparation history; actual execution evidence is reported separately by Go/reference lane."
+    },
+    "go": {
+      "sourceScope": "Private V4AX baseline2824/trace2827 inherited.8; not formal V5 .9/2931.",
+      "actualSuccessfulBuilds": 2,
+      "builds": {
+        "path": "output/tabstrip-r17-p0-go-builds-sealed-attempt02/result.json",
+        "bytes": 10297,
+        "sha256": "91576031d07f97466a65e014ca3158c06b76706a4b930409bd04e0e83819006e"
+      },
+      "baselineBinary": {
+        "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/build/go-baseline-build-attempt01/tabstrip-fixture.exe",
+        "bytes": 21792256,
+        "sha256": "a39bc83168578ae905c0ef117176a481c26d898d42bc65e621610f1a9cb87e57"
+      },
+      "traceBinary": {
+        "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/build/go-trace-build-attempt01/tabstrip-fixture.exe",
+        "bytes": 21842944,
+        "sha256": "4f0bb9edbad839b45824d5330c66dc302841dcfa274296303ed53b0f5ecd1c18"
+      },
+      "actualABIControls": 6,
+      "ABIResult": {
+        "path": "output/tabstrip-r17-p0-go-abi-tests-attempt01/result.json",
+        "bytes": 3930,
+        "sha256": "4afd07723491158afe7cf27682e30976af4b78c8c493977a66e02babdb65d49c"
+      },
+      "compiled": true,
+      "nativeRun": true,
+      "nativeComposite": {
+        "path": "output/tabstrip-r17-p0-go-native-seal/attempt-01/result.json",
+        "bytes": 3277,
+        "sha256": "80d5b4329c4e77fbfc98c428f2d9863c28b527a2699b1d44572bde1551b0dca2"
+      },
+      "nativeIndependent": {
+        "path": "output/tabstrip-r17-p0-go-native-independent-review/result.json",
+        "bytes": 64192,
+        "sha256": "d802b2e186985626baae559803e7e65ca79921638619ff13e89bb15353c4ebf9"
+      },
+      "threeStageWholePNGByteGatePassed": true,
+      "successfulWholePNGs": 6,
+      "wholePNGsExactHistoricalV4AXRun15": true,
+      "savedOriginalSkyStates": 23,
+      "savedOriginalSkyStatesByStage": {
+        "baseline": 7,
+        "traceOff": 8,
+        "traceOn": 8
+      },
+      "bothThemesThreeStagesMatureAXName": "Tab02.txt",
+      "normalExitCodeBySuccessfulStage": {
+        "baseline": 0,
+        "traceOff": 0,
+        "traceOn": 0
+      },
+      "firstFailedBaselineRetained": true,
+      "firstFailedBaselineNormalExitCode": 0,
+      "firstFailedBaselinePNGs": 2,
+      "firstFailedBaselineSavedSkyStates": 5,
+      "firstFailedBaselineMissingLightMatureSky": true,
+      "firstFailureIndependent": {
+        "path": "output/tabstrip-r17-text-actual-input-baseline-png-independent-review/attempt-01/result.json",
+        "bytes": 3515,
+        "sha256": "4f21e794710d5e9f7cb52976f397b363680513892e29961f35b59224ec5f60f4"
+      },
+      "inputOffsetNotAcceptedAsSoleFailureCause": true,
+      "hostUploadTraceCompleteWithinBoundedTransport": true,
+      "traceCounters": {
+        "uploadCount": 12,
+        "globalsCount": 12,
+        "emptyGlobalsCount": 0,
+        "drawIssuedCount": 67,
+        "instanceCount": 346,
+        "drawnInstanceCount": 346,
+        "associatedGlobalsCount": 12,
+        "defaultPipelineDrawCount": 47,
+        "effectPipelineDrawCount": 0,
+        "customPixelIdentityOmittedCount": 20
+      },
+      "catalog": {
+        "path": "output/tabstrip-r17-p0-go-uploaded-text-catalog/attempt-01/result.json",
+        "bytes": 4688,
+        "sha256": "3c37bec96416ede2b05d8dd199d6af0525fe2a78cbb1240514ca2898616dd3b9"
+      },
+      "catalogIndependentRawCrosscheck": {
+        "path": "output/tabstrip-r17-p0-go-catalog-independent-word-check/result.json",
+        "bytes": 1674,
+        "sha256": "f21e60750ae7de34753d1076f7d12fa63502e0089cd4dfab00ccd71d670e9ba6"
+      },
+      "kind5InstanceCount": 243,
+      "kind5ProfileCount": 4,
+      "selectedDirectModelFieldComparison": {
+        "path": "output/tabstrip-r17-p0-go-host-leaf-field-comparison/attempt-01/result.json",
+        "bytes": 3370,
+        "sha256": "8b421491cbd9e750dce72f9c9fdd9f3e9656104fbbe94b906f0c119dc5a9cd04"
+      },
+      "selectedDirectModelMatches": [
+        {
+          "modelControlCase": "zeron-light",
+          "profileID": "14aff065f50dbbec074967a8297949ed2c02b125041d73dcc310761043aa0731",
+          "hostInstanceCount": 45,
+          "uploadEpochs": [
+            9,
+            10,
+            11,
+            12
+          ]
+        },
+        {
+          "modelControlCase": "zeron-dark",
+          "profileID": "efcf110368a51fae41374676fbdb3ab5e981c5bb7af7017a02f45ef5c5cba911",
+          "hostInstanceCount": 90,
+          "uploadEpochs": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        }
+      ],
+      "selectedDirectModelFieldScope": [
+        "Color RGBA",
+        "Radii gamma coefficients",
+        "Inner first2 contrast/thin",
+        "Params opacity"
+      ],
+      "modelControlNamesDoNotIdentifyActualSceneThemeOrFrame": true,
+      "defaultPSPointerToCreationBytecodeJoinCaptured": false,
+      "customPixelShaderDrawsNotCaptured": 20,
+      "exactStringGlyphFrameOrPresentProducerCaptured": false,
+      "actualGPUIInputWordsCaptured": false,
+      "actualAtlasClipFadeUnderlayAccepted": false,
+      "GPUOutputOrScreenshotRootCauseAccepted": false,
+      "operatorScope": "Root supplied actual native operation and saved artifacts. This index did not observe/replay operator input or prove continuous event timing."
+    },
+    "reference": {
+      "defaultMetadataHistorical": {
+        "defaultFeatureMetadataSucceeded": true,
+        "metadataSeal": {
+          "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/metadata-reference-trace-attempt03/seal.json",
+          "bytes": 149087,
+          "sha256": "c7f90cb2f1fe49d7f28e7c4d364507ddb15728859c6527d07c87b6a186eb14c7"
+        },
+        "defaultMetadataIndependent": {
+          "path": "output/tabstrip-r17-rust-metadata-independent-review/attempt-01/result.final.json",
+          "bytes": 10998,
+          "sha256": "472a2838ee876d1b9d03ffacb5bfc3bf4c0f596c672c1c36a79c55fb93fae3db"
+        },
+        "metadataExitCode": 0,
+        "wrapperExitCode": 2,
+        "metadataPackages": 1298,
+        "resolveNodes": 1298,
+        "workspaceMembers": 30,
+        "metadataSourceKinds": {
+          "registry": 1240,
+          "path": 50,
+          "git": 8
+        },
+        "lockPackagesBefore": 1308,
+        "lockPackagesAfter": 1308,
+        "registryLockPackages": 1250,
+        "registryIdentityAndChecksumSetUnchanged": true,
+        "ZuiSamePackageGitToPathSourceChanges": 20,
+        "requestedAndAuthenticatedArchiveGETs": 381,
+        "actualArchiveBodyBytes": 77581593,
+        "automaticRetries": 0,
+        "redirects": 0,
+        "privateC3FilesAfterMetadata": 62617,
+        "privateC3BytesAfterMetadata": 2064257290,
+        "privateReadyCheckoutsQualification": "Ready checkouts were copied from exact reviewed bytes; a fresh clone/checkout execution was not independently demonstrated.",
+        "firstTwoMetadataFailures": [
+          {
+            "path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\metadata-reference-trace-attempt01\\failure-seal.json",
+            "bytes": 17744,
+            "sha256": "0903f055b0261b046c9c2611fe419fefd97465e104390a81fa65b52a2c9de20e"
+          },
+          {
+            "path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\metadata-reference-trace-attempt02\\failure-seal.json",
+            "bytes": 24928,
+            "sha256": "dc8dc16fb9163669c126665ce1eb26fbbd5c9c327aaea763f8f1e2815ac94047"
+          }
+        ],
+        "defaultZeronUiEnabledFeatures": [],
+        "futureRequestedFixtureFeatures": [
+          "compact-picker-fixture"
+        ],
+        "futureFeatureExpansion": [
+          "gpui_platform/test-support"
+        ],
+        "featureCoverageP1Open": true,
+        "featureCoverageP1": {
+          "priority": "P1",
+          "title": "Future build feature selection has no matching resolved metadata review",
+          "evidence": {
+            "metadataCommand": [
+              "C:\\Users\\chengliang\\.rustup\\toolchains\\1.98.1-x86_64-pc-windows-msvc\\bin\\cargo.exe",
+              "metadata",
+              "--offline",
+              "--format-version",
+              "1",
+              "--manifest-path",
+              "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\Cargo.toml"
+            ],
+            "zeronUiEnabled": [],
+            "futureRequestedFeatures": [
+              "compact-picker-fixture"
+            ],
+            "featureExpansion": [
+              "gpui_platform/test-support"
+            ],
+            "gpuiPlatformEnabled": [
+              "default",
+              "font-kit",
+              "runtime_shaders",
+              "wayland",
+              "x11"
+            ],
+            "fixtureTargets": [
+              {
+                "kind": [
+                  "example"
+                ],
+                "crate_types": [
+                  "bin"
+                ],
+                "name": "compact-picker-fixture",
+                "src_path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\crates\\ui\\examples\\compact-picker-fixture.rs",
+                "edition": "2024",
+                "required-features": [
+                  "compact-picker-fixture"
+                ],
+                "doc": false,
+                "doctest": false,
+                "test": false
+              },
+              {
+                "kind": [
+                  "example"
+                ],
+                "crate_types": [
+                  "bin"
+                ],
+                "name": "tabstrip-native",
+                "src_path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\crates\\ui\\examples\\tabstrip-native.rs",
+                "edition": "2024",
+                "doc": false,
+                "doctest": false,
+                "test": false
+              }
+            ],
+            "judgement": "Feature-specific metadata and target filtering are not supplied; default workspace graph is not the future Windows compilation unit list."
+          },
+          "requiredAction": "Before any separately authorized reference compilation, obtain and review metadata for the actual compact-picker-fixture feature and Windows target, pin graph/manifests/cache/toolchain/build-script inputs, and bind approval to these inputs rather than lock SHA alone."
+        },
+        "featureSpecificWindowsMetadataAccepted": false,
+        "futureFeatureGatePreparationBoundInSnapshot": false,
+        "projectCompiled": false,
+        "SDKCompilerLinkerApproved": false,
+        "buildScriptProcMacroExecutionApproved": false,
+        "ABIControlsExecuted": false,
+        "nativeRun": false,
+        "actualGUIInputWordsCaptured": false,
+        "scope": "Only default workspace metadata and its static review are bound. Wrapper exit2 is not a compiler success. Future feature-specific/Windows graph, SDK/build-script/proc-macro/compiler/ABI/native acceptance requires separate frozen inputs and review; no concurrent mutable feature preparation is inferred."
+      },
+      "requestedFeatureMetadata": {
+        "path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-feature-metadata-attempt01\\cargo-feature-metadata.stdout",
+        "bytes": 4929167,
+        "sha256": "7ce9d3720c372f20f7c1cd9dbb196511ffb59789c1a14329bb495e0ca709df59"
+      },
+      "requestedFeatureIndependentReview": {
+        "path": "D:\\projects\\GCode\\output\\tabstrip-r17-rust-metadata-independent-review\\attempt-03-feature-graph\\result.json",
+        "bytes": 3776,
+        "sha256": "1e4fe0d284abaaf86b1afa2bc6cce343e09e5ab47ac4cf44c15cfdbec3de2a3b"
+      },
+      "requestedFeatureExecution": {
+        "path": "output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\feature-metadata-execution-attempt01\\run\\completion.json",
+        "bytes": 7912,
+        "sha256": "a1e9cf485c9bb2d4d94c79199c141f99a3c0c954a18fea55386a47233af73f1e"
+      },
+      "requestedZeronUiFeatures": [
+        "compact-picker-fixture"
+      ],
+      "gpuiPlatformTestSupportEnabled": true,
+      "filteredWorkspaceGraphPackages": 959,
+      "filteredWorkspaceResolveNodes": 959,
+      "workspaceMembers": 30,
+      "sourceKinds": {
+        "registry": 910,
+        "path": 45,
+        "git": 4
+      },
+      "graphScope": "Windows-filtered requested-feature workspace metadata; includes all30 members and is not a single example actual compilation-unit list.",
+      "featureCoverageP1Open": false,
+      "featureSpecificWindowsMetadataAccepted": true,
+      "featureGateBoundBeforeActualCompilation": true,
+      "SDKAndCompilerConfiguration": {
+        "path": "D:\\projects\\GCode\\output\\tabstrip-r17-p0-rust-toolchain-preflight\\environment-plan-source.json",
+        "bytes": 75642,
+        "sha256": "5d99bd982ec5a1b695d8c0eca2756b014f1c3c4bc2e6d2835feaa64338d7ecf0"
+      },
+      "actualRustCompilationExecuted": true,
+      "actualCargoBuildAttempts": 2,
+      "firstFailedBuild": {
+        "path": "output\\tabstrip-r17-p0-rust-build-driver-prepared\\attempt-02\\runs\\reference-trace-build-attempt01\\build.json",
+        "bytes": 166887,
+        "sha256": "5f8d249f0f2e39fdd2dfc42881335af98c23d2828844a211f1435c4b7aaf8bfc"
+      },
+      "firstFailedOuterProtection": {
+        "path": "output\\tabstrip-r17-p0-rust-first-build-attempt01\\execution.json",
+        "bytes": 3130,
+        "sha256": "f76336b932c2eb34af3881f99850e32a9c9d66fb3768e5c8b053b85f5a16fbf3"
+      },
+      "firstCargoExitCode": 101,
+      "firstDriverActualWorkInputDrift": null,
+      "blake3TriageAndPostFailureWorkReview": {
+        "path": "output\\tabstrip-r17-p0-rust-blake3-triage\\attempt-01\\result.json",
+        "bytes": 11099,
+        "sha256": "72e847169b6997556199c08b9a034664b998b8acb9add9fb402f7fb760448315"
+      },
+      "cachedResumeRequest": {
+        "path": "output\\tabstrip-r17-p0-rust-cached-resume-attempt02\\request.json",
+        "bytes": 7959,
+        "sha256": "b4f747bc4569bc660739fdf7ed10743f0d666c7328711231159adaa18925527f"
+      },
+      "cachedResumeIndependentSourceReview": {
+        "path": "output\\tabstrip-r17-p0-rust-cached-resume-independent-review\\attempt-01\\result.json",
+        "bytes": 5215,
+        "sha256": "cd02a7e7bf9f849ce7b717a7021258524994ee70feac0df3560d7f31f7c9b70f"
+      },
+      "cachedResumeCleanupPolicySmoke": {
+        "path": "output\\tabstrip-r17-p0-rust-cached-resume-policy-smoke\\attempt-01\\result.json",
+        "bytes": 87686,
+        "sha256": "9be3dde4632eaebfc5672b58a2e351791f5ad1c2f7d59277d6e39055d65abadd"
+      },
+      "cachedResumeEnvironmentChange": {
+        "CC": "cl.exe"
+      },
+      "workCacheTargetReused": true,
+      "priorFailedReceiptsImmutable": true,
+      "projectCompiled": true,
+      "compilationRunning": false,
+      "referenceBaselineBuilt": false,
+      "ABIControlsExecuted": false,
+      "nativeRun": false,
+      "actualGUIInputWordsCaptured": false,
+      "scope": "Graph P1 closure and actual compiler execution are separate from reference baseline/off/on native ABI/whole-PNG and actual renderer input acceptance.",
+      "cachedResumeResult": {
+        "path": "output\\tabstrip-r17-p0-rust-cached-resume-attempt02\\build.json",
+        "bytes": 166061,
+        "sha256": "97f00838a5ceb613760a5fc4ff567c69988d6afc8d4f13b089050c584b268d21"
+      },
+      "cachedResumeCargoExitCode": 0,
+      "traceBinary": {
+        "path": "D:\\projects\\GCode\\output\\tabstrip-r17-p0-rust-build-driver-prepared\\attempt-02\\runs\\reference-trace-build-attempt01\\target\\x86_64-pc-windows-msvc\\debug\\examples\\tabstrip-native.exe",
+        "bytes": 215057408,
+        "sha256": "f678bc898348d4df5e3709a4d3431ba91a1fe236e8182022c337ee46600c70ba"
+      }
+    },
+    "scope": "Lane-specific facts. Private Go host-upload capture does not establish actual GPUI inputs, per-frame/glyph/string ownership, GPU execution/Present, full production ABI replay, parity or screenshot residual cause."
+  },
+  "currentDocumentation": {
+    "documents": 8,
+    "latestUpdate": {
+      "path": "output\\tabstrip-r17-feature-focus-docs-applied\\attempt-03-rust-build-complete\\result.json",
+      "bytes": 2932,
+      "sha256": "1d4917dd091d6788b0967d8ca9a0be8d8e2b9168ad359dbf18428a75c27dc96e"
+    },
+    "actualR12Snapshot": {
+      "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\documents-snapshot.json",
+      "bytes": 3285,
+      "sha256": "238a2c60dfcf0cda9267745f18d292be93a1f0c500880bfac360f50750f7c092"
+    },
+    "docsEditedByThisProgressSeal": false,
+    "currentFilesVerifiedAtSeal": true
+  },
+  "historicalR10PreP0State": {
+    "actualUploadCapture": {
+      "preparedAttempt01": true,
+      "historicalAttempt01IndependentReviewFoundTwoP1EvidenceGates": true,
+      "originalAttempt01P1ReviewRetained": true,
+      "attempt02SourceCorrectionsPrepared": true,
+      "attempt02OriginalCompilerDecoderGapsAddressedInSource": true,
+      "attempt02HardeningInProgress": false,
+      "attempt02PreparedResult": {
+        "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/result.json",
+        "bytes": 9581,
+        "sha256": "85552da2f7140364cba0eed2364188565595b5278049c350fa5a4fa71acde168"
+      },
+      "pythonSyntheticGoTraceCases": 92,
+      "pythonSyntheticGoCLIControls": 6,
+      "pythonSyntheticRustTopLevelTests": 21,
+      "pythonWrapperTests": 7,
+      "collectorOrPayloadChanged": false,
+      "independentReviewScope": "Source preparation and synthetic Python controls; prior pre-GOENV wrapper review stays historical, final seven wrapper controls are separate.",
+      "actualGoCargoOrCompilerExecutionBoundInSnapshot": false,
+      "metadataResultBoundInSnapshot": false,
+      "metadataBuildABINativeAcceptancePending": true,
+      "actualGUIWordsCaptured": false,
+      "compiled": false,
+      "nativeRun": false,
+      "baseline": "V4AX2824/trace2827, not formal V5 .9; unchanged collectors. Root later metadata/build/SDK/ABI/native gates require their own sealed evidence.",
+      "scope": "Old attempt01 remains unchanged; original twoP1 gaps are addressed in new attempt02 source controls. Synthetic92+6/21/7 passing does not certify actual compiler invocation, dependency metadata, ABI, trace-off/on native byte regression or GUI words."
+    },
+    "textLeafGPUControl": {
+      "sourceVersion1Compiled": true,
+      "buildExitCode": 0,
+      "actualGUIWordsObserved": false,
+      "productionABIReplay": false,
+      "sourceVersion1NativeBlockedByFindings": [
+        "inputs.json entire bytes unbound to trusted identity",
+        "wrapper ancestor reparse containment"
+      ],
+      "sourceVersion2StatusAsOfSnapshot": "executed validation and lane refusals, then initialization failed with0 cases;20 HLSL compilations and12 warning blobs",
+      "sourceVersion1ExecutableEverStarted": false,
+      "version2RuntimeEvidenceBoundInThisSnapshot": true,
+      "version2BuildExitCode": 0,
+      "version2IndependentSourceFindings": 0,
+      "version2RuntimeExecuted": true,
+      "version2RuntimeCaseCount": 0,
+      "version2RuntimeFailure": "created depth mismatch in initialization",
+      "version2HLSLCompileCount": 20,
+      "version2HLSLWarningBlobCount": 12,
+      "version3Built": true,
+      "version3BuildOnlyRecordNotRuntimeProof": true,
+      "runtime02ExecutionBoundInThisSnapshot": true,
+      "MRTFullMatrixBlockedByExistingIgnoredRT1Guard": false,
+      "sourceVersion3ActualGUIWordsObserved": false,
+      "runtime02CompletedCases": 0,
+      "runtime02Failure": "sampler full-descriptor guard rejected two inactive fields before Draw",
+      "effectiveStatePredicatesImplementedInDiagnostic05": true,
+      "purePredicateTestsPassed": 7,
+      "source04TestCompilationFailed": true,
+      "source05OnlyTestConstantTokenCorrected": true,
+      "runtime03Executed": true,
+      "runtime03CompletedCases": 24,
+      "runtime03SingleRTV": true,
+      "runtime03FullRawBuffers": 48,
+      "runtime03AfterAll24ByteIdentical": true,
+      "runtime03SampleWordsEqualSyntheticGrayQ255": true,
+      "runtime03Scope": "synthetic ramp-gray exact texel centers sampled stage only; no derived color, gamma, blend, MRT, full matrix or actual GUI acceptance",
+      "MRTActualRuntimeAccepted": false,
+      "runtime03IndependentReviewNoNewFindings": true,
+      "runtime04Executed": true,
+      "runtime04Execution": {
+        "path": "output/tabstrip-r17-text-leaf-gpu-runtime-attempt04/execution-result.json",
+        "bytes": 8130,
+        "sha256": "bf6571dc589cf318e11ddb9b8370fe6d4fce6d7fc0af94429d11051b57ef58e6"
+      },
+      "runtime04ExpectedCases": 288,
+      "runtime04CompletedCases": 288,
+      "runtime04AuthorizedNativeExitCode": 0,
+      "runtime04ReadbackCount": 672,
+      "runtime04ReadbackPackedBytes": 2457600,
+      "runtime04StructuralChecksPassed": true,
+      "runtime04Protected379PinsUnchanged": true,
+      "runtime04ActualMRTCases": 48,
+      "runtime04MRTActualDistinctOwnedRTVCount": 2,
+      "runtime04MRTPhysicalTwoRTVAndRawStructureVerified": true,
+      "runtime04SampledBrushCorrectedBlendDrawsExecuted": true,
+      "runtime04OfflineNumericAnalysisBoundInSnapshot": false,
+      "runtime04FinalOfflineNumericAnalysisPending": true,
+      "runtime04GammaBlendMRTNumericPixelAcceptance": false,
+      "runtime04ActualGUIWordsObserved": false,
+      "runtime04Scope": "288 source-parameter-derived six-stage cases actually executed;48 MRT cases have two distinct queried owned RTV identities and separate before/after raw structure. Full672readback structure2457600B is recorded. Offline pixel math/gamma/blend/MRT semantic analysis remains pending; no actual GUI/production ABI/compositor or residual-root-cause acceptance."
+    },
+    "currentDocumentation": {
+      "update01Historical": {
+        "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-01/result.json",
+        "bytes": 3215,
+        "sha256": "3a76c7789d6137be8c19b17c86223f278ec3eeb8f3e130de20f4635a63034444"
+      },
+      "update02": {
+        "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-02/result.json",
+        "bytes": 2357,
+        "sha256": "4d3df5bee8fed1a03f92eb7e2120a55eaa1fac8390180b35507596bc5e721474"
+      },
+      "documents": 7,
+      "actualR10Snapshot": {
+        "path": "output/tabstrip-r17-progress-v5-r10/documents-snapshot.json",
+        "bytes": 4459,
+        "sha256": "88260e4b3714eac9c77a5209c8c7f3ac0b82eccffdc27a45b56118ade40f2ef4"
+      },
+      "sevenCurrentFilesVerifiedAgainstFrozenUpdate02": true,
+      "docsEditedByThisProgressSeal": false
+    },
+    "pending": [
+      "Wrapped-text source-compatible shaped-glyph policy and unsupported Unicode/RTL scope",
+      "Same-position glyph alpha/color residual and compositor/material equivalence",
+      "Unused native example must not grow",
+      "Exact native350/500ms boundaries and full event/drag/blur/exit sequences",
+      "All other source scenes/themes/DPIs and full-window actual-flow comparison",
+      "macOS Intel and ARM actual native acceptance",
+      "Windows glass/frame/accessibility/performance acceptance",
+      "Framework CLI inherited LanguagePackaging symlink-privilege test remains unpassed; installer/signing excluded",
+      "Card underlay off/on or bound-instance control; no radius or color fitting",
+      "Historical V4 Darwin unused-size +32/+16B candidate was not adopted; V5 independent ten-example relative-C4 gate passed. Whole-framework historical .6 counter +2048B still pending.",
+      "Wrap unused +1536B and complete source LF measurement; V3 native LF fallback regression passed",
+      "Prepared P0 attempt02 still needs separately sealed actual metadata/compiler/SDK/ABI and trace-off/on native byte-regression evidence before uploaded-GUI-word claims.",
+      "GPU04 actual288 derived cases/672raw structure completed; final offline gamma/blend/MRT numeric-pixel analysis and semantic acceptance remain pending; no GUI-root-cause acceptance.",
+      "P0 source compiler/decoder corrections passed synthetic Python controls; no actual Go/Cargo metadata/build/ABI/native evidence is bound in this R10 snapshot."
+    ],
+    "scope": "Exact R10 as-of values, before later actual Go native and GPU04 finite offline final evidence was bound; preserved rather than relabeled."
+  },
+  "controlledFixtureLedger": {
+    "current": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r7/result.json",
+      "bytes": 297879,
+      "sha256": "1353468bb196c4876df61cc48ffd1d6ea21d4509688b1d05d90526243199c239"
+    },
+    "previous": {
+      "path": "output/tabstrip-r17-native-fixture-ledger-r6/result.json",
+      "bytes": 269811,
+      "sha256": "9d20f7280737abb05dfd116a5ff3c7a80326c948c92887e613e349fdd7e11c22"
+    },
+    "totalTrials": 25,
+    "totalPNGsIncludingRetainedPartialFailures": 214,
+    "successfulTrials": 20,
+    "failedTrials": 5,
+    "newTrials": 4,
+    "newPNGs": 8,
+    "newSuccesses": 3,
+    "newFailures": 1,
+    "old21TrialObjectsExact": true,
+    "scope": "Controlled fixtures only. Includes first failed baseline and three successful private V4AX P0 Go stages. Main-package JPEGs, GPU control cases and raw Sky JPEG checkpoints are excluded."
+  },
+  "documentationScopeAudit": {
+    "existingDiscrepancyRecordsRetained": 19,
+    "newHistoricalPlanLiteralClarifications": 1,
+    "totalRecords": 20,
+    "scope": "Old as-of stage statements are retained as history; feature coverage P1 is now closed. Current source/package scope and Cloud native bounds explicitly updated."
+  },
+  "historicalR11DefaultMetadataAndPreCloudState": {
+    "stage": "R17-P0-Go-native-and-reference-default-metadata-R11",
+    "status": "Formal .9 unchanged; private V4AX Go builds/ABI/three-stage native and finite GPU04 numeric evidence bound; reference default metadata only with feature P1 and full acceptance pending",
+    "sourceScope": {
+      "fixtureAppInputs": 961,
+      "sourceManifest": {
+        "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt01/inputs-final-gates03/formal-fixture961-actual.json",
+        "bytes": 166075,
+        "sha256": "cb1135f5ed8000b253c8fbc5db27db2f75dcc1f796a87ddcea38ebf4eb0c7f04"
+      },
+      "fixtureBinary": null,
+      "fixtureBinaryScope": "No exact .9 fixture EXE claimed. Separate V5+AX inherited.8 diagnostic has2825 audit inputs and40 native PNGs.",
+      "productionBuildSourceInputs": 2931,
+      "productionSourceManifest": {
+        "path": "output/tabstrip-r17-quarter-v5-adoption-prepared/attempt-01/root-forward2931-manifest.json",
+        "bytes": 497348,
+        "sha256": "188ed064db0771fb052ad16d66d3eab96ef3377072af3044f4fce60e8cee21ee"
+      },
+      "vendorActualAndSealedVerified": true,
+      "allFiveGatesPassed": true,
+      "formalGateResult": {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-03/result.json",
+        "bytes": 8672,
+        "sha256": "831c2944ee20348513f0df369c018e0932136a2218a0af93bc565de6a81b151c"
+      },
+      "inventoryInterpretation": "Audit inventories include tests, other-platform files and supporting resources; not compiled or executed unit counts.",
+      "mainPackageBinary": {
+        "path": "output/resume-validation/tabstrip-r17-quarter-v5-packages/windows-amd64/Zeron.exe",
+        "bytes": 25952256,
+        "sha256": "9c58004289a9da967b3e1b6e1baae03c031374b2f0c3aa6fc272677e0b8ff795"
+      },
+      "mainPackageBinaryScope": "Current exact .9 Windows canonical main package, separate from fixtureBinary; no exact .9 fixture EXE is claimed.",
+      "mainPackageSourceInputs": 2931,
+      "mainPackageNativeResult": {
+        "path": "output/resume-validation/tabstrip-r17-quarter-v5-native/result.json",
+        "bytes": 10228,
+        "sha256": "0d850ab4bebfd6c9a308ea015266321fb64e7028dbcbdda926c77842fbb7767c"
+      },
+      "sourceAndBackupNativeVerified": true
+    },
+    "packageState": {
+      "currentRevision": "zeron-native-ui.9",
+      "canonicalFourTargetSuccess": true,
+      "currentStatus": "V5 .9 canonical02 sealed four packages after one runner-only preflight correction; bounded exact Windows main package smoke passed.",
+      "currentActualCanonicalBuildCountBoundInSnapshot": 1,
+      "currentPackageCountBoundInSnapshot": 4,
+      "priorC4CanonicalFourTargetAttempts": 6,
+      "priorC4SuccessfulAttempts": 2,
+      "priorC4BuildFailures": 4,
+      "dot9PreflightFailures": 1,
+      "nativeWindowsExecutableSHA256": "9c58004289a9da967b3e1b6e1baae03c031374b2f0c3aa6fc272677e0b8ff795",
+      "windowsNativeSmokeExitCode": 0,
+      "nativeMacOS": false,
+      "installerRun": false,
+      "published": false,
+      "scope": "Six historical C4 actual CLI builds (4failed/2passed) plus one V5 .9 passed CLI build =7. Eight runner attempts include canonical01 preflight failure with0build. Four cross-built packages do not imply Mac native, installer or publication acceptance.",
+      "currentCanonicalFinal": {
+        "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt02/final-result.json",
+        "bytes": 9590,
+        "sha256": "8043c0a304287937181fdcdf7c5aba6d29e012b355028e5267ece3e99ced768d"
+      },
+      "currentCanonicalRaw": {
+        "path": "output/tabstrip-r17-quarter-v5-canonical-delivery-attempt02/result.json",
+        "bytes": 86195,
+        "sha256": "e09bf5b3df32c6447f2d8dc34cc5569d681f637664667dea1b7e74ffd0ea1e86"
+      },
+      "currentPackageAndNativeIndependentReview": {
+        "path": "output/tabstrip-r17-quarter-v5-package-independent-review/result.json",
+        "bytes": 16413,
+        "sha256": "31591d085afc917ae8646b63c866c9b6e3e2d7cd0b5976210affc08cd7221150"
+      },
+      "actualCanonicalCLIFourTargetBuildsTotal": 7,
+      "actualCanonicalCLISuccessesTotal": 3,
+      "actualCanonicalCLIFailuresTotal": 4,
+      "canonicalRunnerAttemptsTotal": 8,
+      "canonicalRunnerPreflightFailuresTotal": 1,
+      "dot9CanonicalRunnerAttempts": 2,
+      "dot9ActualCanonicalCLIBuilds": 1,
+      "dot9CanonicalCLISuccesses": 1,
+      "windowsNativeMainPackageSmoke": true
+    },
+    "gateLogs": [
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/framework-pin.stdout.log",
+        "bytes": 120,
+        "sha256": "d4b4951b64b23ec6f3162f3d9b6a66aaf2a93f30e927046c48368a31c42ca43f"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/framework-pin.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/full-tests.stdout.log",
+        "bytes": 430,
+        "sha256": "5fe3463343dff9740117aae6cb7025388e8361229331b8f12ae80c06ccb653ff"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/full-tests.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/tagged-tests.stdout.log",
+        "bytes": 156,
+        "sha256": "4e0d9e0db6a35d6bc03a8d849c8b1d85f07efab8d3e72b8058737e9a187b6235"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/tagged-tests.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/go-vet.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/go-vet.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/mygo-vet.stdout.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-02/mygo-vet.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-03/lint.stdout.log",
+        "bytes": 10,
+        "sha256": "e92606b0bf483111dff0a120c315ea165821348f31365020e2468a0059095c47"
+      },
+      {
+        "path": "output/tabstrip-r17-quarter-v5-formal-gates/attempt-03/lint.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "currentDocumentation": {
+      "previousR10Documentation": {
+        "update01Historical": {
+          "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-01/result.json",
+          "bytes": 3215,
+          "sha256": "3a76c7789d6137be8c19b17c86223f278ec3eeb8f3e130de20f4635a63034444"
+        },
+        "update02": {
+          "path": "output/tabstrip-r17-quarter-v5-docs-update/attempt-02/result.json",
+          "bytes": 2357,
+          "sha256": "4d3df5bee8fed1a03f92eb7e2120a55eaa1fac8390180b35507596bc5e721474"
+        },
+        "documents": 7,
+        "actualR10Snapshot": {
+          "path": "output/tabstrip-r17-progress-v5-r10/documents-snapshot.json",
+          "bytes": 4459,
+          "sha256": "88260e4b3714eac9c77a5209c8c7f3ac0b82eccffdc27a45b56118ade40f2ef4"
+        },
+        "sevenCurrentFilesVerifiedAgainstFrozenUpdate02": true,
+        "docsEditedByThisProgressSeal": false
+      },
+      "p0DocsUpdate01": {
+        "path": "output/tabstrip-r17-p0-docs-update/attempt-01/result.json",
+        "bytes": 7412,
+        "sha256": "a85563ff8ec14b438f4e70c6bfe44ad37e3fde38e50f2ab5d7e45187c9f9be67"
+      },
+      "documents": 7,
+      "changedByPriorFrozenDocsUpdate": 3,
+      "unchangedByPriorFrozenDocsUpdate": 4,
+      "actualR11Snapshot": {
+        "path": "output/tabstrip-r17-progress-p0-r11/documents-snapshot.json",
+        "bytes": 4310,
+        "sha256": "e50e10fea2c6374bece66adf16936994473c1209037170badcb7d953a1818896"
+      },
+      "sevenCurrentFilesVerifiedAgainstFrozenP0Update01": true,
+      "docsEditedByThisProgressSeal": false
+    },
+    "pending": [
+      "Wrapped-text source-compatible shaped-glyph policy and unsupported Unicode/RTL scope",
+      "Same-position glyph alpha/color residual and compositor/material equivalence",
+      "Unused native example must not grow",
+      "Exact native350/500ms boundaries and full event/drag/blur/exit sequences",
+      "All other source scenes/themes/DPIs and full-window actual-flow comparison",
+      "macOS Intel and ARM actual native acceptance",
+      "Windows glass/frame/accessibility/performance acceptance",
+      "Framework CLI inherited LanguagePackaging symlink-privilege test remains unpassed; installer/signing excluded",
+      "Card underlay off/on or bound-instance control; no radius or color fitting",
+      "Historical V4 Darwin unused-size +32/+16B candidate was not adopted; V5 independent ten-example relative-C4 gate passed. Whole-framework historical .6 counter +2048B still pending.",
+      "Wrap unused +1536B and complete source LF measurement; V3 native LF fallback regression passed",
+      "Reference default metadata03 passed only for enabled zeron-ui features[]; P1 requires separately frozen/reviewed actual compact-picker-fixture feature and Windows target graph, compiler/SDK/linker/build-script/proc-macro/ABI/native gates. Concurrent source preparation is not bound.",
+      "Private V4AX Go host words and two selected model field matches do not establish actual GPUI inputs, string/glyph/frame association, default PS pointer-to-bytecode join,20 custom shader draws, atlas/clip/fade/underlay, GPU completion/Present/exact WGC producer or one-level screenshot residual cause.",
+      "GPU04 finite288/48actualMRT/672raw offline numeric analysis completed; retained3 nonzero evidence findings and shared BGRA8 differences remain. Actual GUI/pixel parity/root-cause acceptance and full6048 matrix remain unaccepted.",
+      "Historical whole-framework .6 counter +2048B remains unresolved; new read-only attribution and source-only no-growth design contain no implemented patch or causal/candidate build."
+    ],
+    "notes": [
+      "Historical R8 snapshot note: Current R16 resume-result/latest release index is preserved; this file is an additive progress snapshot",
+      "Historical R8 snapshot note: Every failed native/package trial retained; no source image replaced with a generated golden",
+      "Historical R8 snapshot note: New device diagnostics do not bind old GUI binaries or prove exact PNG producer/lifetime",
+      "Historical R8 snapshot note: Feature-level11.1/11.0 controlled54cases match at both levels, not a general GUI equivalence proof",
+      "Historical R8 snapshot note: Historical R2/pre-C4 scope: R1 bytes and review were preserved while R2 recorded the then-later C3 plus leaf inputs and package failures. Current C4 build/native evidence is recorded separately.",
+      "Historical R8 snapshot note: Historical R2/pre-C4 scope: no fresh package had yet been built for leaf ceil at R2. Current C4 has its own fresh four-target build and exact Windows native smoke; pre-leaf smoke retains only its original executable scope.",
+      "Historical R8 snapshot note: Fourth package original false hash flag was an unexecuted-check default; postfailure report verifies Windows hash equality.",
+      "Historical R8 snapshot note: C4 has its own full source/build/native identities; no C3 image, GPU diagnostic or earlier test is relabeled C4.",
+      "Historical R8 snapshot note: New root five gates passed; framework CLI entire ordinary suite remains red for inherited language/symlink failure.",
+      "Historical R8 snapshot note: EEXIST saver incident is parent tool-history attestation; old referenced files independently rehash unchanged, not an independent reenactment.",
+      "Historical R8 snapshot note: Native baseline/edge/source/device/material/macOS boundaries remain distinct; latest sealed release index is still R16.",
+      "Historical R8 snapshot note: Checked-facade reduction and quarter-placement changes are isolated candidates; current formal C4 includes neither.",
+      "Historical R8 snapshot note: Historical R4 scope: R4 is a metadata scope correction only; no new test/build/native run and no change to the formal C4 implementation, R16 release index or pending acceptance.",
+      "Historical R8 snapshot note: R5 records the adopted AX app and its own R6 gates, four-target build and exact Windows full-app native proof; C4 framework remains unchanged.",
+      "Historical R8 snapshot note: Historical R5 scope: Quarter native proof belongs only to isolated V1; V2 has its own tests/size proof and no GUI run. V3 is still isolated work, not current code.",
+      "Historical R8 snapshot note: AX V1 tagged-test omission and Windows386 quarter test-range finding retain their historical reviews. No prior report is relabeled finding-free.",
+      "Historical R8 snapshot note: Actual AX content naming is verified; screen-reader events, complete native timing, Mac and full visual acceptance remain open.",
+      "Historical R8 snapshot note: R6 retains formal C4 plus adopted AX and its existing packages. New quarter V4 remains isolated with its own current-AX integration input tree and native run15/16.",
+      "Historical R8 snapshot note: All previous fixture ledger trial objects and all failed trials remain; ledger now has18 trials/166 PNGs,14 successful and4 failed.",
+      "Historical R8 snapshot note: Historical Windows-only R6 scope: V4 relative-C4 file-size gate passed, but metadata/PC/default branch and C4 versus R16 growth remain explicit; no runtime0 claim.",
+      "Historical R8 snapshot note: Historical R6 scope: CPU model is executed only as source-parameter arithmetic; GPU V1 only compiled and has two retained preflight findings. No control executable was started.",
+      "Historical R8 snapshot note: Existing full-app packages are not relabeled quarter V4; no new four-target package, Mac native or timing acceptance in this progress snapshot.",
+      "Historical R8 snapshot note: R7 is additive: the frozen R6 snapshot and its nonzero P3 documentation review remain unchanged.",
+      "Historical R8 snapshot note: R6 described GPU01 as source-only in one frozen doc although its own artifacts bind a successful compile/link; this snapshot corrects only live/new documentation, without relabeling historical reports.",
+      "Historical R8 snapshot note: R7 binds GPU02 build/source review and wrap02 failed gates. Authorized pilot execution and in-progress cross-platform size work require later exact result packets, not assumptions from authorization.",
+      "Historical R8 snapshot note: No formal runtime source change, no commit/push, no package rebuild or new GUI run is performed by this metadata correction. Existing five gates remain prior exact-source evidence.",
+      "Historical R8 snapshot note: R8 removes the ambiguous wrap OR field, preserving R7 and its P3 independent finding. Formal C4/AX code, R16 and resume hub remain unchanged.",
+      "Historical R8 snapshot note: New wrap03 limited regression, cross-platform size, GPU02 initialization failure, GPU03 build and separate auth-negative identities are separate proofs. Source-only P0 capture and V5 preparation do not establish actual GUI words or size acceptance.",
+      "Historical R9 snapshot note: R9 marks adopted .9 source and current formal gates explicitly; exact diagnostic, canonical, platform and native scopes remain separate.",
+      "Historical R9 snapshot note: No old failure, expected value, screenshot or source identity was relabeled as a later success. Output go.mod isolates evidence from standard root ./... without filtering product packages.",
+      "Historical R9 snapshot note: Canonical01 stopped after two successful Go environment queries because its GOENV return-value assertion was wrong; zero canonical package builds occurred in that attempt.",
+      "Historical R10 snapshot note: R10 binds exact .9 canonical02 final8043/raw e09b, four packages and current Windows main native result0d85. canonical01 performed two Goenv queries and0builds; runner02 changes only actual empty GOENV result validation while child GOENV remains off.",
+      "Historical R10 snapshot note: Actual CLI four-target totals7=3success+4fail; runner totals8 additionally include one preflight failure. No old failure or .8 diagnostic source is relabeled .9.",
+      "Historical R10 snapshot note: The controlled fixture ledgerR6 remains21trials/206PNGs/17success/4fail. New main-package14states/15SkyJPEGs and initialPNG do not change those counts. SkyID is not HWND; observed3200x2000 versus requested1600x1000 is not a new DPI measurement.",
+      "Historical R10 snapshot note: R10 binds GPU04 execution/structure only and P0 attempt02 source-only controls. Mutable future GPU04 offline analysis and concurrent P0 metadata execution are not guessed or certified here.",
+      "Historical R10 snapshot note: The seven docs were frozen by docs-update02 and are snapshotted/byte-checked in this R10 packet without edits. R16 and resume hub remain unchanged; goal stays active.",
+      "R11 preserves R10 exact as-of P0/GPU04/doc/pending objects under historicalR10PreP0State. Current facts are separated into private Go actual execution, reference default metadata only, and finite GPU04 control verification.",
+      "Private V4AX Go actual successful builds2/ABI tests6; native retry baseline/off/on all normal0 and six wholePNG bytes exact historical run15,23 originalSky states, both-theme Tab02.txt. First baseline gate failure normal0,2PNGs/5Sky/missing light-mature remains in controlled R7 totals25/214/20success5fail; offset is not accepted as sole cause.",
+      "Go trace12uploads/12globals/346instances/67issued47default20customPSnotCaptured/0effect.243kind5 records form4profiles; two model field matches involve one profile each with45 and90 host instances. No actual scene/theme/string/frame or Present producer is attached to those control names.",
+      "Reference Cargo metadata03 exit0 under wrapperexit2 produced default1298graph1240registry50path8git; lock1308 with1250registry identities/checksums stable and20same ZUI git-to-path source tuples. Actual381authenticatedGET/77581593B and private c3 after2064257290B are metadata/cache costs, not compiler/native success. First2 failures and unresolved future-feature P1 remain.",
+      "GPU04 actual48dualRTV semantic evidence and offline288/672readback numeric work are now independently verified. Retained3 nonzero evidence findings,16 BGRA8 shared-brush differences, no GUI/pixel/root-cause or full6048 acceptance.",
+      "R10 previous review b1083 is Root read-only6281 checks, not an independent clean-review. This index binds independent reports but does not rerun their checks or count their checks as its own.",
+      "Seven current docs match frozen P0 docs-update01,3changed4same, and are snapshotted without edits. Formal .9/1864/14/2931, AX0bcfb, exact .9 main package and null exact .9 fixtureBinary, R16 and resumehub remain unchanged. No mutable feature-gate result is bound; goal stays active."
+    ],
+    "documentationScopeAudit": {
+      "existingDiscrepancyRecordsRetained": 19,
+      "newDocumentCodeContradictionsFoundByThisIndexAggregation": 0,
+      "scope": "Old R10 no-execution and GPU04-pending statements are preserved as correct historical as-of scope, not relabeled false claims. The explicit unused-example no-growth requirement remains unmet (+2048B C4 counter versus .6); attribution/design report no additional API semantic documentation discrepancy. Metadata feature P1 is an evidence-coverage gap, not an invented documentation contradiction."
+    },
+    "referenceDefaultMetadataState": {
+      "defaultFeatureMetadataSucceeded": true,
+      "metadataSeal": {
+        "path": "output/tabstrip-r17-text-actual-input-capture-prepared/attempt-02/metadata-reference-trace-attempt03/seal.json",
+        "bytes": 149087,
+        "sha256": "c7f90cb2f1fe49d7f28e7c4d364507ddb15728859c6527d07c87b6a186eb14c7"
+      },
+      "defaultMetadataIndependent": {
+        "path": "output/tabstrip-r17-rust-metadata-independent-review/attempt-01/result.final.json",
+        "bytes": 10998,
+        "sha256": "472a2838ee876d1b9d03ffacb5bfc3bf4c0f596c672c1c36a79c55fb93fae3db"
+      },
+      "metadataExitCode": 0,
+      "wrapperExitCode": 2,
+      "metadataPackages": 1298,
+      "resolveNodes": 1298,
+      "workspaceMembers": 30,
+      "metadataSourceKinds": {
+        "registry": 1240,
+        "path": 50,
+        "git": 8
+      },
+      "lockPackagesBefore": 1308,
+      "lockPackagesAfter": 1308,
+      "registryLockPackages": 1250,
+      "registryIdentityAndChecksumSetUnchanged": true,
+      "ZuiSamePackageGitToPathSourceChanges": 20,
+      "requestedAndAuthenticatedArchiveGETs": 381,
+      "actualArchiveBodyBytes": 77581593,
+      "automaticRetries": 0,
+      "redirects": 0,
+      "privateC3FilesAfterMetadata": 62617,
+      "privateC3BytesAfterMetadata": 2064257290,
+      "privateReadyCheckoutsQualification": "Ready checkouts were copied from exact reviewed bytes; a fresh clone/checkout execution was not independently demonstrated.",
+      "firstTwoMetadataFailures": [
+        {
+          "path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\metadata-reference-trace-attempt01\\failure-seal.json",
+          "bytes": 17744,
+          "sha256": "0903f055b0261b046c9c2611fe419fefd97465e104390a81fa65b52a2c9de20e"
+        },
+        {
+          "path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\metadata-reference-trace-attempt02\\failure-seal.json",
+          "bytes": 24928,
+          "sha256": "dc8dc16fb9163669c126665ce1eb26fbbd5c9c327aaea763f8f1e2815ac94047"
+        }
+      ],
+      "defaultZeronUiEnabledFeatures": [],
+      "futureRequestedFixtureFeatures": [
+        "compact-picker-fixture"
+      ],
+      "futureFeatureExpansion": [
+        "gpui_platform/test-support"
+      ],
+      "featureCoverageP1Open": true,
+      "featureCoverageP1": {
+        "priority": "P1",
+        "title": "Future build feature selection has no matching resolved metadata review",
+        "evidence": {
+          "metadataCommand": [
+            "C:\\Users\\chengliang\\.rustup\\toolchains\\1.98.1-x86_64-pc-windows-msvc\\bin\\cargo.exe",
+            "metadata",
+            "--offline",
+            "--format-version",
+            "1",
+            "--manifest-path",
+            "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\Cargo.toml"
+          ],
+          "zeronUiEnabled": [],
+          "futureRequestedFeatures": [
+            "compact-picker-fixture"
+          ],
+          "featureExpansion": [
+            "gpui_platform/test-support"
+          ],
+          "gpuiPlatformEnabled": [
+            "default",
+            "font-kit",
+            "runtime_shaders",
+            "wayland",
+            "x11"
+          ],
+          "fixtureTargets": [
+            {
+              "kind": [
+                "example"
+              ],
+              "crate_types": [
+                "bin"
+              ],
+              "name": "compact-picker-fixture",
+              "src_path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\crates\\ui\\examples\\compact-picker-fixture.rs",
+              "edition": "2024",
+              "required-features": [
+                "compact-picker-fixture"
+              ],
+              "doc": false,
+              "doctest": false,
+              "test": false
+            },
+            {
+              "kind": [
+                "example"
+              ],
+              "crate_types": [
+                "bin"
+              ],
+              "name": "tabstrip-native",
+              "src_path": "D:\\projects\\GCode\\output\\tabstrip-r17-text-actual-input-capture-prepared\\attempt-02\\build\\reference-trace-metadata-attempt03\\work\\app\\crates\\ui\\examples\\tabstrip-native.rs",
+              "edition": "2024",
+              "doc": false,
+              "doctest": false,
+              "test": false
+            }
+          ],
+          "judgement": "Feature-specific metadata and target filtering are not supplied; default workspace graph is not the future Windows compilation unit list."
+        },
+        "requiredAction": "Before any separately authorized reference compilation, obtain and review metadata for the actual compact-picker-fixture feature and Windows target, pin graph/manifests/cache/toolchain/build-script inputs, and bind approval to these inputs rather than lock SHA alone."
+      },
+      "featureSpecificWindowsMetadataAccepted": false,
+      "futureFeatureGatePreparationBoundInSnapshot": false,
+      "projectCompiled": false,
+      "SDKCompilerLinkerApproved": false,
+      "buildScriptProcMacroExecutionApproved": false,
+      "ABIControlsExecuted": false,
+      "nativeRun": false,
+      "actualGUIInputWordsCaptured": false,
+      "scope": "Only default workspace metadata and its static review are bound. Wrapper exit2 is not a compiler success. Future feature-specific/Windows graph, SDK/build-script/proc-macro/compiler/ABI/native acceptance requires separate frozen inputs and review; no concurrent mutable feature preparation is inferred."
+    }
+  },
+  "cloudNavigation": {
+    "adoption": {
+      "path": "output\\tabstrip-r17-cloud-navigation-adopted\\attempt-01\\result.json",
+      "bytes": 3221,
+      "sha256": "0b3a17e97c90393d9402447ab78411548d7da176a93bedc503d2da2d202b090a"
+    },
+    "independentSourceReview": {
+      "path": "output\\tabstrip-r17-cloud-navigation-independent-review\\attempt-02\\result.json",
+      "bytes": 10988,
+      "sha256": "70a49724194655391f989aab5b64d81460713bf12f037329a4d532e1374be12b"
+    },
+    "beforeFixRegression": {
+      "path": "output\\tabstrip-r17-cloud-navigation-overlay-test\\attempt-02-red\\result.json",
+      "bytes": 4050,
+      "sha256": "fc8f0f10c90a16d5c26084a66e86ac3d8b279aabe8ad525c12a9bcbcb382da2c"
+    },
+    "beforeFixRegressionsFailed": 4,
+    "alreadyRoutedNewConversationControlPassed": true,
+    "afterFixTargetedTests": {
+      "path": "output\\tabstrip-r17-cloud-navigation-overlay-test\\attempt-03-green\\result.json",
+      "bytes": 4005,
+      "sha256": "f7785b4f07c8e7672c2ca50744a28540ff81c480d81940fd697ea395511c1721"
+    },
+    "afterFixTopLevelTestsPassed": 9,
+    "currentGates": {
+      "path": "output\\tabstrip-r17-progress-feature-cloud-r12\\current-cloud-gates.json",
+      "bytes": 1262,
+      "sha256": "096c57f87dfe11438c2ba54f78c2e30638b4e314a57f895332c9df122e7dcce8"
+    },
+    "native": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native\\attempt-01\\result.json",
+      "bytes": 14552,
+      "sha256": "a5981b8b0445d3950d6eff42993cde2748459e89409cc1638ecc057761163b1c"
+    },
+    "nativeBeforeCloseRevision": 6,
+    "normalNativePathVerified": true,
+    "firstWrongWindowImageRejected": true,
+    "fullNativeFailureCancellationRapidRouteMatrixAccepted": false,
+    "adaptation": "Only a fresh status read can auto-enable; abnormal successful Enable->Off does not recursively enable again. Reference lacks this guard; normal mock success transitions provisioning->ready.",
+    "failedActionProtocolParity": false,
+    "referenceVisualParity": false,
+    "nativeIndependentFileReview": {
+      "path": "output\\tabstrip-r17-cloud-navigation-native-independent-review\\attempt-01\\result.json",
+      "bytes": 4000,
+      "sha256": "fad08e8ef8019d2acbef124250ce27f3ffed4fe926c0511c41f2d97258baf234"
+    }
+  },
+  "focusInvestigation": {
+    "sourceTriage": {
+      "path": "output\\tabstrip-r17-focus-ax-source-triage\\attempt-01\\result.json",
+      "bytes": 5831,
+      "sha256": "04174c1daeed3113865154abf37a9bc669832d382b311dfe6f5c0c09e3f536c3"
+    },
+    "partialNativeFailure": {
+      "path": "output\\tabstrip-r17-focus-ax-source-triage\\attempt-01\\native-execution-attempt01\\result.json",
+      "bytes": 7702,
+      "sha256": "822ccedcb404304924297b5ca1d20cc5a0a87f0a1fc8b37acd6e0654eef16f61"
+    },
+    "newCurrentFocusDefectEstablished": false,
+    "newFocusWorkaroundAdopted": false,
+    "scope": "OlderR9 raw focus result applies to its .5 binary; later .9 raw probe was policy-rejected before COM and mixed Sky/PS UIA plan stopped. No current four-stage/popup focus acceptance."
+  }
+}

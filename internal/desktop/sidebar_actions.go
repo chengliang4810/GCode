@@ -64,11 +64,11 @@ func (a *App) sidebarDeleteDialog(c *ui.Context) {
 		back.Background(ui.RGBA(0, 0, 0, .35))
 		panel.Width(400).Padding(24).Radius(12).Background(a.palette.Dialog)
 		ui.Column(c).Gap(16).Children(func() {
-			ui.Text(c, "Delete session?").FontSize(design.UISize(c, 18)).FontWeight(600)
-			ui.Text(c, "This action cannot be undone.").TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, "Delete session?")).FontSize(design.UISize(c, 18)).FontWeight(600)
+			ui.Text(c, tr(c, "This action cannot be undone.")).TextColor(a.palette.Muted)
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-				textButton(c, "Cancel").OnClick(func() { a.sidebarUI.deleteOpen = false })
-				textButton(c, "Delete").TextColor(a.palette.Danger).OnClick(func() {
+				textButton(c, tr(c, "Cancel")).OnClick(func() { a.sidebarUI.deleteOpen = false })
+				textButton(c, tr(c, "Delete")).TextColor(a.palette.Danger).OnClick(func() {
 					id := a.sidebarUI.deleteID
 					a.sidebarUI.deleteOpen = false
 					a.dispatch(contracts.Command{Kind: "session.delete", ID: id})

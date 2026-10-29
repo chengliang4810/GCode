@@ -1,0 +1,41 @@
+{
+  "independentCrossProcessAudit": {
+    "sha256": "1bc484922b1dd152fa9373e1502773fa95634f9ceff300fe6af884eaba863276",
+    "path": "output/native-uia-focus-r8-review/result.json"
+  },
+  "rawStableRounds": 9,
+  "remaining": [
+    "FocusChanged event delivery and screen-reader behavior",
+    "Popup/IME/keyboard traversal/full-platform accessibility matrix",
+    "Exact tool focus-report implementation and separate diagnostic DPI-awareness geometry"
+  ],
+  "stderrBytes": 0,
+  "externalServiceUsed": false,
+  "sequence": [
+    "side",
+    "main",
+    "side with controlled native text"
+  ],
+  "fullAccessibilityAccepted": false,
+  "sideMessageSent": false,
+  "conclusion": "In the sampled sequence independent cross-process raw and managed UIA expose focus matching real editor input. The original tool report alone does not establish an application focus defect; exact tool cache/event/mapping cause remains unproved.",
+  "rawGetFocusedElementSucceeded": 18,
+  "rawCurrentEditorFocusReads": 36,
+  "nativeInput": {
+    "sha256": "0e71cd2d2033b29a840de3a04b426e572bc3f93ff6a9e53e711e64191e37bccc",
+    "path": "output/resume-validation/popup-r9-uia-focus/evidence.json"
+  },
+  "originalTool": "continues to report main while actual side is focused",
+  "recordedAtUTC": "2026-10-28T13:50:39.1972238Z",
+  "freshManagedFocusedElement": "same side identity as raw",
+  "scope": "R9 diagnostic supplement on sealed R8 binary/source; subsequent R10 source edits are separate",
+  "goalStatus": "active",
+  "providerOptionsFixCausality": "Not established by this observation; .5 contract correction is retained independently",
+  "completeUIParity": false,
+  "sourceManifest": {
+    "sha256": "443a7345666ee52a5c3302bfdab5bc035953660e738f986afb596f678e22cec1",
+    "path": "output/resume-validation/popup-r8-source-hashes.json"
+  },
+  "schemaVersion": 1,
+  "nativeExitCode": 0
+}

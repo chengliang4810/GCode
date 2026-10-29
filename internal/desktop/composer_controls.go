@@ -60,19 +60,19 @@ func (a *composerController) selectedModel() contracts.Model {
 
 func (a *composerController) modelLabel() string {
 	if a.sessionID == "" && a.modelNoAgents() {
-		return "No agents"
+		return a.t("No agents")
 	}
 	if model := a.selectedModel(); model.Label != "" {
 		return model.Label
 	}
-	return "Select model"
+	return a.t("Select model")
 }
 
 func (a *composerController) controlLabel(label string) string {
 	if a.side != nil {
-		return label + " in " + a.currentSession().Title
+		return a.t(label) + a.t(" in ") + a.currentSession().Title
 	}
-	return label
+	return a.t(label)
 }
 
 func (a *composerController) normalizeReasoning() {
@@ -127,8 +127,11 @@ func (a *composerController) saveComposerConfig(update *contracts.SessionUpdate)
 	a.dispatch(command)
 }
 
-func (a *composerController) modelTrigger(c *ui.Context) {
-	button := ui.ButtonBase(c).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).Label(a.controlLabel("Select model"))
+func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Element) {
+	button := ui.ButtonBase(c).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel("Select model")))
+	if a.modelMenu || button.Hovered() {
+		button.Background(a.palette.Hover)
+	}
 	button.Children(func() {
 		glyph := "terminal"
 		for _, provider := range a.state.Providers {
@@ -142,7 +145,7 @@ func (a *composerController) modelTrigger(c *ui.Context) {
 		icon(c, glyph, 16)
 		ui.Text(c, a.modelLabel()).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).FontWeight(500)
 		if len(a.selectedModel().ReasoningLevels) > 0 && (a.sessionID != "" || !a.modelNoAgents()) {
-			ui.Text(c, a.reasoning).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted.Alpha(.7))
+			ui.Text(c, tr(c, a.reasoning)).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted.Alpha(.7))
 		}
 	})
 	button.OnClick(func() {
@@ -159,7 +162,7 @@ func (a *composerController) modelTrigger(c *ui.Context) {
 			}
 		}
 	})
-	a.modelPopover(c, button)
+	return button, a.modelPopover(c, button)
 }
 
 // Compatibility wrappers preserve the root shell's central-only entry points.

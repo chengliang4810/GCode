@@ -72,7 +72,7 @@ func (a *App) paletteKeyHint(c *ui.Context, key, label string) {
 				ui.Text(c, key).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 			}
 		})
-		ui.Text(c, label).FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
 	})
 }
 func sourcePaletteInk(dark bool, alpha float32) ui.Color {
@@ -254,12 +254,12 @@ func (a *App) paletteRows() []paletteRow {
 		if mode == "light" {
 			glyph = "sun"
 		}
-		commands = append(commands, paletteRow{key: "theme", title: "Switch to " + mode + " theme", glyph: glyph, command: "theme:" + mode})
+		commands = append(commands, paletteRow{key: "theme", title: fmt.Sprintf("Switch to %s theme", mode), glyph: glyph, command: "theme:" + mode})
 		if selected := a.currentSession(); selected.ID != "" && !selected.Archived {
 			commands = append(commands, paletteRow{key: "archive", title: "Archive thread", glyph: "archive-minimalistic", command: "archive"})
 		}
 		for _, row := range commands {
-			if queryWordsMatch(query, row.title) {
+			if queryWordsMatch(query, row.title+" "+a.t(row.title)) {
 				row.section = section
 				rows = append(rows, row)
 			}
@@ -408,12 +408,12 @@ func (a *App) commandPalette(c *ui.Context) {
 		maxResults := max(float32(100), min(float32(360), height-180))
 		top := max(float32(54), (height-maxResults-120)/2)
 		back.Background(paletteScrim(a.palette.Dark)).Justify(ui.Start).Padding(top, 0, 0)
-		panel.Label("Command palette").Width(min(560, width-32)).Radius(16).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
+		panel.Label(tr(c, "Command palette")).Width(min(560, width-32)).Radius(16).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
 		ui.Column(c).FillWidth().Children(func() {
 			var input ui.Element
 			ui.Row(c).Height(44).Padding(8, 16).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				ui.Icon(c, assets.Icon("palette-search")).Size(16, 16).TextColor(a.palette.Muted)
-				input = ui.TextInputBase(c, &a.paletteQuery).Bind(&p.input).Label("Command search").Placeholder("Search anything…").AutoFocus().Grow(1).MinWidth(0).FontSize(design.UISize(c, 14)).OnChange(func() { p.selected = 0; p.activeKey = ""; a.refreshPaletteSearch() })
+				input = ui.TextInputBase(c, &a.paletteQuery).Bind(&p.input).Label(tr(c, "Command search")).Placeholder(tr(c, "Search anything…")).AutoFocus().Grow(1).MinWidth(0).FontSize(design.UISize(c, 14)).OnChange(func() { p.selected = 0; p.activeKey = ""; a.refreshPaletteSearch() })
 				ui.Text(c, paletteShortcut("Mod+K")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 			})
 			changeTab := func(index int) {
@@ -425,12 +425,12 @@ func (a *App) commandPalette(c *ui.Context) {
 			}
 			ui.Row(c).Padding(6, 12).Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				for i, title := range paletteTabs {
-					row := ui.ButtonBase(c).Label("Command tab: "+title).Padding(4, 8).Height(26).Radius(6).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
+					row := ui.ButtonBase(c).Label(tr(c, "Command tab: ")+tr(c, title)).Padding(4, 8).Height(26).Radius(6).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
 					if p.tab == i {
 						row.Background(sourcePaletteWash(a.palette.Dark, .1))
 					}
 					row.Children(func() {
-						ui.Text(c, title).FontSize(design.UISize(c, 12))
+						ui.Text(c, tr(c, title)).FontSize(design.UISize(c, 12))
 						ui.Text(c, paletteShortcut(fmt.Sprintf("Mod+%d", i+1))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 					})
 				}
@@ -465,7 +465,7 @@ func (a *App) commandPalette(c *ui.Context) {
 				input.OnShortcut(ui.Ctrl, key, func() { changeTab(i) }).OnShortcut(ui.Super, key, func() { changeTab(i) })
 			}
 			p.list.Key = func(i int) any { return rows[i].key }
-			p.list.Label = func(i int) string { return rows[i].title }
+			p.list.Label = func(i int) string { return a.paletteRowTitle(rows[i]) }
 			listHeight := float32(0)
 			for i, row := range rows {
 				if i == 0 || rows[i-1].section != row.section {
@@ -488,19 +488,19 @@ func (a *App) commandPalette(c *ui.Context) {
 							if i > 0 {
 								ui.Box(c).Height(1).FillWidth().Background(a.palette.Border).Margin(8, 0)
 							}
-							ui.Text(c, row.section).Height(20).Padding(2, 16, 4).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+							ui.Text(c, tr(c, row.section)).Height(20).Padding(2, 16, 4).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 						}
 						a.paletteResult(c, row, i, p.selected == i, execute)
 					})
-				}).Label("Command results").Height(min(maxResults, listHeight+16)).Padding(8, 0).Gap(2).FillWidth()
+				}).Label(tr(c, "Command results")).Height(min(maxResults, listHeight+16)).Padding(8, 0).Gap(2).FillWidth()
 			} else {
 				ui.Column(c).Padding(24, 16).Gap(6).AlignItems(ui.Center).Children(func() {
 					title, hint := "No results", "Try a command, chat title, project, or device."
 					if p.tab == 3 && a.paletteQuery == "" {
 						title, hint = "No recent files", "Files you open or change in this workspace show up here."
 					}
-					ui.Text(c, title)
-					ui.Text(c, hint).TextColor(a.palette.Muted)
+					ui.Text(c, tr(c, title))
+					ui.Text(c, tr(c, hint)).TextColor(a.palette.Muted)
 				})
 			}
 			if p.loading || p.error != "" {
@@ -508,7 +508,7 @@ func (a *App) commandPalette(c *ui.Context) {
 				if p.error != "" {
 					status = p.error
 				}
-				ui.Text(c, status).Padding(4, 16).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, status)).Padding(4, 16).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 			}
 			ui.Row(c).Padding(7, 16).Gap(12).BorderWidth(1, 0, 0, 0).BorderColor(a.palette.Border).Children(func() {
 				a.paletteKeyHint(c, "↑ ↓", "Navigate")
@@ -526,7 +526,7 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 	if row.session != nil {
 		height = paletteSessionHeight(*row.session, a.state.Settings)
 	}
-	button := ui.ButtonBase(c).Key(row.key).Label("Command: "+row.title).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
+	button := ui.ButtonBase(c).Key(row.key).Label(tr(c, "Command: ")+a.paletteRowTitle(row)).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
 	button.HandleInput(func(event ui.InputEvent) bool {
 		if event.Kind == ui.InputPointerMove && event.Button < 0 {
 			a.commands.selected = index
@@ -550,7 +550,7 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 		} else {
 			ui.Icon(c, assets.Icon(row.glyph)).Size(16, 16).TextColor(a.palette.Muted)
 		}
-		title := paletteHighlight(c, row.title, a.paletteQuery, a.palette.Accent).SingleLine().MinWidth(0).MaxWidth(240).FontSize(design.UISize(c, 13))
+		title := paletteHighlight(c, a.paletteRowTitle(row), a.paletteQuery, a.palette.Accent).SingleLine().MinWidth(0).MaxWidth(240).FontSize(design.UISize(c, 13))
 		if row.command != "" {
 			title.Grow(1).MaxWidth(10000)
 			bindingID := ""

@@ -17,6 +17,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/desktop"
+	"gcode/internal/i18n"
 	"gcode/internal/mock"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
@@ -26,6 +27,7 @@ func main() {
 	scenario := flag.String("scenario", "", "Deterministic data scenario (default, empty, loading, live, transcript, questions, permissions, showcase, offline, error, stress)")
 	route := flag.String("route", "chat", "Initial route: chat, chat/<id>, settings/<section>, pull-requests")
 	stateDir := flag.String("data-dir", "", "Independent state directory; scenarios default to memory")
+	language := flag.String("language", "", "Interface language override: zh-CN, en")
 	appearance := flag.String("appearance", "", "Appearance override: light, dark, system")
 	themeID := flag.String("theme", "", "Exact built-in theme variant ID")
 	dump := flag.String("dump-scene", "", "Write the initial versioned contract fixture as JSON and exit")
@@ -64,10 +66,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *appearance != "" || *themeID != "" {
+	if *language != "" && *language != "zh-CN" && *language != "en" {
+		log.Fatal("language must be zh-CN or en")
+	}
+	if *appearance != "" || *themeID != "" || *language != "" {
 		s, err := backend.Snapshot(context.Background())
 		if err != nil {
 			log.Fatal(err)
+		}
+		if *language != "" {
+			s.Settings.General.Language = *language
 		}
 		if *appearance != "" {
 			s.Settings.Appearance.Mode = *appearance
@@ -125,6 +133,7 @@ func main() {
 	if *headless {
 		app.OpenRoute(*route)
 		tester := ui.NewTester(app.View, *width, *height)
+		tester.SetLocale(i18n.Native(app.Snapshot().Settings.General.Language))
 		tester.SetScale(float32(*scale))
 		tester.Advance(time.Second)
 		if *capture == "" {
@@ -151,16 +160,22 @@ func main() {
 		log.Fatal(err)
 	}
 	mygo.App.SetName("Zeron")
+	mygo.App.SetLanguages("zh-Hans", "en")
+	mygo.App.SetLocale(i18n.Native(app.Snapshot().Settings.General.Language))
 	mygo.Theme.SetSource(mygo.ThemeSource(app.Snapshot().Settings.Appearance.Mode))
 	mygo.App.WhenReady(func() {
-		mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
-			{Role: mygo.RoleAppMenu}, {Label: "File", Submenu: []*mygo.MenuItem{
-				{Label: "New session", Accelerator: "CmdOrCtrl+N", Click: func(_ *mygo.MenuItem, _ *mygo.Window) { app.NewConversation() }},
-				{Label: "Settings", Accelerator: "CmdOrCtrl+,", Click: func(_ *mygo.MenuItem, _ *mygo.Window) { app.OpenRoute("settings") }},
-				{Role: mygo.RoleClose},
-			}},
-			{Role: mygo.RoleEditMenu}, {Role: mygo.RoleWindowMenu},
-		}))
+		updateMenu := func() {
+			mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{
+				{Role: mygo.RoleAppMenu}, {Label: i18n.In(mygo.App.Locale(), "File"), Submenu: []*mygo.MenuItem{
+					{Label: i18n.In(mygo.App.Locale(), "New session"), Accelerator: "CmdOrCtrl+N", Click: func(_ *mygo.MenuItem, _ *mygo.Window) { app.NewConversation() }},
+					{Label: i18n.In(mygo.App.Locale(), "Settings"), Accelerator: "CmdOrCtrl+,", Click: func(_ *mygo.MenuItem, _ *mygo.Window) { app.OpenRoute("settings") }},
+					{Role: mygo.RoleClose},
+				}},
+				{Role: mygo.RoleEditMenu}, {Role: mygo.RoleWindowMenu},
+			}))
+		}
+		updateMenu()
+		mygo.App.OnLocaleChanged(func(string) { updateMenu() })
 		stateKey := "gcode-zeron-ui-main"
 		if *scenario != "" {
 			stateKey = ""

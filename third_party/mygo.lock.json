@@ -3,10 +3,10 @@
   "module": "github.com/egoist/mygo",
   "upstreamVersion": "v0.6.4",
   "upstreamSum": "h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o=",
-  "revision": "zeron-native-ui.2",
+  "revision": "zeron-native-ui.9",
   "sourceDir": "third_party/mygo",
-  "treeSha256": "fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e",
-  "fileCount": 1830,
+  "treeSha256": "27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9",
+  "fileCount": 1864,
   "patches": [
     {
       "sha256": "8fa72a733547c893bfd7c24e015523ef08a19dd5262de4bc7403a38eba03606f",
@@ -27,6 +27,42 @@
     {
       "sha256": "54e8631331fd2389eda4b7bc37eced6a54b5f8323be54d9176398c8c81556aea",
       "path": "patches/mygo-v0.6.4-coexistence.patch"
+    },
+    {
+      "sha256": "10e6003b954b9d6038bf98a6e4e8ca731b785bb8d64c817578687821e37d4a46",
+      "path": "patches/mygo-v0.6.4-input-display-text.patch"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-snap-to-window.patch",
+      "sha256": "b34a00a524ae6ef04782f08cad9f023320b44ed689875f6df3c3c6b13949c6ca"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-placeholder-color.patch",
+      "sha256": "d1b7ddaa6604b3b61c16b487d8cdccf4d165672961ab10dea07b0b69299ab60d"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-caret-width.patch",
+      "sha256": "147cb61beb2fde6bdd3c7b0be01de7044535947609658cf9a6f96469486a1f98"
+    },
+    {
+      "sha256": "5372a13aae75d6bb103bf7489cd9e5bfe28d4a099cd9eef9e550080ea323523e",
+      "path": "patches/mygo-v0.6.4-windows-uia-provider.patch"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-scrollbars.patch",
+      "sha256": "76473041ef62dc3e68681594d4840b364064c3403bd62fe4c60eb1891bc22b05"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-tooltip-primitives.patch",
+      "sha256": "c0aacba0bf423852051fa61fa290214c72852d2dc655f7e0bd8c4f36603ff1bb"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-package-stage-rename.patch",
+      "sha256": "c73c539c94ccf9a2945d450fe12b3cf7a1d079c56ca3b51e14e17b52b9c37af0"
+    },
+    {
+      "path": "patches/mygo-v0.6.4-windows-glyph-placement.patch",
+      "sha256": "8a463bc728654abeb1ae3461687a5d8512a69e77f45284640aec5fc0b097a893"
     }
   ]
 }

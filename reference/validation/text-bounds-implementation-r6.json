@@ -1,0 +1,677 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T11:04:41.821146+00:00",
+  "status": "scoped-option-layout-implemented-native-pixel-differences-remain",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "originalNativeBoundsEvidence": {
+    "path": "reference/validation/text-bounds.json",
+    "sha256": "8b64a8090eacd0549d5361406f50b61129f7612eebdba2652135210ee23683a9"
+  },
+  "sourceRules": {
+    "defaultLineHeight": "GPUI style.rs TextStyle::default line_height=phi(); geometry.rs phi()=1.618034",
+    "lineHeightSnap": "GPUI elements/text.rs:636 and window.rs:2642 -> util.rs:130 half-toward-zero at device scale",
+    "intrinsicWidth": "GPUI elements/text.rs:765 ceil(max(line.size.width))",
+    "absoluteBounds": "GPUI taffy.rs:350-381 snaps absolute origin and far boundary, then subtracts",
+    "optionFlex": "Frozen pickers.rs:6190 label flex1/minw0/truncate, :6197 value max100/truncate; popover.rs menu_row padding8 gap10; chevron12"
+  },
+  "implementation": {
+    "files": [
+      {
+        "path": "internal/desktop/model_picker.go",
+        "sha256": "fbfe442c9f2c76d96ba77b71abe653005f42d6fc12e9692bce37a325dd3b0bbb"
+      },
+      {
+        "path": "internal/desktop/model_picker_visual_test.go",
+        "sha256": "4a00cf62f0d1aafb8549091487f03fad4a7b4de1c0a70becb8f937d37887c68e"
+      },
+      {
+        "path": "internal/desktop/model_picker_option_geometry_windows_test.go",
+        "sha256": "ca98125039d6070a15c054f01691023dc91b4ca9a943f00459e35a8a80eb99f8"
+      }
+    ],
+    "geometry": "native ui.Text: snapped phi Height/FixedLineHeight, AlignSelf(Start), floor(center inset); native value width=min100,ceil(advance); label Grow(1)",
+    "measuredSpan": "current theme font, UISize(13), inherited popup weight500, root reference feature kern=0",
+    "defaultActualSourceAndHeadlessMatch": {
+      "row": [
+        13,
+        459,
+        246,
+        26
+      ],
+      "label": [
+        21,
+        461,
+        140,
+        21
+      ],
+      "value": [
+        171,
+        461,
+        58,
+        21
+      ]
+    },
+    "retained": [
+      "native Text/ButtonBase/Menu",
+      "typed business choice IDs",
+      "side session ownership",
+      "centered chevron",
+      "label flex remainder",
+      "100px value cap"
+    ],
+    "supportedDomain": "Windows 1x; integer row origins with nonnegative centered absolute text positions",
+    "dpiGate": "Attached App queries Screen.DisplayMatching(window.Bounds()).ScaleFactor == 1; non-Windows and non1x retain previous native layout. Unattached test/fixture views are validated at1x only.",
+    "limitations": [
+      "No current-layout callback or Context DPI API is exposed; no stale LayoutBounds, persistent Element/Context or Draw state writes are used.",
+      "Fractional scrolling/parent transforms and negative offscreen text origins are outside the rounding equivalence domain.",
+      "Native default fixture WGC confirms scale1/dpi96; other DPI fixtures are not claimed.",
+      "SingleLine ellipsis is retained; GPUI wrapper hard clipping of arbitrary glyph overhang is not established by these tests.",
+      "Actual SharedString glyph baseline remains derived rather than directly exported; ink boxes below are independent raster observations."
+    ]
+  },
+  "verification": {
+    "focused": {
+      "command": "go test ./internal/desktop -run 'Test(Model|Compact|SideCompact|SideModel)' -count=1 -v",
+      "exitCode": 0,
+      "reportedSeconds": 7.744
+    },
+    "goVet": {
+      "command": "go vet ./internal/desktop",
+      "exitCode": 0
+    },
+    "mygoVet": {
+      "command": "go tool mygo vet ./internal/desktop",
+      "exitCode": 0
+    },
+    "taggedFixture": {
+      "command": "go test -tags uifixture ./internal/desktop ./cmd/model-picker-fixture -run 'Test(CompactPickerFixture|ModelOptionTextTracks|SideModelOptionNativeText|ModelPopupSourceGeometry|ModelPopupRetains)' -count=1",
+      "exitCode": 0,
+      "desktopReportedSeconds": 6.255,
+      "commandPackageReportedSeconds": 0.765
+    },
+    "matrix": "font12..20 x compact26/standard30 x5 successive positive integer position changes; no pending geometry redraws",
+    "sideRegression": "native menu changes Standard to 1M tokens while persisting ID1m and retaining main model; long value caps100 and label remainder98",
+    "independentReview": "Read-only MyGo/source/API review; two added tests independently rerun and passed; no material findings"
+  },
+  "build": {
+    "command": "go build -tags uifixture -ldflags (go run ./scripts/check-framework.go -ldflags) -o output/text-bounds-audit/implementation-r6/model-picker-fixture.exe ./cmd/model-picker-fixture",
+    "binary": {
+      "path": "output/text-bounds-audit/implementation-r6/model-picker-fixture.exe",
+      "sha256": "c1c3539724a6696159fb1cb5f247c90f8fe2c0e2ee6bd9a301e527ee5f48682f"
+    },
+    "exitCode": 0,
+    "scope": "Current fixture command also contains root-owned footer-usage path; no syso generated. R5 binary/source/evidence preserved."
+  },
+  "native": {
+    "command": "model-picker-fixture.exe --out-dir output/captures/model-picker-fixture-wgc-20261028-r6 --capture-mode wgc --capture-bridge D:/projects/GCode/output/native-wgc-bridge-r4/zeron_fixture_wgc.dll",
+    "processId": 9060,
+    "exitCode": 0,
+    "nativeSlotReleased": true,
+    "captures": 8,
+    "scale": 1,
+    "dpi": 96,
+    "bridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1"
+  },
+  "strictFullFrameComparison": {
+    "report": {
+      "path": "output/compact-comparison-20261028-r6/comparison.json",
+      "sha256": "a527b7e9e1e65eefca7100c591bec1192a5e6d2165fdb8b64a7ad569e82c2558"
+    },
+    "exitCode": 1,
+    "threshold": 0.995,
+    "thresholdsMet": 3,
+    "allThresholdsMet": false,
+    "imageTransformations": [],
+    "scenes": [
+      {
+        "name": "compact-panel-dark-wide",
+        "R5": 0.9956816263249391,
+        "R6": 0.997981294556962,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-model-list-dark-wide",
+        "R5": 0.9935963170733542,
+        "R6": 0.9935963170733542,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-panel-dark-narrow",
+        "R5": 0.9900536991176117,
+        "R6": 0.9953529346087957,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-model-list-dark-narrow",
+        "R5": 0.9852484212769993,
+        "R6": 0.9852484212769993,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-panel-light-wide",
+        "R5": 0.9950219234943845,
+        "R6": 0.9974387559291065,
+        "thresholdMet": true
+      },
+      {
+        "name": "compact-model-list-light-wide",
+        "R5": 0.9932884937793015,
+        "R6": 0.9932884937793015,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-panel-light-narrow",
+        "R5": 0.988542910121306,
+        "R6": 0.9941121326882733,
+        "thresholdMet": false
+      },
+      {
+        "name": "compact-model-list-light-narrow",
+        "R5": 0.9845484851257228,
+        "R6": 0.9845484851257228,
+        "thresholdMet": false
+      }
+    ],
+    "limit": "Exit1 is threshold failure after all metadata/transport guards passed. Local ink ROI measurements do not replace or change this full-frame comparison."
+  },
+  "pixelInkObservations": [
+    {
+      "scene": "compact-panel-dark-wide",
+      "cases": {
+        "reference": {
+          "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-dark-wide.png",
+          "sha256": "f00ff4f82e739ff3fa424b2310c3ec608a31410ab7e2c158421da352b47454ad",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  23,
+                  498,
+                  123,
+                  506
+                ],
+                "120": [
+                  23,
+                  498,
+                  123,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "120": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        },
+        "implementation": {
+          "path": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-panel-dark-wide.png",
+          "sha256": "cc48d14d8e8528ba7edc017c4aaa482db5eed16b5494317fe3242b1fbe9e0e7a",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  23,
+                  498,
+                  123,
+                  506
+                ],
+                "120": [
+                  23,
+                  498,
+                  122,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "120": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "scene": "compact-panel-dark-narrow",
+      "cases": {
+        "reference": {
+          "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-dark-narrow.png",
+          "sha256": "1ba19e5ab4315d489d979f20bc863a4a7a929924e5a11543d8972fec5eb3921a",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  23,
+                  498,
+                  123,
+                  506
+                ],
+                "120": [
+                  23,
+                  498,
+                  123,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "120": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        },
+        "implementation": {
+          "path": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-panel-dark-narrow.png",
+          "sha256": "9bb5582cd99320e1c5fa5a4c4576699bdab7367342ae1c3a46da09602ba6140b",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  23,
+                  498,
+                  123,
+                  506
+                ],
+                "120": [
+                  23,
+                  498,
+                  122,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "80": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "120": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "scene": "compact-panel-light-wide",
+      "cases": {
+        "reference": {
+          "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-light-wide.png",
+          "sha256": "8531ceaafcc59fe821ca410c87ed023a6eb43878dcb053a080875a3d90efb818",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  23,
+                  498,
+                  122,
+                  506
+                ],
+                "200": [
+                  23,
+                  498,
+                  123,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "200": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        },
+        "implementation": {
+          "path": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-panel-light-wide.png",
+          "sha256": "1129d2d069bfb36387b8cdae88fd12eede280866281bbe73b62bda5e36ca04bd",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  23,
+                  498,
+                  122,
+                  506
+                ],
+                "200": [
+                  23,
+                  498,
+                  122,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "200": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "scene": "compact-panel-light-narrow",
+      "cases": {
+        "reference": {
+          "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-light-narrow.png",
+          "sha256": "4cf766fa6d29ee39f9cbfcebd757628034094b35f899aac5348c1ac3f8701b44",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  23,
+                  498,
+                  122,
+                  506
+                ],
+                "200": [
+                  23,
+                  498,
+                  123,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "200": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        },
+        "implementation": {
+          "path": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-panel-light-narrow.png",
+          "sha256": "e31fd734e77ec3fcc54baaae6b45ff55b5d0954177f65d8db1322178a8ff613e",
+          "inkBoxesWindowPx": {
+            "label": {
+              "roiWindowPxExclusive": [
+                22,
+                494,
+                155,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  23,
+                  498,
+                  122,
+                  506
+                ],
+                "200": [
+                  23,
+                  498,
+                  122,
+                  506
+                ]
+              }
+            },
+            "value": {
+              "roiWindowPxExclusive": [
+                161,
+                494,
+                238,
+                511
+              ],
+              "thresholds": {
+                "160": [
+                  173,
+                  498,
+                  227,
+                  506
+                ],
+                "200": [
+                  173,
+                  498,
+                  227,
+                  506
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "internal/desktop/model_picker.go",
+      "sha256": "fbfe442c9f2c76d96ba77b71abe653005f42d6fc12e9692bce37a325dd3b0bbb"
+    },
+    {
+      "path": "internal/desktop/model_picker_visual_test.go",
+      "sha256": "4a00cf62f0d1aafb8549091487f03fad4a7b4de1c0a70becb8f937d37887c68e"
+    },
+    {
+      "path": "internal/desktop/model_picker_option_geometry_windows_test.go",
+      "sha256": "ca98125039d6070a15c054f01691023dc91b4ca9a943f00459e35a8a80eb99f8"
+    },
+    {
+      "path": "output/text-bounds-audit/record_implementation_r6.py",
+      "sha256": "30ccd0869f2df97454ba40b4663c312642869e734de856407c9f6e5301bd590a"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6/model-picker-fixture.exe",
+      "sha256": "c1c3539724a6696159fb1cb5f247c90f8fe2c0e2ee6bd9a301e527ee5f48682f"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6/native-stdout.log",
+      "sha256": "c61db8710a36add464b3e16555844eb48d726977dc8dcf4deb0dbd50a4fc654f"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6/native-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6/comparison.log",
+      "sha256": "55d9f2f0b05c63fbd9ff80281c7cec45820d687530cc276d02ce5840f9d37303"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-focused.log",
+      "sha256": "c96cb34342d6d8543d9bd414236f6a398440f47eb133ac092fc8b5e9b69a9355"
+    },
+    {
+      "path": "output/captures/model-picker-fixture-wgc-20261028-r6/evidence.json",
+      "sha256": "c68789e40fc06f0fcd1aa979d7255e7ed96f5665945e3d0dbb1169a65d8bef24"
+    },
+    {
+      "path": "output/compact-comparison-20261028-r6/comparison.json",
+      "sha256": "a527b7e9e1e65eefca7100c591bec1192a5e6d2165fdb8b64a7ad569e82c2558"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/dark-compact.json",
+      "sha256": "0e9d6fb9152808fe1fa60098de4da6fb310e060c447378b20faddbfe94bed98b"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/dark-compact.png",
+      "sha256": "e2929c59487a93d6684f3e43493b1d5cbbeeb41001b81a6545c16d9a67767432"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/dark-standard.json",
+      "sha256": "ae4258819d64ac858fb13e612449dce109baae0765ccefeb7f961d939e796928"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/dark-standard.png",
+      "sha256": "c51b17f5113257fa7980db91cca4e271b1392ca6132723d3ecbf3f63316b3f74"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/light-compact.json",
+      "sha256": "2e62226a480f88cd7133c90d4de0081d0655ff945a61f900d48121a7eb77901b"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/light-compact.png",
+      "sha256": "cd55a5ac35de2875d2c58fe7e2c19e11114a8283ebf8472fdc7b987d45542a7d"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/light-standard.json",
+      "sha256": "bd0b84439b9c63235170cb41ac70d84a2ad7f001610d99b2abb64ade6c679549"
+    },
+    {
+      "path": "output/text-bounds-audit/implementation-r6-headless/light-standard.png",
+      "sha256": "d7e084ea4b1159dffe185a41327b38e50aee11695aefd60a1c14d52ee7e764ef"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "clientDIP": [840, 560],
+  "windowOriginDIP": [40, 40],
+  "windowOptions": "frozen footer profile: window_bounds only, remaining GPUI WindowOptions defaults; blank title; OS appearance system",
+  "rootMaterial": "opaque semantic Theme.surface; host transparent; no labels/borders",
+  "outerHostOriginDIP": [40, 40],
+  "outerHostHeightDIP": 38,
+  "outerPaddingTopRightBottomLeftDIP": [4, 4, 0, 8],
+  "outerGapDIP": 4,
+  "expandDIP": 28,
+  "expanded": false,
+  "appearances": ["dark", "light"],
+  "hostWidthsDIP": [400, 220],
+  "counts": [0, 2, 6],
+  "scrollFractions": [0, 0.5, 1],
+  "expectedScenes": 36,
+  "parentId": "parent",
+  "sideIdFormat": "side-{01..06}",
+  "sideTitleFormat": "Tab{01..06}",
+  "activeIndex": 0,
+  "emptyActiveIndex": null,
+  "config": null,
+  "activity": "idle; no sessions/messages/working evidence",
+  "filenameFormat": "tabstrip-{dark|light}-w{400|220}-n{0|2|6}-scroll{start|middle|end}.png",
+  "scrollSemantics": "Set requested fraction of actual positive max after seeding/selection and completed stable layout. Source raw offset is negative; metadata scrollX is positive. At least two distinct stable layout frames after setting offset.",
+  "captureBoundary": "independent full HWND WGC PNG; no crop/rescale/mask; actual client/DPI/frame identity must pass",
+  "rawNativeActivityPolicy": {
+    "initialWaitMilliseconds": 10000,
+    "fixtureCallsSetForeground": false,
+    "activationOwner": "parent root via one native activate after launch when needed",
+    "perCaptureBeforeAndAfter": ["nativeActivityBefore", "nativeActivityAfter"],
+    "requiredFields": ["processId", "hwnd", "foregroundHWND", "foregroundProcessId", "nativeWindowActive"],
+    "gate": "UI-thread GetForegroundWindow equals own HWND, foreground PID equals own process, queried on own UI thread, owner GUI-thread active HWND equals own HWND; before and after WGC",
+    "cachedFlag": "fixtureState.nativeWindowActive remains the GPUI cache; explicit source and gpuiCachedWindowActive alias disambiguate it",
+    "limitation": "Before/after raw queries bracket capture but do not directly expose DWM caption paint state or guarantee the same compositor frame."
+  },
+  "componentScope": "production Shell::render_right_tab_strip plus production header expand helper in a declared source-proven outer testhost; not the full production titlebar",
+  "sceneSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["appearance", "hostWidth", "count", "scrollFraction"],
+    "properties": {
+      "appearance": {"type": "string", "enum": ["dark", "light"]},
+      "hostWidth": {"type": "number", "enum": [400, 220]},
+      "count": {"type": "integer", "enum": [0, 2, 6]},
+      "scrollFraction": {"type": "number", "enum": [0, 0.5, 1]}
+    }
+  },
+  "runtimeArguments": {
+    "required": ["--out-dir NEW_DIRECTORY", "--expected-scale 1_OR_2"],
+    "scalePolicy": "Reject actual scale mismatch; never change OS display settings or rewrite metadata."
+  },
+  "nativeAcceptance": "pending independent reference/implementation capture, strict metadata pairing and original pixels; compilation does not establish parity"
+}

@@ -1,7 +1,7 @@
 package desktop
 
 import (
-	"fmt"
+	"gcode/internal/i18n"
 	"time"
 
 	"gcode/internal/contracts"
@@ -63,25 +63,25 @@ func (a *App) deviceRow(c *ui.Context, d contracts.Device) {
 		meta += " · v" + d.Version
 	}
 	if !d.Current && d.Platform == "cloud" {
-		meta += " · " + presence
+		meta += " · " + tr(c, presence)
 	} else if !d.Current && presence == "Online" {
-		meta += " · Online"
+		meta += " · " + tr(c, "Online")
 	} else if !d.Current {
-		meta += " · Last seen " + deviceLastSeen(d.LastSeen, a.state.Integrations.ObservedAt)
+		meta += tr(c, " · Last seen ") + deviceLastSeen(d.LastSeen, a.state.Integrations.ObservedAt, a.state.Settings.General.Language)
 	}
 	services := c.Services()
-	a.settingsRow(c, d.Name, meta, func() {
+	a.settingsDataRow(c, a.deviceDisplayName(d), meta, func() {
 		label := "Copy ID"
 		if a.integrationUI.CopiedDevice == d.ID && c.Now().Before(a.integrationUI.CopiedUntil) {
 			label = "Copied"
 			c.After(a.integrationUI.CopiedUntil.Sub(c.Now()))
 		}
-		textButton(c, label).Label("Copy device ID " + d.ID).Tooltip(d.ID).OnClick(func() {
+		textButton(c, tr(c, label)).Label(tr(c, "Copy device ID ") + d.ID).Tooltip(d.ID).OnClick(func() {
 			services.WriteClipboard(d.ID)
 			a.integrationUI.CopiedDevice = d.ID
 			a.integrationUI.CopiedUntil = c.Now().Add(1800 * time.Millisecond)
 		})
-		textButton(c, "Rename").Label("Rename " + d.Name).Background(a.palette.Text.Alpha(.05)).OnClick(func() {
+		textButton(c, tr(c, "Rename")).Label(tr(c, "Rename ") + d.Name).Background(a.palette.Text.Alpha(.05)).OnClick(func() {
 			a.integrationUI.RenameID = d.ID
 			a.integrationUI.RenameText = d.Name
 			a.integrationUI.RenameOpen = true
@@ -104,19 +104,23 @@ func devicePlatform(value string) string {
 	}
 	return value
 }
-func deviceLastSeen(at, now time.Time) string {
+func deviceLastSeen(at, now time.Time, language ...string) string {
+	lang := "en"
+	if len(language) > 0 {
+		lang = language[0]
+	}
 	if at.IsZero() {
-		return "never seen"
+		return i18n.In(lang, "never seen")
 	}
 	seconds := int64(now.Sub(at).Seconds())
 	switch {
 	case seconds < 60:
-		return "just now"
+		return i18n.In(lang, "just now")
 	case seconds < 3600:
-		return fmt.Sprintf("%dm ago", seconds/60)
+		return i18n.In(lang, "%dm ago", seconds/60)
 	case seconds < 86400:
-		return fmt.Sprintf("%dh ago", seconds/3600)
+		return i18n.In(lang, "%dh ago", seconds/3600)
 	default:
-		return fmt.Sprintf("%dd ago", seconds/86400)
+		return i18n.In(lang, "%dd ago", seconds/86400)
 	}
 }

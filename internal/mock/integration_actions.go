@@ -20,6 +20,29 @@ func (s *Server) integrationCommandLocked(c contracts.Command) error {
 		}
 	}
 	v := &s.state.Integrations
+	// The composer lists all accounts on a target; Settings can still refresh
+	// one provider through the same shared store and command.
+	if c.Kind == "provider.accounts.refresh" && r.ProviderID == "" {
+		providers := make([]string, 0)
+		for _, detail := range v.Providers {
+			if detail.TargetID == r.TargetID {
+				providers = append(providers, detail.ProviderID)
+			}
+		}
+		if len(providers) == 0 {
+			return ErrNotFound
+		}
+		for _, provider := range providers {
+			request := r
+			request.ProviderID = provider
+			command := c
+			command.Integration = &request
+			if err := s.integrationCommandLocked(command); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	if strings.HasPrefix(c.Kind, "provider.") {
 		d := s.providerDetailsLocked(r.TargetID, r.ProviderID)
 		if d == nil {
@@ -392,7 +415,7 @@ func (s *Server) integrationCommandLocked(c contracts.Command) error {
 		if v.Cloud.Github.State != "connected" {
 			return errors.New("connect GitHub first")
 		}
-		v.Cloud.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "alex/fieldnotes", Private: true, Authorized: true}, {ID: "zeron", Name: "alex/zeron", Authorized: true}}
+		v.Cloud.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Private: true, Authorized: true}, {ID: "zeron", Name: "zeronsh/zeron", Authorized: true}}
 		return nil
 	case "cloud.usage":
 		if r.Value != "7d" && r.Value != "30d" && r.Value != "90d" && r.Value != "thisMonth" && r.Value != "lastMonth" {
@@ -491,5 +514,5 @@ func (s *Server) finishGithubLocked() {
 	v.Github.UserCode = ""
 	v.Github.URL = ""
 	v.Github.Authorized = true
-	v.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "alex/fieldnotes", Private: true, Authorized: true}}
+	v.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Private: true, Authorized: true}}
 }

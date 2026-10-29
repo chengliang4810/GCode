@@ -168,7 +168,7 @@ func (a *App) backgroundSettings(c *ui.Context) {
 		a.settingsRow(c, "New thread background", meta, func() {
 			if p.Background != "" {
 				if state.Bitmap != nil {
-					textButton(c, "Adjust").Bind(&state.ReturnFocus).Label("Adjust background").OnClick(func() {
+					textButton(c, tr(c, "Adjust")).Bind(&state.ReturnFocus).Label(tr(c, "Adjust background")).OnClick(func() {
 						state.DialogPath = p.Background
 						state.Draft = adjustmentFromContract(p.BackgroundAdjustment)
 						state.ZoomValue = float64(state.Draft.Zoom)
@@ -176,10 +176,10 @@ func (a *App) backgroundSettings(c *ui.Context) {
 						state.Dragging = false
 					})
 				}
-				textButton(c, "Replace image").OnClick(func() { a.chooseBackground(state) })
-				textButton(c, "Remove").Label("Remove background").OnClick(func() { a.backgroundCommand(state, contracts.Command{Kind: "background.remove"}, nil) })
+				textButton(c, tr(c, "Replace image")).OnClick(func() { a.chooseBackground(state) })
+				textButton(c, tr(c, "Remove")).Label(tr(c, "Remove background")).OnClick(func() { a.backgroundCommand(state, contracts.Command{Kind: "background.remove"}, nil) })
 			} else {
-				textButton(c, "Choose image").OnClick(func() { a.chooseBackground(state) })
+				textButton(c, tr(c, "Choose image")).OnClick(func() { a.chooseBackground(state) })
 			}
 		}, func() {
 			if state.Thumbnail != nil {
@@ -254,15 +254,15 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 		c.OnShortcut(ui.Cmd, ui.KeyEnter, apply)
 		ui.Row(c).FillWidth().Gap(16).AlignItems(ui.Start).Children(func() {
 			ui.Column(c).Grow(1).Gap(4).Children(func() {
-				ui.Text(c, "Adjust background").FontSize(design.UISize(c, 18)).FontWeight(600)
-				ui.Text(c, "Drag to reposition. Scroll or pinch to zoom.").FontSize(design.UISize(c, 13)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, "Adjust background")).FontSize(design.UISize(c, 18)).FontWeight(600)
+				ui.Text(c, tr(c, "Drag to reposition. Scroll or pinch to zoom.")).FontSize(design.UISize(c, 13)).TextColor(a.palette.Muted)
 			})
-			iconButton(c, "close", "Close background adjustment").Border(1, a.palette.Border).Radius(7).OnClick(closeDialog)
+			iconButton(c, "close", tr(c, "Close background adjustment")).Border(1, a.palette.Border).Radius(7).OnClick(closeDialog)
 		})
 		pw, ph := design.BackgroundPreviewSize(vw, vh, float32(a.state.Settings.SidebarWidth), !a.sidebar)
 		state.Width, state.Height = pw, ph
 		ui.Row(c).FillWidth().Height(260).Margin(16, 0, 0, 0).AlignItems(ui.Center).Justify(ui.Center).Children(func() {
-			preview := ui.Box(c.Key("background-preview")).Size(pw+2, ph+2).Radius(12).Border(1, a.palette.Border).Background(a.palette.Background).Clip().Bind(&state.Preview).Focusable().AutoFocus().Label("Background crop preview")
+			preview := ui.Box(c.Key("background-preview")).Size(pw+2, ph+2).Radius(12).Border(1, a.palette.Border).Background(a.palette.Background).Clip().Bind(&state.Preview).Focusable().AutoFocus().Label(tr(c, "Background crop preview"))
 			preview.Draw(func(painter *ui.Painter, r ui.Rect) {
 				inner := ui.Rect{X: r.X + 1, Y: r.Y + 1, W: r.W - 2, H: r.H - 2}
 				if ready {
@@ -343,26 +343,26 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 					} else if state.LoadError != "" {
 						message = "Image unavailable. Choose a replacement or remove it."
 					}
-					ui.Text(c, message).Absolute().Left(12).Right(12).Top(ph/2 - 8).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+					ui.Text(c, tr(c, message)).Absolute().Left(12).Right(12).Top(ph/2 - 8).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
 				})
 			}
 		})
 		ui.Row(c).FillWidth().Margin(14, 0, 0, 0).AlignItems(ui.Center).Gap(12).Children(func() {
-			textButton(c, "Reset").Label("Reset background adjustment").OnClick(func() {
+			textButton(c, tr(c, "Reset")).Label(tr(c, "Reset background adjustment")).OnClick(func() {
 				state.Draft = design.DefaultBackgroundAdjustment()
 				state.ZoomValue = 1
 				state.Dragging = false
 			})
 			ui.Spacer(c)
-			textButton(c, "−").Label("Background zoom out").Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom-.1, pw/2, ph/2) })
-			ui.StepSlider(c.Key("background-zoom"), &state.ZoomValue, 1, 4, .1).Width(168).Label("Background zoom").Disabled(!ready).OnChange(func() { zoom(float32(state.ZoomValue), pw/2, ph/2) })
-			ui.Text(c, fmt.Sprintf("%.0f%%", state.Draft.Zoom*100)).Width(52).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
-			textButton(c, "+").Label("Background zoom in").Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom+.1, pw/2, ph/2) })
+			textButton(c, "−").Label(tr(c, "Background zoom out")).Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom-.1, pw/2, ph/2) })
+			ui.StepSlider(c.Key("background-zoom"), &state.ZoomValue, 1, 4, .1).Width(168).Label(tr(c, "Background zoom")).Disabled(!ready).OnChange(func() { zoom(float32(state.ZoomValue), pw/2, ph/2) })
+			ui.Text(c, fmt.Sprintf(tr(c, "%.0f%%"), state.Draft.Zoom*100)).Width(52).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+			textButton(c, "+").Label(tr(c, "Background zoom in")).Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom+.1, pw/2, ph/2) })
 		})
 		ui.Box(c).FillWidth().Height(1).Background(a.palette.Border).Margin(18, 0, 12, 0)
 		ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {
-			textButton(c, "Cancel").Label("Cancel background adjustment").Height(34).Padding(0, 13).OnClick(closeDialog)
-			ui.PrimaryButton(c, "Apply").Label("Apply background adjustment").Height(34).Padding(0, 14).Disabled(!ready).OnClick(apply)
+			textButton(c, tr(c, "Cancel")).Label(tr(c, "Cancel background adjustment")).Height(34).Padding(0, 13).OnClick(closeDialog)
+			ui.PrimaryButton(c, tr(c, "Apply")).Label(tr(c, "Apply background adjustment")).Height(34).Padding(0, 14).Disabled(!ready).OnClick(apply)
 		})
 	})
 }

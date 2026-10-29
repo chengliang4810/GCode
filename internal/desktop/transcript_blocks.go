@@ -49,7 +49,7 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 					ui.Row(c).Gap(8).Children(func() {
 						for _, v := range []string{"Allow once", "Always allow", "Deny"} {
 							answer := v
-							textButton(c, v).OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: p.ID, Text: answer}) })
+							textButton(c, tr(c, v)).OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: p.ID, Text: answer}) })
 						}
 					})
 				} else {
@@ -87,7 +87,10 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 	case "annotation":
 		if b.Annotation != nil {
 			annotation := *b.Annotation
-			ui.ButtonBase(c).Padding(5, 8).Radius(8).Border(1, a.palette.Border).Label(annotation.Label()).OnClick(func() { a.workspace.FocusAnnotation(annotation.Index) }).Children(func() { icon(c, "cursor-square", 14); ui.Text(c, annotation.Label()).FontSize(design.UISize(c, 12)) })
+			ui.ButtonBase(c).Padding(5, 8).Radius(8).Border(1, a.palette.Border).Label(a.annotationLabel(annotation.Index)).OnClick(func() { a.workspace.FocusAnnotation(annotation.Index) }).Children(func() {
+				icon(c, "cursor-square", 14)
+				ui.Text(c, a.annotationLabel(annotation.Index)).FontSize(design.UISize(c, 12))
+			})
 		}
 	default:
 		if b.Text != "" {
@@ -101,13 +104,13 @@ func (a *App) transcriptSubagent(c *ui.Context, agent contracts.Subagent) {
 	if agent.Status == "failed" || agent.Status == "errored" {
 		color = a.palette.Danger
 	}
-	button := ui.ButtonBase(c).FillWidth().Height(30).Padding(0, 8).Gap(8).Radius(9).Border(1, a.activityInk(.07)).Background(a.activityInk(.03)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Label("Open agent: " + agent.Name).Tooltip(agent.Task)
+	button := ui.ButtonBase(c).FillWidth().Height(30).Padding(0, 8).Gap(8).Radius(9).Border(1, a.activityInk(.07)).Background(a.activityInk(.03)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, "Open agent: ") + agent.Name).Tooltip(agent.Task)
 	if agent.SessionID != "" {
 		button.OnClick(func() { a.workspace.OpenSession(agent.SessionID) })
 	}
 	button.Children(func() {
 		ui.Row(c).Size(18, 18).Radius(5).Background(a.activityInk(.08)).AlignItems(ui.Center).Justify(ui.Center).Children(func() { icon(c, "bot", 12) })
-		ui.Text(c, "Agent").FontWeight(500).FontSize(design.UISize(c, 12)).SingleLine().TextColor(color)
+		ui.Text(c, tr(c, "Agent")).FontWeight(500).FontSize(design.UISize(c, 12)).SingleLine().TextColor(color)
 		ui.Text(c, firstNonempty(agent.Name, agent.Task)).FontSize(design.UISize(c, 12)).SingleLine().Grow(1).TextColor(color)
 		if agent.Status == "working" || agent.Status == "running" {
 			ui.Spinner(c).Size(11, 11)

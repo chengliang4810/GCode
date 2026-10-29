@@ -34,6 +34,12 @@ their copies without mutating backend state. `Command.Clone` freezes drafts
 before they cross a queue/goroutine boundary; `Command.Validate` rejects unknown
 commands, missing required identities and a payload belonging to another kind.
 
+`Run.requestId` optionally retains the send's request identity in complete and
+persisted snapshots. The latest-snapshot subscription can coalesce away the
+transient event ACK; consumers must not infer creation ownership from the first
+new session row. Empty/legacy request IDs remain valid. The desktop excludes
+preexisting RunIDs when matching a new canvas send, including after restart.
+
 The backend has no model API, real account, Git process or shell. Virtual file
 operations never edit the project on disk. Public browser content comes from the
 real page engine. Native image selection is a deliberate local-file exception:
@@ -170,6 +176,12 @@ without adding more public scenarios.
 reasoning}` independently of favorites and option values. Commands, snapshots
 and persisted settings own those maps.
 
+`ModelOption.choices` and `defaultChoice` retain stable option IDs. Optional
+`choiceLabels` maps those IDs to display text, for example `1m` to `1M tokens`.
+The UI stores and sends IDs; missing or empty labels fall back to the ID. The
+optional field preserves legacy JSON, and snapshot ownership includes a deep
+copy of each label map.
+
 Sidebar defaults follow source settings.rs:1295-1305: compact, one list,
 last-updated sort. Location/icon, harness, branch, PR, project filter and archived
 entries are shown. Their typed preferences persist independently.
@@ -199,6 +211,18 @@ transcript with new message/block IDs; a side chat starts empty. Both reference
 `parentSessionId`, inherit model/device/branch/worktree/access/plan configuration,
 and begin idle with independent drafts and run ownership. Copied pending requests
 receive new identities and a cancelled answer, preserving the parent wait.
+
+Branch commands may include `requestId`; the created session exposes the same
+value as `creationRequestId`. It survives saved-state restoration. Repeating the
+same request for the same parent and branch kind returns the existing child;
+reusing it for another parent or kind fails. Older commands without this optional
+field retain their existing behavior.
+
+The session-info **New side chat** action opens that exact child in the native
+right pane, using its existing independent composer. Existing side-chat entries
+reopen there, preserving the central conversation and draft. Fork opens the
+copied conversation centrally. A completion arriving after navigation updates
+the data without taking over the newly selected conversation.
 
 `ThemeLibraryEntry.sourceKind` is `imported`, `linked` or `editable`.
 The theme import workflow is deterministic business simulation: analyze produces
@@ -310,7 +334,7 @@ again before commit. IDs not present in the current snapshot return errors.
 | session.rename | id, text; changes title |
 | session.archive, session.pin | id, enabled; archive cancels work and queue |
 | session.delete | id; removes session/messages/queue and settles owned run |
-| session.fork, session.sidechat | sessionId (id shorthand), optional name; creates child |
+| session.fork, session.sidechat | sessionId (id shorthand), optional name and requestId; creates correlated child |
 | project.create | name, path; adds an isolated virtual project |
 | project.action.create, project.action.update | projectId, action; update requires action.id |
 | project.action.delete, project.action.run | projectId, id |
@@ -458,9 +482,44 @@ Behavior and implementation captures are recorded in
 `docs/audit-account-settings.md`. Remaining source differences are explicit there;
 compilation, regression tests and these captures do not establish visual parity.
 
+## Composer footer resources and occupancy
+
+`Snapshot.contextUsage` maps each session ID to a host occupancy snapshot with
+optional `tokens` and `window` counters. An absent counter is unknown; reported
+zero tokens remain zero. A report merges only its supplied fields, ignoring a
+zero window. Occupancy may decrease after compaction or exceed capacity. This
+state is independent of cumulative `Message.Usage` and model catalog limits.
+The deterministic host keeps provider/target/cwd session scopes: first dispatch
+to a new scope resets its occupancy, while resuming an existing scope restores
+its own host state. Merely selecting another model does not reset a host report.
+Snapshots, subscribers and persistence own separate copies; deleting a session
+removes only its own occupancy and rejects late host updates.
+
+`Snapshot.repoRefs` is keyed by `RepoRefScope.Key()` including project, target,
+repository path and Cloud repository/default branch. `git.refs.load` and
+`git.ref.switch` use `Command.git`; generations reject stale results. Refreshes
+retain previous rows. Draft sends consume a `SendRequest.checkout` plan:
+`current`, `reuseWorktree`, `newWorktree` or `cloud`. A new worktree is created
+by the mock on send; an unspecified base means HEAD. An established session's
+checkout cannot be migrated by a later draft selection.
+
+Each fresh host dispatch captures `Session.sourceContext` from that session's
+actual cwd. `Snapshot.checkoutPR` is keyed by device, nonempty checkout ID,
+repository root and trimmed branch. UI matching does not add cwd/head-SHA/time
+requirements absent from the source. Successful nil summaries clear a prior
+PR; errors retain the previous success for the same source. Deletion prevents
+late work from recreating an unowned PR resource. All Git/PR work remains
+deterministic in-process state; no Git process or external service is used.
+
+The footer and Settings use the same `Integrations.accounts` store.
+`provider.accounts.refresh` accepts an empty provider ID to list all providers
+on its explicit target; other provider commands require a provider ID. Account
+display names fall back from email to `displayName` to `Unknown account`.
+`UsageWindow.resetsAt` uses its zero time for an unreported reset moment.
+
 ## Complete DTO field inventory
 
-Generated from current Go JSON tags; ? denotes omitempty.
+Generated from the exported struct fields in `internal/contracts/*.go`; `?` marks JSON fields tagged `omitempty`.
 
 ### Account
 
@@ -714,6 +773,19 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `newContent` | `string` |
 | `hunks` | `[]DiffHunk` |
 
+### ChangeRequestSummary
+
+| JSON field | Go type |
+|---|---|
+| `provider` | `string` |
+| `number` | `int` |
+| `title` | `string` |
+| `url` | `string` |
+| `state` | `string` |
+| `baseRef` | `string` |
+| `headRef` | `string` |
+| `detailId?` | `string` |
+
 ### Check
 
 | JSON field | Go type |
@@ -721,6 +793,35 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `name` | `string` |
 | `status` | `string` |
 | `detail` | `string` |
+
+### CheckoutPRKey
+
+| JSON field | Go type |
+|---|---|
+| `targetId` | `string` |
+| `checkoutId` | `string` |
+| `repoRoot` | `string` |
+| `branch` | `string` |
+
+### CheckoutPRStatus
+
+| JSON field | Go type |
+|---|---|
+| `key` | `CheckoutPRKey` |
+| `state` | `LoadStatus` |
+| `summary?` | `*ChangeRequestSummary` |
+| `error?` | `string` |
+| `generation` | `uint64` |
+
+### CheckoutPlan
+
+| JSON field | Go type |
+|---|---|
+| `kind` | `CheckoutKind` |
+| `branch?` | `string` |
+| `base?` | `string` |
+| `path?` | `string` |
+| `worktreeId?` | `string` |
 
 ### ClipboardAttachment
 
@@ -778,6 +879,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 
 | JSON field | Go type |
 |---|---|
+| `git?` | `*GitRequest` |
 | `projectCreate?` | `*ProjectCreate` |
 | `integration?` | `*IntegrationRequest` |
 | `adjustment?` | `*BackgroundAdjustment` |
@@ -838,6 +940,24 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `column` | `int` |
 | `text` | `string` |
 | `ranges` | `[]MatchRange` |
+
+### ContextUsage
+
+| JSON field | Go type |
+|---|---|
+| `tokens?` | `*uint64` |
+| `window?` | `*uint64` |
+
+### ConversationSourceContext
+
+| JSON field | Go type |
+|---|---|
+| `checkoutId` | `string` |
+| `repoRoot` | `string` |
+| `cwd` | `string` |
+| `branch` | `string` |
+| `headSha?` | `string` |
+| `observedAt` | `time.Time` |
 
 ### Device
 
@@ -964,6 +1084,15 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `launchAtLogin` | `bool` |
 | `restoreWindows` | `bool` |
 
+### GitRequest
+
+| JSON field | Go type |
+|---|---|
+| `scope` | `RepoRefScope` |
+| `ref?` | `string` |
+| `force` | `bool` |
+| `source?` | `*CheckoutPRKey` |
+
 ### IntegrationRequest
 
 | JSON field | Go type |
@@ -1045,6 +1174,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `id` | `string` |
 | `label` | `string` |
 | `choices` | `[]string` |
+| `choiceLabels?` | `map[string]string` |
 | `defaultChoice` | `string` |
 
 ### ModelPickerSettings
@@ -1096,6 +1226,9 @@ Generated from current Go JSON tags; ? denotes omitempty.
 
 | JSON field | Go type |
 |---|---|
+| `gitDetected` | `bool` |
+| `cloudRepository?` | `string` |
+| `defaultBranch?` | `string` |
 | `actions` | `[]ProjectAction` |
 | `id` | `string` |
 | `name` | `string` |
@@ -1152,6 +1285,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `providerId` | `string` |
 | `targetId` | `string` |
 | `email` | `string` |
+| `displayName?` | `string` |
 | `plan` | `string` |
 | `inUse` | `bool` |
 | `authStatus` | `string` |
@@ -1257,10 +1391,41 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `attachments` | `[]Attachment` |
 | `createdAt` | `time.Time` |
 
+### RepoRef
+
+| JSON field | Go type |
+|---|---|
+| `name` | `string` |
+| `current` | `bool` |
+| `worktreePath?` | `string` |
+
+### RepoRefScope
+
+| JSON field | Go type |
+|---|---|
+| `projectId` | `string` |
+| `targetId` | `string` |
+| `repoPath` | `string` |
+| `cloudRepository?` | `string` |
+| `defaultBranch?` | `string` |
+
+### RepoRefs
+
+| JSON field | Go type |
+|---|---|
+| `scope` | `RepoRefScope` |
+| `state` | `LoadStatus` |
+| `rows` | `[]RepoRef` |
+| `error?` | `string` |
+| `generation` | `uint64` |
+| `switching?` | `string` |
+| `switchError?` | `string` |
+
 ### Run
 
 | JSON field | Go type |
 |---|---|
+| `requestId?` | `string` |
 | `durationMs` | `int64` |
 | `summary` | `ActivitySummary` |
 | `accessMode` | `AccessMode` |
@@ -1277,6 +1442,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 
 | JSON field | Go type |
 |---|---|
+| `checkout?` | `*CheckoutPlan` |
 | `accessMode` | `AccessMode` |
 | `plan` | `bool` |
 | `annotations?` | `[]Annotation` |
@@ -1295,6 +1461,8 @@ Generated from current Go JSON tags; ? denotes omitempty.
 
 | JSON field | Go type |
 |---|---|
+| `cwd?` | `string` |
+| `sourceContext?` | `*ConversationSourceContext` |
 | `accessMode` | `AccessMode` |
 | `plan` | `bool` |
 | `parentSessionId?` | `string` |
@@ -1395,6 +1563,8 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `changes` | `[]Change` |
 | `commits` | `[]Commit` |
 | `pullRequests` | `[]PullRequest` |
+| `repoRefs?` | `map[string]RepoRefs` |
+| `checkoutPR?` | `map[string]CheckoutPRStatus` |
 | `terminals` | `[]Terminal` |
 | `queue` | `[]QueuedMessage` |
 | `runs` | `[]Run` |
@@ -1402,6 +1572,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 | `appshots` | `[]Attachment` |
 | `attachments` | `[]Attachment` |
 | `update` | `Update` |
+| `contextUsage` | `map[string]ContextUsage` |
 
 ### Subagent
 
@@ -1556,6 +1727,7 @@ Generated from current Go JSON tags; ? denotes omitempty.
 
 | JSON field | Go type |
 |---|---|
+| `baseRef?` | `string` |
 | `id` | `string` |
 | `name` | `string` |
 | `path` | `string` |

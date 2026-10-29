@@ -21,11 +21,26 @@ func testApp(t *testing.T, scenario string) *App {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Reference geometry and existing interaction assertions intentionally use English.
+	snapshot, err := backend.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.Settings.General.Language = "en"
+	if err := backend.UpdateSettings(context.Background(), snapshot.Settings); err != nil {
+		t.Fatal(err)
+	}
 	app, err := NewWithOptions(backend, Options{Now: clock})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(app.Close)
+	// Establish the backend-owned initial refs before callers customize this
+	// fixture snapshot. A first-render resource load publishes a full snapshot.
+	app.ensureComposerFooterRefs(false)
+	ui.NewTester(func(c *ui.Context) {
+		app.trackFooterUsage(c, &app.footerUsage, contracts.Session{ID: "fixture-cache-prime", DeviceID: "local"}, app.selectedModel().ProviderID, false)
+	}, 1, 1)
 	return app
 }
 func TestHomeAndNewSession(t *testing.T) {
@@ -152,5 +167,18 @@ func TestComposerAndPanelAtSizes(t *testing.T) {
 		if box.X < 0 || box.Y < 0 || box.X+box.W > float32(size[0])+1 || box.Y+box.H > float32(size[1])+1 {
 			t.Fatalf("composer outside %v: %+v", size, box)
 		}
+	}
+}
+
+// Historical source/geometry assertions intentionally target the English option.
+func useEnglishSettings(t *testing.T, backend *mock.Server) {
+	t.Helper()
+	snapshot, err := backend.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.Settings.General.Language = "en"
+	if err := backend.UpdateSettings(context.Background(), snapshot.Settings); err != nil {
+		t.Fatal(err)
 	}
 }

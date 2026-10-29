@@ -17,17 +17,26 @@ import (
 )
 
 const (
-	ModulePath             = "github.com/egoist/mygo"
-	UpstreamVersion        = "v0.6.4"
-	Revision               = "zeron-native-ui.2"
-	Replacement            = "./third_party/mygo"
-	UpstreamSum            = "h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o="
-	ExpectedTreeSHA256     = "fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e"
-	MotionPatchSHA256      = "8fa72a733547c893bfd7c24e015523ef08a19dd5262de4bc7403a38eba03606f"
-	HoverPatchSHA256       = "093dc4b5bb0a78e7adfb7ba1d6332eaa1c6c3e5ab0b86e3b80d94e153e96fd9b"
-	FilesDropPatchSHA256   = "216f0edada22d085830160f7af7cd2a222f4617e8fcaa2a5a73b104c88160a24"
-	MarkdownPatchSHA256    = "8416b7be5bb94e5751068a33b78f9fc07351902945e81cb3fae891f7931c213a"
-	CoexistencePatchSHA256 = "54e8631331fd2389eda4b7bc37eced6a54b5f8323be54d9176398c8c81556aea"
+	ModulePath                    = "github.com/egoist/mygo"
+	UpstreamVersion               = "v0.6.4"
+	Revision                      = "zeron-native-ui.9"
+	Replacement                   = "./third_party/mygo"
+	UpstreamSum                   = "h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o="
+	ExpectedTreeSHA256            = "27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9"
+	MotionPatchSHA256             = "8fa72a733547c893bfd7c24e015523ef08a19dd5262de4bc7403a38eba03606f"
+	HoverPatchSHA256              = "093dc4b5bb0a78e7adfb7ba1d6332eaa1c6c3e5ab0b86e3b80d94e153e96fd9b"
+	FilesDropPatchSHA256          = "216f0edada22d085830160f7af7cd2a222f4617e8fcaa2a5a73b104c88160a24"
+	MarkdownPatchSHA256           = "8416b7be5bb94e5751068a33b78f9fc07351902945e81cb3fae891f7931c213a"
+	CoexistencePatchSHA256        = "54e8631331fd2389eda4b7bc37eced6a54b5f8323be54d9176398c8c81556aea"
+	InputDisplayPatchSHA256       = "10e6003b954b9d6038bf98a6e4e8ca731b785bb8d64c817578687821e37d4a46"
+	SnapToWindowPatchSHA256       = "b34a00a524ae6ef04782f08cad9f023320b44ed689875f6df3c3c6b13949c6ca"
+	PlaceholderPatchSHA256        = "d1b7ddaa6604b3b61c16b487d8cdccf4d165672961ab10dea07b0b69299ab60d"
+	CaretWidthPatchSHA256         = "147cb61beb2fde6bdd3c7b0be01de7044535947609658cf9a6f96469486a1f98"
+	UIAProviderPatchSHA256        = "5372a13aae75d6bb103bf7489cd9e5bfe28d4a099cd9eef9e550080ea323523e"
+	ScrollbarsPatchSHA256         = "76473041ef62dc3e68681594d4840b364064c3403bd62fe4c60eb1891bc22b05"
+	TooltipPrimitivesPatchSHA256  = "c0aacba0bf423852051fa61fa290214c72852d2dc655f7e0bd8c4f36603ff1bb"
+	PackageStageRenamePatchSHA256 = "c73c539c94ccf9a2945d450fe12b3cf7a1d079c56ca3b51e14e17b52b9c37af0"
+	GlyphPlacementPatchSHA256     = "8a463bc728654abeb1ae3461687a5d8512a69e77f45284640aec5fc0b097a893"
 )
 
 type Patch struct {
@@ -110,6 +119,15 @@ func VerifySource(root string) (Lock, error) {
 		{"patches/mygo-v0.6.4-files-drop.patch", FilesDropPatchSHA256},
 		{"patches/mygo-v0.6.4-markdown-line-height.patch", MarkdownPatchSHA256},
 		{"patches/mygo-v0.6.4-coexistence.patch", CoexistencePatchSHA256},
+		{"patches/mygo-v0.6.4-input-display-text.patch", InputDisplayPatchSHA256},
+		{"patches/mygo-v0.6.4-snap-to-window.patch", SnapToWindowPatchSHA256},
+		{"patches/mygo-v0.6.4-placeholder-color.patch", PlaceholderPatchSHA256},
+		{"patches/mygo-v0.6.4-caret-width.patch", CaretWidthPatchSHA256},
+		{"patches/mygo-v0.6.4-windows-uia-provider.patch", UIAProviderPatchSHA256},
+		{"patches/mygo-v0.6.4-scrollbars.patch", ScrollbarsPatchSHA256},
+		{"patches/mygo-v0.6.4-tooltip-primitives.patch", TooltipPrimitivesPatchSHA256},
+		{"patches/mygo-v0.6.4-package-stage-rename.patch", PackageStageRenamePatchSHA256},
+		{"patches/mygo-v0.6.4-windows-glyph-placement.patch", GlyphPlacementPatchSHA256},
 	}
 	if len(lock.Patches) != len(wantPatches) {
 		return lock, fmt.Errorf("unexpected framework patch list")

@@ -85,10 +85,21 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 	if i < 0 {
 		return ErrNotFound
 	}
+	if c.RequestID != "" {
+		for _, session := range s.state.Sessions {
+			if session.CreationRequestID == c.RequestID {
+				if session.ParentSessionID != id || session.SideChat != (c.Kind == "session.sidechat") {
+					return errors.New("conversation request ID is already in use")
+				}
+				return nil
+			}
+		}
+	}
 	v := s.state.Sessions[i]
 	parent := v.ID
 	v.ID = s.idLocked("session")
 	v.ParentSessionID = parent
+	v.CreationRequestID = c.RequestID
 	v.SideChat = c.Kind == "session.sidechat"
 	v.Status = contracts.Idle
 	v.Archived = false

@@ -21,6 +21,7 @@ func settingsTestApp(t *testing.T) (*App, *mock.Server) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	useEnglishSettings(t, backend)
 	app, err := New(backend)
 	if err != nil {
 		t.Fatal(err)
@@ -426,6 +427,7 @@ func TestAppshotsUsesNativeRecordingAndBackendPermissionStates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	useEnglishSettings(t, backend)
 	app, err := New(backend)
 	if err != nil {
 		t.Fatal(err)

@@ -1,0 +1,110 @@
+{
+  "sourceFiles": 260,
+  "checks": {
+    "sha256": "c79132bd6a2b36aad0795ece5679d3451ad3054cfbd338e6828b743ac20e4b5d",
+    "path": "output/resume-validation/canvas-r10-final-checks.json"
+  },
+  "changes": [
+    "Canvas derives from actual selected-session lookup, not a nonempty dangling ID",
+    "Effective right/Files fit and titlebar trailing controls omit canvas without overwriting stored intent",
+    "NewConversation explicitly closes canvas terminal even when selectSession empty-ID returns early"
+  ],
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "textSnapDesign": {
+    "reviewAddendum": {
+      "sha256": "f13622613439bf0d32c46a15365a581d50b5b29d00d1fbcac7a65f3af57cf9a8",
+      "path": "output/model-picker-2x-text-audit/r9-design/review-addendum.json"
+    },
+    "implemented": false,
+    "result": {
+      "sha256": "8eaa56d36ad8bbdb4cd5c08bc9ec216a5e59834cd0a555b2ae5c0c340dba51f8",
+      "path": "output/model-picker-2x-text-audit/r9-design/result.json"
+    }
+  },
+  "sourceDelta": {
+    "sha256": "0298436bcb8f251bf1cbe3b5705c32e20c0ea8d58e8dc17873b6d7307863bdc2",
+    "path": "output/resume-validation/canvas-r10-source-delta.json"
+  },
+  "actualNativeExitCode": 0,
+  "nativeEvidenceFiles": 37,
+  "referenceClones": [
+    {
+      "clean": true,
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+      "path": "output/reference-sources/zeron"
+    },
+    {
+      "clean": true,
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609",
+      "path": "output/reference-sources/mygo"
+    }
+  ],
+  "roundTripTest": {
+    "sha256": "4a0fb51ee04b0950f5ee791b3e959317b5d7c53f26206e0780b640142aeea9ea",
+    "path": "output/resume-validation/canvas-r10-roundtrip-test.log"
+  },
+  "documentationCorrections": [
+    "Earlier new-chat primary-action test and audit preserved controls contrary to frozen canvas trailing=None; now corrected",
+    "Fresh canvas terminal reset was skipped by same-empty-ID early return; source open_new_session resets it independently"
+  ],
+  "native": {
+    "sha256": "ff8ac8d1d4a2b707d88af687045e51770b928e8ddf0f603c6ccbe9a41c056467",
+    "path": "output/resume-validation/canvas-r10-native-input/evidence.json"
+  },
+  "finalTestReview": {
+    "sha256": "a3542577f77f143aba3c74037683698091094e7faaebcd0429b386d91da43770",
+    "path": "output/titlebar-canvas-review/final-test-review.json"
+  },
+  "recordedAtUTC": "2026-10-28T14:06:17.4984021Z",
+  "publicFocusDiagnostic": {
+    "sha256": "418d32f6621f637d9d731be6fe4260b28a4d64d84a1bcd1c6dbe24554a612f22",
+    "path": "reference/validation/native-focus-r9-result.json"
+  },
+  "framework": "Verified MyGo v0.6.4 + zeron-native-ui.5: 282c9e97b03e120d3960f9ee38ebf5f9407075b100f99c2d03ece74c37545e00 (1835 files)",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "goalStatus": "active",
+  "branch": "codex/isolated-worktree",
+  "priorVisualEvidence": {
+    "scope": "Historical actual2x compact/footer fixture pairing; not newly captured or scored for this executable",
+    "phase": "reference/validation/popup-r8-result.json"
+  },
+  "completeUIParity": false,
+  "packages": {
+    "windowsExecutableSHA256": "cccb9bd2ba30e5ce485a4bd0504978f7523b9f9b8eec23da3ad7d2e58f28c224",
+    "macNative": "pending",
+    "sourceAfterPackage": {
+      "sha256": "8992507ab87b64ab79fb18096ba0e626ea2efa91318970a2931f19f6c65fb8c9",
+      "path": "output/resume-validation/canvas-r10-after-package-source-check.json"
+    },
+    "installerExecuted": false,
+    "manifest": {
+      "sha256": "2901cf75ffba0940ba3a9e10b053fdb93c171a9c101be587408b52f8db005db5",
+      "path": "output/resume-validation/canvas-r10-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json"
+    },
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "architectureResourcesZIPChecksumsStamp": "passed"
+  },
+  "sourceReview": {
+    "sha256": "44ec92c604bf8b33ae73e2e067ee259c259720a596dada651b3be252461ea945",
+    "path": "output/titlebar-canvas-review/result.json"
+  },
+  "schemaVersion": 1,
+  "sourceManifest": {
+    "sha256": "7cf549ba33fba8db52dc90e4787efce9df5a7562d030b9bc06342fcc3f94de7e",
+    "path": "output/resume-validation/canvas-r10-source-hashes.json"
+  },
+  "sourceUnchangedAfterBuildAndNativeInput": true,
+  "remaining": [
+    "Data-layer reconciliation of a dangling selected session is separate from this visual lookup guard",
+    "Text absolute-origin/lineheight and fractional-scroll evidence/API implementation remain pending",
+    "Header expand/plus size, left cluster and reveal/material/motion styling",
+    "Complete footer/Git/PR/tooltip, otherDPI/IME/browser/clipboard/performance routes",
+    "FocusChanged/screen-reader/full accessibility matrix and exact original tool report mechanism",
+    "Mac Intel/ARM native execution and full platform acceptance"
+  ]
+}

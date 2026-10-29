@@ -16,20 +16,24 @@ func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bo
 			return false
 		}
 		status = contracts.CatalogNoAgents
+	} else if status == contracts.CatalogNoAgents {
+		// The catalog's aggregate status may describe local agents while this
+		// composer targets another device. Its provider details own availability.
+		status = contracts.CatalogReady
 	}
 	switch status {
 	case contracts.CatalogLoading:
-		ui.Column(c).FillWidth().Height(min(float32(144), budget)).Padding(8).Label("Loading models").Children(func() { a.modelSkeleton(c) })
+		ui.Column(c).FillWidth().Height(min(float32(144), budget)).Padding(8).Label(tr(c, "Loading models")).Children(func() { a.modelSkeleton(c) })
 	case contracts.CatalogError:
 		ui.Column(c).FillWidth().Padding(16).Gap(6).Children(func() {
 			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger)
-			textButton(c, "Retry").Border(1, a.palette.Border).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
+			textButton(c, tr(c, "Retry")).Border(1, a.palette.Border).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
 		})
 	case contracts.CatalogNoAgents:
 		ui.Column(c).FillWidth().Padding(16).Gap(8).AlignItems(ui.Center).Children(func() {
 			icon(c, "terminal", 20)
-			ui.Text(c, "No agents available").FontSize(design.UISize(c, 13))
-			ui.Text(c, "Enable an installed agent in Settings → Providers, or install an agent CLI.").FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted).TextAlign(ui.Center)
+			ui.Text(c, tr(c, "No agents available")).FontSize(design.UISize(c, 13))
+			ui.Text(c, tr(c, "Enable an installed agent in Settings → Providers, or install an agent CLI.")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted).TextAlign(ui.Center)
 		})
 	default:
 		return false
@@ -41,19 +45,49 @@ func (a *composerController) modelNoAgents() bool {
 	switch a.state.ModelCatalog.State {
 	case contracts.CatalogLoading, contracts.CatalogError:
 		return false
-	case contracts.CatalogNoAgents:
-		return true
 	}
 	for _, provider := range a.state.Providers {
-		if provider.Enabled {
+		if a.modelProviderAvailable(provider.ID) {
 			return false
 		}
 	}
 	return true
 }
 
+func (a *composerController) modelTarget() string {
+	if a.side != nil {
+		if target := a.currentSession().DeviceID; target != "" {
+			return target
+		}
+	} else if a.deviceID != "" {
+		return a.deviceID
+	}
+	for _, device := range a.state.Devices {
+		if device.Current {
+			return device.ID
+		}
+	}
+	return "local"
+}
+
+func (a *composerController) modelProviderDetails(id string) contracts.ProviderDetails {
+	target := a.modelTarget()
+	for _, provider := range a.state.Integrations.Providers {
+		if provider.TargetID == target && provider.ProviderID == id {
+			return provider
+		}
+	}
+	return contracts.ProviderDetails{}
+}
+
+func (a *composerController) modelProviderAvailable(id string) bool {
+	provider := a.modelProviderDetails(id)
+	return provider.Installed && provider.Enabled
+}
+
 func (a *composerController) modelProviderOffered(provider contracts.Provider) bool {
-	return provider.Enabled || a.sessionID != "" && provider.ID == a.selectedModel().ProviderID
+	details := a.modelProviderDetails(provider.ID)
+	return details.Installed && (details.Enabled || a.sessionID != "" && provider.ID == a.selectedModel().ProviderID)
 }
 
 func (a *composerController) restoreModelSelection() {
@@ -61,10 +95,8 @@ func (a *composerController) restoreModelSelection() {
 		return
 	}
 	if current := a.selectedModel(); current.ID != "" {
-		for _, provider := range a.state.Providers {
-			if provider.ID == current.ProviderID && provider.Enabled {
-				return
-			}
+		if a.modelProviderAvailable(current.ProviderID) {
+			return
 		}
 	}
 	if len(a.state.Models) == 0 && (a.state.ModelCatalog.State == contracts.CatalogLoading || a.state.ModelCatalog.State == contracts.CatalogError) {
@@ -74,7 +106,7 @@ func (a *composerController) restoreModelSelection() {
 	preferred := a.state.Settings.ModelPicker.ProviderID
 	remembered := a.state.Settings.ModelPicker.Selections[preferred]
 	for _, provider := range a.state.Providers {
-		if !provider.Enabled || provider.ID != preferred {
+		if !a.modelProviderAvailable(provider.ID) || provider.ID != preferred {
 			continue
 		}
 		for _, model := range a.state.Models {
@@ -93,7 +125,7 @@ func (a *composerController) restoreModelSelection() {
 		}
 	}
 	for _, provider := range a.state.Providers {
-		if !provider.Enabled {
+		if !a.modelProviderAvailable(provider.ID) {
 			continue
 		}
 		for _, model := range a.state.Models {

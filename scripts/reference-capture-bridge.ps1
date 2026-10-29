@@ -61,7 +61,8 @@ $taskText=$taskText.Replace($taskMarker,$taskMarker+@'
 $taskText=$taskText.Replace('composer::init(cx, prefs.composer_send_behavior);','motion::set_reduced_motion(cx, true); composer::init(cx, prefs.composer_send_behavior);')
 [IO.File]::WriteAllText($taskAdapter,$taskText,[Text.UTF8Encoding]::new($false))
 $taskEvidence=@{schemaVersion=1;referenceCommit='ab189159f10cf8e63c0502be75a59bbc487e0eaf';originalExample='crates/ui/examples/compact-picker-fixture.rs';originalSha256=(Get-FileHash -LiteralPath $taskOriginal -Algorithm SHA256).Hash.ToLowerInvariant();adapter='output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-parity.rs';adapterSha256=(Get-FileHash -LiteralPath $taskAdapter -Algorithm SHA256).Hash.ToLowerInvariant();modifications=@('Replace unsupported Windows render_to_image export with async scene-ready/acknowledgment transport for Computer Use window capture','Optional opaque surface and reduced motion selected as test configuration');productionRendererModified=$false;productionComponentsModified=$false}
-$taskEvidence | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $taskRoot 'reference/native/capture-adapter.json') -Encoding utf8
+$taskEvidenceJson = ($taskEvidence | ConvertTo-Json -Depth 5).Replace("`r`n", "`n") + "`n"
+[IO.File]::WriteAllText((Join-Path $taskRoot 'reference/native/capture-adapter.json'), $taskEvidenceJson, [Text.UTF8Encoding]::new($false))
 $taskPreviousTarget=$env:CARGO_TARGET_DIR
 try {
     $env:CARGO_TARGET_DIR=Join-Path $taskRoot 'output/reference-native/target'

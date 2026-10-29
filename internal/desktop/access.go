@@ -25,14 +25,14 @@ func (a *composerController) runControls(c *ui.Context) {
 	if len(provider.AccessModes) == 0 {
 		return
 	}
-	button := ui.ButtonBase(c).Label(a.controlLabel("Access mode")).Height(32).Padding(0, 10).Radius(8).MinWidth(0).Shrink(1).Gap(6).AlignItems(ui.Center).Justify(ui.Start)
+	button := ui.ButtonBase(c).Label(tr(c, a.controlLabel("Access mode"))).Height(32).Padding(0, 10).Radius(8).MinWidth(0).Shrink(1).Gap(6).AlignItems(ui.Center).Justify(ui.Start)
 	if button.Hovered() || a.accessMenu {
 		button.Background(a.palette.Hover)
 	}
 	button.Children(func() {
-		ui.Text(c, accessLabel(a.accessMode)).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).FontWeight(500).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, accessLabel(a.accessMode))).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).FontWeight(500).TextColor(a.palette.Muted)
 		if a.plan {
-			ui.Text(c, "Plan").FontSize(design.UISize(c, 12)).TextColor(a.palette.Accent)
+			ui.Text(c, tr(c, "Plan")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Accent)
 		}
 	})
 	button.OnClick(func() {
@@ -44,7 +44,7 @@ func (a *composerController) runControls(c *ui.Context) {
 	})
 	ui.PopoverBase(c, button, &a.accessMenu, func(panel ui.Element) {
 		_, height := c.Size()
-		panel.Label(a.controlLabel("Access options")).Width(288).MaxHeight(min(float32(640), height*.75)).Padding(4).Radius(12).Background(a.palette.Dialog).Border(1, a.palette.Border).Shadow(0, 6, 20, 0, ui.RGBA(0, 0, 0, .18)).AttachTo(button, ui.AnchorTopEnd, ui.AnchorBottomEnd).Margin(0, 0, 6, 0).Focusable().AutoFocus()
+		panel.Label(tr(c, a.controlLabel("Access options"))).Width(288).MaxHeight(min(float32(640), height*.75)).Padding(4).Radius(12).Background(a.palette.Dialog).Border(1, a.palette.Border).Shadow(0, 6, 20, 0, ui.RGBA(0, 0, 0, .18)).AttachTo(button, ui.AnchorTopEnd, ui.AnchorBottomEnd).Margin(0, 0, 6, 0).Focusable().AutoFocus()
 		count := len(provider.AccessModes)
 		if provider.SupportsPlan {
 			count++
@@ -62,7 +62,7 @@ func (a *composerController) runControls(c *ui.Context) {
 		panel.OnShortcut(0, ui.KeyDown, func() { move(1) }).OnShortcut(0, ui.KeyUp, func() { move(-1) }).OnShortcut(0, ui.KeyEnter, choose).OnShortcut(0, ui.KeySpace, choose)
 		ui.Column(c).FillWidth().Gap(2).Children(func() {
 			for i, mode := range provider.AccessModes {
-				row := ui.ButtonBase(c).FillWidth().Padding(6, 8).Gap(10).Radius(8).AlignItems(ui.Center).Justify(ui.Start).Label(accessLabel(mode))
+				row := ui.ButtonBase(c).FillWidth().Padding(6, 8).Gap(10).Radius(8).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, accessLabel(mode)))
 				if mode == a.accessMode || a.accessCursor == i || row.Hovered() {
 					row.Background(modelSelectionColor(a.palette))
 				}
@@ -79,11 +79,11 @@ func (a *composerController) runControls(c *ui.Context) {
 				})
 			}
 			if len(provider.AccessModes) == 1 {
-				ui.Text(c, provider.Name+" can't ask before acting, so it always runs with "+strings.ToLower(accessLabel(provider.AccessModes[0]))+".").FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted).Padding(4, 8)
+				ui.Text(c, provider.Name+tr(c, " can't ask before acting, so it always runs with ")+strings.ToLower(tr(c, accessLabel(provider.AccessModes[0])))+".").FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted).Padding(4, 8)
 			}
 			if provider.SupportsPlan {
 				ui.Box(c).FillWidth().Height(1).Background(a.palette.Border).Margin(4, -4)
-				row := ui.ToggleBase(c, &a.plan).FillWidth().Padding(6, 8).Gap(10).Radius(8).AlignItems(ui.Center).Justify(ui.Start).Label("Plan mode").OnClick(a.saveRunConfig)
+				row := ui.ToggleBase(c, &a.plan).FillWidth().Padding(6, 8).Gap(10).Radius(8).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, "Plan mode")).OnClick(a.saveRunConfig)
 				if row.Hovered() || a.accessCursor == len(provider.AccessModes) {
 					row.Background(modelSelectionColor(a.palette))
 				}
@@ -98,8 +98,8 @@ func (a *composerController) runControls(c *ui.Context) {
 
 func accessRowText(c *ui.Context, label, description string, text, muted ui.Color) {
 	ui.Column(c).Grow(1).MinWidth(0).Children(func() {
-		ui.Text(c, label).SingleLine().FontSize(design.UISize(c, 13)).FixedLineHeight(design.UISize(c, 19.5)).TextColor(text)
-		ui.Text(c, description).FontSize(design.UISize(c, 11)).FixedLineHeight(design.UISize(c, 16.5)).TextColor(muted)
+		ui.Text(c, tr(c, label)).SingleLine().FontSize(design.UISize(c, 13)).FixedLineHeight(design.UISize(c, 19.5)).TextColor(text)
+		ui.Text(c, tr(c, description)).FontSize(design.UISize(c, 11)).FixedLineHeight(design.UISize(c, 16.5)).TextColor(muted)
 	})
 }
 
@@ -181,8 +181,8 @@ func (a *App) annotationChips(c *ui.Context) {
 			}
 		}).Children(func() {
 			icon(c, "cursor-square", 13)
-			ui.Text(c, item.Label()).FontSize(design.UISize(c, 11))
-			iconButton(c, "close", "Remove "+item.Label()).Size(16, 16).OnClick(func() { a.removeAnnotation(index) })
+			ui.Text(c, a.annotationLabel(item.Index)).FontSize(design.UISize(c, 11))
+			iconButton(c, "close", tr(c, "Remove ")+a.annotationLabel(item.Index)).Size(16, 16).OnClick(func() { a.removeAnnotation(index) })
 		})
 	}
 }

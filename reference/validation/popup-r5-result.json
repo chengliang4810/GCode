@@ -1,0 +1,109 @@
+{
+  "branch": "codex/isolated-worktree",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "originalPNGStateAddition": {
+    "verification": "output/reference-lossless/typed-state-image-equivalence.json",
+    "output": "output/reference-lossless/capture-native-state-20261028-01",
+    "allEightByteIdenticalToPriorOriginalSet": true
+  },
+  "goalStatus": "active",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "comparison": {
+    "allThresholdsMet": false,
+    "report": "output/compact-comparison-20261028-r5/comparison.json",
+    "maximumSSIM": 0.9956816263249391,
+    "reportSHA256": "7001a808fe318a974f475b36fed29379005b19adc297ddc8ab71df8e11122d35",
+    "nativeActiveAndDWMState": "not recorded; native frame tint remains an unresolved finding",
+    "minimumSSIM": 0.9845484851257228,
+    "threshold": 0.995,
+    "scenesMeetingPixelThreshold": [
+      "compact-panel-dark-wide",
+      "compact-panel-light-wide"
+    ],
+    "acceptedScenes": 0,
+    "acceptanceScope": "Two wide panel scores meet the numerical screen; six scores remain below threshold. Scores do not accept typography baseline, native frame state, keyboard, motion or accessibility."
+  },
+  "completeUIParity": false,
+  "checks": {
+    "goVet": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-r5-final-go-vet.log"
+    },
+    "taggedFixtureAndDesktopTests": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-r5-final-tagged.log"
+    },
+    "mygoVet": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-r5-final-mygo-vet.log"
+    },
+    "race": "not rerun in R5",
+    "diffCheck": "passed",
+    "fullGoTests": {
+      "exitCode": 0,
+      "log": "output/resume-validation/popup-r5-final-tests.log"
+    },
+    "lint": {
+      "log": "output/resume-validation/popup-r5-final-lint.log",
+      "exitCode": 0,
+      "issues": 0
+    },
+    "initialGateFailure": "Temporary diagnostic Go sources under output were visible to go ./...; moved byte-identically into _source and verified go list before clean final rerun."
+  },
+  "remaining": [
+    "Source intrinsic text ceil and absolute-boundary snapping",
+    "Material/glyph and native frame residuals",
+    "Footer implementation and typed context/checkout state",
+    "Full motion/material and Windows native matrix",
+    "UIA focused-element reporting",
+    "Native Mac Intel/ARM acceptance"
+  ],
+  "sourceManifestSHA256": "7ee4cc418fe5f4e5b01e40cf8c9723780bdc9defee2bdcf98d24f63723125fc2",
+  "readOnlyReferenceClean": true,
+  "sourceManifest": "output/resume-validation/popup-r5-source-hashes.json",
+  "schemaVersion": 1,
+  "packages": {
+    "manifest": "output/resume-validation/popup-r5-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+    "installerExecuted": false,
+    "nativeBootEvidence": "output/resume-validation/popup-r5-native-boot/evidence.json",
+    "nativeBootEvidenceSHA256": "e24ac4741df7afd3275d16c0ed88949e69552ee359a894180867cfaca99b606a",
+    "buildAndArchitectureResourcesChecksums": "passed",
+    "windowsExecutableSHA256": "c687a0186d40cb369742cd8d1bd8965f005b83a02ff901890685c83eb7618253",
+    "macNative": "pending for each architecture",
+    "nativeBootScope": "default/dark and transcript/light startup, native client render, exit0; no new key/mouse sequence",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ]
+  },
+  "framework": {
+    "fileCount": 1831,
+    "sourceSHA256": "c6a86278ae261c75b6b195632d97d4d64218ed69189ec45554b85c5826b4d2a6",
+    "upstream": "v0.6.4",
+    "revision": "zeron-native-ui.3"
+  },
+  "recordedAtUTC": "2026-10-28T10:22:01.6702985Z",
+  "sourceFiles": 208,
+  "sourceUnchangedAfterBuildAndNativeBoot": true,
+  "capture": {
+    "fixtureExecutableSHA256": "3f4673e8b563b95c0f788428482c6262dba96b0a2771cc6d8a1664f90095462d",
+    "sourceAndBuild": "output/fixtures/model-picker-fixture-r5-build.json",
+    "count": 8,
+    "bridgeSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+    "output": "output/captures/model-picker-fixture-wgc-20261028-r5",
+    "transformations": []
+  },
+  "phase": "R5 frozen Windows default Typography alignment using public FontFeatures API",
+  "typographyEvidence": {
+    "completeGlyphPairs": 312,
+    "macOS": "kept existing platform defaults",
+    "evidence": "reference/validation/windows-typography.json",
+    "positionResidual": "source intrinsic-ceil and absolute-boundary rounding supported by code, native text bounds not yet exported",
+    "change": "Windows root FontFeatures(kern=0); bundled faces, font sizes and vendor unchanged",
+    "nonEmptyFeaturesMapping": "not established by this default-feature helper",
+    "source": "docs/audit-windows-typography.md"
+  },
+  "footerAudit": "docs/audit-composer-footer.md"
+}

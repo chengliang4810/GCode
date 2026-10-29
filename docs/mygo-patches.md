@@ -1,7 +1,10 @@
 # MyGo v0.6.4 固定补丁
 
-状态：**已采用**，上游为 `github.com/egoist/mygo v0.6.4`，本地修订
-`zeron-native-ui.2`。`go.mod` 只允许该模块替换到 `./third_party/mygo`。
+状态：当前代码为 **R17 候选**，上游为 `github.com/egoist/mygo v0.6.4`，本地修订
+`zeron-native-ui.9`，已按审阅后的27项差异接入当前源码。V5相对C4的10项raw不增长
+已实测；历史C4对R16的counter+2,048B、运行时成本和完整原生验收仍未闭环，
+最新封存发布证据仍为 R16。新的`.9` pin、五门槛及canonical四目标候选包构建/校验已通过；原生/发布接受仍待完成。
+`go.mod` 只允许该模块替换到 `./third_party/mygo`。
 完整框架源码约 17 MB，保留上游 LICENSE、go.mod、go.sum、API 生成器、构建工具、
 平台资源和测试；没有修改全局 Go 模块缓存。
 
@@ -12,14 +15,84 @@
 3. [`mygo-v0.6.4-files-drop.patch`](../patches/mygo-v0.6.4-files-drop.patch)：原生文件拖放事件回调。
 4. [`mygo-v0.6.4-markdown-line-height.patch`](../patches/mygo-v0.6.4-markdown-line-height.patch)：Markdown 可选 DIP 精确行高。
 5. [`mygo-v0.6.4-coexistence.patch`](../patches/mygo-v0.6.4-coexistence.patch)：独立的 Windows 安装名与 macOS 包文件名。
+6. [`mygo-v0.6.4-input-display-text.patch`](../patches/mygo-v0.6.4-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
+7. [`mygo-v0.6.4-snap-to-window.patch`](../patches/mygo-v0.6.4-snap-to-window.patch)：可选按本轮实际margin box贴窗，不自动翻转。
+8. [`mygo-v0.6.4-placeholder-color.patch`](../patches/mygo-v0.6.4-placeholder-color.patch)：当前原生输入框的可选占位色。
+9. [`mygo-v0.6.4-caret-width.patch`](../patches/mygo-v0.6.4-caret-width.patch)：当前原生输入框的可选DIP caret宽度及`.4`标记。
+10. [`mygo-v0.6.4-windows-uia-provider.patch`](../patches/mygo-v0.6.4-windows-uia-provider.patch)：Windows UIA服务端provider声明、Bounds文档及`.5`标记。
+11. [`mygo-v0.6.4-scrollbars.patch`](../patches/mygo-v0.6.4-scrollbars.patch)：当前滚动容器的indicator/命中开关、最终提交后拖动取消与`.6`标记。
+12. [`mygo-v0.6.4-tooltip-primitives.patch`](../patches/mygo-v0.6.4-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属；R17 候选，见 [当前审计](audit-tabstrip-tooltip-primitives.md)。
+13. [`mygo-v0.6.4-package-stage-rename.patch`](../patches/mygo-v0.6.4-package-stage-rename.patch)：Windows build/dev 共用 `replacePath` 的最终提交在 error5/32 时有限重试，最多10次、900ms计划等待；不改变旧目标备份及原有 best-effort rollback。
+14. [`mygo-v0.6.4-windows-glyph-placement.patch`](../patches/mygo-v0.6.4-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与内部Windows ClearType quarter定位；默认及不支持路径回native，采用V5三态cache mode及`.9`来源标记。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 1,830 个文件的
-SHA-256 树指纹为 `fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e`。
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前`.9`的 1,864 个文件的
+SHA-256 树指纹为 `27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。
+首13个补丁的字节及顺序不变；第14补丁SHA-256为
+`8a463bc728654abeb1ae3461687a5d8512a69e77f45284640aec5fc0b097a893`。
+历史C4 `.8`仍为1,847文件/13补丁/a8088f65…178a，原包和验证范围保留。
 树指纹按 UTF-8 相对路径的字节序排序，再对每个 `路径 + NUL + 文件 SHA-256 十六进制 + LF`
 记录做 SHA-256。`.gitattributes` 禁止框架文件换行转换，确保跨平台字节一致。
 
 此文档记录框架能力与验证。设置及 annotation chip 在 Desktop 的实际接线由主任务完成，
 原生操作与视觉一致性仍需单独验收。
+
+`.6`新增 `Element.Scrollbars(visible)`，只控制当前原生 Scroll/Horizontal/Both/List 的
+指示条和对应命中区域；默认行为保持，策略不继承，也不影响自绘的代码/富文本编辑器。
+隐藏后仍支持滚轮、TrackScroll、键盘导航和辅助功能滚入。最终提交后的光标更新检查
+正在拖动的稳定节点，隐藏时取消拖动并恢复内容光标；配置先后顺序和稳定 Key 不会提前
+取消另一个节点的拖动。应用目前仅在工作区 TabStrip 使用该开关。
+
+八类框架回归覆盖默认/隐藏、双轴、1x/2x、拖动中切换、链式最终值、无重新布局、
+邻居/父子隔离、虚拟 List、键盘/辅助功能和指示条像素边界。完整 `ui` 与 `ui/markdown`
+测试、Go vet 通过；`go generate ./ui` 再生成逐字节不变。上游归档顺序重放全部11补丁
+得到 R12 的1,836文件快照；撤销第11补丁精确回到`.5`，再应用精确恢复`.6`，见
+`output/framework-scrollbars-r12/final-replay.json`。在 checkout 内的忽略副本重放时，
+须从 Git 根使用 `git apply --directory=<副本相对路径>`；`git -C` 进入副本可能受父仓库
+前缀过滤而静默跳过路径，必须核对完整树指纹，不能只看 apply 的退出码。
+
+Go1.27.3、CGO关闭、生产标记下，before/after各5目标×2示例的20次构建全部成功。
+未采用API的 counter 在 Windows/Linux 体积不变，macOS amd64增加16字节、arm64增加
+32字节、WebAssembly增加101字节；hello五目标均不变。**不能称为全平台零体积成本。**
+初始Windows候选曾增加512字节，已移出大提交函数并重测为0；原失败候选和符号诊断保留。
+准确 argv、二进制哈希、构建前后源码树核对及增长分析见
+`output/framework-scrollbars-r12/size-cross/`。这些产物未运行，不代替对应平台原生验收。
+三增长目标的 `-dumpdep` 对比没有新增可达函数或重依赖；新增节点为`.6`身份字符串
+及两个字段/方法名字，原已可达的滚动条绘制、按压和光标更新函数增加条件分支。
+Mach-O符号大小和磁盘增量受对齐影响，不能直接相加；wasm保留函数数5,867，code段
+增加242字节、data段减少141字节，净增加101字节。增长原因由诊断记录支持，未以
+剥除生产功能、扩大全局状态或改变既有默认滚动行为来追求字节归零。
+
+`.4`新增三个独立opt-in样式能力：`Element.SnapToWindow(margin)`、
+`Element.PlaceholderColor(color)` 和 `Element.CaretWidth(width)`。前者按本轮实际
+margin box仅在越界时贴窗、不自动flip；输入样式仅当前editable input的paint使用，
+不改变全局theme、文本/撤销/IME布局或native blink。CaretWidth默认1DIP，正宽度
+按设备像素取整且至少1pixel，0/负值隐藏。未设置仍走原有行为，显式透明占位色
+与unset分开。详细source差异、应用接线和取证限制见 `audit-native-popup-style.md`。
+
+标准上游归档按原6patch重放精确还原`.3`，再顺序应用7–9及`.4`标记得到R7阶段
+1,834文件完整树。反向撤销7–9又精确回`.3`，重新正向与当时live tree逐字节一致；
+证据为 `output/snap-framework-qa/final-replay.json`。各API测试/生成/二进制体积
+记录在 `output/framework-snap-to-window/validation.json` 和
+`output/framework-caret-width/final-validation.json`。API9原始补丁与root追加revision
+后的最终补丁hash分开保存，不能把API-only重放日志说成最终identity重放。
+
+未opt-in的counter示例从`.3`到三API最终共增加2,048字节；hello不变。新增量来自
+native UI布局/分支及editor元数据，无新依赖；CaretWidth单独加入未再增加体积。
+这些是构建/链接证据，没有运行示例窗口，也不代表新平台原生验收。
+
+`.5`只将本进程的Windows UIA provider从错误的ClientSideProvider标记改为
+ServerSideProvider，保留UseComThreading，最终值0x22。依据为
+[Microsoft ProviderOptions](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationcore/ne-uiautomationcore-provideroptions)。
+真实COM vtable回归覆盖声明以及64位不同ID的main→side→none→main发布焦点；
+这是provider契约测试，不能证明外部客户端的旧focus报告已解决。Bounds注释从
+“visible box”改为实际的transformed border box，按祖先clip裁剪和兄弟遮挡
+检测均未新增。调查与API-only体积/依赖证据见
+`output/framework-uia-provider-options-20261028-124947-256/`。
+
+现有固定归档/九补丁重放树先重新核对为精确`.4`，加最终第10补丁得当前`.5`；
+反向回`.4`再正向回`.5`均逐字节匹配，见 `output/uia-framework-qa/final-replay.json`。
+API-only原补丁8d0bc626…另存该目录，正式第10补丁5372a13a…追加revision；不把
+前者的build/体积日志追溯改称最终`.5`身份。
 
 ## 原因与应用侧边界
 
@@ -142,6 +215,24 @@ Markdown 新增可选字段：`markdown.Theme.FixedLineHeight`、`CodeFixedLineH
 
 没有修改平台实现、原生库、WebView、布局算法或默认动效值。
 
+## 输入显示快照
+
+`zeron-native-ui.3` 增加 `Element.InputDisplayText() string`，由原有生成器产生
+checked API。它读取当前原生输入控件的 `editor.displayText()`：包括尚未提交的 IME
+预编辑文本；密码输入仍返回遮罩圆点，普通元素和零值返回空字符串。它不提交预编辑，
+不修改绑定值、选区、焦点或 undo 历史。字符串是本轮数据快照，不是可跨帧操作的控件。
+
+Composer 用该快照测量 compact 容量及换行；原生 `TextAreaBase` 自己处理 expanded
+模式的换行高度和滚动。若改用绑定 draft 测量，长中文/日文预编辑会一直挤在 compact
+一行里；若把预编辑写回 draft，则会提前提交 IME。此 API 保留输入管线原有语义。
+
+`ui/input_display_text_test.go` 使用生成后的公开 API，覆盖在中间插入 CJK/emoji
+预编辑、连续只读帧、真正提交、undo、取消、快照稳定性、密码和非输入元素。
+当同一 key 从输入控件换成普通或可选择文本时，即使复用了含旧 editor 的 state，
+读 API 也会检查当前 editable 标志，返回空字符串，不暴露上一个控件的草稿。
+应用层回归另覆盖预编辑期间不发送已有草稿，以及展开/折叠时保留原生输入身份。
+第六补丁只涉及该读 API、测试、生成结果和本地修订标记；上游仍是 v0.6.4。
+
 ## 安装共存与打包名称
 
 `zeron-native-ui.2` 在构建配置中新增两个可选字段；省略时保留上游默认命名。
@@ -199,7 +290,7 @@ git apply --reverse --check <checkout>/patches/mygo-v0.6.4-motion.patch
 
 重新构造源码副本时，应从校验和为
 `h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o=` 的 v0.6.4 Go 模块归档解压，
-按顺序应用五个补丁，并执行：
+按顺序应用当前十四个补丁，并执行：
 
 ```text
 git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-motion.patch
@@ -207,6 +298,15 @@ git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-hover.patch
 git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-files-drop.patch
 git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-markdown-line-height.patch
 git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-coexistence.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-input-display-text.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-snap-to-window.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-placeholder-color.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-caret-width.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-windows-uia-provider.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-scrollbars.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-tooltip-primitives.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-package-stage-rename.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-windows-glyph-placement.patch
 go generate ./ui
 go test ./ui ./ui/markdown
 ```
@@ -222,7 +322,7 @@ go run ./scripts/check-framework.go
 go test ./scripts/frameworkpin
 ```
 
-`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、五个补丁哈希和完整源码树哈希。
+`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、十四个补丁哈希和完整源码树哈希。
 它核对 Go 实际选中的模块，拒绝其他 replace 目录、版本、未替换上游、符号链接及源码增删改。
 有意修改框架必须更新补丁、修订、锁文件和校验器中的固定值，作为新的可审查变更。
 
@@ -241,3 +341,38 @@ Go 的 `-trimpath` 产物省略 build settings 中的 `-ldflags`，因此校验�
 交付仍须验证三个目标架构可构建，并在 Windows/macOS 原生环境检查鼠标滚轮、触控板、
 中文输入、嵌套列表、聊天跟随输出、编辑器、终端，以及设置切换/重启后的行为。
 原生运行、视觉一致性、性能和用户验收均仍待单独完成。
+
+## R14 fixture observations
+
+R14 does not change the `.6` vendor tree or add a patch. Production TabStrip only
+binds additional Handles through a tagged observer; the normal build's observer
+is empty.36 native reference/Go pairs, actual before/after Win32 foreground checks
+and69 comparison guards are application fixture evidence, not framework pixel
+acceptance. The last release packages remain R13. See `audit-tabstrip-fixture.md`.
+
+## R15 follow-up
+
+R15 changes application tab drawing through the existing shader API; the `.6`
+framework tree and eleven patches are unchanged. Four package targets and a
+separate exact Windows EXE tab interaction smoke pass.36 original/Go baseline
+pairs plus four supplemental states do not establish full visual acceptance;
+see `audit-tabstrip-style.md`. Earlier evidence above retains its phase identity.
+
+## R17 V5 接入边界
+
+采用记录为 `output/tabstrip-r17-quarter-v5-adopted/attempt-01/result.json`。
+当前2931项正式输入与审阅提案逐字节匹配；当前AX app961只新增原生提示leaf的
+checked wrapper，未恢复通用Label，也未恢复旧959项app。该API只选择glyph定位，
+没有接入隔离的换行候选。普通Text和不满足Windows/AA/color资格的路径保持native。
+
+实际10项体积矩阵属于接入前V5完整树c18a…1165和继承`.8`的诊断身份：
+9项raw delta0、Wasm counter−425B。它不等于runtime或metadata0；`.9`相对该V5
+仅改变两处revision literal；新五门槛已按自身2931输入通过，新canonical四目标
+候选包已有自己的`.9`来源、架构和文件/ZIP校验身份。该构建记录未运行新包GUI、
+installer或Mac程序，不能重标旧native产物或宣布发布接受。
+后续同一9c5800…f795主包已另做限定Windows smoke：14状态/15原JPEG、实际
+README.md与Close tab名称、右键原生菜单关闭layout并保留README编辑器/文件树/
+会话，Alt+F4退出0且stderr空。新记录为
+`output/resume-validation/tabstrip-r17-quarter-v5-native/result.json`（0d850ab4…767c）；
+它不借用旧c18夹具身份，不表示新DPI、完整视觉、installer、Mac或读屏事件验收。
+完整执行、独审及当前接入见 `audit-tabstrip-tooltip-primitives.md`。

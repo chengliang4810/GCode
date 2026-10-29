@@ -294,6 +294,15 @@ func (_handle *Context) CloseToast(id string) {
 	_ctx.CloseToast(id)
 }
 
+// DeviceScale returns the device pixels per DIP used to paint this frame.
+func (_handle *Context) DeviceScale() float32 {
+	_ctx := _handle.build()
+	if _ctx == nil {
+		return 0
+	}
+	return _ctx.DeviceScale()
+}
+
 // Direction returns the direction of the elements built now: that of the
 // element they go in. Widgets of an app's own read it to draw what points
 // along the line, as an arrow forward:
@@ -323,6 +332,21 @@ func (_handle *Context) DisableAnimations() {
 		return
 	}
 	_ctx.DisableAnimations()
+}
+
+// InputActivity returns a plain snapshot of the input received by the UI
+// engine since its first subscription. Events before that subscription have
+// no history, so the query establishing that subscription returns zero. It
+// consumes no event. Reading it subscribes this window to a new frame after
+// subsequent counted input or a blur that clears PointerDown, so
+// the view can observe activity even when no widget otherwise needs a frame.
+// It requests no recurring frame or timer.
+func (_handle *Context) InputActivity() InputActivitySnapshot {
+	_ctx := _handle.build()
+	if _ctx == nil {
+		return *new(InputActivitySnapshot)
+	}
+	return _ctx.InputActivity()
 }
 
 // Locale returns the language the app shows (mygo.App.Locale), a BCP 47
@@ -2766,6 +2790,26 @@ func (_handle Element) Attach(at Anchor, self Anchor) Element {
 	return wrapElement(_node.Attach(at, self))
 }
 
+// AttachAtPoint takes the element out of its parent's layout and places its
+// margin box gap logical pixels right of and below (x, y), in window coordinates.
+// It measures this layout's own content, padding, border and min/max constraints
+// before positioning. An overflowing right or bottom edge flips that axis to
+// gap before the point; a negative origin then moves to zero. An oversized box
+// keeps its measured size. There is no implicit window-edge inset or rounding.
+//
+// gap is at least zero. The coordinates are physical directions, independent of
+// text direction. Build in an Overlay to avoid ancestor clipping. This replaces
+// Attach/AttachTo positioning; SnapToWindow does not alter this placement.
+func (_handle Element) AttachAtPoint(x float32, y float32, gap float32) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.AttachAtPoint(x, y, gap))
+}
+
 // AttachTo takes the element out of its parent's layout, as Attach does,
 // and puts its point self on the point at of target's box, wherever target
 // is in the window: built in an Overlay, a panel goes below a button with
@@ -2779,7 +2823,7 @@ func (_handle Element) Attach(at Anchor, self Anchor) Element {
 //
 // The element is target's popover: its elements follow target as Tab
 // moves, and a press on target is not outside it (PressedOutside). Build
-// target before it, in the same frame.
+// target before it, in the same frame. SnapToWindow opts out of flipping.
 func (_handle Element) AttachTo(target Element, at Anchor, self Anchor) Element {
 	_node := _handle.node()
 	if _node == nil {
@@ -3012,6 +3056,21 @@ func (_handle Element) Bounds() Rect {
 	_ctx := _node.c
 	_ = _ctx
 	return _node.Bounds()
+}
+
+// CaretWidth sets this input's painted caret width in DIPs for this build.
+// It defaults to one DIP. Positive widths are rounded to device pixels,
+// at least one pixel wide; zero and negative widths hide the caret. It does
+// not change text layout, input-method candidate bounds or caret blinking.
+// Other elements are unaffected.
+func (_handle Element) CaretWidth(width float32) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.CaretWidth(width))
 }
 
 // Center centers the children along and across the main axis.
@@ -4103,6 +4162,20 @@ func (_handle Element) InView() bool {
 	return _node.InView()
 }
 
+// InputDisplayText returns a snapshot of the text a text input currently
+// displays, including an input method's uncommitted composition. Password
+// inputs return their masking bullets. Other elements return an empty string.
+// Reading it changes no bound value, composition, selection or undo history.
+func (_handle Element) InputDisplayText() string {
+	_node := _handle.node()
+	if _node == nil {
+		return ""
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return _node.InputDisplayText()
+}
+
 // InputMethod sets whether the system's input methods compose text for the
 // element while it has the keyboard focus, as they do by default for one
 // that takes text (HandleTextInput, TextCaret). Turned off, keys type the
@@ -4864,6 +4937,19 @@ func (_handle Element) Placeholder(s string) Element {
 	return wrapElement(_node.Placeholder(s))
 }
 
+// PlaceholderColor sets the color of this input's placeholder for this build.
+// When unset it uses the theme's TextMuted. It does not change entered text,
+// other inputs or the theme. A transparent color hides the placeholder.
+func (_handle Element) PlaceholderColor(color Color) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.PlaceholderColor(color))
+}
+
 // PointerPosition returns the pointer's position relative to the
 // element's box and whether it is over the element. Elements asking for it
 // get a frame whenever the pointer moves over them.
@@ -5207,6 +5293,21 @@ func (_handle Element) ScrollbarInsets(v ...float32) Element {
 	return wrapElement(_node.ScrollbarInsets(v...))
 }
 
+// Scrollbars controls the overlay indicators and their pointer hit targets on
+// this scroll container. They show on hover by default. With false, scrolling
+// by wheel, TrackScroll, keyboard focus and accessibility remains available.
+// It applies to Scroll, ScrollHorizontal, ScrollBoth and List, not the internal
+// indicators of custom controls such as a code editor, and is not inherited.
+func (_handle Element) Scrollbars(visible bool) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.Scrollbars(visible))
+}
+
 // Selectable lets the user select and copy text by dragging, double-clicking
 // a word, triple-clicking a line, or using Shift with the arrows. Its context
 // menu has Copy and Select All; Cmd+C copies the selection.
@@ -5378,6 +5479,23 @@ func (_handle Element) Skew(x float32, y float32) Element {
 	_ctx := _node.c
 	_ = _ctx
 	return wrapElement(_node.Skew(x, y))
+}
+
+// SnapToWindow fits an element placed with AttachTo into the window without
+// flipping its anchors. It uses this layout's full margin box, including
+// padding and border: an overflowing right or bottom edge moves to margin
+// inside that window edge, then a negative left or top edge moves to margin.
+// A box larger than the window therefore keeps its left or top edge visible.
+// Edges already inside the window stay where they are, even nearer than margin.
+// Calling this with zero still opts out of AttachTo's default flipping.
+func (_handle Element) SnapToWindow(margin float32) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.SnapToWindow(margin))
 }
 
 // Spring returns a value following target with a spring, as AnimateTo

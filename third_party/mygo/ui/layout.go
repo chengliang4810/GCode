@@ -253,6 +253,9 @@ func (e *node) resolvedText() textStyle {
 		if take&setLang != 0 {
 			out.lang = t.lang
 		}
+		if take&setGlyphPlacement != 0 {
+			out.placeGlyph = t.placeGlyph
+		}
 		if take&setStrike != 0 {
 			out.strike = t.strike
 		}
@@ -1177,6 +1180,10 @@ func layoutAbsolute(e *node) {
 			// Copies of elements leaving are placed by their transitions.
 			continue
 		}
+		if c.pointAttached {
+			c.c.placePoint(c, e, pw, ph)
+			continue
+		}
 		if c.attach != 0 {
 			if c.popover != nil {
 				attachTo(c, e, pw, ph)
@@ -1264,15 +1271,36 @@ func attachTo(c, e *node, pw, ph float32) {
 	at, self = at.physical(c.rtl()), self.physical(c.rtl())
 	ax, ay := at.fractions()
 	sx, sy := self.fractions()
-	if c.flags&flagScrollY != 0 {
+	if c.flags&flagScrollY != 0 && !c.snapToWindow {
 		h = min(h, roomAlong(t.Y, t.H, beside(ay, sy), c.m(0)+c.m(2), c.c.h))
 	}
-	x := alongTarget(t.X, t.W, ax, sx, w, c.m(3)-c.m(1), c.c.w)
-	y := alongTarget(t.Y, t.H, ay, sy, h, c.m(0)-c.m(2), c.c.h)
 	dx, dy := c.relative(pw, ph)
+	var x, y float32
+	if c.snapToWindow {
+		// w and h are this layout's final border-box sizes, including an
+		// automatic height. Fit the margin box before laying out children,
+		// whose attachments must see their parent's final position.
+		x = t.X + ax*t.W - sx*w + c.m(3) - c.m(1) + dx
+		y = t.Y + ay*t.H - sy*h + c.m(0) - c.m(2) + dy
+		x = snapToWindow(x-c.m(3), w+c.marginX(), c.c.w, c.snapMargin) + c.m(3)
+		y = snapToWindow(y-c.m(0), h+c.marginY(), c.c.h, c.snapMargin) + c.m(0)
+	} else {
+		x = alongTarget(t.X, t.W, ax, sx, w, c.m(3)-c.m(1), c.c.w) + dx
+		y = alongTarget(t.Y, t.H, ay, sy, h, c.m(0)-c.m(2), c.c.h) + dy
+	}
 	ox, oy := laidOutOrigin(e)
-	c.x, c.y = x+dx-ox, y+dy-oy
+	c.x, c.y = x-ox, y-oy
 	layoutBox(c, w, h)
+}
+
+func snapToWindow(pos, size, limit, margin float32) float32 {
+	if pos+size > limit {
+		pos = limit - size - margin
+	}
+	if pos < 0 {
+		pos = margin
+	}
+	return pos
 }
 
 // windowMargin keeps what overlays place apart from the window's edges.

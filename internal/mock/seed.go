@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/i18n"
 )
 
 func DefaultSettings() contracts.Settings {
 	settings := contracts.Settings{
 		Appearance:    contracts.AppearanceSettings{RenderMath: true, MathFont: "Fira Math", MathScale: 100, Mode: "dark", ThemeID: "zeron-dark", LightThemeID: "zeron-light", DarkThemeID: "zeron-dark", Accent: "theme", Surface: "theme", Font: "Geist", FontSize: 16, CodeFont: "Geist Mono", CodeFontSize: 12.5, TerminalFont: "Geist Mono", TerminalFontSize: 13, TranscriptWidth: 736, BackgroundEffect: "none"},
-		General:       contracts.GeneralSettings{SendBehavior: "enter", CompactModelPicker: true, StopWithEscape: true, PRDestination: "pullRequest", ThreadNamingModel: "Automatic", CreditZeron: true, RestoreWindows: true, WorktreePath: "~/worktrees"},
+		General:       contracts.GeneralSettings{Language: i18n.Chinese, SendBehavior: "enter", CompactModelPicker: true, StopWithEscape: true, PRDestination: "pullRequest", ThreadNamingModel: "Automatic", CreditZeron: true, RestoreWindows: true, WorktreePath: "~/worktrees"},
 		Notifications: contracts.NotificationSettings{Errors: true, Enabled: true, Completion: true, Questions: true, Sound: false},
 		Files:         contracts.FileSettings{Autosave: true, AutosaveDelay: 900, LineNumbers: true, FontSize: 12.5},
 		Appshots:      contracts.AppshotSettings{Destination: "lastSession", Shortcut: "Cmd+Shift+2", IncludeCursor: false},

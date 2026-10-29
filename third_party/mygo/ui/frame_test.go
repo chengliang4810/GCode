@@ -8,6 +8,24 @@ import (
 	"weak"
 )
 
+func TestContextDeviceScaleTracksFrameAndWindow(t *testing.T) {
+	var first, second float32
+	a := NewTester(func(c *Context) { first = c.DeviceScale() }, 200, 100)
+	b := NewTester(func(c *Context) { second = c.DeviceScale() }, 200, 100)
+	for _, scale := range []float32{1, 1.25, 2, 1} {
+		a.SetScale(scale)
+		b.SetScale(3)
+		a.Frame()
+		if first != scale || second != 3 {
+			t.Fatalf("frame scales = %g, %g; want %g, 3", first, second, scale)
+		}
+	}
+	var absent *Context
+	if absent.DeviceScale() != 0 || new(Context).DeviceScale() != 0 {
+		t.Fatal("an absent context reported an active frame scale")
+	}
+}
+
 func TestValueHandleExpiresBeforeStorageReuse(t *testing.T) {
 	var old Element
 	first := true

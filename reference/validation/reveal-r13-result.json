@@ -1,0 +1,136 @@
+{
+  "packages": {
+    "build": {
+      "path": "output/resume-validation/reveal-r13-package-build.json",
+      "sha256": "d864aaa7b1f1a2309f7917a048129f8a488e2fb598688e533aebadf110fdc8ab"
+    },
+    "windowsExecutableSHA256": "36ede6c6f3b4c26cf2b57ee3ad8d4334bdbdaebfe16719edce3180bcad84d67f",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "manifest": {
+      "path": "output/resume-validation/reveal-r13-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "4ac4ed85eb0c9c728ad2190d342f8bb2e55f3df14cd85299c8b780390b63903e"
+    },
+    "installerExecuted": false,
+    "macNative": "pending",
+    "architectureResourcesArchivesChecksumsStamp": "passed"
+  },
+  "preflight": {
+    "path": "output/tabstrip-r13-reveal-preflight/result.json",
+    "sha256": "6fd2de5df9787b10c0cfa2ce2ab59a222c6c8855e8b2cfbd7b3680db1845e889"
+  },
+  "branch": "codex/isolated-worktree",
+  "sourceDelta": {
+    "path": "output/resume-validation/reveal-r13-final-source-delta.json",
+    "sha256": "14c5335a945adb7781809f1ad7b0283c6c94c682ac14d999545ef098b4a9344a"
+  },
+  "checks": {
+    "path": "output/resume-validation/reveal-r13-final-checks.json",
+    "sha256": "003202cb65919d9b9e166f4f3be1f67193e9f25207e8de72dcfc34487f885aa1"
+  },
+  "sourceReview": {
+    "path": "output/tabstrip-reveal-r13-independent-review/implementation-review.json",
+    "sha256": "8b2bbbf618ebbe3575b377de46d59f28d9f2f10e36f1b85a3b97104c25925419"
+  },
+  "sourceManifest": {
+    "path": "output/resume-validation/reveal-r13-final-source-hashes.json",
+    "sha256": "c2d0ab918ec8972f621cc7c2e249dfa3baf4d9f56d43d67fe076aac35fa25eee"
+  },
+  "completeUIParity": false,
+  "changes": [
+    "Consume only reveal requests present on TabStrip entry; menu-raised requests survive into the rebuilt selected chip",
+    "Eight menu regressions fail before and pass after; six direct/End controls and manual wheel retention pass",
+    "Generated license metadata normalized306CRLF toLF with identical parsed JSON and50 other license files unchanged"
+  ],
+  "tabStripFix": {
+    "path": "output/tabstrip-r13-reveal-fix/result.json",
+    "sha256": "f1942a8d80c072c0b0f3c5aa8a2e73c37accc8e286275bed60b50798233eb846"
+  },
+  "schemaVersion": 1,
+  "sourceUnchangedAfterBuildAndNativeInput": true,
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "licenseMetadata": {
+    "path": "output/resume-validation/reveal-r13-license-metadata.json",
+    "sha256": "a44a81c46e40296c6f75c57c12355544b10fbe7d78904d211e6272add54426ec"
+  },
+  "frameworkChanged": false,
+  "remaining": [
+    "Production reference TabStrip fixture and same-platform/DPI/theme/data/scroll matched visual comparison",
+    "True glass subtree alpha mask and drag/reveal/takeover transitions/custom168px menu",
+    "Resize/takeover interaction expectation; manual user scrolling must remain respected",
+    "Text origin/lineheight/fallback and fractional-scroll native evidence",
+    "Complete Windows native IME/clipboard/browser/accessibility/performance and Mac Intel/ARM acceptance"
+  ],
+  "buildIdentities": {
+    "path": "output/resume-validation/reveal-r13-build-identities.json",
+    "sha256": "1a7540d06d780032350cd097bfd05f00b942124e1cb3d6f073fd6b723b03aeb4"
+  },
+  "native": [
+    {
+      "evidence": {
+        "path": "output/resume-validation/reveal-r13-release-native/evidence.json",
+        "sha256": "5c87d5ed0c44e5ed56c20802c15b6f0f0cb142b5aba4d921fe4ec1dd7b1aedde"
+      },
+      "kind": "exact-release-menu-reveal",
+      "rawFiles": 34
+    }
+  ],
+  "sourceFiles": 263,
+  "priorEvidence": {
+    "R12Review": {
+      "path": "output/scrollbars-r12-independent-review/result.json",
+      "sha256": "7981c2fd90166abeda694ba8432cc214c60d69867769b59eda1ca48576509b5d"
+    },
+    "R8": "Original paired compact/footer scores remain unchanged and are not rescored forR13",
+    "R12": {
+      "path": "reference/validation/scrollbars-r12-result.json",
+      "sha256": "2dc340804f0915c42896286f70de4771ed2815881097eb4dbfaae6b6b5ececf1"
+    }
+  },
+  "baselineSourceBackup": {
+    "path": "output/resume-validation/scrollbars-r12-source-backup.json",
+    "sha256": "9a2135c72208ad65661310e03d7e82856ce3e0c45d294e93e6847da737df76ec"
+  },
+  "referenceClones": [
+    {
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+      "path": "output/reference-sources/zeron",
+      "clean": true
+    },
+    {
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609",
+      "path": "output/reference-sources/mygo",
+      "clean": true
+    }
+  ],
+  "priorFrameworkEvidence": {
+    "path": "output/framework-scrollbars-r12/final-framework-evidence.json",
+    "sha256": "9971b8b4c3db4bd2c89db377a6e782fafe0218cf0805a341582af42cd70f1f42"
+  },
+  "goalStatus": "active",
+  "defaultDiffCheck": {
+    "exitCode": 0,
+    "log": {
+      "path": "output/resume-validation/reveal-r13-final-diff-check.log",
+      "sha256": "0f657ada88c49c715ba160500b4ec8fc1876a7acf8aeba227631b0e406b7cc7c"
+    }
+  },
+  "recordedAtUTC": "2026-10-28T16:11:43.3040854Z",
+  "documentationCorrections": [
+    "R12 menu24DIP clipping is a lost existing selection reveal request, not an oldMaxX cap",
+    "R12 takeover/resize clipping is a separate observation; frozen source has no proven automatic resize reveal requirement, so it is not labeled a confirmed parity bug",
+    "Selecting the active chip does not require the plus button to be visible",
+    "R12 default diff check failure is historical; R13 restoresLF and default check0",
+    "Current implementation regression, native Windows sample and original/reference visual acceptance remain distinct"
+  ],
+  "baselineDocBackup": {
+    "path": "output/resume-validation/scrollbars-r12-doc-backup.json",
+    "sha256": "45fb033f08628c2b82aedf394cf4c14ac128fa33a76cb5ccba89aee99250711b"
+  },
+  "framework": "Verified MyGo v0.6.4 + zeron-native-ui.6: cefb5a5c8694f538ac4caeecb080d2fa96adbaf15c6c12e234e1a4bd06cce914 (1836 files)"
+}

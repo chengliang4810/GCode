@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/i18n"
 )
 
 func (s *Server) sessionIndexLocked(id string) int {
@@ -46,7 +47,10 @@ func (s *Server) CreateSession(ctx context.Context, projectID string) (contracts
 		}
 	}
 	now := s.opts.Now().UTC()
-	v := contracts.Session{ID: s.idLocked("session"), Title: "New session", ProjectID: projectID, DeviceID: "local", ModelID: "claude-opus-4-6", Branch: project.Branch, Status: contracts.Idle, CreatedAt: now, UpdatedAt: now, AccessMode: contracts.AccessFullAccess, ReasoningLevel: "High"}
+	v := contracts.Session{ID: s.idLocked("session"), Title: "New session", ProjectID: projectID, DeviceID: project.DeviceID, CWD: project.Path, ModelID: "claude-opus-4-6", Branch: project.Branch, Status: contracts.Idle, CreatedAt: now, UpdatedAt: now, AccessMode: contracts.AccessFullAccess, ReasoningLevel: "High"}
+	if v.DeviceID == "" {
+		v.DeviceID = "local"
+	}
 	s.state.Sessions = append([]contracts.Session{v}, s.state.Sessions...)
 	s.state.Messages[v.ID] = []contracts.Message{}
 	s.publishLocked("session.created", v.ID, "", "", "")
@@ -289,6 +293,20 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 		s.mu.Unlock()
 		return contracts.Run{}, ErrClosed
 	}
+	if existing := s.sessionIndexLocked(req.SessionID); req.SessionID != "" && existing >= 0 {
+		// Draft selections cannot migrate an established conversation, even
+		// when a stale caller still includes its former checkout payload.
+		current := s.state.Sessions[existing]
+		req.Checkout = nil
+		req.DeviceID, req.Branch, req.WorktreeID = current.DeviceID, current.Branch, current.WorktreeID
+	} else if req.SessionID == "" && req.Checkout != nil {
+		if project, ok := s.gitProjectLocked(req.ProjectID); ok {
+			req.DeviceID = project.DeviceID
+			if req.Checkout.Kind == contracts.CheckoutCloud {
+				req.DeviceID = ""
+			}
+		}
+	}
 	if req.ModelID != "" {
 		found := false
 		for _, m := range s.state.Models {
@@ -332,7 +350,14 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 			}
 		}
 		now := s.opts.Now().UTC()
-		v := contracts.Session{ID: s.idLocked("session"), Title: "New session", ProjectID: req.ProjectID, DeviceID: "local", ModelID: "claude-opus-4-6", Branch: project.Branch, Status: contracts.Idle, CreatedAt: now, UpdatedAt: now, AccessMode: contracts.AccessFullAccess, ReasoningLevel: "High"}
+		resolved, err := s.resolveNewCheckoutLocked(project, s.idLocked("session"), req)
+		if err != nil {
+			s.mu.Unlock()
+			return contracts.Run{}, err
+		}
+		v := resolved
+		v.Title, v.ModelID, v.Status = "New session", "claude-opus-4-6", contracts.Idle
+		v.CreatedAt, v.UpdatedAt, v.AccessMode, v.ReasoningLevel = now, now, contracts.AccessFullAccess, "High"
 		s.state.Sessions = append([]contracts.Session{v}, s.state.Sessions...)
 		s.state.Messages[v.ID] = []contracts.Message{}
 		req.SessionID = v.ID
@@ -410,17 +435,9 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 	if req.ReasoningLevel != "" {
 		session.ReasoningLevel = req.ReasoningLevel
 	}
-	if req.Branch != "" {
-		session.Branch = req.Branch
-	}
-	if req.WorktreeID != "" {
-		session.WorktreeID = req.WorktreeID
-	}
-	if req.DeviceID != "" {
-		session.DeviceID = req.DeviceID
-	}
+	s.captureSessionSourceLocked(session)
 	s.normalizeSessionCapabilitiesLocked(session)
-	run := contracts.Run{ID: s.idLocked("run"), SessionID: session.ID, Status: "running", StartedAt: now, AccessMode: session.AccessMode, Plan: session.Plan}
+	run := contracts.Run{ID: s.idLocked("run"), RequestID: req.RequestID, SessionID: session.ID, Status: "running", StartedAt: now, AccessMode: session.AccessMode, Plan: session.Plan}
 	runIndex := -1
 	if turnID != "" {
 		for ri, previous := range s.state.Runs {
@@ -610,6 +627,7 @@ func (s *Server) advanceRun(sessionID, runID, text string, done bool) bool {
 			}
 		}
 		s.publishLocked("run.completed", sessionID, runID, "", text)
+		s.finishHostContextLocked(sessionID, runID)
 		for qi, q := range s.state.Queue {
 			if q.SessionID == sessionID && si >= 0 {
 				s.state.Queue = append(s.state.Queue[:qi], s.state.Queue[qi+1:]...)
@@ -884,6 +902,7 @@ func (s *Server) UpdateSettings(ctx context.Context, settings contracts.Settings
 }
 
 func normalizeSettings(v *contracts.Settings) {
+	v.General.Language = i18n.Normalize(v.General.Language)
 	v.SidebarWidth = clamp(v.SidebarWidth, 242, 400)
 	v.FilesWidth = clamp(v.FilesWidth, 220, 440)
 	v.RightPaneWidth = clamp(v.RightPaneWidth, 360, 2000)

@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "recordedAtUtc": "2026-10-28T09:10:44.5218152Z",
+  "script": "scripts/reference-capture-lossless.ps1",
+  "scriptSHA256": "35bbe6f742fd036af736ef02376640e04d5c903efe2865568dd7675a40819755",
+  "replayDirectory": "output/reference-lossless/replay-20261028-091043-866",
+  "archiveCRLFCount": 14278,
+  "dependencyReplay": [
+    {
+      "case": "fresh-mixed",
+      "baselineCRLF": 14273,
+      "baselineSHA256": "adbe67e15b3a65bce8eff8736799ca7d9f76b7e8ef97ac47eeaddd8f0fbfaa89",
+      "finalSHA256": "e21e33f79522c196a265c99deb0d56082b1e76bafaa83aa2e7f6f9e5eb01b5d6",
+      "onlyDeclaredInsertion": true,
+      "repeatUnchanged": true
+    },
+    {
+      "case": "lf",
+      "baselineCRLF": 0,
+      "baselineSHA256": "0dae49265c683c99c3269d7ebad5e303e32b9e18a853f025933c9843044c583f",
+      "finalSHA256": "97ba0e99c37f9a68bbb6504926ffb82ec38542885fc5bd6a8e43e648bec4c620",
+      "onlyDeclaredInsertion": true,
+      "repeatUnchanged": true
+    }
+  ],
+  "pathGuards": [
+    {
+      "path": "D:\\projects\\GCode\\output\\reference-lossless\\replay-20261028-091043-866\\guard-alias\\new.png",
+      "rejected": true,
+      "reason": "Lossless writes must not redirect through a reparse path."
+    },
+    {
+      "path": "D:\\projects\\GCode\\output\\reference-sources\\zeron\\new.png",
+      "rejected": true,
+      "reason": "Lossless writes must not enter the read-only reference checkout."
+    },
+    {
+      "path": "D:/lossless-outside-checkout/new.png",
+      "rejected": true,
+      "reason": "Lossless writes must remain inside this checkout."
+    },
+    {
+      "path": "physical clone path while SourceRoot is a junction alias",
+      "rejected": true,
+      "reason": "Lossless writes must not enter the read-only reference checkout."
+    }
+  ],
+  "capturesDirectory": "output/reference-lossless/capture-layout-20261028-02",
+  "captures": [
+    {
+      "name": "compact-model-list-dark-narrow.png",
+      "pngSizePx": [
+        362,
+        592
+      ],
+      "windowSizePx": [
+        376,
+        599
+      ],
+      "clientSizePx": [
+        360,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "14201256f08b04e5521c49b95ef2ab3e636202c1647cb14b52473b8f8fa81c86",
+      "bytes": 19700
+    },
+    {
+      "name": "compact-model-list-dark-wide.png",
+      "pngSizePx": [
+        842,
+        592
+      ],
+      "windowSizePx": [
+        856,
+        599
+      ],
+      "clientSizePx": [
+        840,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "98b5a73a258d2e05a939cf0d41bcf54f65d0e408c6911e0fecbd7186b5c5e2d9",
+      "bytes": 22070
+    },
+    {
+      "name": "compact-model-list-light-narrow.png",
+      "pngSizePx": [
+        362,
+        592
+      ],
+      "windowSizePx": [
+        376,
+        599
+      ],
+      "clientSizePx": [
+        360,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "27e4da559ec47d10e336d884addd50658f189329e9fe2c444f2981a3a4c923b8",
+      "bytes": 21980
+    },
+    {
+      "name": "compact-model-list-light-wide.png",
+      "pngSizePx": [
+        842,
+        592
+      ],
+      "windowSizePx": [
+        856,
+        599
+      ],
+      "clientSizePx": [
+        840,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "689753ea7677b447e06835326fbbc8f0048d419030d19feb0eb9cdf306be32a5",
+      "bytes": 24565
+    },
+    {
+      "name": "compact-panel-dark-narrow.png",
+      "pngSizePx": [
+        362,
+        592
+      ],
+      "windowSizePx": [
+        376,
+        599
+      ],
+      "clientSizePx": [
+        360,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "1ba19e5ab4315d489d979f20bc863a4a7a929924e5a11543d8972fec5eb3921a",
+      "bytes": 22602
+    },
+    {
+      "name": "compact-panel-dark-wide.png",
+      "pngSizePx": [
+        842,
+        592
+      ],
+      "windowSizePx": [
+        856,
+        599
+      ],
+      "clientSizePx": [
+        840,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "f00ff4f82e739ff3fa424b2310c3ec608a31410ab7e2c158421da352b47454ad",
+      "bytes": 25032
+    },
+    {
+      "name": "compact-panel-light-narrow.png",
+      "pngSizePx": [
+        362,
+        592
+      ],
+      "windowSizePx": [
+        376,
+        599
+      ],
+      "clientSizePx": [
+        360,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "4cf766fa6d29ee39f9cbfcebd757628034094b35f899aac5348c1ac3f8701b44",
+      "bytes": 25069
+    },
+    {
+      "name": "compact-panel-light-wide.png",
+      "pngSizePx": [
+        842,
+        592
+      ],
+      "windowSizePx": [
+        856,
+        599
+      ],
+      "clientSizePx": [
+        840,
+        560
+      ],
+      "scale": 1.0,
+      "pngSHA256": "8531ceaafcc59fe821ca410c87ed023a6eb43878dcb053a080875a3d90efb818",
+      "bytes": 27675
+    }
+  ],
+  "signatureDimensionsSHA256": "verified for every PNG against its individual original frame metadata",
+  "productionUISourceFilesCompared": 196,
+  "productionUISourceAllHashesMatchFrozenClone": true,
+  "frozenCloneGitStatus": "clean",
+  "boundary": "WGC complete HWND frame; includes nonclient pixels, excludes Windows invisible resize margins; no file crop/resize; not directly equivalent to client-only CapturePage",
+  "layoutTransport": "eight original matrix scenes captured; no external capture helper or manual permission interaction was needed",
+  "keyboardAcceptance": "not run beyond unchanged original matrix Enter/Escape navigation and model-list assertion",
+  "visualAcceptance": "pending independent matching boundary/geometry/data and pixel review",
+  "initialFailedRun": "output/reference-lossless/capture-layout-20261028-01.run.log; GPUI async request_animation_frame misuse corrected in transport only"
+}

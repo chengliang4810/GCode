@@ -16,7 +16,7 @@ type SourcePatch struct {
 // These values are also recorded in the executable's Go linker settings.
 // Development builds keep sourcePatchSHA256 empty; release verification rejects
 // such builds and requires the complete fixed identity.
-var sourcePatchRevision = "zeron-native-ui.2"
+var sourcePatchRevision = "zeron-native-ui.9"
 var sourcePatchSHA256 string
 var sourcePatchIdentity string
 
@@ -26,7 +26,7 @@ func FrameworkPatch() SourcePatch {
 }
 
 func init() {
-	if sourcePatchRevision != "zeron-native-ui.2" {
+	if sourcePatchRevision != "zeron-native-ui.9" {
 		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
 	}
 	if sourcePatchSHA256 != "" {

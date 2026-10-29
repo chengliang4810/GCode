@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "objective": "Find a native capture configuration matching content-only captures without image transformations",
+  "nativeBaseline": "reference/validation/lossless-frame-boundary-baseline.json",
+  "diagnosticSource": [
+    {
+      "sha256": "360cb05bd97484a1eccabecbe7779001757e6d7e5df67afb4a4d33c093ebf007",
+      "file": "scripts/reference-capture-lossless.ps1",
+      "retained": "output/reference-lossless/frameless-diagnostic-source/scripts/reference-capture-lossless.ps1"
+    },
+    {
+      "sha256": "d5a9b218bea954852afd0738b8a9d3f9405de0749152772bed1b427dd8835423",
+      "file": "reference/fixtures/native-capture-lossless.rs",
+      "retained": "output/reference-lossless/frameless-diagnostic-source/reference/fixtures/native-capture-lossless.rs"
+    },
+    {
+      "sha256": "82822047b2cd1e0c9cfb10ff778b222134d7af97262a36b70550c575dcc4c7e5",
+      "file": "output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-lossless.rs",
+      "retained": "output/reference-lossless/frameless-diagnostic-source/output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-lossless.rs"
+    },
+    {
+      "sha256": "2adc15804bb6164865a2fd4b19cfb0fd62b9fe7c471bbec3fa6472116e79f9a9",
+      "file": "reference/native/lossless-capture-adapter-frameless.json",
+      "retained": "output/reference-lossless/frameless-diagnostic-source/reference/native/lossless-capture-adapter-frameless.json"
+    }
+  ],
+  "trials": [
+    {
+      "frame": "PopUp, no titlebar, nonresizable",
+      "output": "output/reference-lossless/capture-frameless-20261028-01",
+      "result": "WGC CreateForWindow rejected; no PNG; no privacy change attempted"
+    },
+    {
+      "narrowClient": [
+        360,
+        560
+      ],
+      "output": "output/reference-lossless/capture-frameless-20261028-02",
+      "widePNG": [
+        842,
+        561
+      ],
+      "frame": "Normal, no titlebar, nonresizable",
+      "result": "8 raw PNGs captured but WGC retains two horizontal border pixels and one vertical pixel",
+      "narrowPNG": [
+        362,
+        561
+      ],
+      "wideClient": [
+        840,
+        560
+      ]
+    }
+  ],
+  "decision": "Restore original native-frame transport. Add fixture-only in-process WGC capture to implementation so both capture complete native windows.",
+  "productionUIOrRendererModified": false,
+  "transformations": [],
+  "configurationRestored": true
+}

@@ -24,18 +24,18 @@ func (a *App) chatView(c *ui.Context) {
 	root.Children(func() {
 		if a.expanded["conversation-find"] {
 			ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
-				ui.TextInput(c, &a.conversationQuery).Placeholder("Find in conversation").Label("Find in conversation").Grow(1)
+				ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)
 				matches := conversationMatches(messages, a.conversationQuery)
-				ui.Text(c, fmt.Sprintf("%d matches", len(matches))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 				move := func(delta int) {
 					if len(matches) > 0 {
 						a.findIndex = (a.findIndex + delta + len(matches)) % len(matches)
 						a.messages.ScrollIntoView(matches[a.findIndex])
 					}
 				}
-				iconButton(c, "alt-arrow-up", "Previous match").OnClick(func() { move(-1) })
-				iconButton(c, "alt-arrow-down", "Next match").OnClick(func() { move(1) })
-				iconButton(c, "close", "Close find").OnClick(func() { a.expanded["conversation-find"] = false })
+				iconButton(c, "alt-arrow-up", tr(c, "Previous match")).OnClick(func() { move(-1) })
+				iconButton(c, "alt-arrow-down", tr(c, "Next match")).OnClick(func() { move(1) })
+				iconButton(c, "close", tr(c, "Close find")).OnClick(func() { a.expanded["conversation-find"] = false })
 			})
 		}
 		if len(messages) == 0 {
@@ -68,7 +68,9 @@ func (a *App) chatView(c *ui.Context) {
 				})
 			}).Grow(1).Gap(16).Padding(28, 0, 24, 0)
 			if !a.messages.AtEnd() {
-				ui.Row(c).FillWidth().Justify(ui.Center).Children(func() { iconButton(c, "arrow-down", "Back to latest").OnClick(func() { a.messages.ScrollToEnd() }) })
+				ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
+					iconButton(c, "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
+				})
 			}
 			for _, queued := range a.state.Queue {
 				if queued.SessionID == a.sessionID {
@@ -76,7 +78,7 @@ func (a *App) chatView(c *ui.Context) {
 					ui.Row(c).Padding(6, 24).Gap(10).AlignItems(ui.Center).Children(func() {
 						icon(c, "clock-circle", 14)
 						ui.Text(c, q.Text).Grow(1).SingleLine().TextColor(a.palette.Muted)
-						iconButton(c, "pen", "Edit queued message").OnClick(func() {
+						iconButton(c, "pen", tr(c, "Edit queued message")).OnClick(func() {
 							a.draft = q.Text
 							a.attachments = append([]contracts.Attachment(nil), q.Attachments...)
 							a.annotations = append([]contracts.Annotation(nil), q.Annotations...)
@@ -101,7 +103,7 @@ func (a *App) chatView(c *ui.Context) {
 							a.normalizeReasoning()
 							a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID})
 						})
-						iconButton(c, "close", "Remove queued message").OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
+						iconButton(c, "close", tr(c, "Remove queued message")).OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
 					})
 				}
 			}
@@ -110,7 +112,7 @@ func (a *App) chatView(c *ui.Context) {
 		ui.Row(c).Height(24).Padding(0, 24).Gap(6).AlignItems(ui.Center).Children(func() {
 			session := a.currentSession()
 			if session.Status == contracts.Errored {
-				ui.Text(c, "Run failed").FontSize(design.UISize(c, 11)).TextColor(a.palette.Danger)
+				ui.Text(c, tr(c, "Run failed")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Danger)
 			}
 		})
 	})
@@ -143,7 +145,7 @@ func (a *App) message(c *ui.Context, m contracts.Message) {
 							if expanded {
 								name, label = "alt-arrow-up", "Collapse message"
 							}
-							iconButton(c, name, label).Size(20, 16).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
+							iconButton(c, name, tr(c, label)).Size(20, 16).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
 						}
 					}
 					if b.Attachment != nil {
@@ -155,7 +157,7 @@ func (a *App) message(c *ui.Context, m contracts.Message) {
 					}
 					if b.Annotation != nil {
 						item := *b.Annotation
-						textButton(c, item.Label()).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
+						textButton(c, a.annotationLabel(item.Index)).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
 					}
 				}
 			})
@@ -166,21 +168,24 @@ func (a *App) message(c *ui.Context, m contracts.Message) {
 }
 
 func (a *App) composerView(c *ui.Context, home bool) {
-	ui.Row(c).FillWidth().Justify(ui.Center).Padding(0, 24).Children(func() {
-		width := float32(a.state.Settings.Appearance.TranscriptWidth)
-		if width <= 0 {
-			width = 736
-		}
-		ui.Column(c).FillWidth().MaxWidth(width).Gap(10).Children(func() {
+	width := float32(a.state.Settings.Appearance.TranscriptWidth)
+	if width <= 0 {
+		width = 736
+	}
+	reserve, _ := a.infoVisibility()
+	outerWidth := composerOuterWidth(a.chatWidth-reserve, width, home)
+	ui.Row(c).Key("main-composer").FillWidth().Justify(ui.Center).Children(func() {
+		ui.Column(c).FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16).Gap(8).Children(func() {
 			if home {
-				ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() { a.projectPicker(c); a.devicePicker(c) })
+				ui.Row(c).FillWidth().Height(20).Padding(0, 10).Justify(ui.End).Gap(8).Children(func() { a.projectPicker(c); a.devicePicker(c) })
 			}
 			a.nativeComposerSurface(c, composerSurfaceProps{
 				draft: &a.draft, input: &a.composer, surface: &a.composerSurface, controls: a.centralControls(),
 				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: "Stop response",
-				running:       a.currentSession().Status == contracts.Working,
-				canSend:       !a.pendingNew && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations)),
-				controlsWidth: max(float32(0), min(width, a.chatWidth-48)*.45),
+				running:   a.currentSession().Status == contracts.Working,
+				canSend:   !a.pendingNew && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations)),
+				hero:      home,
+				widthHint: max(0, outerWidth-32),
 				renderStaged: func() {
 					if len(a.attachments) > 0 || len(a.annotations) > 0 {
 						ui.Row(c).Wrap().Padding(12, 16, 0, 16).Gap(6).Children(func() {
@@ -196,24 +201,18 @@ func (a *App) composerView(c *ui.Context, home bool) {
 				onFilesDrop: func(paths []string) { a.importAttachments(contracts.AttachmentImportRequest{Paths: paths}) },
 				onMention:   func(file workbench.FileDrag) { a.draft += " @" + file.Path },
 			})
-			ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
-				icon(c, "folder", 12)
-				ui.Select(c, &a.checkout, []string{"Current checkout", "New worktree"}).Label("Checkout").FontSize(design.UISize(c, 11))
-				icon(c, "branch", 12)
-				branches := []string{"main"}
-				for _, p := range a.state.Projects {
-					if p.ID == a.projectID {
-						branches = p.Branches
-					}
+			ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
+				ui.Row(c).Grow(1).MinWidth(0).AlignItems(ui.Center).Children(func() { a.composerFooterGit(c) })
+				if !home {
+					a.composerFooterPRBadge(c)
+					ui.Row(c).Shrink(0).Padding(0, 10, 0, 4).Children(func() { a.composerUsage(c, a.currentSession(), &a.footerUsage, false) })
 				}
-				ui.Select(c, &a.branch, branches).Label("Branch").FontSize(design.UISize(c, 11))
-				ui.Spacer(c)
 			})
 		})
 	})
 }
 func (a *App) projectPicker(c *ui.Context) {
-	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label("Select project").Children(func() {
+	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select project")).Children(func() {
 		icon(c, "folder", 12)
 		ui.Text(c, a.projectLabel()).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)
@@ -222,7 +221,8 @@ func (a *App) projectPicker(c *ui.Context) {
 	a.projectPopover(c, b)
 }
 func (a *App) devicePicker(c *ui.Context) {
-	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label("Select device").Children(func() {
+	a.reconcileComposerCloudDevice()
+	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select device")).Children(func() {
 		icon(c, "monitor", 12)
 		ui.Text(c, a.deviceLabel()).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)
@@ -231,7 +231,13 @@ func (a *App) devicePicker(c *ui.Context) {
 	ui.Popover(c, b, &a.deviceMenu, func() {
 		for _, device := range a.state.Devices {
 			d := device
-			menuChoice(c, d.Name, a.deviceID == d.ID, func() { a.deviceID = d.ID; a.deviceMenu = false })
+			if footerCloudDevice(d.ID) {
+				continue
+			}
+			menuChoice(c, d.Name, a.deviceID == d.ID, func() { a.pickComposerDevice(d.ID) })
+		}
+		if project, found := a.footerGitProject(); found && footerCloudRepositoryAvailable(a.state, project) {
+			menuChoice(c, tr(c, "Cloud"), footerCloudDevice(a.deviceID), func() { a.pickComposerDevice(a.composerCloudDeviceID()) })
 		}
 	})
 }
@@ -248,7 +254,7 @@ func (a *App) attachmentChip(c *ui.Context, item contracts.Attachment, removable
 			ui.Spinner(c).Size(12, 12)
 		}
 		if removable {
-			iconButton(c, "close", "Remove "+item.Name).Size(16, 16).OnClick(func() {
+			iconButton(c, "close", tr(c, "Remove ")+item.Name).Size(16, 16).OnClick(func() {
 				for i, x := range a.attachments {
 					if x.ID == item.ID {
 						a.attachments = append(a.attachments[:i], a.attachments[i+1:]...)

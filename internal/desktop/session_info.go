@@ -62,14 +62,14 @@ func (a *App) sessionInfo(c *ui.Context) {
 						dels += change.Deletions
 					}
 				}
-				ui.ButtonBase(c).FillWidth().Padding(6, 9).Gap(8).Justify(ui.Start).Label("Branch changes").OnClick(func() { a.setPanel(1, true); a.workspace.OpenSurface("changes") }).Children(func() {
+				ui.ButtonBase(c).FillWidth().Padding(6, 9).Gap(8).Justify(ui.Start).Label(tr(c, "Branch changes")).OnClick(func() { a.setPanel(1, true); a.workspace.OpenSurface("changes") }).Children(func() {
 					icon(c, "git-branch", 16)
 					ui.Text(c, s.Branch).FontSize(design.UISize(c, 12)).SingleLine().Grow(1)
-					ui.Text(c, fmt.Sprintf("+%d", adds)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Success)
-					ui.Text(c, fmt.Sprintf("−%d", dels)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Danger)
+					ui.Text(c, fmt.Sprintf(tr(c, "+%d"), adds)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Success)
+					ui.Text(c, fmt.Sprintf(tr(c, "−%d"), dels)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Danger)
 				})
 				line(c)
-				ui.Text(c, "ACTIONS").FontSize(design.UISize(c, 10)).LetterSpacing(.8).TextColor(a.palette.Muted).Padding(12, 12, 4, 12)
+				ui.Text(c, tr(c, "ACTIONS")).FontSize(design.UISize(c, 10)).LetterSpacing(.8).TextColor(a.palette.Muted).Padding(12, 12, 4, 12)
 				for _, project := range a.state.Projects {
 					if project.ID == s.ProjectID {
 						for _, action := range project.Actions {
@@ -86,15 +86,15 @@ func (a *App) sessionInfo(c *ui.Context) {
 				a.infoAction(c, "plus", "Add action", func() { a.actionOpen = true; a.actionName = ""; a.actionCommand = "" })
 			})
 			ui.Column(c).FillWidth().Radius(10).Background(a.palette.Overlay.Alpha(.85)).Border(1, a.palette.Border).Padding(10, 0).Children(func() {
-				ui.Text(c, "SIDE CHATS").FontSize(design.UISize(c, 10)).LetterSpacing(.8).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
+				ui.Text(c, tr(c, "SIDE CHATS")).FontSize(design.UISize(c, 10)).LetterSpacing(.8).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
 				for _, child := range a.state.Sessions {
 					if child.ParentSessionID == s.ID && !child.Archived {
 						child := child
-						menuChoice(c, child.Title, false, func() { a.navigate("chat/" + child.ID) })
+						menuChoice(c, child.Title, false, func() { a.openRelatedSession(child) })
 					}
 				}
-				a.infoAction(c, "plus", "New side chat", func() { a.pendingNew = true; a.dispatch(contracts.Command{Kind: "session.sidechat", SessionID: s.ID}) })
-				a.infoAction(c, "fork", "Fork chat", func() { a.pendingNew = true; a.dispatch(contracts.Command{Kind: "session.fork", SessionID: s.ID}) })
+				a.infoAction(c, "plus", "New side chat", func() { a.createRelatedSession(s.ID, true) }).Disabled(a.branchCreation != nil)
+				a.infoAction(c, "fork", "Fork chat", func() { a.createRelatedSession(s.ID, false) }).Disabled(a.branchCreation != nil)
 			})
 		})
 	})
@@ -102,12 +102,12 @@ func (a *App) sessionInfo(c *ui.Context) {
 		back.Background(ui.RGBA(0, 0, 0, .35))
 		panel.Width(460).Padding(24).Radius(12).Background(a.palette.Overlay)
 		ui.Column(c).Gap(16).Children(func() {
-			ui.Text(c, "Add action").FontSize(design.UISize(c, 18)).FontWeight(600)
-			ui.TextInput(c, &a.actionName).Label("Action name").Placeholder("Name").AutoFocus()
-			ui.TextInput(c, &a.actionCommand).Label("Action command").Placeholder("Command")
+			ui.Text(c, tr(c, "Add action")).FontSize(design.UISize(c, 18)).FontWeight(600)
+			ui.TextInput(c, &a.actionName).Label(tr(c, "Action name")).Placeholder(tr(c, "Name")).AutoFocus()
+			ui.TextInput(c, &a.actionCommand).Label(tr(c, "Action command")).Placeholder(tr(c, "Command"))
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-				textButton(c, "Cancel").OnClick(func() { a.actionOpen = false })
-				textButton(c, "Add action").Disabled(a.actionName == "" || a.actionCommand == "").OnClick(func() {
+				textButton(c, tr(c, "Cancel")).OnClick(func() { a.actionOpen = false })
+				textButton(c, tr(c, "Add action")).Disabled(a.actionName == "" || a.actionCommand == "").OnClick(func() {
 					action := contracts.ProjectAction{Name: a.actionName, Command: a.actionCommand, Icon: "action-play", Enabled: true}
 					a.dispatch(contracts.Command{Kind: "project.action.create", ProjectID: s.ProjectID, Action: &action})
 					a.actionOpen = false
@@ -117,8 +117,8 @@ func (a *App) sessionInfo(c *ui.Context) {
 	})
 }
 func (a *App) infoRow(c *ui.Context, glyph, label string) {
-	ui.Row(c).Padding(6, 9).Gap(8).AlignItems(ui.Center).Children(func() { icon(c, glyph, 16); ui.Text(c, label).FontSize(design.UISize(c, 13)).SingleLine() })
+	ui.Row(c).Padding(6, 9).Gap(8).AlignItems(ui.Center).Children(func() { icon(c, glyph, 16); ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 13)).SingleLine() })
 }
-func (a *App) infoAction(c *ui.Context, glyph, label string, action func()) {
-	ui.ButtonBase(c).FillWidth().Padding(7, 12).Gap(8).Justify(ui.Start).Label(label).OnClick(action).Children(func() { icon(c, glyph, 14); ui.Text(c, label).FontSize(design.UISize(c, 12)) })
+func (a *App) infoAction(c *ui.Context, glyph, label string, action func()) ui.Element {
+	return ui.ButtonBase(c).FillWidth().Padding(7, 12).Gap(8).Justify(ui.Start).Label(tr(c, label)).OnClick(action).Children(func() { icon(c, glyph, 14); ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 12)) })
 }

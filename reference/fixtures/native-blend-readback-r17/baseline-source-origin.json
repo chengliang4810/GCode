@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "stage": "R17",
+  "baselineSourceDirectory": "D:\\projects\\GCode\\reference\\fixtures\\native-blend-readback",
+  "baselineSourceFiles": [
+    {
+      "path": "analyze.py",
+      "bytes": 10781,
+      "sha256": "b562f8ac85d5a43756b29d1ac1eb915d57c29bf140cce1442f50f414b4578267"
+    },
+    {
+      "path": "build.ps1",
+      "bytes": 5858,
+      "sha256": "f09aec5b2975e8b5765a6914cbe520cc5f7ee1f40f97e427376594999ef0657d"
+    },
+    {
+      "path": "Cargo.lock",
+      "bytes": 8196,
+      "sha256": "c1ee4c3a1a99276173c77de3a06c114e1cec2496a3c0356fb54f0a908f7de2c5"
+    },
+    {
+      "path": "Cargo.toml",
+      "bytes": 419,
+      "sha256": "960ace4b21fee3c3726322c8653c324adcbda7355a2ad2282f17fe3fc34f900c"
+    },
+    {
+      "path": "lock-origin.json",
+      "bytes": 5577,
+      "sha256": "bfb86b83f10f7675b12c8abb3ee72adec4bd0f58198c9a66512562e665fdf93e"
+    },
+    {
+      "path": "probe.hlsl",
+      "bytes": 820,
+      "sha256": "80866eef0426de0271e46b69b11360391f9a043178b860be6f49e26900ce6b4c"
+    },
+    {
+      "path": "seal.py",
+      "bytes": 5533,
+      "sha256": "29689614afd07e7b65d71d655c2329e6e734d9c7db321b30cce3ebfa6c07008b"
+    },
+    {
+      "path": "seed-lock.py",
+      "bytes": 2374,
+      "sha256": "fbf84620c6f6343e4fa38f73020afd11695085cbe5c776efcae36606d20c9401"
+    },
+    {
+      "path": "src/main.rs",
+      "bytes": 16140,
+      "sha256": "347229ccf80b700da14a15050e60d1e1a95b68cd174f237234a4995d99c9c8e9"
+    }
+  ],
+  "baselineProtectedArtifacts": [
+    {
+      "path": "D:\\projects\\GCode\\output\\native-blend-readback-r16-build-attempt03\\native-blend-readback.exe",
+      "bytes": 807936,
+      "sha256": "24a9a88f8fb9b9a9c1b2bd047670985c62e6ff5c16f2fc9db1aee68076b87ae5"
+    },
+    {
+      "path": "D:\\projects\\GCode\\output\\native-blend-readback-r16-build-attempt03\\provenance.json",
+      "bytes": 10931,
+      "sha256": "d9873b051365be7044b811b4e970c1d1e282cf736621f8734542f8458cc8155f"
+    },
+    {
+      "path": "D:\\projects\\GCode\\output\\native-blend-readback-r16-run-attempt02\\readbacks.json",
+      "bytes": 393863,
+      "sha256": "d686487603d546f3b15928902d41143fa392691e5f2a97d2727b8f0ad2426b84"
+    },
+    {
+      "path": "D:\\projects\\GCode\\output\\native-blend-readback-r16-run-attempt02\\result.json",
+      "bytes": 29748,
+      "sha256": "9fafa5b61536430fd47b463f1cd7c37c858af9be2c9385fe690814d18e3e50c2"
+    },
+    {
+      "path": "D:\\projects\\GCode\\output\\native-blend-readback-r16-run-attempt02\\seal.json",
+      "bytes": 18648,
+      "sha256": "682a09370fd324659387b80b26d8aa7ae970acfbcb820ba69c0ed7ffbcc217e3"
+    }
+  ],
+  "baselineByteBackup": "D:\\projects\\GCode\\output\\native-blend-readback-r17-source-attempt01\\r16-source-byte-backup",
+  "dependencyPolicy": "Cargo.toml and Cargo.lock remain byte-exact R16 inputs; no dependency added/resolved/downloaded",
+  "requestModes": {
+    "baseline": [
+      "0xb100",
+      "0xb000"
+    ],
+    "11_1": [
+      "0xb100"
+    ],
+    "11_0": [
+      "0xb000"
+    ]
+  },
+  "actualGUIEvidence": {
+    "gpuiChosen": "0xb100",
+    "mygoChosen": "0xb000",
+    "scope": "new diagnostic GUI binaries only; no-window probe creates another device and measures its own adapter/LUID"
+  },
+  "unchangedNumericBlocks": {
+    "target-readback-blend-draw": {
+      "bytes": 5042,
+      "sha256": "7d608f5bb7bcccb1886c5b54c26107aad25014a7bc25b2544fafe89d23e6a4f6",
+      "byteExact": true
+    },
+    "shader-profiles-numeric-cases": {
+      "bytes": 5074,
+      "sha256": "1a2463d93bd64b941a3df5945e7a1f5c41e73deec1abb53bf368cb2977204cf8",
+      "byteExact": true
+    }
+  },
+  "oldAnalysisAndSealScripts": "Not copied as runnable R17 tools; their hard-coded R16 evidence links are preserved only in baseline byte backup"
+}

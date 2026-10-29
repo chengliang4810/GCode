@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "phase": "R16-file-image-detail-eligibility-timed-hover-native-blend-readback",
+  "recordedAtUTC": "2026-10-28T18:37:16.0870235Z",
+  "branch": "codex/isolated-worktree",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "goalStatus": "active",
+  "completeUIParity": false,
+  "status": "File image alpha and absent-detail title tooltip corrected; measured native supplements and controlled GPU readback verified; full parity pending",
+  "sourceManifest": {
+    "path": "output/resume-validation/tabstrip-r16-final-source-hashes.json",
+    "sha256": "9754888e3204171b9d30cb34fd9e0e82075978c319372429796802cd75a961c4"
+  },
+  "sourceDelta": {
+    "path": "output/resume-validation/tabstrip-r16-final-source-delta.json",
+    "sha256": "079755aff2f44623bf39c8dabf2904ea30370f5c34cf19db0b802c3046ebe0ec"
+  },
+  "sourceCount": 300,
+  "existingChanged": 11,
+  "added": 13,
+  "removed": 0,
+  "sourceBackup": "output/resume-validation/_source/tabstrip-r16-sealed",
+  "appEmbeddedBuildManifest": {
+    "path": "output/tabstrip-r16-go-fixture/attempt-01/source-hashes.json",
+    "sha256": "c26c3d9adf3639caf9d5812807e5cd551b73ce01428f629c227f0ae88d491d63"
+  },
+  "appEmbeddedBuildInputs": 951,
+  "resourceManifest": {
+    "path": "output/tabstrip-r16-root/package-resource-inputs.json",
+    "sha256": "3cba33df457ecdad5168dcf0cef09bfdecbd4f47dcfe15bfd5dab3bc45aeca4c"
+  },
+  "packageResourceInputs": 52,
+  "productionChanges": [
+    "Idle inactive file image leaf opacity.78; selected1; distinct from generic.7 and unchanged state/hit geometry",
+    "Details use real file path/current browser URL; no fallback generic title; real PR detail remains pending"
+  ],
+  "framework": {
+    "version": "v0.6.4",
+    "revision": "zeron-native-ui.6",
+    "treeSHA256": "cefb5a5c8694f538ac4caeecb080d2fa96adbaf15c6c12e234e1a4bd06cce914",
+    "files": 1836,
+    "patches": 11,
+    "changed": false,
+    "check": {
+      "path": "output/tabstrip-r16-root/framework-check.log",
+      "sha256": "def71f6bea489c34881ec706323d27cf16e2469b14d1a96cdaef16470d9a092c"
+    }
+  },
+  "implementation": {
+    "path": "output/tabstrip-r16-file-icon/result.json",
+    "sha256": "2769a572ee19b2ffec8f6e1303f35f3062083c7b5f63870ddec83b4667b39001"
+  },
+  "timedGoFixture": {
+    "path": "output/tabstrip-r16-timed-fixture/attempt-01/result.json",
+    "sha256": "554a20492f855fea1a4ffcb2d8370be88b6dc815364eb02bfcd1696b76bf221f"
+  },
+  "originalFixtureBuild": {
+    "path": "output/tabstrip-reference-build-r16-attempt01/provenance.json",
+    "sha256": "10e26126cf0331905c2fc9e19a81bdd6cf4ab7c77c63d873d8750dbc33b1ef22"
+  },
+  "originalCLIRejectionGuards": {
+    "path": "output/tabstrip-r16-root/reference-cli-guards.json",
+    "sha256": "4593cbea8b7caab3390a193b2b622729c26c7e4013dbca9679e171b9cc4e8f49"
+  },
+  "sourceReview": {
+    "path": "output/tabstrip-r16-tooltip-review/candidate-review.json",
+    "sha256": "3e6fcc0da303a5771356269c964bae6606eaa56cbbdfab04f3d981da04982f94"
+  },
+  "sourceTooltipPreflight": {
+    "path": "output/tabstrip-r16-tooltip-review/preflight.json",
+    "sha256": "d13d3db7d6ada6285d4943f1a5e8d9710ef6e3b6abcf05e6ea9aa2fa1c0d9d0c"
+  },
+  "checks": {
+    "path": "output/tabstrip-r16-root/final-r2-checks.json",
+    "sha256": "c7b8877b929aeba7ccbb807f468f2d8b78f85782a441696bdb1c1a3665663989"
+  },
+  "extraChecks": {
+    "path": "output/tabstrip-r16-root/extra-checks.json",
+    "sha256": "a5e68b75b9a3d4c76586532758b0b6987e0c83b0ad5fb0d2ef1af49239663d87"
+  },
+  "native": {
+    "path": "output/resume-validation/tabstrip-r16-native-evidence.json",
+    "sha256": "f8deed30e6978fa0d1299e2a6bd955f388191850265edb3c856c61763c95e015"
+  },
+  "nativeInputAttestation": {
+    "path": "output/tabstrip-r16-root/native-input-attestation.json",
+    "sha256": "97d814e9f2c94b5d6e56530eb904791d3d64f36a8330f867fcc50c7a886d0958"
+  },
+  "styleNativeReview": {
+    "path": "output/tabstrip-r16-native-review/result.json",
+    "sha256": "825928578b7445ca9890b90135c2be40b0ce0f7b9fa687a646838c05fd5cfe41"
+  },
+  "baselineAndReleaseReview": {
+    "path": "output/tabstrip-r16-native-review/baseline-release-review.json",
+    "sha256": "4f6ece86e1ab0877dd81323278159a61f7d9e25584ce755519b79b098aea8604"
+  },
+  "nativeSummary": {
+    "actualScale": 2,
+    "fixtureTrials": 6,
+    "success": 5,
+    "failed": 1,
+    "newRawPNGs": 44,
+    "reusedReferencePNGs": 36,
+    "failure": "Go01 pointer220,61 to213,43.5 during16ms sampled dwell; native foreground remained own; no PNG/successmanifest",
+    "style": "2themes x2 styles x2 frameworks; successful measured dwell1.0079848..1.0171901s; poll-limited, not350ms proof",
+    "fileIcon": "FullPNG354,180 darkRef=Go164,172,181 lightRef=Go129,141,159; fulliconAA residual remains",
+    "sideChat": "matured1s title-tooltip absent both themes/frameworks",
+    "fileTooltip": "real path present both; source right/below vsGo above/inverse default style retained"
+  },
+  "baselineComparison": {
+    "path": "output/tabstrip-comparison-r16-baseline-01/comparison.json",
+    "sha256": "1f7ad0253610d23d9a859494253d0548bea5eae445e40c74474a37a2d72d695a"
+  },
+  "baselineSummary": {
+    "path": "output/tabstrip-r16-root/baseline-summary.json",
+    "sha256": "458c9aa05b73fe6faf200937030130477ee9fdf5eb8b422708d97139bc58b177"
+  },
+  "baselineReference": "R14 source02 original raw36 reused unchanged",
+  "goFixtureBinarySHA256": "ffc06934068cc12a58f2aea88082f0e9711e301fa9b1f5e9449f627db50b43c5",
+  "originalStyleBinarySHA256": "8782cda9352b7623b8a1adc881e317876b53deec4982c409925d7799a021650b",
+  "reusedComparatorGuards": {
+    "path": "output/tabstrip-comparison-tests-20261028-171626-179/result.json",
+    "sha256": "0767638baa59935cf784fa58da39baa57031e68b0a639aa7575ccc470ae3091e",
+    "cases": 69,
+    "rerunInR16": false,
+    "liveScriptUnchanged": true,
+    "visualAcceptance": false
+  },
+  "gpu": {
+    "seal": {
+      "path": "output/native-blend-readback-r16-run-attempt02/seal.json",
+      "sha256": "682a09370fd324659387b80b26d8aa7ae970acfbcb820ba69c0ed7ffbcc217e3"
+    },
+    "result": {
+      "path": "output/native-blend-readback-r16-run-attempt02/result.json",
+      "sha256": "9fafa5b61536430fd47b463f1cd7c37c858af9be2c9385fe690814d18e3e50c2"
+    },
+    "review": {
+      "path": "output/tabstrip-r16-gpu-independent-review/result.json",
+      "sha256": "9e60c4e5e641351054f2c133f593b2a0a483ae10f7dd41c919ef12b15c08309b"
+    },
+    "cases": 54,
+    "hardware": "Intel Arc B580 / LUID0x12a5a / featurelevel11_1 / driver32.0.101.9033",
+    "lightBGRA8": "clear243,243,245,255 -> straight222,222,223,255; premul anddual222,222,224,255",
+    "lightFloat": "allthree modes bit-identical under3 compiler profiles",
+    "darkFloat": "blue1ULP retained",
+    "actualUIAdaptersBound": false,
+    "productOrFrameworkChanged": false,
+    "conclusion": "controlled light fixed-point RT blend decomposition reproduced; not dual-source specific; no screenshot-tuned channels or claim of complete app root-cause closure"
+  },
+  "packages": {
+    "build": {
+      "path": "output/tabstrip-r16-root/package-build.json",
+      "sha256": "805b87ad5c3bb483c06ce9e09e26f5e5ec555b619df399547bee4fe89b31f01e"
+    },
+    "manifest": {
+      "path": "output/resume-validation/tabstrip-r16-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "c7b11fbdc5e5415e4121b4d6e9f2a985c3748f3b832bceeaa3392ba2a9ea58f1"
+    },
+    "review": {
+      "path": "output/tabstrip-r16-package-review/result.json",
+      "sha256": "66cced99c01605e99e4bb9812256132244365ffe744d341d34d5a3235ab78866"
+    },
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "windowsExecutableSHA256": "f5e4159f812a1c17e71fd1a89546dbc48571a79e757868757ce548b9c1b55e0e",
+    "nativeReleaseDirectory": "output/resume-validation/tabstrip-r16-release-native",
+    "exactWindowsNative": "Files/README/layout opening, actual file detail hover, reselection/contextclose, settledonlyREADME, AltF4exit0/stderr0/DPI192",
+    "installerExecuted": false,
+    "macNative": "pending"
+  },
+  "documents": {
+    "path": "output/resume-validation/tabstrip-r16-document-hashes.json",
+    "sha256": "300517b274236f5810a5659947b4c6d5b4083c7a9267dab239c769d8fb7decce"
+  },
+  "historical": {
+    "R15": {
+      "path": "reference/validation/tabstrip-r15-result.json",
+      "sha256": "ec26596f50b01e8f480785f5c1187ff9d255a56b3e70a8a9169453a7584fa92f"
+    },
+    "R15Source": {
+      "path": "output/resume-validation/tabstrip-r15-final-source-hashes.json",
+      "sha256": "ecfa364e39cb5430585ccdd38602b0a9455c188ebe2b5809f6d8fa444221c6f5"
+    },
+    "R15Documents": {
+      "path": "output/resume-validation/tabstrip-r15-document-hashes.json",
+      "sha256": "a313e028c3e59d2c069287e8e661719f9862b0b99a6bcf11e324e907a06a0860"
+    },
+    "firstNativeIndexWrongManifestName": {
+      "path": "output/resume-validation/tabstrip-r16-native-evidence-attempt01.json",
+      "sha256": "1866c3084857443c66e97ef363d5316d7e5ccef8cc1686026d79bbeb423614fb"
+    }
+  },
+  "documentationCorrections": [
+    "R15 dwell-only explanation insufficient: frozen SideChat detailNone confirms semantic gap; old report/PNGs preserved and corrected additively",
+    "R15 missing file.78 corrected, generic.7 is separate",
+    "R15 light blend hypothesis now reproduced by no-window same-device control, actual app adapters still unbound",
+    "Go01 generic error claims PNG retained but dwell failed before WGC: actual directory haszeroPNG; root records disk truth",
+    "First root native index looked for non-existent capture-manifest instead of evidence.json; firstcandidate retained, finalledger verifies exit/manifest consistency",
+    "Source R11 fallback comment/code inconsistency remains documented; original runtime code remains authority"
+  ],
+  "remaining": [
+    "Actual UI adapter/feature level binding and opt-in general straight-alpha path with tests/native comparisons",
+    "Detail350ms lifecycle/show-time point+actualnatural-size flip/sourcecard style; close500ms and realPR detail",
+    "Native glass subtree alpha mask, glyph/text/rounded coverage and fractionalDPI matrix",
+    "Original resize/takeover/reveal interaction expectation",
+    "Complete Windows IME/clipboard/browser/accessibility/performance and MacIntel/ARM native/fullscene acceptance"
+  ],
+  "commitOrPushPerformed": false
+}

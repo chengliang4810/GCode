@@ -1,25 +1,45 @@
 # 2026-10-28 换机交接与进度
 
+> 同日新机器已恢复执行。本文保留原交接基线；当前进展与实际新机路径见
+> `machine-resume.md`。2026-10-29 用户已暂停继续优化；后续 i18n、账户菜单和侧边
+> 聊天入口修复已完成，现创建本地 UI 基线提交，下一阶段实现真实后端。见
+> `ui-checkpoint.md`；不恢复原视觉一致性目标。
+
+最新R16已修文件图片`.78`和无详情标签的标题提示，五门槛与四目标包校验通过。
+计时原图保留详情提示位置/样式差异；GPU控制复现浅色1级差，实际UI适配器仍待绑定。
+见 `audit-tabstrip-file-tooltip.md` 和 `reference/validation/tabstrip-r16-result.json`。
+旧路径、`.2`表及R15原图保留各阶段范围，完整视觉与Mac实机仍待验收。
+
 ## 当前目标和状态
 
 完全复刻 Zeron v0.2.128 的桌面界面、布局、视觉状态与交互。
 源码事实源固定为 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`，不自动追新。
 Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数据全部由有真实
-状态变化的进程内 Go mock 服务提供。保留 Zeron 品牌/英文，移除所有语音入口。
+状态变化的进程内 Go mock 服务提供。保留 Zeron 品牌，移除所有语音入口。2026-10-29 起按用户新要求默认简体中文，
+英文为可选语言；旧英文截图和参考 fixture 保留历史验收范围。
 
-**当前为实现与验收进行中，未达到“完全一致”。** 用户因本机 Computer Use
-和人工操作冲突，要求整理资料、提交推送后暂停目标，在另一台机器恢复。
-新机器先完成下面的环境核对与基线检查，再明确恢复执行目标及桌面操作。
+**当前为实现与验收进行中，未达到“完全一致”。** 原交接时用户要求整理资料、
+提交推送后暂停；同日已明确“已换机，恢复目标”，恢复条件已满足。以下版本表
+保留原交接基线；最新封存 R16 为 MyGo `.6`（1,836文件/11补丁），当前源码已接入
+尚未发布验收的 [R17 `.9`](audit-tabstrip-tooltip-primitives.md)：1,864文件、14补丁，
+树为`27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。基于2931项正式输入
+的新pin与五门槛、canonical四目标候选包构建/校验已通过；installer、Mac原生和
+完整视觉/发布接受仍待完成。旧C4/AX包及V5隔离原图保留原身份。准确当前指纹与阶段证据见 `machine-resume.md` 和
+`audit-tabstrip-tooltip-primitives.md`；`reference/validation/resume-result.json`仍为R16历史hub，
+保留原指纹，不将其改称当前`.9`源码记录。
 
-## 仓库与固定版本
+## 仓库与固定版本（原交接基线）
+
+下表保留原交接时的版本事实；当前MyGo以本页上方`.9`、`mygo-patches.md`与
+实际`third_party/mygo.lock.json`为准，不能将表内`.2`当作当前依赖。
 
 | 项目 | 固定信息 |
 | --- | --- |
 | 工作仓库 | `https://github.com/chengliang4810/GCode.git` |
 | 分支 | `codex/isolated-worktree`；不替换 main，不改其他本机 checkout |
 | Go | 1.27.3；go.mod 已固定，允许 Go toolchain 自动下载 |
-| 实际 MyGo 依赖 | v0.6.4 + `zeron-native-ui.2`，仓库内 `third_party/mygo` |
-| MyGo 依赖源码 SHA | `fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e`，1,830 文件、5 个补丁 |
+| 原交接 MyGo 依赖 | v0.6.4 + `zeron-native-ui.2`，仓库内 `third_party/mygo` |
+| 原交接 MyGo 源码 SHA | `fd197203233f09d5cede40fc69fad6e6bac8f6dc797e1770f1637e4687ab133e`，1,830 文件、5 个补丁 |
 | 原版参考仓库 | `https://github.com/zeronsh/zeron.git`，上述 0.2.128 提交，只读 |
 | 官方 MyGo 示例参考 | `https://github.com/egoist/mygo.git`，`43199d0b0fb95fd0b71e5a225d2807c04ebcc609` |
 | 桌面目标 | Windows 11 22H2+ amd64；macOS 13+ amd64/arm64，分别实机验收 |
@@ -45,11 +65,12 @@ Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数�
 
 1. 建立同尺寸/DPI/主题/时间/数据的独立参考截图，先解决公共几何、字体、
    材质和控件，再比较整窗。现有实现图不能当参考图或用于自己证明 SSIM。
-2. 完成源码 composer compact/expanded/dock 与 footer/usage ring：准确常量、
-   阈值和源码函数在 `audit-composer.md`。此次只保留已验证的共用 surface/
-   独立控制器，未验证的 compact 试接线已撤掉，当前仍不是原版全部布局。
-3. 主/侧 composer 根据所选 device 消费 `Integrations.Providers` 的
-   Installed/Enabled，避免 remote 会话误用 local 开关；侧聊 working trailer 待接。
+2. 新机已实现 compact/expanded/dock 与 typed footer/usage ring；继续完整
+   footer、动画/材质与多DPI原生验收。R6 picker 3/8、footer组件28/28超过
+   数值门槛，均不等于视觉验收。准确细项见 `machine-resume.md` 与相关审计。
+3. 主/侧 composer 的 device-scoped Installed/Enabled 和侧聊 working trailer
+   已在新机接入并通过行为回归；分别见 `audit-composer-device.md` 和
+   `machine-resume.md`。配对视觉与完整原生验收仍待完成。
 4. 原版搜索的独立文件名/内容返回时序、索引/错误状态、CRUD 后重查、长树
    虚拟化/多选/Git 装饰；新项目卷/Home 索引/补全/Cloud clone 等详见命令审计。
 5. Providers 原版设备菜单、账号整行切换、更新调度、Cloud off 导航自动 enable

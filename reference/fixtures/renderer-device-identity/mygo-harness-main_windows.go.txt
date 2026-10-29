@@ -1,0 +1,497 @@
+//go:build windows && (amd64 || arm64) && uifixture && mygo_renderer_device_diag
+
+package main
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"image/png"
+	"io/fs"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"reflect"
+	"runtime/debug"
+	"sort"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"gcode/internal/workbench"
+	"github.com/egoist/mygo"
+	"github.com/egoist/mygo/ui"
+)
+
+var diagnosticSourceStamp = "unstamped"
+
+type treeIdentity struct {
+	Root string `json:"root"`
+	TreeSHA256 string `json:"treeSHA256"`
+	FileCount int `json:"fileCount"`
+}
+
+type sourceManifest struct {
+	SchemaVersion int `json:"schemaVersion"`
+	Kind string `json:"kind"`
+	App treeIdentity `json:"app"`
+	MyGo treeIdentity `json:"mygo"`
+	BaseTreeSHA256 string `json:"baseTreeSHA256"`
+}
+
+type buildManifest struct {
+	SchemaVersion int `json:"schemaVersion"`
+	DiagnosticBinary bool `json:"diagnosticBinary"`
+	SourceManifestPath string `json:"sourceManifestPath"`
+	SourceManifestSHA256 string `json:"sourceManifestSHA256"`
+	BinarySHA256 string `json:"binarySHA256"`
+	MainPackage string `json:"mainPackage"`
+	Module string `json:"module"`
+	Toolchain string `json:"toolchain"`
+	MyGoReplacement string `json:"mygoReplacement"`
+}
+
+type options struct {
+	out, manifest, manifestSHA, exeSHA, bridge, bridgeSHA, runID string
+	appearance string
+	width, count int
+	fraction, scale float64
+	matrix bool
+	sampleTimeout time.Duration
+}
+
+func main() {
+	if err := run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	var o options
+	flag.StringVar(&o.out, "out-dir", "", "New absolute output directory")
+	flag.StringVar(&o.manifest, "build-manifest", "", "Sealed diagnostic build manifest")
+	flag.StringVar(&o.manifestSHA, "expected-build-manifest-sha256", "", "Expected build manifest SHA256")
+	flag.StringVar(&o.exeSHA, "expected-exe-sha256", "", "Externally sealed executable SHA256")
+	flag.StringVar(&o.bridge, "capture-bridge", "", "Absolute existing WGC bridge DLL")
+	flag.StringVar(&o.bridgeSHA, "expected-bridge-sha256", "", "Expected WGC bridge SHA256")
+	flag.StringVar(&o.runID, "run-id", "", "Explicit unique run identity")
+	flag.StringVar(&o.appearance, "appearance", "light", "light or dark")
+	flag.IntVar(&o.width, "host-width", 400, "400 or 220 DIP")
+	flag.IntVar(&o.count, "count", 2, "0, 2 or 6 tabs")
+	flag.Float64Var(&o.fraction, "scroll-fraction", 0, "0, .5 or 1")
+	flag.Float64Var(&o.scale, "expected-scale", 2, "Expected native scale: 1 or 2")
+	flag.BoolVar(&o.matrix, "matrix", false, "Capture the 36 baseline scenes")
+	flag.DurationVar(&o.sampleTimeout, "sample-timeout", 20*time.Second, "Per fresh-sample deadline, at most 30s")
+	flag.Parse()
+	if flag.NArg() != 0 || o.runID == "" || len(o.runID) > 128 || strings.ContainsAny(o.runID, "\x00\r\n") {
+		return errors.New("explicit run-id and no positional arguments are required")
+	}
+	if o.scale != 1 && o.scale != 2 || o.sampleTimeout <= 0 || o.sampleTimeout > 30*time.Second {
+		return errors.New("invalid scale or sample-timeout")
+	}
+	if o.fraction != 0 && o.fraction != .5 && o.fraction != 1 {
+		return errors.New("scroll-fraction must be 0, .5 or 1")
+	}
+	first := workbench.TabStripFixtureScene{Appearance: o.appearance, HostWidth: o.width, Count: o.count, ScrollFraction: float32(o.fraction)}
+	if err := first.Validate(); err != nil { return err }
+	if err := freshOutput(o.out); err != nil { return err }
+	startedAt := time.Now()
+	identity, err := verifyInputs(o)
+	if err != nil {
+		return errors.Join(err, writeFreshJSON(filepath.Join(o.out, "startup-error.json"), map[string]any{"error": err.Error(), "diagnosticBinary": true}))
+	}
+	for key, name := range map[mygo.PathName]string{mygo.PathUserData: "profile", mygo.PathCache: "cache", mygo.PathLogs: "logs", mygo.PathTemp: "temp"} {
+		path := filepath.Join(o.out, name)
+		if err := os.Mkdir(path, 0755); err != nil { return err }
+		mygo.App.SetPath(key, path)
+		if key == mygo.PathTemp {
+			if err := os.Setenv("TMP", path); err != nil { return err }
+			if err := os.Setenv("TEMP", path); err != nil { return err }
+		}
+	}
+	all := []workbench.TabStripFixtureScene{first}
+	if o.matrix {
+		all = nil
+		for _, appearance := range []string{"dark", "light"} {
+			for _, width := range []int{400, 220} {
+				for _, count := range []int{0, 2, 6} {
+					for _, fraction := range []float32{0, .5, 1} {
+						all = append(all, workbench.TabStripFixtureScene{Appearance: appearance, HostWidth: width, Count: count, ScrollFraction: fraction})
+					}
+				}
+			}
+		}
+	}
+	fixture, err := workbench.NewTabStripFixture(all[0])
+	if err != nil { return err }
+	defer fixture.Close()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	done := make(chan error, 1)
+	var workers sync.WaitGroup
+	workerStarted := false
+	mygo.App.SetName("Zeron R17 renderer diagnostic")
+	mygo.Theme.SetSource(mygo.ThemeSystem)
+	mygo.App.WhenReady(func() {
+		sampler := &viewSampler{fixture: fixture}
+		window := mygo.NewWindow(mygo.WindowOptions{Title: "", X: 40, Y: 40, Width: 840, Height: 560, UseContentSize: true, Content: ui.View(sampler.View)})
+		fixture.UseNativeWindow(window)
+		window.SetTitle("") // NewWindow otherwise fills an empty Title from App.Name.
+		window.OnClosed(cancel)
+		window.Show()
+		hwnd := window.NativeHandle()
+		workerStarted = true
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			workerErr := captureScenes(ctx, window, hwnd, sampler, all, o, identity, startedAt)
+			done <- workerErr
+			mygo.App.Quit()
+		}()
+	})
+	runErr := mygo.App.Run()
+	cancel()
+	workers.Wait()
+	if !workerStarted { return errors.Join(runErr, errors.New("App.Run returned without starting the diagnostic worker")) }
+	return errors.Join(runErr, <-done)
+}
+
+func digest(data []byte) string { value := sha256.Sum256(data); return hex.EncodeToString(value[:]) }
+
+func validSHA(value string) bool {
+	b, err := hex.DecodeString(value)
+	return err == nil && len(b) == 32 && value == strings.ToLower(value)
+}
+
+func checkedBytes(path, expected string) ([]byte, error) {
+	if !filepath.IsAbs(path) || !validSHA(expected) { return nil, errors.New("identity requires absolute path and lowercase SHA256") }
+	for entry := path; ; entry = filepath.Dir(entry) {
+		info, err := os.Lstat(entry)
+		if err != nil { return nil, err }
+		if info.Mode()&os.ModeSymlink != 0 || isReparse(info) { return nil, fmt.Errorf("input path redirects: %s", entry) }
+		if parent := filepath.Dir(entry); parent == entry { break }
+	}
+	data, err := os.ReadFile(path)
+	if err == nil && digest(data) != expected { err = fmt.Errorf("input SHA256 differs: %s", path) }
+	return data, err
+}
+
+func verifyTree(expected treeIdentity) error {
+	if !filepath.IsAbs(expected.Root) || !validSHA(expected.TreeSHA256) || expected.FileCount <= 0 { return errors.New("invalid source tree identity") }
+	var rows []string
+	err := filepath.WalkDir(expected.Root, func(path string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil { return walkErr }
+		info, err := os.Lstat(path)
+		if err != nil { return err }
+		if info.Mode()&os.ModeSymlink != 0 || isReparse(info) { return fmt.Errorf("source redirects: %s", path) }
+		if entry.IsDir() { return nil }
+		if !info.Mode().IsRegular() { return fmt.Errorf("nonregular source: %s", path) }
+		data, err := os.ReadFile(path)
+		if err != nil { return err }
+		relative, err := filepath.Rel(expected.Root, path)
+		if err != nil { return err }
+		rows = append(rows, filepath.ToSlash(relative)+"\x00"+digest(data)+"\n")
+		return nil
+	})
+	if err != nil { return err }
+	sort.Strings(rows)
+	if len(rows) != expected.FileCount || digest([]byte(strings.Join(rows, ""))) != expected.TreeSHA256 { return fmt.Errorf("source tree changed: %s", expected.Root) }
+	return nil
+}
+
+func verifyInputs(o options) (map[string]any, error) {
+	buildBytes, err := checkedBytes(o.manifest, o.manifestSHA)
+	if err != nil { return nil, err }
+	var build buildManifest
+	if err := json.Unmarshal(buildBytes, &build); err != nil { return nil, err }
+	if build.SchemaVersion != 1 || !build.DiagnosticBinary || build.MainPackage != "gcode/cmd/renderer-device-r17" || build.Module != "gcode" || build.Toolchain != "go1.27.3" || build.BinarySHA256 != o.exeSHA || !validSHA(o.exeSHA) {
+		return nil, errors.New("unexpected diagnostic build identity")
+	}
+	executable, err := os.Executable()
+	if err != nil { return nil, err }
+	if _, err := checkedBytes(executable, o.exeSHA); err != nil { return nil, err }
+	sourceBytes, err := checkedBytes(build.SourceManifestPath, build.SourceManifestSHA256)
+	if err != nil { return nil, err }
+	if diagnosticSourceStamp == "unstamped" || diagnosticSourceStamp != build.SourceManifestSHA256 { return nil, errors.New("missing/wrong separate diagnostic source stamp") }
+	var source sourceManifest
+	if err := json.Unmarshal(sourceBytes, &source); err != nil { return nil, err }
+	if source.SchemaVersion != 1 || source.Kind != "r17-mygo-diagnostic-source-variant" || !validSHA(source.BaseTreeSHA256) || !strings.EqualFold(filepath.Clean(source.MyGo.Root), filepath.Clean(build.MyGoReplacement)) { return nil, errors.New("unexpected source manifest identity") }
+	if err := verifyTree(source.App); err != nil { return nil, err }
+	if err := verifyTree(source.MyGo); err != nil { return nil, err }
+	info, ok := debug.ReadBuildInfo()
+	if !ok || info.Path != build.MainPackage || info.Main.Path != build.Module || info.GoVersion != build.Toolchain { return nil, errors.New("unexpected executable main/module/toolchain") }
+	found, tagged := false, false
+	for _, dep := range info.Deps {
+		if dep.Path == "github.com/egoist/mygo" {
+			if found || dep.Version != "v0.6.4" || dep.Replace == nil || dep.Replace.Version != "(devel)" || !strings.EqualFold(filepath.Clean(dep.Replace.Path), filepath.Clean(build.MyGoReplacement)) { return nil, errors.New("unexpected actual MyGo module replacement") }
+			found = true
+		}
+	}
+	for _, setting := range info.Settings {
+		if setting.Key == "-tags" {
+			tags := strings.Split(setting.Value, ",")
+			seen := map[string]bool{}
+			for _, tag := range tags { seen[tag] = true }
+			tagged = len(seen) == 2 && seen["uifixture"] && seen["mygo_renderer_device_diag"]
+		}
+	}
+	if !found || !tagged || mygo.FrameworkPatch().SourceSHA256 != "" { return nil, errors.New("diagnostic must use its own identity, exact tags and empty inherited development SHA") }
+	if _, err := checkedBytes(o.bridge, o.bridgeSHA); err != nil { return nil, err }
+	return map[string]any{"diagnosticBinary": true, "canonicalRelease": false, "oldR16BinaryIdentityProven": false, "capturedFrameProducerProven": false, "buildManifestSHA256": o.manifestSHA, "sourceManifestSHA256": build.SourceManifestSHA256, "binarySHA256": o.exeSHA, "bridgeSHA256": o.bridgeSHA, "baseTreeSHA256": source.BaseTreeSHA256, "variantTreeSHA256": source.MyGo.TreeSHA256, "appTreeSHA256": source.App.TreeSHA256, "frameworkBaseDeclaration": mygo.FrameworkPatch()}, nil
+}
+
+type queryResult struct {
+	RequestID uint64 `json:"requestId"`
+	SceneGeneration uint64 `json:"sceneGeneration"`
+	Stage string `json:"stage"`
+	UIFrame uint64 `json:"uiFrame"`
+	ViewPassEpoch uint64 `json:"viewPassEpoch"`
+	Attempts int `json:"attempts"`
+	QueryAt time.Time `json:"queryAt"`
+	RequestedAt time.Time `json:"requestedAt"`
+	InstalledAt time.Time `json:"installedOnUiThreadAt"`
+	RequestedToInstalledNS int64 `json:"requestedToInstalledNanoseconds"`
+	InstalledToQueryNS int64 `json:"installedToQueryNanoseconds"`
+	AttemptHistory []queryAttempt `json:"attemptHistory"`
+	AttemptHistoryDropped int `json:"attemptHistoryDropped"`
+	Device map[string]any `json:"device"`
+	Error string `json:"error,omitempty"`
+}
+
+type queryAttempt struct {
+	UIFrame uint64 `json:"uiFrame"`
+	ViewPassEpoch uint64 `json:"viewPassEpoch"`
+	GatePassed bool `json:"gatePassed"`
+	Error string `json:"error,omitempty"`
+}
+
+type sampleRequest struct {
+	id, generation, minimumFrame, minimumEpoch uint64
+	stage string
+	deadline time.Time
+	requestedAt, installedAt time.Time
+	response chan queryResult
+	latest chan queryResult
+	attempts int
+	history []queryAttempt
+	historyDropped int
+}
+
+type viewSampler struct {
+	fixture *workbench.TabStripFixture
+	pending *sampleRequest
+	nextID uint64 // Worker-only sequence; UI receives the copied ID in a request.
+}
+
+func uintCounter(value any) (uint64, bool) {
+	switch n := value.(type) {
+	case uint64: return n, true
+	case uint32: return uint64(n), true
+	case uint: return uint64(n), true
+	case int: if n >= 0 { return uint64(n), true }
+	}
+	return 0, false
+}
+
+func (s *viewSampler) View(c *ui.Context) {
+	s.fixture.View(c)
+	r := s.pending
+	if r == nil { return }
+	r.attempts++
+	device, queryErr := ui.RendererDeviceIdentity(c)
+	result := queryResult{RequestID: r.id, SceneGeneration: r.generation, Stage: r.stage, Attempts: r.attempts, QueryAt: time.Now(), RequestedAt: r.requestedAt, InstalledAt: r.installedAt, Device: device}
+	binding, bound := device["uiBinding"].(map[string]any)
+	frame, frameOK := uintCounter(binding["uiFrame"])
+	epoch, epochOK := uintCounter(binding["viewPassEpoch"])
+	result.UIFrame, result.ViewPassEpoch = frame, epoch
+	gate, _ := device["gatePassed"].(bool)
+	attempt := queryAttempt{UIFrame: frame, ViewPassEpoch: epoch, GatePassed: gate}
+	if queryErr != nil { attempt.Error = queryErr.Error() }
+	if len(r.history) < 256 { r.history = append(r.history, attempt) } else { r.historyDropped++ }
+	result.RequestedToInstalledNS = r.installedAt.Sub(r.requestedAt).Nanoseconds()
+	result.InstalledToQueryNS = result.QueryAt.Sub(r.installedAt).Nanoseconds()
+	result.AttemptHistory = append([]queryAttempt(nil), r.history...)
+	result.AttemptHistoryDropped = r.historyDropped
+	if queryErr != nil { result.Error = queryErr.Error() }
+	// Publish the newest owned snapshot even while readiness is pending. The
+	// worker can retain failure details on timeout without reading UI state.
+	select {
+	case r.latest <- result:
+	default:
+		select { case <-r.latest: default: }
+		select { case r.latest <- result: default: }
+	}
+	ready := queryErr == nil && gate && bound && frameOK && epochOK && frame > r.minimumFrame && epoch > r.minimumEpoch
+	if ready || !time.Now().Before(r.deadline) {
+		result.Error = ""
+		if !ready {
+			result.Error = "fresh current-View renderer query timed out"
+			if queryErr != nil { result.Error += ": " + queryErr.Error() }
+		}
+		s.pending = nil
+		r.response <- result // Capacity one, one sender, exactly one delivery.
+		return
+	}
+	c.After(16*time.Millisecond)
+}
+
+type observation struct {
+	Query queryResult `json:"query"`
+	State workbench.TabStripFixtureState `json:"state"`
+	Native windowMetrics `json:"native"`
+	PostViewQueueAcknowledgedAt time.Time `json:"postViewQueueAcknowledgedAt"`
+}
+
+func freshObservation(ctx context.Context, window *mygo.Window, sampler *viewSampler, generation uint64, stage string, minimumFrame, minimumEpoch uint64, scene workbench.TabStripFixtureScene, o options) (observation, error) {
+	ctx, cancel := context.WithTimeout(ctx, o.sampleTimeout)
+	defer cancel()
+	var last observation
+	for ctx.Err() == nil {
+		sampler.nextID++
+		deadline, _ := ctx.Deadline()
+		r := &sampleRequest{id: sampler.nextID, generation: generation, minimumFrame: minimumFrame, minimumEpoch: minimumEpoch, stage: stage, deadline: deadline, requestedAt: time.Now(), response: make(chan queryResult, 1), latest: make(chan queryResult, 1)}
+		window.Update(func() { r.installedAt = time.Now(); sampler.pending = r })
+		received := false
+		for !received {
+			select {
+			case last.Query = <-r.response:
+				if last.Query.Error != "" { return last, errors.New(last.Query.Error) }
+				received = true
+			case last.Query = <-r.latest:
+			case <-ctx.Done():
+				select { case last.Query = <-r.latest: default: }
+				return last, ctx.Err()
+			}
+		}
+		// This callback executes after the sampled View unwinds. It is a UI
+		// queue barrier, not a GPU/display fence or exact PNG producer proof.
+		type snapshot struct { value observation; err error }
+		done := make(chan snapshot, 1)
+		query := last.Query
+		window.Update(func() {
+			native, err := measureNativeWindow(window, o.scale, true)
+			done <- snapshot{observation{query, sampler.fixture.State(), native, time.Now()}, err}
+		})
+		select {
+		case value := <-done:
+			last = value.value
+			if value.err == nil && last.State.Ready() && last.State.Scene == scene && workbench.TabStripFixturePointerReady(last.State) && last.Native.NativeWindowActive && last.Native.ForegroundHWND == last.Native.HWND && last.Native.ClientBounds.Width == 840 && last.Native.ClientBounds.Height == 560 { return last, nil }
+		case <-ctx.Done(): return last, ctx.Err()
+		}
+		minimumFrame, minimumEpoch = last.Query.UIFrame, last.Query.ViewPassEpoch
+	}
+	return last, ctx.Err()
+}
+
+func writeFreshJSON(path string, value any) error {
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil { return err }
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	if err != nil { return err }
+	_, writeErr := file.Write(append(data, '\n'))
+	return errors.Join(writeErr, file.Close())
+}
+
+func sameDeviceSnapshots(a, b map[string]any) bool {
+	for _, key := range []string{"adapter", "featureLevelHex", "creationFlagsHex", "deviceInstanceToken", "hwnd", "ownerWindowHWND", "processId", "ownerThreadId", "queryThreadId", "actualRenderTarget", "actualSwapchain"} {
+		if !reflect.DeepEqual(a[key], b[key]) { return false }
+	}
+	return true
+}
+
+func validateRawCapture(metadata, pngBytes []byte, width, height int, hwnd uintptr, native windowMetrics, scale float64) error {
+	var raw struct {
+		SchemaVersion int `json:"schemaVersion"`
+		BridgeABI int `json:"bridgeABIVersion"`
+		Status string `json:"status"`
+		HWND string `json:"hwnd"`
+		ProcessID int `json:"processId"`
+		DPI uint32 `json:"dpi"`
+		Scale float64 `json:"scale"`
+		ClientSize [2]int `json:"clientSizePx"`
+		WindowSize [2]int `json:"windowSizePx"`
+		WindowRect [4]int `json:"windowRectScreenPx"`
+		Cropped *bool `json:"cropped"`
+		Resized *bool `json:"resized"`
+		Transformations []json.RawMessage `json:"imageTransformations"`
+		Pixels struct {
+			PixelFormat string `json:"pixelFormat"`
+			FrameSize [2]int `json:"frameSizePx"`
+			PNGSize [2]int `json:"pngSizePx"`
+			PNGBytes int `json:"pngBytes"`
+			PNGSHA256 string `json:"pngSHA256"`
+		} `json:"pixels"`
+	}
+	if err := json.Unmarshal(metadata, &raw); err != nil { return err }
+	actualHWND, err := strconv.ParseUint(raw.HWND, 0, 64)
+	if err != nil || actualHWND != uint64(hwnd) || raw.ProcessID != os.Getpid() || raw.SchemaVersion != 1 || raw.BridgeABI != 1 || raw.Status != "captured" { return errors.New("raw WGC process/window/schema identity differs") }
+	if raw.DPI != native.DPI || raw.Scale != scale || raw.ClientSize != [2]int{int(840*scale), int(560*scale)} { return errors.New("raw WGC client/DPI identity differs") }
+	if raw.Pixels.PixelFormat != "BGRA8" || raw.Pixels.FrameSize != [2]int{width, height} || raw.Pixels.PNGSize != [2]int{width, height} || raw.Pixels.PNGBytes != len(pngBytes) || raw.Pixels.PNGSHA256 != digest(pngBytes) { return errors.New("raw WGC frame/PNG dimensions or bytes differ") }
+	if raw.WindowSize[0] <= 0 || raw.WindowSize[1] <= 0 || raw.WindowSize != [2]int{raw.WindowRect[2]-raw.WindowRect[0], raw.WindowRect[3]-raw.WindowRect[1]} || raw.Cropped == nil || *raw.Cropped || raw.Resized == nil || *raw.Resized || len(raw.Transformations) != 0 { return errors.New("raw WGC extent/transformation metadata is invalid") }
+	// Full-HWND WGC size can differ from both Win32 window size and client size.
+	return nil
+}
+
+func captureScenes(ctx context.Context, window *mygo.Window, hwnd uintptr, sampler *viewSampler, scenes []workbench.TabStripFixtureScene, o options, identity map[string]any, startedAt time.Time) (resultErr error) {
+	var captures []map[string]any
+	var last any
+	defer func() {
+		if resultErr != nil {
+			resultErr = errors.Join(resultErr, writeFreshJSON(filepath.Join(o.out, "failure.json"), map[string]any{"error": resultErr.Error(), "identity": identity, "lastObservation": last, "completedCaptures": captures, "diagnosticBinary": true, "capturedFrameProducerProven": false}))
+		}
+	}()
+	var previousFrame, previousEpoch uint64
+	for index, scene := range scenes {
+		generation := uint64(index+1)
+		changed := make(chan error, 1)
+		window.Update(func() {
+			if err := sampler.fixture.SetScene(scene); err != nil { changed <- err; return }
+			window.SetContentSize(840, 560)
+			changed <- nil
+		})
+		select { case err := <-changed: if err != nil { return err }; case <-ctx.Done(): return ctx.Err() }
+		// Existing geometry/input pre-gate waits for handlers before it sends
+		// pointer messages. Its cached State is not used as a device sample.
+		state, native, err := settledState(ctx, window, hwnd, sampler.fixture, scene, o.scale)
+		last = resultSnapshot{state, native}
+		if err != nil { return err }
+		warm, err := freshObservation(ctx, window, sampler, generation, "before-warmup", previousFrame, previousEpoch, scene, o)
+		last = warm
+		if err != nil { return err }
+		before, err := freshObservation(ctx, window, sampler, generation, "before-capture", warm.Query.UIFrame, warm.Query.ViewPassEpoch, scene, o)
+		last = before
+		if err != nil { return err }
+		name := fmt.Sprintf("%02d-%s-w%d-n%d-s%g", index+1, scene.Appearance, scene.HostWidth, scene.Count, scene.ScrollFraction)
+		if err := writeFreshJSON(filepath.Join(o.out, name+".before.json"), map[string]any{"warmup": warm, "before": before}); err != nil { return err }
+		if !sameDeviceSnapshots(warm.Query.Device, before.Query.Device) { return errors.New("device snapshot identity changed between pre-capture samples") }
+		file := filepath.Join(o.out, name+".png")
+		captureStartedAt := time.Now()
+		data, err := captureNativeWindow(ctx, hwnd, o.bridge, file)
+		captureReturnedAt := time.Now()
+		if err != nil { return err }
+		after, err := freshObservation(ctx, window, sampler, generation, "after-wgc-return", before.Query.UIFrame, before.Query.ViewPassEpoch, scene, o)
+		last = after
+		if err != nil { return err }
+		if err := validateCapturedState(after.State, before.State, before.Native, after.Native); err != nil { return err }
+		if !sameDeviceSnapshots(before.Query.Device, after.Query.Device) { return errors.New("device snapshot identity changed across WGC; raw evidence retained") }
+		config, err := png.DecodeConfig(bytes.NewReader(data))
+		if err != nil { return err }
+		metadataPath := file+".capture.json"
+		metadata, err := os.ReadFile(metadataPath)
+		if err != nil { return err }
+		if err := validateRawCapture(metadata, data, config.Width, config.Height, hwnd, before.Native, o.scale); err != nil { return err }
+		record := map[string]any{"scene": scene, "sceneGeneration": generation, "beforeWarmup": warm, "before": before, "after": after, "file": filepath.Base(file), "pngSHA256": digest(data), "pixelWidth": config.Width, "pixelHeight": config.Height, "rawCaptureMetadataFile": filepath.Base(metadataPath), "rawCaptureMetadataSHA256": digest(metadata), "rawSidecarUnmodified": true, "wgcStartedAt": captureStartedAt, "wgcReturnedAt": captureReturnedAt, "wgcDurationNanoseconds": captureReturnedAt.Sub(captureStartedAt).Nanoseconds(), "afterRequestIssuedAfterWgcReturn": true, "capturedFrameProducerProven": false, "logicalViewProgressionOnly": true}
+		if err := writeFreshJSON(filepath.Join(o.out, name+".diagnostic.json"), record); err != nil { return err }
+		captures = append(captures, record)
+		previousFrame, previousEpoch = after.Query.UIFrame, after.Query.ViewPassEpoch
+	}
+	if _, err := verifyInputs(o); err != nil { return fmt.Errorf("end-of-run input identity: %w", err) }
+	return writeFreshJSON(filepath.Join(o.out, "result.json"), map[string]any{"schemaVersion": 1, "status": "new-diagnostic-binary-current-view-device-snapshots-with-wgc", "runId": o.runID, "identity": identity, "startedAt": startedAt, "completedAt": time.Now(), "captures": captures, "expectedScenes": len(scenes), "diagnosticBinary": true, "canonicalRelease": false, "oldR16BinaryIdentityProven": false, "capturedFrameProducerProven": false, "contextOrElementRetained": false, "nativeInput": "synthetic WM_MOUSEMOVE sent to own surface; receiver readiness separately checked; no OS cursor movement or foreground forcing"})
+}

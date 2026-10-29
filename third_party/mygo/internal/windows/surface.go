@@ -461,6 +461,10 @@ func (s *surface) pointer(kind platform.SurfaceEventKind, lp uintptr, button int
 	s.send(platform.SurfaceEvent{Kind: kind, X: s.toDIP(int32(x)), Y: s.toDIP(int32(y)), Button: button, Clicks: clicks, Mods: mods()})
 }
 
+// pointerMoveButtonTag preserves this actual WM_MOUSEMOVE's raw held-button
+// mask. The opt-in UI observer decodes priority; modifiers are not button facts.
+func pointerMoveButtonTag(wp uintptr) int { return -128 - int(wp&0x73) }
+
 func (s *surface) message(hwnd uintptr, m uint32, wp, lp uintptr) (uintptr, bool) {
 	switch m {
 	case wmMouseMove, wmLButtonDown, wmLButtonDblClk, wmLButtonUp, wmRButtonDown, wmRButtonDblClk, wmRButtonUp,
@@ -513,7 +517,7 @@ func (s *surface) message(hwnd uintptr, m uint32, wp, lp uintptr) (uintptr, bool
 			procTrackMouseEvent.Call(uintptr(unsafe.Pointer(&tme)))
 			s.tracking = true
 		}
-		s.pointer(platform.PointerMove, lp, 0)
+		s.pointer(platform.PointerMove, lp, pointerMoveButtonTag(wp))
 		return 0, true
 	case wmMouseLeave:
 		s.tracking = false

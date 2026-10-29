@@ -39,12 +39,12 @@ func (a *App) projectCrumbs(c *ui.Context) {
 	}
 	home := p.listing.Home
 	if home == "" || !strings.HasPrefix(current, home) {
-		ui.Text(c, current).Label("Project folder trail").SingleLine().Padding(4, 6).FontSize(design.UISize(c, 13))
+		ui.Text(c, current).Label(tr(c, "Project folder trail")).SingleLine().Padding(4, 6).FontSize(design.UISize(c, 13))
 		return
 	}
 	crumb := func(title, folder string) {
 		if folder == current {
-			ui.Text(c, title).Label("Project folder trail").SingleLine().Padding(4, 6).FontSize(design.UISize(c, 13))
+			ui.Text(c, title).Label(tr(c, "Project folder trail")).SingleLine().Padding(4, 6).FontSize(design.UISize(c, 13))
 		} else {
 			textButton(c, title).Padding(4, 6).OnClick(func() { a.projectBrowse(folder) })
 		}
@@ -243,7 +243,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 		maxResults := max(float32(100), min(float32(360), height-180))
 		top := max(float32(54), (height-maxResults-120)/2)
 		back.Background(paletteScrim(a.palette.Dark)).Justify(ui.Start).Padding(top, 0, 0)
-		panel.Label("New project picker").Width(min(560, width-32)).Radius(16).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
+		panel.Label(tr(c, "New project picker")).Width(min(560, width-32)).Radius(16).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
 		ui.Column(c).FillWidth().Children(func() {
 			placeholder := "Search devices…"
 			switch p.step {
@@ -255,7 +255,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 			var input ui.Element
 			ui.Row(c).Height(44).Padding(8, 16).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				ui.Icon(c, assets.Icon("palette-search")).Size(16, 16).TextColor(a.palette.Muted)
-				input = ui.TextInputBase(c, &p.query).Bind(&p.input).Label("New project search").Placeholder(placeholder).AutoFocus().Grow(1).MinWidth(0).FontSize(design.UISize(c, 14)).OnChange(func() {
+				input = ui.TextInputBase(c, &p.query).Bind(&p.input).Label(tr(c, "New project search")).Placeholder(tr(c, placeholder)).AutoFocus().Grow(1).MinWidth(0).FontSize(design.UISize(c, 14)).OnChange(func() {
 					p.selected = 0
 					if strings.HasSuffix(p.query, "/") {
 						for _, directory := range p.listing.Entries {
@@ -268,7 +268,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				})
 			})
 			ui.Row(c).Height(38).Padding(4, 10).Gap(2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
-				textButton(c, "New project").Padding(4, 6).OnClick(func() {
+				textButton(c, tr(c, "New project")).Padding(4, 6).OnClick(func() {
 					a.stopProjectBrowse()
 					p.step = 0
 					p.deviceID = ""
@@ -283,13 +283,13 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				if p.step == 2 {
 					icon(c, "alt-arrow-right", 12)
 					if p.pathEdit {
-						ui.TextInputBase(c, &p.typedPath).Label("Project path").AutoFocus().MinWidth(0).Grow(1).OnSubmit(func() { a.projectBrowse(p.typedPath) }).OnShortcut(0, ui.KeyEscape, func() { p.pathEdit = false })
+						ui.TextInputBase(c, &p.typedPath).Label(tr(c, "Project path")).AutoFocus().MinWidth(0).Grow(1).OnSubmit(func() { a.projectBrowse(p.typedPath) }).OnShortcut(0, ui.KeyEscape, func() { p.pathEdit = false })
 					} else {
 						ui.ScrollHorizontal(c).Grow(1).MinWidth(0).Children(func() {
 							ui.Row(c).Gap(2).Children(func() { a.projectCrumbs(c) })
 						})
 					}
-					iconButton(c, "pen", "Edit path").Size(24, 24).OnClick(func() { p.pathEdit = !p.pathEdit; p.typedPath = p.listing.Path })
+					iconButton(c, "pen", tr(c, "Edit path")).Size(24, 24).OnClick(func() { p.pathEdit = !p.pathEdit; p.typedPath = p.listing.Path })
 				}
 			})
 			rows := a.projectPickerRows()
@@ -324,7 +324,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				ui.List(c, &p.list, len(rows), func(i int) {
 					row := rows[i]
 					ui.Column(c).FillWidth().Padding(0, 8).Children(func() {
-						button := ui.ButtonBase(c).Label("Project folder: "+row.title).Height(30).FillWidth().Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).OnClick(func() { a.chooseProjectPicker(row) }).HandleInput(func(event ui.InputEvent) bool {
+						button := ui.ButtonBase(c).Label(tr(c, "Project folder: ")+tr(c, row.title)).Height(30).FillWidth().Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).OnClick(func() { a.chooseProjectPicker(row) }).HandleInput(func(event ui.InputEvent) bool {
 							if event.Kind == ui.InputPointerMove && event.Button < 0 {
 								p.selected = i
 								return true
@@ -351,16 +351,16 @@ func (a *App) newProjectDialog(c *ui.Context) {
 							}
 						})
 					})
-				}).Label("Project folders").Height(min(maxResults, float32(len(rows))*32+16)).Padding(8, 0).Gap(2).FillWidth()
+				}).Label(tr(c, "Project folders")).Height(min(maxResults, float32(len(rows))*32+16)).Padding(8, 0).Gap(2).FillWidth()
 			} else {
 				ui.Column(c).Padding(24, 16).Gap(6).Children(func() {
 					if p.loading {
-						ui.Text(c, "Loading folders…")
+						ui.Text(c, tr(c, "Loading folders…"))
 					} else if p.error != "" {
 						ui.Text(c, p.error).TextColor(a.palette.Danger)
-						textButton(c, "Retry").OnClick(func() { a.projectBrowse(p.typedPath) })
+						textButton(c, tr(c, "Retry")).OnClick(func() { a.projectBrowse(p.typedPath) })
 					} else {
-						title, hint := "No folders here", "Add this folder with "+paletteShortcut("Mod+Enter")+", or go back with ←."
+						title, hint := "No folders here", tr(c, "Add this folder with ")+paletteShortcut("Mod+Enter")+tr(c, ", or go back with ←.")
 						switch p.step {
 						case 0:
 							title, hint = "No devices found", "Try another device name."
@@ -381,7 +381,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				a.paletteKeyHint(c, "↵", "Open")
 				ui.Box(c).Grow(1)
 				if p.step == 2 {
-					textButton(c, "Add project").Disabled(p.loading || p.error != "" || p.submission != nil || p.listing.Path == "").OnClick(a.addPickedProject)
+					textButton(c, tr(c, "Add project")).Disabled(p.loading || p.error != "" || p.submission != nil || p.listing.Path == "").OnClick(a.addPickedProject)
 				}
 			})
 		})

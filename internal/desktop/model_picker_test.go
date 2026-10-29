@@ -348,6 +348,9 @@ func TestAllDisabledProvidersHaveNoAgentsButKeepExistingChatModel(t *testing.T) 
 	for i := range a.state.Providers {
 		a.state.Providers[i].Enabled = false
 	}
+	for i := range a.state.Integrations.Providers {
+		a.state.Integrations.Providers[i].Enabled = false
+	}
 	a = modelSnapshotApp(t, a.state)
 	if !a.modelNoAgents() || a.modelLabel() != "No agents available" {
 		t.Fatal("all-disabled catalog remained a perpetual loading list")
@@ -523,6 +526,9 @@ func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 		t.Fatalf("retry did not restore the catalog: %v error %q open %v texts %v", a.state.ModelCatalog, a.errorText, a.modelMenu, tt.Texts())
 	}
 	a.state.ModelCatalog = contracts.ModelCatalogState{State: contracts.CatalogNoAgents}
+	for i := range a.state.Integrations.Providers {
+		a.state.Integrations.Providers[i].Enabled = false
+	}
 	tt.Frame()
 	if !tt.HasText("No agents available") || !tt.HasText("Enable an installed agent") {
 		t.Fatal("no agents state missing")

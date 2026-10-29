@@ -1,0 +1,182 @@
+diff --git a/patch_identity.go b/patch_identity.go
+index 3adcdc1..02ffac7 100644
+--- a/patch_identity.go
++++ b/patch_identity.go
+@@ -16,7 +16,7 @@ type SourcePatch struct {
+ // These values are also recorded in the executable's Go linker settings.
+ // Development builds keep sourcePatchSHA256 empty; release verification rejects
+ // such builds and requires the complete fixed identity.
+-var sourcePatchRevision = "zeron-native-ui.2"
++var sourcePatchRevision = "zeron-native-ui.3"
+ var sourcePatchSHA256 string
+ var sourcePatchIdentity string
+ 
+@@ -26,7 +26,7 @@ func FrameworkPatch() SourcePatch {
+ }
+ 
+ func init() {
+-	if sourcePatchRevision != "zeron-native-ui.2" {
++	if sourcePatchRevision != "zeron-native-ui.3" {
+ 		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
+ 	}
+ 	if sourcePatchSHA256 != "" {
+diff --git a/ui/api_gen.go b/ui/api_gen.go
+index 2d3b4db..a995e27 100644
+--- a/ui/api_gen.go
++++ b/ui/api_gen.go
+@@ -4103,6 +4103,20 @@ func (_handle Element) InView() bool {
+ 	return _node.InView()
+ }
+ 
++// InputDisplayText returns a snapshot of the text a text input currently
++// displays, including an input method's uncommitted composition. Password
++// inputs return their masking bullets. Other elements return an empty string.
++// Reading it changes no bound value, composition, selection or undo history.
++func (_handle Element) InputDisplayText() string {
++	_node := _handle.node()
++	if _node == nil {
++		return ""
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return _node.InputDisplayText()
++}
++
+ // InputMethod sets whether the system's input methods compose text for the
+ // element while it has the keyboard focus, as they do by default for one
+ // that takes text (HandleTextInput, TextCaret). Turned off, keys type the
+diff --git a/ui/textinput.go b/ui/textinput.go
+index b14c75a..4749a9c 100644
+--- a/ui/textinput.go
++++ b/ui/textinput.go
+@@ -246,6 +246,20 @@ func (e *node) Composing() bool {
+ 	return ed != nil && ed.compose != ""
+ }
+ 
++// InputDisplayText returns a snapshot of the text a text input currently
++// displays, including an input method's uncommitted composition. Password
++// inputs return their masking bullets. Other elements return an empty string.
++// Reading it changes no bound value, composition, selection or undo history.
++func (e *node) InputDisplayText() string {
++	if e.flags&flagEditable == 0 {
++		return ""
++	}
++	if ed := e.st.editor; ed != nil {
++		return ed.displayText()
++	}
++	return ""
++}
++
+ // Password hides what a text input holds, in the frames that call it: an
+ // input that stops calling it shows its text again, as a field's eye
+ // button does. It does nothing to a text area: as on every platform, only
+diff --git a/ui/input_display_text_test.go b/ui/input_display_text_test.go
+new file mode 100644
+--- /dev/null
++++ b/ui/input_display_text_test.go
+@@ -0,0 +1,105 @@
++package ui
++
++import (
++	"strings"
++	"testing"
++)
++
++func TestInputDisplayTextIncludesUncommittedComposition(t *testing.T) {
++	draft := "before after"
++	shown, composing, selectCaret := "", false, false
++	tt := NewTester(func(c *Context) {
++		input := TextAreaBase(c, &draft).Label("Draft").Width(300)
++		if selectCaret {
++			input.SetTextSelection(6, 6)
++			selectCaret = false
++		}
++		shown, composing = input.InputDisplayText(), input.Composing()
++		if again := input.InputDisplayText(); again != shown {
++			t.Fatalf("a second read changed display text: %q, %q", shown, again)
++		}
++	}, 400, 300)
++	if shown != draft {
++		t.Fatalf("initial display %q, want %q", shown, draft)
++	}
++	if err := tt.Click("Draft"); err != nil {
++		t.Fatal(err)
++	}
++	selectCaret = true
++	tt.Frame()
++	tt.Compose("中文🙂", 3)
++	snapshot := shown
++	if shown != "before中文🙂 after" || draft != "before after" || !composing {
++		t.Fatalf("read committed or changed composition: display %q, draft %q, composing %v", shown, draft, composing)
++	}
++	tt.Frame()
++	if shown != snapshot || draft != "before after" || !composing {
++		t.Fatal("a subsequent frame changed preedit while only reading it")
++	}
++	tt.Type("中文🙂")
++	if shown != snapshot || draft != snapshot || composing {
++		t.Fatalf("native commit changed by read API: display %q, draft %q, composing %v", shown, draft, composing)
++	}
++	tt.Command("undo")
++	if draft != "before after" || shown != draft || snapshot != "before中文🙂 after" {
++		t.Fatalf("read changed undo or retained snapshot: draft %q, display %q, snapshot %q", draft, shown, snapshot)
++	}
++	tt.Compose("cancel", 6)
++	tt.Compose("", 0)
++	if shown != draft || composing {
++		t.Fatalf("cancelled composition still displayed: %q", shown)
++	}
++}
++
++func TestInputDisplayTextMasksPasswordsAndIgnoresOtherElements(t *testing.T) {
++	secret, shown := "sëcret", ""
++	tt := NewTester(func(c *Context) {
++		input := TextInputBase(c, &secret).Password().Label("Password").Width(200)
++		shown = input.InputDisplayText()
++		if Text(c, "Visible label").InputDisplayText() != "" || (Element{}).InputDisplayText() != "" {
++			t.Fatal("non-input returned editable display text")
++		}
++	}, 400, 200)
++	if shown != strings.Repeat("•", 6) || secret != "sëcret" {
++		t.Fatalf("password display %q exposed or changed %q", shown, secret)
++	}
++	if err := tt.Click("Password"); err != nil {
++		t.Fatal(err)
++	}
++	tt.Compose("中文", 2)
++	if shown != strings.Repeat("•", 8) || secret != "sëcret" {
++		t.Fatalf("password composition exposed or changed text: %q", shown)
++	}
++}
++
++func TestInputDisplayTextRejectsReusedNonInputState(t *testing.T) {
++	for _, selectable := range []bool{false, true} {
++		name := "ordinary text"
++		if selectable {
++			name = "selectable text"
++		}
++		t.Run(name, func(t *testing.T) {
++			draft, shown, editable := "old draft", "", true
++			tt := NewTester(func(c *Context) {
++				c.Key("reused")
++				if editable {
++					shown = TextInputBase(c, &draft).Width(200).InputDisplayText()
++					return
++				}
++				label := Text(c, "Replacement label")
++				if selectable {
++					label.Selectable()
++				}
++				shown = label.InputDisplayText()
++			}, 400, 200)
++			if shown != draft {
++				t.Fatalf("input snapshot %q, want %q", shown, draft)
++			}
++			editable = false
++			tt.Frame()
++			if shown != "" {
++				t.Fatalf("non-input reused an editor snapshot: %q", shown)
++			}
++		})
++	}
++}

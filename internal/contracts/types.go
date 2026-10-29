@@ -18,33 +18,37 @@ const (
 )
 
 type Snapshot struct {
-	Integrations        IntegrationState     `json:"integrations"`
-	ModelCatalog        ModelCatalogState    `json:"modelCatalog"`
-	AppshotCapabilities AppshotCapabilities  `json:"appshotCapabilities"`
-	ThemeLibrary        []ThemeLibraryEntry  `json:"themeLibrary"`
-	ThemeImport         *ThemeImportPreview  `json:"themeImport,omitempty"`
-	SchemaVersion       int                  `json:"schemaVersion"`
-	Revision            uint64               `json:"revision"`
-	User                User                 `json:"user"`
-	Capabilities        Capabilities         `json:"capabilities"`
-	Projects            []Project            `json:"projects"`
-	Devices             []Device             `json:"devices"`
-	Sessions            []Session            `json:"sessions"`
-	Messages            map[string][]Message `json:"messages"`
-	Models              []Model              `json:"models"`
-	Providers           []Provider           `json:"providers"`
-	Settings            Settings             `json:"settings"`
-	Files               []File               `json:"files"`
-	Changes             []Change             `json:"changes"`
-	Commits             []Commit             `json:"commits"`
-	PullRequests        []PullRequest        `json:"pullRequests"`
-	Terminals           []Terminal           `json:"terminals"`
-	Queue               []QueuedMessage      `json:"queue"`
-	Runs                []Run                `json:"runs"`
-	Account             Account              `json:"account"`
-	Appshots            []Attachment         `json:"appshots"`
-	Attachments         []Attachment         `json:"attachments"`
-	Update              Update               `json:"update"`
+	Integrations        IntegrationState            `json:"integrations"`
+	ModelCatalog        ModelCatalogState           `json:"modelCatalog"`
+	AppshotCapabilities AppshotCapabilities         `json:"appshotCapabilities"`
+	ThemeLibrary        []ThemeLibraryEntry         `json:"themeLibrary"`
+	ThemeImport         *ThemeImportPreview         `json:"themeImport,omitempty"`
+	SchemaVersion       int                         `json:"schemaVersion"`
+	Revision            uint64                      `json:"revision"`
+	User                User                        `json:"user"`
+	Capabilities        Capabilities                `json:"capabilities"`
+	Projects            []Project                   `json:"projects"`
+	Devices             []Device                    `json:"devices"`
+	Sessions            []Session                   `json:"sessions"`
+	Messages            map[string][]Message        `json:"messages"`
+	Models              []Model                     `json:"models"`
+	Providers           []Provider                  `json:"providers"`
+	Settings            Settings                    `json:"settings"`
+	Files               []File                      `json:"files"`
+	Changes             []Change                    `json:"changes"`
+	Commits             []Commit                    `json:"commits"`
+	PullRequests        []PullRequest               `json:"pullRequests"`
+	RepoRefs            map[string]RepoRefs         `json:"repoRefs,omitempty"`
+	CheckoutPR          map[string]CheckoutPRStatus `json:"checkoutPR,omitempty"`
+	Terminals           []Terminal                  `json:"terminals"`
+	Queue               []QueuedMessage             `json:"queue"`
+	Runs                []Run                       `json:"runs"`
+	Account             Account                     `json:"account"`
+	Appshots            []Attachment                `json:"appshots"`
+	Attachments         []Attachment                `json:"attachments"`
+	Update              Update                      `json:"update"`
+
+	ContextUsage map[string]ContextUsage `json:"contextUsage"`
 }
 
 type User struct {
@@ -61,21 +65,25 @@ type Capabilities struct {
 	Voice    bool `json:"voice"`
 }
 type Project struct {
-	Actions   []ProjectAction `json:"actions"`
-	ID        string          `json:"id"`
-	Name      string          `json:"name"`
-	Path      string          `json:"path"`
-	DeviceID  string          `json:"deviceId"`
-	Icon      string          `json:"icon"`
-	Branch    string          `json:"branch"`
-	Branches  []string        `json:"branches"`
-	Worktrees []Worktree      `json:"worktrees"`
+	GitDetected     bool            `json:"gitDetected"`
+	CloudRepository string          `json:"cloudRepository,omitempty"`
+	DefaultBranch   string          `json:"defaultBranch,omitempty"`
+	Actions         []ProjectAction `json:"actions"`
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	Path            string          `json:"path"`
+	DeviceID        string          `json:"deviceId"`
+	Icon            string          `json:"icon"`
+	Branch          string          `json:"branch"`
+	Branches        []string        `json:"branches"`
+	Worktrees       []Worktree      `json:"worktrees"`
 }
 type Worktree struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Path   string `json:"path"`
-	Branch string `json:"branch"`
+	BaseRef string `json:"baseRef,omitempty"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Path    string `json:"path"`
+	Branch  string `json:"branch"`
 }
 type Device struct {
 	Version      string    `json:"version,omitempty"`
@@ -88,28 +96,31 @@ type Device struct {
 	LastSeen     time.Time `json:"lastSeen"`
 }
 type Session struct {
-	AccessMode        AccessMode    `json:"accessMode"`
-	Plan              bool          `json:"plan"`
-	ParentSessionID   string        `json:"parentSessionId,omitempty"`
-	SideChat          bool          `json:"sideChat"`
-	ID                string        `json:"id"`
-	Title             string        `json:"title"`
-	ProjectID         string        `json:"projectId"`
-	DeviceID          string        `json:"deviceId"`
-	ModelID           string        `json:"modelId"`
-	ReasoningLevel    string        `json:"reasoningLevel"`
-	Branch            string        `json:"branch"`
-	WorktreeID        string        `json:"worktreeId"`
-	Status            SessionStatus `json:"status"`
-	Unread            bool          `json:"unread"`
-	Pinned            bool          `json:"pinned"`
-	Archived          bool          `json:"archived"`
-	PinOrder          int           `json:"pinOrder"`
-	CreatedAt         time.Time     `json:"createdAt"`
-	UpdatedAt         time.Time     `json:"updatedAt"`
-	LastOutcome       string        `json:"lastOutcome"`
-	RunningSubagents  int           `json:"runningSubagents"`
-	PullRequestNumber int           `json:"pullRequestNumber"`
+	CreationRequestID string                     `json:"creationRequestId,omitempty"`
+	CWD               string                     `json:"cwd,omitempty"`
+	SourceContext     *ConversationSourceContext `json:"sourceContext,omitempty"`
+	AccessMode        AccessMode                 `json:"accessMode"`
+	Plan              bool                       `json:"plan"`
+	ParentSessionID   string                     `json:"parentSessionId,omitempty"`
+	SideChat          bool                       `json:"sideChat"`
+	ID                string                     `json:"id"`
+	Title             string                     `json:"title"`
+	ProjectID         string                     `json:"projectId"`
+	DeviceID          string                     `json:"deviceId"`
+	ModelID           string                     `json:"modelId"`
+	ReasoningLevel    string                     `json:"reasoningLevel"`
+	Branch            string                     `json:"branch"`
+	WorktreeID        string                     `json:"worktreeId"`
+	Status            SessionStatus              `json:"status"`
+	Unread            bool                       `json:"unread"`
+	Pinned            bool                       `json:"pinned"`
+	Archived          bool                       `json:"archived"`
+	PinOrder          int                        `json:"pinOrder"`
+	CreatedAt         time.Time                  `json:"createdAt"`
+	UpdatedAt         time.Time                  `json:"updatedAt"`
+	LastOutcome       string                     `json:"lastOutcome"`
+	RunningSubagents  int                        `json:"runningSubagents"`
+	PullRequestNumber int                        `json:"pullRequestNumber"`
 }
 type Message struct {
 	ContinuationOf string    `json:"continuationOf,omitempty"`
@@ -211,6 +222,7 @@ type Usage struct {
 	Cost          float64 `json:"cost"`
 }
 type Run struct {
+	RequestID    string          `json:"requestId,omitempty"`
 	DurationMS   int64           `json:"durationMs"`
 	Summary      ActivitySummary `json:"summary"`
 	AccessMode   AccessMode      `json:"accessMode"`
@@ -248,10 +260,11 @@ type Model struct {
 	Options         []ModelOption `json:"options"`
 }
 type ModelOption struct {
-	ID            string   `json:"id"`
-	Label         string   `json:"label"`
-	Choices       []string `json:"choices"`
-	DefaultChoice string   `json:"defaultChoice"`
+	ID            string            `json:"id"`
+	Label         string            `json:"label"`
+	Choices       []string          `json:"choices"`
+	ChoiceLabels  map[string]string `json:"choiceLabels,omitempty"`
+	DefaultChoice string            `json:"defaultChoice"`
 }
 type Provider struct {
 	AccessModes  []AccessMode `json:"accessModes"`
@@ -317,6 +330,7 @@ type AppearanceSettings struct {
 	ReduceMotion         bool                 `json:"reduceMotion"`
 }
 type GeneralSettings struct {
+	Language               string `json:"language"`
 	SendBehavior           string `json:"sendBehavior"`
 	CompactMode            bool   `json:"compactMode"`
 	CompactModelPicker     bool   `json:"compactModelPicker"`
@@ -373,19 +387,20 @@ type Event struct {
 	Snapshot      *Snapshot `json:"snapshot,omitempty"`
 }
 type SendRequest struct {
-	AccessMode     AccessMode   `json:"accessMode"`
-	Plan           bool         `json:"plan"`
-	Annotations    []Annotation `json:"annotations,omitempty"`
-	DeviceID       string       `json:"deviceId,omitempty"`
-	Branch         string       `json:"branch,omitempty"`
-	WorktreeID     string       `json:"worktreeId,omitempty"`
-	ProjectID      string       `json:"projectId,omitempty"`
-	SessionID      string       `json:"sessionId"`
-	Text           string       `json:"text"`
-	ModelID        string       `json:"modelId"`
-	ReasoningLevel string       `json:"reasoningLevel"`
-	Attachments    []Attachment `json:"attachments"`
-	RequestID      string       `json:"requestId"`
+	Checkout       *CheckoutPlan `json:"checkout,omitempty"`
+	AccessMode     AccessMode    `json:"accessMode"`
+	Plan           bool          `json:"plan"`
+	Annotations    []Annotation  `json:"annotations,omitempty"`
+	DeviceID       string        `json:"deviceId,omitempty"`
+	Branch         string        `json:"branch,omitempty"`
+	WorktreeID     string        `json:"worktreeId,omitempty"`
+	ProjectID      string        `json:"projectId,omitempty"`
+	SessionID      string        `json:"sessionId"`
+	Text           string        `json:"text"`
+	ModelID        string        `json:"modelId"`
+	ReasoningLevel string        `json:"reasoningLevel"`
+	Attachments    []Attachment  `json:"attachments"`
+	RequestID      string        `json:"requestId"`
 }
 type SessionUpdate struct {
 	AccessMode     *AccessMode `json:"accessMode,omitempty"`
@@ -405,6 +420,8 @@ type SessionUpdate struct {
 
 // Command is a typed action envelope used by the application coordinator.
 type Command struct {
+	RequestID     string                `json:"requestId,omitempty"`
+	Git           *GitRequest           `json:"git,omitempty"`
 	ProjectCreate *ProjectCreate        `json:"projectCreate,omitempty"`
 	Integration   *IntegrationRequest   `json:"integration,omitempty"`
 	Adjustment    *BackgroundAdjustment `json:"adjustment,omitempty"`

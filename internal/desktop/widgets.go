@@ -52,7 +52,7 @@ func menuChoice(c *ui.Context, label string, selected bool, action func()) {
 }
 
 func sectionTitle(c *ui.Context, label string) {
-	ui.Text(c, label).FontSize(design.UISize(c, 13)).TextColor(c.Theme().TextMuted).Margin(8, 0, 4, 0)
+	ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 13)).TextColor(c.Theme().TextMuted).Margin(8, 0, 4, 0)
 }
 
 func (a *App) settingsCard(c *ui.Context, body func()) {

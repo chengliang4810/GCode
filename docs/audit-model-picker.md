@@ -1,6 +1,8 @@
 # 模型选择器逐项审查
 
 事实源：Zeron v0.2.128 / `ab189159f10cf8e63c0502be75a59bbc487e0eaf`。
+恢复机器的只读参考位于 `output/reference-sources/zeron` 和
+`output/reference-sources/mygo`；下列绝对路径为原审计机器的位置。
 已读取 `D:/projects/mygo/examples/effort-slider/effort.go`、gallery 的 List
 示例及固定 v0.6.4 API。使用官方 PopoverBase、ButtonBase、TextInputBase、
 List、SliderBase 和原生 Menu。Slider 只移植原版外观，键鼠、焦点和步长由官方控件负责。
@@ -45,14 +47,89 @@ List、SliderBase 和原生 Menu。Slider 只移植原版外观，键鼠、焦�
 | M19 | 300px 聊天列下保留模型/附件/发送点击 | 窄窗实际点击及菜单边界通过 |
 | M20 | Plan 在 access menu，启用后显示 chip suffix | 原生 Menu 操作通过 |
 | M21 | 目录加载、错误/重试、无 agents | typed catalog 状态、2.4s 原版 ghost-label pulse、原生 Retry 闭环与无 agent 保留草稿回归通过；空目录按源码显示 skeleton，搜索/收藏空态另显原文 |
-| M22 | 原版 scrollbar、fast mode、完整动效 | 待继续核对 |
-| M23 | 同状态 GPUI 截图、系统输入与监视器 DPI | 待原生验收 |
+| M22 | 原版 scrollbar、fast mode、完整动效 | Fast 编码/按钮/快捷键已有新机实现回归；scrollbar、完整动效和配对视觉仍待验收 |
+| M23 | 同状态 GPUI 截图、系统输入与监视器 DPI | R6配对8场景完整WGC原图，3项过0.995、5项未过；无视觉验收完成；系统输入及多DPI继续待验收 |
 | M24 | 独立复核发现：空模型发送暗退回 Claude | 已修复；统一恢复 preferred provider 的有效模型，未解析时保留输入，retry 后恢复；使用真实持久化场景回归 |
 | M25 | 独立复核发现：跨会话遗留 provider filter 与运行锁冲突 | 已修复；切会话关闭旧菜单，重新打开按当前 provider 定位；Claude→运行中 Codex 回归通过 |
-| M26 | 全部 provider 禁用、新聊天和已有聊天区别 | 状态/显示已修复；新聊天显示 no agents，已有聊天保留已提交 provider；后端 toggle/retry 更新 catalog 状态 |
+| M26 | 全部 provider 禁用、新聊天和已有聊天区别 | 状态/显示已修复；新聊天显示 no agents，已有聊天仅保留仍安装的已提交 provider；按设备安装/启用过滤及缺失安装回归见 audit-composer-device.md |
 
 回归集中在 `internal/desktop/model_picker_test.go`。本轮修正前浅深色共 6 张，
 修正后正常菜单与四种目录状态共 14 张，保存于
 `output/model-audit/before`、`output/model-audit/after`。
 manifest 为 `reference/validation/model-picker-audit.json`。
 这些是实现图，没有替换 reference golden，也没有用裁剪/缩放/遮罩获取 SSIM。
+
+## 新机独立原版观察
+
+原版 native capture adapter 已取得8张深/浅色、宽/窄屏的 panel/list 原生
+JPEG，元数据及逐图 SHA 见
+`output/resume-validation/reference-native-observed/observations.json`。
+这补充了独立原版观察来源；JPEG 和未匹配数据的整窗图不能作为无损像素验收。
+
+同提交的 `compact-picker-fixture.rs` 与生产按键代码不一致：fixture 的
+`down/down/end` 假定 Model→Fast→Effort 焦点顺序，但生产
+`pickers/compact.rs:771–830` 的 Up/Down 会打开邻模型列表，Enter/Space 打开
+当前模型列表，F 切 fast，Tab 循环 provider，Left/Right/Home/End 直接改变
+effort。新机运行在该旧断言得到 High 而非 XHigh 并退出，没有产生 PASS。
+副本按冻结生产代码补齐行为，fixture 失败单独保留，不能被读作副本键盘验收。
+
+生产语义已接入共用面板：Up/Down/Enter/Space、无需聚焦 slider 的 effort 键、
+Tab/ShiftTab provider 记忆、Fast 的5类编码、Cursor option effort 都有真实控件
+回归。主/侧配置归属、设备可用项、运行锁及 typed settings/session 命令另有断言。
+Fast 选项仅在 compact 中转为右侧按钮；standard 保留选项行，其余 option 可继续选择。
+
+原合同将 option choice 简化为字符串，曾无法区分 `standard` ID 与 `Standard`
+标签。现保留 `Choices`/`DefaultChoice` 的业务 ID，并新增可选 `ChoiceLabels`；
+当前按钮、菜单、Cursor effort 标题按标签显示，保存仍为 `standard`/`1m` 等 ID。
+缺失标签回退原 ID，旧 JSON 不变；snapshot 对标签 map 作深拷贝。对应新回归位于
+`model_picker_keyboard_test.go`、`contracts/types_test.go` 和 `mock/clone_test.go`。
+这些测试不是 Windows 原生候选窗口或像素对照验收。
+
+此前阶段已补8张真正的原版无损 WGC PNG，以及复用 production modelPopover 的8张
+实现 native client PNG，来源分别见 `reference/validation/lossless-result.json`
+和 `audit-compact-picker-fixture.md`。全窗/客户区边界不同，严格原图比较已拒绝
+842×592与840×560，没有 SSIM。原图观察可见 popup 底色、effort 轨道材质、
+option 行边框和 anchor 位置差异；早期表中的实现 PNG 检查不能覆盖这些差异。
+当前状态见 `reference/validation/compact-fixture-comparison.json`。
+
+接续已统一到完整 WGC 边界，保留每张原始 PNG，无裁剪/缩放/配准/遮罩。
+`output/compact-comparison-20261028-r3-reviewed/comparison.json` 的8项
+SSIM 为0.971695047–0.991387733，均未达0.995；几何已对齐，差异仍需修复。
+源码核对确认 trigger 打开底色、overlay 从 trigger 继承500字重，以及键盘高亮
+行的非收藏星标曾被遗漏。它们属于生产显示差异，不是替换参考图来消除差异。
+搜索 caret 时相、非客户区合成/active 状态尚未完全核实，不据分数宣布一致。
+上述 trigger、500字重、键盘 active 星标已修复并在 R4 原生图中复采。
+`output/compact-comparison-20261028-r4-reviewed/comparison.json` 的8项为
+0.976711056–0.993399479，仍未达0.995。搜索真实 focus/caret、重复开关后输入
+及高亮行移行/收藏点击有回归；没有通过硬绘 caret 或整体位移消除残差。
+
+最终集成 Windows 包也已实测 End→Max、Down→邻行、Enter→选中并回 panel、
+Escape→关闭。UIA focused_element 仍报主 Message，而键盘实际正确作用于 panel；
+无障碍焦点报告一致性继续待定位。证据在 `output/resume-validation/package-native`。
+
+R5先对齐 Windows 默认 Typography；R6再依据原版实际 Inspector bounds 修正
+option 的 intrinsic ceil 与整数位置行高。修正限 Windows1x 已测域，不扩展为
+分数滚动、其他DPI或任意字形overhang保证。原版 row/label/value 的实际bounds
+与实现测试相符；字号12–20的18种字体/compact配置，各测5个整数位置。
+`output/compact-comparison-20261028-r6/comparison.json` 中 dark宽/窄panel及light宽
+panel达到0.995，light窄panel为0.994112133；四个model list仍不足。原图完整、
+未变换，未宣称视觉验收。证据与限制见
+`reference/validation/text-bounds-implementation-r6.json` 和
+`audit-windows-typography.md`。R3–R5数字仅代表各自历史阶段。
+
+R7按实际source renderer改为搜索14px/22.75DIP/Faint和2DIP原生caret，列表header、
+active行、半径与图标按源码修正。菜单贴窗现在只在实际越界时退8px；冷开与
+compact方向规则不再依赖默认AttachTo翻转。详见 `audit-native-popup-style.md`
+和 `audit-model-list-residual.md`。fixture绑定真实Window，因此本次实际2x走
+oneXOptionText=false，不用1x fallback代替产品分支。原版新8图独立捕获、双方
+全窗无变换，`output/compact-comparison-20261028-r7-2x/comparison.json` 中仅
+dark宽panel/list达到0.995，全部范围0.986806768–0.996676105，0场视觉验收。
+旧1x结果保留；DPI不同，不能直接用两阶段通过数评价改善。滑条/阴影、文字与
+caret时相等残差和原生输入仍待继续，最新证据为
+`reference/validation/popup-r7-result.json`（R7历史阶段）。
+
+R8只修正局部accent overlay的border-box坐标，保留Slider真实交互。实际2x
+重新配对后四个panel分数上升，四个list分数未变，总计3/8达到0.995，范围
+0.988087192–0.997084323，仍为0场视觉验收。完整证据和当前`.5`框架/260源码/
+新包身份见 `reference/validation/popup-r8-result.json`。R9c原版实际列表wrapper
+量测进一步说明统一上移0.5DIP会误伤其他字号，详见 `audit-model-list-residual.md`。

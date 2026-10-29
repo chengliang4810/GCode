@@ -11,25 +11,25 @@ import (
 )
 
 func (s *State) fileContext(c *ui.Context, f contracts.File, m *ui.Menu) {
-	if f.Kind != "directory" && m.Item("Open").Chosen() {
+	if f.Kind != "directory" && m.Item(tr(c, "Open")).Chosen() {
 		s.OpenFile(f.ID)
 	}
-	if m.Item("Copy path").Chosen() {
+	if m.Item(tr(c, "Copy path")).Chosen() {
 		c.Services().WriteClipboard(f.Path)
 	}
 	m.Separator()
 	if f.Kind == "directory" {
-		if m.Item("New file…").Chosen() {
+		if m.Item(tr(c, "New file…")).Chosen() {
 			s.requestFileAction("create", f.ID)
 		}
-		if m.Item("New folder…").Chosen() {
+		if m.Item(tr(c, "New folder…")).Chosen() {
 			s.requestFileAction("mkdir", f.ID)
 		}
 	}
-	if m.Item("Rename…").Disabled(f.ReadOnly).Chosen() {
+	if m.Item(tr(c, "Rename…")).Disabled(f.ReadOnly).Chosen() {
 		s.requestFileAction("rename", f.ID)
 	}
-	if m.Item("Delete…").Disabled(f.ReadOnly).Chosen() {
+	if m.Item(tr(c, "Delete…")).Disabled(f.ReadOnly).Chosen() {
 		s.requestFileAction("delete", f.ID)
 	}
 }
@@ -95,7 +95,7 @@ func (s *State) fileActionDialog(c *ui.Context) {
 		case "mkdir":
 			title = "New folder"
 		}
-		ui.Text(c, title).FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
+		ui.Text(c, tr(c, title)).FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
 		if s.fileAction == "delete" {
 			name := s.fileActionID
 			for _, f := range s.snapshot.Files {
@@ -104,14 +104,14 @@ func (s *State) fileActionDialog(c *ui.Context) {
 					break
 				}
 			}
-			ui.Text(c, "Delete "+name+"?").Margin(0, 0, 8, 0)
-			ui.Text(c, "This action cannot be undone.").TextColor(p.Muted).Margin(0, 0, 16, 0)
+			ui.Text(c, tr(c, "Delete ")+name+"?").Margin(0, 0, 8, 0)
+			ui.Text(c, tr(c, "This action cannot be undone.")).TextColor(p.Muted).Margin(0, 0, 16, 0)
 		} else {
-			ui.TextInputBase(c, &s.fileActionName).Label("Name").Placeholder("Name").AutoFocus().Padding(10, 12).Radius(6).Background(p.Input).OnSubmit(s.performFileAction)
+			ui.TextInputBase(c, &s.fileActionName).Label(tr(c, "Name")).Placeholder(tr(c, "Name")).AutoFocus().Padding(10, 12).Radius(6).Background(p.Input).OnSubmit(s.performFileAction)
 		}
 		ui.Row(c).Gap(8).Margin(16, 0, 0, 0).Justify(ui.End).Children(func() {
-			ui.Button(c, "Cancel").OnClick(func() { s.fileActionOpen = false })
-			ui.PrimaryButton(c, button).Disabled(s.fileAction != "delete" && strings.TrimSpace(s.fileActionName) == "").OnClick(s.performFileAction)
+			ui.Button(c, tr(c, "Cancel")).OnClick(func() { s.fileActionOpen = false })
+			ui.PrimaryButton(c, tr(c, button)).Disabled(s.fileAction != "delete" && strings.TrimSpace(s.fileActionName) == "").OnClick(s.performFileAction)
 		})
 	})
 }

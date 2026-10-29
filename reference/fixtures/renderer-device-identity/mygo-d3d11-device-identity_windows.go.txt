@@ -1,0 +1,232 @@
+//go:build windows && (amd64 || arm64) && mygo_renderer_device_diag
+
+package d3d11
+
+import (
+	"fmt"
+	"os"
+	"runtime"
+	"syscall"
+	"time"
+	"unsafe"
+
+	"github.com/egoist/mygo/internal/gpu/d3d11/device"
+)
+
+var (
+	rendererDiagIsWindow = user32.NewProc("IsWindow")
+	rendererDiagWindowThread = user32.NewProc("GetWindowThreadProcessId")
+	rendererDiagGetAncestor = user32.NewProc("GetAncestor")
+	rendererDiagCurrentThread = syscall.NewLazyDLL(device.SystemDir() + `\kernel32.dll`).NewProc("GetCurrentThreadId")
+	rendererDiagIUnknown = guid{Data4: [8]byte{0xc0, 0, 0, 0, 0, 0, 0, 0x46}}
+	rendererDiagD3D11Device = guid{0xdb6f6ddb, 0xac77, 0x4e88, [8]byte{0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40}}
+	rendererDiagAdapter1 = guid{0x29038f61, 0x3839, 0x4626, [8]byte{0x91, 0xfd, 0x08, 0x68, 0x79, 0x01, 0x1a, 0x05}}
+	rendererDiagSwapChain1 = guid{0x790a45f7, 0x0d42, 0x4876, [8]byte{0x98, 0x3a, 0x0a, 0x55, 0xcf, 0xe6, 0xf4, 0xaa}}
+)
+
+// DXGI_ADAPTER_DESC1 on supported 64-bit Windows architectures. SIZE_T stays
+// uintptr and LUID stays two 32-bit words; neither is replaced by a packed guess.
+type rendererDiagAdapterDesc1 struct {
+	Description [128]uint16
+	VendorID, DeviceID, SubsystemID, Revision uint32
+	DedicatedVideoMemory, DedicatedSystemMemory, SharedSystemMemory uintptr
+	LUID struct {
+		Low uint32
+		High int32
+	}
+	Flags uint32
+}
+
+func rendererDiagQuery(obj uintptr, iid *guid, operation string) (uintptr, error) {
+	if obj == 0 {
+		return 0, fmt.Errorf("d3d11 diagnostic: %s has no input object", operation)
+	}
+	var out uintptr
+	hr := call(obj, 0, uintptr(unsafe.Pointer(iid)), uintptr(unsafe.Pointer(&out)))
+	if failed(hr) {
+		free(&out)
+		return 0, fmt.Errorf("d3d11 diagnostic: %s HRESULT %#08x", operation, uint32(hr))
+	}
+	if out == 0 {
+		return 0, fmt.Errorf("d3d11 diagnostic: %s returned a null object", operation)
+	}
+	return out, nil
+}
+
+func rendererDiagSameDevice(canonical, other uintptr, operation string) (bool, error) {
+	value, err := rendererDiagQuery(other, &rendererDiagIUnknown, operation)
+	if err != nil {
+		return false, err
+	}
+	defer free(&value)
+	return canonical == value, nil
+}
+
+// RendererDeviceIdentity queries this existing renderer only. The caller must
+// be its owning UI thread, outside rendering/Release/resize, and supply its
+// owning top-level HWND from the current Content view. Every COM AddRef/query
+// result is released locally; no pointer, Context, Element or callback escapes.
+// This opt-in diagnostic makes no device and never changes D3D pipeline state.
+func (r *Renderer) RendererDeviceIdentity(ownerWindowHWND uintptr) (map[string]any, error) {
+	if r == nil || r.hwnd == 0 || ownerWindowHWND == 0 {
+		return nil, fmt.Errorf("d3d11 diagnostic: no live renderer/owner window")
+	}
+	defer runtime.KeepAlive(r)
+	if unsafe.Sizeof(rendererDiagAdapterDesc1{}) != 312 || unsafe.Offsetof(rendererDiagAdapterDesc1{}.LUID) != 296 {
+		return nil, fmt.Errorf("d3d11 diagnostic: unexpected 64-bit DXGI descriptor ABI")
+	}
+	live, _, _ := rendererDiagIsWindow.Call(r.hwnd)
+	ownerLive, _, _ := rendererDiagIsWindow.Call(ownerWindowHWND)
+	var process, ownerProcess uint32
+	thread, _, _ := rendererDiagWindowThread.Call(r.hwnd, uintptr(unsafe.Pointer(&process)))
+	ownerThread, _, _ := rendererDiagWindowThread.Call(ownerWindowHWND, uintptr(unsafe.Pointer(&ownerProcess)))
+	queryThread, _, _ := rendererDiagCurrentThread.Call()
+	root, _, _ := rendererDiagGetAncestor.Call(r.hwnd, 2) // GA_ROOT
+	if live == 0 || ownerLive == 0 || thread == 0 || thread != queryThread || ownerThread != thread ||
+		process != uint32(os.Getpid()) || ownerProcess != process || root != ownerWindowHWND {
+		return nil, fmt.Errorf("d3d11 diagnostic: current renderer HWND must belong to this live owner window/UI thread/process")
+	}
+	dev, ctx, swap, target := r.device, r.ctx, r.swapChain, r.rtv
+	if dev == 0 || ctx == 0 || swap == 0 || target == 0 {
+		return nil, fmt.Errorf("d3d11 diagnostic: current renderer device/context/swapchain/RTV not ready")
+	}
+	// These are local owned references, never addresses of Renderer fields.
+	call(dev, 1)
+	defer free(&dev)
+	call(ctx, 1)
+	defer free(&ctx)
+	call(swap, 1)
+	defer free(&swap)
+	call(target, 1)
+	defer free(&target)
+	canonical, err := rendererDiagQuery(dev, &rendererDiagIUnknown, "device QueryInterface(IUnknown)")
+	if err != nil {
+		return nil, err
+	}
+	defer free(&canonical)
+	dxgi, err := rendererDiagQuery(dev, &iidIDXGIDevice, "actual device QueryInterface(IDXGIDevice)")
+	if err != nil {
+		return nil, err
+	}
+	defer free(&dxgi)
+	var adapter uintptr
+	hr := call(dxgi, dxgiDevGetAdapter, uintptr(unsafe.Pointer(&adapter)))
+	defer free(&adapter)
+	if failed(hr) || adapter == 0 {
+		return nil, fmt.Errorf("d3d11 diagnostic: actual IDXGIDevice.GetAdapter HRESULT %#08x/null=%t", uint32(hr), adapter == 0)
+	}
+	adapter1, err := rendererDiagQuery(adapter, &rendererDiagAdapter1, "actual adapter QueryInterface(IDXGIAdapter1)")
+	if err != nil {
+		return nil, err
+	}
+	defer free(&adapter1)
+	var desc rendererDiagAdapterDesc1
+	if hr = call(adapter1, 10, uintptr(unsafe.Pointer(&desc))); failed(hr) {
+		return nil, fmt.Errorf("d3d11 diagnostic: IDXGIAdapter1.GetDesc1 HRESULT %#08x", uint32(hr))
+	}
+	// GetFeatureLevel/GetCreationFlags return uint32, not HRESULTs.
+	feature := uint32(call(dev, 37))
+	flags := uint32(call(dev, 38))
+	var driverPacked uint64
+	driverHR := call(adapter, 9, uintptr(unsafe.Pointer(&iidIDXGIDevice)), uintptr(unsafe.Pointer(&driverPacked)))
+	var driverVersion, packed, driverError any
+	if failed(driverHR) {
+		driverError = fmt.Sprintf("CheckInterfaceSupport(IDXGIDevice::IID) HRESULT %#08x", uint32(driverHR))
+	} else {
+		driverVersion = [4]uint16{uint16(driverPacked >> 48), uint16(driverPacked >> 32), uint16(driverPacked >> 16), uint16(driverPacked)}
+		packed = fmt.Sprintf("0x%016x", driverPacked)
+	}
+	// ID3D11DeviceChild.GetDevice is void: test the out pointer only.
+	var contextDevice, targetDevice uintptr
+	call(ctx, 3, uintptr(unsafe.Pointer(&contextDevice)))
+	defer free(&contextDevice)
+	call(target, 3, uintptr(unsafe.Pointer(&targetDevice)))
+	defer free(&targetDevice)
+	if contextDevice == 0 || targetDevice == 0 {
+		return nil, fmt.Errorf("d3d11 diagnostic: context/RTV GetDevice returned null")
+	}
+	var swapDevice uintptr
+	hr = call(swap, 7, uintptr(unsafe.Pointer(&rendererDiagD3D11Device)), uintptr(unsafe.Pointer(&swapDevice)))
+	defer free(&swapDevice)
+	if failed(hr) || swapDevice == 0 {
+		return nil, fmt.Errorf("d3d11 diagnostic: swapchain GetDevice HRESULT %#08x/null=%t", uint32(hr), swapDevice == 0)
+	}
+	contextMatches, err := rendererDiagSameDevice(canonical, contextDevice, "context device QueryInterface(IUnknown)")
+	if err != nil {
+		return nil, err
+	}
+	swapMatches, err := rendererDiagSameDevice(canonical, swapDevice, "swapchain device QueryInterface(IUnknown)")
+	if err != nil {
+		return nil, err
+	}
+	targetMatches, err := rendererDiagSameDevice(canonical, targetDevice, "RTV device QueryInterface(IUnknown)")
+	if err != nil {
+		return nil, err
+	}
+	// Read the resource of the actual window RTV, not r.drawing (which can be
+	// a temporary canvas target), and query its concrete texture descriptor.
+	var resource uintptr
+	call(target, viewGetResource, uintptr(unsafe.Pointer(&resource)))
+	defer free(&resource)
+	tex, err := rendererDiagQuery(resource, &iidID3D11Texture2D, "window RTV resource QueryInterface(ID3D11Texture2D)")
+	if err != nil {
+		return nil, err
+	}
+	defer free(&tex)
+	var textureDesc texture2DDesc
+	call(tex, 10, uintptr(unsafe.Pointer(&textureDesc))) // void ID3D11Texture2D.GetDesc
+	swap1, err := rendererDiagQuery(swap, &rendererDiagSwapChain1, "current swapchain QueryInterface(IDXGISwapChain1)")
+	if err != nil {
+		return nil, err
+	}
+	defer free(&swap1)
+	var swapDesc swapChainDesc1
+	if hr = call(swap1, 18, uintptr(unsafe.Pointer(&swapDesc))); failed(hr) {
+		return nil, fmt.Errorf("d3d11 diagnostic: IDXGISwapChain1.GetDesc1 HRESULT %#08x", uint32(hr))
+	}
+	runtime.KeepAlive(&desc)
+	runtime.KeepAlive(&textureDesc)
+	runtime.KeepAlive(&swapDesc)
+	gate := contextMatches && swapMatches && targetMatches
+	value := map[string]any{
+		"status": "queried-current-renderer-device", "gatePassed": gate,
+		"processId": process, "hwnd": fmt.Sprintf("0x%x", r.hwnd),
+		"ownerWindowHWND": fmt.Sprintf("0x%x", ownerWindowHWND),
+		"hwndScope": "hwnd is the actual renderer surface; ownerWindowHWND is its current top-level owner",
+		"ownerThreadId": uint32(thread), "queryThreadId": uint32(queryThread),
+		"deviceInstanceToken": fmt.Sprintf("0x%x", canonical),
+		"deviceTokenScope": "canonical IUnknown address snapshot valid only within this process/lifetime; equal snapshots do not prove uninterrupted lifetime",
+		"featureLevelHex": fmt.Sprintf("0x%x", feature), "creationFlagsHex": fmt.Sprintf("0x%x", flags),
+		"adapter": map[string]any{
+			"description": syscall.UTF16ToString(desc.Description[:]),
+			"luid": map[string]any{"low": desc.LUID.Low, "high": desc.LUID.High, "hex": fmt.Sprintf("0x%08x%08x", uint32(desc.LUID.High), desc.LUID.Low)},
+			"vendorId": desc.VendorID, "deviceId": desc.DeviceID, "subsystemId": desc.SubsystemID, "revision": desc.Revision,
+			"flags": desc.Flags, "software": desc.Flags&2 != 0,
+		},
+		"driver": map[string]any{
+			"method": "actual renderer device -> IDXGIDevice.GetAdapter -> CheckInterfaceSupport(IDXGIDevice::IID)",
+			"version": driverVersion, "packedHex": packed, "error": driverError,
+		},
+		"crossChecks": map[string]any{
+			"storedSelectedAdapterMatchesActualDevice": nil,
+			"contextDeviceMatches": contextMatches, "swapchainDeviceMatches": swapMatches, "renderTargetDeviceMatches": targetMatches,
+			"rendererWindowRootMatchesOwnerWindow": true, "ownerWindowThreadMatchesRendererThread": true,
+			"overlayDeviceMatches": nil, "overlayAttached": nil,
+		},
+		"unavailableCrossChecks": map[string]any{
+			"storedSelectedAdapterMatchesActualDevice": "Renderer stores no separately selected adapter",
+			"overlayDeviceMatches": "this native scene renderer has no GPUI-style overlay plane",
+			"overlayAttached": "not represented by this renderer; composed describes its own swapchain",
+		},
+		"actualRenderTarget": map[string]any{"format": textureDesc.Format, "sampleCount": textureDesc.SampleCount, "sampleQuality": textureDesc.SampleQuality},
+		"actualSwapchain": map[string]any{"format": swapDesc.Format, "sampleCount": swapDesc.SampleCount, "alphaMode": swapDesc.AlphaMode},
+		"rendererComposed": r.composed, "rendererWarp": r.warp,
+		"sampledAtUnixMilliseconds": time.Now().UnixMilli(),
+		"source": "current UI windowHost.gpu -> this existing d3d11.Renderer.device; device -> actual DXGI adapter; never creates a substitute device",
+		"evidenceScope": "new opt-in diagnostic mirror of canonical .7; cannot retroactively identify old binaries or establish visual parity",
+	}
+	if !gate {
+		return value, fmt.Errorf("d3d11 diagnostic: actual context/swapchain/RTV device identity mismatch")
+	}
+	return value, nil
+}

@@ -1,10 +1,92 @@
 package desktop
 
 import (
+	"cmp"
+	"slices"
+	"strings"
+
 	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
-	"strings"
 )
+
+// An empty ProjectID is an explicit project opt-out, distinct from no bookmark.
+type canvasTarget struct {
+	ProjectID, DeviceID, ProjectDeviceID string
+}
+
+func (a *App) rememberCanvasTarget() {
+	a.canvasTarget = &canvasTarget{ProjectID: a.projectID, DeviceID: a.deviceID}
+	for _, project := range a.state.Projects {
+		if project.ID == a.projectID {
+			a.canvasTarget.ProjectDeviceID = project.DeviceID
+			return
+		}
+	}
+}
+
+func (a *App) invalidateCanvasCloudTarget(session contracts.Session) {
+	target := a.canvasTarget
+	if target == nil || !footerCloudDevice(target.DeviceID) {
+		return
+	}
+	if !footerCloudDevice(target.ProjectDeviceID) && (session.ProjectID != target.ProjectID || session.DeviceID != target.ProjectDeviceID) {
+		// The source forgets its synthetic Cloud checkout on a project
+		// or effective-host change; it cannot silently return afterward.
+		target.DeviceID = target.ProjectDeviceID
+	}
+}
+
+func (a *App) restoreCanvasTarget() {
+	if a.canvasTarget == nil {
+		return
+	}
+	target := *a.canvasTarget
+	a.canvasTarget = nil
+	pickedDevice := target.DeviceID
+	syntheticCloud := footerCloudDevice(target.DeviceID) && target.ProjectDeviceID != "" && !footerCloudDevice(target.ProjectDeviceID)
+	if syntheticCloud {
+		pickedDevice = target.ProjectDeviceID
+	}
+	a.projectID, a.deviceID = target.ProjectID, pickedDevice
+	if target.ProjectID == "" {
+		return
+	}
+	projects := slices.Clone(a.state.Projects)
+	slices.SortFunc(projects, func(x, y contracts.Project) int {
+		if order := cmp.Compare(strings.ToLower(x.Name), strings.ToLower(y.Name)); order != 0 {
+			return order
+		}
+		return cmp.Compare(x.ID, y.ID)
+	})
+	var picked *contracts.Project
+	for i := range projects {
+		if projects[i].ID == target.ProjectID {
+			picked = &projects[i]
+			break
+		}
+	}
+	if picked == nil {
+		for i := range projects {
+			if projects[i].DeviceID == pickedDevice {
+				picked = &projects[i]
+				break
+			}
+		}
+		if picked == nil && len(projects) > 0 {
+			picked = &projects[0]
+		}
+	}
+	a.projectID, a.branch = "", ""
+	if picked != nil {
+		a.projectID, a.branch = picked.ID, picked.Branch
+		// Effective device follows the chosen project's host. Only the same
+		// project/host may retain its synthetic Cloud checkout display.
+		a.deviceID = picked.DeviceID
+		if syntheticCloud && picked.ID == target.ProjectID && picked.DeviceID == target.ProjectDeviceID {
+			a.deviceID = target.DeviceID
+		}
+	}
+}
 
 type sessionViewState struct {
 	Annotations            []contracts.Annotation
@@ -18,7 +100,11 @@ type sessionViewState struct {
 
 func (a *App) newConversation() {
 	a.draftEpoch++
+	a.pendingNew = false
+	a.pendingNewRequestID = ""
+	delete(a.pendingSends, "")
 	a.navigate("chat")
+	a.terminal = false
 	a.draft = ""
 	a.attachments = nil
 	a.annotations = nil
@@ -62,18 +148,29 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
+	if a.branchCommandFinished(cmd, err) {
+		return
+	}
+	primaryCurrent := false
 	if cmd.Kind == "message.send" && cmd.Send != nil {
 		if pending, ok := a.pendingSends[cmd.Send.SessionID]; ok && pending.RequestID == cmd.Send.RequestID {
+			primaryCurrent = cmd.Send.SessionID != "" || pending.DraftEpoch == a.draftEpoch
 			delete(a.pendingSends, cmd.Send.SessionID)
 		}
 	}
 	if a.projectCommandFinished(cmd, err) {
 		return
 	}
+	if a.composerFooterGitCommandFinished(cmd, err) || a.footerUsageCommandFinished(cmd, err) {
+		return
+	}
 	if a.integrationCommandFinished(cmd, err) {
 		return
 	}
 	if a.sideCommandFinished(cmd, err) {
+		return
+	}
+	if cmd.Kind == "message.send" && cmd.Send != nil && (!primaryCurrent || cmd.Send.SessionID != "" && !a.hasSession(cmd.Send.SessionID)) {
 		return
 	}
 	if cmd.Kind == "settings.update" {
@@ -84,6 +181,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 			a.desiredSettings = nil
 			a.state.Settings = copySettings(a.authoritativeSettings)
 			a.syncNativeAppearance()
+			a.syncNativeLanguage()
 			a.refreshBackground()
 		}
 	}
@@ -99,6 +197,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 		}
 		if req.SessionID == "" {
 			a.pendingNew = false
+			a.pendingNewRequestID = ""
 		}
 		if a.sessionID == req.SessionID {
 			if a.draft == "" {

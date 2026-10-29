@@ -1,0 +1,123 @@
+{
+  "priorVisualEvidence": {
+    "phase": "reference/validation/popup-r8-result.json",
+    "scope": "Unmodified historical R8 compact/footer fixture pair scores; not rescored or relabeled for R11"
+  },
+  "sourceDelta": {
+    "path": "output/resume-validation/session-r11-final-source-delta.json",
+    "sha256": "d2c17bf36e0e5302f66cf997dd65e7a533897a30b6ec08bc721f632b07337693"
+  },
+  "packages": {
+    "macNative": "pending",
+    "manifest": {
+      "path": "output/resume-validation/session-r11-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "c948603a515f8e8209e3d98d150718a0b4dd255e14fe4472077489d46a06cdd4"
+    },
+    "installerExecuted": false,
+    "architectureResourcesArchivesChecksumsStamp": "passed",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "windowsExecutableSHA256": "371843aa3fdd6a44e80ca00f45cef53039ea6432437e715c565506b863e190c4"
+  },
+  "branch": "codex/isolated-worktree",
+  "sourceReview": {
+    "path": "output/session-reconcile-r11-review/implementation-review.json",
+    "sha256": "0a2ab7be4e2dde6502a999ccd288a4e1f635eebff23b1b1e96dabea4597f1d1b"
+  },
+  "documentationCorrections": [
+    "Historical 24px expand/plus reuse, fixed add-tab position, nonGit disabled menu entries superseded by source expand28/plus24, scrolling plus and omitted nonGit items",
+    "R10 visual lookup was not data reconciliation; R11 implements the data path separately",
+    "Run requestId inventory/ownership contract updated",
+    "Frozen state.rs1859 fallback comment mentions local pass, actual code uses preferred-device then global display-order first",
+    "Frozen state.rs1508 healing warning contrasts with called helper permitting global fallback; follow code"
+  ],
+  "remaining": [
+    "Horizontal scrollbar visible and overlaps bottom7DIP; 36px fades, drag/takeover/reveal animation and 168px menu material/behavior remain pending",
+    "Text absolute-origin/lineheight implementation, fallback-font and fractional-scroll native evidence",
+    "Complete header/footer/Git/PR/tooltip and all scene parity",
+    "OtherDPI/IME/native clipboard/browser/performance and FocusChanged/screen-reader matrix",
+    "Mac Intel/ARM native execution and complete platform acceptance"
+  ],
+  "recordedAtUTC": "2026-10-28T14:59:30.7908617Z",
+  "tabStripAudit": {
+    "path": "output/tabstrip-r11-audit/result.json",
+    "sha256": "de233e29cf260cc272913cc7471e0e9ba9212b84cb604b67b82009cff0533b65"
+  },
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "framework": "Verified MyGo v0.6.4 + zeron-native-ui.5: 282c9e97b03e120d3960f9ee38ebf5f9407075b100f99c2d03ece74c37545e00 (1835 files)",
+  "adapterDesign": {
+    "path": "output/resume-validation/session-r11-native-harness-design.json",
+    "sha256": "a86860d492a9e37d4cc3584154501dec04079995f540039a8573d2c457ed39d0"
+  },
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "changes": [
+    "Selected deletion reconciles against accepted state without losing Settings/PR route",
+    "Canvas destination bookmark and source project/device/Cloud fallback",
+    "Deleted-scope late send and attachment results cannot resurrect drafts",
+    "Durable optional Run.requestId survives snapshot coalescing, with preexisting RunID and draft-generation protection",
+    "TabStrip expand28/plus24, plus inside scroller, effective reduced-motion and exact typed Git guards"
+  ],
+  "sourceManifest": {
+    "path": "output/resume-validation/session-r11-final-source-hashes.json",
+    "sha256": "0983a2b31f866013f40c591f154a7c39f40df3a8b8ca9c4e791317b7f13e0254"
+  },
+  "completeUIParity": false,
+  "native": [
+    {
+      "kind": "independent-native-adapter-not-release",
+      "rawFiles": 26,
+      "evidence": {
+        "path": "output/resume-validation/session-r11-native-visible/evidence.json",
+        "sha256": "a61d26f5646d41000bbc403439aa17fb5820b7826b54899fbb507d738909ffb5"
+      }
+    },
+    {
+      "kind": "release-executable-native-smoke",
+      "rawFiles": 18,
+      "evidence": {
+        "path": "output/resume-validation/session-r11-release-native/evidence.json",
+        "sha256": "24186bf3e00111012d9f437e3fb0ebf0e4449c635384d08795ab0d9c6fcf584e"
+      }
+    }
+  ],
+  "checks": {
+    "path": "output/resume-validation/session-r11-final-r4-checks.json",
+    "sha256": "f3fd6c3de45ac1ff7cc74ba32a69fa715268850a052952cd4326fd78c93947f9"
+  },
+  "failedHiddenLaunch": {
+    "diagnosis": {
+      "path": "output/resume-validation/session-r11-native-adapter/launch-diagnosis.json",
+      "sha256": "cb7749b59e8d1882391f4d8b84ef627598e0efbfdf0ce4a9718a0700de85c1ad"
+    },
+    "accepted": false,
+    "exit": {
+      "path": "output/resume-validation/session-r11-native-adapter/process-exit.json",
+      "sha256": "7399f36fdccbac098e6e7cb6f82fff4a7cb471587b3e554374ea312b2921bab6"
+    },
+    "reason": "First adapter launch used Start-Process Hidden, leaving no visible target; no OS input occurred. Owned verified process was stopped, actual exit -1 retained; identical binary then ran visibly and exited0"
+  },
+  "referenceClones": [
+    {
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+      "path": "output/reference-sources/zeron",
+      "clean": true
+    },
+    {
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609",
+      "path": "output/reference-sources/mygo",
+      "clean": true
+    }
+  ],
+  "buildIdentities": {
+    "path": "output/resume-validation/session-r11-build-identities.json",
+    "sha256": "f67cbefcd319e0f6b4d7e84bdf2b86db8b0fbd58c3257a2fc002b37519a9b1ef"
+  },
+  "sourceFiles": 262,
+  "schemaVersion": 1,
+  "sourceUnchangedAfterBuildAndNativeInput": true,
+  "goalStatus": "active"
+}

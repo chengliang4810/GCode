@@ -183,3 +183,33 @@ earlier missing-side-controls statement. See `docs/audit-composer.md` for the
 verified independent-control tests and exact remaining compact/dock/footer
 differences. The source freeze removed an unfinished compact-layout experiment;
 no compact/dock visual parity is claimed.
+
+
+## 2026-10-29 side-chat creation entry correction
+
+The previous input checks above exercised an already existing child and its
+composer. They did not cover the **New side chat** action: that action created
+an empty child but reused the central new-message pending flag, so no matching
+run appeared to open it. The child entry also navigated centrally.
+
+The entry now correlates creation by request ID, opens the right-pane composer,
+and leaves the parent selection and draft intact. Existing child entries reopen
+in that pane. Fork completion opens the copied conversation. Matching does not
+infer ownership from list order, title, or the most recently created child.
+
+`session_creation_test.go` covers both languages through the actual button and
+send/reply path, ACK/event ordering, an unrelated concurrent child, navigation
+while pending, error/retry, snapshot failure, existing-child reopening and fork.
+The mock persistence check covers correlated request retries and identity reuse.
+These remain deterministic in-process backend checks; they do not connect an
+external model provider. Native Windows observations for this correction are
+recorded separately under `output/side-chat-entry-fix/evidence/`.
+
+The Windows build was exercised at 1600 x 900 in the Chinese showcase scenario:
+**New side chat** opened an independent right pane; Enter sent a child message
+and a completed mock reply appeared. Hiding the pane and reopening the child
+from session info restored that transcript. The parent stayed selected and its
+unsent draft remained visible. Screenshots, accessibility trees and persisted
+identity/message checks are listed in `evidence/validation.json` there. The full
+Go suite, MyGo vet, golangci-lint and Windows build passed. This verifies native
+entry wiring and deterministic mock replies, not external-provider behavior.

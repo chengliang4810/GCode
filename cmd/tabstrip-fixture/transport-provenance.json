@@ -1,0 +1,15 @@
+{
+  "purpose": "uifixture-only transport byte copies; no UI renderer copied",
+  "sources": [
+    {
+      "source": "cmd/model-picker-fixture/capture_windows.go",
+      "destination": "cmd/tabstrip-fixture/capture_windows.go",
+      "sha256": "a40a3f9798075aa994fc25c6d57a282321576725c6d7b9e181768e07c1241af4"
+    },
+    {
+      "source": "cmd/model-picker-fixture/capture_other.go",
+      "destination": "cmd/tabstrip-fixture/capture_other.go",
+      "sha256": "56dc57087cf70d24554c89ddc382811a6479e7002aef46f86567f2a1ee658b2d"
+    }
+  ]
+}

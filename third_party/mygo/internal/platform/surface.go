@@ -261,6 +261,10 @@ type SurfaceEvent struct {
 	// X and Y locate the pointer in DIPs relative to the surface.
 	X, Y float64
 	// Button is 0 for the primary button, 1 the secondary, 2 the middle.
+	// Actual Windows PointerMove encodes the raw held-button mask as
+	// -128-(wParam&0x73); the opt-in observer decodes that private tag.
+	// Ordinary legacy Move values, including 0 and -1, remain unknown.
+	// The tag never applies to PointerDown/Up and invents no press/release.
 	Button int
 	Clicks int
 	// DX and DY are scroll distances in DIPs; Precise marks touchpads and

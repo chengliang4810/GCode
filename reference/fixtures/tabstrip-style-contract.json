@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 3,
+  "independentFromBaseline36": true,
+  "baselineContractSHA256": "16f54432c962f447798cd40f5429107b425093224f28a8e7d4c021336ce5468c",
+  "styleCases": ["inactive-hover", "dirty-file", "file-hover", "file-hover-edge"],
+  "appearances": ["dark", "light"],
+  "hostWidth": 400,
+  "count": 2,
+  "scrollFraction": 0,
+  "expectedScenesPerStyleCase": 2,
+  "inactiveHover": {
+    "target": "actual painted second SideChat chip center, excluding close slot",
+    "ids": ["side-01", "side-02"],
+    "titles": ["Tab01", "Tab02"],
+    "activeIndex": 0,
+    "productionDetailTooltip": null,
+    "actualHovered": null,
+    "actualHoveredLimitation": "Production chip hover state is not exposed by public GPUI APIs; native queue receipt and Window.mouse_position are input evidence, independent PNG wash/close response remains visual evidence."
+  },
+  "dirtyFile": {
+    "ids": ["file-01", "file-02"],
+    "paths": ["Tab01.txt", "Tab02.txt"],
+    "activeIndex": 0,
+    "dirty": [true, false],
+    "pointerTargetClientDIP": [10, 10],
+    "seedPath": "original Shell.add_file_surface -> typed WorkspaceFileText + original FileDocument.set_loaded/ensure_editor -> EditorState.replace -> original InputEvent::Change subscription -> original FilesSurface.on_editor_change -> original has_unsaved_changes",
+    "fileRpcOrDiskValidated": false
+  },
+  "fileHover": {
+    "ids": ["file-01", "file-02"],
+    "paths": ["Tab01.txt", "Tab02.txt"],
+    "activeIndex": 0,
+    "dirty": [true, false],
+    "target": "actual painted second File chip center, excluding close slot",
+    "productionDetailTooltip": "Tab02.txt",
+    "productionDetailTooltipDelayMilliseconds": 350,
+    "seedPath": "same original FileDocument/EditorState path as dirtyFile; no fabricated dirty bit"
+  },
+  "fileHoverEdge": {
+    "ids": ["file-01", "file-02"],
+    "paths": ["workspace/long-component-path/long-component-path/long-component-path/Tab01.txt", "workspace/long-component-path/long-component-path/long-component-path/Tab02.txt"],
+    "titles": ["Tab01.txt", "Tab02.txt"],
+    "hostOriginDIP": [400, 510],
+    "activeIndex": 0,
+    "dirty": [true, false],
+    "target": "measured second chip center, not a precomputed coordinate; long real path detail causes right/bottom tooltip overflow",
+    "productionDetailTooltipDelayMilliseconds": 350,
+    "productionTooltipVisibility": null,
+    "pixelCroppingOrMaskingAllowed": false
+  },
+  "optionalHoverDwell": {
+    "argument": "--hover-dwell-ms",
+    "maximumMilliseconds": 10000,
+    "allowedStyles": ["inactive-hover", "file-hover", "file-hover-edge"],
+    "defaultMilliseconds": 0,
+    "observationIntervalMilliseconds": 16,
+    "start": "first owner-UI-thread committed input/native/geometry sample after input settlement",
+    "requiresAllObservedSamplesReady": true,
+    "excludesBetweenPollTransitions": false,
+    "provesProduction350MillisecondDelay": false,
+    "baseline36Unchanged": true
+  },
+  "nativeInput": {
+    "transport": "PostMessageW WM_MOUSEMOVE to own HWND; current UI-thread WH_GETMESSAGE PM_REMOVE records native queue receipt; GPUI Window.mouse_position records dispatch effect",
+    "requireNativeCursorOptional": true,
+    "readyTimeoutMilliseconds": 30000,
+    "fixtureMovesOsCursor": false,
+    "fixtureCallsSetForeground": false,
+    "captureBeforeAfterInputGate": true
+  }
+}

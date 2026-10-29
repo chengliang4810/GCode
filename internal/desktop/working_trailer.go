@@ -8,13 +8,15 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 )
 
 type primaryPendingSend struct {
-	RequestID string
-	StartedAt time.Time
-	Queued    bool
+	RequestID  string
+	DraftEpoch uint64
+	StartedAt  time.Time
+	Queued     bool
 }
 
 // These are the source's decorative activity captions, not reasoning content.
@@ -29,6 +31,12 @@ func activityWord(sessionID string, seconds int64) string {
 func (a *App) workingState(sessionID string) (word, elapsed string, visible bool) {
 	if pending, ok := a.pendingSends[sessionID]; ok {
 		if pending.Queued {
+			return "Queued — will send automatically", "", true
+		}
+		return "Sending…", "", true
+	}
+	if side := a.sideComposers[sessionID]; side != nil && side.Pending != nil {
+		if side.Pending.Queued {
 			return "Queued — will send automatically", "", true
 		}
 		return "Sending…", "", true
@@ -53,7 +61,7 @@ func (a *App) workingState(sessionID string) (word, elapsed string, visible bool
 	if !run.StartedAt.IsZero() {
 		milliseconds = max(a.now().UTC().Sub(run.StartedAt).Milliseconds(), run.DurationMS, 0)
 	}
-	return activityWord(sessionID, milliseconds/1000) + "…", strings.TrimPrefix(workedFor(milliseconds), "Worked for "), true
+	return activityWord(sessionID, milliseconds/1000) + "…", i18n.Duration(a.state.Settings.General.Language, milliseconds), true
 }
 
 func (a *App) workingTrailer(c *ui.Context, sessionID string) {
@@ -61,13 +69,17 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 	if !visible {
 		return
 	}
-	ui.Row(c).Label("Activity status: "+sessionID).FillWidth().Padding(16, 0, 0, 0).Gap(8).AlignItems(ui.Center).Children(func() {
+	caption := tr(c, word)
+	if strings.HasSuffix(word, "…") {
+		caption = tr(c, strings.TrimSuffix(word, "…")) + "…"
+	}
+	ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 		a.activityGlyph(c)
 		color := a.palette.Muted
 		if word == "Queued — will send automatically" {
 			color = a.palette.Warning
 		}
-		ui.Text(c, word).FontSize(design.UISize(c, 12)).TextColor(color)
+		ui.Text(c, caption).FontSize(design.UISize(c, 12)).TextColor(color)
 		if elapsed != "" {
 			ui.Text(c, elapsed).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint).Margin(1, 0, 0, 0)
 		}

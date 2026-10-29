@@ -211,6 +211,8 @@ func TestProjectActionsAndRelatedSessions(t *testing.T) {
 func TestQueueRetainsConfigurationAndArchiveCancels(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	ctx := context.Background()
+	before, _ := s.Snapshot(ctx)
+	original := before.Sessions[0]
 	first, err := s.Send(ctx, contracts.SendRequest{SessionID: "chat-0", Text: "first"})
 	if err != nil {
 		t.Fatal(err)
@@ -222,8 +224,11 @@ func TestQueueRetainsConfigurationAndArchiveCancels(t *testing.T) {
 	s.advanceRun("chat-0", first.ID, "done", true)
 	v, _ := s.Snapshot(ctx)
 	session := v.Sessions[0]
-	if session.ModelID != "gpt-5.4" || session.ReasoningLevel != "Extra high" || session.Branch != "feature/next" || session.DeviceID != "macbook" {
-		t.Fatal("queued run lost selected configuration")
+	if session.ModelID != "gpt-5.4" || session.ReasoningLevel != "Extra high" {
+		t.Fatal("queued run lost frozen model/reasoning configuration")
+	}
+	if session.Branch != original.Branch || session.DeviceID != original.DeviceID || session.CWD != original.CWD || session.WorktreeID != original.WorktreeID {
+		t.Fatal("queued draft settings migrated an established conversation")
 	}
 	active := s.runs["chat-0"].id
 	archived := true

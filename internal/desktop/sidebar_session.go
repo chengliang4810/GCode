@@ -63,14 +63,14 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 	})
 	row.ContextMenu(func(menu *ui.Menu) {
-		if menu.Item("Rename").Chosen() {
+		if menu.Item(tr(c, "Rename")).Chosen() {
 			a.startSidebarRename(session.ID)
 		}
 		pinLabel := "Pin"
 		if session.Pinned {
 			pinLabel = "Unpin"
 		}
-		if menu.Item(pinLabel).Chosen() {
+		if menu.Item(tr(c, pinLabel)).Chosen() {
 			pin := !session.Pinned
 			a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: session.ID, Pinned: &pin}})
 		}
@@ -78,17 +78,17 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		if session.Archived {
 			archiveLabel = "Unarchive"
 		}
-		if menu.Item(archiveLabel).Chosen() {
+		if menu.Item(tr(c, archiveLabel)).Chosen() {
 			a.archiveSidebarSession(session.ID, !session.Archived)
 		}
 		menu.Submenu("Copy", func(menu *ui.Menu) {
-			if menu.Item("Title").Chosen() {
+			if menu.Item(tr(c, "Title")).Chosen() {
 				c.Services().WriteClipboard(session.Title)
 			}
-			if menu.Item("Session ID").Chosen() {
+			if menu.Item(tr(c, "Session ID")).Chosen() {
 				c.Services().WriteClipboard(session.ID)
 			}
-			if menu.Item("Branch").Disabled(session.Branch == "").Chosen() {
+			if menu.Item(tr(c, "Branch")).Disabled(session.Branch == "").Chosen() {
 				c.Services().WriteClipboard(session.Branch)
 			}
 		})
@@ -96,12 +96,12 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		if session.Unread {
 			unreadLabel = "Mark read"
 		}
-		if menu.Item(unreadLabel).Chosen() {
+		if menu.Item(tr(c, unreadLabel)).Chosen() {
 			value := !session.Unread
 			a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: session.ID, Unread: &value}})
 		}
 		menu.Separator()
-		if menu.Item("Delete").Chosen() {
+		if menu.Item(tr(c, "Delete")).Chosen() {
 			a.sidebarUI.deleteID = session.ID
 			a.sidebarUI.deleteOpen = true
 		}
@@ -125,7 +125,7 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 					icon(c, "folder", 13)
 				}
 				if renaming {
-					input := ui.TextInputBase(c, &a.sidebarUI.renameTitle).Label("Session name").Grow(1).MinWidth(0).FontSize(design.UISize(c, 13)).OnSubmit(a.commitSidebarRename).OnShortcut(0, ui.KeyEscape, func() { a.sidebarUI.renameID = "" })
+					input := ui.TextInputBase(c, &a.sidebarUI.renameTitle).Label(tr(c, "Session name")).Grow(1).MinWidth(0).FontSize(design.UISize(c, 13)).OnSubmit(a.commitSidebarRename).OnShortcut(0, ui.KeyEscape, func() { a.sidebarUI.renameID = "" })
 					if a.sidebarUI.focusRename {
 						input.Focus().SetTextSelection(0, len([]rune(a.sidebarUI.renameTitle)))
 						a.sidebarUI.focusRename = false
@@ -162,7 +162,7 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 }
 
 func (a *App) sidebarPRBadge(c *ui.Context, session contracts.Session) {
-	ui.ButtonBase(c).Label(fmt.Sprintf("Open pull request #%d", session.PullRequestNumber)).Height(16).Padding(0, 4).Gap(3).Radius(4).AlignItems(ui.Center).Background(a.palette.Success.Alpha(.08)).TextColor(a.palette.Success).OnClick(func() {
+	ui.ButtonBase(c).Label(fmt.Sprintf(tr(c, "Open pull request #%d"), session.PullRequestNumber)).Height(16).Padding(0, 4).Gap(3).Radius(4).AlignItems(ui.Center).Background(a.palette.Success.Alpha(.08)).TextColor(a.palette.Success).OnClick(func() {
 		for _, pr := range a.state.PullRequests {
 			if pr.Number == session.PullRequestNumber {
 				a.workspace.OpenPR(pr.ID)
@@ -172,7 +172,7 @@ func (a *App) sidebarPRBadge(c *ui.Context, session contracts.Session) {
 		a.navigate("pull-requests")
 	}).Children(func() {
 		icon(c, "pull-request", 10)
-		ui.Text(c, fmt.Sprintf("#%d", session.PullRequestNumber)).Font("Geist Mono").FontSize(design.UISize(c, 10))
+		ui.Text(c, fmt.Sprintf(tr(c, "#%d"), session.PullRequestNumber)).Font("Geist Mono").FontSize(design.UISize(c, 10))
 	})
 }
 
@@ -198,7 +198,7 @@ func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hov
 			if session.Archived {
 				label, glyph = "Unarchive session", "archive-up-minimalistic"
 			}
-			iconButton(c, glyph, label+" "+session.ID).Tooltip(label).Size(18, 18).OnClick(func() { a.archiveSidebarSession(session.ID, !session.Archived) })
+			iconButton(c, glyph, tr(c, label)+" "+session.ID).Tooltip(tr(c, label)).Size(18, 18).OnClick(func() { a.archiveSidebarSession(session.ID, !session.Archived) })
 		} else if !compact && session.Status != contracts.Idle {
 			label, color := "Working", a.palette.Accent
 			if session.Status == contracts.AwaitingInput {
@@ -207,9 +207,9 @@ func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hov
 			if session.Status == contracts.Errored {
 				label, color = "Failed", a.palette.Danger
 			}
-			ui.Text(c, label).FontSize(design.UISize(c, 10)).TextColor(color)
+			ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 10)).TextColor(color)
 		} else {
-			ui.Text(c, relativeAge(session.UpdatedAt, a.state.Sessions)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Faint)
+			ui.Text(c, relativeAge(session.UpdatedAt, a.state.Sessions, a.state.Settings.General.Language)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Faint)
 		}
 	})
 }

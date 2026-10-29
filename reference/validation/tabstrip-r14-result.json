@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "phase": "R14-production-tabstrip-native-baseline",
+  "recordedAtUTC": "2026-10-28T17:22:41.2519822Z",
+  "branch": "codex/isolated-worktree",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "goalStatus": "active",
+  "completeUIParity": false,
+  "status": "independent production component baseline captured; product differences and platform acceptance remain",
+  "sourceManifest": {
+    "path": "output/resume-validation/tabstrip-r14-final-source-hashes.json",
+    "sha256": "7b8a263538f251aa884887e90af9785a0431c6fae773f095180f1b51bf25ee22"
+  },
+  "sourceDelta": {
+    "path": "output/resume-validation/tabstrip-r14-final-source-delta.json",
+    "sha256": "9088817546ce7e77a2c73e0cce9c219ce19877c77418f76c4b1c94bcce348f27"
+  },
+  "sourceCount": 280,
+  "existingSourceChanged": 2,
+  "newSourceFiles": 17,
+  "productionDrawing": "R13 retained;3 observer binding calls plus empty normal-build observer field/implementation; tagged actual Handle observations only",
+  "framework": {
+    "version": "v0.6.4",
+    "revision": "zeron-native-ui.6",
+    "treeSHA256": "cefb5a5c8694f538ac4caeecb080d2fa96adbaf15c6c12e234e1a4bd06cce914",
+    "files": 1836,
+    "patches": 11,
+    "changed": false,
+    "check": {
+      "path": "output/resume-validation/tabstrip-r14-framework-check.log",
+      "sha256": "def71f6bea489c34881ec706323d27cf16e2469b14d1a96cdaef16470d9a092c"
+    }
+  },
+  "checks": {
+    "path": "output/resume-validation/tabstrip-r14-final-r2-checks.json",
+    "sha256": "a6c9b0b5cb7bc41f13aa0fbe821552841d89d683ce05039666c83dd1e0998d0a"
+  },
+  "typedFixtureChecks": "72 scene cases at Tester scale1/2;12 observer on/off pixel+geometry invariance cases at default scale; distinct c.Now samples prove layout observations, not GPU presentation",
+  "referenceImplementation": {
+    "path": "output/tabstrip-r14-native-frame-review/result.json",
+    "sha256": "f783eaeefcff49516de021d0103aaab0aefa102e81d9fb7331d450e0163c75a2"
+  },
+  "goImplementation": {
+    "path": "output/tabstrip-r14-go-fixture/attempt-05/implementation-result.json",
+    "sha256": "80df766d59fd33373701ef259d4e68c1475165d76c38faaa9a99231807289bc2"
+  },
+  "native": {
+    "path": "output/resume-validation/tabstrip-r14-native-evidence.json",
+    "sha256": "0e8d5cbbb720e75d499ae32de7451a83dc757be5d8da6b6696643e3952a39ccd"
+  },
+  "nativeSourceBinarySHA256": "4b24fec812f16898d9b6451b38ba1d6df61dc9355679dcaa22c26172022ed408",
+  "nativeGoBinarySHA256": "73237d9f44fd06032dc8c2d9003d18576c04cec509a0a7f0bbc45f1d6969e7bf",
+  "comparison": {
+    "path": "output/tabstrip-comparison-r14-baseline-02/comparison.json",
+    "sha256": "429765abd16b5fbd2d80c7c2e3140f35a68ef6abbd8a5e7aff1c1d600a2710d4"
+  },
+  "guardSuite": {
+    "path": "output/tabstrip-comparison-tests-20261028-171626-179/result.json",
+    "sha256": "0767638baa59935cf784fa58da39baa57031e68b0a639aa7575ccc470ae3091e"
+  },
+  "guardCases": 69,
+  "guardFailures": 0,
+  "scenes": 36,
+  "actualScale": 2,
+  "ssim": {
+    "min": 0.9998630230588416,
+    "max": 0.9999965707212943,
+    "allAboveScreeningThreshold": true,
+    "threshold": 0.995,
+    "visualAcceptance": false,
+    "blankScaffoldDominates": true
+  },
+  "pixelDiagnostics": {
+    "path": "output/tabstrip-r14-pixel-diagnostics/beforeafter-result.json",
+    "sha256": "0fcdf20bfb9ecb29fcc7b481b05ce4c0dc341611e7c5246618d01cc0bdcb17bb"
+  },
+  "pixelDiagnosticsCode": {
+    "path": "output/tabstrip-r14-pixel-diagnostics/_source/main.go",
+    "sha256": "b965e69a54cc9bd497a217c2e239ed263b6ffae689f1e6e273caa1ab52b184dc"
+  },
+  "independentComparisonAudit": {
+    "path": "output/tabstrip-r14-comparator-review/comparison-artifact-review-02.json",
+    "sha256": "f97436abf4f5dd8d5cb409451d6720e35c0fa7f583faed4d5ea12eaabbc7990b"
+  },
+  "independentPixelAudit": {
+    "path": "output/tabstrip-r14-comparator-review/pixel-diagnostics-review.json",
+    "sha256": "cfa7df0dab22ddc52700a062d38337c76ece53811f6bd96e871c0eab39051c60"
+  },
+  "independentTypedGuardClosure": {
+    "path": "output/tabstrip-r14-comparator-review/activity-delta-source-review-closure.json",
+    "sha256": "32c589a08c79785b9e543adcace09544d85bbd69bd80a870c763d388b1e0a886"
+  },
+  "historical": {
+    "R13": {
+      "path": "reference/validation/reveal-r13-result.json",
+      "sha256": "73f475407666142d37e12169864dbd8c58484aae21f0a1030acb4a9b10897979"
+    },
+    "R13SourceBackup": {
+      "path": "output/resume-validation/reveal-r13-source-backup.json",
+      "sha256": "82859378995ec74880caccd4b2981dbd8ab68a5878b069020a590e32b2e09939"
+    },
+    "R13DocumentBackup": {
+      "path": "output/resume-validation/reveal-r13-doc-backup.json",
+      "sha256": "48cb8e1d98ca53e77ad40be5b4c251f553ad36143e9e44dd7299dab27bed662d"
+    },
+    "firstComparison": {
+      "path": "output/tabstrip-comparison-r14-baseline-01/comparison.json",
+      "sha256": "10c9dfc9e0de783f2f3251f4b2bd0a157836c6f209dfca8a23103d45115a7150"
+    },
+    "first51Guards": {
+      "path": "output/tabstrip-comparison-tests-20261028-165916-076/result.json",
+      "sha256": "c3d9c067441c0b2a277e45c2c03178ce473db151fb62ffa4a2c6d566cd99a015"
+    },
+    "firstAudit": {
+      "path": "output/tabstrip-r14-comparator-review/historical-baseline-01-review.json",
+      "sha256": "42f312ecb6062e28b8b8f5e232ebe86fb7f96b610e3d50a1329080c0496b9ce7"
+    },
+    "firstScope": "Reference cached active only; raw Win32 foreground unverified. Different instrumentation/activity conditions; never a controlled product-improvement comparison."
+  },
+  "lastRelease": "R13 packages and exact release-native observations retain their own identities; no new R14 release packages or installer run",
+  "nextStylePreflight": {
+    "path": "output/tabstrip-r15-style-preflight/result.json",
+    "sha256": "ba81747b1701f89ce232a774808da5b7bafe9a972baf0e9c7bcc7d59fef75102"
+  },
+  "remaining": [
+    "Selected/hover chip wash endpoints and alpha precision; inactive generic icon opacity; dirty6-DIP file dot untested by these idle side chats",
+    "Unhovered36 component states only; true glass alpha mask/transitions/drag/reveal/resize/custom menu/full titlebar/native input remain pending",
+    "Default caption retains20772 max1-channel pixel differences; requested40/40DIP matches but actual screen origins differ; DWM position/tint/raster causes unproven",
+    "Native scale1x and fractional DPI not exercised here; scale1/2 Tester cases are separate",
+    "Complete Windows IME/clipboard/browser/accessibility/performance and Mac Intel/ARM native acceptance"
+  ],
+  "docCodeClarifications": [
+    "Older documentation said original production TabStrip fixture was pending; this phase implements it without accepting parity",
+    "GPUI cached is_window_active and no-op Windows App.activate do not prove Win32 foreground; new actual before/after owner-thread checks are distinct",
+    "An old exact-settled-endpoint description is too strong for byte-alpha paths; R15 precision preflight preserves rather than rewrites historical reports"
+  ],
+  "gitCommitOrPushPerformed": false
+}

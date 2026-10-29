@@ -87,7 +87,7 @@ func (v *ImageViewport) View(c *ui.Context, image ui.ImageSource) ui.Element {
 	if bounds.W <= 0 || bounds.H <= 0 {
 		c.Invalidate()
 	}
-	viewport := ui.Box(c).Grow(1).FillWidth().Clip().Focusable().Bind(&v.handle).Label("Image preview").Cursor(ui.CursorGrab)
+	viewport := ui.Box(c).Grow(1).FillWidth().Clip().Focusable().Bind(&v.handle).Label(tr(c, "Image preview")).Cursor(ui.CursorGrab)
 	if v.dragging {
 		viewport.Cursor(ui.CursorGrabbing)
 	}

@@ -57,7 +57,7 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 	root := ui.Column(c).FillWidth().Key(row.ID)
 	open := ui.Local(root, "open", func() bool { return row.AutoOpen })
 	a.activityFold(row.ID, open, row.AutoOpen)
-	summary := contracts.SummarizeActivity(row.Activity).Label()
+	summary := a.activitySummary(contracts.SummarizeActivity(row.Activity))
 	title := summary
 	if row.Compact && !message.Streaming {
 		duration := message.DurationMS
@@ -67,12 +67,12 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 			}
 		}
 		if duration > 0 {
-			title = workedFor(duration)
+			title = a.workedFor(duration)
 		}
 	}
 	root.Children(func() {
 		parts := ui.CollapsibleBase(c, open)
-		trigger := parts.Trigger.FillWidth().Height(activityHeaderHeight).AlignItems(ui.Center).Justify(ui.Start).Label("Activity: " + summary).Tooltip(summary)
+		trigger := parts.Trigger.FillWidth().Height(activityHeaderHeight).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, "Activity: ") + summary).Tooltip(summary)
 		trigger.OnClick(func() { a.rememberActivityFold(row.ID, *open) })
 		trigger.Children(func() {
 			ui.Box(c).Size(22, activityHeaderHeight).Shrink(0).Draw(func(p *ui.Painter, bounds ui.Rect) {
@@ -132,7 +132,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	})
 	root.Children(func() {
 		parts := ui.CollapsibleBase(c, open)
-		trigger := parts.Trigger.FillWidth().Height(activityRowHeight).AlignItems(ui.Center).Justify(ui.Start).Label(label + ": " + firstNonempty(detail, block.ID))
+		trigger := parts.Trigger.FillWidth().Height(activityRowHeight).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, label) + ": " + firstNonempty(detail, block.ID))
 		trigger.OnClick(func() { a.rememberActivityFold(id, *open) })
 		trigger.Children(func() {
 			ui.Box(c).Width(activityGutter).Height(activityRowHeight).Shrink(0).Children(func() {
@@ -143,7 +143,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 				if trigger.Hovered() && (block.Tool == nil || !block.Tool.Failed()) {
 					text = a.palette.Text
 				}
-				ui.Text(c, label).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(text).SingleLine().Shrink(0)
+				ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(text).SingleLine().Shrink(0)
 				if activityFile(block) {
 					a.activityFileBadge(c, block.Tool.Path, color)
 				} else if detail != "" {
@@ -173,7 +173,7 @@ func (a *App) activityFileBadge(c *ui.Context, path string, color ui.Color) {
 			break
 		}
 	}
-	badge := ui.ButtonBase(c).Height(22).MinWidth(0).Shrink(1).Padding(0, 6, 0, 1).Gap(2).Radius(5).Background(a.activityInk(.06)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Tooltip(path).Label("Open file: " + path)
+	badge := ui.ButtonBase(c).Height(22).MinWidth(0).Shrink(1).Padding(0, 6, 0, 1).Gap(2).Radius(5).Background(a.activityInk(.06)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Tooltip(path).Label(tr(c, "Open file: ") + path)
 	if file.ID != "" {
 		badge.OnClick(func() { a.workspace.OpenFile(file.ID) })
 	}
@@ -253,7 +253,7 @@ func (a *App) activityDetail(c *ui.Context, block contracts.Block, live bool) {
 
 func (a *App) activityTruncated(c *ui.Context, lines int) {
 	if lines > 0 {
-		ui.Text(c, fmt.Sprintf("… %d more lines", lines)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint)
+		ui.Text(c, fmt.Sprintf(tr(c, "… %d more lines"), lines)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint)
 	}
 }
 
@@ -290,8 +290,8 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 			row.Opacity(0)
 		}
 		row.Children(func() {
-			ui.Text(c, message.CreatedAt.Local().Format("Jan 2, 3:04 PM")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint)
-			ui.ButtonBase(c).Size(16, 16).Label("Copy message").Tooltip("Copy message").AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
+			ui.Text(c, date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint)
+			ui.ButtonBase(c).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
 				var text []string
 				for _, b := range message.Blocks {
 					if b.Kind == "text" && b.Text != "" {

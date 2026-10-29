@@ -159,21 +159,21 @@ func (s *State) browserView(c *ui.Context, id string) {
 	}
 	services := c.Services()
 	ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
-		ui.ButtonBase(c).Label("Back").Disabled(!b.data.CanGoBack).Size(24, 24).Tooltip("Back").OnClick(func() {
+		ui.ButtonBase(c).Label(tr(c, "Back")).Disabled(!b.data.CanGoBack).Size(24, 24).Tooltip(tr(c, "Back")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.focusBody = true
 				b.view.Page().GoBack()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-left")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c).Label("Forward").Disabled(!b.data.CanGoForward).Size(24, 24).Tooltip("Forward").OnClick(func() {
+		ui.ButtonBase(c).Label(tr(c, "Forward")).Disabled(!b.data.CanGoForward).Size(24, 24).Tooltip(tr(c, "Forward")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.focusBody = true
 				b.view.Page().GoForward()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-right")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c).Label("Reload page").Size(24, 24).Radius(6).Tooltip("Reload page").OnClick(func() {
+		ui.ButtonBase(c).Label(tr(c, "Reload page")).Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.data.Loading = true
@@ -184,29 +184,29 @@ func (s *State) browserView(c *ui.Context, id string) {
 		}).Children(func() { ui.Icon(c, assets.Icon("refresh")).Size(14, 14).TextColor(p.Muted) })
 		ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
 			ui.Icon(c, assets.Icon("globe")).Size(12, 12).TextColor(p.Faint)
-			in := ui.TextInputBase(c, &b.address).Label("Website address").Placeholder("Enter URL").Grow(1).FontSize(design.UISize(c, 11.5)).OnSubmit(func() { s.navigateBrowser(b) })
+			in := ui.TextInputBase(c, &b.address).Label(tr(c, "Website address")).Placeholder(tr(c, "Enter URL")).Grow(1).FontSize(design.UISize(c, 11.5)).OnSubmit(func() { s.navigateBrowser(b) })
 			if in.Focused() || b.address != b.data.URL {
-				ui.ButtonBase(c).Label("Go to address").Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
+				ui.ButtonBase(c).Label(tr(c, "Go to address")).Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
 			}
 		})
 		label := "Annotate an element"
 		if b.annotation != nil {
 			label = "Stop annotating"
 		}
-		button := ui.ButtonBase(c).Label(label).Tooltip(label).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
+		button := ui.ButtonBase(c).Label(tr(c, label)).Tooltip(tr(c, label)).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
 		color := p.Muted
 		if b.annotation != nil {
 			button.Background(sourceInk(p.Dark, .1))
 			color = p.Accent
 		}
 		button.Children(func() { ui.Icon(c, assets.Icon("cursor-square")).Size(14, 14).TextColor(color) })
-		ui.ButtonBase(c).Label("Open in default browser").Tooltip("Open in default browser").Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
+		ui.ButtonBase(c).Label(tr(c, "Open in default browser")).Tooltip(tr(c, "Open in default browser")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
 	})
 	if b.data.Error != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {
-			ui.Text(c, "This page could not be loaded.").FontSize(design.UISize(c, 16))
+			ui.Text(c, tr(c, "This page could not be loaded.")).FontSize(design.UISize(c, 16))
 			ui.Text(c, b.data.Error).TextColor(p.Muted).MaxWidth(400)
-			ui.Button(c, "Try again").OnClick(func() { s.navigateBrowser(b) })
+			ui.Button(c, tr(c, "Try again")).OnClick(func() { s.navigateBrowser(b) })
 		})
 		return
 	}
@@ -220,7 +220,7 @@ func (s *State) browserView(c *ui.Context, id string) {
 		return
 	}
 	ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {
-		ui.Text(c, "Open a website").FontSize(design.UISize(c, 16))
+		ui.Text(c, tr(c, "Open a website")).FontSize(design.UISize(c, 16))
 		ui.Text(c, b.data.URL).TextColor(p.Muted)
 	})
 }

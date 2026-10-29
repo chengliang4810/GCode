@@ -1,0 +1,277 @@
+{
+  "fixtureBuild": {
+    "sha256": "0cad2e0dd4ceacdaf1ae24aba75e21aa30cee3ca9e5d39687797a08d5c60a8ea",
+    "path": "output/fixtures/model-picker-fixture-r7-build.json"
+  },
+  "footerComparison": {
+    "minimumSSIM": 0.9987967525287049,
+    "imageTransformations": [],
+    "limitation": "Wide blank scaffold dominates; production component screen only, not full footer/input acceptance. Native frame button tint differs; active/DWM state is not independently locked.",
+    "count": 28,
+    "numericalThresholdMetCount": 28,
+    "maximumSSIM": 0.9997550609348813,
+    "report": {
+      "sha256": "cc1e6e4a837f777e2e0b681f51db898c532a9a5ecbc01499a7f47ae7c62be2e4",
+      "path": "output/footer-comparison-r4-2x/comparison.json"
+    },
+    "threshold": 0.995,
+    "visuallyAcceptedScenes": 0,
+    "scale": 2
+  },
+  "framework": {
+    "orderedPatches": 9,
+    "exactNinePatchReplayAndThreePatchReverse": {
+      "sha256": "74924024c7849e7ee1bc66a6208c9a9c586940b0a0fc335438a9ed7c630700be",
+      "path": "output/snap-framework-qa/final-replay.json"
+    },
+    "upstream": "v0.6.4",
+    "sourceSHA256": "eb9a7c79a121eaf1fb8ac0da0cd2b3956de04df67d6a3079571130b7a0be7f5e",
+    "UIAPIValidation": {
+      "sha256": "0858870aea68cb783c5a960ce4f341322fe7f395be2586ba2e7fb6b5ec5627f8",
+      "path": "output/framework-caret-width/final-validation.json"
+    },
+    "initialSnapAndPlaceholderValidation": {
+      "sha256": "7b666a837162900cef4815961fa3b5951c5cad6b3177326bd72b6f4226acee58",
+      "path": "output/framework-snap-to-window/validation.json"
+    },
+    "revision": "zeron-native-ui.4",
+    "fileCount": 1834
+  },
+  "packages": {
+    "nativeRunOfThesePackageExecutables": "Windows default/dark and transcript/light startup/route/render/client self-capture, exit0, stderr empty; no OS input, installer or Mac runtime",
+    "manifest": {
+      "sha256": "c1b04b498fc93200cfc0933e470ccda86cea2d318f29c1d78f7a64fa7ae059a4",
+      "path": "output/resume-validation/popup-r7-packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json"
+    },
+    "macNative": "pending for both architectures",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "windowsExecutableSHA256": "15203765a1d01983c4b55cbe349af02ce7ba5599619bec4d5669695562a8a22f",
+    "installerExecuted": false,
+    "buildArchitectureResourcesZIPChecksumsAndStamp": "passed",
+    "nativeBoot": {
+      "sha256": "3c6640a408e57b4d73d616db240ee46078a7503a921e2e3ece28acbd3ddc472a",
+      "path": "output/resume-validation/popup-r7-native-boot/evidence.json"
+    }
+  },
+  "recordedAtUTC": "2026-10-28T12:28:05.5547093Z",
+  "remaining": [
+    "Compact material/text/native frame residuals, search caret phase, fractional-offset rounding and complete scene acceptance",
+    "PR tooltip geometry, Git/checkout/ref send and native destination, complete footer behavior",
+    "Native keyboard/mouse, accessibility focus consistency, IME/candidate/clipboard/browser matrix",
+    "Windows otherDPI, motion/material, performance and complete routes",
+    "Actual Mac Intel/ARM execution and full platform acceptance"
+  ],
+  "sourceManifest": {
+    "sha256": "379bb0b6b713f4071dec7d96719f0469abcd4650ac21ed38327a6944a35027f4",
+    "path": "output/resume-validation/popup-r7-source-hashes.json"
+  },
+  "goalStatus": "active",
+  "branch": "codex/isolated-worktree",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "schemaVersion": 1,
+  "fixtureBinary": {
+    "sha256": "46e3ec579b3a5dfa0671d6e6444ba262de6138c1e6c3013b8cf936ac5ec54140",
+    "path": "output/fixtures/model-picker-fixture-r7.exe"
+  },
+  "sourceUnchangedAfterBuildAndCaptures": true,
+  "completeUIParity": false,
+  "captures": [
+    {
+      "nativeWindowAttached": true,
+      "directory": "output/captures/model-picker-fixture-wgc-20261028-r7-2x",
+      "run": {
+        "sha256": "5eab914289d046e3c5ed2f988d09d8c74b9210d1283014ff304d6f926e2baf0e",
+        "path": "output/captures/model-picker-fixture-wgc-20261028-r7-2x.run.json"
+      },
+      "manifest": {
+        "sha256": "c373ceaeb0402b2df5fddf342b26618bc1e1fec3203c2c243b038c73d126decd",
+        "path": "output/captures/model-picker-fixture-wgc-20261028-r7-2x/evidence.json"
+      },
+      "count": 8,
+      "exitCode": 0,
+      "dpi": 192,
+      "allPNGsAndSidecarHashesMatch": true,
+      "noOSKeyboardOrMouseInput": true,
+      "scale": 2
+    },
+    {
+      "nativeWindowAttached": true,
+      "directory": "output/footer-implementation-r4-2x",
+      "run": {
+        "sha256": "c00959f28f3ee3a4de4af51bb02e399ee2cb31216d5c24a8bab6d198688617dd",
+        "path": "output/footer-implementation-r4-2x.run.json"
+      },
+      "manifest": {
+        "sha256": "653eac3e8d6f730f9723f7dff585499b40c4e16ed49397324c28bf3e74bfec91",
+        "path": "output/footer-implementation-r4-2x/evidence.json"
+      },
+      "count": 28,
+      "exitCode": 0,
+      "dpi": 192,
+      "allPNGsAndSidecarHashesMatch": true,
+      "noOSKeyboardOrMouseInput": true,
+      "scale": 2
+    }
+  ],
+  "originalCompact": {
+    "directory": "output/reference-lossless/capture-native-state-20261028-2x-01",
+    "scale": 2,
+    "run": {
+      "sha256": "1243c968748611eac9b7b580fc46d6009bfb7f37ecec5b3847b669b7a8b0a9d6",
+      "path": "output/reference-lossless/capture-native-state-20261028-2x-01.run.json"
+    },
+    "productionRendererUnmodified": true,
+    "binarySHA256": "cd460f145549aad6d6686b2a6b6b8008936d713cd676d4fff5aa9771152833ba",
+    "count": 8
+  },
+  "documentationCorrections": [
+    "Snap8 is overflow-only, not a permanent minimum8 inset",
+    "Cold zero bounds use source320/above rather than accidental framework auto-flip",
+    "Wrapper13px does not override the source custom input14px",
+    "Source placeholder is Faint, not Muted",
+    "Source caret2DIP versus MyGo default1DIP; device width depends on scale",
+    "Source custom renderer uses absolute22.75 despite outer ui_rems style",
+    "Fixture nil Window implies1x fallback and cannot prove actual product2x branch",
+    "Native frame physical nonclient geometry is separately observed, not a doubled1x formula",
+    "Tester.Find returns visible intersection rather than raw complete box",
+    "Go guard stub restoration must snapshot actual ScriptBlock and marker value"
+  ],
+  "sourceFiles": 256,
+  "referenceClones": [
+    {
+      "clean": true,
+      "path": "output/reference-sources/zeron",
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf"
+    },
+    {
+      "clean": true,
+      "path": "output/reference-sources/mygo",
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609"
+    }
+  ],
+  "comparatorGuards": [
+    {
+      "suite": "compact",
+      "negatives": 53,
+      "result": {
+        "sha256": "f54a314607e7eda3fcac77bee3c34ddf5e3b3fb22b6a3c8171c84e2d4dfe6f1d",
+        "path": "output/compact-comparison-tests-20261028-122534-067/result.json"
+      },
+      "cases": 55,
+      "controls": 2
+    },
+    {
+      "suite": "footer",
+      "negatives": 34,
+      "result": {
+        "sha256": "686028bdc003b8ba9b2327126ca7a953e2ae6dc2a35e0a41bac63320b048d6f3",
+        "path": "output/footer-comparison-tests-20261028-122016-517/result.json"
+      },
+      "cases": 36,
+      "controls": 2
+    }
+  ],
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "compactComparison": {
+    "minimumSSIM": 0.9868067677841457,
+    "imageTransformations": [],
+    "limitation": "Actual2x with native Window; R6 numerical results were1x and are not directly comparable as a controlled same-DPI improvement. Material/text/native frame and blink-phase residuals remain.",
+    "count": 8,
+    "scenes": [
+      {
+        "thresholdMet": true,
+        "name": "compact-panel-dark-wide",
+        "changedPixels": 28409,
+        "ssim": 0.9966761053765303
+      },
+      {
+        "thresholdMet": true,
+        "name": "compact-model-list-dark-wide",
+        "changedPixels": 12125,
+        "ssim": 0.9950442986491509
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-panel-dark-narrow",
+        "changedPixels": 28409,
+        "ssim": 0.9922929476312935
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-model-list-dark-narrow",
+        "changedPixels": 12305,
+        "ssim": 0.9880871918006088
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-panel-light-wide",
+        "changedPixels": 47196,
+        "ssim": 0.9943100278121316
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-model-list-light-wide",
+        "changedPixels": 25412,
+        "ssim": 0.9948541643886732
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-panel-light-narrow",
+        "changedPixels": 47196,
+        "ssim": 0.9868067677841457
+      },
+      {
+        "thresholdMet": false,
+        "name": "compact-model-list-light-narrow",
+        "changedPixels": 25232,
+        "ssim": 0.9885000203514469
+      }
+    ],
+    "numericalThresholdMetCount": 2,
+    "maximumSSIM": 0.9966761053765303,
+    "report": {
+      "sha256": "a83adafcf82b173112c30f990fb1db9b93fa8ca0348b5d8678127ce1489039d4",
+      "path": "output/compact-comparison-20261028-r7-2x/comparison.json"
+    },
+    "threshold": 0.995,
+    "visuallyAcceptedScenes": 0,
+    "scale": 2
+  },
+  "phase": "R7 actual Windows2x popup geometry, source input metrics and native fixture binding",
+  "changes": [
+    "Opt-in SnapToWindow matches overflow-only source rule and actual margin-box size; app menus retain native AttachTo outside opt-in",
+    "Cold popup fallback320/above and compact prefer-above rule follow frozen pickers.rs",
+    "Search actual font14, line22.75, Faint placeholder; source header/list geometry and paint",
+    "Opt-in2DIP caret preserves native editing/blink; IME candidate geometry remains unaccepted",
+    "Shared main/side ComposerInput line22.75 remains absolute across interface font sizes",
+    "Native fixture uses actual Window without App.Attach subscription and records display branch",
+    "Comparators verify separately observed native1x/2x profiles; guard Go substitution restores caller scope"
+  ],
+  "checks": {
+    "race": "not rerun in R7",
+    "fullAndTagged": {
+      "sha256": "b3d9e109878299155137b535a7e32271ee75a38757f9041202d52e6d566b575e",
+      "path": "output/resume-validation/popup-r7-test-checks.json"
+    },
+    "lint": {
+      "exitCode": 0,
+      "issues": 0,
+      "log": "output/resume-validation/popup-r7-lint.log"
+    },
+    "vet": {
+      "sha256": "306e48382b345a388e99a66db63d3da267b5050079f4fb44af7ed681b0f08eb8",
+      "path": "output/resume-validation/popup-r7-vet-checks.json"
+    },
+    "diffCheck": "passed after phase documentation; final proof is output/resume-validation/popup-r7-final-proof.json"
+  },
+  "independentOriginalImplementationMetadataReview": {
+    "sha256": "7087b36639f52fec5768227f3b7f3021b2e5ff61586a71412077b56f2b154845",
+    "path": "output/compact-comparison-tests-20261028-122534-067/actual-2x-metadata-review-v2.json"
+  },
+  "sourceUnchangedAfterNativePackageBoot": true
+}

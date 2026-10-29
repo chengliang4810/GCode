@@ -155,11 +155,11 @@ func (s *State) fileSearchResults(c *ui.Context) {
 		} else if q.error != "" {
 			label = q.error
 		}
-		ui.Text(c, label).Padding(20, 10).TextColor(p.Faint).FontSize(design.UISize(c, 11.5))
+		ui.Text(c, tr(c, label)).Padding(20, 10).TextColor(p.Faint).FontSize(design.UISize(c, 11.5))
 		return
 	}
 	if len(q.result.Files) >= 200 {
-		ui.Text(c, "Showing the first 200 matches").Padding(5, 10).FontSize(design.UISize(c, 10)).TextColor(p.Faint)
+		ui.Text(c, tr(c, "Showing the first 200 matches")).Padding(5, 10).FontSize(design.UISize(c, 10)).TextColor(p.Faint)
 	}
 	q.list.Key = func(i int) any { return q.rows[i].ID }
 	q.list.Label = func(i int) string { return q.rows[i].Name }
@@ -185,5 +185,5 @@ func (s *State) fileSearchResults(c *ui.Context) {
 			ui.Image(c, sourceFileIcon(file, file.Kind == "directory" && !q.collapsed[file.ID], p.Dark)).Size(14, 14)
 			ui.Text(c, file.Name).SingleLine().MinWidth(0).FontSize(design.UISize(c, 11.5)).TextColor(p.Muted)
 		})
-	}).Label("Fuzzy workspace file results").Grow(1).FillWidth()
+	}).Label(tr(c, "Fuzzy workspace file results")).Grow(1).FillWidth()
 }

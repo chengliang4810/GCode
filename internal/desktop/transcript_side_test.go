@@ -261,6 +261,7 @@ func TestSideRunningSessionQueuesAndEditsItsOwnMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	useEnglishSettings(t, backend)
 	a, err := New(backend)
 	if err != nil {
 		t.Fatal(err)

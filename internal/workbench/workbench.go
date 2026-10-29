@@ -58,6 +58,8 @@ type State struct {
 	tabs            []surface
 	active          int
 	tabScroll       ui.ScrollState
+	tabObserver     tabStripObserver
+	tabTooltip      tabTooltipState
 	revealTab       bool
 	systemDark      bool
 	documents       map[string]*document
@@ -475,7 +477,7 @@ func (s *State) Body(c *ui.Context) { s.view(c, false) }
 func (s *State) view(c *ui.Context, ownTabs bool) {
 	s.syncAppearance(c)
 	p := s.palette()
-	container := ui.Column(c).Key("workspace:" + s.scopeID).Label("Workspace surface").Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
+	container := ui.Column(c).Key("workspace:" + s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
 	if value, ok := ui.Drop[FileDrag](container); ok {
 		s.OpenFile(value.ID)
 	}
@@ -484,7 +486,7 @@ func (s *State) view(c *ui.Context, ownTabs bool) {
 	}
 	container.Children(func() {
 		if ownTabs && len(s.tabs) > 0 {
-			s.TabStrip(c)
+			s.TabStrip(c, false)
 		}
 		if s.Error != "" {
 			ui.Text(c, s.Error).TextColor(p.Danger).Padding(8, 12)
@@ -529,7 +531,7 @@ func (s *State) view(c *ui.Context, ownTabs bool) {
 }
 
 func (s *State) iconButton(c *ui.Context, icon, label string, action func()) {
-	ui.ButtonBase(c).Label(label).Size(24, 24).Radius(6).Tooltip(label).OnClick(action).Children(func() { ui.Icon(c, assets.Icon(icon)).Size(16, 16) })
+	ui.ButtonBase(c).Label(tr(c, label)).Size(24, 24).Radius(6).Tooltip(tr(c, label)).OnClick(action).Children(func() { ui.Icon(c, assets.Icon(icon)).Size(16, 16) })
 }
 
 func (s *State) picker(c *ui.Context) {
@@ -542,13 +544,13 @@ func (s *State) picker(c *ui.Context) {
 		ui.Column(c).FillWidth().MaxWidth(280).Gap(8).Children(func() {
 			for _, item := range items {
 				c.Key(item.kind)
-				b := ui.ButtonBase(c).Label(item.title).FillWidth().Height(44).Padding(0, 14).Radius(10).Border(1, p.Border).Gap(10).AlignItems(ui.Center).Background(sourceInk(p.Dark, .02)).OnClick(func() { s.OpenSurface(item.kind) })
+				b := ui.ButtonBase(c).Label(tr(c, item.title)).FillWidth().Height(44).Padding(0, 14).Radius(10).Border(1, p.Border).Gap(10).AlignItems(ui.Center).Background(sourceInk(p.Dark, .02)).OnClick(func() { s.OpenSurface(item.kind) })
 				if b.Hovered() {
 					b.Background(sourceInk(p.Dark, .05)).BorderColor(p.BorderStrong)
 				}
 				b.Children(func() {
 					ui.Icon(c, assets.Icon(item.icon)).Size(15, 15).TextColor(p.Muted)
-					ui.Text(c, item.title).FontWeight(500).TextColor(p.Text)
+					ui.Text(c, tr(c, item.title)).FontWeight(500).TextColor(p.Text)
 				})
 			}
 		})
@@ -557,10 +559,8 @@ func (s *State) picker(c *ui.Context) {
 
 func (s *State) hasGit() bool {
 	for _, project := range s.snapshot.Projects {
-		if project.ID == s.ProjectID || s.ProjectID == "" {
-			if project.Branch != "" || len(project.Branches) > 0 {
-				return true
-			}
+		if project.ID == s.ProjectID && project.GitDetected {
+			return true
 		}
 	}
 	return false
@@ -576,11 +576,11 @@ func sourceInk(dark bool, alpha float32) ui.Color {
 func (s *State) FilesView(c *ui.Context) {
 	s.syncAppearance(c)
 	p := s.palette()
-	ui.Column(c).Key("files-explorer:" + s.scopeID).Label("Files explorer").Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
+	ui.Column(c).Key("files-explorer:" + s.scopeID).Label(tr(c, "Files explorer")).Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
 		ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
 			ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
 				ui.Icon(c, assets.Icon("magnifer")).Size(12, 12).TextColor(p.Faint)
-				input := ui.TextInputBase(c, &s.fileSearch).Bind(&s.search.input).Placeholder("Search files").Label("Search files").Grow(1).FontSize(design.UISize(c, 11.5)).OnChange(s.refreshFileSearch).OnShortcut(0, ui.KeyEscape, func() { s.clearFileSearch(); s.tree.Focus() })
+				input := ui.TextInputBase(c, &s.fileSearch).Bind(&s.search.input).Placeholder(tr(c, "Search files")).Label(tr(c, "Search files")).Grow(1).FontSize(design.UISize(c, 11.5)).OnChange(s.refreshFileSearch).OnShortcut(0, ui.KeyEscape, func() { s.clearFileSearch(); s.tree.Focus() })
 				input.OnShortcut(0, ui.KeyDown, func() { s.moveFileSearch(1) }).OnShortcut(0, ui.KeyUp, func() { s.moveFileSearch(-1) }).OnSubmit(s.activateFileSearch)
 			})
 			icon, label := "eye-closed", "Show all files (even hidden)"
@@ -604,10 +604,10 @@ func (s *State) FilesView(c *ui.Context) {
 			}
 			ui.Scroll(c).Grow(1).FillWidth().Children(func() { ui.Tree(c, func() { s.fileChildren(c, "") }).Bind(&s.tree).FillWidth() })
 		}).ContextMenu(func(m *ui.Menu) {
-			if m.Item("New file…").Chosen() {
+			if m.Item(tr(c, "New file…")).Chosen() {
 				s.requestFileAction("create", "")
 			}
-			if m.Item("New folder…").Chosen() {
+			if m.Item(tr(c, "New folder…")).Chosen() {
 				s.requestFileAction("mkdir", "")
 			}
 		})
@@ -676,9 +676,9 @@ func (s *State) fileView(c *ui.Context, id string) {
 	ui.Row(c).Height(34).Padding(4, 12).Gap(8).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
 		ui.Text(c, d.file.Path).SingleLine().TextColor(p.Muted).Grow(1)
 		if d.file.ReadOnly {
-			ui.Text(c, "Read only").TextColor(p.Faint)
+			ui.Text(c, tr(c, "Read only")).TextColor(p.Faint)
 		} else if d.editor.Buffer.Modified() {
-			ui.Text(c, "Unsaved").TextColor(p.Muted)
+			ui.Text(c, tr(c, "Unsaved")).TextColor(p.Muted)
 		}
 		s.iconButton(c, "magnifer", "Find in file", func() { d.editor.Run(editor.Find) })
 		if strings.HasSuffix(d.file.Path, ".md") {
@@ -686,15 +686,15 @@ func (s *State) fileView(c *ui.Context, id string) {
 			if d.preview {
 				label = "Edit"
 			}
-			ui.ButtonBase(c).Label(label).Padding(4, 8).OnClick(func() { d.preview = !d.preview }).Children(func() { ui.Text(c, label) })
+			ui.ButtonBase(c).Label(tr(c, label)).Padding(4, 8).OnClick(func() { d.preview = !d.preview }).Children(func() { ui.Text(c, label) })
 		}
-		ui.ButtonBase(c).Label("Save file").Disabled(d.file.ReadOnly || !d.editor.Buffer.Modified()).Padding(4, 8).OnClick(func() { s.save(id) }).Children(func() { ui.Text(c, "Save") })
+		ui.ButtonBase(c).Label(tr(c, "Save file")).Disabled(d.file.ReadOnly || !d.editor.Buffer.Modified()).Padding(4, 8).OnClick(func() { s.save(id) }).Children(func() { ui.Text(c, tr(c, "Save")) })
 	})
 	if d.conflict {
 		ui.Row(c).Padding(8, 12).Gap(8).Children(func() {
-			ui.Text(c, "This file changed since it was opened.").TextColor(p.Warning)
+			ui.Text(c, tr(c, "This file changed since it was opened.")).TextColor(p.Warning)
 			ui.Spacer(c)
-			ui.Button(c, "Reload").OnClick(func() {
+			ui.Button(c, tr(c, "Reload")).OnClick(func() {
 				for _, f := range s.snapshot.Files {
 					if f.ID == id {
 						d.file = f
@@ -706,7 +706,7 @@ func (s *State) fileView(c *ui.Context, id string) {
 		})
 	}
 	if d.deleted {
-		ui.Text(c, "This file no longer exists.").TextColor(p.Warning).Padding(8, 12)
+		ui.Text(c, tr(c, "This file no longer exists.")).TextColor(p.Warning).Padding(8, 12)
 	}
 	if d.file.Kind == "image" {
 		s.imagePreview(c, d.file)
@@ -783,19 +783,19 @@ func codeTheme(base *ui.Theme, p design.Tokens) *editor.Theme {
 func (s *State) imagePreview(c *ui.Context, f contracts.File) {
 	d := s.documents[f.ID]
 	if d == nil || d.image == nil {
-		ui.Text(c, "Unable to open image.").Padding(20)
+		ui.Text(c, tr(c, "Unable to open image.")).Padding(20)
 		return
 	}
 	d.viewer.View(c, d.image).ContextMenu(func(m *ui.Menu) {
-		if m.Item("Fit to window").Chosen() {
+		if m.Item(tr(c, "Fit to window")).Chosen() {
 			d.viewer.geometry.fit()
 		}
-		if m.Item("Actual size").Chosen() {
+		if m.Item(tr(c, "Actual size")).Chosen() {
 			g := &d.viewer.geometry
 			g.zoom(1, g.width/2, g.height/2)
 		}
 		m.Separator()
-		if m.Item("Open image").Chosen() {
+		if m.Item(tr(c, "Open image")).Chosen() {
 			s.imageID = f.ID
 			s.imageOpen = true
 			s.imageViewer = ImageViewport{}
@@ -818,12 +818,12 @@ func (s *State) closeConfirmation(c *ui.Context) {
 		return
 	}
 	ui.Column(c).Grow(1).FillWidth().Center().Gap(16).Children(func() {
-		ui.Text(c, fmt.Sprintf("Save changes to %s?", d.file.Name)).FontSize(design.UISize(c, 16)).FontWeight(500)
-		ui.Text(c, "Your changes will be lost if you close without saving.").TextColor(s.palette().Muted)
+		ui.Text(c, fmt.Sprintf(tr(c, "Save changes to %s?"), d.file.Name)).FontSize(design.UISize(c, 16)).FontWeight(500)
+		ui.Text(c, tr(c, "Your changes will be lost if you close without saving.")).TextColor(s.palette().Muted)
 		ui.Row(c).Gap(8).Children(func() {
-			ui.Button(c, "Cancel").OnClick(func() { s.pendingClose = "" })
-			ui.Button(c, "Don't save").OnClick(func() { id := s.pendingClose; s.pendingClose = ""; s.removeFile(id) })
-			ui.PrimaryButton(c, "Save").OnClick(func() { id := s.pendingClose; s.pendingClose = ""; d.closeAfterSave = true; s.save(id) })
+			ui.Button(c, tr(c, "Cancel")).OnClick(func() { s.pendingClose = "" })
+			ui.Button(c, tr(c, "Don't save")).OnClick(func() { id := s.pendingClose; s.pendingClose = ""; s.removeFile(id) })
+			ui.PrimaryButton(c, tr(c, "Save")).OnClick(func() { id := s.pendingClose; s.pendingClose = ""; d.closeAfterSave = true; s.save(id) })
 		})
 	})
 }
@@ -834,10 +834,10 @@ func (s *State) diffView(c *ui.Context, id string) {
 		return
 	}
 	ui.Row(c).Height(34).Padding(4, 12).AlignItems(ui.Center).Gap(8).Children(func() {
-		ui.Text(c, "Changes").TextColor(s.palette().Muted)
+		ui.Text(c, tr(c, "Changes")).TextColor(s.palette().Muted)
 		ui.Spacer(c)
-		ui.Button(c, "Unified").OnClick(func() { d.Layout = editor.DiffUnified })
-		ui.Button(c, "Split").OnClick(func() { d.Layout = editor.DiffSplit })
+		ui.Button(c, tr(c, "Unified")).OnClick(func() { d.Layout = editor.DiffUnified })
+		ui.Button(c, tr(c, "Split")).OnClick(func() { d.Layout = editor.DiffSplit })
 	})
 	d.Font = s.codeFont()
 	d.Theme = codeTheme(c.Theme(), s.palette())
@@ -847,7 +847,7 @@ func (s *State) diffView(c *ui.Context, id string) {
 func (s *State) changesView(c *ui.Context) {
 	p := s.palette()
 	ui.Scroll(c).Grow(1).FillWidth().Padding(16).Children(func() {
-		ui.Text(c, "Changes").FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
+		ui.Text(c, tr(c, "Changes")).FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
 		for _, ch := range s.snapshot.Changes {
 			if s.ProjectID != "" && ch.ProjectID != s.ProjectID {
 				continue
@@ -856,12 +856,12 @@ func (s *State) changesView(c *ui.Context) {
 			ui.ButtonBase(c).Label(ch.Path).FillWidth().Padding(10, 8).Radius(6).OnClick(func() { s.OpenChange(ch.ID) }).Children(func() {
 				ui.Icon(c, assets.Icon("file-code")).Size(16, 16)
 				ui.Text(c, ch.Path).Grow(1).SingleLine()
-				ui.Text(c, fmt.Sprintf("+%d", ch.Additions)).TextColor(p.Success)
-				ui.Text(c, fmt.Sprintf("−%d", ch.Deletions)).TextColor(p.Danger)
+				ui.Text(c, fmt.Sprintf(tr(c, "+%d"), ch.Additions)).TextColor(p.Success)
+				ui.Text(c, fmt.Sprintf(tr(c, "−%d"), ch.Deletions)).TextColor(p.Danger)
 			})
 		}
 		if len(s.snapshot.Changes) == 0 {
-			ui.Text(c, "No changes").TextColor(p.Muted)
+			ui.Text(c, tr(c, "No changes")).TextColor(p.Muted)
 		}
 	})
 }
@@ -870,8 +870,11 @@ func shortSHA(sha string) string { return sha[:min(7, len(sha))] }
 
 func (s *State) pullRequestsView(c *ui.Context) {
 	p := s.palette()
-	ui.Row(c).Height(48).Padding(8, 16).AlignItems(ui.Center).Children(func() { ui.Text(c, "Pull requests").FontSize(design.UISize(c, 18)).FontWeight(600); ui.Spacer(c) })
-	ui.TextInputBase(c, &s.prSearch).Label("Search pull requests").Placeholder("Search pull requests").Padding(8, 12).Margin(4, 16).Radius(6).Background(p.Input)
+	ui.Row(c).Height(48).Padding(8, 16).AlignItems(ui.Center).Children(func() {
+		ui.Text(c, tr(c, "Pull requests")).FontSize(design.UISize(c, 18)).FontWeight(600)
+		ui.Spacer(c)
+	})
+	ui.TextInputBase(c, &s.prSearch).Label(tr(c, "Search pull requests")).Placeholder(tr(c, "Search pull requests")).Padding(8, 12).Margin(4, 16).Radius(6).Background(p.Input)
 	ui.Scroll(c).Grow(1).FillWidth().Padding(8, 16).Children(func() {
 		for _, pr := range s.snapshot.PullRequests {
 			if !strings.Contains(strings.ToLower(pr.Title+pr.Repository), strings.ToLower(s.prSearch)) {
@@ -881,7 +884,7 @@ func (s *State) pullRequestsView(c *ui.Context) {
 			ui.ButtonBase(c).Label(pr.Title).FillWidth().Padding(14, 12).Radius(10).Margin(0, 0, 8, 0).Background(p.Card).OnClick(func() { s.OpenPR(pr.ID) }).Children(func() {
 				ui.Column(c).Gap(6).Children(func() {
 					ui.Text(c, pr.Title).FontWeight(500)
-					ui.Text(c, fmt.Sprintf("%s #%d · %s · %s", pr.Repository, pr.Number, pr.Author, pr.Status)).TextColor(p.Muted)
+					ui.Text(c, fmt.Sprintf(tr(c, "%s #%d · %s · %s"), pr.Repository, pr.Number, pr.Author, tr(c, pr.Status))).TextColor(p.Muted)
 				})
 			})
 		}
@@ -902,20 +905,20 @@ func (s *State) pullRequestView(c *ui.Context, id string) {
 	p := s.palette()
 	ui.Column(c).Padding(16, 20).Gap(8).Children(func() {
 		ui.Text(c, pr.Title).FontSize(design.UISize(c, 20)).FontWeight(600)
-		ui.Text(c, fmt.Sprintf("#%d · %s → %s", pr.Number, pr.HeadBranch, pr.BaseBranch)).TextColor(p.Muted)
+		ui.Text(c, fmt.Sprintf(tr(c, "#%d · %s → %s"), pr.Number, pr.HeadBranch, pr.BaseBranch)).TextColor(p.Muted)
 		ui.Row(c).Gap(8).Children(func() {
-			ui.Text(c, pr.Status).Padding(3, 8).Radius(10).Background(p.Card).TextColor(p.Success)
+			ui.Text(c, tr(c, pr.Status)).Padding(3, 8).Radius(10).Background(p.Card).TextColor(p.Success)
 			ui.Spacer(c)
-			ui.Button(c, "Merge pull request").Disabled(pr.Status != "open").OnClick(func() { s.command(contracts.Command{Kind: "pr.merge", ID: id}) })
+			ui.Button(c, tr(c, "Merge pull request")).Disabled(pr.Status != "open").OnClick(func() { s.command(contracts.Command{Kind: "pr.merge", ID: id}) })
 		})
 	})
-	ui.Tabs(c, &s.prTab, "Summary", "Code", "Activity")
+	ui.Tabs(c, &s.prTab, tr(c, "Summary"), tr(c, "Code"), tr(c, "Activity"))
 	ui.Scroll(c).Grow(1).FillWidth().Padding(16, 20).Children(func() {
 		switch s.prTab {
 		case 0:
 			markdown.View(c, pr.Body, nil)
-			ui.ButtonBase(c).Label("Checks").FillWidth().Padding(12, 0).Margin(16, 0, 0, 0).OnClick(func() { s.checksExpanded = !s.checksExpanded }).Children(func() {
-				ui.Text(c, fmt.Sprintf("Checks · %d", len(pr.Checks))).FontWeight(500)
+			ui.ButtonBase(c).Label(tr(c, "Checks")).FillWidth().Padding(12, 0).Margin(16, 0, 0, 0).OnClick(func() { s.checksExpanded = !s.checksExpanded }).Children(func() {
+				ui.Text(c, fmt.Sprintf(tr(c, "Checks · %d"), len(pr.Checks))).FontWeight(500)
 				ui.Spacer(c)
 				icon := "alt-arrow-right"
 				if s.checksExpanded {
@@ -935,7 +938,7 @@ func (s *State) pullRequestView(c *ui.Context, id string) {
 							ui.Icon(c, assets.Icon(icon)).Size(14, 14).TextColor(color)
 							ui.Text(c, check.Name).FontWeight(500)
 							ui.Spacer(c)
-							ui.Text(c, check.Status).TextColor(color)
+							ui.Text(c, tr(c, check.Status)).TextColor(color)
 						})
 						ui.Text(c, check.Detail).TextColor(p.Muted)
 					})
@@ -955,7 +958,7 @@ func (s *State) pullRequestView(c *ui.Context, id string) {
 			if len(comments) == 0 {
 				ui.Column(c).MinHeight(160).FillWidth().Center().Gap(16).Children(func() {
 					ui.Icon(c, assets.Icon("chat-round-line")).Size(24, 24).TextColor(p.Muted)
-					ui.Text(c, "No activity yet").FontSize(design.UISize(c, 15)).FontWeight(600)
+					ui.Text(c, tr(c, "No activity yet")).FontSize(design.UISize(c, 15)).FontWeight(600)
 				})
 			}
 			for _, comment := range comments {
@@ -978,7 +981,7 @@ func (s *State) pullRequestView(c *ui.Context, id string) {
 							}
 							ui.Text(c, label).Size(24, 24).TextAlign(ui.Center).Radius(12).Background(p.Hover)
 							ui.Text(c, comment.Author).FontWeight(500)
-							ui.Text(c, comment.CreatedAt.Format("Jan 2, 15:04")).FontSize(design.UISize(c, 11)).TextColor(p.Muted)
+							ui.Text(c, date(c, comment.CreatedAt, "Jan 2, 15:04")).FontSize(design.UISize(c, 11)).TextColor(p.Muted)
 						})
 						if comment.Path != "" {
 							location := comment.Path
@@ -995,9 +998,9 @@ func (s *State) pullRequestView(c *ui.Context, id string) {
 	})
 	if s.prTab == 2 {
 		ui.Column(c).Padding(12, 20).Gap(8).BorderWidth(1, 0, 0, 0).BorderColor(p.Border).Children(func() {
-			ui.TextAreaBase(c, &s.comment).Label("Write a comment").Placeholder("Write a comment… Type @ to mention someone").MinHeight(72).Padding(12).Radius(16).Background(p.Input)
+			ui.TextAreaBase(c, &s.comment).Label(tr(c, "Write a comment")).Placeholder(tr(c, "Write a comment… Type @ to mention someone")).MinHeight(72).Padding(12).Radius(16).Background(p.Input)
 			ui.Row(c).Justify(ui.End).Children(func() {
-				ui.PrimaryButton(c, "Comment").Disabled(strings.TrimSpace(s.comment) == "").OnClick(func() {
+				ui.PrimaryButton(c, tr(c, "Comment")).Disabled(strings.TrimSpace(s.comment) == "").OnClick(func() {
 					text := s.comment
 					s.comment = ""
 					s.command(contracts.Command{Kind: "pr.comment", ID: id, Comment: &contracts.CommentInput{Body: text}})

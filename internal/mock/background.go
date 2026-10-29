@@ -117,7 +117,7 @@ func (s *Server) updateBackground(ctx context.Context, c contracts.Command) erro
 	}
 	if err = ctx.Err(); err == nil {
 		next.Revision++
-		err = s.savePersisted(persisted{Snapshot: next, Next: s.next})
+		err = s.savePersisted(s.withContextSessionsLocked(persisted{Snapshot: next, Next: s.next}))
 	}
 	if err != nil {
 		if prepared != "" {

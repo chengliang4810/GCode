@@ -70,6 +70,28 @@ func (e *node) Placeholder(s string) *node {
 	return e
 }
 
+// PlaceholderColor sets the color of this input's placeholder for this build.
+// When unset it uses the theme's TextMuted. It does not change entered text,
+// other inputs or the theme. A transparent color hides the placeholder.
+func (e *node) PlaceholderColor(color Color) *node {
+	if ed := e.st.editor; ed != nil && e.flags&flagEditable != 0 {
+		ed.placeholderColor, ed.placeholderColorSet = color, true
+	}
+	return e
+}
+
+// CaretWidth sets this input's painted caret width in DIPs for this build.
+// It defaults to one DIP. Positive widths are rounded to device pixels,
+// at least one pixel wide; zero and negative widths hide the caret. It does
+// not change text layout, input-method candidate bounds or caret blinking.
+// Other elements are unaffected.
+func (e *node) CaretWidth(width float32) *node {
+	if ed := e.st.editor; ed != nil && e.flags&flagEditable != 0 {
+		ed.caretWidth = max(width, 0)
+	}
+	return e
+}
+
 // ReadOnly makes a text input show its text without letting the user
 // change it: the text can still be selected and copied, from the keyboard
 // too, as it takes the focus, without a caret; assistive technology reads
@@ -244,6 +266,20 @@ func (e *node) SetTextSelection(start, end int) *node {
 func (e *node) Composing() bool {
 	ed := e.st.editor
 	return ed != nil && ed.compose != ""
+}
+
+// InputDisplayText returns a snapshot of the text a text input currently
+// displays, including an input method's uncommitted composition. Password
+// inputs return their masking bullets. Other elements return an empty string.
+// Reading it changes no bound value, composition, selection or undo history.
+func (e *node) InputDisplayText() string {
+	if e.flags&flagEditable == 0 {
+		return ""
+	}
+	if ed := e.st.editor; ed != nil {
+		return ed.displayText()
+	}
+	return ""
 }
 
 // Password hides what a text input holds, in the frames that call it: an

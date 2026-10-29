@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/i18n"
 )
 
 var (
@@ -25,6 +26,7 @@ var (
 )
 
 type Options struct {
+	GitScenario         string
 	IntegrationScenario string
 	Scenario            string
 	StatePath           string
@@ -58,6 +60,8 @@ type Server struct {
 	diskRevision    uint64
 	resources       map[string][]byte
 	integrationJobs map[string]uint64
+	gitJobs         map[string]uint64
+	contextSessions map[string]contextSession
 }
 
 var _ contracts.Service = (*Server)(nil)
@@ -89,6 +93,8 @@ func New(opts Options) (*Server, error) {
 				return nil, fmt.Errorf("unsupported desktop state version %d", saved.Snapshot.SchemaVersion)
 			}
 			s.state = saved.Snapshot
+			s.migrateComposerFooterGitProjects(data)
+			s.contextSessions = saved.ContextSessions
 			restored = true
 			s.next = saved.Next
 			if s.next < 1000 {
@@ -123,6 +129,7 @@ func New(opts Options) (*Server, error) {
 	if !restored {
 		s.seedIntegrationScenarioLocked(opts.IntegrationScenario)
 	}
+	s.state.Settings.General.Language = i18n.Normalize(s.state.Settings.General.Language)
 	if restored {
 		s.restoreIntegrationsLocked()
 	}
@@ -155,9 +162,14 @@ func New(opts Options) (*Server, error) {
 		}
 		reconcileAgentTurns(&s.state, opts)
 	}
+	s.ensureComposerFooterGitLocked(restored)
+	s.ensureContextUsageLocked(restored)
 	if opts.Scenario == "live" && s.sessionIndexLocked("chat-0") >= 0 && s.state.Sessions[s.sessionIndexLocked("chat-0")].Status == contracts.Working {
 		s.mu.Lock()
 		s.liveScenarioLocked()
+		if active, ok := s.runs["chat-0"]; ok {
+			s.beginHostContextLocked("chat-0", active.id)
+		}
 		s.mu.Unlock()
 	}
 	return s, nil
@@ -216,6 +228,7 @@ func (s *Server) idLocked(prefix string) string {
 }
 
 func (s *Server) publishLocked(kind, sessionID, runID, requestID, text string) {
+	s.observeHostContextLocked(kind, sessionID, runID)
 	if sessionID != "" && runID != "" {
 		s.updateRunSummaryLocked(sessionID, runID)
 	}
@@ -253,8 +266,9 @@ func clone[T any](v T) T {
 }
 
 type persisted struct {
-	Snapshot contracts.Snapshot `json:"snapshot"`
-	Next     uint64             `json:"next"`
+	Snapshot        contracts.Snapshot        `json:"snapshot"`
+	Next            uint64                    `json:"next"`
+	ContextSessions map[string]contextSession `json:"contextSessions,omitempty"`
 }
 
 func (s *Server) persist() error {
@@ -262,7 +276,7 @@ func (s *Server) persist() error {
 		return nil
 	}
 	s.mu.Lock()
-	p := persisted{Snapshot: cloneSnapshot(s.state), Next: s.next}
+	p := s.withContextSessionsLocked(persisted{Snapshot: cloneSnapshot(s.state), Next: s.next})
 	s.mu.Unlock()
 	return s.savePersisted(p)
 }
@@ -365,6 +379,9 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 		return err
 	}
 	c = c.Clone()
+	if contracts.IsComposerGitCommand(c.Kind) {
+		return s.composerGitCommand(ctx, c)
+	}
 	switch c.Kind {
 	case "background.install", "background.remove", "background.adjust":
 		return s.updateBackground(ctx, c)
@@ -494,7 +511,9 @@ func (s *Server) applyLocked(c contracts.Command) error {
 					delete(s.runs, v.ID)
 				}
 				s.state.Sessions = append(s.state.Sessions[:i], s.state.Sessions[i+1:]...)
+				s.deleteComposerFooterGitSessionLocked(v)
 				delete(s.state.Messages, c.ID)
+				s.deleteContextUsageLocked(c.ID)
 				s.removeQueueLocked(c.ID)
 				for ri := range s.state.Runs {
 					if s.state.Runs[ri].SessionID == c.ID && (s.state.Runs[ri].Status == "running" || s.state.Runs[ri].Status == "awaitingInput") {

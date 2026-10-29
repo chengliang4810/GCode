@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-29T11:39:43.5306770+08:00",
+  "binary": "output/side-chat-entry-fix/Zeron.exe",
+  "sha256": "1C8EC270134697871084723E93FCA8E84C1312BE0896D6E0ED38E75E256F785D",
+  "nativeWindowId": 65740084,
+  "scenario": "showcase",
+  "parentSessionId": "chat-0",
+  "childSessionId": "session-1001",
+  "requestId": "branch:3XL4AL4GJCX37GAR66UHL4WOHV",
+  "checks": [
+    "Native New side chat entry opens right pane",
+    "Side composer Enter sends user message and receives completed mock reply",
+    "Parent draft remains visible and unchanged",
+    "Existing child entry reopens same transcript in right pane",
+    "Persisted child contains two messages; no side user text in parent",
+    "go test ./... passed",
+    "go tool mygo vet . passed",
+    "golangci-lint: 0 issues",
+    "Windows build passed"
+  ],
+  "backend": "deterministic in-process mock; no external model provider",
+  "evidence": [
+    "side-reply.png",
+    "side-reply-ax.json",
+    "side-reopened.png",
+    "side-reopened-ax.json"
+  ]
+}

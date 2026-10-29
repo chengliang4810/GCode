@@ -1,8 +1,8 @@
 package desktop
 
 import (
-	"fmt"
 	"gcode/internal/contracts"
+	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 	"time"
 )
@@ -35,7 +35,11 @@ func sidebarGrouping(value string) string {
 	}
 }
 
-func relativeAge(at time.Time, sessions []contracts.Session) string {
+func relativeAge(at time.Time, sessions []contracts.Session, language ...string) string {
+	lang := "en"
+	if len(language) > 0 {
+		lang = language[0]
+	}
 	now := at
 	for _, s := range sessions {
 		if s.UpdatedAt.After(now) {
@@ -44,15 +48,15 @@ func relativeAge(at time.Time, sessions []contracts.Session) string {
 	}
 	d := now.Sub(at)
 	if d < time.Minute {
-		return "now"
+		return i18n.In(lang, "now")
 	}
 	if d < time.Hour {
-		return fmt.Sprintf("%dm", int(d.Minutes()))
+		return i18n.In(lang, "%dm", int(d.Minutes()))
 	}
 	if d < 24*time.Hour {
-		return fmt.Sprintf("%dh", int(d.Hours()))
+		return i18n.In(lang, "%dh", int(d.Hours()))
 	}
-	return fmt.Sprintf("%dd", int(d.Hours()/24))
+	return i18n.In(lang, "%dd", int(d.Hours()/24))
 }
 
 func (a *App) projectPopover(c *ui.Context, b ui.Element) {
@@ -62,9 +66,9 @@ func (a *App) projectPopover(c *ui.Context, b ui.Element) {
 				p := p
 				menuChoice(c, p.Name, a.projectID == p.ID, func() { a.projectID = p.ID; a.branch = p.Branch; a.projectMenu = false })
 			}
-			menuChoice(c, "Don't work in a project", a.projectID == "", func() { a.projectID = ""; a.projectMenu = false })
+			menuChoice(c, tr(c, "Don't work in a project"), a.projectID == "", func() { a.projectID = ""; a.projectMenu = false })
 			line(c)
-			menuChoice(c, "New project…", false, func() { a.openNewProject(); a.projectMenu = false })
+			menuChoice(c, tr(c, "New project…"), false, func() { a.openNewProject(); a.projectMenu = false })
 		})
 	})
 }

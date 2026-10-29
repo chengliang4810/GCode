@@ -1,0 +1,23 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index bcb84ac..d8be8dc 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -14046,6 +14046,7 @@ dependencies = [
+  "uuid",
+  "webview2-com",
+  "windows 0.61.3",
++ "windows-capture",
+  "windows-core 0.61.2",
+  "windows-sys 0.61.2",
+  "wry",
+diff --git a/crates/ui/Cargo.toml b/crates/ui/Cargo.toml
+index 3584e22..5b8b2ac 100644
+--- a/crates/ui/Cargo.toml
++++ b/crates/ui/Cargo.toml
+@@ -201,3 +201,6 @@ windows-core = "0.61"
+ raw-window-handle = "0.6"
+ reqwest.workspace = true
+ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
++
++[target.'cfg(windows)'.dev-dependencies]
++windows-capture = "=1.5.0"

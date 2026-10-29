@@ -1,6 +1,9 @@
 package workbench
 
 import (
+	"fmt"
+	"time"
+
 	"gcode/internal/assets"
 	"gcode/internal/design"
 
@@ -18,79 +21,157 @@ func (s *State) syncAppearance(c *ui.Context) {
 
 // TabStrip uses the official TabsBase focus and keyboard model inside a native
 // horizontal scroller. Chips keep the reference's 112×24 geometry at overflow.
-func (s *State) TabStrip(c *ui.Context) {
+func (s *State) TabStrip(c *ui.Context, expanded bool) {
+	// Consume only the request this pass can render. A synchronous menu
+	// choice below may select a new tab after the chips were already built;
+	// that request belongs to the next build pass.
+	reveal := s.revealTab
+	s.revealTab = false
 	s.syncAppearance(c)
 	p := s.palette()
-	ui.Row(c).Key("workspace-tabs:"+s.scopeID).Label("Workspace tabs").FillWidth().Height(38).Shrink(0).Gap(4).Padding(4, 8, 0, 8).AlignItems(ui.Center).Background(p.Background).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
-		ui.ScrollHorizontal(c).Label("Scroll workspace tabs").Grow(1).MinWidth(0).Height(24).TrackScroll(&s.tabScroll).Children(func() {
+	tips := s.tabTooltip.begin(c, s.scopeID, len(s.tabs))
+	// shell/tabs.rs supplies one 4px top inset over the transparent titlebar;
+	// its fixed expand button follows the scrolling chips and add-tab button.
+	ui.Row(c).Key("workspace-tabs:"+s.scopeID).Label(tr(c, "Workspace tabs")).FillWidth().Height(38).Shrink(0).Gap(4).Padding(4, 4, 0, 8).AlignItems(ui.Center).Clip().Children(func() {
+		scroller := ui.ScrollHorizontal(c).Label(tr(c, "Scroll workspace tabs")).Grow(1).MinWidth(0).FillHeight().Gap(4).TrackScroll(&s.tabScroll).Scrollbars(false)
+		if design.Glass(p, s.snapshot.Settings.Appearance.Surface, c.Vibrancy()).A == 255 {
+			// TrackScroll commits these plain values during layout. Read them
+			// at paint time so a MaxX-only change cannot leave a stale fade
+			// while the window is idle; no additional frame is needed.
+			scroll := &s.tabScroll
+			background := p.Shell
+			scroller.DrawOver(func(painter *ui.Painter, r ui.Rect) {
+				paintTabStripFades(painter, r, background, scroll.X > 1, scroll.X < scroll.MaxX-1)
+			})
+		}
+		scroller.Children(func() {
 			parts := ui.TabsBase(c, &s.active, len(s.tabs))
 			var moveFrom, moveTo tabDrag
 			move := false
 			parts.List.Gap(4).Children(func() {
 				for i, tab := range s.tabs {
 					c.Key(tab.kind + ":" + tab.id)
-					chip := parts.Tab(i).Label(tab.title).Tooltip(s.tabDetail(tab)).Width(112).Height(24).Padding(0, 4).Gap(3).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
+					detail := s.tabDetail(tab)
+					chip := parts.Tab(i).Label(s.tabTitle(tab)).Description(detail).Width(112).Height(24).Padding(0, 4).Gap(3).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
+					s.tabObserver.bind("chip", tab.id, chip)
+					s.tabTooltip.observe(c, &tips, i, false, detail, chip)
 					selected := i == s.active
-					if selected {
-						chip.Background(sourceInk(p.Dark, .10))
-					} else if chip.Hovered() {
-						chip.Background(sourceInk(p.Dark, .06))
+					if selected || chip.Hovered() {
+						dark := p.Dark
+						chip.Draw(func(painter *ui.Painter, r ui.Rect) {
+							paintTabChipWash(painter, r, dark, selected)
+						})
 					}
-					if selected && s.revealTab {
+					if selected && reveal {
 						chip.ScrollIntoView()
 					}
 					if dragged, ok := ui.Drop[tabDrag](chip); ok {
 						moveFrom, moveTo, move = dragged, tabDrag{tab.kind, tab.id}, true
 					}
 					chip.ContextMenu(func(menu *ui.Menu) {
-						if menu.Item("Close tab").Chosen() {
+						if menu.Item(tr(c, "Close tab")).Chosen() {
 							s.closeTab(i)
 						}
-						if menu.Item("Close other tabs").Disabled(len(s.tabs) < 2).Chosen() {
+						if menu.Item(tr(c, "Close other tabs")).Disabled(len(s.tabs) < 2).Chosen() {
 							s.closeOtherTabs(tab)
 						}
 					})
 					chip.Children(func() {
 						ui.Box(c).Size(18, 18).Shrink(0).Center().Children(func() {
 							if tab.kind == "file" && s.documents[tab.id] != nil {
-								ui.Image(c, sourceFileIcon(s.documents[tab.id].file, false, p.Dark)).Size(14, 14)
+								icon := ui.Image(c, sourceFileIcon(s.documents[tab.id].file, false, p.Dark)).Size(14, 14)
+								if !selected {
+									icon.Opacity(.78)
+								}
 							} else {
-								ui.Icon(c, assets.Icon(tabIcon(tab.kind))).Size(12, 12).TextColor(p.Muted)
+								icon := ui.Icon(c, assets.Icon(tabIcon(tab.kind))).Size(12, 12).TextColor(p.Muted)
+								if !selected {
+									icon.Opacity(.7)
+								}
 							}
 						})
 						color := p.Muted
 						if selected {
 							color = p.Text
 						}
-						ui.Text(c, tab.title).SingleLine().Grow(1).MinWidth(0).FontSize(design.UISize(c, 11.5)).TextColor(color)
-						close := ui.ButtonBase(c).Label("Close tab "+tab.title).Tooltip("Close tab").Size(18, 18).Shrink(0).Radius(4).OnClick(func() { s.closeTab(i) })
+						ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.UISize(c, 11.5)).TextColor(color)
+						close := ui.ButtonBase(c).Label(tr(c, "Close tab ")+s.tabTitle(tab)).Description(tr(c, "Close tab")).Size(18, 18).Shrink(0).Radius(4).OnClick(func() { s.closeTab(i) })
+						s.tabTooltip.observe(c, &tips, i, true, tr(c, "Close tab"), close)
 						close.Children(func() {
 							if chip.Hovered() || close.Hovered() || close.FocusVisible() {
 								ui.Icon(c, assets.Icon("close")).Size(12, 12).TextColor(p.Muted)
 							} else if d := s.documents[tab.id]; tab.kind == "file" && d != nil && d.editor.Buffer.Modified() {
-								ui.Box(c).Size(5, 5).Radius(3).Background(p.Muted)
+								ui.Box(c).Size(6, 6).Radius(3).Background(p.Muted)
 							}
 						})
 					})
 				}
 			})
+			// Keep the menu button outside the TabsBase focus group, while
+			// including it in the same scrolling content as the chips.
+			if len(s.tabs) > 0 {
+				plus := tabStripButton(c, "add-surface", "New surface", "New tab", "plus", 24, 13, p)
+				s.tabObserver.bind("plus", "", plus)
+				plus.Menu(func(menu *ui.Menu) {
+					for _, item := range []struct{ kind, title string }{{"files", "Files"}, {"browser", "Browser"}, {"terminal", "Terminal"}, {"changes", "Diffs"}, {"history", "History"}} {
+						if (item.kind == "changes" || item.kind == "history") && !s.hasGit() {
+							continue
+						}
+						if menu.Item(tr(c, item.title)).Chosen() {
+							s.OpenSurface(item.kind)
+						}
+					}
+				})
+			}
 			if move {
 				s.moveTab(moveFrom, moveTo)
 			}
 			parts.List.OnChange(func() { s.selectTab(s.active) })
 		})
 		if s.OnToggleExpand != nil {
-			s.iconButton(c, "expand-arrows", "Expand workspace", s.OnToggleExpand)
-		}
-		ui.ButtonBase(c).Label("New surface").Tooltip("New tab").Size(24, 24).Shrink(0).Radius(6).Menu(func(menu *ui.Menu) {
-			for _, item := range []struct{ kind, title string }{{"files", "Files"}, {"browser", "Browser"}, {"terminal", "Terminal"}, {"changes", "Diffs"}, {"history", "History"}} {
-				if menu.Item(item.title).Disabled((item.kind == "changes" || item.kind == "history") && !s.hasGit()).Chosen() {
-					s.OpenSurface(item.kind)
-				}
+			icon, tooltip := "expand-arrows", "Expand panel"
+			if expanded {
+				icon, tooltip = "collapse-arrows", "Collapse panel"
 			}
-		}).Children(func() { ui.Icon(c, assets.Icon("plus")).Size(13, 13).TextColor(p.Muted) })
+			expand := tabStripButton(c, "expand-workspace", "Expand workspace", tooltip, icon, 28, 16, p).OnClick(s.OnToggleExpand)
+			s.tabObserver.bind("expand", "", expand)
+		}
 	})
-	s.revealTab = false
+	s.renderTabTooltip(c, tips)
+}
+
+// Opaque strips use shell-color ramps; glass requires a subtree alpha mask.
+func paintTabStripFades(painter *ui.Painter, r ui.Rect, background ui.Color, left, right bool) {
+	const band float32 = 36
+	painter.Clip(r, 0, func() {
+		if left {
+			painter.FillGradient(ui.Rect{X: r.X, Y: r.Y, W: band, H: r.H}, ui.LinearGradient{From: background, To: background.Alpha(0), Angle: 90}, 0)
+		}
+		if right {
+			painter.FillGradient(ui.Rect{X: r.X + r.W - band, Y: r.Y, W: band, H: r.H}, ui.LinearGradient{From: background, To: background.Alpha(0), Angle: 270}, 0)
+		}
+	})
+}
+
+func tabStripButton(c *ui.Context, key, label, tooltip, icon string, size, glyphSize float32, p design.Tokens) ui.Element {
+	c.Key(key)
+	button := ui.ButtonBase(c).Label(tr(c, label)).Tooltip(tr(c, tooltip)).Size(size, size).Shrink(0).Radius(6).Center()
+	alpha := float32(0)
+	if button.Hovered() {
+		alpha = .11
+	}
+	// Button hover keeps its existing byte-color animation path.
+	wash := ui.RGBA(26, 26, 26, alpha)
+	if p.Dark {
+		wash = ui.RGBA(235, 235, 235, alpha)
+	}
+	if c.Preferences().ReduceMotion {
+		button.Background(wash)
+	} else {
+		button.Background(button.AnimateColor("hover", wash, ui.Animation{Duration: 150 * time.Millisecond, Ease: ui.CubicBezier(.4, 0, .2, 1)}))
+	}
+	button.Children(func() { ui.Icon(c, assets.Icon(icon)).Size(glyphSize, glyphSize).TextColor(p.Muted) })
+	return button
 }
 
 func tabIcon(kind string) string {
@@ -118,7 +199,20 @@ func (s *State) tabDetail(tab surface) string {
 	if d := s.documents[tab.id]; tab.kind == "file" && d != nil {
 		return d.file.Path
 	}
-	return tab.title
+	if b := s.browsers[tab.id]; tab.kind == "browser" && b != nil {
+		return b.data.URL
+	}
+	if tab.kind == "pr" {
+		for _, pr := range s.snapshot.PullRequests {
+			if pr.ID == tab.id {
+				if pr.Number > 0 {
+					return fmt.Sprintf("#%d %s", pr.Number, pr.Title)
+				}
+				return pr.Title
+			}
+		}
+	}
+	return ""
 }
 
 func (s *State) moveTab(from, to tabDrag) {

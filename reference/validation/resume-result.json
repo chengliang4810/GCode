@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T09:14:57.3980703Z",
+  "userResumed": true,
+  "details": "docs/machine-resume.md",
+  "branch": "codex/isolated-worktree",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "remoteBranchVerifiedAtStartingCommit": true,
+  "goVersion": "1.27.3",
+  "cgoEnabled": 0,
+  "sourcePhase": "Integrated device/provider, side activity, compact/expanded/preedit, panel keyboard/Fast/choice labels; isolated native fixtures",
+  "sourceManifest": "output/resume-validation/integrated-source-hashes.json",
+  "sourceManifestEntries": 172,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "referenceRoot": "output/reference-sources/zeron",
+  "mygoExamplesRoot": "output/reference-sources/mygo",
+  "framework": {
+    "revision": "zeron-native-ui.3",
+    "sourceSHA256": "c6a86278ae261c75b6b195632d97d4d64218ed69189ec45554b85c5826b4d2a6",
+    "sixthPatchSHA256": "10e6003b954b9d6038bf98a6e4e8ca731b785bb8d64c817578687821e37d4a46",
+    "version": "v0.6.4",
+    "fileCount": 1831,
+    "replay": "exact .3 to .2 reverse and .2 to .3 forward tree hashes verified"
+  },
+  "checks": {
+    "goVet": "passed",
+    "logs": "output/resume-validation",
+    "fixtureTestsAndTaggedVets": "passed",
+    "fullGoTests": "passed",
+    "race": "not rerun on new machine",
+    "lint": "passed: 0 issues after package build",
+    "checkReturnCodes": "output/resume-validation/integrated-checks.json",
+    "mygoFullUI": "passed",
+    "frameworkPin": "passed",
+    "mygoVet": "passed",
+    "independentReview": "confirmed regressions corrected; current code and capture transport review complete"
+  },
+  "packages": {
+    "nativeLibraryDownload": "Direct GitHub timeout; official GitHub release asset API files matched fixed plugin SHA256 before caching",
+    "windowsExecutableSHA256": "38e0127e24ca8954eda64b8bc7f3b49101d6bb968e3f6dbfac21d717c58ee6c1",
+    "status": "built and verified",
+    "log": "output/resume-validation/packages-integrated-retry.log",
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ],
+    "manifest": "output/resume-validation/packages/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+    "installedPackageTest": "pending"
+  },
+  "nativeObservations": {
+    "packageModelPanelEndDownEnterEscape": "observed in current Windows package",
+    "primaryChineseDraftSwitchRestoreAndMockSend": "observed in recorded baseline",
+    "earlierManifest": "output/resume-validation/native/evidence.json",
+    "uiaFocusedElementConsistency": "pending: stale main Message reported while side/popup keyboard actions route correctly",
+    "sideTextKeyboardAndUndoRouting": "observed",
+    "composerEvidence": "output/resume-validation/composer-native-final",
+    "encoding": "raw Computer Use JPEG; separate PNG fixtures described below",
+    "sideMockSendWorkingTrailerAndCompletion": "observed in recorded side phase",
+    "packageEvidence": "output/resume-validation/package-native/evidence.json",
+    "composerMultilineUndoAndCappedScroll": "observed in .3 layout phase"
+  },
+  "referenceCapture": {
+    "losslessScope": "layout-only matrix; no full keyboard or pixel pass",
+    "jpegScenes": 8,
+    "productionUIAndRendererModified": false,
+    "losslessOutput": "output/reference-lossless/capture-layout-20261028-02",
+    "losslessEvidence": "reference/validation/lossless-result.json",
+    "jpegManifest": "output/resume-validation/reference-native-observed/observations.json",
+    "losslessTransport": "in-process existing windows-capture 1.5.0; exact own HWND; full original PNG frame; no transformations",
+    "losslessScenes": 8,
+    "frozenFullKeyboardFixture": "fails High != XHigh because test assumes obsolete focus traversal"
+  },
+  "implementationCapture": {
+    "headlessMatrixScope": "earlier layout-stage source; implementation-only MyGo Tester captures",
+    "nativeCompactFixtureManifest": "output/captures/model-picker-fixture-native-20261028-r2/evidence.json",
+    "nativeCompactFixtureBoundary": "native client content from Window.CapturePage",
+    "headlessLayoutMatrixScenes": 79,
+    "nativeCompactFixtureScenes": 8,
+    "productionModelUIReused": true,
+    "headlessMatrixManifest": "output/resume-validation/implementation-matrix/evidence.json",
+    "buildTag": "uifixture"
+  },
+  "comparison": {
+    "strictUntransformedComparison": "refused dimensions 842x592 versus 840x560; no SSIM",
+    "next": "align capture boundary and anchor geometry, then fix and compare complete scenes",
+    "evidence": "reference/validation/compact-fixture-comparison.json",
+    "status": "not accepted",
+    "actionableVisualDifferences": [
+      "popup surface",
+      "effort rail material",
+      "option row chrome",
+      "fixture placement"
+    ]
+  },
+  "acceptance": {
+    "samePlatformMatchedReferenceComparison": "pending",
+    "fullFooterAndMotion": "pending",
+    "completeUIParity": false,
+    "fullWindowsNativeMatrix": "pending",
+    "macOSARMNative": "pending",
+    "macOSIntelNative": "pending",
+    "productionTabStripNativeBaseline": "R16:36 newGo actual2x vs unchangedR14 originals with strictbeforeafter gates;8 timedstyle rawPNGs independently reviewed, no visual acceptance. Matured1s doesnot prove350ms and polling excludes no between-poll transitions.",
+    "losslessReferencePNG": "Historical compact/footer/R14/R15 raw evidence retained;R16 adds4 source style WGC originals and4 Go styleWGC plus36 newGo baseline. FullPNG/sidecars preserved. No visual acceptance."
+  },
+  "latestFocusDiagnostic": "reference/validation/native-focus-r9-result.json",
+  "latestDiagnosticNativeObservation": "output/resume-validation/session-r11-native-visible/evidence.json",
+  "nextScrollbarPreflight": "output/resume-validation/next-scrollbar-preflight.json",
+  "sourceFormattingResolution": {
+    "path": "output/resume-validation/reveal-r13-license-metadata.json",
+    "sha256": "a44a81c46e40296c6f75c57c12355544b10fbe7d78904d211e6272add54426ec"
+  },
+  "stage": "Earlier integration fields retain historical scope. Latest source/native/component diagnostics/release package smoke are R16 via latestPhaseEvidence/latestReleasePhaseEvidence. Full acceptance remains pending.",
+  "latestPhaseEvidence": "reference/validation/tabstrip-r16-result.json",
+  "latestPhaseEvidenceSHA256": "72782137afb79bbd1460c1177b1925e41a138a3f3ae5314e607b807adeb1ec32",
+  "latestReleasePhaseEvidence": "reference/validation/tabstrip-r16-result.json",
+  "latestNativeObservation": "output/resume-validation/tabstrip-r16-native-evidence.json",
+  "latestPhaseReview": {
+    "path": "output/tabstrip-r16-final-review/result.json",
+    "sha256": "b00b7d81bebb3ed4645fef754aef9ebd3955871597aa6194db1643d0c395a92b"
+  },
+  "latestPhaseProof": {
+    "path": "output/resume-validation/tabstrip-r16-final-proof.json",
+    "sha256": "b9b694d7f05cf89bbf6b133fc06f64c4f6b7405943373cc65bd82f0356ae71b0"
+  },
+  "currentSourceWork": "R16:300 scoped sources/24delta(11changed13new), same.6/1836files/11patches. Inactive file bitmap.78 and real File/Browser-only details; no generic title fallback. Five gates,951app+52resource unchanged, four release packages verified. NewGo36 vs retainedR14 original36,8 timed style PNGs and exact Windows release file open/switch/hover/contextclose/exit0DPI192. No-window same-device54case GPU control reproduces lightB1; actualUI adapters still unbound. Source350/point/flip/style/realPR, iconedges/glass/fullWindows/Mac pending; goalactive.",
+  "nextPhasePreflight": {
+    "path": "output/native-blend-readback-r16-run-attempt02/result.json",
+    "sha256": "9fafa5b61536430fd47b463f1cd7c37c858af9be2c9385fe690814d18e3e50c2",
+    "scope": "Implemented no-window controlled GPU readback. Next bind actual GUI adapter/feature level and assess opt-in general straight-alpha path; no product blend change yet. Source tooltip350/point/natural-size-flip API remains pending."
+  },
+  "nextStaticDifferences": [
+    "Light selected fill differsB1; controlled ArcB580 BGRA8 reproduces straight-vs-premul decomposition, actualGUI adapter binding pending; no channel tuning",
+    "File tooltip350ms/show-timepointer/natural-sizeflip/style, close500ms and realPR detail pending; generic no-detail title fallback and file.78 now corrected",
+    "Wholeicon/glyph/text/radius coverage and nativeglass subtree mask/fractionalDPI remain pending"
+  ],
+  "referenceExportCaveat": "Frozen clone remains clean. Mutable export preserves inherited Cargo/lock differences. R16 protects15 production dependencies with exact append-only Shell/preview feature guards; original production methods unchanged. File-hover and optional measured dwell are fixture instrumentation only; origin stamp is not whole-export byte equality.",
+  "goalStatus": "active",
+  "readonlyReferencesClean": true,
+  "documentationCorrections": [
+    "Historical pause and old reference paths are superseded by active resume and checkout-local paths",
+    "Earlier integration used .3/six patches; latest current pin is .6/1836files/11patches",
+    "Earlier always-expanded116/22 leading/fixed radius statements superseded by compact49 and native adaptive layout",
+    "Generic hero120 floor omitted the settled dock104 floor",
+    "Empty side footer wording omitted conditional context ring, still pending implementation",
+    "Frozen compact keyboard fixture disagrees with production key handler",
+    "ModelOption optional choiceLabels and owned-map contract inventory now updated",
+    "Historical native PNG pending record is explicitly marked handoff baseline; current eight-scene PNG evidence is separate",
+    "Current-facing framework pin/count is .6/1836files/11patches; earlier stage counts retained as historical",
+    "R12 menu reveal is now fixed; resize/takeover expectation is separate and unestablished",
+    "Generated license metadata LF restored; default diff check0,50 other license files unchanged",
+    "Reference export source stamp does not establish whole-tree equality; existing Cargo differences documented by fixture preflight",
+    "Production original TabStrip fixture previously pending is now implemented;36 controlled native pairs remain visually unaccepted",
+    "GPUI cached active/no-op Windows App.activate cannot prove Win32 foreground; final fixtures query actual before/after native identity",
+    "Historical exact settled wash endpoint wording exceeds byte Color precision; old report retained and R15 preflight records quantization",
+    "R14 not-yet-implemented wash/glyph/dot candidate is now implemented inR15; prior phase prose remains historical",
+    "Current latest release and exact Windows EXE smoke advanceR13 toR15 without relabeling previous artifacts",
+    "Go capture03 changed pointer while foreground/geometry stayed stable; source readiness fix and native failure cause remain separate",
+    "R15 exact-release launch sourceManifest typo preserved with explicit hash-bound additive correction172b02e9",
+    "R15 hover difference was not explained sufficiently by unmatched dwell: frozen SideChat detailNone confirms semanticgap, correctedR16; old reports retained",
+    "Inactive file.78 corrected independently from generic.7; GPU light hypothesis reproduced only in controlled device test, actual app adapters still unbound",
+    "Go01 dwell failsbeforeWGC withzeroPNG despite generic retainedPNG error text; native foreground remained own",
+    "R16 first nativeindex used wrong successmanifest name; candidate retained, final ledger verifies actual evidence.json/exit consistency"
+  ],
+  "latestPhaseLinkedAtUTC": "2026-10-28T18:39:23.3439348Z"
+}

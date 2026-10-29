@@ -28,6 +28,7 @@ func cloneSnapshot(v contracts.Snapshot) contracts.Snapshot {
 	}
 	v.Devices = slices.Clone(v.Devices)
 	v.Sessions = slices.Clone(v.Sessions)
+	cloneComposerFooterGitSnapshots(&v)
 	messages := make(map[string][]contracts.Message, len(v.Messages))
 	for key, ms := range v.Messages {
 		out := slices.Clone(ms)
@@ -37,12 +38,20 @@ func cloneSnapshot(v contracts.Snapshot) contracts.Snapshot {
 		messages[key] = out
 	}
 	v.Messages = messages
+	if v.ContextUsage != nil {
+		usage := make(map[string]contracts.ContextUsage, len(v.ContextUsage))
+		for id, context := range v.ContextUsage {
+			usage[id] = context.Clone()
+		}
+		v.ContextUsage = usage
+	}
 	v.Models = slices.Clone(v.Models)
 	for i := range v.Models {
 		v.Models[i].ReasoningLevels = slices.Clone(v.Models[i].ReasoningLevels)
 		v.Models[i].Options = slices.Clone(v.Models[i].Options)
 		for j := range v.Models[i].Options {
 			v.Models[i].Options[j].Choices = slices.Clone(v.Models[i].Options[j].Choices)
+			v.Models[i].Options[j].ChoiceLabels = maps.Clone(v.Models[i].Options[j].ChoiceLabels)
 		}
 	}
 	v.Providers = slices.Clone(v.Providers)

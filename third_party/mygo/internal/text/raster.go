@@ -64,13 +64,22 @@ var linear = func() (t [256]float32) {
 }()
 
 type glyphKey struct {
-	font     *Font
-	id       uint32
-	scale    uint32 // pixels per DIP, in 1/256
-	subX     uint8  // the position within a pixel, of placement.n
-	shade    Shade
-	subpixel bool
+	font  *Font
+	id    uint32
+	scale uint32 // pixels per DIP, in 1/256
+	subX  uint8  // the position within a pixel, of placement.n
+	shade Shade
+	mode  uint8
 }
+
+// Raster modes normalize the cache identity; they do not prescribe the
+// bitmap flags returned by the text engine. Public placement policy values
+// are distinct: quarter policy1 normalizes to quarterSubpixel2.
+const (
+	nativeNonSubpixel uint8 = iota
+	nativeSubpixel
+	quarterSubpixel
+)
 
 // placement is how the system's text stack places glyphs of a font at a
 // scale horizontally: at n positions within a pixel, the nearest to their
@@ -81,9 +90,9 @@ type placement struct {
 }
 
 type placeKey struct {
-	font     *Font
-	scale    uint32
-	subpixel bool
+	font  *Font
+	scale uint32
+	mode  uint8
 }
 
 // GlyphImage is a rasterized glyph in an atlas.
@@ -241,11 +250,25 @@ func (s *System) Glyph(f *Font, id uint32, scale, x float32, shade Shade, opaque
 	shade = f.shadeFor(shade)
 	subpixel := opaque && s.subpixel
 	q, n, carry := s.place(f, scale, subpixel, x)
-	key := glyphKey{font: f, id: id, scale: uint32(scale*256 + 0.5), subX: uint8(q), shade: shade, subpixel: subpixel}
+	return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
+}
+
+// glyphAt is called with the System lock held. Policy belongs to the raster
+// key, not the font/shape keys: those outputs remain identical.
+func (s *System) glyphAt(f *Font, id uint32, scale float32, shade Shade, subpixel bool, q, n int, carry float32, policy uint8) GlyphImage {
+	mode := nativeNonSubpixel
+	if subpixel {
+		mode = nativeSubpixel
+		if policy == GlyphPlacementWindowsClearTypeQuarter {
+			mode = quarterSubpixel
+		}
+	}
+	key := glyphKey{font: f, id: id, scale: uint32(scale*256 + 0.5), subX: uint8(q), shade: shade, mode: mode}
+
 	e, ok := s.glyphs[key]
 	if !ok {
 		failed := s.failed
-		g := s.rasterize(f, id, scale, float32(q)/float32(n), key.shade, key.subpixel)
+		g := s.rasterize(f, id, scale, float32(q)/float32(n), key.shade, key.mode != nativeNonSubpixel)
 		e = &atlasEntry{g, s.frame}
 		if s.failed == failed { // not left out of a full atlas
 			s.glyphs[key] = e
@@ -261,7 +284,11 @@ func (s *System) Glyph(f *Font, id uint32, scale, x float32, shade Shade, opaque
 // is at x: at position q of the n within a pixel, carry pixels right of
 // the pixel x is in.
 func (s *System) place(f *Font, scale float32, subpixel bool, x float32) (q, n int, carry float32) {
-	pk := placeKey{f, uint32(scale*256 + 0.5), subpixel}
+	mode := nativeNonSubpixel
+	if subpixel {
+		mode = nativeSubpixel
+	}
+	pk := placeKey{font: f, scale: uint32(scale*256 + 0.5), mode: mode}
 	pl, ok := s.places[pk]
 	if !ok {
 		pl.n, pl.round = s.engine().positions(f, scale, subpixel)

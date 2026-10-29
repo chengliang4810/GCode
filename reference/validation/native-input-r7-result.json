@@ -1,0 +1,242 @@
+{
+  "phase": "R7 packaged Windows native input supplement, before R8 fixes",
+  "data": "Explicit default/transcript scenarios, deterministic in-process mock, no data-dir",
+  "findings": [
+    "Main header controls remain in UIA while workspace TabStrip overlays their live bounds; source confirms app layout overlap, not proven stale tree",
+    "Titlebar Toggle right pane uses primary Menu, intercepting original OnClick; app fix tracked separately in R8",
+    "Visible side caret and keyboard text route to side, while UIA focused_element reports main Message; framework COM declaration error separately found, focus root cause still pending"
+  ],
+  "screenshots": "Raw Computer Use JPEG audit, not lossless full-window WGC or reference parity",
+  "completeUIParity": false,
+  "packageExecutableSHA256": "15203765a1d01983c4b55cbe349af02ce7ba5599619bec4d5669695562a8a22f",
+  "inputTool": "Computer Use @oai/sky, fresh returned window selection and per-action observation",
+  "schemaVersion": 1,
+  "framework": "zeron-native-ui.4",
+  "observed": [
+    "Main Context usage click opens42000/200000 and158000remaining",
+    "Actual transcript Agent Schema reviewer card opens workspace side session Review the schema fixture",
+    "Side Context usage click opens8400/200000 and191600remaining, main21% unchanged",
+    "Escape closes side card; main card subsequently still42000/200000",
+    "Click side editor then native text reaches only side draft; main remains empty despite stale UIA focused_element",
+    "Native Send side button calls only mock; side working trailer then final response observed",
+    "Side Context usage after completion13200/200000 and186800remaining, rounded7%; main remains21%"
+  ],
+  "packageSourceManifest": "output/resume-validation/popup-r7-source-hashes.json",
+  "evidence": [
+    {
+      "path": "output/resume-validation/popup-r7-native-input/hidden-launch-cleanup.json",
+      "sha256": "f1e9967323211d07cad3e4cbe1608b217d426f661fb80f09ab9076442faf723d",
+      "bytes": 373
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/launch.json",
+      "sha256": "f04d96c88075ce1b0ae750bf3fea443b8c84a53b821682944945b8ec683c264c",
+      "bytes": 399
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/main-context-card-0.jpg",
+      "sha256": "a5f3d57194b2cb8f975d363a9842487d39aed6e8b75f8808e86319bb718b1dc1",
+      "bytes": 87305
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/main-context-card.json",
+      "sha256": "f3013e4d7516b29e57c1d16a724a319423b4f2dbc8a9ea09dd227ddbc157284a",
+      "bytes": 5710
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/new-side-session-primary-0.jpg",
+      "sha256": "948eb0b91bf5367ec14422f6268cafa9cf107a24d583bc9a0a8c63b8e75149a8",
+      "bytes": 62954
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/new-side-session-primary.json",
+      "sha256": "5b6c52fffaf1548ec94f055674560b577410b272f529c03e61681e72130c4650",
+      "bytes": 3981
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-editor-focus-uia-main-0.jpg",
+      "sha256": "a702ac476639935b12b02d7b9067dff18a65b66bcdbace15b7fbe1c2340fe992",
+      "bytes": 131086
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-editor-focus-uia-main.json",
+      "sha256": "de7b59506167e92f357cd8f3685b9909965a6c4153ffd2b276981bcb9b968c15",
+      "bytes": 9453
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-context-after-send-0.jpg",
+      "sha256": "fc85c72657b276b91fb29ef40e15ee71dd9a7c44e5f7020c3de900c70be1f4ae",
+      "bytes": 157832
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-context-after-send.json",
+      "sha256": "61dccf48a9d326192ae34a78483594d4a179dae7c24c2e56699cdda6ce3cde72",
+      "bytes": 11124
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-draft-isolation-0.jpg",
+      "sha256": "863288ddbc2d66905d32afecea2054617864dba62702e125846d5d3433812e8d",
+      "bytes": 132823
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-draft-isolation.json",
+      "sha256": "08c348e0cbd2161abc147f91ef802b1699885b2a3221d1d549f6c01f3559b084",
+      "bytes": 9514
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-send-complete-0.jpg",
+      "sha256": "4c81164c6a088eb5e3ad40f9c25888fcb2791142ef91ae7190b25058253bad44",
+      "bytes": 156218
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-send-complete.json",
+      "sha256": "7ba96c24d6e0dde9bfcd25877cd14e851fff00c5ff96569837d6106b40f202c4",
+      "bytes": 10967
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-send-working-0.jpg",
+      "sha256": "23cbd4a85ae1589cf3bf0a97f8dc816390c0fe47c10452e0a4d910b66b3937ea",
+      "bytes": 135927
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/side-native-send-working.json",
+      "sha256": "34b067d7b597a99fb690e6c492cf58253f86002c8e539a9d26b46230606ae9fa",
+      "bytes": 9838
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/sidechat-launch.json",
+      "sha256": "2c49e792f0ec0fd1c66845866a0054c9082e55072aa498638bee531bc1f8d55e",
+      "bytes": 298
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/sidechat.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/sidechat.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/transcript-launch.json",
+      "sha256": "6153a4165b3b2c7211624a2ea512d3547ef86e57a9ce9e8bddf15d8ea2e326c0",
+      "bytes": 316
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/transcript.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/transcript.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/ui-close-confirmed.json",
+      "sha256": "3ea686b4f6f6a549b8b82323bda00a35766ac98a31d44bbc144878c034ec3599",
+      "bytes": 262
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/ui-close.json",
+      "sha256": "7e38d856a650100dd3ce5352f1024c206761d1cce6f0aec0a5a45d7e69ebb46d",
+      "bytes": 371
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/visible-launch.json",
+      "sha256": "0baa8cd5e440fa647f048c49a087ee9780d6f40ad188766957982f67bfb5d4a6",
+      "bytes": 313
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/visible.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/visible.stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-main-context-after-side-0.jpg",
+      "sha256": "90b1287b5530f079f30cbc61db327fee546ee65c0b6f98bcb3da519eb54433ca",
+      "bytes": 132586
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-main-context-after-side.json",
+      "sha256": "57ca7e6e1c265962bb9ec074d25f7c2b99fc623a64f38fbec3b68fe580bab028",
+      "bytes": 9612
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-side-context-4-main-21-0.jpg",
+      "sha256": "cc7bff1a82a59703fefa63b92e5fc297b3f2c4d7529d54debe58c8bc49738620",
+      "bytes": 131807
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-side-context-4-main-21.json",
+      "sha256": "0577307dbb01118ddf5f525710c5efe24e2b465ea6175556d544cddbed0bc1e5",
+      "bytes": 9459
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-side-context-card-0.jpg",
+      "sha256": "05fde5b135663455b2da19ec232e1a830526be1ff4df62c783948831cdd69de8",
+      "bytes": 132736
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-side-context-card.json",
+      "sha256": "d7d62ceb25a9a12f13d34afb1a646617c69ccf917ac9f4eedc234caae9593ccd",
+      "bytes": 9605
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-split-obscured-header-0.jpg",
+      "sha256": "9c8322cf791161571e64e3301fe0e1b895fb8a9c64fb5ef2456fee4a57fbca92",
+      "bytes": 94904
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-split-obscured-header.json",
+      "sha256": "55b84a663d66355dc4ca5fc6fe7224d0ce353dadf75c6ab0b094688cf2e67677",
+      "bytes": 6026
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-takeover-obscured-uia-0.jpg",
+      "sha256": "b399be6a9dff3c2f00dc6414b8c62511a23ade5d50398167fed3c24d7f9e58d7",
+      "bytes": 55125
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-takeover-obscured-uia-1.jpg",
+      "sha256": "a26a897c6cfb1c5201482455772d58ff35636cdd61c54ef792b9af563b010ced",
+      "bytes": 3344
+    },
+    {
+      "path": "output/resume-validation/popup-r7-native-input/workspace-takeover-obscured-uia.json",
+      "sha256": "a1fa98c8a7c49547c19c1b870372d167a9a4412a8b9b2c016de69e1fe50237d5",
+      "bytes": 3788
+    }
+  ],
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "ownedProcessCleanup": {
+    "initialHiddenLaunch": "PID42528 had no selectable window; path verified then stopped, no UI input and no graceful exit0 claim",
+    "visibleTests": "PIDs48248,21600,49220 closed using Alt+F4 on selected own window; fresh list and process inventory show no remaining test process",
+    "exitCode": "Not captured for interactive close; do not infer exit0"
+  },
+  "packageExecutable": "output/resume-validation/popup-r7-packages/windows-amd64/Zeron.exe",
+  "goalStatus": "active",
+  "recordedAtUTC": "2026-10-28T12:49:04.0864312Z",
+  "boundaries": [
+    "No real AI provider/account, external messaging, shell-command execution through UI, auth, settings or installer",
+    "No PR destination/checkout-ref send acceptance",
+    "No reference pixel, motion, full Windows input/DPI/browser/IME/clipboard/performance or Mac acceptance",
+    "Working tree may now contain R8 fixes; these R7 package observations remain tied to the frozen package SHA"
+  ]
+}

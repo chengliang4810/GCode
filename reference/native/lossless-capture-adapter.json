@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "sourceRoot": "D:\\projects\\GCode\\output\\reference-sources\\zeron",
+  "originalExample": "crates/ui/examples/compact-picker-fixture.rs",
+  "originalSHA256": "1819ef4c2cce728769ff26480a97b045a4c1083053e8d099baa09c5fedf510a3",
+  "template": "reference/fixtures/native-capture-lossless.rs",
+  "templateSHA256": "967de65aaf8623f62ccbbc02b125d469eec01b7e6ba9f98cfb7fe9667f6d1b49",
+  "adapter": "output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-lossless.rs",
+  "adapterSHA256": "dddd9b686848ca41af344cea7704830bfc02914cc2d6a43f8e7f15392e9628e9",
+  "dependency": "existing locked windows-capture =1.5.0; Windows dev-dependency only",
+  "sourceSnapshots": "output/reference-lossless/transport-source",
+  "changes": [
+    {
+      "afterSHA256": "1ade6e34b72d74b0a7d2e719b7d8e697f1bad7bf34f07417435530f0b327decf",
+      "path": "Cargo.toml",
+      "beforeSHA256": "1ade6e34b72d74b0a7d2e719b7d8e697f1bad7bf34f07417435530f0b327decf"
+    },
+    {
+      "afterSHA256": "97ba0e99c37f9a68bbb6504926ffb82ec38542885fc5bd6a8e43e648bec4c620",
+      "path": "Cargo.lock",
+      "beforeSHA256": "0dae49265c683c99c3269d7ebad5e303e32b9e18a853f025933c9843044c583f"
+    },
+    {
+      "afterSHA256": "c621cc29480111c3f60ba8843f337abdb6aa18661c4e8f3fbf98a933e91f5275",
+      "path": "crates/ui/Cargo.toml",
+      "beforeSHA256": "cd06fb583db26fda68b6af7a2bb4b5f25e9853d4bafc3a2f8edd978c5bbdd59a"
+    },
+    {
+      "afterSHA256": "afd06578ced5b62a9fd78410480396d882bef268c2bf97e530c0cf8801f50d35",
+      "path": "crates/voice/Cargo.toml",
+      "beforeSHA256": "afd06578ced5b62a9fd78410480396d882bef268c2bf97e530c0cf8801f50d35"
+    }
+  ],
+  "dependencyPatch": "reference/fixtures/native-capture-lossless-dependency.patch",
+  "dependencyPatchSHA256": "79499204425f97b103051ce6764afec70afa5e87156249026c613825d5e4d6fc",
+  "sourceSnapshotScope": "before is the prior dynamic-voice/JPEG build stage; after adds only this fixture dev-dependency",
+  "inheritedDynamicVoiceProvenance": "reference/validation/reference-dynamic-voice-runtime.json; its prior-stage lock hash is preserved",
+  "productionRendererModified": false,
+  "productionComponentsModified": false,
+  "frozenSourceCheckoutModified": false,
+  "existingJPEGAdapterModified": false,
+  "captureTarget": "exact fixture HWND and current process ID",
+  "format": "original complete BGRA8 WGC frame to PNG",
+  "transformations": [],
+  "privacyOverrides": [],
+  "captureBorder": "system Default",
+  "surface": "opaque",
+  "reducedMotion": true,
+  "keyboardAcceptance": "not established; layout-only by default; IncludeKeyboardAssertions retains frozen assertions without corrections",
+  "captureBoundary": "complete HWND WGC frame including native/nonclient extent; not directly equivalent to client-only CapturePage output",
+  "buildCommand": "cargo build --offline --locked -j 2 --manifest-path output/reference-native-0.2.128/Cargo.toml -p zeron-ui --example compact-picker-windows-lossless --features compact-picker-fixture",
+  "buildStatus": "built",
+  "runtimeStatus": "eight-layout-scenes-captured; keyboard and visual parity pending",
+  "rustcVersion": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "cargoVersion": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+  "binarySHA256": "cd460f145549aad6d6686b2a6b6b8008936d713cd676d4fff5aa9771152833ba",
+  "runtimeLog": "D:\\projects\\GCode\\output\\reference-lossless\\capture-native-state-20261028-01.run.log",
+  "runtimeOutputDirectory": "D:\\projects\\GCode\\output\\reference-lossless\\capture-native-state-20261028-01",
+  "runtimeExitCode": 0
+}

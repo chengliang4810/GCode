@@ -117,7 +117,7 @@ func (s *Server) ImportAttachments(ctx context.Context, request contracts.Attach
 		return nil, err
 	}
 	next.Revision++
-	if err := s.savePersisted(persisted{Snapshot: next, Next: s.next}); err != nil {
+	if err := s.savePersisted(s.withContextSessionsLocked(persisted{Snapshot: next, Next: s.next})); err != nil {
 		cleanup()
 		return nil, fmt.Errorf("save attachment catalog: %w", err)
 	}

@@ -24,8 +24,9 @@ type AccessNode struct {
 	// Label names the element; Value is its value, as the text of a text
 	// field, for elements that have one.
 	Label, Value string
-	// Bounds is the element's visible box, in DIPs relative to the
-	// surface.
+	// Bounds is the element's transformed border box, in DIPs relative to
+	// the surface, without clipping to its ancestors. AccessOffscreen marks
+	// boxes fully clipped by layout; ordinary sibling occlusion is not tested.
 	Bounds RectF
 	States AccessStates
 	// Min, Max and Now are the range and the value of a slider or a

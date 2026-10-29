@@ -15,11 +15,11 @@ func (a *App) overlays(c *ui.Context) {
 		back.Background(ui.RGBA(0, 0, 0, .35))
 		panel.Width(400).Padding(24).Radius(12).Background(a.palette.Raised)
 		ui.Column(c).Gap(16).Children(func() {
-			ui.Text(c, "Rename session").FontSize(design.UISize(c, 18)).FontWeight(600)
-			ui.TextInput(c, &a.renameText).Label("Session name").AutoFocus()
+			ui.Text(c, tr(c, "Rename session")).FontSize(design.UISize(c, 18)).FontWeight(600)
+			ui.TextInput(c, &a.renameText).Label(tr(c, "Session name")).AutoFocus()
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-				textButton(c, "Cancel").OnClick(func() { a.renameOpen = false })
-				textButton(c, "Rename").OnClick(func() {
+				textButton(c, tr(c, "Cancel")).OnClick(func() { a.renameOpen = false })
+				textButton(c, tr(c, "Rename")).OnClick(func() {
 					title := a.renameText
 					a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: a.renameID, Title: &title}})
 					a.renameOpen = false
@@ -36,9 +36,9 @@ func (a *App) overlays(c *ui.Context) {
 			back.Background(ui.RGBA(0, 0, 0, .35))
 			panel.Width(440).Padding(24).Radius(12).Background(a.palette.Raised)
 			ui.Column(c).Gap(16).Children(func() {
-				ui.Text(c, "Unable to complete the operation").FontWeight(600)
+				ui.Text(c, tr(c, "Unable to complete the operation")).FontWeight(600)
 				ui.Text(c, a.errorText).Selectable().TextColor(a.palette.Muted)
-				textButton(c, "Dismiss").OnClick(func() { a.errorText = "" })
+				textButton(c, tr(c, "Dismiss")).OnClick(func() { a.errorText = "" })
 			})
 		})
 		if !opened {
@@ -91,7 +91,7 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 				row := ui.Row(c).Width(max(w, columnWidth)).Justify(ui.Center)
 				row.Children(func() {
 					ui.Image(c, svg).Size(w, h).Fit(ui.Contain).Label(artifact.Source).Menu(func(menu *ui.Menu) {
-						if menu.Item("Copy").Chosen() {
+						if menu.Item(tr(c, "Copy")).Chosen() {
 							services.WriteClipboard(artifact.Source)
 						}
 					}).OnClick(func() {
@@ -104,7 +104,7 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 				})
 			})
 		} else {
-			ui.Text(c, "Preview unavailable").TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, "Preview unavailable")).TextColor(a.palette.Muted)
 		}
 	}
 	if kind == "math" {
@@ -114,14 +114,14 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 	key := "diagram-source:" + artifact.Source
 	ui.Column(c).FillWidth().Radius(10).Border(1, a.palette.Border).Background(a.palette.Card).Children(func() {
 		ui.Row(c).FillWidth().Padding(4, 10).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, "mermaid").FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, "mermaid")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
 			ui.Spacer(c)
 			glyph, label := "file-code", "Show source"
 			if a.expanded[key] {
 				glyph, label = "eye", "Show diagram"
 			}
-			iconButton(c, glyph, label).Size(24, 24).OnClick(func() { a.expanded[key] = !a.expanded[key] })
-			iconButton(c, "copy", "Copy diagram source").Size(24, 24).OnClick(func() { services.WriteClipboard(artifact.Source) })
+			iconButton(c, glyph, tr(c, label)).Size(24, 24).OnClick(func() { a.expanded[key] = !a.expanded[key] })
+			iconButton(c, "copy", tr(c, "Copy diagram source")).Size(24, 24).OnClick(func() { services.WriteClipboard(artifact.Source) })
 		})
 		ui.Column(c).FillWidth().Padding(12).Children(func() {
 			if a.expanded[key] {

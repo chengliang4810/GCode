@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "410dec01b54f729026003bf25c5c8356be84a87408cf6fd6ce2f8d9c36945d67",
+  "noticeSha256": "ec2a462904aedaf5d23135b9836b8712e41e6edbe31c91aa7cab0b11e6a425af",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -11,7 +11,7 @@
     {
       "path": "README.md",
       "bytes": 4844,
-      "sha256": "ca832fe72db673afd7b8335faa72823e94a321b92a1f68f3b0addbdfafaf0472",
+      "sha256": "490bd94965a21cc9808dc358b69c79bcb8808ca76944e89e8ef977ed77706eb9",
       "source": "project-maintained component/source index; no substituted license terms"
     },
     {

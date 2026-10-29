@@ -64,6 +64,54 @@ Recreate captures with `ZERON_INTEGRATIONS_AUDIT_DIR=<absolute-directory>` and
 The full local set is `output/acceptance/settings-integrations/`; representative
 implementation images are retained in `docs/evidence/settings-integrations/`.
 
+## Cloud navigation follow-up (2026-10-29)
+
+The live four-file attempt-02 uses a fresh typed `cloud.refresh` for each visit,
+then enables only a Ready/available/Off result. Loading may settle later; redraws,
+same-page navigation and failed actions do not retry themselves. Leaving cancels
+the page request; returning without an intermediate View also replaces its
+generation before the new route is installed.
+
+Root's actual offline headless overlay logs retain the red/green sequence:
+attempt-01 production with the new regression fails four session/annotation/history
+scenarios; the NewConversation routed-exit control already passes. Attempt-02
+passes all nine top-level Cloud tests (five named re-entry cases included), and
+the whole `go test ./...` overlay exits0. Evidence is under
+`output/tabstrip-r17-cloud-navigation-overlay-test/{attempt-02-red,attempt-03-green,attempt-04-full}/result.json`.
+The four live files are byte-exact to that tested proposal and gofmt-l is empty:
+`output/tabstrip-r17-cloud-navigation-adopted/attempt-01/result.json`
+(0b3a17e9…b090a). The independent delta review is
+`output/tabstrip-r17-cloud-navigation-independent-review/attempt-02/result.json`.
+This closes CLOUD-VISIT-01; its old report remains frozen, including the separately
+corrected overgeneralization about NewConversation, which already used OpenRoute.
+
+A separate normal native-worker run is now sealed at
+`output/tabstrip-r17-cloud-navigation-native/attempt-01/result.json` (a5981b8b…63b1c).
+The 2933-input Windows development main (manifest02e9e2e6…04684, EXE69a43719…f0090)
+used an independent offline profile: signed-in/off rev2 became provisioning rev4
+then ready/cloud-1 rev5; picking Cloud again retained rev5, Devices showed Cloud,
+and actual settings search re-entry performed one fresh refresh to rev6. PID50440
+closed normally via AltF4, exit0/stderr0; source inputs and the four original
+windows stayed unchanged. Among 12 Sky states and nine original images, the first
+wrong-window image was rejected and explicit target activation recovered later
+images. This exercises the real normal worker path, not all failure/cancel/rapid
+route cases, race/OS-thread tracing, exact WGC production, reference visual parity
+or real Cloud services. It is a development build, not a new canonical package.
+
+Live pin/tagged/Go-vet/MyGo-vet passed. The first lint launch failed because
+GOPROXYoff blocked deprecation metadata (7dd9ccae…93e9); only lint was repeated
+using the existing local file proxy and exited0 with 0 issues (8d0df8f4…3b6b1).
+Both attempts remain at `output/tabstrip-r17-cloud-navigation-live-gates/`; this
+is not a first-attempt all-green or a fresh rerun of every gate.
+The DTO still lacks the source's `failed_action`; the existing `cloud.retry`
+action-error path is retained without claiming complete failed-action parity.
+The typed adaptation also deliberately prevents recursive Enable when a
+successful Enable reply is unexpectedly still Off: only a fresh status read
+can arm it. Frozen `settings/cloud.rs:356,365,249–253` clears busy and reapplies
+an Off reply, which can Enable again. This is an explicit implementation/source
+difference, not a protection already present in the reference. Other handoff
+observations below retain their historical scope.
+
 ## Remaining source differences and next work
 
 1. Provider device options still use a native MenuButton: the source selector's
@@ -76,10 +124,18 @@ implementation images are retained in `docs/evidence/settings-integrations/`.
    complete source comparison across the ten agents.
 3. `Auto when idle` is persisted and shown, but automatic update scheduling behind
    the policy is not implemented. Explicit Update/Cancel/Retry transitions work.
-4. Cloud automatically enables after mock sign-in; the source's automatic enable
-   upon entering an already signed-in, off Cloud page still needs navigation wiring.
-   Remote provider metadata is isolated by target; the main composer must consume
-   that device's installed/enabled flags rather than local global flags.
+4. Cloud navigation's automatic enable is now wired and adopted, as recorded
+   in the follow-up above. This closes the previously recorded navigation gap,
+   while failed-action parity and the untested native failure/cancel/rapid-route
+   matrix remain open.
+   Remote provider metadata is isolated by target. The main/side composer now
+   consumes that device's installed/enabled flags; the resumed-machine repair
+   and regressions are recorded in `audit-composer-device.md`.
+   Its current settled layout is recorded separately in
+   [audit-composer-layout.md](audit-composer-layout.md): hero120–304 versus
+   dock104–304, with a 24px side footer footprint. Account/context rings and PR
+   footer integration remain pending; the source side footer can conditionally
+   show context usage, while the implementation currently reserves an empty slot.
 5. Authentication, installation, GitHub selection and billing portal outcomes are
    deterministic mock flows. They do not open real authentication/payment services.
    Exact pending/error/disabled/loading/offline visuals, focus restoration, native

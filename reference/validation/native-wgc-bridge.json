@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "bridgeABIVersion": 1,
+  "status": "built-contract-tests-passed",
+  "platform": "windows/amd64",
+  "scriptSHA256": "efd119c40374bf1395fe46183d93f28052cd44a16ec072a592f23c36cb8b9776",
+  "sources": [
+    {
+      "sha256": "9d6893d60b535a01cb6e78d553f29a8ffbf1810552364798ec831a1a24a35a92",
+      "path": "reference/fixtures/native-wgc-bridge/Cargo.toml"
+    },
+    {
+      "sha256": "4a66d0dab2a66f0a81871d8980a0c1ae0db5b73548629f9f37379e9217880ef6",
+      "path": "reference/fixtures/native-wgc-bridge/Cargo.lock"
+    },
+    {
+      "sha256": "f8eea25d978e9ebb7173aa987b5e3044d9663d9e93efe8744690140c9bdaf01d",
+      "path": "reference/fixtures/native-wgc-bridge/src/lib.rs"
+    },
+    {
+      "sha256": "81ca1a0b86432484a301b4183a2e70bf145f116ae1cab630c390ead9ca4add29",
+      "path": "reference/fixtures/native-wgc-bridge/bridge.h"
+    }
+  ],
+  "dependency": "windows-capture =1.5.0; independent Cargo.lock; no production dependencies",
+  "buildCommand": "cargo build --offline --locked -j 2 --manifest-path reference/fixtures/native-wgc-bridge/Cargo.toml",
+  "testCommand": "cargo test --offline --locked -j 2 --manifest-path reference/fixtures/native-wgc-bridge/Cargo.toml",
+  "rustcVersion": "rustc 1.98.1 (48a229cea 2026-09-01)",
+  "cargoVersion": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+  "captureTarget": "exact HWND owner must equal GetCurrentProcessId; no enumeration",
+  "cursor": "WithoutCursor",
+  "border": "system Default",
+  "transformations": [],
+  "privacyOverrides": [],
+  "runtimeStatus": "not-run by build script",
+  "visualAcceptance": "pending",
+  "keyboardAcceptance": "pending",
+  "lifetime": "DLL retained until fixture process exit; explicit WGC stop and join",
+  "timeout": "maximum 15 seconds for first frame only; upstream initialization and shutdown are not hard-bounded",
+  "dll": "output/native-wgc-bridge-r4/zeron_fixture_wgc.dll",
+  "dllSHA256": "6c10000695b6e54163bd3c89e311a98461d2c5c08300c63c0b9b979e477805b1",
+  "buildLog": "output/native-wgc-bridge-r4/build.log",
+  "buildLogSHA256": "15a40edb057e82c3101f70e07e02099b93a8b9e76c2b49ff64452e4211d3f77c"
+}

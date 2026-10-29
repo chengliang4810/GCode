@@ -12,36 +12,36 @@ import (
 func (a *App) providerSettings(c *ui.Context) {
 	state := a.state.Integrations
 	ui.Row(c).FillWidth().Padding(0, 8).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, "Device").FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, "Device")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
 		ui.Spacer(c)
-		label := "This device"
+		label := tr(c, "This device")
 		for _, d := range a.state.Devices {
 			if d.ID == a.integrationTarget() {
-				label = d.Name
+				label = a.deviceDisplayName(d)
 			}
 		}
 		if a.integrationTarget() == "cloud-1" {
-			label = "Cloud"
+			label = tr(c, "Cloud")
 		}
 		ui.MenuButton(c, label, func(menu *ui.Menu) {
 			for _, d := range a.state.Devices {
 				if d.Platform == "cloud" {
 					continue
 				}
-				if menu.Item(d.Name).Checked(d.ID == a.integrationTarget()).Chosen() {
+				if menu.Item(a.deviceDisplayName(d)).Checked(d.ID == a.integrationTarget()).Chosen() {
 					a.integrationUI.ProviderTarget = d.ID
 					a.integrationUI.ExpandedProvider = ""
 				}
 			}
 			if a.state.User.SignedIn && a.state.Integrations.Cloud.State == "ready" {
 				menu.Separator()
-				if menu.Item("Cloud").Checked(a.integrationTarget() == "cloud-1").Chosen() {
+				if menu.Item(tr(c, "Cloud")).Checked(a.integrationTarget() == "cloud-1").Chosen() {
 					a.integrationUI.ProviderTarget = "cloud-1"
 					a.integrationUI.ExpandedProvider = ""
 				}
 			}
-		}).Label("Provider device").FontSize(design.UISize(c, 12))
-		iconButton(c, "refresh", "Check for agents and updates").OnClick(func() { a.dispatch(contracts.Command{Kind: "providers.refresh"}) })
+		}).Label(tr(c, "Provider device")).FontSize(design.UISize(c, 12))
+		iconButton(c, "refresh", tr(c, "Check for agents and updates")).OnClick(func() { a.dispatch(contracts.Command{Kind: "providers.refresh"}) })
 	})
 	if state.ProvidersState == contracts.LoadLoading {
 		a.integrationLoading(c, "Loading providers")
@@ -90,7 +90,7 @@ func (a *App) providerRow(c *ui.Context, p contracts.Provider, d contracts.Provi
 	cloud := a.integrationTarget() == "cloud-1"
 	expanded := d.Enabled && a.integrationUI.ExpandedProvider == p.ID
 	ui.Row(c.Key("provider-"+p.ID)).FillWidth().Padding(10, 16).Gap(12).AlignItems(ui.Center).Children(func() {
-		trigger := ui.ButtonBase(c).Label(p.Name + " preferences").Grow(1).MinWidth(0).MinHeight(44).Gap(12).Justify(ui.Start).AlignItems(ui.Center).Disabled(!d.Enabled).OnClick(func() {
+		trigger := ui.ButtonBase(c).Label(p.Name + tr(c, " preferences")).Grow(1).MinWidth(0).MinHeight(44).Gap(12).Justify(ui.Start).AlignItems(ui.Center).Disabled(!d.Enabled).OnClick(func() {
 			if expanded {
 				a.integrationUI.ExpandedProvider = ""
 			} else {
@@ -113,20 +113,20 @@ func (a *App) providerRow(c *ui.Context, p contracts.Provider, d contracts.Provi
 					if count == 1 {
 						meta = "1 account"
 					} else if count > 1 {
-						meta = fmt.Sprintf("%d accounts", count)
+						meta = fmt.Sprintf(tr(c, "%d accounts"), count)
 					}
 				}
 				if !d.Installed {
-					meta = "Install the " + providerCLI(p.ID) + " CLI to enable"
+					meta = tr(c, "Install the ") + providerCLI(p.ID) + tr(c, " CLI to enable")
 				}
 				if d.InstallState == "installing" {
-					meta = "Installing " + p.Name + "…"
+					meta = tr(c, "Installing ") + p.Name + "…"
 				}
 				if d.Error != "" {
 					meta = d.Error
 				}
 				if meta != "" {
-					ui.Text(c, meta).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+					ui.Text(c, tr(c, meta)).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
 				}
 			})
 			if d.Enabled {
@@ -139,17 +139,17 @@ func (a *App) providerRow(c *ui.Context, p contracts.Provider, d contracts.Provi
 		})
 		if !cloud {
 			if d.InstallState == "installing" {
-				textButton(c, "Cancel").Label("Cancel installing " + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.install.cancel", p.ID)) })
+				textButton(c, tr(c, "Cancel")).Label(tr(c, "Cancel installing ") + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.install.cancel", p.ID)) })
 			} else if !d.Installed && d.CanInstall {
-				textButton(c, "Install").Label("Install " + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.install", p.ID)) })
+				textButton(c, tr(c, "Install")).Label(tr(c, "Install ") + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.install", p.ID)) })
 			} else if d.UpdateState == "available" || d.UpdateState == "failed" {
 				label := "Update"
 				if d.UpdateState == "failed" {
 					label = "Retry update"
 				}
-				textButton(c, label).Label(label + " " + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.update", p.ID)) })
+				textButton(c, tr(c, label)).Label(tr(c, label) + " " + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.update", p.ID)) })
 			} else if d.UpdateState == "downloading" {
-				textButton(c, "Cancel").Label("Cancel updating " + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.update.cancel", p.ID)) })
+				textButton(c, tr(c, "Cancel")).Label(tr(c, "Cancel updating ") + p.Name).OnClick(func() { a.dispatch(a.integrationCommand("provider.update.cancel", p.ID)) })
 			}
 			enabled := 0
 			for _, other := range a.state.Providers {
@@ -158,7 +158,7 @@ func (a *App) providerRow(c *ui.Context, p contracts.Provider, d contracts.Provi
 				}
 			}
 			disabled := d.Enabled && d.Installed && enabled == 1 || !d.Enabled && !d.Installed
-			a.integrationToggle(c, "provider-toggle-"+p.ID, "Enable "+p.Name, d.Enabled, disabled, func(on bool) { cmd := a.integrationCommand("provider.enable", p.ID); cmd.Enabled = on; a.dispatch(cmd) })
+			a.integrationToggle(c, "provider-toggle-"+p.ID, tr(c, "Enable ")+p.Name, d.Enabled, disabled, func(on bool) { cmd := a.integrationCommand("provider.enable", p.ID); cmd.Enabled = on; a.dispatch(cmd) })
 		}
 	})
 }
@@ -216,7 +216,7 @@ func (a *App) providerDetailsView(c *ui.Context, p contracts.Provider, d contrac
 			ui.Column(c).FillWidth().Children(func() {
 				a.integrationLabel(c, "Delegation")
 				a.providerPreferenceRow(c, "Native subagents", "Off: delegate through side chats, from each chat's next turn.", func() {
-					a.integrationToggle(c, p.ID+"native-subagents", p.Name+": Native subagents", d.NativeSubagents, false, func(on bool) {
+					a.integrationToggle(c, p.ID+"native-subagents", p.Name+tr(c, ": Native subagents"), d.NativeSubagents, false, func(on bool) {
 						cmd := a.integrationCommand("provider.preference", p.ID)
 						cmd.Name = "subagents"
 						cmd.Enabled = on
@@ -238,14 +238,14 @@ func (a *App) providerDetailsView(c *ui.Context, p contracts.Provider, d contrac
 				a.providerPreferenceRow(c, "Update policy", detail, func() {
 					ui.MenuButton(c, label, func(menu *ui.Menu) {
 						for _, option := range []settingOption{{"notify", "Notify"}, {"autoWhenIdle", "Auto when idle"}, {"off", "Off"}} {
-							if menu.Item(option.label).Checked(d.UpdatePolicy == option.value).Chosen() {
+							if menu.Item(tr(c, option.label)).Checked(d.UpdatePolicy == option.value).Chosen() {
 								cmd := a.integrationCommand("provider.preference", p.ID)
 								cmd.Name = "updatePolicy"
 								cmd.Integration.Value = option.value
 								a.dispatch(cmd)
 							}
 						}
-					}).Label(p.Name + " update policy").Width(136).FontSize(design.UISize(c, 12))
+					}).Label(p.Name + tr(c, " update policy")).Width(136).FontSize(design.UISize(c, 12))
 				})
 			})
 		}
@@ -258,7 +258,7 @@ func (a *App) providerAccounts(c *ui.Context, p contracts.Provider, d contracts.
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
 			a.integrationLabel(c, "Accounts")
 			ui.Spacer(c)
-			iconButton(c, "refresh", "Refresh accounts").Size(32, 28).OnClick(func() { a.dispatch(a.integrationCommand("provider.accounts.refresh", p.ID)) })
+			iconButton(c, "refresh", tr(c, "Refresh accounts")).Size(32, 28).OnClick(func() { a.dispatch(a.integrationCommand("provider.accounts.refresh", p.ID)) })
 		})
 		if d.Warning != "" {
 			ui.Text(c, d.Warning).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger)
@@ -297,15 +297,15 @@ func (a *App) providerAccounts(c *ui.Context, p contracts.Provider, d contracts.
 				for _, option := range options {
 					label := "Add account"
 					if count == 0 {
-						label = "Connect a " + p.Name + " account"
+						label = tr(c, "Connect a ") + p.Name + tr(c, " account")
 					}
 					if option.ID != "" {
-						label = "Add " + option.Label + " account"
+						label = tr(c, "Add ") + option.Label + tr(c, " account")
 						if count == 0 {
-							label = "Connect " + option.Label
+							label = tr(c, "Connect ") + option.Label
 						}
 					}
-					textButton(c, "+ "+label).Label(label).OnClick(func() {
+					textButton(c, "+ "+tr(c, label)).Label(tr(c, label)).OnClick(func() {
 						cmd := a.integrationCommand("provider.login.start", p.ID)
 						cmd.Integration.Value = option.ID
 						a.dispatch(cmd)
@@ -316,17 +316,17 @@ func (a *App) providerAccounts(c *ui.Context, p contracts.Provider, d contracts.
 					if p.ID == "openai" {
 						key = "OpenAI API key"
 					}
-					textButton(c, "+ Add "+key).Label("Add " + key).OnClick(func() { a.integrationUI.APIProvider = p.ID; a.integrationUI.APIKey = "" })
+					textButton(c, tr(c, "+ Add ")+tr(c, key)).Label(tr(c, "Add ") + tr(c, key)).OnClick(func() { a.integrationUI.APIProvider = p.ID; a.integrationUI.APIKey = "" })
 				}
 			})
 		}
 		if a.integrationUI.APIProvider == p.ID {
 			ui.Column(c).FillWidth().Gap(8).Padding(8, 0).Children(func() {
-				ui.TextInput(c, &a.integrationUI.APIKey).Password().Label("API key").Placeholder("Paste an API key").AutoFocus()
-				ui.Text(c, "Stored encrypted in your account for Cloud. It becomes the account used by your Cloud sessions.").FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+				ui.TextInput(c, &a.integrationUI.APIKey).Password().Label(tr(c, "API key")).Placeholder(tr(c, "Paste an API key")).AutoFocus()
+				ui.Text(c, tr(c, "Stored encrypted in your account for Cloud. It becomes the account used by your Cloud sessions.")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
 				ui.Row(c).Justify(ui.End).Gap(8).Children(func() {
-					textButton(c, "Cancel").OnClick(func() { a.integrationUI.APIProvider = ""; a.integrationUI.APIKey = "" })
-					textButton(c, "Save key").Disabled(strings.TrimSpace(a.integrationUI.APIKey) == "" || a.integrationUI.APISaving).OnClick(func() {
+					textButton(c, tr(c, "Cancel")).OnClick(func() { a.integrationUI.APIProvider = ""; a.integrationUI.APIKey = "" })
+					textButton(c, tr(c, "Save key")).Disabled(strings.TrimSpace(a.integrationUI.APIKey) == "" || a.integrationUI.APISaving).OnClick(func() {
 						cmd := a.integrationCommand("provider.apiKey.save", p.ID)
 						cmd.Text = a.integrationUI.APIKey
 						a.integrationUI.APISaving = true
@@ -360,7 +360,7 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 			ui.Row(c).Gap(6).Children(func() {
 				ui.Text(c, account.Plan).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
 				if account.InUse {
-					ui.Text(c, "In use").FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Accent)
+					ui.Text(c, tr(c, "In use")).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Accent)
 				}
 				if len(account.Usage) == 0 && account.ReportsUsage {
 					reason := account.UsageError
@@ -370,7 +370,7 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 					if account.UsageState == contracts.LoadLoading {
 						reason = "Checking usage…"
 					}
-					ui.Text(c, reason).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+					ui.Text(c, tr(c, reason)).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
 				}
 			})
 		})
@@ -386,23 +386,23 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 				} else if fraction >= .80 {
 					color = a.palette.Warning
 				}
-				ui.Row(c).Height(16).Gap(8).AlignItems(ui.Center).Tooltip(window.Label + ": resets " + window.ResetsAt.Local().Format("Mon 3:04 PM")).Children(func() {
+				ui.Row(c).Height(16).Gap(8).AlignItems(ui.Center).Tooltip(tr(c, window.Label) + tr(c, ": resets ") + tr(c, date(c, window.ResetsAt.Local(), "Mon 3:04 PM"))).Children(func() {
 					ui.Text(c, window.Label).Width(52).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted).SingleLine()
 					ui.Box(c).Width(88).Height(4).Radius(2).Background(a.palette.Text.Alpha(.08)).Children(func() {
 						if fraction > 0 {
 							ui.Box(c).Width(88 * float32(max(.015, fraction))).Height(4).Radius(2).Background(color.Alpha(.8))
 						}
 					})
-					ui.Text(c, fmt.Sprintf("%.0f%%", window.UsedPercent)).Width(34).FontSize(design.UISize(c, 11.5)).TextColor(color).TextAlign(ui.End)
+					ui.Text(c, fmt.Sprintf(tr(c, "%.0f%%"), window.UsedPercent)).Width(34).FontSize(design.UISize(c, 11.5)).TextColor(color).TextAlign(ui.End)
 				})
 			}
 		})
-		iconButton(c, "menu-dots", "Actions for "+name).Size(28, 28).Menu(func(menu *ui.Menu) {
+		iconButton(c, "menu-dots", tr(c, "Actions for ")+name).Size(28, 28).Menu(func(menu *ui.Menu) {
 			req := &contracts.IntegrationRequest{TargetID: account.TargetID, ProviderID: account.ProviderID, AccountID: account.ID}
-			if menu.Item("Switch to this account").Disabled(account.InUse || !account.Switchable).Chosen() {
+			if menu.Item(tr(c, "Switch to this account")).Disabled(account.InUse || !account.Switchable).Chosen() {
 				a.dispatch(contracts.Command{Kind: "provider.account.switch", Integration: req})
 			}
-			if menu.Item("Remove account").Disabled(!account.CanRemove).Chosen() {
+			if menu.Item(tr(c, "Remove account")).Disabled(!account.CanRemove).Chosen() {
 				a.dispatch(contracts.Command{Kind: "provider.account.remove", Integration: req})
 			}
 		})
@@ -412,8 +412,8 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 func (a *App) providerPreferenceRow(c *ui.Context, title, description string, control func()) {
 	ui.Row(c.Key("provider-preference-"+title)).FillWidth().MinHeight(52).Padding(10, 0).Gap(16).AlignItems(ui.Center).Children(func() {
 		ui.Column(c).Grow(1).MinWidth(0).Gap(3).Children(func() {
-			ui.Text(c, title).FontSize(design.UISize(c, 13)).FontWeight(500).FixedLineHeight(17)
-			ui.Text(c, description).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, title)).FontSize(design.UISize(c, 13)).FontWeight(500).FixedLineHeight(17)
+			ui.Text(c, tr(c, description)).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
 		})
 		control()
 	})

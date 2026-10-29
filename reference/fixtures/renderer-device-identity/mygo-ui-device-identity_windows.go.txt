@@ -1,0 +1,74 @@
+//go:build windows && (amd64 || arm64) && mygo_renderer_device_diag
+
+package ui
+
+import "fmt"
+
+// rendererDeviceDiagnostic is optional; the normal gpuRenderer interface and
+// every production construction/rendering method remain unchanged.
+type rendererDeviceDiagnostic interface {
+	RendererDeviceIdentity(ownerWindowHWND uintptr) (map[string]any, error)
+}
+
+// RendererDeviceIdentity reads this view's existing Windows renderer. It is
+// available only with the mygo_renderer_device_diag build tag. Call it during
+// the current Content view on the UI thread; never retain Context for a later
+// callback or call this from a worker. The result contains only owned Go data.
+// Before the first GPU frame, or after fallback/close, it reports not ready;
+// it never constructs a renderer or calls Surface.Native (which changes state).
+func RendererDeviceIdentity(c *Context) (map[string]any, error) {
+	fail := func(message string) (map[string]any, error) {
+		err := fmt.Errorf("ui renderer diagnostic: %s", message)
+		return map[string]any{
+			"status": "failed-or-pending-current-renderer-query", "gatePassed": false,
+			"error": err.Error(), "noSubstituteDeviceCreated": true,
+			"readiness": "the first View may precede GPU creation; query again from a later current View",
+			"plainDataMayBeRetained": true, "contextOrElementsRetained": false,
+		}, err
+	}
+	if c == nil {
+		return fail("no current view context")
+	}
+	raw := c.build()
+	if raw == nil {
+		return fail("query requires the current live Content view")
+	}
+	rt := raw.rt
+	h, ok := rt.host.(*windowHost)
+	if !ok || h == nil || h.rt != rt || rt.public != c || h.detached || h.conn == nil {
+		return fail("context does not identify a live native window host")
+	}
+	diagnostic, ok := h.gpu.(rendererDeviceDiagnostic)
+	if !ok || diagnostic == nil {
+		return fail("the current host has no ready diagnostic Direct3D renderer")
+	}
+	// A structural interface avoids a ui -> mygo import cycle. NativeHandle is
+	// the existing read-only top-level window query, not Surface.Native.
+	window, ok := h.conn.Window.(interface{ NativeHandle() uintptr })
+	if !ok || window == nil {
+		return fail("the current native host has no owning window handle")
+	}
+	owner := window.NativeHandle()
+	if owner == 0 {
+		return fail("the owning native window is not live")
+	}
+	value, err := diagnostic.RendererDeviceIdentity(owner)
+	if value == nil {
+		value = map[string]any{
+			"status": "failed-or-pending-current-renderer-query", "gatePassed": false,
+			"noSubstituteDeviceCreated": true,
+		}
+	}
+	value["uiBinding"] = map[string]any{
+		"source": "current Context.rt.host.(*windowHost).gpu",
+		"currentView": true, "hostRuntimeMatches": true, "contextRuntimeMatches": true,
+		"rendererType": fmt.Sprintf("%T", h.gpu), "uiFrame": rt.frame, "viewPassEpoch": rt.epoch,
+		"surfaceNativeCalled": false,
+	}
+	value["plainDataMayBeRetained"] = true
+	value["contextOrElementsRetained"] = false
+	if err != nil {
+		value["error"] = err.Error()
+	}
+	return value, err
+}

@@ -241,6 +241,14 @@ type engine struct {
 	pointerX, pointerY float32
 	pointerIn          bool
 	hover              []uint64
+	// Activity is opt-in: the public query installs the recorders. An app
+	// using neither query links no recorder and keeps no input history here.
+	// Keep optional API state opaque so unused apps do not retain the
+	// InputActivitySnapshot type's metadata through engine's type descriptor.
+	inputActivity       any
+	inputPressEpoch     uint64
+	observeInput        func(platform.SurfaceEvent)
+	observePrimaryPress func(*state, uint64)
 	// chain is a buffer for the elements under the pointer.
 	chain       []uint64
 	pressed     *state
@@ -818,6 +826,7 @@ func (rt *engine) prune() {
 	}
 	for id, s := range rt.states {
 		if s.seen != rt.frame || s.pass != rt.pass {
+			s.primaryDownEpoch = 0
 			rt.changeHover(s, false)
 			if rt.pressed == s {
 				rt.pressed = nil
@@ -1054,6 +1063,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 		s.contentW, s.contentH = e.contentW, e.contentH
 		s.barInset = e.barInset
 	}
+	s.hideScrollbars = e.hideScrollbars
 	// What is invisible keeps its box but takes neither the pointer nor
 	// the focus, and has no text to find; so does what is inert, which
 	// shows.
@@ -1142,6 +1152,9 @@ func intersect(a, b Rect) Rect {
 // thumb being dragged wherever the pointer goes, show the default, not
 // the cursor of the text under the bar.
 func (rt *engine) updateCursor() {
+	if dragging := rt.scrollDrag.st; dragging != nil && dragging.hideScrollbars {
+		rt.scrollDrag.st = nil
+	}
 	if rt.pressed == nil && rt.scrollDrag.st == nil && rt.overWebView() {
 		// The page sets the cursor over it: it is set again as the
 		// pointer comes back.
@@ -1180,7 +1193,7 @@ func (rt *engine) updateCursor() {
 // bar element id shows.
 func (rt *engine) overScrollbar(id uint64) bool {
 	s := rt.states[id]
-	if s == nil || s.flags&(flagScrollX|flagScrollY) == 0 {
+	if s == nil || s.flags&(flagScrollX|flagScrollY) == 0 || s.hideScrollbars {
 		return false
 	}
 	x, y := s.local(rt.pointerX, rt.pointerY)

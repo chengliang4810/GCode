@@ -24,11 +24,13 @@ type sideComposerState struct {
 	Importing      int
 	Sequence       uint64
 	FocusPending   bool
+	FooterUsage    composerUsageState
 }
 
 type sidePendingSend struct {
 	RequestID, Draft string
 	Attachments      []contracts.Attachment
+	Queued           bool
 }
 
 func (a *App) sideComposer(sessionID string) *sideComposerState {
@@ -102,7 +104,7 @@ func (a *App) sendSideMessage(session contracts.Session, state *sideComposerStat
 	}
 	state.Sequence++
 	id := fmt.Sprintf("side:%s:%d", session.ID, state.Sequence)
-	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...)}
+	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: session.Status == contracts.Working || session.Status == contracts.AwaitingInput}
 	state.Failure = ""
 	access := state.accessMode
 	if access == "" {
@@ -139,19 +141,35 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 	for i := range messages {
 		messages[i].ID = "side:" + sessionID + ":" + messages[i].ID
 	}
+	rows := len(messages)
+	if _, _, working := a.workingState(sessionID); rows == 0 && working {
+		rows = 1
+	}
 	a.prepareTranscriptMarkdown(c)
 	root := ui.Column(c).Fill().Key("side-transcript:" + sessionID)
 	list := ui.Local(root, "messages", func() ui.ListState { return ui.ListState{FollowEnd: true} })
-	list.Key = func(i int) any { return messages[i].ID }
+	list.Key = func(i int) any {
+		if i == len(messages) {
+			return "side:" + sessionID + ":working-trailer"
+		}
+		return messages[i].ID
+	}
 	if !a.reduceMotion(c) && a.state.Settings.Appearance.SmoothScrolling {
 		list.FollowAnimation = &ui.Smooth
 	} else {
 		list.FollowAnimation = nil
 	}
 	root.Children(func() {
-		ui.List(c, list, len(messages), func(i int) {
-			c.Key(messages[i].ID)
-			ui.Column(c).FillWidth().Padding(0, 16).Children(func() { a.message(c, messages[i]) })
+		ui.List(c, list, rows, func(i int) {
+			c.Key(list.Key(i))
+			ui.Column(c).FillWidth().Padding(0, 16).Children(func() {
+				if i < len(messages) {
+					a.message(c, messages[i])
+				}
+				if i == rows-1 {
+					a.workingTrailer(c, sessionID)
+				}
+			})
 		}).Grow(1).FillWidth().Gap(16).Padding(20, 0)
 		a.sideQueuedMessages(c, sessionID, state)
 		a.sideComposerView(c, session, state)
@@ -160,13 +178,21 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 
 func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *sideComposerState) {
 	controls := a.sideControls(session.ID, state)
-	ui.Column(c).FillWidth().Padding(0, 16, 16, 16).Children(func() {
+	viewport, _ := c.Size()
+	columns := allocatePanels(viewport, a.sidebarWidth, a.filesWidth, a.rightWidth, a.fit, a.rightExpanded)
+	transcriptWidth := float32(a.state.Settings.Appearance.TranscriptWidth)
+	if transcriptWidth <= 0 {
+		transcriptWidth = 736
+	}
+	outerWidth := composerOuterWidth(columns.Right, transcriptWidth, false)
+	ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
 		a.nativeComposerSurface(c, composerSurfaceProps{
 			draft: &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
-			inputLabel: "Message to " + session.Title, attachLabel: "Attach files to " + session.Title,
-			sendLabel: "Send message to " + session.Title, stopLabel: "Stop response in " + session.Title,
+			inputLabel: tr(c, "Message to ") + session.Title, attachLabel: tr(c, "Attach files to ") + session.Title,
+			sendLabel: tr(c, "Send message to ") + session.Title, stopLabel: tr(c, "Stop response in ") + session.Title,
 			running:   session.Status == contracts.Working || session.Status == contracts.AwaitingInput,
 			canSend:   state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments)),
+			widthHint: max(0, outerWidth-32),
 			autofocus: true, focusPending: &state.FocusPending, stopWithEscape: a.state.Settings.General.StopWithEscape,
 			renderStaged: func() {
 				if len(state.Attachments) > 0 {
@@ -175,7 +201,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 							c.Key(item.ID)
 							ui.Row(c).AlignItems(ui.Center).Children(func() {
 								a.attachmentChip(c, item, false)
-								iconButton(c, "close", "Remove side attachment: "+item.Name).Size(20, 20).OnClick(func() {
+								iconButton(c, "close", tr(c, "Remove side attachment: ")+item.Name).Size(20, 20).OnClick(func() {
 									for i, candidate := range state.Attachments {
 										if candidate.ID == item.ID {
 											state.Attachments = append(state.Attachments[:i], state.Attachments[i+1:]...)
@@ -195,6 +221,9 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 				a.sideAttachmentWork(session.ID, state, contracts.AttachmentImportRequest{Paths: paths}, false)
 			},
 			onMention: func(file workbench.FileDrag) { state.Draft += " @" + file.Path },
+		})
+		ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Justify(ui.End).Padding(0, 10, 0, 4).Children(func() {
+			a.composerUsage(c, session, &state.FooterUsage, true)
 		})
 		if state.Failure != "" {
 			ui.Text(c, state.Failure).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
@@ -220,13 +249,13 @@ func (a *App) sideQueuedMessages(c *ui.Context, id string, state *sideComposerSt
 		ui.Row(c).FillWidth().Padding(6, 16).Gap(8).AlignItems(ui.Center).Children(func() {
 			icon(c, "clock-circle", 14)
 			ui.Text(c, q.Text).SingleLine().Grow(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
-			iconButton(c, "pen", "Edit queued side message").OnClick(func() {
+			iconButton(c, "pen", tr(c, "Edit queued side message")).OnClick(func() {
 				state.Draft = q.Text
 				state.Attachments = append([]contracts.Attachment(nil), q.Attachments...)
 				state.FocusPending = true
 				a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID})
 			})
-			iconButton(c, "close", "Remove queued side message").OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
+			iconButton(c, "close", tr(c, "Remove queued side message")).OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
 		})
 	}
 }

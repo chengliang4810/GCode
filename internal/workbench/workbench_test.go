@@ -26,6 +26,10 @@ func testWorkspace(t *testing.T) (*State, *mock.Server, contracts.Snapshot) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	snapshot.Settings.General.Language = "en"
+	if err := backend.UpdateSettings(context.Background(), snapshot.Settings); err != nil {
+		t.Fatal(err)
+	}
 	state := New(nil, backend)
 	state.Update(snapshot)
 	t.Cleanup(func() { _ = state.Close(); _ = backend.Close() })
@@ -281,6 +285,7 @@ func TestTerminalCRLFAndEscapeFiltering(t *testing.T) {
 
 func TestSurfacePickerMatchesReferenceChoices(t *testing.T) {
 	s, _, _ := testWorkspace(t)
+	s.ProjectID = s.snapshot.Projects[0].ID
 	tt := ui.NewTester(s.View, 520, 842)
 	for _, label := range []string{"Browser", "Terminal", "Diffs", "History"} {
 		if !tt.HasText(label) {
@@ -293,12 +298,21 @@ func TestSurfacePickerMatchesReferenceChoices(t *testing.T) {
 		}
 	}
 	for i := range s.snapshot.Projects {
-		s.snapshot.Projects[i].Branch = ""
-		s.snapshot.Projects[i].Branches = nil
+		// A stale branch label is not evidence of a currently detected repo.
+		s.snapshot.Projects[i].GitDetected = false
 	}
 	tt.Frame()
 	if tt.HasText("Diffs") || tt.HasText("History") {
 		t.Fatal("Git-only surfaces shown for a non-Git project")
+	}
+	for i := range s.snapshot.Projects {
+		s.snapshot.Projects[i].GitDetected = true
+		s.snapshot.Projects[i].Branch = ""
+		s.snapshot.Projects[i].Branches = nil
+	}
+	tt.Frame()
+	if !tt.HasText("Diffs") || !tt.HasText("History") {
+		t.Fatal("detected Git without a loaded branch list lost its launcher entries")
 	}
 }
 

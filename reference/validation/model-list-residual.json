@@ -1,0 +1,1027 @@
+{
+  "schemaVersion": 1,
+  "status": "local-source-fixes-and-headless-regressions-complete-native-acceptance-pending",
+  "recordedAtUTC": "2026-10-28T12:13:44.560651+00:00",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "scope": "Compact model-list search/header/list body incremental fixes. Existing device/provider and main/side ownership, native controls, keyboard paths, and typed model choices retained.",
+  "nonActions": [
+    "No native window launched",
+    "No executable build",
+    "No reference clone or old WGC bitmap mutation",
+    "No crop/resize/registration/mask acceptance adjustment",
+    "No renderer or global theme edits by this task"
+  ],
+  "baseline": {
+    "analysis": {
+      "path": "output/model-list-residual-audit/pixel-analysis.json",
+      "sha256": "7e24ba31638bf0057c71a83ba6e29a830fbb6b587443bc9976678e4e1ac0e854"
+    },
+    "comparison": {
+      "path": "output/compact-comparison-20261028-r6/comparison.json",
+      "sha256": "a527b7e9e1e65eefca7100c591bec1192a5e6d2165fdb8b64a7ad569e82c2558"
+    },
+    "method": "Pixel samples and semantic ROI statistics read original image coordinates. Whole-frame8x8 SSIM is independently recomputed and matches existing Go metric within1e-10; region attribution assigns each original grid tile by its center. No crop/resize/registration/mask is used to alter acceptance scores.",
+    "roiLimit": "Semantic regions use observed native popup position and raw complete-window coordinates. Ink boxes are threshold observations, not direct vector/layout bounds. Region labels can include a boundary tile's neighbors.",
+    "scoresRemainHistoricalR6": true,
+    "scenes": [
+      {
+        "name": "compact-model-list-dark-wide",
+        "size": [
+          842,
+          592
+        ],
+        "wholeFrameSSIM": 0.9935963170733823,
+        "lossSharesByOriginalTileCenter": {
+          "native-frame": 0.0006652009596513352,
+          "shell-and-other": 0.008593455433348255,
+          "popup-near-shadow": 0.028164948120119517,
+          "popup-border": 0.0,
+          "popup-header": 0.09885848183388318,
+          "popup-search": 0.4679322687580659,
+          "popup-list-body": 0.2808640707171396,
+          "model-trigger": 0.11492157417780158
+        },
+        "flatPoints": {
+          "reference": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                56,
+                56,
+                59,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                64,
+                64,
+                67,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                43,
+                43,
+                46,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                43,
+                43,
+                46,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                56,
+                56,
+                59,
+                255
+              ]
+            }
+          },
+          "implementation": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                54,
+                54,
+                57,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                61,
+                61,
+                63,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                53,
+                53,
+                55,
+                255
+              ]
+            }
+          }
+        },
+        "inputs": {
+          "reference": {
+            "file": "output/reference-lossless/capture-native-state-20261028-01/compact-model-list-dark-wide.png",
+            "sha256": "98b5a73a258d2e05a939cf0d41bcf54f65d0e408c6911e0fecbd7186b5c5e2d9"
+          },
+          "implementation": {
+            "file": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-model-list-dark-wide.png",
+            "sha256": "2e6c00e520ca357467652decf9350bbd217179b457ff8e6354b2869821a429aa"
+          }
+        }
+      },
+      {
+        "name": "compact-model-list-dark-narrow",
+        "size": [
+          362,
+          592
+        ],
+        "wholeFrameSSIM": 0.9852484212770475,
+        "lossSharesByOriginalTileCenter": {
+          "native-frame": 0.0003444923151838379,
+          "shell-and-other": 0.008596213263302708,
+          "popup-near-shadow": 0.028173986875041065,
+          "popup-border": 0.0,
+          "popup-header": 0.09889020770766793,
+          "popup-search": 0.46808243857478804,
+          "popup-list-body": 0.28095420621075573,
+          "model-trigger": 0.11495845505326995
+        },
+        "flatPoints": {
+          "reference": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                56,
+                56,
+                59,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                64,
+                64,
+                67,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                43,
+                43,
+                46,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                43,
+                43,
+                46,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                56,
+                56,
+                59,
+                255
+              ]
+            }
+          },
+          "implementation": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                54,
+                54,
+                57,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                61,
+                61,
+                63,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                39,
+                39,
+                42,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                53,
+                53,
+                55,
+                255
+              ]
+            }
+          }
+        },
+        "inputs": {
+          "reference": {
+            "file": "output/reference-lossless/capture-native-state-20261028-01/compact-model-list-dark-narrow.png",
+            "sha256": "14201256f08b04e5521c49b95ef2ab3e636202c1647cb14b52473b8f8fa81c86"
+          },
+          "implementation": {
+            "file": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-model-list-dark-narrow.png",
+            "sha256": "996976296cd0efeab0c117376a435067ee0b50cb19b08c35e83ec4ede058e202"
+          }
+        }
+      },
+      {
+        "name": "compact-model-list-light-wide",
+        "size": [
+          842,
+          592
+        ],
+        "wholeFrameSSIM": 0.9932884937793405,
+        "lossSharesByOriginalTileCenter": {
+          "native-frame": 0.002563970128177159,
+          "shell-and-other": 0.004457305543826126,
+          "popup-near-shadow": 0.02553831063945782,
+          "popup-border": 0.0,
+          "popup-header": 0.09358823925412475,
+          "popup-search": 0.4925250612865502,
+          "popup-list-body": 0.2778308805305215,
+          "model-trigger": 0.10349623261735229
+        },
+        "flatPoints": {
+          "reference": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                235,
+                235,
+                235,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                237,
+                237,
+                237,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                250,
+                250,
+                250,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                250,
+                250,
+                250,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                227,
+                227,
+                227,
+                255
+              ]
+            }
+          },
+          "implementation": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                239,
+                239,
+                239,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                242,
+                242,
+                242,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                236,
+                236,
+                236,
+                255
+              ]
+            }
+          }
+        },
+        "inputs": {
+          "reference": {
+            "file": "output/reference-lossless/capture-native-state-20261028-01/compact-model-list-light-wide.png",
+            "sha256": "689753ea7677b447e06835326fbbc8f0048d419030d19feb0eb9cdf306be32a5"
+          },
+          "implementation": {
+            "file": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-model-list-light-wide.png",
+            "sha256": "21669f61691f0110ca2bedffff3bb5b710a3b036467c10254e66bd35a6f082a5"
+          }
+        }
+      },
+      {
+        "name": "compact-model-list-light-narrow",
+        "size": [
+          362,
+          592
+        ],
+        "wholeFrameSSIM": 0.9845484851257454,
+        "lossSharesByOriginalTileCenter": {
+          "native-frame": 0.001651848140331292,
+          "shell-and-other": 0.004461381601108309,
+          "popup-near-shadow": 0.025561664572912264,
+          "popup-border": 0.0,
+          "popup-header": 0.09367382257803822,
+          "popup-search": 0.49297545903087714,
+          "popup-list-body": 0.278084947605948,
+          "model-trigger": 0.10359087647079483
+        },
+        "flatPoints": {
+          "reference": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                235,
+                235,
+                235,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                237,
+                237,
+                237,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                250,
+                250,
+                250,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                250,
+                250,
+                250,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                227,
+                227,
+                227,
+                255
+              ]
+            }
+          },
+          "implementation": {
+            "popupHeaderPlane": {
+              "windowPx": [
+                150,
+                320
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "viewedProviderTab": {
+              "windowPx": [
+                54,
+                320
+              ],
+              "rgba": [
+                239,
+                239,
+                239,
+                255
+              ]
+            },
+            "selectedRowFill": {
+              "windowPx": [
+                150,
+                396
+              ],
+              "rgba": [
+                242,
+                242,
+                242,
+                255
+              ]
+            },
+            "unselectedRowPlane": {
+              "windowPx": [
+                150,
+                430
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "listBottomInset": {
+              "windowPx": [
+                150,
+                517
+              ],
+              "rgba": [
+                255,
+                255,
+                255,
+                255
+              ]
+            },
+            "searchBottomHairline": {
+              "windowPx": [
+                150,
+                375
+              ],
+              "rgba": [
+                236,
+                236,
+                236,
+                255
+              ]
+            }
+          }
+        },
+        "inputs": {
+          "reference": {
+            "file": "output/reference-lossless/capture-native-state-20261028-01/compact-model-list-light-narrow.png",
+            "sha256": "27e4da559ec47d10e336d884addd50658f189329e9fe2c444f2981a3a4c923b8"
+          },
+          "implementation": {
+            "file": "output/captures/model-picker-fixture-wgc-20261028-r6/compact-model-list-light-narrow.png",
+            "sha256": "be0c9980d523fdf06a432ae20824137bc9076be1b32f4f749cf8c4513762007b"
+          }
+        }
+      }
+    ]
+  },
+  "sourceEvidence": [
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/pickers.rs",
+      "sha256": "fb88f1cd966f3e089af6d52363edfe06fbbe998aabb73c250ab5b496b898d560",
+      "lines": "1091-1094,5202-5228",
+      "finding": "Plain ComposerInput overrides outer 13px with its own 14px; search icon14 Muted and hairline(.08)."
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/composer.rs",
+      "sha256": "4e201a019a4c6ac7847058f6589b27164367cdcb5aa28df44d7682b7aa04a26e",
+      "lines": "110-111,2227-2235,5572-5575,5639-5640",
+      "finding": "Default text14/configuredLineHeight22.75, empty placeholder Faint. Parent line-height style is rem-based, but custom measured text layout below ignores that inherited line height."
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/composer.rs",
+      "sha256": "4e201a019a4c6ac7847058f6589b27164367cdcb5aa28df44d7682b7aa04a26e",
+      "lines": "4455-4456,4720-4738,5166-5195,5295-5308",
+      "finding": "Custom layout reads style font_size then sets line_height=px(configured_line_height), measures that content, and paints caret width2DIP with input.line_height."
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/pickers.rs",
+      "sha256": "fb88f1cd966f3e089af6d52363edfe06fbbe998aabb73c250ab5b496b898d560",
+      "lines": "5304-5312",
+      "finding": "Scrolling host ink(.02), transparent model rows."
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/pickers/compact.rs",
+      "sha256": "dab709e36041c0d4799bc1e83c7cde8e991f2534801cafe222f937083983d31e",
+      "lines": "219-241,414-550",
+      "finding": "Selected wash over band, active ink(.05), row provider14 Muted/brand tint; header32/radius7/icon14, viewed ink(.08)."
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/theme.rs",
+      "sha256": "215f3a729f86c8ee69adb80d5260cbf79235e5d43c4adfdf40f115f30bf90b45",
+      "lines": "1692-1718,1804-1808,1842-1852",
+      "finding": "Ink is pure black/white, light hairline alpha multiplied1.35, selected wash(.06/.11), 1px inset ring along original radius7 boundary."
+    }
+  ],
+  "implementationAtFreeze": [
+    {
+      "path": "internal/desktop/model_picker.go",
+      "sha256": "a8a369747e7d1a86edbcd5bec88adfb3ec5e71a65cd67efbec514fad67d11298"
+    },
+    {
+      "path": "internal/desktop/model_picker_list_visual_test.go",
+      "sha256": "cf1ae8d3bc6ef7664c57ab39661ce73ec813b962362bca08f7f1aa8fc30afbe2"
+    }
+  ],
+  "frameworkDependencies": {
+    "sealPendingAtModelFreeze": true,
+    "optInAPIs": [
+      "Element.PlaceholderColor(Color)",
+      "Element.CaretWidth(2)"
+    ],
+    "owner": "Separate framework owner; default input placeholder/caret behavior unchanged without opt-in.",
+    "snapshot": [
+      {
+        "path": "third_party/mygo/ui/api_gen.go",
+        "sha256": "ef8a873540e410bfd74d9bd9b5beb19ff9bde5ebe40f6f7acec6414b030eafe9"
+      },
+      {
+        "path": "third_party/mygo/ui/editor_layout.go",
+        "sha256": "db46839f43c3c445dc2b698de542d03eedd0ae180c1767ed6b908cf1b579f878"
+      }
+    ]
+  },
+  "postfixHeadlessEvidence": {
+    "scope": "Diagnostic ink read from unchanged native reference and implementation headless rendering. Different rendering paths; not native WGC parity acceptance.",
+    "referenceVisibleClientOffsetInWGC": [
+      1,
+      31
+    ],
+    "inkAnalysis": {
+      "path": "output/model-list-residual-audit/headless-ink-comparison.json",
+      "sha256": "dd21854aec10b67557d9eafe61643e685a2d2bc817c6566a197abe259f87f773"
+    },
+    "placeholderCaretExcludedObservations": [
+      {
+        "appearance": "dark",
+        "cases": {
+          "reference": {
+            "clientROIExclusive": [
+              44,
+              310,
+              163,
+              338
+            ],
+            "clientInkInclusive": [
+              44,
+              319,
+              147,
+              328
+            ],
+            "peakRGB": [
+              133,
+              133,
+              138
+            ]
+          },
+          "headlessCurrent": {
+            "clientROIExclusive": [
+              44,
+              310,
+              163,
+              338
+            ],
+            "clientInkInclusive": [
+              44,
+              319,
+              147,
+              328
+            ],
+            "peakRGB": [
+              133,
+              133,
+              138
+            ]
+          }
+        }
+      },
+      {
+        "appearance": "light",
+        "cases": {
+          "reference": {
+            "clientROIExclusive": [
+              44,
+              310,
+              163,
+              338
+            ],
+            "clientInkInclusive": [
+              44,
+              319,
+              147,
+              328
+            ],
+            "peakRGB": [
+              121,
+              121,
+              129
+            ]
+          },
+          "headlessCurrent": {
+            "clientROIExclusive": [
+              44,
+              310,
+              163,
+              338
+            ],
+            "clientInkInclusive": [
+              44,
+              319,
+              147,
+              328
+            ],
+            "peakRGB": [
+              121,
+              121,
+              129
+            ]
+          }
+        }
+      }
+    ],
+    "searchMeasureText": {
+      "path": "output/model-list-residual-audit/search-measurements.json",
+      "sha256": "aff85499c51ca388c102060cc49bf986f3f3ae52ae27a3a013048d382208ea6e"
+    },
+    "searchAdvance13px": 99.762,
+    "searchAdvance14px": 107.436005,
+    "rendered": [
+      {
+        "path": "output/model-list-residual-audit/headless-current/dark-model-list.json",
+        "sha256": "80061aeebb950ff348f524cc4918682ad03fd8c9aa99555101b038c47090ce0d"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/dark-model-list.png",
+        "sha256": "af29ab327cdae02938f933a68c73d21e795adc44f60d319f54e083f3fd2a25aa"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/light-model-list.json",
+        "sha256": "0b2c3cf5f582d41f3088533fccdc3fc07706afa3929d0b44293055e5f5fc0251"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/light-model-list.png",
+        "sha256": "4631d3e395977576133dce3d983cfa299786406c7d5c2f55a00c997654a5ba4d"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-13.json",
+        "sha256": "0d4272ad9336d141c9d8aedf70283fa50ffd1d91976e138d74f08b3f3d320a4b"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-13.png",
+        "sha256": "524bd35795040f4782c8afc7d4ba1cd054721ccc34c0004afbee190d6bbff1c2"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-16.json",
+        "sha256": "b5460101dab3a128269a7b70428db4aafe48539da2fb04f0821ac9d9cb411c27"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-16.png",
+        "sha256": "b26942e785bdf2a6e798fccea677376a27adaeb61e00605b25e9803691907265"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-20.json",
+        "sha256": "953477c3004f8dc2865e03f05bf975aabef4dfc89bc4725097e9aa42ccdcb64c"
+      },
+      {
+        "path": "output/model-list-residual-audit/headless-current/search-uifont-20.png",
+        "sha256": "0d9d94089cbb789c2d0c583a3ef59bd6a27f4644a6d3332bc38b76dbcff9e54f"
+      }
+    ]
+  },
+  "verification": [
+    {
+      "command": "go test ./internal/desktop -run 'TestCompactModel(ListSource|SearchFont)' -count=1 -v",
+      "exitCode": 0,
+      "packageSeconds": 5.966,
+      "log": {
+        "path": "output/model-list-residual-audit/list-focused.log",
+        "sha256": "7090a3276e72164a6b120b65ea706afdad453a381fdc0127be879948d49da7d9"
+      }
+    },
+    {
+      "command": "go test ./internal/desktop -run 'Test(Model|Compact|SideCompact|SideModel)' -count=1",
+      "exitCode": 0,
+      "packageSeconds": 7.644,
+      "log": {
+        "path": "output/model-list-residual-audit/all-model-focused.log",
+        "sha256": "a101f0119f3f887c88552c771fd60a2b8d6a8c9d7ce335b202c009f961ff6f21"
+      }
+    },
+    {
+      "command": "go test -tags uifixture ./internal/desktop -run 'Test(ModelPickerFixture|Model|Compact|SideCompact|SideModel)' -count=1",
+      "exitCode": 0,
+      "packageSeconds": 7.746,
+      "log": {
+        "path": "output/model-list-residual-audit/tagged-model-focused.log",
+        "sha256": "ff21228bd16f2a97e57936b3e77b123479938c6d1de7b4e3b600443f83b02ac5"
+      }
+    },
+    {
+      "command": "go vet ./internal/desktop",
+      "exitCode": 0
+    },
+    {
+      "command": "go tool mygo vet ./internal/desktop",
+      "exitCode": 0
+    },
+    {
+      "review": "Independent read-only source/local-regression review",
+      "result": "No material issue found in these incremental changes; separate Snap placement excluded from that review."
+    }
+  ],
+  "relatedComposerObservation": {
+    "source": "shell.rs2545 uses Composer::new; shell/side_chats.rs318-322 also Composer::new plus set_side_chat. composer.rs6550-6555 creates default ComposerInput with_context and enables mentions; set_side_chat6931 only changes the side_chat flag. Neither invokes with_text_metrics, so same absolute22.75 custom text layout applies.",
+    "action": "Evidence reported to root owner; no composer_surface.go edits by this task."
+  },
+  "pending": [
+    "Unified sealed-framework native WGC captures and strict whole-frame comparison at current actual2x scale; no new native score claimed.",
+    "Source/headless SVG ink still differs around1px vertically for search, around1px in both axes for favorite; no unsupported translation added.",
+    "Native caret blink phase intentionally retained. CaretWidth affects painting only, not IME candidate rectangle; real IME interaction unverified.",
+    "This source-driven regression does not prove cross-platform/DPI pixel parity or actual provider service behavior."
+  ],
+  "audit": {
+    "path": "docs/audit-model-list-residual.md",
+    "sha256": "2db29eb80d075fe5e5414747e6eca61419cd157e6eaafbbddfe117d88485e600"
+  },
+  "diagnosticSources": [
+    {
+      "path": "output/model-list-residual-audit/analyze_pixels.py",
+      "sha256": "c64a5a3f314324b6e3dede368b68f7a12bf962becd105e4f65627b111dc7965f"
+    },
+    {
+      "path": "output/model-list-residual-audit/compare_headless.py",
+      "sha256": "d029fe678ac842dc4cf26b0ff29400703fca3cb9f1774aad7d544618af575b27"
+    },
+    {
+      "path": "output/model-list-residual-audit/_source/measure_search.go",
+      "sha256": "5dcab2c6bbe1a8e85d17a66b110c2c569b0a0bc917bc9459eb7c8f3fac4ec6ea"
+    },
+    {
+      "path": "output/model-list-residual-audit/record_evidence.py",
+      "sha256": "2f80d838e9bb26daf55030a484eb43edc7d938a97acf78b0394cac163087bc5b"
+    }
+  ]
+}

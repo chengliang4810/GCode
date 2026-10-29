@@ -1,0 +1,31 @@
+{
+  "captures": "output/reference-lossless/capture-layout-20261028-02",
+  "files": [
+    {
+      "retained": "output/reference-lossless/history-native-20261028-091917-377/scripts/reference-capture-lossless.ps1",
+      "original": "scripts/reference-capture-lossless.ps1",
+      "sha256": "35bbe6f742fd036af736ef02376640e04d5c903efe2865568dd7675a40819755"
+    },
+    {
+      "retained": "output/reference-lossless/history-native-20261028-091917-377/reference/fixtures/native-capture-lossless.rs",
+      "original": "reference/fixtures/native-capture-lossless.rs",
+      "sha256": "0c9ee2eec8eb64e83f291680cf16a67d6421bc8dfae2a4575f3f0ccfae59e76e"
+    },
+    {
+      "retained": "output/reference-lossless/history-native-20261028-091917-377/reference/native/lossless-capture-adapter.json",
+      "original": "reference/native/lossless-capture-adapter.json",
+      "sha256": "2343399aa6adaf6d71f88e59773910b6028b5f9cc8fbbc137ba62be934fdeca5"
+    },
+    {
+      "retained": "output/reference-lossless/history-native-20261028-091917-377/output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-lossless.rs",
+      "original": "output/reference-native-0.2.128/crates/ui/examples/compact-picker-windows-lossless.rs",
+      "sha256": "3885ea3b4f90526f59d06946b664ac838317fae09b1b14b0d3a2ada7d629819e"
+    },
+    {
+      "retained": "output/reference-lossless/history-native-20261028-091917-377/output/reference-native/target/debug/examples/compact-picker-windows-lossless.exe",
+      "original": "output/reference-native/target/debug/examples/compact-picker-windows-lossless.exe",
+      "sha256": "fde062c9ddfdde1043357120df260ec7dcc312ffae417415346e41545d7cdb59"
+    }
+  ],
+  "scope": "Original native-frame lossless transport and binary before adding explicit frame configuration"
+}

@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -66,5 +67,83 @@ func TestWorkingSendingBridgeAndQueueStayInTheirConversation(t *testing.T) {
 	a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: "chat-0", RequestID: "queued"}}, nil)
 	if _, _, visible := a.workingState("chat-0"); visible {
 		t.Fatal("acknowledged idle send retained a bridge")
+	}
+}
+
+func TestSideWorkingTrailerUsesChildRunAndSettlesWithIt(t *testing.T) {
+	a, tt, child := sideViewTester(t)
+	started := time.Date(2026, 10, 28, 8, 0, 0, 0, time.UTC)
+	a.now = func() time.Time { return started.Add(17 * time.Second) }
+	for i := range a.state.Sessions {
+		switch a.state.Sessions[i].ID {
+		case a.sessionID:
+			a.state.Sessions[i].Status = contracts.Working
+		case child.ID:
+			a.state.Sessions[i].Status = contracts.Idle
+		}
+	}
+	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "main-run", SessionID: a.sessionID, StartedAt: started, Status: "running"})
+	tt.Frame()
+	if tt.HasText("Activity status: " + child.ID) {
+		t.Fatal("idle child inherited the central conversation's activity")
+	}
+	for i := range a.state.Sessions {
+		if a.state.Sessions[i].ID == child.ID {
+			a.state.Sessions[i].Status = contracts.Working
+		}
+	}
+	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "child-run", SessionID: child.ID, StartedAt: started.Add(6 * time.Second), Status: "running"})
+	tt.Frame()
+	if !tt.HasText("Activity status: "+child.ID) || !tt.HasText("11s") {
+		t.Fatal("side transcript did not show its own working trailer and timer")
+	}
+	for i := range a.state.Sessions {
+		if a.state.Sessions[i].ID == child.ID {
+			a.state.Sessions[i].Status = contracts.Idle
+		}
+	}
+	tt.Frame()
+	if tt.HasText("Activity status: "+child.ID) || !tt.HasText("Activity status: "+a.sessionID) {
+		t.Fatal("settling the child affected the wrong activity trailer")
+	}
+}
+
+func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *testing.T) {
+	for _, test := range []struct {
+		name, word string
+		queued     bool
+	}{
+		{name: "sending", word: "Sending…"},
+		{name: "queued", word: "Queued — will send automatically", queued: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			a, tt, child := sideViewTester(t)
+			a.state.Messages[child.ID] = nil
+			for i := range a.state.Sessions {
+				if a.state.Sessions[i].ID == child.ID {
+					a.state.Sessions[i].Status = contracts.Idle
+				}
+			}
+			state := a.sideComposer(child.ID)
+			state.Draft = "Keep this draft"
+			state.Pending = &sidePendingSend{RequestID: "pending", Draft: state.Draft, Queued: test.queued}
+			tt.Frame()
+			if !tt.HasText("Activity status: "+child.ID) || !tt.HasText(test.word) {
+				t.Fatal("pending side send was hidden by its empty transcript")
+			}
+			if _, elapsed, _ := a.workingState(child.ID); elapsed != "" {
+				t.Fatal("pending side send inherited a previous turn's timer")
+			}
+			a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: child.ID, RequestID: "older"}}, nil)
+			tt.Frame()
+			if !tt.HasText("Activity status: " + child.ID) {
+				t.Fatal("stale acknowledgment dismissed the newer pending trailer")
+			}
+			a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: child.ID, RequestID: "pending"}}, errors.New("Delivery failed"))
+			tt.Frame()
+			if tt.HasText("Activity status: "+child.ID) || state.Draft != "Keep this draft" || !tt.HasText("Delivery failed") {
+				t.Fatal("failed side send retained progress or discarded its draft/error")
+			}
+		})
 	}
 }

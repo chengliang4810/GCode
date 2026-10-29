@@ -1,5 +1,7 @@
 {
   "schemaVersion": 1,
+  "stage": "historical original-machine handoff baseline",
+  "resumedEvidence": "reference/validation/resume-result.json",
   "referenceVersion": "0.2.128",
   "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
   "platform": "windows/amd64",

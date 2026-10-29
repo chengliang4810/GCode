@@ -12,6 +12,15 @@ import (
 // an element takes files dragged over or dropped at the event's position.
 func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 	defer rt.publishHoverChanges()
+	if observe := rt.observeInput; observe != nil {
+		observe(ev)
+	}
+	// Inspector and pointerMove callbacks may pump nested input too, before
+	// pointerDown finds its target. Keep this event's release epoch local.
+	var primaryEpoch uint64
+	if ev.Kind == platform.PointerDown && ev.Button == 0 && rt.observePrimaryPress != nil {
+		primaryEpoch = rt.inputPressEpoch
+	}
 	if ev.Kind != platform.SurfaceFrame {
 		// Whatever the event changes, the next frame builds anew.
 		rt.redraw = false
@@ -49,7 +58,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		rt.pointerMove(x, y)
 	case platform.PointerDown:
 		rt.pointerMove(x, y)
-		rt.pointerDown(x, y, ev.Button, Modifiers(ev.Mods), ev.Clicks)
+		rt.pointerDown(x, y, ev.Button, Modifiers(ev.Mods), ev.Clicks, primaryEpoch)
 	case platform.PointerUp:
 		rt.pointerMove(x, y)
 		rt.pointerUp(ev.Button, ev.Clicks)
@@ -309,9 +318,10 @@ func (rt *engine) pointerMove(x, y float32) {
 
 const interactive = flagClickable | flagFocusable | flagEditable | flagSelectable | flagDragWindow | flagDraggable | flagTrackPointer
 
-func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks int) {
+func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks int, primaryEpoch uint64) {
 	rt.downing++
 	defer rt.endDown()
+	observePress := rt.observePrimaryPress
 	chain := rt.hitChain(x, y)
 	rt.setHover(chain)
 	rt.pressDragger = 0
@@ -356,6 +366,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
 	if h != nil && rt.deliver(h, InputEvent{Kind: InputPointerDown, Button: button, Mods: mods, Clicks: clicks}) {
 		// It takes the moves and the release.
 		rt.pressed, rt.pressButton, rt.pressClicks = h, button, clicks
+		if primaryEpoch != 0 {
+			observePress(h, primaryEpoch)
+		}
 		h.pressed = true
 		h.pressPending = true
 		h.pressX, h.pressY = h.local(x, y)
@@ -384,6 +397,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
 		return
 	}
 	rt.pressed, rt.pressButton, rt.pressClicks = target, button, clicks
+	if primaryEpoch != 0 {
+		observePress(target, primaryEpoch)
+	}
 	rt.pressDragger = pressDragger(rt, chain, target)
 	target.pressed, target.pressMods = true, mods
 	target.pressPending = true
@@ -1452,7 +1468,7 @@ func (e *node) Dismissed() bool { return e.dismissed }
 func (rt *engine) scrollbarPress(chain []uint64, x, y float32) bool {
 	for _, id := range chain {
 		s := rt.states[id]
-		if s == nil || s.flags&(flagScrollX|flagScrollY) == 0 || !s.barsShown {
+		if s == nil || s.flags&(flagScrollX|flagScrollY) == 0 || !s.barsShown || s.hideScrollbars {
 			continue
 		}
 		lx, ly := s.local(x, y)

@@ -1,0 +1,126 @@
+{
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "tabStripAudit": {
+    "path": "output/tabstrip-r12-audit/result.json",
+    "sha256": "906b1fe98bb2fd2216b2aa764690aaa86650c813fb237ff10d5d01f55b3cb71d"
+  },
+  "crossPlatformSizes": {
+    "path": "output/framework-scrollbars-r12/size-cross/final-diagnostic.json",
+    "sha256": "ff818ae38ddacb12f536929d431dab7a99581e2a2854e249a7b5432bf227f337"
+  },
+  "documentationCorrections": [
+    "Current framework is .6/1836files/11patches, superseding stale6/9/10 patch counts in current-facing text",
+    "R11 bottom7DIP obstruction is historical and fixed by the scoped R12 API; opaque36DIP fades are implemented, glass masks remain pending",
+    "Source previous-frame flags are not proof of an original native lag; this implementation-side idle defect is independently reproduced",
+    "Fresh output alone did not prevent first Windows rename denial; only successful r2 four-target manifest is accepted",
+    "Native inspection found active-tab insertion/collapse reveal incomplete; retained as pending, not hidden by scrollbar/fade pass"
+  ],
+  "sourceUnchangedAfterBuildAndNativeInput": true,
+  "completeUIParity": false,
+  "sourceManifest": {
+    "path": "output/resume-validation/scrollbars-r12-final-source-hashes.json",
+    "sha256": "9c804bb6e2876057cf1e249ef50db8be473e748d786a3dfa7deffa98ab7eb772"
+  },
+  "sourceDelta": {
+    "path": "output/resume-validation/scrollbars-r12-final-source-delta.json",
+    "sha256": "abb536020d881b3ea64169af64b6e46ac4309c459c44d65848be8e4072c49e34"
+  },
+  "goalStatus": "active",
+  "framework": "Verified MyGo v0.6.4 + zeron-native-ui.6: cefb5a5c8694f538ac4caeecb080d2fa96adbaf15c6c12e234e1a4bd06cce914 (1836 files)",
+  "schemaVersion": 1,
+  "sourceFiles": 263,
+  "recordedAtUTC": "2026-10-28T15:51:46.7285846Z",
+  "branch": "codex/isolated-worktree",
+  "checks": {
+    "path": "output/resume-validation/scrollbars-r12-final-checks.json",
+    "sha256": "e65ec825d4c9bcbbfce8789c3af31ec6aaef8194b75a1b6620a345b291f7af42"
+  },
+  "frameworkSourceReview": {
+    "path": "output/framework-scrollbars-r12-review/implementation-final.json",
+    "sha256": "ef9a3f90a68c57cead8c8304c913dbfee3e081050abcb1d99fb55136088a2944"
+  },
+  "referenceClones": [
+    {
+      "clean": true,
+      "head": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+      "path": "output/reference-sources/zeron"
+    },
+    {
+      "clean": true,
+      "head": "43199d0b0fb95fd0b71e5a225d2807c04ebcc609",
+      "path": "output/reference-sources/mygo"
+    }
+  ],
+  "changes": [
+    "Per-container native Scrollbars policy suppresses indicator and hitbox, preserves normal scrolling/navigation/accessibility and default neighbors",
+    "Final keyed commit drag cancellation and content cursor restoration, including fluent last-value semantics",
+    "Opaque TabStrip36DIP full-height shell-color fades with exact source thresholds and clipped narrow ramps",
+    "Paint-time pure ScrollState read fixes six confirmed idle stale-fade cases without timers or extra frames"
+  ],
+  "buildIdentities": {
+    "path": "output/resume-validation/scrollbars-r12-build-identities.json",
+    "sha256": "957eb2cad88c515842a9916f857130aff59abfad8bf419154db40890daeb58a6"
+  },
+  "tabStripIdleCorrection": {
+    "path": "output/tabstrip-r12-audit/idle-r1/result.json",
+    "sha256": "524a3fda48ca9cb9d880f70e038e26187fc78e83c2a33c8a19c166909adc8e9b"
+  },
+  "packages": {
+    "macNative": "pending",
+    "installerExecuted": false,
+    "architectureResourcesArchivesChecksumsStamp": "passed",
+    "windowsExecutableSHA256": "1e8d0dc3290b2a4f4d97095e45c59fb0c54542e8ad65736857281cbe351c2fe0",
+    "manifest": {
+      "path": "output/resume-validation/scrollbars-r12-packages-r2/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "4a0b38d70cff63a56377d6f9e57bed7176c9db9b2250b6bb763054b4419e068e"
+    },
+    "build": {
+      "path": "output/resume-validation/scrollbars-r12-package-build-r2.json",
+      "sha256": "c635372803bf9b95a344bb1f7a324139841cee6c16f9f2f98e8f53f97c92e225"
+    },
+    "targets": [
+      "windows/amd64",
+      "darwin/amd64",
+      "darwin/arm64",
+      "darwin/universal"
+    ]
+  },
+  "failedFirstPackage": {
+    "accepted": false,
+    "reason": "Fresh first output hit Access is denied during macOS amd64 staging rename on Windows; partial Windows package retained, final four targets rebuilt in a second fresh directory without source changes",
+    "record": {
+      "path": "output/resume-validation/scrollbars-r12-package-build-failed-r1.json",
+      "sha256": "51448161207425eff4971383a65069a360ad1d40eb3fe7ddfb0ded624a14736f"
+    },
+    "log": {
+      "path": "output/resume-validation/scrollbars-r12-package-build.log",
+      "sha256": "76a439536f4470fe744dd7eeb6837e866214f94692d00518f66f3f13648565a8"
+    }
+  },
+  "priorVisualEvidence": {
+    "scope": "Historical R8 compact/footer scores unchanged; no rescoring or relabeling for R12",
+    "phase": "reference/validation/popup-r8-result.json"
+  },
+  "frameworkEvidence": {
+    "path": "output/framework-scrollbars-r12/final-framework-evidence.json",
+    "sha256": "9971b8b4c3db4bd2c89db377a6e782fafe0218cf0805a341582af42cd70f1f42"
+  },
+  "remaining": [
+    "Confirmed native active History tab can stay clipped after insertion/takeover collapse; R13 diagnostic in progress",
+    "Glass subtree alpha mask,150ms sibling drag/reveal/takeover animation,168px custom menu and full focus/repeat behavior",
+    "Original matched independent TabStrip captures and complete scene parity",
+    "Text absolute-origin/lineheight/font fallback and fractional-scroll native matrix",
+    "OtherDPI/IME/clipboard/browser/performance/FocusChanged/screen-reader matrix and Mac Intel/ARM native acceptance"
+  ],
+  "native": [
+    {
+      "rawFiles": 48,
+      "evidence": {
+        "path": "output/resume-validation/scrollbars-r12-release-native/evidence.json",
+        "sha256": "f6cd7cb8a5acce95800d3d58983f669adbc77bb5da87324f130d8fb3bf43abfc"
+      },
+      "kind": "exact-release-native-scrollbars"
+    }
+  ]
+}

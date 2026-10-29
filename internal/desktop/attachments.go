@@ -77,6 +77,9 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 			if snapshotErr == nil {
 				a.apply(snapshot)
 			}
+			if origin != "" && !a.hasSession(origin) {
+				return
+			}
 			if origin == a.sessionID {
 				a.attachments = append(a.attachments, items...)
 				a.focusComposer = len(items) > 0

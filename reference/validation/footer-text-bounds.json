@@ -1,0 +1,1054 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T11:18:33.860263+00:00",
+  "status": "actual-production-footer-div-bounds-exported-at-current-scale2",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "gpuiCommit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+  "scope": "Independent test-only example imports existing FooterFixture and unmodified AccountUsage/context_usage. No Go product, existing footer/compact fixture, component or renderer edits. No screenshots generated.",
+  "runtime": {
+    "processId": 1852,
+    "exitCode": 0,
+    "nativeSlotReleased": true,
+    "requestedWindowBoundsLogical": [
+      40,
+      40,
+      1320,
+      560
+    ],
+    "displayIdExplicitlySet": false,
+    "requestedDefaultCenter": false,
+    "actualScale": 2.0,
+    "actualViewport": [
+      1320.0,
+      560.0
+    ],
+    "actualRem": 16.0,
+    "inspectorReservedWidth": 480,
+    "actualProductionRootBounds": [
+      0.0,
+      0.0,
+      840.0,
+      560.0
+    ],
+    "nativeWindowActiveAcrossSnapshots": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "screenshotCaptured": false,
+    "osInputAcceptance": false,
+    "externalEngineOrServicesStarted": false
+  },
+  "displayInventory": {
+    "evidence": {
+      "path": "output/footer-text-bounds-audit/gpui-displays.json",
+      "sha256": "df17045e50656ab33bb20ca076a2b55b1a9915577fae955c3edbb0852300ea15"
+    },
+    "processId": 3904,
+    "exitCode": 0,
+    "windowCreated": false,
+    "activationRequested": false,
+    "primaryDisplayId": "DisplayId(281612635)",
+    "displays": [
+      {
+        "id": "DisplayId(281612635)",
+        "uuid": "6bed0be1-a4ff-5477-bea7-9474fe514c73",
+        "boundsLogical": [
+          0.0,
+          0.0,
+          2048.0,
+          1280.0
+        ],
+        "visibleBoundsLogical": [
+          0.0,
+          0.0,
+          2048.0,
+          1232.0
+        ],
+        "publicDebug": "WindowsDisplay { handle: HMONITOR(0x10c9115b), display_id: DisplayId(281612635), scale_factor: 2.0, bounds: Bounds { origin: Point { x: 0px, y: 0px }, size: Size { 2048px × 1280px } }, visible_bounds: Bounds { origin: Point { x: 0px, y: 0px }, size: Size { 2048px × 1232px } }, physical_bounds: Bounds { origin: Point { x: 0 px (device), y: 0 px (device) }, size: Size { 4096 px (device) × 2560 px (device) } }, uuid: 6bed0be1-a4ff-5477-bea7-9474fe514c73 }"
+      }
+    ],
+    "conclusion": "At probe time GPUI reports only one display, logical2048x1280/physical4096x2560 and scale2. No1x display is available to select. This is not paired scale1 screenshot evidence; no OS display settings or metadata changed."
+  },
+  "productionSourceHashChecks": [
+    {
+      "path": "crates/ui/src/account_usage.rs",
+      "frozenSHA256": "9dd14a6b45ead2cb175df6871e5564c9939dee6cc23a14535de7ffe0d17d003b",
+      "exportSHA256": "9dd14a6b45ead2cb175df6871e5564c9939dee6cc23a14535de7ffe0d17d003b",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/context_usage.rs",
+      "frozenSHA256": "7d91d12f0cd272d139edc1aa187e5758f184d4a9b9f5ac31b2d68cd22a645e8c",
+      "exportSHA256": "7d91d12f0cd272d139edc1aa187e5758f184d4a9b9f5ac31b2d68cd22a645e8c",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/popover.rs",
+      "frozenSHA256": "28dbac8e64a1c7c95bc1f9cababc223d84822c2a89bfcc9ae511d57d2134f206",
+      "exportSHA256": "28dbac8e64a1c7c95bc1f9cababc223d84822c2a89bfcc9ae511d57d2134f206",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/settings/accounts.rs",
+      "frozenSHA256": "7b6a964b7ad73902c1be571f599e5965e852367fd0c1fdd09744fff09ebc26f5",
+      "exportSHA256": "7b6a964b7ad73902c1be571f599e5965e852367fd0c1fdd09744fff09ebc26f5",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/settings/widgets.rs",
+      "frozenSHA256": "bea2984122a75ed2de355f344852d77e86d4612dbde91cd4ddcb451a0a5bc3ab",
+      "exportSHA256": "bea2984122a75ed2de355f344852d77e86d4612dbde91cd4ddcb451a0a5bc3ab",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/theme.rs",
+      "frozenSHA256": "215f3a729f86c8ee69adb80d5260cbf79235e5d43c4adfdf40f115f30bf90b45",
+      "exportSHA256": "215f3a729f86c8ee69adb80d5260cbf79235e5d43c4adfdf40f115f30bf90b45",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/typography.rs",
+      "frozenSHA256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f",
+      "exportSHA256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/src/state.rs",
+      "frozenSHA256": "ad01bc275cbe2997b4d1bb1518b1eefa8094b64082bae9f5070445f5432b410d",
+      "exportSHA256": "ad01bc275cbe2997b4d1bb1518b1eefa8094b64082bae9f5070445f5432b410d",
+      "identical": true
+    },
+    {
+      "path": "crates/proto/src/entities.rs",
+      "frozenSHA256": "cd689df2ca91abc92a3887d8ca1d876111d1d94aad29029397398f0eb3f5a451",
+      "exportSHA256": "cd689df2ca91abc92a3887d8ca1d876111d1d94aad29029397398f0eb3f5a451",
+      "identical": true
+    }
+  ],
+  "existingProtectedExportFilesComparedWithPriorFooterBuild": [
+    {
+      "path": "crates/ui/examples/compact-picker-fixture.rs",
+      "priorFooterBuildSHA256": "1819ef4c2cce728769ff26480a97b045a4c1083053e8d099baa09c5fedf510a3",
+      "currentSHA256": "1819ef4c2cce728769ff26480a97b045a4c1083053e8d099baa09c5fedf510a3",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/examples/compact-picker-windows-lossless.rs",
+      "priorFooterBuildSHA256": "dddd9b686848ca41af344cea7704830bfc02914cc2d6a43f8e7f15392e9628e9",
+      "currentSHA256": "dddd9b686848ca41af344cea7704830bfc02914cc2d6a43f8e7f15392e9628e9",
+      "identical": true
+    },
+    {
+      "path": "Cargo.toml",
+      "priorFooterBuildSHA256": "1ade6e34b72d74b0a7d2e719b7d8e697f1bad7bf34f07417435530f0b327decf",
+      "currentSHA256": "1ade6e34b72d74b0a7d2e719b7d8e697f1bad7bf34f07417435530f0b327decf",
+      "identical": true
+    },
+    {
+      "path": "crates/ui/Cargo.toml",
+      "priorFooterBuildSHA256": "c621cc29480111c3f60ba8843f337abdb6aa18661c4e8f3fbf98a933e91f5275",
+      "currentSHA256": "c621cc29480111c3f60ba8843f337abdb6aa18661c4e8f3fbf98a933e91f5275",
+      "identical": true
+    },
+    {
+      "path": "Cargo.lock",
+      "priorFooterBuildSHA256": "97ba0e99c37f9a68bbb6504926ffb82ec38542885fc5bd6a8e43e648bec4c620",
+      "currentSHA256": "97ba0e99c37f9a68bbb6504926ffb82ec38542885fc5bd6a8e43e648bec4c620",
+      "identical": true
+    }
+  ],
+  "actualObservedGeometry": [
+    {
+      "phase": "known-accounts/card",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 330,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\")])",
+      "bounds": [
+        359.0,
+        385.0,
+        400.0,
+        121.0
+      ],
+      "contentSize": [
+        390.0,
+        111.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eaff",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "known-accounts/heading",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 970,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\")])",
+      "bounds": [
+        364.0,
+        390.0,
+        390.0,
+        26.0
+      ],
+      "contentSize": [
+        374.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "0.625rem",
+        "font_weight": 500.0
+      }
+    },
+    {
+      "phase": "known-accounts/row0",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 911,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        364.0,
+        418.0,
+        390.0,
+        49.0
+      ],
+      "contentSize": [
+        374.0,
+        37.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eaff",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "known-accounts/name0",
+      "sourceFile": "crates\\ui\\src\\account_usage.rs",
+      "sourceLine": 366,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        372.0,
+        424.0,
+        174.0,
+        20.0
+      ],
+      "contentSize": [
+        174.0,
+        20.0
+      ],
+      "explicitTextStyle": {
+        "font_size": "12.5px",
+        "font_weight": 500.0,
+        "white_space": "Nowrap",
+        "text_overflow": {
+          "Truncate": "…"
+        }
+      }
+    },
+    {
+      "phase": "known-accounts/meta-line",
+      "sourceFile": "crates\\ui\\src\\settings\\widgets.rs",
+      "sourceLine": 600,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        372.0,
+        445.0,
+        174.0,
+        16.0
+      ],
+      "contentSize": [
+        73.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "0.75rem",
+        "line_height": "1rem"
+      }
+    },
+    {
+      "phase": "known-accounts/plan",
+      "sourceFile": "crates\\ui\\src\\account_usage.rs",
+      "sourceLine": 333,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        372.0,
+        445.0,
+        20.0,
+        16.0
+      ],
+      "contentSize": [
+        20.0,
+        16.0
+      ],
+      "explicitTextStyle": null
+    },
+    {
+      "phase": "known-accounts/dot",
+      "sourceFile": "crates\\ui\\src\\settings\\widgets.rs",
+      "sourceLine": 617,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        400.0,
+        445.0,
+        3.0,
+        16.0
+      ],
+      "contentSize": [
+        3.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9ae4d"
+      }
+    },
+    {
+      "phase": "known-accounts/active",
+      "sourceFile": "crates\\ui\\src\\account_usage.rs",
+      "sourceLine": 340,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 0)])",
+      "bounds": [
+        411.0,
+        445.0,
+        34.0,
+        16.0
+      ],
+      "contentSize": [
+        34.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#8b7cf6ff"
+      }
+    },
+    {
+      "phase": "known-accounts/row1",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 911,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 1)])",
+      "bounds": [
+        364.0,
+        469.0,
+        390.0,
+        32.0
+      ],
+      "contentSize": [
+        374.0,
+        20.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eae6",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "known-accounts/name1",
+      "sourceFile": "crates\\ui\\src\\account_usage.rs",
+      "sourceLine": 366,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v3)), Name(\"account-usage\"), Name(\"account-usage-menu\"), NamedInteger(\"account-usage-row\", 1)])",
+      "bounds": [
+        372.0,
+        475.0,
+        364.0,
+        20.0
+      ],
+      "contentSize": [
+        364.0,
+        20.0
+      ],
+      "explicitTextStyle": {
+        "font_size": "12.5px",
+        "font_weight": 500.0,
+        "white_space": "Nowrap",
+        "text_overflow": {
+          "Truncate": "…"
+        }
+      }
+    },
+    {
+      "phase": "known-context/card",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 330,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(2v3)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        644.0,
+        424.0,
+        172.0,
+        82.0
+      ],
+      "contentSize": [
+        162.0,
+        72.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eaff",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "known-context/heading",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 970,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(2v3)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        649.0,
+        429.0,
+        162.0,
+        26.0
+      ],
+      "contentSize": [
+        146.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "0.625rem",
+        "font_weight": 500.0
+      }
+    },
+    {
+      "phase": "known-context/details-top",
+      "sourceFile": "crates\\ui\\src\\context_usage.rs",
+      "sourceLine": 157,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(2v3)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        649.0,
+        457.0,
+        162.0,
+        44.0
+      ],
+      "contentSize": [
+        146.0,
+        38.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "12px",
+        "line_height": "19px",
+        "white_space": "Nowrap"
+      }
+    },
+    {
+      "phase": "zero-context/card",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 330,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(6v5)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        640.0,
+        424.0,
+        176.0,
+        82.0
+      ],
+      "contentSize": [
+        166.0,
+        72.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eaff",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "zero-context/heading",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 970,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(6v5)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        645.0,
+        429.0,
+        166.0,
+        26.0
+      ],
+      "contentSize": [
+        150.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "0.625rem",
+        "font_weight": 500.0
+      }
+    },
+    {
+      "phase": "zero-context/details-top",
+      "sourceFile": "crates\\ui\\src\\context_usage.rs",
+      "sourceLine": 157,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(6v5)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        645.0,
+        457.0,
+        166.0,
+        44.0
+      ],
+      "contentSize": [
+        150.0,
+        38.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "12px",
+        "line_height": "19px",
+        "white_space": "Nowrap"
+      }
+    },
+    {
+      "phase": "over-context/card",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 330,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v7)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        637.0,
+        424.0,
+        179.0,
+        82.0
+      ],
+      "contentSize": [
+        169.0,
+        72.0
+      ],
+      "explicitTextStyle": {
+        "color": "#e8e8eaff",
+        "font_size": "0.8125rem"
+      }
+    },
+    {
+      "phase": "over-context/heading",
+      "sourceFile": "crates\\ui\\src\\popover.rs",
+      "sourceLine": 970,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v7)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        642.0,
+        429.0,
+        169.0,
+        26.0
+      ],
+      "contentSize": [
+        153.0,
+        16.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "0.625rem",
+        "font_weight": 500.0
+      }
+    },
+    {
+      "phase": "over-context/details-top",
+      "sourceFile": "crates\\ui\\src\\context_usage.rs",
+      "sourceLine": 157,
+      "globalId": "GlobalElementId([View(EntityId(3v1)), Name(\"footer-fixture\"), View(EntityId(5v7)), Name(\"context-usage\"), Name(\"context-usage-menu\")])",
+      "bounds": [
+        642.0,
+        457.0,
+        169.0,
+        44.0
+      ],
+      "contentSize": [
+        153.0,
+        38.0
+      ],
+      "explicitTextStyle": {
+        "color": "#a9a9aeff",
+        "font_size": "12px",
+        "line_height": "19px",
+        "white_space": "Nowrap"
+      }
+    }
+  ],
+  "fontAndLeadingMeasurements": [
+    {
+      "label": "account heading",
+      "text": "C O D E X   A C C O U N T S",
+      "fontSize": 10.0,
+      "fontWeight": 500.0,
+      "lineHeightBeforeSnap": 16.180339813232422,
+      "lineHeightSnapped": 16.0,
+      "advance": 108.02000427246094,
+      "intrinsicCeil": 109.0,
+      "ascent": 10.791015625,
+      "descent": 2.9499998092651367
+    },
+    {
+      "label": "context heading",
+      "text": "C O N T E X T   W I N D O W",
+      "fontSize": 10.0,
+      "fontWeight": 500.0,
+      "lineHeightBeforeSnap": 16.180339813232422,
+      "lineHeightSnapped": 16.0,
+      "advance": 108.68000793457031,
+      "intrinsicCeil": 109.0,
+      "ascent": 10.791015625,
+      "descent": 2.9499998092651367
+    },
+    {
+      "label": "account name0",
+      "text": "first@example.test",
+      "fontSize": 12.5,
+      "fontWeight": 500.0,
+      "lineHeightBeforeSnap": 20.225425720214844,
+      "lineHeightSnapped": 20.0,
+      "advance": 114.73750305175781,
+      "intrinsicCeil": 115.0,
+      "ascent": 12.5625,
+      "descent": 3.6875
+    },
+    {
+      "label": "account name1",
+      "text": "Second account",
+      "fontSize": 12.5,
+      "fontWeight": 500.0,
+      "lineHeightBeforeSnap": 20.225425720214844,
+      "lineHeightSnapped": 20.0,
+      "advance": 96.11248779296875,
+      "intrinsicCeil": 97.0,
+      "ascent": 12.5625,
+      "descent": 3.6875
+    },
+    {
+      "label": "plan",
+      "text": "Pro",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 16.0,
+      "lineHeightSnapped": 16.0,
+      "advance": 19.2239990234375,
+      "intrinsicCeil": 20.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "meta separator",
+      "text": "·",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 16.0,
+      "lineHeightSnapped": 16.0,
+      "advance": 2.4119999408721924,
+      "intrinsicCeil": 3.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "active",
+      "text": "In use",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 16.0,
+      "lineHeightSnapped": 16.0,
+      "advance": 33.08399963378906,
+      "intrinsicCeil": 34.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "account chip",
+      "text": "90%",
+      "fontSize": 11.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 17.79837417602539,
+      "lineHeightSnapped": 18.0,
+      "advance": 22.63800048828125,
+      "intrinsicCeil": 23.0,
+      "ascent": 11.055000305175781,
+      "descent": 3.244999885559082
+    },
+    {
+      "label": "known context chip",
+      "text": "21%",
+      "fontSize": 11.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 17.79837417602539,
+      "lineHeightSnapped": 18.0,
+      "advance": 19.854999542236328,
+      "intrinsicCeil": 20.0,
+      "ascent": 11.055000305175781,
+      "descent": 3.244999885559082
+    },
+    {
+      "label": "zero context chip",
+      "text": "0%",
+      "fontSize": 11.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 17.79837417602539,
+      "lineHeightSnapped": 18.0,
+      "advance": 16.114999771118164,
+      "intrinsicCeil": 17.0,
+      "ascent": 11.055000305175781,
+      "descent": 3.244999885559082
+    },
+    {
+      "label": "over context chip",
+      "text": "120%",
+      "fontSize": 11.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 17.79837417602539,
+      "lineHeightSnapped": 18.0,
+      "advance": 27.147998809814453,
+      "intrinsicCeil": 28.0,
+      "ascent": 11.055000305175781,
+      "descent": 3.244999885559082
+    },
+    {
+      "label": "known tokens",
+      "text": "42,000 / 200,000 tokens",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 144.072021484375,
+      "intrinsicCeil": 145.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "known remaining",
+      "text": "158,000 tokens remaining",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 145.5959930419922,
+      "intrinsicCeil": 146.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "zero tokens",
+      "text": "0 / 200,000 tokens",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 110.94000244140625,
+      "intrinsicCeil": 111.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "zero remaining",
+      "text": "200,000 tokens remaining",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 149.56800842285156,
+      "intrinsicCeil": 150.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "over tokens",
+      "text": "240,000 / 200,000 tokens",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 152.02801513671875,
+      "intrinsicCeil": 153.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    },
+    {
+      "label": "over remaining",
+      "text": "0 tokens remaining",
+      "fontSize": 12.0,
+      "fontWeight": 400.0,
+      "lineHeightBeforeSnap": 19.0,
+      "lineHeightSnapped": 19.0,
+      "advance": 107.90399932861328,
+      "intrinsicCeil": 108.0,
+      "ascent": 12.0600004196167,
+      "descent": 3.5399999618530273
+    }
+  ],
+  "chipLabelWidthEvidence": [
+    {
+      "phase": "known-closed/account-chip",
+      "actualChipBounds": [
+        703.0,
+        512.0,
+        56.0,
+        24.0
+      ],
+      "actualChipContentSize": [
+        44.0,
+        18.0
+      ],
+      "label": "90%",
+      "nativeShapeLineAdvance": 22.63800048828125,
+      "intrinsicCeil": 23.0,
+      "labelAllocatedWidthFromMeasuredChipAndSourcePaddingRingGap": 23.0,
+      "directSharedStringBoundsExported": false
+    },
+    {
+      "phase": "known-closed/context-chip",
+      "actualChipBounds": [
+        763.0,
+        512.0,
+        53.0,
+        24.0
+      ],
+      "actualChipContentSize": [
+        41.0,
+        18.0
+      ],
+      "label": "21%",
+      "nativeShapeLineAdvance": 19.854999542236328,
+      "intrinsicCeil": 20.0,
+      "labelAllocatedWidthFromMeasuredChipAndSourcePaddingRingGap": 20.0,
+      "directSharedStringBoundsExported": false
+    },
+    {
+      "phase": "zero-context/context-chip",
+      "actualChipBounds": [
+        766.0,
+        512.0,
+        50.0,
+        24.0
+      ],
+      "actualChipContentSize": [
+        44.0,
+        21.0
+      ],
+      "label": "0%",
+      "nativeShapeLineAdvance": 16.114999771118164,
+      "intrinsicCeil": 17.0,
+      "labelAllocatedWidthFromMeasuredChipAndSourcePaddingRingGap": 17.0,
+      "directSharedStringBoundsExported": false
+    },
+    {
+      "phase": "over-context/context-chip",
+      "actualChipBounds": [
+        755.0,
+        512.0,
+        61.0,
+        24.0
+      ],
+      "actualChipContentSize": [
+        55.0,
+        21.0
+      ],
+      "label": "120%",
+      "nativeShapeLineAdvance": 27.147998809814453,
+      "intrinsicCeil": 28.0,
+      "labelAllocatedWidthFromMeasuredChipAndSourcePaddingRingGap": 28.0,
+      "directSharedStringBoundsExported": false
+    }
+  ],
+  "clusterBounds": [
+    {
+      "scene": "known",
+      "openCard": null,
+      "bounds": [
+        703.0,
+        512.0,
+        113.0,
+        24.0
+      ]
+    },
+    {
+      "scene": "known",
+      "openCard": "accounts",
+      "bounds": [
+        703.0,
+        512.0,
+        113.0,
+        24.0
+      ]
+    },
+    {
+      "scene": "known",
+      "openCard": "context",
+      "bounds": [
+        703.0,
+        512.0,
+        113.0,
+        24.0
+      ]
+    },
+    {
+      "scene": "zero",
+      "openCard": "context",
+      "bounds": [
+        706.0,
+        512.0,
+        110.0,
+        24.0
+      ]
+    },
+    {
+      "scene": "over",
+      "openCard": "context",
+      "bounds": [
+        695.0,
+        512.0,
+        121.0,
+        24.0
+      ]
+    }
+  ],
+  "accountsCardHeightDecomposition": {
+    "actualCardHeight": 121,
+    "borderAndPadding": 10,
+    "heading": 26,
+    "twoGaps": 4,
+    "row0": 49,
+    "row1": 32,
+    "row0TextStack": "20px name +1px metadata margin +16px metadata +12px vertical padding =49",
+    "row1TextStack": "20px name +12px vertical padding =32; no metadata row/margin when meta empty"
+  },
+  "derivedBaselineOnly": [
+    {
+      "label": "accounts heading",
+      "textTopFromActualWrapperAndSourcePadding": 396,
+      "beforeGlyphPixelSnap": 407.92050790786743,
+      "atActualScale2": 408.0,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "account name0",
+      "textTopFromActualWrapperAndSourcePadding": 424,
+      "beforeGlyphPixelSnap": 438.4375,
+      "atActualScale2": 438.5,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "account meta",
+      "textTopFromActualWrapperAndSourcePadding": 445,
+      "beforeGlyphPixelSnap": 457.26000022888184,
+      "atActualScale2": 457.5,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "account name1",
+      "textTopFromActualWrapperAndSourcePadding": 475,
+      "beforeGlyphPixelSnap": 489.4375,
+      "atActualScale2": 489.5,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "known context heading",
+      "textTopFromActualWrapperAndSourcePadding": 435,
+      "beforeGlyphPixelSnap": 446.92050790786743,
+      "atActualScale2": 447.0,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "context first detail line",
+      "textTopFromActualWrapperAndSourcePadding": 457,
+      "beforeGlyphPixelSnap": 470.76000022888184,
+      "atActualScale2": 471.0,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "context second detail line",
+      "textTopFromActualWrapperAndSourcePadding": 476,
+      "beforeGlyphPixelSnap": 489.76000022888184,
+      "atActualScale2": 490.0,
+      "directlyExportedExistingTextGlyphBaseline": false
+    },
+    {
+      "label": "chip label",
+      "textTopFromActualWrapperAndSourcePadding": 515,
+      "beforeGlyphPixelSnap": 527.9050002098083,
+      "atActualScale2": 528.0,
+      "directlyExportedExistingTextGlyphBaseline": false
+    }
+  ],
+  "publicAPIAndLimits": [
+    "App::register_inspector_element<DivInspectorState> + Inspector::render_inspector_states expose actual selected Div bounds/content_size/base_style.",
+    "base_style is explicit refinement, not resolved inherited style. Font12/meta16 and name12.5/500 are also independently read from frozen source; shape_line uses matching parameters.",
+    "SharedString has no inspector ID/TextLayout global lookup. Its allocated label width is inferred from actual chip dimensions plus source geometry; baseline is derived, never represented as direct glyph export.",
+    "Open chips contain a deferred popover child, affecting DivInspectorState.content_size. Use measured chip border box minus source padding/ring/gap for label allocation; do not interpret open content_size as label width.",
+    "Heading tracks uppercase with U+200A hair spaces. Public shape_line reports ascent10.791 for this tracked string; per-run fallback fonts were not exported, so do not replace it with assumed plain-Geist ascent.",
+    "Inspector picking intercepts ordinary input. Existing fixture public click_position + mouse down/up dispatch is used while inspector is closed; no private popup flag edits.",
+    "Actual2x geometry is independent source evidence. Old footer R2 screenshots are scale1 and cannot be force-paired with current2x native captures.",
+    "Public PlatformDisplay has no scale_factor getter; its public Debug output includes the actual WindowsDisplay scale and physical bounds. No private state is accessed or changed."
+  ],
+  "buildAndRun": {
+    "CARGO_TARGET_DIR": "output/reference-native/target",
+    "buildCommand": "cargo build --offline --locked -j 2 --manifest-path output/reference-native-0.2.128/Cargo.toml -p zeron-ui --example footer-bounds-audit --features compact-picker-fixture",
+    "buildExitCode": 0,
+    "reportedBuildSeconds": 12.34,
+    "initialCompileAttempt": "Missing IntoElement import fixed only in new example; failed log preserved.",
+    "runCommand": "output/reference-native/target/debug/examples/footer-bounds-audit.exe output/footer-text-bounds-audit/run-01",
+    "displayBuildCommand": "cargo build --offline --locked -j 2 --manifest-path output/reference-native-0.2.128/Cargo.toml -p zeron-ui --example footer-display-probe --features compact-picker-fixture",
+    "displayRunCommand": "output/reference-native/target/debug/examples/footer-display-probe.exe output/footer-text-bounds-audit/gpui-displays.json",
+    "sourceCopy": "Only two new examples copied byte-for-byte from canonical ignored _source; existing manifest/module/fixture/renderer files unchanged."
+  },
+  "artifacts": [
+    {
+      "path": "output/footer-text-bounds-audit/run-01/inspector-bounds.json",
+      "sha256": "add8335ff70354eee06553e92d26643bbe5f5a53e82b174b259ba1f972c29859"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/run-01/result.txt",
+      "sha256": "faf6cbb395b51fce6b018200bfe154dded7fb73c71ee22391ea616ef31cf919c"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/_source/footer-bounds-audit.rs",
+      "sha256": "7f920e9bc348650c04a143a0f0f0bdc04dc58b35728b470b51272fc14cec9868"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/_source/footer-display-probe.rs",
+      "sha256": "645b8a2f776359e785be8d87690cf3cb5404da415c02212f6661f733b5ad345e"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/record_footer_bounds.py",
+      "sha256": "73b41805a2ee40385437b68ddf7ae53332a5d101e32ae84e8d53cd91c7561e47"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/build.log",
+      "sha256": "ac0f28f747440e4539395ff177a58613dfd60ab1ea513528c7e135ffcf501835"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/build-attempt01.log",
+      "sha256": "3ff28ea497cc08278ae6663ffbdb02afb4c2359dec8921c556ad681125728c31"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/native-stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/native-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/display-probe-build.log",
+      "sha256": "008eb7b91795decfdf504aa4e5366706c70f5694f01db004a38da162a998b5b8"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/display-probe-stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/display-probe-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "output/footer-text-bounds-audit/gpui-displays.json",
+      "sha256": "df17045e50656ab33bb20ca076a2b55b1a9915577fae955c3edbb0852300ea15"
+    },
+    {
+      "path": "output/reference-native-0.2.128/crates/ui/examples/footer-bounds-audit.rs",
+      "sha256": "7f920e9bc348650c04a143a0f0f0bdc04dc58b35728b470b51272fc14cec9868"
+    },
+    {
+      "path": "output/reference-native-0.2.128/crates/ui/examples/footer-display-probe.rs",
+      "sha256": "645b8a2f776359e785be8d87690cf3cb5404da415c02212f6661f733b5ad345e"
+    },
+    {
+      "path": "output/reference-native/target/debug/examples/footer-bounds-audit.exe",
+      "sha256": "f6c9a199beb152f5be6f342b8db749e745bbaef1fbce296ee2d73284ba04a0f4"
+    },
+    {
+      "path": "output/reference-native/target/debug/examples/footer-display-probe.exe",
+      "sha256": "8748282c3e4f0da4f272bf0f01f4a4143b6a68817c4e64f19110cdd9d39dcf58"
+    },
+    {
+      "path": "output/footer-reference-build-20261028-110355-698/provenance.json",
+      "sha256": "14307afd62e13ca2b6e53b25ee8544f945fb3938cc406a5003aa17747fa0111e"
+    }
+  ]
+}

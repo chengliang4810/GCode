@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T11:37:51.2696044Z",
+  "goalStatus": "active",
+  "completeUIParity": false,
+  "branch": "codex/isolated-worktree",
+  "startingCommit": "488ec8d2cecfc8a3bf2cc6034d84d60a14adf238",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "sourcePhase": "R6 scoped option typography plus typed footer/git/context/account; final staticcheck fixes",
+  "sourceManifest": {
+    "path": "output/resume-validation/footer-final-source-hashes.json",
+    "sha256": "905c03ad7bb23c0fb489d2d4013d604c0f379bb5807bb4fe74dbc2337ccbf572"
+  },
+  "sourceManifestEntries": 228,
+  "sourceUnchangedAcrossPackageBuild": {
+    "unchanged": true,
+    "checkedAtUTC": "2026-10-28T11:37:29.1935198Z",
+    "sourceEntries": 228,
+    "changed": [],
+    "manifest": "output/resume-validation/footer-final-source-hashes.json"
+  },
+  "priorObservedPackageManifest": "output/resume-validation/footer-source-hashes.json",
+  "differencesFromPriorObservedPackage": [
+    {
+      "before": "5d1f03c46c8bbf3c7991e25dcca1068b3e7989be227b1d0457b906d979eb5b2c",
+      "after": "b0b270b353d600ded53425fca18d04235db3d332c18f91f8980d8852f7abf304",
+      "path": "internal/desktop/composer_footer_git.go"
+    },
+    {
+      "before": "c33d40772e04fe087d1cb88af5a0f3a4963d9c62113d727bda724ba9fc9a19ba",
+      "after": "dfca504f7e11e1b35ddb70a7d7f2118e54b95ee6add59f59445a636039fc7a07",
+      "path": "internal/mock/composer_footer_git.go"
+    },
+    {
+      "before": "0324440a30e18cb324bc9978f7c8abbd753a85b07023ab7495b98456ad33aa5b",
+      "after": "f3c6717d2b699b82cd6a23acc6be17cb90e07fc7be67292fc81bb293b2b8da3e",
+      "path": "scripts/compare-footer-fixtures.ps1"
+    }
+  ],
+  "referenceClean": true,
+  "mygoReferenceClean": true,
+  "framework": {
+    "sourceSHA256": "c6a86278ae261c75b6b195632d97d4d64218ed69189ec45554b85c5826b4d2a6",
+    "revision": "zeron-native-ui.3",
+    "patches": 6,
+    "version": "v0.6.4",
+    "files": 1831
+  },
+  "implemented": [
+    "Typed Git checkout/ref Loading/Ready/Error/Empty, source cap300/filter/order/keyboard, new worktree allocation on first send with HEAD fallback, existing footer readonly",
+    "Exact device/checkout/repo/trimmedbranch PR matching, authoritative none, errors retain current source, late results ignored",
+    "Normal mocked Cloud connect/repository/device/ref/send/disconnect flow and isolated capability-only provider state",
+    "Independent optional host ContextUsage tokens/window, compaction decrease, overcapacity and scope resume, clone/persist/late results",
+    "Main shared-account and context cards; side only own context;30s debounce,5min whole-target polling, first active source order, max all windows ring versus first2 card windows",
+    "Optimistic same-target/provider/login-provider account switch with failure rebasing and stale-snapshot projection",
+    "Source-confirmed footer ring/text/card geometry and Windows1x scoped option text layout"
+  ],
+  "checks": {
+    "preflightControlScope": "Actual1x/2x metadata reaches intercepted go build; no parity/native executed by guard suite",
+    "strictComparatorPreflight": {
+      "path": "output/footer-comparison-tests-20261028-112849-381/result.json",
+      "sha256": "e2618b1b4e3e4975e1aa4712420acdf3fca917ba3e138c6d5e2affa2baa47c67"
+    },
+    "strictComparatorCases": 33,
+    "focusedVetLint": {
+      "schemaVersion": 1,
+      "recordedAt": "2026-10-28T11:34:18.8620584Z",
+      "checks": [
+        {
+          "command": "go test ./internal/desktop ./internal/mock -count=1",
+          "startedAt": "2026-10-28T11:33:48.9665134Z",
+          "completedAt": "2026-10-28T11:33:54.3437242Z",
+          "exitCode": 0,
+          "log": "D:\\projects\\GCode\\output\\resume-validation\\footer-lint-fixed-go-test.log",
+          "logSha256": "dbb90aa5622110f458f48fc0ebde75d15c42531f00cf0fd3b7a9820579bc7007"
+        },
+        {
+          "command": "go vet ./internal/contracts ./internal/mock ./internal/desktop",
+          "startedAt": "2026-10-28T11:33:54.3513693Z",
+          "completedAt": "2026-10-28T11:33:55.222708Z",
+          "exitCode": 0,
+          "log": "D:\\projects\\GCode\\output\\resume-validation\\footer-lint-fixed-go-vet.log",
+          "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "command": "go tool mygo vet .",
+          "startedAt": "2026-10-28T11:33:55.2253231Z",
+          "completedAt": "2026-10-28T11:34:09.8780964Z",
+          "exitCode": 0,
+          "log": "D:\\projects\\GCode\\output\\resume-validation\\footer-lint-fixed-mygo-vet.log",
+          "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "command": "./scripts/lint.ps1",
+          "startedAt": "2026-10-28T11:34:09.879355Z",
+          "completedAt": "2026-10-28T11:34:18.8599788Z",
+          "exitCode": 0,
+          "log": "D:\\projects\\GCode\\output\\resume-validation\\footer-lint-fixed-lint.log",
+          "logSha256": "bc1988bf921b4da8e4a985cb6772edad177c0e408118ea21fcf3a645e1fdc016"
+        }
+      ],
+      "sources": [
+        {
+          "path": "internal/desktop/composer_footer_git.go",
+          "sha256": "b0b270b353d600ded53425fca18d04235db3d332c18f91f8980d8852f7abf304"
+        },
+        {
+          "path": "internal/mock/composer_footer_git.go",
+          "sha256": "dfca504f7e11e1b35ddb70a7d7f2118e54b95ee6add59f59445a636039fc7a07"
+        }
+      ],
+      "nativeRun": false
+    },
+    "race": "Not run: current machine has no gcc/clang for CGO race build",
+    "negativesRejectedBeforeOutputOrParity": 31,
+    "fullAndTagged": {
+      "schemaVersion": 1,
+      "phase": "footer-lint-fixed-final",
+      "checks": [
+        {
+          "exitCode": 0,
+          "name": "fullGoTests",
+          "log": "output\\resume-validation\\footer-lint-fixed-full-tests.log",
+          "command": "go test ./... -count=1"
+        },
+        {
+          "exitCode": 0,
+          "name": "taggedFixtureTests",
+          "log": "output\\resume-validation\\footer-lint-fixed-tagged-tests.log",
+          "command": "go test -tags uifixture ./cmd/model-picker-fixture ./internal/desktop -count=1"
+        }
+      ]
+    },
+    "priorLintFailure": "output/resume-validation/footer-lint.log; six staticcheck issues fixed in two Git source files, original log retained",
+    "positiveControls": 2
+  },
+  "packages": {
+    "installer": "pending",
+    "macNativeAcceptance": "pending",
+    "windowsExecutable": {
+      "path": "output/resume-validation/footer-final-packages-r2/windows-amd64/Zeron.exe",
+      "sha256": "641ac7bde07afedb456b9adc93a4c66e21656f1b8ddd91ca9f5b46a37cfeeb44"
+    },
+    "log": "output/resume-validation/footer-final-package-build-r2.log",
+    "manifest": {
+      "path": "output/resume-validation/footer-final-packages-r2/release-manifest-windows-amd64_darwin-amd64_darwin-arm64_darwin-universal.json",
+      "sha256": "b4c312e097df6b1ab8d8f59b5d1038b25fa58610b0f74b0870b7a79a4bbdb3b3"
+    },
+    "priorFailedAttempt": "output/resume-validation/footer-final-package-build.log: Windows access denied renaming darwin-arm64 staging. ACL permits Modify,201GB free,no remaining Go/native process found. Retry uses fresh output; exact external lock cause not established.",
+    "status": "Four targets built and verified: architecture/resources/native Ghostty/ZIP/checksum/framework stamp",
+    "nativeRuntimeOfFinalLintFixedBuild": "not performed"
+  },
+  "footerComparison": {
+    "maximumSSIM": 0.9999502307449268,
+    "currentDirectFooterRendererPaths": [
+      "internal/desktop/composer_footer_usage.go",
+      "internal/desktop/composer_footer_fixture.go",
+      "internal/design/typography.go",
+      "internal/contracts/context_usage.go"
+    ],
+    "displayInventory": "output/footer-text-bounds-audit/gpui-displays.json",
+    "originalBuild": {
+      "path": "output/footer-reference-build-20261028-111556-297/provenance.json",
+      "sha256": "3c8421cedf236514925fac97cbd87a828203bdc110c0936640d87535969d2cc7"
+    },
+    "clientOffsetWithinWindow": [
+      13,
+      58
+    ],
+    "completeWGC": [
+      1684,
+      1180
+    ],
+    "currentDirectFooterRendererUnchanged": true,
+    "threshold": 0.995,
+    "dpi": 192,
+    "minimumSSIM": 0.9989870043510842,
+    "implementationExecutableSHA256": "cdfc3c8cc4dd8a6c2afa4b45baf2513a0432d733b75d6c70e36e6058e6656815",
+    "originalDirectory": "output/footer-reference-capture-20261028-r3-2x",
+    "implementationDirectory": "output/footer-implementation-r3",
+    "sceneCount": 28,
+    "originalExecutableSHA256": "9b97d945c47b66f0d722264f74dcd838ae05bb2c6322a202e83ce24ba5be3ae9",
+    "allThresholdsMet": true,
+    "scope": "Complete original PNGs,28 component cases. Large blank scaffold raises whole-frame scores; numerical screen is not visual/full-footer/input acceptance.",
+    "logicalClient": [
+      840,
+      560
+    ],
+    "scale": 2,
+    "implementationCardInput": "DTO-controlled fixture popup state, not OS input",
+    "otherSourceDifferencesFromCapture": [
+      {
+        "before": "8e16b2c81abae115be80429606eb52f6532bf5c383ac169e578d10a385648d2a",
+        "after": "a0ea2a2f0d0af91b4173b1747e21c318bdbd93815fc821ab221f96e1377bb2d1",
+        "path": "cmd/model-picker-fixture/footer_usage.go"
+      }
+    ],
+    "display": "Earlier1x and later actual2x runs kept separately; no OS settings changed by harness, no metadata relabel/resize",
+    "report": {
+      "path": "output/footer-comparison-r3-2x-reviewed/comparison.json",
+      "sha256": "7ad72cf01e8fcc224f5913ad803db331e13f30893392c79c765fb11cfdedc8c6"
+    },
+    "imageTransformations": [],
+    "sourceCardInput": "Public GPUI MouseDown/MouseUp dispatch; no private popup field mutation; pointer reset to[10,10]",
+    "laterFixtureChange": "CLI fixture window pinnedX40/Y40 after captured R3 binary; raw R3 window metadata is retained. No recapture is inferred.",
+    "physicalClient": [
+      1680,
+      1120
+    ],
+    "acceptedScenes": 0,
+    "inspectorGeometry": {
+      "path": "reference/validation/footer-text-bounds.json",
+      "sha256": "d8fc910c7b296f695b0049bcbf0d3cb37f6995e31caac90e201539a813c2773e"
+    },
+    "implementationBuild": {
+      "path": "output/fixtures/footer-usage-r3-build.json",
+      "sha256": "8f2f806643a4d96b5b4dc12e283a6a40f65c04f69f8d6362dcf987397e40a932"
+    }
+  },
+  "compactR6": {
+    "domain": "Measured Windows1x integer row origins; no arbitrary fractional scrolling/negative origins/overhang/DPI/macOS claim",
+    "report": {
+      "path": "output/compact-comparison-20261028-r6/comparison.json",
+      "sha256": "a527b7e9e1e65eefca7100c591bec1192a5e6d2165fdb8b64a7ad569e82c2558"
+    },
+    "evidence": {
+      "path": "reference/validation/text-bounds-implementation-r6.json",
+      "sha256": "c76867b05b10a98de36f58fdd0048953c0894bf2f220aed4a728a3a70ec82161"
+    },
+    "scenes": 8,
+    "acceptedScenes": 0,
+    "threshold": 0.995,
+    "thresholdMet": 3
+  },
+  "nativeObservation": {
+    "path": "output/footer-native-ui/evidence.json",
+    "sha256": "6a4c4a8561868ae72707d586f5cf485e3669d081f6cc3b1dfbdd57d1262dacb4"
+  },
+  "remaining": [
+    "Five of eight compact R6 pairs below numerical threshold; model lists/material/glyph and native frame state",
+    "Full footer Git/PR/menu layout and motion, real OS newcheckout/ref/send, PR destination and side card click",
+    "Popover8px edge-clamp and narrow viewport acceptance",
+    "UIA focused_element consistency",
+    "Windows full input/IME/clipboard/DPI/browser/activation/performance/installer matrix",
+    "Native macOS Intel/ARM runtime/Retina/menu/input/material acceptance"
+  ],
+  "documentationCorrections": [
+    "Main shell always supplies DockFrame, so nonGit hero has24px slot; Git controls contents only",
+    "Existing-session ref switch comment contradicts actual readonly guard",
+    "NewWorktree no-base comment contradicts actual HEAD consumer",
+    "Draft order is checkout then ref; source context recaptured on every fresh host dispatch",
+    "PR match excludes cwd/headSHA/observedAt requirements",
+    "Account hover comment contradicts first-track/open/poll refresh implementation",
+    "Implementation-prestate audit/DTO inventory updated with optional markers preserved",
+    "Fresh Cloud mock authorized repo identity did not match Project/PR canonical repo; corrected data and normal-flow regression",
+    "Original frozen compact keyboard fixture assumptions disagree with actual production key handler; no keyboard PASS inferred"
+  ]
+}

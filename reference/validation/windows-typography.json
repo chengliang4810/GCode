@@ -1,0 +1,690 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUTC": "2026-10-28T10:17:30.933697+00:00",
+  "status": "default-typography-difference-measured; native-R5-acceptance-remains-parent-owned",
+  "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+  "scope": "Windows DirectWrite measurements and isolated production-popup headless diagnostics; no native windows launched by this audit",
+  "sourceEvidence": [
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui_windows/src/direct_write.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui_windows/src/direct_write.rs",
+      "sha256": "08823d2328dd31111e9b0c77cabc4f72086009e01ad1d01b06d49666eb4f5988",
+      "lines": [
+        446,
+        452,
+        474,
+        490,
+        538,
+        567,
+        605,
+        1763,
+        1772
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/style.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/style.rs",
+      "sha256": "d0e09cedcf3861f219d91d16c4e3d96bacee158dc2e0d7c3a371e6cb7ec933ad",
+      "lines": [
+        481,
+        490,
+        550
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/elements/text.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/elements/text.rs",
+      "sha256": "55983dad6642e1c35b640a86541cf2ca9dbf2ecdaa200f945a4cc2dfaf30285b",
+      "lines": [
+        609,
+        765,
+        783,
+        792
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/taffy.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/taffy.rs",
+      "sha256": "816be7f5bd3601eb045cda4702e24fbfe827a95f9a4a5599c4f4cc20e1abbf90",
+      "lines": [
+        350,
+        375,
+        381
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/text_system/line.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/text_system/line.rs",
+      "sha256": "a7e6ca8ff264888da6cb636266b3ef76bfc7cae4886d9746eeac579ae35d1c91",
+      "lines": [
+        353,
+        354
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/window.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/window.rs",
+      "sha256": "bc380f1b0e2a07d0a2c9a9265dddfbef84a2bfc3f5f63b8ff02e45e582b7ed51",
+      "lines": [
+        4383,
+        4393
+      ]
+    },
+    {
+      "repository": "gpui/zui",
+      "commit": "b564a34413bb7ef1da04121c4a287758f94993d9",
+      "path": "crates/gpui/src/text_system.rs",
+      "resolvedPath": "C:/Users/chengliang/.cargo/git/checkouts/zui-05467652636d6f6d/b564a34/crates/gpui/src/text_system.rs",
+      "sha256": "6ee859fd751b28c9eda6e438d6e9e11ae80e95695cf516ab2694bac1a4ebdf97",
+      "lines": [
+        45,
+        48
+      ]
+    },
+    {
+      "path": "third_party/mygo/internal/text/dwrite_windows.go",
+      "sha256": "54455bfee51cd63501dbd9b07b965f3481f5c3f6e3b365127590f9d81da528ab",
+      "lines": [
+        623,
+        639,
+        655,
+        918,
+        920,
+        1054,
+        1100
+      ]
+    },
+    {
+      "path": "third_party/mygo/internal/text/layout.go",
+      "sha256": "20e816df47d2c66f862bdb4eef1aba52f296a45778086c52d16c7c350254e0e7",
+      "lines": [
+        829,
+        839,
+        1047,
+        1048
+      ]
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/pickers.rs",
+      "sha256": "fb88f1cd966f3e089af6d52363edfe06fbbe998aabb73c250ab5b496b898d560",
+      "lines": [
+        4028,
+        6049,
+        6089,
+        6138
+      ]
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/popover.rs",
+      "sha256": "28dbac8e64a1c7c95bc1f9cababc223d84822c2a89bfcc9ae511d57d2134f206",
+      "lines": [
+        910,
+        919
+      ]
+    },
+    {
+      "path": "output/reference-sources/zeron/crates/ui/src/typography.rs",
+      "sha256": "0796f7488f375637a6c27932d77c8625ad606877e8ee168811f850daf76aa39f",
+      "lines": [
+        113,
+        121,
+        252,
+        280
+      ]
+    }
+  ],
+  "artifactManifest": [
+    {
+      "path": "output/font-metrics-audit/directwrite_probe.py",
+      "sha256": "d65f740aa07e28072058dd5f115275024d17d153e59d974154325c657c3bc66e"
+    },
+    {
+      "path": "output/font-metrics-audit/directwrite_metrics.json",
+      "sha256": "794876ce2c601eba9453adb1634c1c02fa29df7f613970b160a99e2637941686"
+    },
+    {
+      "path": "output/font-metrics-audit/directwrite_features_probe.py",
+      "sha256": "9887db2336f9203b32aaace11c5c0e7bc7ed23bdcadf6dab3f21b8b1c4fdbcf1"
+    },
+    {
+      "path": "output/font-metrics-audit/directwrite_features_metrics.json",
+      "sha256": "f0799ae6626dfb9e8db838e4c555def32775b20e86a1afecd1da1004b67a5c64"
+    },
+    {
+      "path": "output/font-metrics-audit/bundled-font-metadata.json",
+      "sha256": "f4b8f8a90cd9cdd03135b20b03a950ca4dc44a9762b7735bd33e6363066e58b6"
+    },
+    {
+      "path": "output/font-metrics-audit/_source/mygo-measure.go",
+      "sha256": "5c089dc1c6d66e950abb22e0f380d8fdcd52fd357de1d832a9b56e0914e8fe74"
+    },
+    {
+      "path": "output/font-metrics-audit/mygo-measure.json",
+      "sha256": "ad1c1d77b750372b9a5d3b3a271691c46d3dec49d86e826bee82600a3331a656"
+    },
+    {
+      "path": "output/font-metrics-audit/mygo-measure.png",
+      "sha256": "cee2011e93b88eff9a10c2ffe635e319c037e74c807bead7ac7922be0a9afeec"
+    },
+    {
+      "path": "output/font-metrics-audit/_source/model_picker_visual_test.go",
+      "sha256": "f02b25071d698c4bb41a3183b60e5ddf87321577e0794ca99d7ea19e9e322a02"
+    },
+    {
+      "path": "output/font-metrics-audit/overlay.json",
+      "sha256": "75a1106ecf0ff7b4d4f327cc805f2a3e814f5e08eba7da8e42272c7698bcf383"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-comparison.json",
+      "sha256": "ef3c72f76f5c25b7c63d3a853c9fc21e8b8438226f38b30fe701fa1cbabbf0b6"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-default/dark-compact.png",
+      "sha256": "b7dd68910f60b3965b76dc18ba8141640f97a01a818cffe8a67b25b10bd07ec6"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-default/dark-standard.png",
+      "sha256": "a6f2f2cf663fdad2a905c63424e134af78acb9c7cb79b765beaedcc3dcabd455"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-default/light-compact.png",
+      "sha256": "8c35c78e1a9bddc80b7d26a6c505321e581e2d76dd56e2807ce2949ca8c292da"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-default/light-standard.png",
+      "sha256": "e707d2abdf3dbd711b50447b515ec1947485f68d7aee9e64f12d2f03f840e142"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0/dark-compact.png",
+      "sha256": "2d7f30bd0bca6adfe44ea0dd188dc811fe8b3a1d3edd9c63ccb6e8cbb16d9976"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0/dark-standard.png",
+      "sha256": "7192b3677fa8681dcf47cd5d8caaee60a853dc9ee0719a01e46bc540c4e2d12d"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0/light-compact.png",
+      "sha256": "dbff4b775d4919a28c39d345d9fec3223298031867735aa59e7e86657c97b9f8"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0/light-standard.png",
+      "sha256": "899a17449719fc0890b1662ffabcd5625fcf50ef5212c858661e7755f6b8efaf"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0-line21/dark-compact.png",
+      "sha256": "2d7f30bd0bca6adfe44ea0dd188dc811fe8b3a1d3edd9c63ccb6e8cbb16d9976"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0-line21/dark-standard.png",
+      "sha256": "7192b3677fa8681dcf47cd5d8caaee60a853dc9ee0719a01e46bc540c4e2d12d"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0-line21/light-compact.png",
+      "sha256": "dbff4b775d4919a28c39d345d9fec3223298031867735aa59e7e86657c97b9f8"
+    },
+    {
+      "path": "output/font-metrics-audit/popup-kern0-line21/light-standard.png",
+      "sha256": "899a17449719fc0890b1662ffabcd5625fcf50ef5212c858661e7755f6b8efaf"
+    }
+  ],
+  "commands": [
+    {
+      "command": "python output/font-metrics-audit/directwrite_probe.py",
+      "sha256UTF8": "25dcf9f60e8e1ceaa7f62fe1d655c33079f0c467d7f1762a90e1102d9308129c"
+    },
+    {
+      "command": "python output/font-metrics-audit/directwrite_features_probe.py",
+      "sha256UTF8": "bcb45d6237690f04606dc1164492f887297f96659da59fe7aa66fe7faba2b34a"
+    },
+    {
+      "command": "go run output/font-metrics-audit/_source/mygo-measure.go",
+      "sha256UTF8": "eca50bd0edb5e8e68f8fef2a88f53565e7c47794eb7666c41237ee213824c809"
+    },
+    {
+      "command": "go test -overlay output/font-metrics-audit/overlay.json ./internal/desktop -run TestModelPopupSourceGeometryAndMaterial -count=1",
+      "sha256UTF8": "7302233342ff47810aac8cac6ab443f80d664e80092f67f299e50b9840b9c50d"
+    },
+    {
+      "command": "go list ./...",
+      "sha256UTF8": "be24d0370f3ce7297a8c6f5c1a61b8d91310159e44b63cabb21cf9cee38b43a3"
+    }
+  ],
+  "popupEnvironmentCases": [
+    {
+      "name": "popup-default",
+      "ZERON_MODEL_FONT_FEATURES": "",
+      "ZERON_MODEL_FONT_LINE_HEIGHT": ""
+    },
+    {
+      "name": "popup-kern0",
+      "ZERON_MODEL_FONT_FEATURES": "kern=0",
+      "ZERON_MODEL_FONT_LINE_HEIGHT": ""
+    },
+    {
+      "name": "popup-kern0-line21",
+      "ZERON_MODEL_FONT_FEATURES": "kern=0",
+      "ZERON_MODEL_FONT_LINE_HEIGHT": "21"
+    }
+  ],
+  "fontFacts": {
+    "faceCount": 16,
+    "allMatchFrozenReference": true,
+    "variableAxes": [],
+    "fontUnitsPerEm": 1000,
+    "ascentDescentLineGap": [
+      1005,
+      -295,
+      0
+    ]
+  },
+  "matchingAndTypographyProbe": {
+    "measurementCount": 144,
+    "legacyAndModernSelectionEquivalentCases": 72,
+    "contextWindow13px500": {
+      "noSetTypographyAdvance": 98.943,
+      "emptyTypographyAdvance": 101.907,
+      "kernZeroAdvance": 101.907
+    },
+    "standard13px500": {
+      "noSetTypographyAdvance": 55.835,
+      "emptyTypographyAdvance": 57.135,
+      "kernZeroAdvance": 57.135
+    },
+    "lineMetrics13px": {
+      "baseline": 13.0649995803833,
+      "height": 16.899999618530273,
+      "changedByTypography": false
+    },
+    "pairKerningPropertySwitchChangedMeasuredAdvance": false
+  },
+  "featureProbeSummary": {
+    "measurementCount": 1560,
+    "kernZeroComparedCases": 312,
+    "kernZeroDifferencesFromEmpty": [],
+    "defaultGlyphRunDifferencesFromEmptyCount": 222,
+    "callbackErrors": []
+  },
+  "featureProbeCoverage": {
+    "families": [
+      "Geist",
+      "Geist Mono",
+      "Segoe UI",
+      "Consolas"
+    ],
+    "weights": [
+      400,
+      500,
+      600
+    ],
+    "styles": [
+      "normal",
+      "italic"
+    ],
+    "textCount": 13,
+    "comparison": "empty Typography versus kern=0 compares complete glyph IDs, advances, offsets, line metrics and layout metrics",
+    "office13px400": {
+      "noSetTypographyGlyphCount": 5,
+      "noSetTypographyAdvance": 32.72100067138672,
+      "emptyOrKernZeroGlyphCount": 6,
+      "emptyOrKernZeroAdvance": 35.28200149536133
+    }
+  },
+  "popupEvidence": {
+    "scope": "isolated Go test overlay on frozen production popup; headless implementation only, not native acceptance",
+    "productFilesModified": false,
+    "referenceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
+    "originalVisualTestSHA256": "9c1b81fac0e8fa56b863c64f3bc81bd3c231eb6bf351caa4de43bd2cade1b171",
+    "overlayTestSHA256": "f02b25071d698c4bb41a3183b60e5ddf87321577e0794ca99d7ea19e9e322a02",
+    "scenes": {
+      "dark": {
+        "roisClient": {
+          "effortTitle": [
+            21,
+            367,
+            80,
+            387
+          ],
+          "modelSubtitle": [
+            21,
+            387,
+            92,
+            404
+          ],
+          "optionLabel": [
+            21,
+            463,
+            153,
+            480
+          ],
+          "optionValue": [
+            160,
+            463,
+            237,
+            480
+          ]
+        },
+        "cases": {
+          "reference": {
+            "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-dark-wide.png",
+            "sha256": "f00ff4f82e739ff3fa424b2310c3ec608a31410ab7e2c158421da352b47454ad",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                371,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                467,
+                122,
+                475
+              ],
+              "optionValue": [
+                172,
+                467,
+                226,
+                475
+              ]
+            }
+          },
+          "popup-default": {
+            "path": "output/font-metrics-audit/popup-default/dark-compact.png",
+            "sha256": "b7dd68910f60b3965b76dc18ba8141640f97a01a818cffe8a67b25b10bd07ec6",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                371,
+                49,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                118,
+                476
+              ],
+              "optionValue": [
+                174,
+                468,
+                227,
+                476
+              ]
+            }
+          },
+          "popup-kern0": {
+            "path": "output/font-metrics-audit/popup-kern0/dark-compact.png",
+            "sha256": "2d7f30bd0bca6adfe44ea0dd188dc811fe8b3a1d3edd9c63ccb6e8cbb16d9976",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                371,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                121,
+                476
+              ],
+              "optionValue": [
+                173,
+                468,
+                227,
+                476
+              ]
+            }
+          },
+          "popup-kern0-line21": {
+            "path": "output/font-metrics-audit/popup-kern0-line21/dark-compact.png",
+            "sha256": "2d7f30bd0bca6adfe44ea0dd188dc811fe8b3a1d3edd9c63ccb6e8cbb16d9976",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                371,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                121,
+                476
+              ],
+              "optionValue": [
+                173,
+                468,
+                227,
+                476
+              ]
+            }
+          }
+        }
+      },
+      "light": {
+        "roisClient": {
+          "effortTitle": [
+            21,
+            367,
+            80,
+            387
+          ],
+          "modelSubtitle": [
+            21,
+            387,
+            92,
+            404
+          ],
+          "optionLabel": [
+            21,
+            463,
+            153,
+            480
+          ],
+          "optionValue": [
+            160,
+            463,
+            237,
+            480
+          ]
+        },
+        "cases": {
+          "reference": {
+            "path": "output/reference-lossless/capture-native-state-20261028-01/compact-panel-light-wide.png",
+            "sha256": "8531ceaafcc59fe821ca410c87ed023a6eb43878dcb053a080875a3d90efb818",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                372,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                467,
+                121,
+                475
+              ],
+              "optionValue": [
+                172,
+                467,
+                226,
+                475
+              ]
+            }
+          },
+          "popup-default": {
+            "path": "output/font-metrics-audit/popup-default/light-compact.png",
+            "sha256": "8c35c78e1a9bddc80b7d26a6c505321e581e2d76dd56e2807ce2949ca8c292da",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                371,
+                49,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                118,
+                476
+              ],
+              "optionValue": [
+                174,
+                468,
+                227,
+                476
+              ]
+            }
+          },
+          "popup-kern0": {
+            "path": "output/font-metrics-audit/popup-kern0/light-compact.png",
+            "sha256": "dbff4b775d4919a28c39d345d9fec3223298031867735aa59e7e86657c97b9f8",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                372,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                121,
+                476
+              ],
+              "optionValue": [
+                173,
+                468,
+                227,
+                476
+              ]
+            }
+          },
+          "popup-kern0-line21": {
+            "path": "output/font-metrics-audit/popup-kern0-line21/light-compact.png",
+            "sha256": "dbff4b775d4919a28c39d345d9fec3223298031867735aa59e7e86657c97b9f8",
+            "inkBoxesClient": {
+              "effortTitle": [
+                22,
+                372,
+                50,
+                383
+              ],
+              "modelSubtitle": [
+                22,
+                389,
+                65,
+                397
+              ],
+              "optionLabel": [
+                22,
+                468,
+                121,
+                476
+              ],
+              "optionValue": [
+                173,
+                468,
+                227,
+                476
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "baselineAssessment": {
+    "lineHeight21AloneChangedObservedInkBaseline": false,
+    "sourceDefaultLineHeight": "pixel_snap(13 * phi) = 21 at scale 1",
+    "sourceLayoutSnapping": "absolute text bounds use round_half_toward_zero; a vertically centered 21px text in a 26px row begins at a half pixel before snapping",
+    "sourceDerivedPrediction": {
+      "rowTop": 459,
+      "rawTextTop": 461.5,
+      "snappedTextTop": 461,
+      "baselineBeforeFinalSnap": 476.115,
+      "finalBaseline": 476
+    },
+    "mygoPrediction": {
+      "textTop": 463.55,
+      "baselineBeforeFinalSnap": 476.615,
+      "finalBaseline": 477
+    },
+    "classification": "source-derived explanation consistent with independent native ink; actual GPUI text element bounds were not exported, so vertical repair remains unverified",
+    "remainingHorizontalPrediction": "GPUI ceil(57.135)=58 intrinsic value width shifts a trailing value left by .865px versus fractional MyGo width"
+  },
+  "implementation": {
+    "owner": "parent agent",
+    "helper": "internal/design/typography.go::ApplyReferenceTypography",
+    "platform": "windows only",
+    "rootSites": [
+      "internal/desktop/app.go::App.View",
+      "internal/desktop/model_picker_fixture.go::CompactPickerFixture.View"
+    ],
+    "features": "kern=0 through the public ui API",
+    "vendorChangedByAudit": false
+  },
+  "limits": [
+    "312 feature equivalence cases do not establish every font, script, locale, size or GPU configuration.",
+    "GPUI nonempty Features additionally enables liga/clig/calt; this default mapping is not a general mapping for arbitrary Features.",
+    "Changing line height alone did not fix the 1px option baseline difference; no product translation or font-size adjustment was made.",
+    "Headless local probes are not independent native visual acceptance; parent owns R5 WGC and whole-frame scores.",
+    "The diagnostic Go sources were moved byte-for-byte under _source to keep go test ./... clean; explicit go run and Go overlay paths above remain available."
+  ]
+}
