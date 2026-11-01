@@ -25,7 +25,7 @@ const (
 	Replacement     = "./third_party/mygo"
 	UpstreamSum     = "h1:Jch8vV8ZzlHHr6hABg+aOx9nFbdjZ2oD/abY5Cf5/0I="
 
-	ExpectedTreeSHA256 = "ed9afb70ef97e138936f67058db29be585c36de836a7b3529545716f462cf22f"
+	ExpectedTreeSHA256 = "2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1"
 )
 
 // patchChain lists the reviewed local patches in application order over
@@ -59,7 +59,7 @@ var patchChain = []Patch{
 	{Path: "patches/mygo-v0.7.3-26-patch-identity-final.patch", SHA256: "fc5105bf8bed56393e31c58b272c549033da64b2c93f9c527018320e0a4cfd7e"},
 	{Path: "patches/mygo-v0.7.3-27-selection-spans.patch", SHA256: "28672a79803648eb19ea0aa90793c9bd1e3a66d26db30df0d9b89c679d3cf33c"},
 	{Path: "patches/mygo-v0.7.3-28-code-block-tabs.patch", SHA256: "cbc6de5f43c04f13cefb61ef08bf34d3c966da9461b163d454fb68f5c1694435"},
-	{Path: "patches/mygo-v0.7.3-29-split-drag.patch", SHA256: "744f61dc6ebb599bfe0686c2d42a98084cd68475be9fc64e8240781463910c9c"},
+	{Path: "patches/mygo-v0.7.3-29-split-drag.patch", SHA256: "4fb4b69d1edf7c800ef21dcd0d1a8ecfcfb3a4e7ad7821078469261ef889c3d5"},
 }
 
 type Patch struct {

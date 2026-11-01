@@ -51,8 +51,8 @@ preedit-aware capacity measurement. The same keyed `TextAreaBase` and persistent
 handle survive layout changes. A small read-only MyGo `InputDisplayText()` API
 supplies preedit snapshots without committing the draft; native input owns
 wrapping, selection, undo and scrolling. The current source lock is MyGo v0.7.3
-with `rcode-native-ui.20` (2,034 files, 28 patches, tree
-`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`); see
+with `rcode-native-ui.21` (2,034 files, 29 patches, tree
+`2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1`); see
 [mygo-patches.md](mygo-patches.md).
 
 ## Historical shared-controls checks at handoff
@@ -130,8 +130,8 @@ Their paired visual acceptance remains pending.
 ## Migration materials and reproduction
 
 Source dependencies are Go 1.27.3 and MyGo v0.7.3 with the existing local
-`replace ./third_party/mygo`. The current lock is `rcode-native-ui.20`
-(2,034 files, 28 patches). The historical shared-controls handoff stage did not
+`replace ./third_party/mygo`. The current lock is `rcode-native-ui.21`
+(2,034 files, 29 patches). The historical shared-controls handoff stage did not
 change the then-current lock; the resumed layout stage introduced the read-only
 input-snapshot patch, now patch 07 in the v0.7.3 chain. The native Collapsible
 Panel and fixed Rust reference are unchanged by this layout work.

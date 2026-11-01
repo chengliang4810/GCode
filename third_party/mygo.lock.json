@@ -5,7 +5,7 @@
   "upstreamSum": "h1:Jch8vV8ZzlHHr6hABg+aOx9nFbdjZ2oD/abY5Cf5/0I=",
   "revision": "rcode-native-ui.21",
   "sourceDir": "third_party/mygo",
-  "treeSha256": "f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d",
+  "treeSha256": "2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1",
   "fileCount": 2034,
   "patches": [
     {
@@ -119,6 +119,10 @@
     {
       "path": "patches/mygo-v0.7.3-28-code-block-tabs.patch",
       "sha256": "cbc6de5f43c04f13cefb61ef08bf34d3c966da9461b163d454fb68f5c1694435"
+    },
+    {
+      "path": "patches/mygo-v0.7.3-29-split-drag.patch",
+      "sha256": "4fb4b69d1edf7c800ef21dcd0d1a8ecfcfb3a4e7ad7821078469261ef889c3d5"
     }
   ]
 }

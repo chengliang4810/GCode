@@ -217,62 +217,68 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 		transcriptWidth = 736
 	}
 	outerWidth := composerOuterWidth(columns.Right, transcriptWidth, false)
-	ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
-		running := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
-		canSend := state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments))
-		mode := composerSend
-		switch {
-		case running && !canSend:
-			mode = composerStop
-		case running && a.activeTurnSend() == "queue":
-			mode = composerQueue
-		case running:
-			mode = composerSteer
-		}
-		a.nativeComposerSurface(c, composerSurfaceProps{
-			keyPrefix: "side:" + session.ID + ":",
-			draft:     &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
-			inputLabel: tr(c, "Message to ") + session.Title, attachLabel: tr(c, "Attach files to ") + session.Title,
-			sendLabel: tr(c, "Send message to ") + session.Title, stopLabel: tr(c, "Stop response in ") + session.Title,
-			steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
-			running:   running,
-			canSend:   canSend,
-			widthHint: max(0, outerWidth-32),
-			autofocus: true, focusPending: &state.FocusPending, stopWithEscape: a.state.Settings.General.StopWithEscape,
-			renderStaged: func() {
-				if len(state.Attachments) > 0 {
-					ui.Row(c).Wrap().Padding(12, 16, 0, 16).Gap(6).Children(func() {
-						for _, item := range state.Attachments {
-							c.Key(item.ID)
-							ui.Row(c).AlignItems(ui.Center).Children(func() {
-								a.attachmentChip(c, item, false)
-								iconButton(c, "close", tr(c, "Remove side attachment: ")+item.Name).Size(20, 20).OnClick(func() {
-									for i, candidate := range state.Attachments {
-										if candidate.ID == item.ID {
-											state.Attachments = append(state.Attachments[:i], state.Attachments[i+1:]...)
-											break
+	ui.Column(c).FillWidth().Children(func() {
+		ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
+			running := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
+			canSend := state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments))
+			mode := composerSend
+			switch {
+			case running && !canSend:
+				mode = composerStop
+			case running && a.activeTurnSend() == "queue":
+				mode = composerQueue
+			case running:
+				mode = composerSteer
+			}
+			a.nativeComposerSurface(c, composerSurfaceProps{
+				keyPrefix: "side:" + session.ID + ":",
+				draft:     &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
+				inputLabel: tr(c, "Message to ") + session.Title, attachLabel: tr(c, "Attach files to ") + session.Title,
+				sendLabel: tr(c, "Send message to ") + session.Title, stopLabel: tr(c, "Stop response in ") + session.Title,
+				steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
+				running:   running,
+				canSend:   canSend,
+				widthHint: max(0, outerWidth-32),
+				autofocus: true, focusPending: &state.FocusPending, stopWithEscape: a.state.Settings.General.StopWithEscape,
+				renderStaged: func() {
+					if len(state.Attachments) > 0 {
+						ui.Row(c).Wrap().Padding(12, 16, 0, 16).Gap(6).Children(func() {
+							for _, item := range state.Attachments {
+								c.Key(item.ID)
+								ui.Row(c).AlignItems(ui.Center).Children(func() {
+									a.attachmentChip(c, item, false)
+									iconButton(c, "close", tr(c, "Remove side attachment: ")+item.Name).Size(20, 20).OnClick(func() {
+										for i, candidate := range state.Attachments {
+											if candidate.ID == item.ID {
+												state.Attachments = append(state.Attachments[:i], state.Attachments[i+1:]...)
+												break
+											}
 										}
-									}
+									})
 								})
-							})
-						}
-					})
-				}
-			},
-			onSend: func(text string) bool { return a.sendSideMessage(session, state, text) }, onStop: func() { a.stopSideMessage(session.ID) },
-			onChooseAttach: func() { a.sideAttachmentWork(session.ID, state, contracts.AttachmentImportRequest{}, true) },
-			onPaste:        func(services ui.Services) bool { return a.pasteSideAttachments(session.ID, state, services) },
-			onFilesDrop: func(paths []string) {
-				a.sideAttachmentWork(session.ID, state, contracts.AttachmentImportRequest{Paths: paths}, false)
-			},
-			onMention: func(file workbench.FileDrag) { state.Draft += " @" + file.Path },
+							}
+						})
+					}
+				},
+				onSend: func(text string) bool { return a.sendSideMessage(session, state, text) }, onStop: func() { a.stopSideMessage(session.ID) },
+				onChooseAttach: func() { a.sideAttachmentWork(session.ID, state, contracts.AttachmentImportRequest{}, true) },
+				onPaste:        func(services ui.Services) bool { return a.pasteSideAttachments(session.ID, state, services) },
+				onFilesDrop: func(paths []string) {
+					a.sideAttachmentWork(session.ID, state, contracts.AttachmentImportRequest{Paths: paths}, false)
+				},
+				onMention: func(file workbench.FileDrag) { state.Draft += " @" + file.Path },
+			})
+			ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Justify(ui.End).Padding(0, 10, 0, 4).Children(func() {
+				a.composerUsage(c, session, &state.FooterUsage, true)
+			})
+			if state.Failure != "" {
+				ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
+			}
 		})
-		ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Justify(ui.End).Padding(0, 10, 0, 4).Children(func() {
-			a.composerUsage(c, session, &state.FooterUsage, true)
-		})
-		if state.Failure != "" {
-			ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
-		}
+		// The central conversation keeps a status strip below its composer;
+		// the pane reserves the same strip so both pills share one bottom
+		// line even though only the conversation ever writes to it.
+		ui.Row(c).Height(composerStatusHeight)
 	})
 }
 

@@ -1,7 +1,7 @@
 # 新机恢复记录 — 2026-10-28
 
 > 桌面测试已接入 MyGo Automation，原子命令引用使用富文本输入框；本记录时源码修订为 `rcode-native-ui.12`。
-> 当前框架见 `mygo-patches.md`（MyGo v0.7.3 + `rcode-native-ui.20`）。
+> 当前框架见 `mygo-patches.md`（MyGo v0.7.3 + `rcode-native-ui.21`）。
 > 入口、固定来源和验证边界见 [desktop-testing.md](desktop-testing.md)；
 > 下文 R16/R17 的 `.9` 及更早指纹继续保留其历史证据身份。
 

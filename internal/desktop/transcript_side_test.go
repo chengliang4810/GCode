@@ -95,6 +95,23 @@ func TestSideComposerSendsToChildAndHandlesIME(t *testing.T) {
 	}
 }
 
+// The conversation and the pane share one composer line: the side strip
+// reserves the same status strip the central composer carries below it.
+func TestSideComposerSharesTheConversationComposerLine(t *testing.T) {
+	_, tt, child := sideViewTester(t)
+	main, ok := tt.Find("Send message")
+	if !ok {
+		t.Fatal("conversation send button missing")
+	}
+	side, ok := tt.Find("Send message to " + child.Title)
+	if !ok {
+		t.Fatal("side send button missing")
+	}
+	if delta := main.Y - side.Y; delta > 1 || delta < -1 {
+		t.Fatalf("composers sit on different lines: conversation %+v, side %+v", main, side)
+	}
+}
+
 func TestSideComposerRespectsSendShortcutModes(t *testing.T) {
 	for _, test := range []struct {
 		name, behavior string

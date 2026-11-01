@@ -98,6 +98,38 @@ func TestSplit(t *testing.T) {
 	}
 }
 
+// A drag resizes the first pane before it builds, so the frame that shows the
+// moved divider already lays its content out at the new size, and a move asks
+// for no second build pass. The grip reaches 10 DIPs over either pane.
+func TestSplitDragAppliesBeforeThePanesBuild(t *testing.T) {
+	size := float32(120)
+	builds, changes := 0, 0
+	tt := coreNewTester(func(c *context) {
+		builds++
+		split := coreSplit(c, &size, func() { coreText(c, "left") }, func() { coreText(c, "right") }).Fill()
+		if split.Changed() {
+			changes++
+		}
+	}, 400, 200)
+	// The grip reaches 10 DIPs before the seam: a press there is a drag.
+	tt.Press(size-9, 100)
+	builds = 0
+	tt.Move(size-9+50, 100)
+	if size != 170 {
+		t.Fatalf("dragged 50 DIPs right, the first pane is %v wide", size)
+	}
+	if r, _ := tt.Find("right"); r.X != 171 {
+		t.Fatalf("the second pane starts at %v after the drag", r.X)
+	}
+	if builds != 1 {
+		t.Fatalf("a drag move built %d passes, want 1", builds)
+	}
+	tt.Release(size-9+50, 100)
+	if changes != 0 {
+		t.Fatalf("a pointer drag reported %d Changed calls", changes)
+	}
+}
+
 func TestSplitVertical(t *testing.T) {
 	size := float32(60)
 	tt := coreNewTester(func(c *context) {

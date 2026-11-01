@@ -139,6 +139,12 @@ popovers, Git-only read-only established-session labels, conditional hero slot,
 account/context rings and PR badge. Main retains its existing selectors in the
 now-sized footer; side reserves the correct slot but has no context ring yet.
 
+The conversation and the side pane now share one composer bottom line: the side
+column reserves the same 24px status strip the conversation carries below its
+composer, matching `composer.rs` (`SESSION_FOOTER_HEIGHT`, side slot included).
+`TestSideComposerSharesTheConversationComposerLine` pins the two send buttons
+to the same Y within 1px.
+
 Exact compact/expanded height motion, route dock choreography, easing, text
 glide, material/frost/overflow fades and coordinated attachment/queue motion are
 not implemented by this settled-layout step. Attachment/annotation business

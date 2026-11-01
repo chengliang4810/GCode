@@ -306,10 +306,10 @@ MIT 许可沿用框架原始 LICENSE）。`plugins/automation` 与原生 UI 接�
 `windows.displayName`/`windows.installDirName` 与 slug 文件命名取代，一并删除。
 应用命名完全跟随 `mygo.json` 的 `name`（GCode 为 ASCII，上游默认值即可覆盖）。
 
-当前框架固定为 `rcode-native-ui.20`；源码锁、补丁 SHA 和构建身份由
-`go run ./scripts/check-framework.go` 检查。当前树为 2,034 文件、28 个补丁条目，
+当前框架固定为 `rcode-native-ui.21`；源码锁、补丁 SHA 和构建身份由
+`go run ./scripts/check-framework.go` 检查。当前树为 2,034 文件、29 个补丁条目，
 SHA-256 为
-`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`。
+`2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1`。
 补丁清单见 [mygo-patches.md](mygo-patches.md)；下述 `.9`/`.10` 重放指纹是
 v0.6.4 时期引入第 15 项补丁时的历史记录。
 第 15 补丁反向还原后应得到原 `.9` 的 1,864 文件和

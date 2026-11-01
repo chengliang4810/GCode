@@ -9,7 +9,7 @@ identified explicitly below. `manifest.json` records the delivered bytes.
 | --- | --- | --- |
 | Models.dev catalog | JSON snapshot retrieved 2026-10-30 | `models-dev/LICENSE.txt` — original MIT, copyright 2025 models.dev |
 | Zeron source, artwork and rendering adapters | v0.2.128 / `ab189159f10cf8e63c0502be75a59bbc487e0eaf` | `zeron/LICENSE.txt` — original MIT text, copyright 2026 Wing |
-| MyGo | v0.7.3 + `rcode-native-ui.20` | `mygo/LICENSE.txt` — original MIT; patch source is fixed by `third_party/mygo.lock.json` in the source distribution |
+| MyGo | v0.7.3 + `rcode-native-ui.21` | `mygo/LICENSE.txt` — original MIT; patch source is fixed by `third_party/mygo.lock.json` in the source distribution |
 | Geist / Geist Mono | v1.7.2 | `fonts/Geist-OFL.txt`, `fonts/Geist-NOTICE.md` — original OFL 1.1 and reference font notice |
 | Solar Icons | imported reference Linear SVG set | `icons/Solar-ATTRIBUTION.md`, `icons/CC-BY-4.0.txt` |
 | Symbols file icons | `296ef1b62287fb2315cb5651e552e09e8c8e1de8` | `icons/Symbols-LICENSE.txt` — original MIT, Miguel Solorio |

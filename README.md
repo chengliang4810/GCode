@@ -28,7 +28,7 @@ to switch to English without restarting; the choice is saved. Conversation conte
 and model/provider names retain their original text. See [i18n notes](docs/i18n.md).
 
 Requires Go 1.27.3. MyGo v0.7.3 is included with local patches,
-locked to the current `rcode-native-ui.20` source; `scripts/check-framework.go` verifies
+locked to the current `rcode-native-ui.21` source; `scripts/check-framework.go` verifies
 its source and patch hashes. Windows 11 22H2+ amd64 and macOS 13+ amd64/arm64
 are targets.
 

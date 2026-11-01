@@ -1,7 +1,7 @@
 # MyGo v0.7.3 固定补丁
 
 2026-10-31：框架自 v0.6.4 整体升级到官方 **v0.7.3**（提交 `6f28d7bb…8016`，
-2026-10-27..29 发布），本地修订号 `rcode-native-ui.20`（第 27 项把文本选区改为自带 span 文本快照，第 28 项展开代码块里的制表符）。原第 5 项独立安装名补丁由上游
+2026-10-27..29 发布），本地修订号 `rcode-native-ui.21`（第 27 项把文本选区改为自带 span 文本快照，第 28 项展开代码块里的制表符，第 29 项让 split 的拖拽在构建窗格前生效并把命中区扩到 20 DIP）。原第 5 项独立安装名补丁由上游
 `windows.displayName`/`windows.installDirName` 与 slug 文件命名取代（应用名 GCode 为
 ASCII，上游按 `name` 默认值命名全部产物），原第 15 项 automation 反向移植补丁由上游
 原生 `plugins/automation` 取代，两者删除；v0.6.4 时期工作树里未补丁化的渲染对齐改动
@@ -18,7 +18,7 @@ prompt picker 等场景；`TestDesktopLocalPromptReferences` 与 `TestDesktopLoc
 完整框架源码约 17 MB，保留上游 LICENSE、go.mod、go.sum、API 生成器、构建工具、
 平台资源和测试；没有修改全局 Go 模块缓存。
 
-按顺序应用的补丁（28 个条目；11–13、21–23 为 v0.7.3 适配中产生的修正条目）：
+按顺序应用的补丁（29 个条目；11–13、21–23 为 v0.7.3 适配中产生的修正条目）：
 
 1. [`mygo-v0.7.3-01-motion.patch`](../patches/mygo-v0.7.3-01-motion.patch)：窗口级动效与滚轮缓动偏好。
 2. [`mygo-v0.7.3-02-hover.patch`](../patches/mygo-v0.7.3-02-hover.patch)：原生 hover 回调及构建来源标识；并集合并 v0.7.3 字段清单与 `hoverFn`。
@@ -48,10 +48,11 @@ prompt picker 等场景；`TestDesktopLocalPromptReferences` 与 `TestDesktopLoc
 26. [`mygo-v0.7.3-26-patch-identity-final.patch`](../patches/mygo-v0.7.3-26-patch-identity-final.patch)：固定 `v0.7.3` + `rcode-native-ui.18` 身份。
 27. [`mygo-v0.7.3-27-selection-spans.patch`](../patches/mygo-v0.7.3-27-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制；身份升为 `rcode-native-ui.19`。
 28. [`mygo-v0.7.3-28-code-block-tabs.patch`](../patches/mygo-v0.7.3-28-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。身份升为 `rcode-native-ui.20`。
+29. [`mygo-v0.7.3-29-split-drag.patch`](../patches/mygo-v0.7.3-29-split-drag.patch)：split 拖拽在构建窗格前应用（新增 `draggedBy`，不再用 `Dragged()` 触发第二次构建），命中区从主题线宽扩到 20 DIP；`Changed()` 只报告方向键步进，调用方在 split 返回后读取 `*size`。身份升为 `rcode-native-ui.21`。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.20` 的
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.21` 的
 2,034 个文件的 SHA-256 树指纹为
-`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`。
+`2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1`。
 补丁按上述顺序在 v0.7.3 原版上重放得到与锁定树逐字节一致的结果；
 各补丁的 SHA-256 以源码锁与 `scripts/frameworkpin/pin.go` 的 `patchChain` 为准。
 树指纹按 UTF-8 相对路径的字节序排序，再对每个 `路径 + NUL + 文件 SHA-256 十六进制 + LF`
