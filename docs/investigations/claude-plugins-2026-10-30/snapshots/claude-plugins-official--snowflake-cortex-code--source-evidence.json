@@ -1,0 +1,48 @@
+{
+  "repo": "Snowflake-Labs/snowflake-ai-kit",
+  "commit": "e2a3cbb45a9a62b5648266c5777c1b2edb3f8579",
+  "path": "plugins/cortex-code",
+  "archive_sha256": "152166fd5eae787f4052d64312774e804ee5ffe0d8b4ff81aafa9db443173643",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    "README.md",
+    "hooks/hooks.json",
+    "scripts/router/config.yaml.example",
+    "scripts/router/discover_cortex.py",
+    "scripts/router/envelope_policy.py",
+    "scripts/router/execute_cortex.py",
+    "scripts/router/predict_tools.py",
+    "scripts/router/prompt_filter.py",
+    "scripts/router/read_cortex_sessions.py",
+    "scripts/router/route_request.py",
+    "scripts/router/security/__init__.py",
+    "scripts/router/security/approval_handler.py",
+    "scripts/router/security/audit_logger.py",
+    "scripts/router/security/cache_manager.py",
+    "scripts/router/security/config_manager.py",
+    "scripts/router/security/policies/default_policy.yaml",
+    "scripts/router/security/prompt_sanitizer.py",
+    "scripts/router/security_wrapper.py",
+    "scripts/router/session_state.py",
+    "scripts/router/test_envelope_policy.py",
+    "scripts/router/test_integration.py",
+    "scripts/router/test_launcher_config.py",
+    "scripts/router/test_plugin_units.py",
+    "scripts/run_python.sh",
+    "skills/cortex-router/SKILL.md",
+    "skills/cortex-router/references/cortex-cli-reference.md",
+    "skills/cortex-router/references/routing-examples.md",
+    "skills/cortex-run/SKILL.md",
+    "skills/cortex-setup/SKILL.md"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"Cortex Code plugin hooks.\",\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash \\\"${CLAUDE_PLUGIN_ROOT}/scripts/run_python.sh\\\" \\\"${CLAUDE_PLUGIN_ROOT}/scripts/router/discover_cortex.py\\\"\"\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash \\\"${CLAUDE_PLUGIN_ROOT}/scripts/run_python.sh\\\" \\\"${CLAUDE_PLUGIN_ROOT}/scripts/router/prompt_filter.py\\\"\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"snowflake-cortex-code\",\n  \"version\": \"3.4.0\",\n  \"description\": \"Automatically route Snowflake prompts from Claude Code to Cortex Code for execution.\",\n  \"author\": {\n    \"name\": \"Snowflake\"\n  },\n  \"homepage\": \"https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code\",\n  \"repository\": \"https://github.com/Snowflake-Labs/snowflake-ai-kit\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"snowflake\", \"cortex-code\", \"auto-routing\", \"sql\", \"data\"],\n  \"skills\": \"./skills\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/cortex-setup/SKILL.md": "\nname: cortex-setup\ndescription: \"Install Snowflake CLI and Cortex Code CLI. Use when cortex is not installed, when the user asks to set up Cortex Code, or when routing fails because the CLI is missing. Triggers: setup cortex, install cortex, cortex not found, CLI not installed, set up snowflake.\"\nlicense: Proprietary. See LICENSE-SKILLS.md for complete terms\n",
+    "skills/cortex-router/SKILL.md": "\nname: cortex-router\ndescription: \"Auto-routing skill loaded by the prompt filter hook. Routes Snowflake-related operations to Cortex Code CLI. Not for direct invocation — use $cortex-run instead.\"\nlicense: Proprietary. See LICENSE-SKILLS.md for complete terms\nuser-invocable: false\nmetadata:\n  author: Snowflake Integration Team\n  version: 3.4.0\n  compatibility: Requires Cortex Code CLI installed and configured\n",
+    "skills/cortex-run/SKILL.md": "\nname: cortex-run\ndescription: \"ONLY load this skill when the user explicitly types $cortex-run or /cortex-run. NEVER load this skill from auto-routing hooks or keyword matching. For auto-routed prompts, use snowflake-cortex-code:cortex-router instead.\"\nlicense: Proprietary. See LICENSE-SKILLS.md for complete terms\nuser-invocable: true\nmetadata:\n  author: Snowflake\n  version: 1.0.0\n"
+  }
+}

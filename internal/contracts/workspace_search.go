@@ -44,6 +44,20 @@ type DirectoryRequest struct {
 	DeviceID string `json:"deviceId"`
 	Path     string `json:"path"`
 }
+
+// DirectoryLocation is a browsable starting point on a device: the user's home
+// directory or a filesystem/volume root.
+type DirectoryLocation struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Kind string `json:"kind"`
+}
+
+const (
+	LocationHome   = "home"
+	LocationVolume = "volume"
+)
+
 type DirectoryEntry struct {
 	Name    string `json:"name"`
 	Path    string `json:"path"`
@@ -58,8 +72,17 @@ type DirectoryListing struct {
 	Entries  []DirectoryEntry `json:"entries"`
 	Revision uint64           `json:"revision"`
 }
+
+// DirectoryLocations lists the places the picker offers before a folder is
+// browsed. It is a host query, not state: volumes change while the host runs.
+type DirectoryLocations struct {
+	DeviceID  string              `json:"deviceId"`
+	Locations []DirectoryLocation `json:"locations"`
+}
+
 type ProjectDirectoryService interface {
 	ListDirectories(context.Context, DirectoryRequest) (DirectoryListing, error)
+	ListDirectoryLocations(context.Context, DirectoryRequest) (DirectoryLocations, error)
 }
 type ProjectCreate struct {
 	DeviceID string `json:"deviceId"`

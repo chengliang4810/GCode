@@ -1,0 +1,227 @@
+{
+  "pluginId": "nightvision@claude-plugins-official",
+  "sourceCommit": "957db6bb934839275c0f643042101bbb675ddbf7",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "record-api-discovery-extraction",
+      "componentId": "skill:nightvision:api-discovery",
+      "prompt": "Use the api-discovery skill to prepare the NightVision API Discovery record for a Python Flask service named orion-api. The current directory is the run directory. Headless boundary: there is no NightVision account, no network and no installs; the NightVision CLI is not installed, so no extraction can run. Do not claim that any NightVision command ran and do not invent an extracted spec. Instead write api-discovery-plan.md as the documented extraction record for orion-api: the prerequisite check command nightvision --help; the documented language flag for Flask; the documented basic extraction command nightvision swagger extract . --lang python and the default output file openapi-spec.yml; the documented output path and format flags -o api-spec.json --file-format json; the documented success line Swagger file extracted successfully; the documented handling of unresolved variables through nv.config with its replacements object and the --config option; the documented Code Traceback annotation x-source with file path and line number; and the documented comparison command nightvision swagger diff. End the record with a section named Untested that contains the exact sentence No extraction ran in this session. It must also state that real extraction against orion-api remains untested. Then read the immutable verify_api_discovery.py and run exactly python verify_api_discovery.py using Bash to validate the record and write api-discovery-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that CLI execution and real extraction for orion-api remain untested.",
+      "allowCommands": [
+        "python verify_api_discovery.py"
+      ],
+      "verifierOutputs": [
+        "api-discovery-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_api_discovery.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('api-discovery-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision --help' in plan, 'the documented prerequisite check must be recorded'\nassert '--lang python' in plan, 'the documented Flask language flag must be recorded'\nassert 'nightvision swagger extract . --lang python' in plan, 'the documented basic extraction command must be recorded'\nassert 'openapi-spec.yml' in plan, 'the documented default output file must be recorded'\nassert '--file-format json' in plan, 'the documented format flag must be recorded'\nassert 'Swagger file extracted successfully' in plan, 'the documented success line must be recorded'\nassert 'nv.config' in plan and 'replacements' in plan, 'the documented unresolved variable handling must be recorded'\nassert '--config' in plan, 'the documented config option must be recorded'\nassert 'x-source' in plan, 'the documented Code Traceback annotation must be recorded'\nassert 'nightvision swagger diff' in plan, 'the documented comparison command must be recorded'\nassert 'flask' in low, 'the documented Flask framework support must be recorded'\nassert 'orion-api' in plan, 'the given service name must appear in the record'\nassert 'no extraction ran in this session' in low, 'the record must state honestly that no extraction ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'code_traceback': True, 'compare_command': True, 'default_output': True, 'format_flag': True, 'honest_no_run': True, 'language_flag': True, 'success_line': True, 'unresolved_config': True}\nPath('api-discovery-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('API Discovery record: documented extraction surface and Code Traceback verified; real extraction remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_api_discovery.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('api-discovery-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision --help' in plan, 'the documented prerequisite check must be recorded'\nassert '--lang python' in plan, 'the documented Flask language flag must be recorded'\nassert 'nightvision swagger extract . --lang python' in plan, 'the documented basic extraction command must be recorded'\nassert 'openapi-spec.yml' in plan, 'the documented default output file must be recorded'\nassert '--file-format json' in plan, 'the documented format flag must be recorded'\nassert 'Swagger file extracted successfully' in plan, 'the documented success line must be recorded'\nassert 'nv.config' in plan and 'replacements' in plan, 'the documented unresolved variable handling must be recorded'\nassert '--config' in plan, 'the documented config option must be recorded'\nassert 'x-source' in plan, 'the documented Code Traceback annotation must be recorded'\nassert 'nightvision swagger diff' in plan, 'the documented comparison command must be recorded'\nassert 'flask' in low, 'the documented Flask framework support must be recorded'\nassert 'orion-api' in plan, 'the given service name must appear in the record'\nassert 'no extraction ran in this session' in low, 'the record must state honestly that no extraction ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'code_traceback': True, 'compare_command': True, 'default_output': True, 'format_flag': True, 'honest_no_run': True, 'language_flag': True, 'success_line': True, 'unresolved_config': True}\nPath('api-discovery-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('API Discovery record: documented extraction surface and Code Traceback verified; real extraction remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "api-discovery-verification.json",
+          "equals": "{\"code_traceback\": true, \"compare_command\": true, \"default_output\": true, \"format_flag\": true, \"honest_no_run\": true, \"language_flag\": true, \"success_line\": true, \"unresolved_config\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "api-discovery-plan.md",
+          "contains": "nightvision swagger extract . --lang python"
+        },
+        {
+          "kind": "file",
+          "path": "api-discovery-plan.md",
+          "contains": "x-source"
+        },
+        {
+          "kind": "file",
+          "path": "api-discovery-plan.md",
+          "contains": "orion-api"
+        }
+      ]
+    },
+    {
+      "id": "record-app-security-scan-harness",
+      "componentId": "skill:nightvision:app-security-scan",
+      "prompt": "Use the app-security-scan skill to prepare the NightVision DAST record for the Python Flask service orion-api at https://staging.orion-api.example.com in project orion-security with target orion-api-staging. The current directory is the run directory. Headless boundary: there is no NightVision account, no network and no installs; the NightVision MCP server and CLI are unavailable, so no scan can run. Do not claim that any scan ran and do not invent findings. Instead write app-security-scan-plan.md as the documented scan record: the MCP harness tools preflight-app, run-app-security-scan, wait-for-scan, get-scan-status, summarize-scan-findings and export-sarif; the required project_path set to the app source directory orion-api and the target_url; the documented order in which the single harness call runs preflight, API Discovery, target create or update and DAST; the result fields to report before polling, namely api_discovery.status, api_discovery.attached_spec_file, the endpoint count from the spec paths, target.action, target.target.type and the scan_id; the documented local record .nightvision/manifest.json that must hold a scan_id; the documented auth choices, using app_auth with type playwright_script for the expiring form login with MFA on orion-api, and never pasting a shared account token into a repo file; the documented unattended mode that starts the app, relies on NIGHTVISION_DEFAULT_PROJECT and the environment token, polls to a terminal status and then exports SARIF and summarizes; and the documented coverage floor that treats zero findings or coverage_suspect true as a setup failure rather than a clean result. End the record with a section named Untested that contains the exact sentence No scan ran in this session. It must also state that real DAST against orion-api remains untested. Then read the immutable verify_app_scan.py and run exactly python verify_app_scan.py using Bash to validate the record and write app-scan-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that MCP harness execution and real DAST coverage for orion-api remain untested.",
+      "allowCommands": [
+        "python verify_app_scan.py"
+      ],
+      "verifierOutputs": [
+        "app-scan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_app_scan.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('app-security-scan-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor token in ('preflight-app', 'run-app-security-scan', 'wait-for-scan', 'get-scan-status', 'summarize-scan-findings', 'export-sarif'):\n    assert token in plan, 'documented harness tool missing: ' + token\nassert 'project_path' in plan and 'orion-api' in plan, 'the documented project_path for the app source must be recorded'\nassert 'target_url' in plan and 'https://staging.orion-api.example.com' in plan, 'the given target_url must be recorded'\nassert 'api_discovery.status' in plan and 'api_discovery.attached_spec_file' in plan, 'the documented discovery result fields must be recorded'\nassert 'target.action' in plan and 'target.target.type' in plan, 'the documented target result fields must be recorded'\nassert '.nightvision/manifest.json' in plan, 'the documented local manifest record must be recorded'\nassert 'playwright_script' in plan, 'the documented auth mode for an expiring login must be recorded'\nassert 'NIGHTVISION_DEFAULT_PROJECT' in plan, 'the documented unattended project variable must be recorded'\nassert 'coverage_suspect' in plan, 'the documented coverage floor must be recorded'\nassert 'no scan ran in this session' in low, 'the record must state honestly that no scan ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'auth_choice': True, 'coverage_floor': True, 'harness_tools': True, 'honest_no_run': True, 'manifest_record': True, 'project_path': True, 'reported_fields': True, 'unattended_mode': True}\nPath('app-scan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('App security scan record: documented harness, auth gate and coverage floor verified; real DAST remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_app_scan.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('app-security-scan-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor token in ('preflight-app', 'run-app-security-scan', 'wait-for-scan', 'get-scan-status', 'summarize-scan-findings', 'export-sarif'):\n    assert token in plan, 'documented harness tool missing: ' + token\nassert 'project_path' in plan and 'orion-api' in plan, 'the documented project_path for the app source must be recorded'\nassert 'target_url' in plan and 'https://staging.orion-api.example.com' in plan, 'the given target_url must be recorded'\nassert 'api_discovery.status' in plan and 'api_discovery.attached_spec_file' in plan, 'the documented discovery result fields must be recorded'\nassert 'target.action' in plan and 'target.target.type' in plan, 'the documented target result fields must be recorded'\nassert '.nightvision/manifest.json' in plan, 'the documented local manifest record must be recorded'\nassert 'playwright_script' in plan, 'the documented auth mode for an expiring login must be recorded'\nassert 'NIGHTVISION_DEFAULT_PROJECT' in plan, 'the documented unattended project variable must be recorded'\nassert 'coverage_suspect' in plan, 'the documented coverage floor must be recorded'\nassert 'no scan ran in this session' in low, 'the record must state honestly that no scan ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'auth_choice': True, 'coverage_floor': True, 'harness_tools': True, 'honest_no_run': True, 'manifest_record': True, 'project_path': True, 'reported_fields': True, 'unattended_mode': True}\nPath('app-scan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('App security scan record: documented harness, auth gate and coverage floor verified; real DAST remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "app-scan-verification.json",
+          "equals": "{\"auth_choice\": true, \"coverage_floor\": true, \"harness_tools\": true, \"honest_no_run\": true, \"manifest_record\": true, \"project_path\": true, \"reported_fields\": true, \"unattended_mode\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "app-security-scan-plan.md",
+          "contains": "run-app-security-scan"
+        },
+        {
+          "kind": "file",
+          "path": "app-security-scan-plan.md",
+          "contains": ".nightvision/manifest.json"
+        },
+        {
+          "kind": "file",
+          "path": "app-security-scan-plan.md",
+          "contains": "orion-api"
+        }
+      ]
+    },
+    {
+      "id": "record-ci-cd-pipeline",
+      "componentId": "skill:nightvision:ci-cd-integration",
+      "prompt": "Use the ci-cd-integration skill to prepare the NightVision pipeline record for orion-api, a Python Flask API, on GitHub Actions. The current directory is the run directory. Headless boundary: there is no NightVision account, no network and no installs; the CLI is not installed and no CI runner exists, so no pipeline can run. Do not claim that a pipeline or scan ran. Instead write ci-cd-plan.md as the documented pipeline record: the six documented pipeline steps Install the NightVision CLI, Extract API spec from source code, Start the application, Run the scan, Export results and Upload to CI platform; the documented interactive prerequisites nightvision login and nightvision token create plus the CI secret NIGHTVISION_TOKEN that the user must create in a browser session; the documented environment variable NIGHTVISION_API_URL with its default https://api.nightvision.net/api/v1/; the documented target creation command nightvision target create orion-api-staging for project orion-security with --type API and --spec-file openapi-spec.yml; the documented scan command with --auth and the extended duration flag --max-duration-minutes; the documented scan id capture from the first stdout line using head -n 1 scan-results.txt; the documented exit code rule that exit code 0 does not mean no vulnerabilities; the documented SARIF export with --swagger-file openapi-spec.yml and the CSV export; and the documented GitHub Actions upload step github/codeql-action/upload-sarif@v3 with permissions contents: read and security-events: write. End the record with a section named Untested that contains the exact sentence No pipeline was run in this session. It must also state that real CI execution with a NightVision token remains untested. Then read the immutable verify_ci_cd.py and run exactly python verify_ci_cd.py using Bash to validate the record and write ci-cd-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that CI execution, token authentication and real scan publication remain untested.",
+      "allowCommands": [
+        "python verify_ci_cd.py"
+      ],
+      "verifierOutputs": [
+        "ci-cd-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ci_cd.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('ci-cd-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor step in ('Install the NightVision CLI', 'Extract API spec from source code', 'Start the application', 'Run the scan', 'Export results', 'Upload to CI platform'):\n    assert step in plan, 'documented pipeline step missing: ' + step\nassert 'nightvision login' in plan and 'nightvision token create' in plan, 'the documented interactive token prerequisites must be recorded'\nassert 'NIGHTVISION_TOKEN' in plan, 'the documented CI secret name must be recorded'\nassert 'https://api.nightvision.net/api/v1/' in plan, 'the documented default API URL must be recorded'\nassert 'nightvision target create orion-api-staging' in plan and 'orion-security' in plan, 'the given target and project must appear in the target command'\nassert '--type API' in plan and '--spec-file openapi-spec.yml' in plan, 'the documented API target flags must be recorded'\nassert '--max-duration-minutes' in plan, 'the documented duration flag must be recorded'\nassert 'head -n 1 scan-results.txt' in plan, 'the documented scan id capture must be recorded'\nassert 'does not mean' in low, 'the documented exit code rule must be recorded'\nassert 'github/codeql-action/upload-sarif@v3' in plan, 'the documented GitHub upload step must be recorded'\nassert 'security-events: write' in plan and 'contents: read' in plan, 'the documented workflow permissions must be recorded'\nassert '--swagger-file openapi-spec.yml' in plan, 'the documented SARIF traceback flag must be recorded'\nassert 'no pipeline was run in this session' in low, 'the record must state honestly that no pipeline ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'ci_upload': True, 'exit_code_rule': True, 'honest_no_run': True, 'pipeline_steps': True, 'prerequisites': True, 'scan_id_capture': True, 'target_creation': True, 'token_environment': True}\nPath('ci-cd-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('CI/CD record: documented pipeline steps, token gate and SARIF upload verified; real CI execution remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ci_cd.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('ci-cd-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor step in ('Install the NightVision CLI', 'Extract API spec from source code', 'Start the application', 'Run the scan', 'Export results', 'Upload to CI platform'):\n    assert step in plan, 'documented pipeline step missing: ' + step\nassert 'nightvision login' in plan and 'nightvision token create' in plan, 'the documented interactive token prerequisites must be recorded'\nassert 'NIGHTVISION_TOKEN' in plan, 'the documented CI secret name must be recorded'\nassert 'https://api.nightvision.net/api/v1/' in plan, 'the documented default API URL must be recorded'\nassert 'nightvision target create orion-api-staging' in plan and 'orion-security' in plan, 'the given target and project must appear in the target command'\nassert '--type API' in plan and '--spec-file openapi-spec.yml' in plan, 'the documented API target flags must be recorded'\nassert '--max-duration-minutes' in plan, 'the documented duration flag must be recorded'\nassert 'head -n 1 scan-results.txt' in plan, 'the documented scan id capture must be recorded'\nassert 'does not mean' in low, 'the documented exit code rule must be recorded'\nassert 'github/codeql-action/upload-sarif@v3' in plan, 'the documented GitHub upload step must be recorded'\nassert 'security-events: write' in plan and 'contents: read' in plan, 'the documented workflow permissions must be recorded'\nassert '--swagger-file openapi-spec.yml' in plan, 'the documented SARIF traceback flag must be recorded'\nassert 'no pipeline was run in this session' in low, 'the record must state honestly that no pipeline ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i executed nightvision', 'we executed nightvision'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'ci_upload': True, 'exit_code_rule': True, 'honest_no_run': True, 'pipeline_steps': True, 'prerequisites': True, 'scan_id_capture': True, 'target_creation': True, 'token_environment': True}\nPath('ci-cd-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('CI/CD record: documented pipeline steps, token gate and SARIF upload verified; real CI execution remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "ci-cd-verification.json",
+          "equals": "{\"ci_upload\": true, \"exit_code_rule\": true, \"honest_no_run\": true, \"pipeline_steps\": true, \"prerequisites\": true, \"scan_id_capture\": true, \"target_creation\": true, \"token_environment\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "ci-cd-plan.md",
+          "contains": "github/codeql-action/upload-sarif@v3"
+        },
+        {
+          "kind": "file",
+          "path": "ci-cd-plan.md",
+          "contains": "https://api.nightvision.net/api/v1/"
+        },
+        {
+          "kind": "file",
+          "path": "ci-cd-plan.md",
+          "contains": "orion-api-staging"
+        }
+      ]
+    },
+    {
+      "id": "record-scan-configuration-setup",
+      "componentId": "skill:nightvision:scan-configuration",
+      "prompt": "Use the scan-configuration skill to prepare the NightVision setup record for the Python Flask API orion-api at https://staging.orion-api.example.com. The current directory is the run directory. Headless boundary: there is no NightVision account, no network and no installs; the CLI is not installed, so nothing can be created or verified live. Do not claim that a project, target or auth record was created. Instead write scan-configuration-plan.md as the documented setup record: the project commands nightvision project create -n orion-security, nightvision project list, and nightvision project set -p orion-security as the documented default project; the target commands nightvision target create orion-api-staging https://staging.orion-api.example.com --type API -p orion-security --spec-file openapi-spec.yml and the documented idempotent create-or-update form using nightvision target update; the documented target types WEB and API; the documented auth methods, with nightvision auth headers create orion-auth for the stable bearer token used by orion-api and the note that nightvision auth playwright create needs the user browser and cannot run headless; the documented scope control with --exclude-url covering /health, /metrics, /admin and /api/internal and the warning that logout links must be excluded; the documented private network path with Smart Proxy and --force-private-scan; the documented traffic recording commands nightvision traffic record and nightvision traffic upload; and the documented verification checklist covering NIGHTVISION_TOKEN, target existence, spec readiness, auth association and reachability. End the record with a section named Untested that contains the exact sentence No project, target or auth record was created in this session. It must also state that live configuration and reachability checks remain untested. Then read the immutable verify_scan_config.py and run exactly python verify_scan_config.py using Bash to validate the record and write scan-config-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that live project, target and auth configuration remain untested.",
+      "allowCommands": [
+        "python verify_scan_config.py"
+      ],
+      "verifierOutputs": [
+        "scan-config-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_scan_config.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('scan-configuration-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision project create -n orion-security' in plan, 'the given project create command must be recorded'\nassert 'nightvision project list' in plan, 'the documented project listing must be recorded'\nassert 'nightvision project set -p orion-security' in plan, 'the documented default project command must be recorded'\nassert 'nightvision target create orion-api-staging' in plan, 'the given target create command must be recorded'\nassert '--type API' in plan and '--spec-file openapi-spec.yml' in plan, 'the documented API target flags must be recorded'\nassert 'nightvision target update' in plan, 'the documented idempotent update form must be recorded'\nassert 'WEB' in plan and 'API' in plan, 'the documented target types must be recorded'\nassert 'nightvision auth headers create orion-auth' in plan, 'the documented header auth command must be recorded'\nassert 'nightvision auth playwright create' in plan, 'the documented Playwright auth command must be recorded'\nassert '--exclude-url' in plan and '/health' in plan and '/metrics' in plan and '/admin' in plan, 'the documented scope control must be recorded'\nassert '--force-private-scan' in plan, 'the documented private network flag must be recorded'\nassert 'nightvision traffic record' in plan and 'nightvision traffic upload' in plan, 'the documented traffic recording commands must be recorded'\nassert 'NIGHTVISION_TOKEN' in plan, 'the documented token check must be recorded'\nassert 'no project, target or auth record was created in this session' in low, 'the record must state honestly that nothing was created'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i created the project', 'we created the project'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'auth_methods': True, 'default_project': True, 'honest_no_run': True, 'private_network': True, 'project_commands': True, 'scope_control': True, 'target_commands': True}\nPath('scan-config-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Scan configuration record: documented project, target, auth and scope commands verified; live setup remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_scan_config.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('scan-configuration-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision project create -n orion-security' in plan, 'the given project create command must be recorded'\nassert 'nightvision project list' in plan, 'the documented project listing must be recorded'\nassert 'nightvision project set -p orion-security' in plan, 'the documented default project command must be recorded'\nassert 'nightvision target create orion-api-staging' in plan, 'the given target create command must be recorded'\nassert '--type API' in plan and '--spec-file openapi-spec.yml' in plan, 'the documented API target flags must be recorded'\nassert 'nightvision target update' in plan, 'the documented idempotent update form must be recorded'\nassert 'WEB' in plan and 'API' in plan, 'the documented target types must be recorded'\nassert 'nightvision auth headers create orion-auth' in plan, 'the documented header auth command must be recorded'\nassert 'nightvision auth playwright create' in plan, 'the documented Playwright auth command must be recorded'\nassert '--exclude-url' in plan and '/health' in plan and '/metrics' in plan and '/admin' in plan, 'the documented scope control must be recorded'\nassert '--force-private-scan' in plan, 'the documented private network flag must be recorded'\nassert 'nightvision traffic record' in plan and 'nightvision traffic upload' in plan, 'the documented traffic recording commands must be recorded'\nassert 'NIGHTVISION_TOKEN' in plan, 'the documented token check must be recorded'\nassert 'no project, target or auth record was created in this session' in low, 'the record must state honestly that nothing was created'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i created the project', 'we created the project'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'auth_methods': True, 'default_project': True, 'honest_no_run': True, 'private_network': True, 'project_commands': True, 'scope_control': True, 'target_commands': True}\nPath('scan-config-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Scan configuration record: documented project, target, auth and scope commands verified; live setup remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "scan-config-verification.json",
+          "equals": "{\"auth_methods\": true, \"default_project\": true, \"honest_no_run\": true, \"private_network\": true, \"project_commands\": true, \"scope_control\": true, \"target_commands\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "scan-configuration-plan.md",
+          "contains": "nightvision project create -n"
+        },
+        {
+          "kind": "file",
+          "path": "scan-configuration-plan.md",
+          "contains": "--force-private-scan"
+        },
+        {
+          "kind": "file",
+          "path": "scan-configuration-plan.md",
+          "contains": "orion-security"
+        }
+      ]
+    },
+    {
+      "id": "record-scan-triage-formats",
+      "componentId": "skill:nightvision:scan-triage",
+      "prompt": "Use the scan-triage skill to prepare the NightVision triage record for scan 4d1a7c2e-9b3f-4a61-8c05-2e7f1b6d9a30 on orion-api. The current directory is the run directory. Headless boundary: there is no NightVision account, no network and no installs; the CLI is not installed and no exported SARIF or CSV file exists, so no export or live triage can run. Do not claim that an export ran and do not invent additional findings. The record is for one documented finding: SQL injection rated High on POST /api/orders, parameter order_id, payload 1 OR 1=1, evidence is a database error in the response, and Code Traceback points to orion_api/routes/orders.py line 87. Write scan-triage-record.md as the documented triage record: the export commands nightvision export sarif -s with --swagger-file openapi-spec.yml for Code Traceback and without it for a WEB target, plus nightvision export csv -s; the documented SARIF structure runs[0].tool.driver.rules[], runs[0].results[], ruleId, level, message.text and locations[].physicalLocation with artifactLocation uri and region startLine; the documented CSV header exactly as finding_name, kind_id, id, url, path, method, parameter, payload, evidence, severity, ai_explanation; the documented severity levels High, Medium, Low and Informational with the documented action for each; the documented SQL injection class CWE-89 with the parameterized query fix; the documented validation with curl; and the documented false positive statuses Open, False Positive and Resolved. Include a triage entry for the given finding that names the endpoint, parameter, payload, severity and the cited source file and line. End the record with a section named Untested that contains the exact sentence No export ran in this session. It must also state that real SARIF and CSV handling from a live NightVision scan remains untested. Then read the immutable verify_scan_triage.py and run exactly python verify_scan_triage.py using Bash to validate the record and write scan-triage-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that real export, live finding validation and false positive handling remain untested.",
+      "allowCommands": [
+        "python verify_scan_triage.py"
+      ],
+      "verifierOutputs": [
+        "scan-triage-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_scan_triage.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('scan-triage-record.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision export sarif -s' in plan, 'the documented SARIF export command must be recorded'\nassert '--swagger-file openapi-spec.yml' in plan, 'the documented Code Traceback export flag must be recorded'\nassert 'nightvision export csv -s' in plan, 'the documented CSV export command must be recorded'\nassert 'runs[0].tool.driver.rules[]' in plan and 'runs[0].results[]' in plan, 'the documented SARIF structure must be recorded'\nassert 'ruleId' in plan and 'message.text' in plan, 'the documented SARIF result fields must be recorded'\nassert 'locations[].physicalLocation' in plan and 'artifactLocation' in plan and 'startLine' in plan, 'the documented Code Traceback location fields must be recorded'\nassert 'finding_name, kind_id, id, url, path, method, parameter, payload, evidence, severity, ai_explanation' in plan, 'the documented CSV header must be recorded exactly'\nassert 'CWE-89' in plan and 'parameterized' in low, 'the documented SQL injection class and fix must be recorded'\nfor sev in ('High', 'Medium', 'Low', 'Informational'):\n    assert sev in plan, 'the documented severity level must be recorded: ' + sev\nassert 'False Positive' in plan, 'the documented false positive status must be recorded'\nassert '4d1a7c2e-9b3f-4a61-8c05-2e7f1b6d9a30' in plan, 'the given scan id must appear in the record'\nassert '/api/orders' in plan and 'order_id' in plan, 'the given endpoint and parameter must appear in the triage entry'\nassert 'orion_api/routes/orders.py' in plan and 'line 87' in low, 'the given source location must appear in the triage entry'\nassert 'no export ran in this session' in low, 'the record must state honestly that no export ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i exported the results', 'we exported the results'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'code_traceback': True, 'csv_columns': True, 'export_commands': True, 'finding_explained': True, 'honest_no_run': True, 'sarif_structure': True, 'severity_scale': True}\nPath('scan-triage-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Scan triage record: documented export commands, SARIF and CSV schema verified; real export remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_scan_triage.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('scan-triage-record.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'nightvision export sarif -s' in plan, 'the documented SARIF export command must be recorded'\nassert '--swagger-file openapi-spec.yml' in plan, 'the documented Code Traceback export flag must be recorded'\nassert 'nightvision export csv -s' in plan, 'the documented CSV export command must be recorded'\nassert 'runs[0].tool.driver.rules[]' in plan and 'runs[0].results[]' in plan, 'the documented SARIF structure must be recorded'\nassert 'ruleId' in plan and 'message.text' in plan, 'the documented SARIF result fields must be recorded'\nassert 'locations[].physicalLocation' in plan and 'artifactLocation' in plan and 'startLine' in plan, 'the documented Code Traceback location fields must be recorded'\nassert 'finding_name, kind_id, id, url, path, method, parameter, payload, evidence, severity, ai_explanation' in plan, 'the documented CSV header must be recorded exactly'\nassert 'CWE-89' in plan and 'parameterized' in low, 'the documented SQL injection class and fix must be recorded'\nfor sev in ('High', 'Medium', 'Low', 'Informational'):\n    assert sev in plan, 'the documented severity level must be recorded: ' + sev\nassert 'False Positive' in plan, 'the documented false positive status must be recorded'\nassert '4d1a7c2e-9b3f-4a61-8c05-2e7f1b6d9a30' in plan, 'the given scan id must appear in the record'\nassert '/api/orders' in plan and 'order_id' in plan, 'the given endpoint and parameter must appear in the triage entry'\nassert 'orion_api/routes/orders.py' in plan and 'line 87' in low, 'the given source location must appear in the triage entry'\nassert 'no export ran in this session' in low, 'the record must state honestly that no export ran'\nfor claim in ('i ran nightvision', 'we ran nightvision', 'i exported the results', 'we exported the results'):\n    assert claim not in low, 'the record must not claim a NightVision command was executed: ' + claim\n\nreport = {'code_traceback': True, 'csv_columns': True, 'export_commands': True, 'finding_explained': True, 'honest_no_run': True, 'sarif_structure': True, 'severity_scale': True}\nPath('scan-triage-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Scan triage record: documented export commands, SARIF and CSV schema verified; real export remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "scan-triage-verification.json",
+          "equals": "{\"code_traceback\": true, \"csv_columns\": true, \"export_commands\": true, \"finding_explained\": true, \"honest_no_run\": true, \"sarif_structure\": true, \"severity_scale\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "scan-triage-record.md",
+          "contains": "nightvision export csv -s"
+        },
+        {
+          "kind": "file",
+          "path": "scan-triage-record.md",
+          "contains": "physicalLocation"
+        },
+        {
+          "kind": "file",
+          "path": "scan-triage-record.md",
+          "contains": "/api/orders"
+        }
+      ]
+    }
+  ]
+}

@@ -3,18 +3,6 @@
   "sourceCommit": "ab189159f10cf8e63c0502be75a59bbc487e0eaf",
   "files": [
     {
-      "path": "app-icon.png",
-      "source": "dist/zeron.png",
-      "bytes": 1803905,
-      "sha256": "aba989a0bd17d13bb2067a610add39dd57211566c66072296c7dd62925c40191"
-    },
-    {
-      "path": "file-icons.json",
-      "source": "crates/ui/src/file-icons.json",
-      "bytes": 66523,
-      "sha256": "2d85b86cdafa42f2c44179bcf80f79c6920163c327bc7fd76ff421b6224f07e1"
-    },
-    {
       "path": "LICENSE.zeron",
       "source": "LICENSE",
       "bytes": 1082,
@@ -25,6 +13,18 @@
       "source": "THIRD_PARTY_NOTICES.md",
       "bytes": 27005,
       "sha256": "8fe7b797106dbfa078beb16f9e5ffd416b7b21a18f0a77eef61db60dfa08fb99"
+    },
+    {
+      "path": "app-icon.png",
+      "source": "dist/zeron.png",
+      "bytes": 1803905,
+      "sha256": "aba989a0bd17d13bb2067a610add39dd57211566c66072296c7dd62925c40191"
+    },
+    {
+      "path": "file-icons.json",
+      "source": "crates/ui/src/file-icons.json",
+      "bytes": 66523,
+      "sha256": "2d85b86cdafa42f2c44179bcf80f79c6920163c327bc7fd76ff421b6224f07e1"
     },
     {
       "path": "file-icons/LICENSE.symbols",
@@ -2877,6 +2877,12 @@
       "sha256": "5eba164c0977268ddae33bbbeed7c48bc88eec41dc9080915bbaef66cba44041"
     },
     {
+      "path": "icons/rcode-logo.svg",
+      "source": "crates/ui/assets/icons/zeron-logo.svg",
+      "bytes": 1982,
+      "sha256": "ebe6d980be6c76503c18d99f2c9e7ceba9ffb695fab72d0f75a45d9bcb69ce8a"
+    },
+    {
       "path": "icons/refresh.svg",
       "source": "crates/ui/assets/icons/refresh.svg",
       "bytes": 566,
@@ -3037,12 +3043,47 @@
       "source": "crates/ui/assets/icons/wrap-text.svg",
       "bytes": 570,
       "sha256": "01b943a4c67d568f0633f206877910f4a1ef8dd8bc22a598d3761de2b0b08f77"
-    },
-    {
-      "path": "icons/zeron-logo.svg",
-      "source": "crates/ui/assets/icons/zeron-logo.svg",
-      "bytes": 1982,
-      "sha256": "ebe6d980be6c76503c18d99f2c9e7ceba9ffb695fab72d0f75a45d9bcb69ce8a"
     }
-  ]
+  ],
+  "runtimeMathFonts": {
+    "root": "internal/mathrender",
+    "files": [
+      {
+        "path": "fonts/Euler-Math.otf",
+        "source": "crates/zatex/fonts/Euler-Math.otf",
+        "bytes": 438432,
+        "sha256": "d6faf2b5f507aab84990b5fb144675a57dbd6b2b3c216947b99fb1dc9b140529"
+      },
+      {
+        "path": "fonts/FiraMath-Regular.otf",
+        "source": "crates/zatex/fonts/FiraMath-Regular.otf",
+        "bytes": 179840,
+        "sha256": "2028cbd3dd4d8c0cf1608520eb4759956a83a67931d7b6d8e7c313520186e35b"
+      },
+      {
+        "path": "fonts/LibertinusMath-Regular.otf",
+        "source": "crates/zatex/fonts/LibertinusMath-Regular.otf",
+        "bytes": 588848,
+        "sha256": "ded714b0d3808af527438ed7a85f16933133f66a12104c4a83db4cc248888011"
+      },
+      {
+        "path": "fonts/NewCMMath-Book.otf",
+        "source": "crates/zatex/fonts/NewCMMath-Book.otf",
+        "bytes": 1432068,
+        "sha256": "2ea09ebc9167b1e1a66f31390dc917f2d4004ecfca72d51b28010e4ad6becd95"
+      },
+      {
+        "path": "fonts/STIXTwoMath-Regular.otf",
+        "source": "crates/zatex/fonts/STIXTwoMath-Regular.otf",
+        "bytes": 838652,
+        "sha256": "f2076b9f1676438439dd41e23676f5ab99056e83d6b8f8c27841591ef2ccfa72"
+      },
+      {
+        "path": "fonts/texgyrepagella-math.otf",
+        "source": "crates/zatex/fonts/texgyrepagella-math.otf",
+        "bytes": 601220,
+        "sha256": "1f9e010f60e947d0e925910009b2ea85ad54edc7cefb106f8cdefb9ffd1d5f2f"
+      }
+    ]
+  }
 }

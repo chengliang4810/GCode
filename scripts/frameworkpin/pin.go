@@ -14,30 +14,53 @@ import (
 	"runtime/debug"
 	"sort"
 	"strings"
+
+	"gcode/internal/processutil"
 )
 
 const (
-	ModulePath                    = "github.com/egoist/mygo"
-	UpstreamVersion               = "v0.6.4"
-	Revision                      = "zeron-native-ui.9"
-	Replacement                   = "./third_party/mygo"
-	UpstreamSum                   = "h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o="
-	ExpectedTreeSHA256            = "27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9"
-	MotionPatchSHA256             = "8fa72a733547c893bfd7c24e015523ef08a19dd5262de4bc7403a38eba03606f"
-	HoverPatchSHA256              = "093dc4b5bb0a78e7adfb7ba1d6332eaa1c6c3e5ab0b86e3b80d94e153e96fd9b"
-	FilesDropPatchSHA256          = "216f0edada22d085830160f7af7cd2a222f4617e8fcaa2a5a73b104c88160a24"
-	MarkdownPatchSHA256           = "8416b7be5bb94e5751068a33b78f9fc07351902945e81cb3fae891f7931c213a"
-	CoexistencePatchSHA256        = "54e8631331fd2389eda4b7bc37eced6a54b5f8323be54d9176398c8c81556aea"
-	InputDisplayPatchSHA256       = "10e6003b954b9d6038bf98a6e4e8ca731b785bb8d64c817578687821e37d4a46"
-	SnapToWindowPatchSHA256       = "b34a00a524ae6ef04782f08cad9f023320b44ed689875f6df3c3c6b13949c6ca"
-	PlaceholderPatchSHA256        = "d1b7ddaa6604b3b61c16b487d8cdccf4d165672961ab10dea07b0b69299ab60d"
-	CaretWidthPatchSHA256         = "147cb61beb2fde6bdd3c7b0be01de7044535947609658cf9a6f96469486a1f98"
-	UIAProviderPatchSHA256        = "5372a13aae75d6bb103bf7489cd9e5bfe28d4a099cd9eef9e550080ea323523e"
-	ScrollbarsPatchSHA256         = "76473041ef62dc3e68681594d4840b364064c3403bd62fe4c60eb1891bc22b05"
-	TooltipPrimitivesPatchSHA256  = "c0aacba0bf423852051fa61fa290214c72852d2dc655f7e0bd8c4f36603ff1bb"
-	PackageStageRenamePatchSHA256 = "c73c539c94ccf9a2945d450fe12b3cf7a1d079c56ca3b51e14e17b52b9c37af0"
-	GlyphPlacementPatchSHA256     = "8a463bc728654abeb1ae3461687a5d8512a69e77f45284640aec5fc0b097a893"
+	ModulePath      = "github.com/egoist/mygo"
+	UpstreamVersion = "v0.7.3"
+	Revision        = "rcode-native-ui.21"
+	Replacement     = "./third_party/mygo"
+	UpstreamSum     = "h1:Jch8vV8ZzlHHr6hABg+aOx9nFbdjZ2oD/abY5Cf5/0I="
+
+	ExpectedTreeSHA256 = "ed9afb70ef97e138936f67058db29be585c36de836a7b3529545716f462cf22f"
 )
+
+// patchChain lists the reviewed local patches in application order over
+// upstream v0.7.3, ending with the pinned framework identity.
+var patchChain = []Patch{
+	{Path: "patches/mygo-v0.7.3-01-motion.patch", SHA256: "8614bce7424754d9192680dfb97bdcfef998ba206403bf76cce5164598e78965"},
+	{Path: "patches/mygo-v0.7.3-02-hover.patch", SHA256: "bd3426b2c94a8a8fd81e71c751206199e19a604349e4b29ec41c29baa13c3d9e"},
+	{Path: "patches/mygo-v0.7.3-03-files-drop.patch", SHA256: "660630908cf5f046fb2fe63c4972294dd154ebdc2180617b37a83bdf28eb868a"},
+	{Path: "patches/mygo-v0.7.3-04-markdown-line-height.patch", SHA256: "39b2ceb9501f671e8fb952484462d0d48ccbcc4b071a24e0bdb86505db319c3b"},
+	{Path: "patches/mygo-v0.7.3-05-snap-to-window.patch", SHA256: "b40f645a52a1abd9732c0099135f90cd16a643057aca1a20bff9bc806200f03f"},
+	{Path: "patches/mygo-v0.7.3-06-placeholder-color.patch", SHA256: "a112991b5e77d0c9f0d447b6f636c55fc095d3bd0c204423c4630a024aad74cc"},
+	{Path: "patches/mygo-v0.7.3-07-input-display-text.patch", SHA256: "0c6af413ebc7c707d303c40b211e129e0ac2fa0cddd53d268463642d5bd36159"},
+	{Path: "patches/mygo-v0.7.3-08-caret-width.patch", SHA256: "ab8bf37b9fb3d4b85fa37d1335f4619d1171b3a7b0ff28142009fdf15353b9e4"},
+	{Path: "patches/mygo-v0.7.3-09-windows-uia-provider.patch", SHA256: "f5100475ebe4bae91d39f1206e18867627c52762f769b6d22c2aca620f317dea"},
+	{Path: "patches/mygo-v0.7.3-10-scrollbars.patch", SHA256: "bc86a5709a2a5add9e4f8a7b7fd67cee34b266c1f20b4c340635ddf37f8d0bcf"},
+	{Path: "patches/mygo-v0.7.3-11-notification-context.patch", SHA256: "6fd30d98ba8fde4a3f7b7b5600170aa0244be75f8b072f56e925bfb3d472a474"},
+	{Path: "patches/mygo-v0.7.3-12-richtext-composer.patch", SHA256: "5ec64eb8dc52b10e731123e15d52effe2af1dcf0b59a228df1e16c7e673e647c"},
+	{Path: "patches/mygo-v0.7.3-13-richtext-usejustify.patch", SHA256: "95841a7f9e7f1dd5825c155612e08f1bf152372ab2de68ddfe8143287de91179"},
+	{Path: "patches/mygo-v0.7.3-14-updater-availability.patch", SHA256: "f17caf1a42bef853e282f2ba083962e150f16493f9e3f27a6bb69dca699c43de"},
+	{Path: "patches/mygo-v0.7.3-15-markdown-anchor.patch", SHA256: "d54a1fdf93fbd5ce76d1b3ff367e891354989ccb4e3a0147929faabcfef382aa"},
+	{Path: "patches/mygo-v0.7.3-16-inline-link-selection.patch", SHA256: "a84c36cafff5fec9db621c1326901293dbe99b1d02dec3d3f9f7fbf6e92c4472"},
+	{Path: "patches/mygo-v0.7.3-17-collapsible-animation.patch", SHA256: "14196fa6d33b1981909f227ab7c7ac6eb951345c907fdc805bb8e01becdb6ab0"},
+	{Path: "patches/mygo-v0.7.3-18-webview-data-directory.patch", SHA256: "c6c093db0a3b07ca48bf46db951a8dd6125d18ccde5456a95b5795cecfaa24ae"},
+	{Path: "patches/mygo-v0.7.3-19-package-stage-rename.patch", SHA256: "2b5006e196c36c17f8c69aad4a401f02ef04c93c52d969f3a907365388288bff"},
+	{Path: "patches/mygo-v0.7.3-20-windows-glyph-placement.patch", SHA256: "c411b2b4f737fedcd4b86283b02774fd86053c5c30b6d031d229b5e8d8f53373"},
+	{Path: "patches/mygo-v0.7.3-21-rendering-parity.patch", SHA256: "e06fbf864b3f560be74d0d95c930da75f2c8daee474ab733eec2fb60cee53163"},
+	{Path: "patches/mygo-v0.7.3-22-tooltip-primitives.patch", SHA256: "687230a7bc5d16f1b6db1e52cef9210f6d7104f95652de0ffa76e95bba7d71d7"},
+	{Path: "patches/mygo-v0.7.3-23-layoutcache-union-spacing.patch", SHA256: "71d079d2d8ba9f764985af0dcf466b60eb5d333083bb1e54a38be43b25d8bb6c"},
+	{Path: "patches/mygo-v0.7.3-24-textclient-a11y-guard.patch", SHA256: "bd676acb9d3dd8ebbcc893ce6e28254a3fe9beba83c1f673c77cd2f25ed0eb49"},
+	{Path: "patches/mygo-v0.7.3-25-uia-benchmark-close.patch", SHA256: "74c556efa2a7eb6ee521b7972ed4a3ec2e4941939278a45d6ffd84c530fe0bac"},
+	{Path: "patches/mygo-v0.7.3-26-patch-identity-final.patch", SHA256: "fc5105bf8bed56393e31c58b272c549033da64b2c93f9c527018320e0a4cfd7e"},
+	{Path: "patches/mygo-v0.7.3-27-selection-spans.patch", SHA256: "28672a79803648eb19ea0aa90793c9bd1e3a66d26db30df0d9b89c679d3cf33c"},
+	{Path: "patches/mygo-v0.7.3-28-code-block-tabs.patch", SHA256: "cbc6de5f43c04f13cefb61ef08bf34d3c966da9461b163d454fb68f5c1694435"},
+	{Path: "patches/mygo-v0.7.3-29-split-drag.patch", SHA256: "744f61dc6ebb599bfe0686c2d42a98084cd68475be9fc64e8240781463910c9c"},
+}
 
 type Patch struct {
 	Path   string `json:"path"`
@@ -113,22 +136,7 @@ func VerifySource(root string) (Lock, error) {
 	if lock.SchemaVersion != 1 || lock.Module != ModulePath || lock.UpstreamVersion != UpstreamVersion || lock.UpstreamSum != UpstreamSum || lock.Revision != Revision || lock.SourceDir != "third_party/mygo" || lock.TreeSHA256 != ExpectedTreeSHA256 {
 		return lock, fmt.Errorf("unexpected framework lock identity")
 	}
-	wantPatches := []Patch{
-		{"patches/mygo-v0.6.4-motion.patch", MotionPatchSHA256},
-		{"patches/mygo-v0.6.4-hover.patch", HoverPatchSHA256},
-		{"patches/mygo-v0.6.4-files-drop.patch", FilesDropPatchSHA256},
-		{"patches/mygo-v0.6.4-markdown-line-height.patch", MarkdownPatchSHA256},
-		{"patches/mygo-v0.6.4-coexistence.patch", CoexistencePatchSHA256},
-		{"patches/mygo-v0.6.4-input-display-text.patch", InputDisplayPatchSHA256},
-		{"patches/mygo-v0.6.4-snap-to-window.patch", SnapToWindowPatchSHA256},
-		{"patches/mygo-v0.6.4-placeholder-color.patch", PlaceholderPatchSHA256},
-		{"patches/mygo-v0.6.4-caret-width.patch", CaretWidthPatchSHA256},
-		{"patches/mygo-v0.6.4-windows-uia-provider.patch", UIAProviderPatchSHA256},
-		{"patches/mygo-v0.6.4-scrollbars.patch", ScrollbarsPatchSHA256},
-		{"patches/mygo-v0.6.4-tooltip-primitives.patch", TooltipPrimitivesPatchSHA256},
-		{"patches/mygo-v0.6.4-package-stage-rename.patch", PackageStageRenamePatchSHA256},
-		{"patches/mygo-v0.6.4-windows-glyph-placement.patch", GlyphPlacementPatchSHA256},
-	}
+	wantPatches := patchChain
 	if len(lock.Patches) != len(wantPatches) {
 		return lock, fmt.Errorf("unexpected framework patch list")
 	}
@@ -160,6 +168,7 @@ func VerifySource(root string) (Lock, error) {
 		Replace *struct{ Path, Version, Dir string }
 	}
 	cmd := exec.Command("go", "list", "-m", "-json", ModulePath)
+	processutil.HideConsole(cmd)
 	cmd.Dir = root
 	output, err := cmd.Output()
 	if err != nil {
@@ -186,7 +195,7 @@ func LinkerFlags(lock Lock) string {
 }
 
 func BinaryStamp(lock Lock) string {
-	return "ZERON_MYGO_PATCH[" + UpstreamVersion + "|" + lock.Revision + "|" + lock.TreeSHA256 + "]"
+	return "RCODE_MYGO_PATCH[" + UpstreamVersion + "|" + lock.Revision + "|" + lock.TreeSHA256 + "]"
 }
 
 // VerifyBinaryStamp works with -trimpath builds, which omit -ldflags from Go

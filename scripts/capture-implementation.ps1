@@ -8,7 +8,7 @@ Push-Location -LiteralPath $taskRoot
 try {
     New-Item -ItemType Directory -Path $taskOutput -Force | Out-Null
     $taskExecutable=Join-Path $taskOutput 'capture-runner.exe'
-    & go build -o $taskExecutable ./cmd/zeron
+    & go build -o $taskExecutable ./cmd/rcode
     if ($LASTEXITCODE -ne 0) { throw 'Capture build failed.' }
     $taskCases=@()
     foreach ($taskRoute in @('chat','chat/chat-0','history','changes','files','pull-requests','settings/general','settings/appearance','settings/notifications','settings/shortcuts','settings/providers','settings/devices','settings/cloud','settings/billing','settings/files','settings/archived sessions')) {

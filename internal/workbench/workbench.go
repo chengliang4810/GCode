@@ -13,11 +13,14 @@ import (
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/linktarget"
+	"gcode/internal/linkui"
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
 	"github.com/egoist/mygo/ui/markdown"
+	"github.com/egoist/mygo/ui/markdown/parser"
 )
 
 type surface struct{ kind, id, title string }
@@ -30,76 +33,83 @@ type FileDrag struct {
 }
 
 type document struct {
-	file           contracts.File
-	editor         *editor.State
-	conflict       bool
-	closeAfterSave bool
-	image          ui.ImageSource
-	imageError     string
-	preview        bool
-	autosave       *time.Timer
-	deleted        bool
-	focus          bool
-	viewer         ImageViewport
+	file            contracts.File
+	editor          *editor.State
+	conflict        bool
+	closeAfterSave  bool
+	image           ui.ImageSource
+	imageError      string
+	imageGeneration uint64
+	preview         bool
+	autosave        *time.Timer
+	deleted         bool
+	focus           bool
+	viewer          ImageViewport
+	sourceSession   string
+	absolutePath    string
+	linked          bool
+	markdown        markdown.Options
 }
 
 // State owns persistent widget state and native resources. Call Update for every
 // committed backend snapshot, on the UI thread, before drawing. Dispatch may be
 // supplied by the application to execute commands asynchronously.
 type State struct {
-	win             *mygo.Window
-	backend         contracts.Service
-	ctx             context.Context
-	cancel          context.CancelFunc
-	closed          atomic.Bool
-	snapshot        contracts.Snapshot
-	scopeID         string
-	scopes          map[string]workspaceScope
-	tabs            []surface
-	active          int
-	tabScroll       ui.ScrollState
-	tabObserver     tabStripObserver
-	tabTooltip      tabTooltipState
-	revealTab       bool
-	systemDark      bool
-	documents       map[string]*document
-	diffs           map[string]*editor.DiffState
-	browsers        map[string]*browser
-	terminals       map[string]*terminalView
-	folders         map[string]*bool
-	fileSearch      string
-	search          fileSearchState
-	tree            ui.Handle
-	recentFiles     []string
-	prSearch        string
-	prTab           int
-	checksExpanded  bool
-	selectedPR      string
-	comment         string
-	pendingClose    string
-	Error           string
-	ProjectID       string
-	Dispatch        func(contracts.Command)
-	OnOpenSession   func(string)
-	OnCloseSession  func(string)
-	RenderSession   func(*ui.Context, string)
-	OnOpenSurface   func()
-	OnCloseSurface  func()
-	OnToggleExpand  func()
-	OnAnnotation    func(contracts.Annotation)
-	nextAnnotation  uint32
-	nextBrowser     int
-	pendingTerminal bool
-	historySearch   string
-	commitID        string
-	commitOpen      bool
-	fileActionOpen  bool
-	fileAction      string
-	fileActionID    string
-	fileActionName  string
-	imageOpen       bool
-	imageID         string
-	imageViewer     ImageViewport
+	win               *mygo.Window
+	backend           contracts.Service
+	ctx               context.Context
+	cancel            context.CancelFunc
+	closed            atomic.Bool
+	snapshot          contracts.Snapshot
+	scopeID           string
+	scopes            map[string]workspaceScope
+	tabs              []surface
+	active            int
+	tabScroll         ui.ScrollState
+	tabObserver       tabStripObserver
+	tabTooltip        tabTooltipState
+	revealTab         bool
+	systemDark        bool
+	documents         map[string]*document
+	diffs             map[string]*editor.DiffState
+	browsers          map[string]*browser
+	terminals         map[string]*terminalView
+	folders           map[string]*bool
+	fileSearch        string
+	search            fileSearchState
+	recentFiles       []string
+	pendingClose      string
+	Error             string
+	ProjectID         string
+	Dispatch          func(contracts.Command)
+	OnOpenSession     func(string)
+	OnCloseSession    func(string)
+	RenderSession     func(*ui.Context, string)
+	OnNewSideChat     func()
+	CanNewSideChat    func() bool
+	OnOpenSurface     func()
+	OnCloseSurface    func()
+	OnToggleExpand    func()
+	OnAnnotation      func(contracts.Annotation)
+	OnLinkConfig      func(sessionID, documentPath string) linkui.Config
+	nextAnnotation    uint32
+	nextBrowser       int
+	pendingTerminal   bool
+	pendingFile       string
+	historySearch     string
+	commitID          string
+	commitOpen        bool
+	fileActionOpen    bool
+	fileAction        string
+	fileActionID      string
+	fileActionName    string
+	fileActionHost    string
+	imageOpen         bool
+	imageID           string
+	imageViewer       ImageViewport
+	linkCancel        context.CancelFunc
+	linkGeneration    uint64
+	pendingNavigation *fileNavigation
 }
 
 func New(win *mygo.Window, backend contracts.Service) *State {
@@ -122,13 +132,29 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 				continue
 			}
 			found = true
+			d.linked = false
 			for i := range s.tabs {
 				if s.tabs[i].kind == "file" && s.tabs[i].id == f.ID {
 					s.tabs[i].title = f.Name
 				}
 			}
 			d.deleted = false
+			if f.Kind == "image" {
+				changed := imageResourceChanged(d.file, f)
+				d.file, d.conflict = f, false
+				if changed {
+					d.image, d.imageError = nil, ""
+					s.loadDocumentImage(d)
+				}
+				continue
+			}
 			if f.Version == d.file.Version {
+				// Version equality keeps the accepted edit/conflict baseline;
+				// metadata can still change after deletion, policy, or loading.
+				content, version := d.file.Content, d.file.Version
+				d.file = f
+				d.file.Content, d.file.Version = content, version
+				d.editor.ReadOnly, d.editor.Label = f.ReadOnly, f.Name
 				continue
 			}
 			if f.Content == d.editor.Buffer.String() {
@@ -148,7 +174,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 				d.conflict = false
 			}
 		}
-		if !found {
+		if !found && !d.linked {
 			d.deleted = true
 			d.file.ReadOnly = true
 		}
@@ -175,9 +201,20 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 	}
 	if s.pendingTerminal {
 		for _, t := range snapshot.Terminals {
-			if s.terminals[t.ID] == nil && (s.ProjectID == "" || t.ProjectID == s.ProjectID) {
+			if s.terminals[t.ID] == nil && (s.ProjectID == "" || t.ProjectID == s.ProjectID) && (snapshot.Runtime == nil || t.Status == "running" && t.SessionID == s.scopeID) {
 				s.pendingTerminal = false
 				s.openTerminal(t)
+				break
+			}
+		}
+	}
+	if s.pendingFile != "" {
+		for _, file := range snapshot.Files {
+			if file.ID == s.pendingFile && file.Loaded {
+				id := s.pendingFile
+				s.pendingFile = ""
+				s.OpenFile(id)
+				s.applyPendingNavigation(id)
 				break
 			}
 		}
@@ -242,6 +279,7 @@ func (s *State) selectTab(index int) {
 	if index < 0 || index >= len(s.tabs) {
 		return
 	}
+	s.cancelLink()
 	s.active = index
 	s.revealTab = true
 	t := s.tabs[index]
@@ -254,8 +292,7 @@ func (s *State) selectTab(index int) {
 	}
 	if t.kind == "terminal" {
 		if v := s.terminals[t.id]; v != nil {
-			v.focusSearch = v.showSearch
-			v.focusBody = !v.showSearch
+			v.focusBody = true
 		}
 	}
 }
@@ -264,28 +301,16 @@ func (s *State) OpenFile(id string) {
 	if s.closed.Load() {
 		return
 	}
+	s.cancelLink()
 	for _, f := range s.snapshot.Files {
 		if f.ID == id && f.Kind != "directory" {
-			s.recentFiles = append([]string{id}, slices.DeleteFunc(s.recentFiles, func(previous string) bool { return previous == id })...)
-			if s.documents[id] == nil {
-				buffer := editor.NewBuffer(f.Content)
-				buffer.SetLanguage(editor.LanguageFor(f.Path))
-				s.documents[id] = &document{file: f, editor: &editor.State{Buffer: buffer, ReadOnly: f.ReadOnly, Label: f.Name, NoScrollPastEnd: true}}
-				if f.Kind == "image" {
-					d := s.documents[id]
-					data, err := assets.Read(f.AssetRef)
-					if err == nil {
-						if strings.HasSuffix(strings.ToLower(f.AssetRef), ".svg") {
-							d.image, err = ui.ParseSVG(data)
-						} else {
-							d.image, err = ui.DecodeBitmap(data)
-						}
-					}
-					if err != nil {
-						d.imageError = err.Error()
-					}
-				}
+			if s.snapshot.Runtime != nil && !f.Loaded {
+				s.pendingFile = id
+				s.command(contracts.Command{Kind: "file.open", ID: id})
+				return
 			}
+			s.recentFiles = append([]string{id}, slices.DeleteFunc(s.recentFiles, func(previous string) bool { return previous == id })...)
+			s.openDocument(f, s.scopeID, "", false)
 			s.documents[id].focus = true
 			s.choose("file", id, f.Name)
 			return
@@ -310,8 +335,6 @@ func (s *State) OpenChange(id string) {
 		}
 	}
 }
-
-func (s *State) OpenPR(id string) { s.selectedPR = id; s.prTab = 0; s.choose("pr", id, "Pull request") }
 
 // OpenSession opens a native side transcript when its renderer is available.
 // Hosts without a side renderer keep their existing central navigation.
@@ -341,28 +364,37 @@ func (s *State) OpenSurface(kind string) {
 	}
 	s.Error = ""
 	switch kind {
+	case "sidechat":
+		if s.canNewSideChat() {
+			s.OnNewSideChat()
+		}
 	case "browser":
-		s.openBrowser("https://go.dev")
+		s.openBrowser("")
 	case "terminal":
 		for _, t := range s.snapshot.Terminals {
-			if s.ProjectID == "" || t.ProjectID == s.ProjectID {
+			if (s.ProjectID == "" || t.ProjectID == s.ProjectID) && (s.snapshot.Runtime == nil || t.Status == "running" && t.SessionID == s.scopeID) {
 				s.openTerminal(t)
 				return
 			}
 		}
-		s.pendingTerminal = true
-		s.command(contracts.Command{Kind: "terminal.create", ProjectID: s.ProjectID})
+		s.NewTerminal()
 	case "history":
 		s.choose(kind, "history", "History")
 	case "changes":
 		s.choose(kind, "changes", "Changes")
-	case "pullrequests", "pull-requests", "pr":
-		s.choose("pullrequests", "pullrequests", "Pull requests")
 	case "files":
 		s.choose("files", "files", "Files")
 	default:
 		s.choose("picker", "picker", "Workspace")
 	}
+}
+
+func (s *State) NewTerminal() {
+	if s.closed.Load() {
+		return
+	}
+	s.pendingTerminal = true
+	s.command(contracts.Command{Kind: "terminal.create", ProjectID: s.ProjectID, SessionID: s.scopeID})
 }
 
 func (s *State) ActiveKind() string {
@@ -378,6 +410,7 @@ func (s *State) Close() error {
 		return nil
 	}
 	s.cancel()
+	s.cancelLink()
 	for _, b := range s.browsers {
 		b.close()
 	}
@@ -469,15 +502,19 @@ func (s *State) removeTab(index int) {
 	}
 }
 
-func (s *State) View(c *ui.Context) { s.view(c, true) }
+func (s *State) View(c *ui.Context) { s.view(c, true, 0) }
 
 // Body draws a workspace whose TabStrip is hosted by the shell titlebar.
-func (s *State) Body(c *ui.Context) { s.view(c, false) }
+func (s *State) Body(c *ui.Context) { s.view(c, false, 0) }
 
-func (s *State) view(c *ui.Context, ownTabs bool) {
+// BodyBelow draws Body under a shell titlebar band: the surface still fills
+// the window height behind the band, while its own content starts below it.
+func (s *State) BodyBelow(c *ui.Context, top float32) { s.view(c, false, top) }
+
+func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 	s.syncAppearance(c)
 	p := s.palette()
-	container := ui.Column(c).Key("workspace:" + s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
+	container := ui.Column(c).Key("workspace:" + s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
 	if value, ok := ui.Drop[FileDrag](container); ok {
 		s.OpenFile(value.ID)
 	}
@@ -511,10 +548,6 @@ func (s *State) view(c *ui.Context, ownTabs bool) {
 			s.changesView(c)
 		case "history":
 			s.historyView(c)
-		case "pullrequests":
-			s.pullRequestsView(c)
-		case "pr":
-			s.pullRequestView(c, t.id)
 		case "browser":
 			s.browserView(c, t.id)
 		case "terminal":
@@ -536,15 +569,26 @@ func (s *State) iconButton(c *ui.Context, icon, label string, action func()) {
 
 func (s *State) picker(c *ui.Context) {
 	p := s.palette()
-	items := []struct{ kind, title, icon string }{{"browser", "Browser", "globe"}, {"terminal", "Terminal", "terminal"}}
+	items := []struct{ kind, title, icon string }{}
+	if s.OnNewSideChat != nil && s.scopeID != "" {
+		items = append(items, struct{ kind, title, icon string }{"sidechat", "Side chat", "chat-round-line"})
+	}
+	items = append(items, struct{ kind, title, icon string }{"browser", "Browser", "globe"}, struct{ kind, title, icon string }{"terminal", "Terminal", "terminal"})
 	if s.hasGit() {
 		items = append(items, struct{ kind, title, icon string }{"changes", "Diffs", "list"}, struct{ kind, title, icon string }{"history", "History", "git-branch"})
 	}
 	ui.Column(c).Grow(1).FillWidth().Padding(16).Center().Children(func() {
 		ui.Column(c).FillWidth().MaxWidth(280).Gap(8).Children(func() {
 			for _, item := range items {
-				c.Key(item.kind)
+				key := item.kind
+				if item.kind == "sidechat" {
+					key = "side-chat-launcher"
+				}
+				c.Key(key)
 				b := ui.ButtonBase(c).Label(tr(c, item.title)).FillWidth().Height(44).Padding(0, 14).Radius(10).Border(1, p.Border).Gap(10).AlignItems(ui.Center).Background(sourceInk(p.Dark, .02)).OnClick(func() { s.OpenSurface(item.kind) })
+				if item.kind == "sidechat" {
+					b.Disabled(!s.canNewSideChat())
+				}
 				if b.Hovered() {
 					b.Background(sourceInk(p.Dark, .05)).BorderColor(p.BorderStrong)
 				}
@@ -555,6 +599,10 @@ func (s *State) picker(c *ui.Context) {
 			}
 		})
 	})
+}
+
+func (s *State) canNewSideChat() bool {
+	return s.OnNewSideChat != nil && s.scopeID != "" && (s.CanNewSideChat == nil || s.CanNewSideChat())
 }
 
 func (s *State) hasGit() bool {
@@ -574,14 +622,30 @@ func sourceInk(dark bool, alpha float32) ui.Color {
 }
 
 func (s *State) FilesView(c *ui.Context) {
+	s.filesView(c, "workspace", &s.search.workspace, 0)
+}
+
+// FilesDockView shares conversation data with the workspace explorer, while
+// keeping each displayed control's identity, focus and scroll state separate.
+func (s *State) FilesDockView(c *ui.Context) {
+	s.filesView(c, "dock", &s.search.dock, 0)
+}
+
+// FilesDockBelow draws the dock under the shell titlebar band, its surface
+// reaching the window's top edge.
+func (s *State) FilesDockBelow(c *ui.Context, top float32) {
+	s.filesView(c, "dock", &s.search.dock, top)
+}
+
+func (s *State) filesView(c *ui.Context, host string, controls *fileExplorerControls, top float32) {
 	s.syncAppearance(c)
 	p := s.palette()
-	ui.Column(c).Key("files-explorer:" + s.scopeID).Label(tr(c, "Files explorer")).Fill().MinWidth(0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
+	ui.Column(c.Key("files-explorer:" + s.scopeID + ":" + host)).Label(tr(c, "Files explorer")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
 		ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
 			ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
 				ui.Icon(c, assets.Icon("magnifer")).Size(12, 12).TextColor(p.Faint)
-				input := ui.TextInputBase(c, &s.fileSearch).Bind(&s.search.input).Placeholder(tr(c, "Search files")).Label(tr(c, "Search files")).Grow(1).FontSize(design.UISize(c, 11.5)).OnChange(s.refreshFileSearch).OnShortcut(0, ui.KeyEscape, func() { s.clearFileSearch(); s.tree.Focus() })
-				input.OnShortcut(0, ui.KeyDown, func() { s.moveFileSearch(1) }).OnShortcut(0, ui.KeyUp, func() { s.moveFileSearch(-1) }).OnSubmit(s.activateFileSearch)
+				input := ui.TextInputBase(c, &s.fileSearch).Bind(&controls.input).Placeholder(tr(c, "Search files")).Label(tr(c, "Search files")).Grow(1).FontSize(design.TextSize(c, design.TextBase)).OnChange(s.refreshFileSearch).OnShortcut(0, ui.KeyEscape, func() { s.clearFileSearch(); controls.tree.Focus() })
+				input.OnShortcut(0, ui.KeyDown, func() { s.moveFileSearch(1, controls) }).OnShortcut(0, ui.KeyUp, func() { s.moveFileSearch(-1, controls) }).OnSubmit(s.activateFileSearch)
 			})
 			icon, label := "eye-closed", "Show all files (even hidden)"
 			if s.snapshot.Settings.Files.ShowHidden {
@@ -598,28 +662,31 @@ func (s *State) FilesView(c *ui.Context) {
 			})
 		})
 		ui.Column(c).Grow(1).FillWidth().MinHeight(0).Padding(4, 0).Children(func() {
+			s.projectFilesStatus(c)
 			if s.fileSearch != "" {
-				s.fileSearchResults(c)
+				s.fileSearchResults(c, host, controls)
 				return
 			}
-			ui.Scroll(c).Grow(1).FillWidth().Children(func() { ui.Tree(c, func() { s.fileChildren(c, "") }).Bind(&s.tree).FillWidth() })
+			ui.Scroll(c).Grow(1).FillWidth().Children(func() { ui.Tree(c, func() { s.fileChildren(c, "", host) }).Bind(&controls.tree).FillWidth() })
 		}).ContextMenu(func(m *ui.Menu) {
 			if m.Item(tr(c, "New file…")).Chosen() {
-				s.requestFileAction("create", "")
+				s.requestFileAction("create", "", host)
 			}
 			if m.Item(tr(c, "New folder…")).Chosen() {
-				s.requestFileAction("mkdir", "")
+				s.requestFileAction("mkdir", "", host)
 			}
 		})
 	})
-	s.fileActionDialog(c)
+	if s.fileActionHost == host {
+		s.fileActionDialog(c)
+	}
 }
 
-func (s *State) fileChildren(c *ui.Context, parent string) {
-	s.fileChildrenLevel(c, parent, 0)
+func (s *State) fileChildren(c *ui.Context, parent, host string) {
+	s.fileChildrenLevel(c, parent, host, 0)
 }
 
-func (s *State) fileChildrenLevel(c *ui.Context, parent string, depth int) {
+func (s *State) fileChildrenLevel(c *ui.Context, parent, host string, depth int) {
 	p := s.palette()
 	for _, f := range s.filesIn(parent) {
 		c.Key(f.ID)
@@ -630,10 +697,10 @@ func (s *State) fileChildrenLevel(c *ui.Context, parent string, depth int) {
 				open = &v
 				s.folders[f.ID] = open
 			}
-			row := ui.TreeItem(c, "", open, func() { s.fileChildrenLevel(c, f.ID, depth+1) }).Label(f.Name).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path, Directory: true}).OnClick(func() { *open = !*open }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m) })
+			row := ui.TreeItem(c, "", open, func() { s.fileChildrenLevel(c, f.ID, host, depth+1) }).Label(f.Name).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path, Directory: true}).OnClick(func() { *open = !*open }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m, host) })
 			s.styleFileRow(c, row, f, depth, *open, p)
 		} else {
-			row := ui.TreeItem(c, "", nil, nil).Label(f.Name).Selected(s.activeFile() == f.ID).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path}).OnClick(func() { s.OpenFile(f.ID) }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m) })
+			row := ui.TreeItem(c, "", nil, nil).Label(f.Name).Selected(s.activeFile() == f.ID).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path}).OnClick(func() { s.OpenFile(f.ID) }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m, host) })
 			s.styleFileRow(c, row, f, depth, false, p)
 		}
 	}
@@ -642,7 +709,7 @@ func (s *State) fileChildrenLevel(c *ui.Context, parent string, depth int) {
 func (s *State) styleFileRow(c *ui.Context, row ui.Element, f contracts.File, depth int, expanded bool, p design.Tokens) {
 	// The official Tree's disclosure slot is 16px. Its two extra pixels
 	// come out of the inset, preserving the source icon/text starting x.
-	row.Height(27).FillWidth().Gap(0).Padding(0, 8, 0, 6+14*float32(depth)).FontSize(design.UISize(c, 11.5)).TextColor(p.Muted).Radius(0).Draw(func(painter *ui.Painter, r ui.Rect) {
+	row.Height(27).FillWidth().Gap(0).Padding(0, 8, 0, 6+14*float32(depth)).FontSize(design.TextSize(c, design.TextBase)).TextColor(p.Muted).Radius(0).Draw(func(painter *ui.Painter, r ui.Rect) {
 		for level := 0; level < depth; level++ {
 			x := r.X + 15 + 14*float32(level)
 			painter.Line(x, r.Y, x, r.Y+r.H, 1, p.Border)
@@ -681,7 +748,7 @@ func (s *State) fileView(c *ui.Context, id string) {
 			ui.Text(c, tr(c, "Unsaved")).TextColor(p.Muted)
 		}
 		s.iconButton(c, "magnifer", "Find in file", func() { d.editor.Run(editor.Find) })
-		if strings.HasSuffix(d.file.Path, ".md") {
+		if isMarkdown(d.file.Path) {
 			label := "Preview"
 			if d.preview {
 				label = "Edit"
@@ -713,7 +780,44 @@ func (s *State) fileView(c *ui.Context, id string) {
 		return
 	}
 	if d.preview {
-		ui.Scroll(c).Grow(1).FillWidth().Padding(20).Children(func() { markdown.View(c, d.editor.Buffer.String(), nil) })
+		services := c.Services()
+		preview := ui.Column(c).Grow(1).FillWidth().MinHeight(0).Selectable()
+		selection := linkui.BeginSelection(preview)
+		var cfg linkui.Config
+		if s.OnLinkConfig != nil {
+			cfg = s.OnLinkConfig(d.sourceSession, d.absolutePath)
+			cfg.Selection = selection
+			d.markdown.Block = func(c *ui.Context, document *parser.Document, index int) bool {
+				return linkui.Block(c, document, index, cfg, d.markdown.Theme)
+			}
+		}
+		d.markdown.ShareSelection = true
+		d.markdown.OnLink = func(raw string) {
+			if cfg.Open != nil {
+				target, err := linktarget.ParsePreview(raw, d.absolutePath)
+				if err != nil {
+					s.Error = err.Error()
+					return
+				}
+				if target.Kind == linktarget.Mail || target.Kind == linktarget.Web && !cfg.Internal {
+					if cfg.OpenExternal != nil {
+						cfg.OpenExternal(raw)
+					}
+				} else {
+					cfg.Open(raw)
+				}
+				return
+			}
+			if err := s.openPreviewLink(d, raw, services.OpenURL); err != nil {
+				s.Error = err.Error()
+			}
+		}
+		preview.Children(func() {
+			ui.Scroll(c).Grow(1).FillWidth().Padding(20).Children(func() {
+				markdown.View(c, linktarget.NormalizeMarkdown(d.editor.Buffer.String()), &d.markdown)
+			})
+		})
+		selection.Menu(c, preview)
 		return
 	}
 	d.editor.Font = s.codeFont()
@@ -818,7 +922,7 @@ func (s *State) closeConfirmation(c *ui.Context) {
 		return
 	}
 	ui.Column(c).Grow(1).FillWidth().Center().Gap(16).Children(func() {
-		ui.Text(c, fmt.Sprintf(tr(c, "Save changes to %s?"), d.file.Name)).FontSize(design.UISize(c, 16)).FontWeight(500)
+		ui.Text(c, fmt.Sprintf(tr(c, "Save changes to %s?"), d.file.Name)).FontSize(design.TextSize(c, design.TextLarge)).FontWeight(500)
 		ui.Text(c, tr(c, "Your changes will be lost if you close without saving.")).TextColor(s.palette().Muted)
 		ui.Row(c).Gap(8).Children(func() {
 			ui.Button(c, tr(c, "Cancel")).OnClick(func() { s.pendingClose = "" })
@@ -847,7 +951,7 @@ func (s *State) diffView(c *ui.Context, id string) {
 func (s *State) changesView(c *ui.Context) {
 	p := s.palette()
 	ui.Scroll(c).Grow(1).FillWidth().Padding(16).Children(func() {
-		ui.Text(c, tr(c, "Changes")).FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
+		ui.Text(c, tr(c, "Changes")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600).Margin(0, 0, 16, 0)
 		for _, ch := range s.snapshot.Changes {
 			if s.ProjectID != "" && ch.ProjectID != s.ProjectID {
 				continue
@@ -867,145 +971,3 @@ func (s *State) changesView(c *ui.Context) {
 }
 
 func shortSHA(sha string) string { return sha[:min(7, len(sha))] }
-
-func (s *State) pullRequestsView(c *ui.Context) {
-	p := s.palette()
-	ui.Row(c).Height(48).Padding(8, 16).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, tr(c, "Pull requests")).FontSize(design.UISize(c, 18)).FontWeight(600)
-		ui.Spacer(c)
-	})
-	ui.TextInputBase(c, &s.prSearch).Label(tr(c, "Search pull requests")).Placeholder(tr(c, "Search pull requests")).Padding(8, 12).Margin(4, 16).Radius(6).Background(p.Input)
-	ui.Scroll(c).Grow(1).FillWidth().Padding(8, 16).Children(func() {
-		for _, pr := range s.snapshot.PullRequests {
-			if !strings.Contains(strings.ToLower(pr.Title+pr.Repository), strings.ToLower(s.prSearch)) {
-				continue
-			}
-			c.Key(pr.ID)
-			ui.ButtonBase(c).Label(pr.Title).FillWidth().Padding(14, 12).Radius(10).Margin(0, 0, 8, 0).Background(p.Card).OnClick(func() { s.OpenPR(pr.ID) }).Children(func() {
-				ui.Column(c).Gap(6).Children(func() {
-					ui.Text(c, pr.Title).FontWeight(500)
-					ui.Text(c, fmt.Sprintf(tr(c, "%s #%d · %s · %s"), pr.Repository, pr.Number, pr.Author, tr(c, pr.Status))).TextColor(p.Muted)
-				})
-			})
-		}
-	})
-}
-
-func (s *State) pullRequestView(c *ui.Context, id string) {
-	var pr *contracts.PullRequest
-	for i := range s.snapshot.PullRequests {
-		if s.snapshot.PullRequests[i].ID == id {
-			pr = &s.snapshot.PullRequests[i]
-			break
-		}
-	}
-	if pr == nil {
-		return
-	}
-	p := s.palette()
-	ui.Column(c).Padding(16, 20).Gap(8).Children(func() {
-		ui.Text(c, pr.Title).FontSize(design.UISize(c, 20)).FontWeight(600)
-		ui.Text(c, fmt.Sprintf(tr(c, "#%d · %s → %s"), pr.Number, pr.HeadBranch, pr.BaseBranch)).TextColor(p.Muted)
-		ui.Row(c).Gap(8).Children(func() {
-			ui.Text(c, tr(c, pr.Status)).Padding(3, 8).Radius(10).Background(p.Card).TextColor(p.Success)
-			ui.Spacer(c)
-			ui.Button(c, tr(c, "Merge pull request")).Disabled(pr.Status != "open").OnClick(func() { s.command(contracts.Command{Kind: "pr.merge", ID: id}) })
-		})
-	})
-	ui.Tabs(c, &s.prTab, tr(c, "Summary"), tr(c, "Code"), tr(c, "Activity"))
-	ui.Scroll(c).Grow(1).FillWidth().Padding(16, 20).Children(func() {
-		switch s.prTab {
-		case 0:
-			markdown.View(c, pr.Body, nil)
-			ui.ButtonBase(c).Label(tr(c, "Checks")).FillWidth().Padding(12, 0).Margin(16, 0, 0, 0).OnClick(func() { s.checksExpanded = !s.checksExpanded }).Children(func() {
-				ui.Text(c, fmt.Sprintf(tr(c, "Checks · %d"), len(pr.Checks))).FontWeight(500)
-				ui.Spacer(c)
-				icon := "alt-arrow-right"
-				if s.checksExpanded {
-					icon = "alt-arrow-down"
-				}
-				ui.Icon(c, assets.Icon(icon)).Size(12, 12)
-			})
-			if s.checksExpanded {
-				for _, check := range pr.Checks {
-					c.Key(check.Name)
-					ui.Column(c).Padding(10, 12).Gap(5).Children(func() {
-						ui.Row(c).Gap(8).Children(func() {
-							icon, color := "check", p.Success
-							if check.Status == "failure" || check.Status == "failed" {
-								icon, color = "danger-triangle", p.Danger
-							}
-							ui.Icon(c, assets.Icon(icon)).Size(14, 14).TextColor(color)
-							ui.Text(c, check.Name).FontWeight(500)
-							ui.Spacer(c)
-							ui.Text(c, tr(c, check.Status)).TextColor(color)
-						})
-						ui.Text(c, check.Detail).TextColor(p.Muted)
-					})
-				}
-			}
-		case 1:
-			for _, changeID := range pr.ChangeIDs {
-				for _, change := range s.snapshot.Changes {
-					if change.ID == changeID {
-						ui.Button(c, change.Path).OnClick(func() { s.OpenChange(change.ID) })
-					}
-				}
-			}
-		case 2:
-			comments := slices.Clone(pr.Comments)
-			slices.SortFunc(comments, func(a, b contracts.Comment) int { return a.CreatedAt.Compare(b.CreatedAt) })
-			if len(comments) == 0 {
-				ui.Column(c).MinHeight(160).FillWidth().Center().Gap(16).Children(func() {
-					ui.Icon(c, assets.Icon("chat-round-line")).Size(24, 24).TextColor(p.Muted)
-					ui.Text(c, tr(c, "No activity yet")).FontSize(design.UISize(c, 15)).FontWeight(600)
-				})
-			}
-			for _, comment := range comments {
-				c.Key(comment.ID)
-				own := comment.Author == s.snapshot.User.Name || comment.Author == s.snapshot.User.Email
-				ui.Row(c).FillWidth().Margin(0, 24, 0, 0).Children(func() {
-					if own {
-						ui.Spacer(c)
-					}
-					bubble := ui.Column(c).MaxWidth(600).Grow(1).Gap(8)
-					if own {
-						bubble.Padding(10, 16).Radius(16).Background(p.Card)
-					}
-					bubble.Children(func() {
-						ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-							initial := []rune(comment.Author)
-							label := "?"
-							if len(initial) > 0 {
-								label = strings.ToUpper(string(initial[0]))
-							}
-							ui.Text(c, label).Size(24, 24).TextAlign(ui.Center).Radius(12).Background(p.Hover)
-							ui.Text(c, comment.Author).FontWeight(500)
-							ui.Text(c, date(c, comment.CreatedAt, "Jan 2, 15:04")).FontSize(design.UISize(c, 11)).TextColor(p.Muted)
-						})
-						if comment.Path != "" {
-							location := comment.Path
-							if comment.Line > 0 {
-								location += fmt.Sprintf(":%d", comment.Line)
-							}
-							ui.Text(c, location).FontSize(design.UISize(c, 11)).TextColor(p.Muted)
-						}
-						markdown.View(c, comment.Body, nil)
-					})
-				})
-			}
-		}
-	})
-	if s.prTab == 2 {
-		ui.Column(c).Padding(12, 20).Gap(8).BorderWidth(1, 0, 0, 0).BorderColor(p.Border).Children(func() {
-			ui.TextAreaBase(c, &s.comment).Label(tr(c, "Write a comment")).Placeholder(tr(c, "Write a comment… Type @ to mention someone")).MinHeight(72).Padding(12).Radius(16).Background(p.Input)
-			ui.Row(c).Justify(ui.End).Children(func() {
-				ui.PrimaryButton(c, tr(c, "Comment")).Disabled(strings.TrimSpace(s.comment) == "").OnClick(func() {
-					text := s.comment
-					s.comment = ""
-					s.command(contracts.Command{Kind: "pr.comment", ID: id, Comment: &contracts.CommentInput{Body: text}})
-				})
-			})
-		})
-	}
-}

@@ -309,7 +309,7 @@ fn capture_to_file(hwnd: usize, path: &Path, timeout_ms: u32) -> anyhow::Result<
 /// `path` must reference `path_len` readable bytes; `error` must reference
 /// `error_capacity` writable bytes. Neither pointer is retained after return.
 #[unsafe(no_mangle)]
-pub unsafe extern "system" fn zeron_fixture_wgc_capture(
+pub unsafe extern "system" fn rcode_fixture_wgc_capture(
     hwnd: usize,
     path: *const u8,
     path_len: usize,
@@ -357,7 +357,7 @@ pub unsafe extern "system" fn zeron_fixture_wgc_capture(
 }
 
 #[unsafe(no_mangle)]
-pub extern "system" fn zeron_fixture_wgc_abi_version() -> u32 {
+pub extern "system" fn rcode_fixture_wgc_abi_version() -> u32 {
     1
 }
 
@@ -384,7 +384,7 @@ mod tests {
         let path = b"D:\\not-created-by-wgc-test.png";
         let mut error = [0u8; 256];
         let code = unsafe {
-            zeron_fixture_wgc_capture(
+            rcode_fixture_wgc_capture(
                 0,
                 path.as_ptr(),
                 path.len(),
@@ -402,7 +402,7 @@ mod tests {
         let mut error = [0u8; 4];
         assert_eq!(
             unsafe {
-                zeron_fixture_wgc_capture(
+                rcode_fixture_wgc_capture(
                     0,
                     std::ptr::null(),
                     1,
@@ -415,7 +415,7 @@ mod tests {
         );
         assert_eq!(
             unsafe {
-                zeron_fixture_wgc_capture(
+                rcode_fixture_wgc_capture(
                     0,
                     b"x".as_ptr(),
                     MAX_PATH_BYTES + 1,
@@ -429,7 +429,7 @@ mod tests {
         let path = [255u8];
         assert_eq!(
             unsafe {
-                zeron_fixture_wgc_capture(0, path.as_ptr(), 1, 1, error.as_mut_ptr(), error.len())
+                rcode_fixture_wgc_capture(0, path.as_ptr(), 1, 1, error.as_mut_ptr(), error.len())
             },
             1
         );

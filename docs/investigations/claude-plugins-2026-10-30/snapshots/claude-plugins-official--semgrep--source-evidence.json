@@ -1,0 +1,35 @@
+{
+  "repo": "semgrep/mcp-marketplace",
+  "commit": "b58f407c6ac0f5fe47dee8301602f2e290a8ecfb",
+  "path": "plugin",
+  "archive_sha256": "1c6adbb630ab8b5419e862ecd19823c927a35a377010c03cc8a8d1f17f2a18e3",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "hooks/hooks.json",
+    "scripts/hook",
+    "scripts/hook-darwin-amd64",
+    "scripts/hook-darwin-arm64",
+    "scripts/hook-linux-amd64",
+    "scripts/hook-linux-arm64",
+    "scripts/hook.cmd",
+    "scripts/hook.exe",
+    "scripts/hook.sh",
+    "skills/add-and-validate-guardian-developer-semgrep-rule/SKILL.md",
+    "skills/install-mfw/SKILL.md",
+    "skills/install-mfw/scripts/inspect-shell-config.sh",
+    "skills/install-mfw/scripts/install-binary.sh",
+    "skills/remove-guardian-developer-semgrep-rule/SKILL.md"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Write|Edit|Bash|apply_patch\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto PreToolUse\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto PreToolUse\"\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Write|Edit|Bash|apply_patch\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto PostToolUse --async\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto PostToolUse --async\",\n            \"async\": true\n          }\n        ]\n      }\n    ],\n    \"SessionStart\": [\n      {\n        \"matcher\": \"startup|resume|clear|compact\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto SessionStatus\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto SessionStatus\",\n            \"timeout\": 5\n          },\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto SessionStart --async\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto SessionStart --async\",\n            \"async\": true,\n            \"timeout\": 180\n          },\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto Update --async\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto Update --async\",\n            \"async\": true,\n            \"timeout\": 180\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto Stop\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto Stop\",\n            \"timeout\": 35\n          },\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto StopRewake --async\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto StopRewake --async\",\n            \"async\": true,\n            \"asyncRewake\": true,\n            \"timeout\": 600\n          }\n        ]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"matcher\": \"clear|resume|logout|prompt_input_exit|bypass_permissions_disabled|other\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/scripts/hook\\\" auto SessionEnd\",\n            \"commandWindows\": \"& \\\"$env:CLAUDE_PLUGIN_ROOT\\\\scripts\\\\hook.exe\\\" auto SessionEnd\",\n            \"timeout\": 3\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"author\": {\n    \"name\": \"Semgrep\",\n    \"url\": \"https://github.com/semgrep\"\n  },\n  \"description\": \"Semgrep Guardian: Scans agent-generated code for security vulnerabilities.\",\n  \"displayName\": \"Semgrep Guardian\",\n  \"name\": \"semgrep\",\n  \"version\": \"2.7.0\"\n}",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"guardian\": {\n      \"command\": \"${CLAUDE_PLUGIN_ROOT}/scripts/hook\",\n      \"args\": [\"claude\", \"mcp\"]\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/install-mfw/SKILL.md": "\nname: install-mfw\ndescription: Install the mfw (Semgrep Malware Firewall) CLI via the curl|sh installer and walk the user through setup — trust store, PATH shims, shell integration, and the background daemon — asking questions at real decision points. Detects when the user's shell rc files are *managed* (symlinked into nix / home-manager / chezmoi / GNU stow / a dotfiles git repo) and, instead of clobbering them, adds mfw's source line to the right source-of-truth. Use when the user wants to install, set up, or onboard mfw on this machine.\nallowed-tools:\n  - AskUserQuestion\n  - Read\n  - Edit\n  - Write\n  - Bash(uname:*)\n  - Bash(command -v *)\n  - Bash(sh ${CLAUDE_SKILL_DIR}/scripts/*)\n  - Bash(${CLAUDE_SKILL_DIR}/scripts/*)\n  - Bash(curl -fsSL https://*/dist/mfw/install.sh | sh)\n  - Bash(mfw *)\n  - Bash(~/.local/bin/mfw *)\n  - Bash(sudo mfw *)\n  - Bash(readlink *)\n  - Bash(realpath *)\n  - Bash(ls -l *)\n  - Bash(stat *)\n  - Bash(grep *)\n  - Bash(head *)\n  - Bash(home-manager *)\n  - Bash(darwin-rebuild *)\n  - Bash(nixos-rebuild *)\n  - Bash(chezmoi *)\n",
+    "skills/remove-guardian-developer-semgrep-rule/SKILL.md": "\nname: remove-guardian-developer-semgrep-rule\ndescription: Remove a custom Semgrep rule from Guardian — list what is installed, work out which file holds the rule, and delete or edit it out of the user or repo rules directory. Use when someone wants Guardian to stop flagging something, asks to remove, delete or disable a custom rule, or wants to clear room under the rule limit.\n",
+    "skills/add-and-validate-guardian-developer-semgrep-rule/SKILL.md": "\nname: add-and-validate-guardian-developer-semgrep-rule\ndescription: write a custom semgrep rule with the user, add it to guardian in either user or repo scope, and prove it fires by writing a file that should trip it. use when someone wants guardian to catch something it currently misses, asks to write or add a semgrep rule, or wants a project convention enforced on the code claude writes.\n"
+  }
+}

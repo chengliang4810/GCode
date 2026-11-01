@@ -1,0 +1,28 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/math-proof",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "agents/math-proof-judge.md",
+    "agents/math-proof-worker-deep.md",
+    "agents/math-proof-worker.md",
+    "assets/how-a-run-unfolds.png",
+    "skills/siege/SKILL.md",
+    "skills/siege/scripts/ledger.py",
+    "skills/solo/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"math-proof\",\n  \"description\": \"Two skills for hard mathematics problems, each ending in a self-contained proof.md: /math-proof:solo has the session work the problem itself in stages with a notes file; /math-proof:siege works on it for hours in rounds of judge and worker sub-agents and says plainly what is and is not proved.\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/solo/SKILL.md": "\nname: solo\ndescription: \"Work on one hard mathematics problem in this session yourself, with no sub-agents: reason in stages, record each settled step in a notes file so that nothing written is lost if a response is cut off, and end with a self-contained proof.md. Usage: /math-proof:solo <the problem, stated in full, or the path of a file holding it>.\"\nargument-hint: \"[DIR=run-directory] <problem statement | problem-file>\"\ndisable-model-invocation: true\ndisallowed-tools: WebSearch, WebFetch, AskUserQuestion\nallowed-tools: Read, Write, Edit, Glob, Grep, Bash(mkdir *), Bash(cp *), Bash(cmp *)\n",
+    "agents/math-proof-judge.md": "\nname: math-proof-judge\ndescription: \"The math-proof judge: it plans each round's questions, reads the answers, keeps the summary and ledger, and writes up, revises and finalizes proof.md. It does one step per launch and is launched only by the math-proof plugin's siege skill.\"\ntools: Read, Write, Edit, Bash, Glob, Grep\nmodel: inherit\neffort: medium\nmaxTurns: 120\n",
+    "agents/math-proof-worker-deep.md": "\nname: math-proof-worker-deep\ndescription: \"The higher-effort math-proof worker, used from the escalation round on (round 4, unless the siege setting ESC_ROUND says otherwise). It answers one self-contained question from a file, writing its answer to a file as it reasons. It has no memory between questions and is launched only by the math-proof plugin's siege skill.\"\ntools: Read, Write, Edit\nmodel: inherit\neffort: medium\nmaxTurns: 80\n",
+    "agents/math-proof-worker.md": "\nname: math-proof-worker\ndescription: \"A math-proof worker: it answers one self-contained question from a file, writing its answer to a file as it reasons. It has no memory between questions and is launched only by the math-proof plugin's siege skill.\"\ntools: Read, Write, Edit\nmodel: inherit\neffort: low\nmaxTurns: 80\n",
+    "skills/siege/SKILL.md": "\nname: siege\ndescription: \"Work on one hard mathematics problem in rounds: each round a judge writes a few self-contained questions, independent workers answer them, and the judge keeps a ledger of what is proved, refuted and open, until the judge concludes or the rounds run out, and then a proof.md says plainly what is and is not proved. A run takes hours and dozens of worker runs. Usage: /math-proof:siege [NAME=value settings] <the problem, stated in full, or the path of a file holding it>.\"\nargument-hint: \"[NAME=value ...] [DIR=run-directory] <problem statement | problem-file>\"\ndisable-model-invocation: true\ndisallowed-tools: WebSearch, WebFetch, AskUserQuestion\nallowed-tools: Read, Write, Edit, Glob, Grep, Agent, Bash(python3 ${CLAUDE_SKILL_DIR}/scripts/ledger.py *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/skills/siege/scripts/ledger.py *), Bash(python ${CLAUDE_SKILL_DIR}/scripts/ledger.py *), Bash(python ${CLAUDE_PLUGIN_ROOT}/skills/siege/scripts/ledger.py *), Bash(mkdir *), Bash(cp *), Bash(mv *), Bash(cat *), Bash(test *), Bash(ls *), Bash(wc *), Bash(cmp *), Bash(grep *), Bash(printf *), Bash(echo *)\n"
+  }
+}

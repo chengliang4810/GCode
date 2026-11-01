@@ -1,0 +1,48 @@
+{
+  "repo": "obra/the-elements-of-style",
+  "commit": "05fc4f0d2b97b7c042dd9949ad658568e4a1324e",
+  "path": ".",
+  "archive_sha256": "37c81e2817a2a00e48654fd1e850cc4f936aff14d1111cde1da24be094cc03b0",
+  "all_plugin_files": [
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".devin-plugin/plugin.json",
+    ".everyharness/manifest.json",
+    ".gitignore",
+    ".hermes-plugin/__init__.py",
+    ".hermes-plugin/plugin.yaml",
+    ".kimi-plugin/plugin.json",
+    ".opencode/plugins/elements-of-style.js",
+    ".pi/extensions/elements-of-style.ts",
+    "GEMINI.md",
+    "README.md",
+    "docs/install/agent-plugins-1.0.md",
+    "docs/install/agents-marketplace.md",
+    "docs/install/claude-code.md",
+    "docs/install/codex.md",
+    "docs/install/cursor.md",
+    "docs/install/devin.md",
+    "docs/install/gemini.md",
+    "docs/install/hermes.md",
+    "docs/install/kimi.md",
+    "docs/install/opencode.md",
+    "docs/install/pi.md",
+    "docs/support-matrix.md",
+    "elements-of-style.html",
+    "everyharness.yaml",
+    "gemini-extension.json",
+    "package.json",
+    "plugin.json",
+    "skills/writing-clearly-and-concisely/SKILL.md",
+    "skills/writing-clearly-and-concisely/elements-of-style.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"elements-of-style\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Writing guidance based on William Strunk Jr.'s The Elements of Style (1918)\",\n  \"author\": {\n    \"name\": \"Jesse Vincent\",\n    \"url\": \"https://github.com/obra\"\n  },\n  \"license\": \"Public Domain\",\n  \"repository\": \"https://github.com/obra/elements-of-style\",\n  \"homepage\": \"https://github.com/obra/elements-of-style\",\n  \"keywords\": [\n    \"writing\",\n    \"style\",\n    \"grammar\",\n    \"composition\",\n    \"clarity\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/writing-clearly-and-concisely/SKILL.md": "\nname: writing-clearly-and-concisely\ndescription: Apply Strunk's timeless writing rules to ANY prose humans will read—documentation, commit messages, error messages, explanations, reports, or UI text. Makes your writing clearer, stronger, and more professional.\n"
+  }
+}

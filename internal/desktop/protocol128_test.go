@@ -34,7 +34,7 @@ func TestFailedAnnotatedSendRetainsEditableDraft(t *testing.T) {
 	a.draft = "Change this button"
 	a.attachAnnotation(contracts.Annotation{Index: 2, URL: "https://example.com", Element: "button"})
 	a.send(a.draft)
-	if a.draft != "Change this button" || len(a.annotations) != 1 || strings.Contains(a.draft, "zeron-annotation:") {
+	if a.draft != "Change this button" || len(a.annotations) != 1 || strings.Contains(a.draft, "rcode-annotation:") {
 		t.Fatal("failed send lost structured annotation or exposed the protocol token")
 	}
 	a.removeAnnotation(0)

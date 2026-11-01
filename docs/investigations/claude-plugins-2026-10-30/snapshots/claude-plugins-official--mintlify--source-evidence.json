@@ -1,0 +1,23 @@
+{
+  "repo": "mintlify/mintlify-claude-plugin",
+  "commit": "acd6d2e0128c4f235d55cfb8d8c91ecbdd5df8cc",
+  "path": ".",
+  "archive_sha256": "01cf7ea45e81293d3a326ceedcbf9c8f7ec6ac990dfd4b79b3a9e7fe783ec8b4",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "skills/mintlify/SKILL.md",
+    "skills/mintlify/reference/api-docs.md",
+    "skills/mintlify/reference/components.md",
+    "skills/mintlify/reference/configuration.md",
+    "skills/mintlify/reference/navigation.md"
+  ],
+  "config": {
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"Mintlify\": {\n      \"type\": \"http\",\n      \"url\": \"https://mintlify.com/docs/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/mintlify/SKILL.md": "\nname: mintlify\ndescription: Comprehensive reference for building Mintlify documentation sites. Use when creating pages, configuring docs.json, adding components, setting up navigation, or working with API references. Routes to detailed reference files for all components and configuration options.\n"
+  }
+}

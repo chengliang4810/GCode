@@ -1,0 +1,48 @@
+{
+  "repo": "stackhawk/agent-skills",
+  "commit": "66cac9baa5883a1007575faf1b22855a1124834a",
+  "path": "plugins/hawkscan",
+  "archive_sha256": "8fd8b13e29eb4d4634bae63531ba2134aed6d1093047a7207086c793c7651cad",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    "README.md",
+    "hooks/cursor/hooks.json",
+    "hooks/cursor/stop.sh",
+    "hooks/hooks.json",
+    "hooks/post-commit-scan",
+    "hooks/run-hook.cmd",
+    "hooks/session-start",
+    "hooks/skill-activated",
+    "hooks/stop",
+    "skills/hawkscan/SKILL.md",
+    "skills/hawkscan/references/agent-detection.md",
+    "skills/hawkscan/references/app-discovery.md",
+    "skills/hawkscan/references/auth-analyzer-fallback.md",
+    "skills/hawkscan/references/auth-config.md",
+    "skills/hawkscan/references/autonomous-loop.md",
+    "skills/hawkscan/references/cli-reference.md",
+    "skills/hawkscan/references/config-patterns.md",
+    "skills/hawkscan/references/docker-usage.md",
+    "skills/hawkscan/references/false-positives.md",
+    "skills/hawkscan/references/findings-and-fixes.md",
+    "skills/hawkscan/references/high-iteration-findings.md",
+    "skills/hawkscan/references/input-vectors.md",
+    "skills/hawkscan/references/installation.md",
+    "skills/hawkscan/references/openapi-specs.md",
+    "skills/hawkscan/references/platform-model.md",
+    "skills/hawkscan/references/repo-linking.md",
+    "skills/hawkscan/references/scan-planning.md",
+    "skills/hawkscan/references/scan-policy.md",
+    "skills/hawkscan/references/scan-quality.md",
+    "skills/hawkscan/references/spa-scanning.md",
+    "skills/hawkscan/references/tech-flags.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"hawkscan\",\n  \"version\": \"2.6.0\",\n  \"description\": \"Configure, run, and interpret HawkScan DAST results inside Claude Code. Generates stackhawk.yml configs, runs scans via CLI or Docker, and transforms security findings into prioritized fix tasks for your coding agent.\",\n  \"author\": {\n    \"name\": \"StackHawk\",\n    \"email\": \"support@stackhawk.com\",\n    \"url\": \"https://www.stackhawk.com\"\n  },\n  \"homepage\": \"https://docs.stackhawk.com\",\n  \"repository\": \"https://github.com/stackhawk/agent-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"security\",\n    \"dast\",\n    \"appsec\",\n    \"hawkscan\",\n    \"stackhawk\",\n    \"api-security\",\n    \"vulnerability-scanning\"\n  ]\n}\n",
+    "hooks/hooks.json": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"matcher\": \"startup|resume|clear|compact\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\\\" session-start\",\n            \"async\": false\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\\\" post-commit-scan\",\n            \"async\": false\n          }\n        ]\n      },\n      {\n        \"matcher\": \"Skill\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\\\" skill-activated\",\n            \"async\": true\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"matcher\": \"*\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\\\" stop\",\n            \"async\": false\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/hawkscan/SKILL.md": "\nname: hawkscan\nversion: 2.6.0\ndescription: >\n  Runs the HawkScan DAST security loop — configure, scan, fix all reported\n  vulnerabilities (not just your changes), rescan to verify. Performs\n  code-first discovery to configure high-value scans, and quality-gates every\n  scan against code-derived expectations before findings are parsed. Use when\n  the user asks to run or perform a security/DAST scan, to test an app or API\n  for vulnerabilities, or to verify a vulnerability is fixed; and AUTONOMOUSLY\n  right after you complete a code change (feature, bugfix, refactor) — \"done\"\n  means \"done and secure,\" so run the loop without asking permission. Do NOT\n  trigger for: informational questions about what HawkScan is, detects, or how\n  it works (e.g. \"what vulnerabilities does HawkScan find?\"); editing\n  stackhawk.yml or other config without running a scan; querying existing\n  findings, security posture, untriaged counts, or scan history (use the\n  stackhawk-api skill); documentation-only changes; installing or setting up\n  the CLI; or when the user explicitly says to skip scanning.\n"
+  }
+}

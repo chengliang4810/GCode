@@ -505,6 +505,9 @@ func devConfig(c *Config) *Config {
 	d := *c
 	d.Name += " Dev"
 	d.Identifier += ".dev"
+	if d.Slug != "" {
+		d.Slug += "-dev"
+	}
 	if icon := c.devIcon(); icon != "" {
 		d.Icon = icon
 	}
@@ -536,7 +539,7 @@ func (s *devSession) buildAndLaunch(ctx context.Context, t *task, running [32]by
 	case "windows":
 		name += ".exe"
 	default:
-		name = slugify(dc.Name)
+		name = dc.slug()
 	}
 	bin := filepath.Join(stage, name)
 	cleanup := func() {}
@@ -584,7 +587,6 @@ func (s *devSession) buildAndLaunch(ctx context.Context, t *task, running [32]by
 		if icns != nil {
 			iconFile = bundleIcon
 		}
-		h.Write([]byte(dc.macBundleFingerprint()))
 		h.Write(icns)
 		h.Write(infoPlist(dc, name, iconFile, ""))
 		if err := hashEntitlements(h, dc); err != nil {
@@ -620,7 +622,7 @@ func (s *devSession) buildAndLaunch(ctx context.Context, t *task, running [32]by
 		if err := replacePath(app, final); err != nil {
 			return nil, sum, err
 		}
-		exe = bundleExecutable(dc, final)
+		exe = bundleExecutable(final)
 	} else if err := placeBuild(stage, dir, res); err != nil {
 		return nil, sum, err
 	}

@@ -15,6 +15,12 @@ func TestBranchCreationRequestPersistsAndRetriesWithoutDuplicates(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	s.mu.Lock()
+	parentIndex := s.sessionIndexLocked("chat-0")
+	s.state.Sessions[parentIndex].Goal = &contracts.SessionGoal{ID: "parent-goal", Status: contracts.GoalPaused}
+	s.state.Sessions[parentIndex].SubagentType = "explore"
+	s.state.Sessions[parentIndex].RunningSubagents = 2
+	s.mu.Unlock()
 	command := contracts.Command{Kind: "session.sidechat", SessionID: "chat-0", RequestID: "side-creation-1", Name: "侧边聊天"}
 	if err := s.Execute(ctx, command); err != nil {
 		t.Fatal(err)
@@ -23,6 +29,9 @@ func TestBranchCreationRequestPersistsAndRetriesWithoutDuplicates(t *testing.T) 
 	child := before.Sessions[0]
 	if child.CreationRequestID != command.RequestID || child.ParentSessionID != command.SessionID {
 		t.Fatal("creation result lost request identity")
+	}
+	if child.Goal != nil || child.SubagentType != "" || child.RunningSubagents != 0 {
+		t.Fatal("side chat inherited authoritative execution state")
 	}
 	if err := s.Close(); err != nil {
 		t.Fatal(err)

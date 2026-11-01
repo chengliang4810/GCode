@@ -1,0 +1,16 @@
+{
+  "repo": "browser-use/plugins",
+  "commit": "4749bcbfe456e5384b98281a8a66119352197f59",
+  "path": "browser-use",
+  "archive_sha256": "83679a8274d51870a1f25cbd4071cc05f0a0194664bb24d93c70580872729005",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"browser-use\",\n  \"description\": \"Give Claude a real browser — your Chrome or a Browser Use Cloud browser. Use it whenever a task involves a website or web app: browsing, scraping and data extraction, filling forms, testing sites, taking screenshots, automating web workflows.\",\n  \"author\": {\n    \"name\": \"Browser Use\",\n    \"url\": \"https://browser-use.com\"\n  },\n  \"homepage\": \"https://github.com/browser-use/browser-use\"\n}\n",
+    ".mcp.json": "{\n  \"browser-use\": {\n    \"command\": \"uvx\",\n    \"args\": [\"--python\", \"3.12\", \"browser-use@latest\", \"--cli-mcp\"]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

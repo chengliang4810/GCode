@@ -18,7 +18,13 @@ type settingOption struct{ value, label string }
 type settingLink struct{ title, section, description string }
 
 func (a *App) sections() []string {
-	s := []string{"General", "Appearance", "Notifications", "Shortcuts", "Providers", "Devices"}
+	s := []string{"General", "Appearance", "Personalization", "Notifications", "Shortcuts"}
+	if a.state.Runtime != nil {
+		s = append(s, "Model settings", "Plugins", "Subagents", "MCP servers", "Skills", "Commands", "Hooks")
+	} else {
+		s = append(s, "Providers")
+	}
+	s = append(s, "Devices")
 	if a.state.Capabilities.Cloud && a.state.User.SignedIn {
 		s = append(s, "Cloud", "Billing")
 	}
@@ -35,12 +41,26 @@ func settingsIcon(section string) string {
 		return "settings"
 	case "Appearance":
 		return "tuning"
+	case "Personalization":
+		return "global"
 	case "Notifications":
 		return "bell"
 	case "Shortcuts":
 		return "keyboard"
-	case "Providers":
+	case "Providers", "Model settings":
 		return "widget"
+	case "Subagents":
+		return "git-branch"
+	case "MCP servers":
+		return "remote-server"
+	case "Skills":
+		return "star"
+	case "Plugins":
+		return "widget"
+	case "Commands":
+		return "command"
+	case "Hooks":
+		return "action-play"
 	case "Devices", "Appshots":
 		return "monitor"
 	case "Cloud":
@@ -57,8 +77,11 @@ func settingsIcon(section string) string {
 
 func (a *App) settingsNavigation(c *ui.Context) {
 	ui.Column(c).Grow(1).Padding(8, 8).Gap(4).Children(func() {
-		ui.ButtonBase(c).FillWidth().Padding(10, 10).Gap(10).Radius(6).Label(tr(c, "Back to conversations")).Justify(ui.Start).Children(func() { icon(c, "alt-arrow-left", 16); ui.Text(c, tr(c, "Back")).FontSize(design.UISize(c, 13)) }).OnClick(func() { a.clearShortcutRecording(); a.navigate("chat") })
-		ui.TextInput(c.Key("settings-search"), &a.settingsSearch).Placeholder(tr(c, "Search settings")).Label(tr(c, "Search settings")).Margin(2, 0, 8, 0).OnChange(func() {})
+		controlNavButton(c.Key("back-to-conversations"), tr(c, "Back to conversations"), false).FillWidth().Children(func() {
+			icon(c, "alt-arrow-left", 16)
+			ui.Text(c, tr(c, "Back")).FontSize(design.TextSize(c, design.TextBase))
+		}).OnClick(func() { a.clearShortcutRecording(); a.navigate("chat") })
+		controlTextInput(c.Key("settings-search"), &a.settingsSearch).Placeholder(tr(c, "Search settings")).Label(tr(c, "Search settings")).Margin(2, 0, 8, 0).OnChange(func() {})
 		ui.Scroll(c.Key("settings-navigation")).Grow(1).Gap(3).Children(func() {
 			if strings.TrimSpace(a.settingsSearch) != "" {
 				query := strings.ToLower(strings.TrimSpace(a.settingsSearch))
@@ -66,20 +89,17 @@ func (a *App) settingsNavigation(c *ui.Context) {
 				for _, hit := range a.localizedSettingsSearch(query) {
 					found = true
 					h := hit
-					b := ui.ButtonBase(c.Key("search-"+h.title)).FillWidth().Padding(9, 10).Gap(10).Radius(8).Label(tr(c, h.title)).Justify(ui.Start)
-					if b.Hovered() {
-						b.Background(a.palette.Hover)
-					}
+					b := controlNavButton(c.Key("search-"+h.title), tr(c, h.title), false).FillWidth()
 					b.Children(func() {
 						icon(c, settingsIcon(h.section), 17)
 						ui.Column(c).Grow(1).Gap(3).Children(func() {
 							a.settingsMatchLabel(c, h.title, query)
-							ui.Text(c, tr(c, h.section)).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+							ui.Text(c, tr(c, h.section)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 						})
 					})
 					b.OnClick(func() {
 						a.clearShortcutRecording()
-						a.section = h.section
+						a.selectSettingsSection(h.section)
 						target := h.title
 						if target == "Autosave delay" && !a.state.Settings.Files.Autosave {
 							target = "Autosave"
@@ -100,17 +120,12 @@ func (a *App) settingsNavigation(c *ui.Context) {
 				if name == "Providers" || name == "Files" {
 					ui.Spacer(c).Height(12)
 				}
-				b := ui.ButtonBase(c.Key("settings-nav-"+section)).FillWidth().Padding(9, 10).Gap(10).Radius(8).Label(tr(c, section)).Justify(ui.Start)
-				if a.section == section {
-					b.Background(a.palette.Active)
-				} else if b.Hovered() {
-					b.Background(a.palette.Hover)
-				}
+				b := controlNavButton(c.Key("settings-nav-"+section), tr(c, section), a.section == section).FillWidth()
 				b.Children(func() {
 					icon(c, settingsIcon(section), 18)
-					ui.Text(c, tr(c, section)).FontSize(design.UISize(c, 13)).FontWeight(500)
+					ui.Text(c, tr(c, section)).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 				})
-				b.OnClick(func() { a.clearShortcutRecording(); a.section = section })
+				b.OnClick(func() { a.clearShortcutRecording(); a.selectSettingsSection(section) })
 			}
 		})
 	})
@@ -118,13 +133,24 @@ func (a *App) settingsNavigation(c *ui.Context) {
 
 func (a *App) settingLinks() []settingLink {
 	links := []settingLink{
+		{"Subagents", "Subagents", "agent profile prompt model reasoning 子智能体 提示词 模型 思考"},
+		{"Model settings", "Model settings", "provider protocol API key models 模型 供应商"},
+		{"MCP servers", "MCP servers", "tools stdio HTTP servers MCP 服务器"},
+		{"Skills", "Skills", "SKILL.md instructions import 技能 导入"},
+		{"Commands", "Commands", "slash prompt commands 命令 提示词"},
+		{"Hooks", "Hooks", "events process shell hooks 钩子 事件"},
+		{"Plugins", "Plugins", "marketplace install update skills commands MCP hooks 插件 市场 安装 更新"},
+		{"Data directory", "General", "data storage path folder 数据 保存 目录"},
 		{"Language", "General", "中文 Chinese English language 语言 国际化"},
-		{"Send messages with", "General", "Enter keyboard composer"}, {"Compact mode", "General", "Collapse thinking and tools"}, {"Compact model picker", "General", "Reasoning effort slider"}, {"Stop agent with Escape", "General", "Keyboard"}, {"Open pull requests in", "General", "Links"}, {"Thread naming", "General", "Model"}, {"Custom worktree location", "General", "Git folder"},
-		{"Credit Zeron in commits", "General", "co-author coauthor attribution bot commit message"},
-		{"Color scheme", "Appearance", "System light dark mode"}, {"Light theme", "Appearance", "Palette colors"}, {"Dark theme", "Appearance", "Palette colors"}, {"Theme library", "Appearance", "Import add custom themes"}, {"Accent color", "Appearance", "Tint highlight swatch"}, {"Glass", "Appearance", "Frosted translucent opaque transparency blur vibrancy surface"}, {"Interface font", "Appearance", "Typography text typeface size menus conversations"}, {"Terminal font", "Appearance", "Monospace text typeface size"}, {"Code & diff font", "Appearance", "Editor text monospace typeface files size"}, {"Conversation width", "Appearance", "Transcript messages composer column maximum"}, {"New thread background", "Appearance", "Image picture wallpaper composer"}, {"Background effect", "Appearance", "Blur dim image"}, {"Reduce motion", "Appearance", "Animations accessibility"},
-		{"Match wallpaper colors", "Appearance", "Tint accent surface desktop"}, {"Pause animations in background", "Appearance", "focus unfocused inactive window battery"}, {"Smooth scrolling", "Appearance", "Mouse wheel glide ease"}, {"Render math", "Appearance", "Latex formulas equations markdown typeset"}, {"Math font", "Appearance", "Latex formulas typeface"}, {"Math size", "Appearance", "Latex formulas scale"},
-		{"Session sounds", "Notifications", "Task completed input required"}, {"Desktop notifications", "Notifications", "Agent updates"}, {"Keyboard shortcuts", "Shortcuts", "Keybindings"}, {"Providers", "Providers", "Accounts models authentication"}, {"Devices", "Devices", "Remote connection"}, {"Cloud", "Cloud", "Sync storage"}, {"Billing", "Billing", "Plan credits usage invoices"}, {"Autosave", "Files", "Save files delay"}, {"Word wrap", "Files", "Editor"}, {"Show hidden and ignored files", "Files", "Explorer"}, {"Archived sessions", "Archived sessions", "Restore conversations"},
-		{"Task completed", "Notifications", "Done finished audio sound"}, {"Input required", "Notifications", "Question waiting approval audio sound"}, {"Errors and disconnections", "Notifications", "Failure offline audio sound"}, {"Agent updates", "Notifications", "CLI banner new version"}, {"Only when in the background", "Notifications", "Focus unfocused"}, {"Autosave delay", "Files", "Debounce wait"},
+		{"Send messages with", "General", "Enter keyboard composer"}, {"Compact mode", "General", "Collapse thinking and tools"}, {"Stop agent with Escape", "General", "Keyboard"}, {"Thread naming", "General", "Model"},
+		{"Color scheme", "Appearance", "System light dark mode"}, {"Light theme", "Appearance", "Palette colors"}, {"Dark theme", "Appearance", "Palette colors"}, {"Reasoning theme", "Appearance", "思考强度 滑块 渐变 slider gradient swatch"}, {"Theme library", "Appearance", "Import add custom themes"}, {"Accent color", "Appearance", "Tint highlight swatch"}, {"Glass", "Appearance", "Frosted translucent opaque transparency blur vibrancy surface"}, {"Interface font", "Appearance", "Typography text typeface size menus conversations"}, {"Terminal font", "Appearance", "Monospace text typeface size"}, {"Code & diff font", "Appearance", "Editor text monospace typeface files size"}, {"Conversation width", "Appearance", "Transcript messages composer column maximum"}, {"New thread background", "Appearance", "Image picture wallpaper composer"}, {"Background effect", "Appearance", "Blur dim image"}, {"Reduce motion", "Appearance", "Animations accessibility"},
+		{"Auto memory", "Personalization", "记忆 memory recall facts persist 保存 记住 事实 会话"}, {"Global instructions", "Personalization", "AGENTS.md 全局指令 instructions 编辑 editor global"},
+		{"Match wallpaper colors", "Appearance", "Tint accent surface desktop"}, {"Pause animations in background", "Appearance", "focus unfocused inactive window battery"}, {"Render math", "Appearance", "Latex formulas equations markdown typeset"}, {"Math font", "Appearance", "Latex formulas typeface"}, {"Math size", "Appearance", "Latex formulas scale"},
+		{"Session sounds", "Notifications", "Task completed input required"}, {"Desktop notifications", "Notifications", "Alerts banners system"}, {"Keyboard shortcuts", "Shortcuts", "Keybindings"}, {"Providers", "Providers", "Accounts models authentication"}, {"Devices", "Devices", "Remote connection"}, {"Cloud", "Cloud", "Sync storage"}, {"Billing", "Billing", "Plan credits usage invoices"}, {"Autosave", "Files", "Save files delay"}, {"Word wrap", "Files", "Editor"}, {"Show hidden and ignored files", "Files", "Explorer"}, {"Archived sessions", "Archived sessions", "Restore conversations"},
+		{"Task completed", "Notifications", "Done finished audio sound"}, {"Input required", "Notifications", "Question waiting approval audio sound"}, {"Errors and disconnections", "Notifications", "Failure offline audio sound"}, {"Only when in the background", "Notifications", "Focus unfocused"}, {"Autosave delay", "Files", "Debounce wait"},
+	}
+	if a.checkForUpdates != nil {
+		links = append(links, settingLink{"Software updates", "General", "Check for updates version release 软件 更新 版本"})
 	}
 	for _, shortcut := range a.state.Settings.Shortcuts {
 		links = append(links, settingLink{shortcut.Label, "Shortcuts", shortcut.Group + " " + shortcut.Keys + " keyboard shortcut keybinding"})
@@ -167,27 +193,45 @@ func (a *App) settingsView(c *ui.Context) {
 	if !valid {
 		a.section = "General"
 	}
-	ui.Scroll(c.Key("settings-page-" + a.section)).Grow(1).AlignItems(ui.Stretch).Children(func() {
-		ui.Column(c).FillWidth().MaxWidth(760).AlignSelf(ui.Center).Padding(54, 40, 48, 40).Gap(16).Children(func() {
-			heading := ui.Text(c, tr(c, a.section)).FontSize(design.UISize(c, 20)).FontWeight(500).FixedLineHeight(design.UISize(c, 26)).Margin(0, 8, 8, 8)
+	settingsPageViewport(c.Key("settings-page-" + a.section)).Children(func() {
+		settingsPageContent(c).Children(func() {
+			heading := settingsPageHeading(c, a.section)
 			if a.expanded["settings-target:"+a.section] {
 				heading.ScrollIntoView()
 				delete(a.expanded, "settings-target:"+a.section)
 			}
 			if (a.section == "Providers" || a.section == "Devices" || a.section == "Cloud" || a.section == "Billing") && a.integrationUI.Error != "" {
-				ui.ButtonBase(c).FillWidth().Padding(10, 16).Label(tr(c, "Dismiss settings error")).OnClick(func() { a.integrationUI.Error = "" }).Children(func() { ui.Text(c, a.integrationUI.Error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger) })
+				controlRowButton(c).FillWidth().Label(tr(c, "Dismiss settings error")).OnClick(func() { a.integrationUI.Error = "" }).Children(func() {
+					ui.Text(c, a.integrationUI.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+				})
 			}
 			switch a.section {
 			case "General":
+				a.softwareUpdateSettings(c)
+				a.dataDirectorySettings(c)
 				a.generalSettings(c)
 			case "Appearance":
 				a.appearanceSettings(c)
+			case "Personalization":
+				a.personalizationSettings(c)
 			case "Notifications":
 				a.notificationSettings(c)
 			case "Shortcuts":
 				a.shortcutSettings(c)
-			case "Providers":
+			case "Providers", "Model settings":
 				a.providerSettings(c)
+			case "Subagents":
+				a.subagentSettings(c)
+			case "MCP servers":
+				a.mcpSettings(c)
+			case "Skills":
+				a.skillSettings(c)
+			case "Commands":
+				a.commandSettings(c)
+			case "Hooks":
+				a.hookSettings(c)
+			case "Plugins":
+				a.pluginSettings(c)
 			case "Devices":
 				a.deviceSettings(c)
 			case "Cloud":
@@ -204,78 +248,16 @@ func (a *App) settingsView(c *ui.Context) {
 		})
 	})
 	a.integrationDialogs(c)
+	a.settingsImportDialog(c)
+	a.settingsRemovalDialog(c)
 }
 
 func (a *App) settingsToggle(c *ui.Context, label string, value *bool, after ...func()) {
-	b := ui.SwitchBase(c.Key(label), value).Size(44.8, 28.8).Label(tr(c, "Toggle ") + tr(c, label)).OnClick(func() {
+	a.controlSwitch(c.Key(label), value, tr(c, "Toggle ")+tr(c, label), false, func(bool) {
 		for _, update := range after {
 			update()
 		}
 		a.saveSettings()
-	})
-	on := *value
-	target := float32(0)
-	if on {
-		target = 1
-	}
-	position := b.AnimateWith("switch-travel", target, 180*time.Millisecond, func(v float32) float32 { return 1 - (1-v)*(1-v)*(1-v) })
-	if a.state.Settings.Appearance.ReduceMotion || strings.EqualFold(a.state.Settings.Appearance.MotionPreference, "system") && c.Preferences().ReduceMotion {
-		position = target
-	}
-	frost := a.palette.Frosted || strings.EqualFold(a.state.Settings.Appearance.Surface, "Frosted")
-	if strings.EqualFold(a.state.Settings.Appearance.Surface, "Opaque") {
-		frost = false
-	}
-	b.Draw(func(p *ui.Painter, r ui.Rect) {
-		track := ui.Rect{X: r.X, Y: r.Y + 4, W: 44.8, H: 20.8}
-		ink := ui.Hex("#000000")
-		if a.palette.Dark {
-			ink = ui.Hex("#ffffff")
-		}
-		coverage := float32(.1)
-		if a.palette.Dark {
-			coverage = .18
-		}
-		if frost {
-			if a.palette.Dark {
-				coverage = .22
-			} else {
-				coverage = .12
-			}
-		}
-		color := ink.Alpha(coverage).Over(a.palette.Shell)
-		if on {
-			color = a.palette.AccentStrong
-			if a.palette.Dark {
-				color = ui.Hex("#000000").Alpha(.14).Over(color)
-			}
-		}
-		light, shade := color, color
-		if frost {
-			light = ui.Hex("#ffffff").Alpha(.07).Over(color)
-			shade = ui.Hex("#000000").Alpha(.09).Over(color)
-		}
-		p.FillGradient(track, ui.LinearGradient{From: light, To: shade, Angle: 180}, 10.4)
-		rim := a.palette.Border.Over(color)
-		if on {
-			rim = ui.Hex("#ffffff").Alpha(.16).Over(color)
-		}
-		p.Stroke(track, rim, 10.4, 1)
-		p.Fill(ui.Rect{X: r.X + 9, Y: r.Y + 10.8, W: 1.2, H: 7.2}, ui.Hex("#ffffff").Alpha(.96*position), .6)
-		p.Stroke(ui.Rect{X: r.X + 31.6, Y: r.Y + 10.8, W: 7.2, H: 7.2}, ui.Hex("#ffffff").Alpha(.92*(1-position)), 3.6, 1)
-		x := r.X + 1.6 + 17.6*position
-		thumb := ui.Hex("#ffffff").Alpha(.94).Over(a.palette.Shell)
-		thumbLight, thumbShade := thumb, thumb
-		if frost {
-			thumbLight = ui.Hex("#ffffff").Alpha(.12).Over(thumb)
-			thumbShade = ui.Hex("#000000").Alpha(.07).Over(thumb)
-		}
-		thumbRect := ui.Rect{X: x, Y: r.Y + 5.6, W: 24, H: 17.6}
-		p.FillGradient(thumbRect, ui.LinearGradient{From: thumbLight, To: thumbShade, Angle: 180}, 8.8)
-		p.Stroke(thumbRect, ui.Hex("#000000").Alpha(.1).Over(thumb), 8.8, 1)
-		if frost && position > 0 {
-			p.Fill(ui.Rect{X: x + 7.2, Y: r.Y + 7.2, W: 9.6, H: 1}, ui.Hex("#ffffff").Alpha(.45*position).Over(thumbLight), .5)
-		}
 	})
 }
 
@@ -288,13 +270,13 @@ func (a *App) settingsChoice(c *ui.Context, label string, value *string, options
 			break
 		}
 	}
-	sel := ui.SelectBase(c.Key(label), value)
+	sel := controlSelect(c.Key(label), value)
 	searchable := label == "Interface font" || label == "Terminal font" || label == "Code & diff font"
 	filter := ui.Local(sel.Trigger, "font-filter", func() string { return "" })
 	if !sel.Open() {
 		*filter = ""
 	}
-	sel.Trigger.Label(tr(c, "Choose ")+tr(c, label)).MinWidth(124).Padding(7, 10).Gap(14).Radius(8).Background(a.palette.Raised.Alpha(.5)).OnChange(func() {
+	sel.Trigger.Label(tr(c, "Choose ") + tr(c, label)).MinWidth(124).OnChange(func() {
 		if after != nil {
 			after()
 		}
@@ -307,10 +289,10 @@ func (a *App) settingsChoice(c *ui.Context, label string, value *string, options
 		sel.Trigger.Width(220)
 	}
 	sel.Popup(func(panel ui.Element) {
-		panel.Padding(5).Radius(10).MinWidth(200).Background(a.palette.Overlay).Border(1, a.palette.Border).Children(func() {
+		controlSelectPopup(c, panel).MinWidth(200).Children(func() {
 			if searchable {
 				panel.Width(220)
-				ui.TextInput(c.Key("font-search"), filter).Label(tr(c, "Search fonts")).Placeholder(tr(c, "Search fonts")).FillWidth().AutoFocus().Margin(3, 3, 6, 3)
+				controlTextInput(c.Key("font-search"), filter).Label(tr(c, "Search fonts")).Placeholder(tr(c, "Search fonts")).FillWidth().AutoFocus().Margin(3, 3, 6, 3)
 			}
 			ui.Scroll(c.Key("options-scroll")).MaxHeight(280).Children(func() {
 				ui.Column(c).Gap(2).Children(func() {
@@ -320,12 +302,9 @@ func (a *App) settingsChoice(c *ui.Context, label string, value *string, options
 							continue
 						}
 						matches++
-						item := sel.Item(option.value).Padding(7, 10).Radius(6).Label(a.settingOptionText(c, label, option.value, option.label))
+						item := controlSelectItem(c, sel.Item(option.value)).Label(a.settingOptionText(c, label, option.value, option.label))
 						if searchable {
 							item.Label(tr(c, "Select ") + tr(c, label) + " " + a.settingOptionText(c, label, option.value, option.label))
-						}
-						if item.Highlighted() {
-							item.Background(a.palette.Hover)
 						}
 						item.Children(func() {
 							ui.Text(c, a.settingOptionText(c, label, option.value, option.label)).Grow(1).SingleLine()
@@ -335,7 +314,40 @@ func (a *App) settingsChoice(c *ui.Context, label string, value *string, options
 						})
 					}
 					if matches == 0 {
-						ui.Text(c, tr(c, "No matching fonts")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Faint).Padding(6, 8)
+						ui.Text(c, tr(c, "No matching fonts")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Faint).Padding(6, 8)
+					}
+				})
+			})
+		})
+	})
+}
+
+// settingsEffortTheme chooses the device-local reasoning-slider preset. The
+// trigger and every row carry the preset's three-stop swatch.
+func (a *App) settingsEffortTheme(c *ui.Context) {
+	value := &a.state.Settings.Appearance.EffortTheme
+	current := contracts.NormalizeEffortTheme(*value)
+	sel := controlSelect(c.Key("Reasoning theme"), value)
+	sel.Trigger.Label(tr(c, "Choose ") + tr(c, "Reasoning theme")).MinWidth(148).OnChange(a.saveSettings).Children(func() {
+		controlEffortSwatch(c, design.EffortPaletteFor(current, a.palette))
+		ui.Text(c, tr(c, design.EffortThemeLabel(current))).Grow(1).SingleLine()
+		icon(c, "alt-arrow-down", 13)
+	})
+	sel.Popup(func(panel ui.Element) {
+		controlSelectPopup(c, panel).MinWidth(200).Children(func() {
+			ui.Scroll(c.Key("effort-theme-options")).MaxHeight(280).Children(func() {
+				ui.Column(c).Gap(2).Children(func() {
+					for _, theme := range contracts.EffortThemeValues() {
+						theme := theme
+						label := tr(c, design.EffortThemeLabel(theme))
+						item := controlSelectItem(c, sel.Item(theme)).Label(tr(c, "Select ") + tr(c, "Reasoning theme") + " " + label)
+						item.Children(func() {
+							controlEffortSwatch(c, design.EffortPaletteFor(theme, a.palette))
+							ui.Text(c, label).Grow(1).SingleLine()
+							if theme == current {
+								icon(c, "check", 13)
+							}
+						})
 					}
 				})
 			})
@@ -379,9 +391,9 @@ func (a *App) settingsRowWithText(c *ui.Context, key, title, description string,
 			draw()
 		}
 		ui.Column(c).Grow(1).Gap(3).Children(func() {
-			ui.Text(c, title).FontSize(design.UISize(c, 13)).FontWeight(500).FixedLineHeight(design.UISize(c, 17))
+			ui.Text(c, title).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).LineHeight(1.5)
 			if description != "" {
-				ui.Text(c, description).FontSize(design.UISize(c, 12)).TextColor(c.Theme().TextMuted)
+				ui.Text(c, description).FontSize(design.TextSize(c, design.TextBase)).TextColor(c.Theme().TextMuted)
 			}
 		})
 		control()
@@ -567,6 +579,15 @@ func (a *App) registerSettingsShortcuts(c *ui.Context) {
 			if key == ui.KeyEscape && !a.state.Settings.General.StopWithEscape {
 				continue
 			}
+			if key == ui.KeyEscape {
+				focused := a.composer.Focused(c)
+				for _, side := range a.sideComposers {
+					focused = focused || side.Input.Focused(c)
+				}
+				if focused {
+					continue
+				}
+			}
 			action = a.stopRun
 		}
 		if action != nil {
@@ -666,49 +687,30 @@ func (a *App) generalSettings(c *ui.Context) {
 			a.settingsChoice(c, "Send messages with", &g.SendBehavior, []settingOption{{"enter", "Enter"}, {"modEnter", modifier}}, nil)
 		})
 		line(c)
-		a.settingsRow(c, "Compact mode", "Collapse thinking and tools.", func() { a.settingsToggle(c, "Compact mode", &g.CompactMode) })
+		a.settingsRow(c, "While a response is running", activeTurnSendDescription(g.ActiveTurnSendBehavior), func() {
+			a.settingsChoice(c, "While a response is running", &g.ActiveTurnSendBehavior,
+				[]settingOption{{"steer", "Steer the running response"}, {"queue", "Queue for the next turn"}}, nil)
+		})
 		line(c)
-		a.settingsRow(c, "Compact model picker", "Adjust effort with a slider, then open the model list when needed.", func() { a.settingsToggle(c, "Compact model picker", &g.CompactModelPicker) })
+		a.settingsRow(c, "Compact mode", "Collapse thinking and tools.", func() { a.settingsToggle(c, "Compact mode", &g.CompactMode) })
 		line(c)
 		a.settingsRow(c, "Stop agent with Escape", "When no dialog or menu is open.", func() { a.settingsToggle(c, "Stop agent with Escape", &g.StopWithEscape) })
 	})
-	sectionTitle(c, tr(c, "Links"))
 	a.settingsCard(c, func() {
-		description := "Inspect them in Zeron, beside the conversation or the Pull requests board."
-		switch g.PRDestination {
-		case "browser":
-			description = "Open them in a Browser tab beside the conversation, or in the default browser when none is shown."
-		case "external":
-			description = "Open them in the default browser."
-		}
-		a.settingsRow(c, "Open pull requests in", description, func() {
-			a.settingsChoice(c, "Open pull requests in", &g.PRDestination, []settingOption{{"pullRequest", "Pull request view"}, {"browser", "In-app browser"}, {"external", "Default browser"}}, nil)
-		})
-	})
-	a.settingsCard(c, func() {
-		description := "A small model keeps titles fast and cheap."
-		if g.ThreadNamingModel == "" || g.ThreadNamingModel == "Automatic" {
-			description = "Each thread is named by its own agent."
+		description := "Uses an additional model request for each new conversation."
+		if g.ThreadNamingModel == "first-message" {
+			description = "Use the first message without an additional model request."
 		}
 		a.settingsRow(c, "Thread naming", description, func() {
-			if g.ThreadNamingModel != "" && g.ThreadNamingModel != "Automatic" {
-				textButton(c, tr(c, "Reset")).Label(tr(c, "Reset thread naming")).OnClick(func() { g.ThreadNamingModel = "Automatic"; a.saveSettings() })
+			if g.ThreadNamingModel != "first-message" {
+				textButton(c, tr(c, "Reset")).Label(tr(c, "Reset thread naming")).OnClick(func() { g.ThreadNamingModel = "first-message"; a.saveSettings() })
 			}
-			options := []settingOption{{"Automatic", "Session agent"}}
+			options := []settingOption{{"first-message", "First message"}}
 			for _, model := range a.state.Models {
 				options = append(options, settingOption{model.ID, model.Label})
 			}
 			a.settingsChoice(c, "Thread naming model", &g.ThreadNamingModel, options, nil)
 		})
-	})
-	sectionTitle(c, tr(c, "Git"))
-	a.settingsCard(c, func() {
-		a.settingsRow(c, "Custom worktree location", "Choose where new worktrees are created.", func() { a.settingsToggle(c, "Custom worktree location", &g.CustomWorktreeLocation) })
-		if g.CustomWorktreeLocation {
-			ui.TextInput(c.Key("worktree-path"), &g.WorktreePath).Placeholder(tr(c, "Worktree location")).Label(tr(c, "Worktree location")).Margin(0, 16, 14, 16).OnChange(a.saveSettings)
-		}
-		line(c)
-		a.settingsRow(c, "Credit Zeron in commits", "Include a co-authored-by trailer.", func() { a.settingsToggle(c, "Credit Zeron in commits", &g.CreditZeron) })
 	})
 }
 
@@ -730,7 +732,7 @@ func (a *App) appearanceSettings(c *ui.Context) {
 				border = a.palette.Accent
 				labelColor = a.palette.Accent
 			}
-			ui.ButtonBase(c.Key("appearance-mode-" + choice.value)).Grow(1).MinWidth(0).Padding(0).Justify(ui.Start).Label(tr(c, "Appearance ") + tr(c, choice.label)).OnClick(func() { p.Mode = choice.value; p.ThemeID = ""; a.saveSettings() }).Children(func() {
+			controlPreviewButton(c.Key("appearance-mode-"+choice.value), tr(c, "Appearance ")+tr(c, choice.label)).Grow(1).MinWidth(0).OnClick(func() { p.Mode = choice.value; p.ThemeID = ""; a.saveSettings() }).Children(func() {
 				ui.Column(c).FillWidth().Gap(8).Children(func() {
 					preview := ui.Box(c).FillWidth().Height(148).Radius(6).Border(1, border).Clip()
 					light := design.ApplyAccent(design.Palette(p.LightThemeID, false), p.Accent)
@@ -749,7 +751,10 @@ func (a *App) appearanceSettings(c *ui.Context) {
 							drawAppearanceMiniature(painter, half, dark)
 						}
 					})
-					ui.Row(c).AlignSelf(ui.Center).Gap(6).TextColor(labelColor).Children(func() { icon(c, choice.icon, 16); ui.Text(c, tr(c, choice.label)).FontSize(design.UISize(c, 13)) })
+					ui.Row(c).AlignSelf(ui.Center).Gap(6).TextColor(labelColor).Children(func() {
+						icon(c, choice.icon, 16)
+						ui.Text(c, tr(c, choice.label)).FontSize(design.TextSize(c, design.TextBase))
+					})
 				})
 			})
 		}
@@ -777,24 +782,18 @@ func (a *App) appearanceSettings(c *ui.Context) {
 			})
 		}
 		line(c)
+		a.settingsRow(c, "Reasoning theme", "", func() { a.settingsEffortTheme(c) })
+		line(c)
 		description := "Theme default"
 		if p.Accent != "" && p.Accent != "theme" {
 			description = strings.ToUpper(p.Accent[:1]) + p.Accent[1:]
 		}
 		a.settingsRow(c, "Accent color", description, func() {
 			ui.Row(c).Gap(8).Children(func() {
-				for _, selection := range []string{"theme", "zeron", "orange", "amber", "green", "cyan", "blue", "pink"} {
+				for _, selection := range []string{"theme", "rcode", "orange", "amber", "green", "cyan", "blue", "pink"} {
 					selection := selection
 					tokens := design.ApplyAccent(a.palette, selection)
-					b := ui.ButtonBase(c.Key("accent-"+selection)).Size(20, 20).Radius(10).Background(tokens.Accent).Label(tr(c, "Accent ") + tr(c, selection)).Tooltip(tr(c, selection))
-					if p.Accent == selection {
-						b.Border(2, a.palette.Text)
-					}
-					if selection == "theme" {
-						b.Draw(func(painter *ui.Painter, r ui.Rect) {
-							painter.FillGradient(r, ui.LinearGradient{Angle: 90, Stops: []ui.GradientStop{{Color: tokens.Glyph[0], At: 0}, {Color: tokens.Glyph[1], At: .5}, {Color: tokens.Glyph[2], At: 1}}}, 10)
-						})
-					}
+					b := controlAccentSwatch(c.Key("accent-"+selection), tr(c, "Accent ")+tr(c, selection), tokens, p.Accent == selection, selection == "theme")
 					b.OnClick(func() { p.Accent = selection; a.saveSettings() })
 				}
 			})
@@ -806,7 +805,11 @@ func (a *App) appearanceSettings(c *ui.Context) {
 			a.settingsChoice(c, "Glass", &p.Surface, []settingOption{{"theme", "Theme default"}, {"Frosted", "Frosted"}, {"Opaque", "Opaque"}}, nil)
 		})
 		line(c)
-		a.settingsRow(c, "Match wallpaper colors", "Use wallpaper colors for accents, highlights, and subtle surface tints.", func() { a.settingsToggle(c, "Match wallpaper colors", &p.WallpaperColors) })
+		description := tr(c, "Use wallpaper colors for accents, highlights, and subtle surface tints.")
+		if p.WallpaperColors && a.wallpaper.err != "" {
+			description = a.wallpaper.err
+		}
+		a.settingsRow(c, "Match wallpaper colors", description, func() { a.settingsToggle(c, "Match wallpaper colors", &p.WallpaperColors) })
 		line(c)
 		a.backgroundSettings(c)
 	})
@@ -823,9 +826,7 @@ func (a *App) appearanceSettings(c *ui.Context) {
 			a.settingsChoice(c, "Reduce motion", &p.MotionPreference, []settingOption{{"system", "System"}, {"on", "On"}, {"off", "Off"}}, func() { p.ReduceMotion = p.MotionPreference == "on" })
 		})
 		line(c)
-		a.settingsRow(c, "Pause animations in background", "Hold animations still while Zeron isn't the focused window.", func() { a.settingsToggle(c, "Pause animations in background", &p.PauseInBackground) })
-		line(c)
-		a.settingsRow(c, "Smooth scrolling", "Mouse wheels glide instead of jumping. Trackpads are unaffected.", func() { a.settingsToggle(c, "Smooth scrolling", &p.SmoothScrolling) })
+		a.settingsRow(c, "Pause animations in background", "Hold animations still while GCode isn't the focused window.", func() { a.settingsToggle(c, "Pause animations in background", &p.PauseInBackground) })
 	})
 	a.themeLibrary(c)
 	sectionTitle(c, tr(c, "Fonts and layout"))
@@ -846,7 +847,7 @@ func (a *App) appearanceSettings(c *ui.Context) {
 		})
 		line(c)
 		a.settingsRow(c, "Conversation width", "Maximum width for messages and the composer.", func() {
-			ui.StepSlider(c.Key("conversation-width"), &p.TranscriptWidth, 560, 1200, 16).Width(150).Label(tr(c, "Conversation width")).OnChange(a.saveSettings)
+			controlStepSlider(c.Key("conversation-width"), &p.TranscriptWidth, 560, 1200, 16).Width(150).Label(tr(c, "Conversation width")).OnChange(a.saveSettings)
 			textButton(c, tr(c, "Reset")).OnClick(func() { p.TranscriptWidth = 736; a.saveSettings() })
 		})
 		line(c)
@@ -924,16 +925,13 @@ func (a *App) settingsSizeChoice(c *ui.Context, label string, value *float64, va
 	if label == "Math size" {
 		unit = "%"
 	}
-	sel := ui.SelectBase(c.Key(label), value)
-	sel.Trigger.Label(tr(c, "Choose ")+tr(c, label)).Padding(7, 9).Radius(8).Background(a.palette.Raised.Alpha(.5)).OnChange(a.saveSettings).Children(func() { ui.Text(c, fmt.Sprintf(tr(c, "%g%s"), selected, unit)); icon(c, "alt-arrow-down", 13) })
+	sel := controlSelect(c.Key(label), value)
+	sel.Trigger.Label(tr(c, "Choose ") + tr(c, label)).OnChange(a.saveSettings).Children(func() { ui.Text(c, fmt.Sprintf(tr(c, "%g%s"), selected, unit)); icon(c, "alt-arrow-down", 13) })
 	sel.Popup(func(panel ui.Element) {
-		panel.Padding(5).Radius(10).Background(a.palette.Overlay).Children(func() {
+		controlSelectPopup(c, panel).Children(func() {
 			ui.Scroll(c).MaxHeight(280).Children(func() {
 				for _, size := range values {
-					item := sel.Item(size).Padding(7, 10).Radius(6)
-					if item.Highlighted() {
-						item.Background(a.palette.Hover)
-					}
+					item := controlSelectItem(c, sel.Item(size))
 					item.Children(func() { ui.Text(c, fmt.Sprintf(tr(c, "%g%s"), size, unit)) })
 				}
 			})
@@ -968,15 +966,15 @@ func (a *App) themeLibrary(c *ui.Context) {
 			if kind != "imported" {
 				label = "Linked"
 			}
-			ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted).Margin(12, 16, 4, 16)
+			ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted).Margin(12, 16, 4, 16)
 			for _, entry := range entries {
 				entry := entry
 				ui.Row(c.Key("theme-entry-"+entry.ID)).Padding(10, 16).Gap(8).AlignItems(ui.Center).Children(func() {
 					ui.Column(c).Grow(1).MinWidth(0).Gap(3).Children(func() {
-						ui.Text(c, entry.Name).FontSize(design.UISize(c, 13)).FontWeight(600).SingleLine()
-						ui.Text(c, entry.Path).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted).SingleLine()
+						ui.Text(c, entry.Name).FontSize(design.TextSize(c, design.TextBase)).FontWeight(600).SingleLine()
+						ui.Text(c, entry.Path).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
 						if entry.Warning != "" {
-							ui.Text(c, entry.Warning).FontSize(design.UISize(c, 11)).TextColor(a.palette.Warning)
+							ui.Text(c, entry.Warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning)
 						}
 					})
 					if kind != "imported" {
@@ -990,32 +988,30 @@ func (a *App) themeLibrary(c *ui.Context) {
 	})
 	ui.DialogBase(c.Key("add-theme-dialog"), &state.Open, func(backdrop, panel ui.Element) {
 		backdrop.Background(ui.Hex("#000000").Alpha(.55))
-		panel.Width(640).MaxWidth(760).Padding(20).Radius(12).Background(a.palette.Dialog).Border(1, a.palette.Border).Gap(16)
+		panel.Width(640).MaxWidth(760).Padding(20).Radius(12).Gap(16)
+		a.floatingSurface(c, panel, 12)
 		ui.Row(c).Gap(16).AlignItems(ui.Start).Children(func() {
 			ui.Column(c).Grow(1).Gap(4).Children(func() {
-				ui.Text(c, tr(c, "Add a theme")).FontSize(design.UISize(c, 19)).FontWeight(600)
-				ui.Text(c, tr(c, "Import a local theme into your library or keep it linked to its source.")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, "Add a theme")).FontSize(design.TextSize(c, design.TextTitle)).FontWeight(600)
+				ui.Text(c, tr(c, "Import a local theme into your library or keep it linked to its source.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 			})
 			iconButton(c, "close", tr(c, "Close theme import")).OnClick(func() { state.Open = false })
 		})
 		ui.Row(c).Gap(10).Children(func() {
 			for _, mode := range []struct{ id, title, description string }{{"imported", "Import a copy", "Keep a self-contained snapshot."}, {"linked", "Link to file", "Reload changes from the file on disk."}} {
 				mode := mode
-				b := ui.ButtonBase(c.Key(mode.id)).Grow(1).Padding(10).Radius(9).Border(1, a.palette.Border).Justify(ui.Start).Label(tr(c, mode.title))
-				if state.Mode == mode.id {
-					b.BorderColor(a.palette.Accent).Background(a.palette.Active)
-				}
+				b := controlTileButton(c.Key(mode.id), state.Mode == mode.id).Grow(1).Label(tr(c, mode.title))
 				b.Children(func() {
 					ui.Column(c).Gap(4).Children(func() {
 						ui.Text(c, tr(c, mode.title)).FontWeight(600)
-						ui.Text(c, tr(c, mode.description)).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+						ui.Text(c, tr(c, mode.description)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 					})
 				})
 				b.OnClick(func() { state.Mode = mode.id })
 			}
 		})
 		ui.Row(c).Gap(8).Children(func() {
-			ui.TextInput(c.Key("theme-source-path"), &state.Path).Placeholder(tr(c, "Theme file, package.json, or extension folder")).Label(tr(c, "Theme source path")).Grow(1).AutoFocus()
+			controlTextInput(c.Key("theme-source-path"), &state.Path).Placeholder(tr(c, "Theme file, package.json, or extension folder")).Label(tr(c, "Theme source path")).Grow(1).AutoFocus()
 			textButton(c, tr(c, "Browse")).OnClick(func() {
 				if a.win == nil {
 					return
@@ -1033,13 +1029,13 @@ func (a *App) themeLibrary(c *ui.Context) {
 			for _, variant := range preview.Variants {
 				variant := variant
 				selected := variant.Selected
-				ui.Checkbox(c.Key("theme-import-"+variant.ID), &selected, variant.Name).OnClick(func() { a.dispatch(contracts.Command{Kind: "theme.select", ID: variant.ID, Enabled: selected}) })
+				controlCheckbox(c.Key("theme-import-"+variant.ID), &selected, variant.Name).OnClick(func() { a.dispatch(contracts.Command{Kind: "theme.select", ID: variant.ID, Enabled: selected}) })
 			}
 			for _, warning := range preview.Warnings {
-				ui.Text(c, warning).FontSize(design.UISize(c, 11)).TextColor(a.palette.Warning)
+				ui.Text(c, warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning)
 			}
 			if preview.Error != "" {
-				ui.Text(c, preview.Error).TextColor(a.palette.Danger).FontSize(design.UISize(c, 12))
+				ui.Text(c, preview.Error).TextColor(a.palette.Danger).FontSize(design.TextSize(c, design.TextBase))
 			}
 		}
 		ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
@@ -1050,7 +1046,7 @@ func (a *App) themeLibrary(c *ui.Context) {
 				label = "Import selected"
 				ready = preview.Ready
 			}
-			ui.PrimaryButton(c, tr(c, label)).Disabled(label == "Import selected" && !ready).OnClick(func() {
+			primaryButton(c, tr(c, label)).Disabled(label == "Import selected" && !ready).OnClick(func() {
 				if label == "Analyze theme" {
 					a.dispatch(contracts.Command{Kind: "theme.analyze", Path: state.Path, Name: state.Mode})
 				} else {
@@ -1066,8 +1062,6 @@ func (a *App) notificationSettings(c *ui.Context) {
 	sectionTitle(c, tr(c, "Desktop"))
 	a.settingsCard(c, func() {
 		a.settingsRow(c, "Desktop notifications", "", func() { a.settingsToggle(c, "Desktop notifications", &n.Enabled) })
-		line(c)
-		a.settingsRow(c, "Agent updates", "Show a banner when monitored agent CLIs have updates.", func() { a.settingsToggle(c, "Agent updates", &n.AgentUpdates) }).Disabled(!n.Enabled).Opacity(notificationRowOpacity(n.Enabled))
 		line(c)
 		a.settingsRow(c, "Only when in the background", "", func() {
 			on := !n.WhenFocused
@@ -1148,7 +1142,7 @@ func (a *App) recordShortcut(c *ui.Context, id, label string, binding *string) {
 			a.saveSettings()
 			return true
 		}).Children(func() {
-			ui.Text(c, tr(c, "Press a shortcut…")).TextColor(a.palette.Muted).FontSize(design.UISize(c, 12))
+			ui.Text(c, tr(c, "Press a shortcut…")).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
 		})
 		textButton(c, tr(c, "Cancel")).OnClick(func() { a.expanded["shortcut:"+id] = false })
 		return
@@ -1173,18 +1167,15 @@ func (a *App) fileSettings(c *ui.Context) {
 		if f.Autosave {
 			line(c)
 			a.settingsRow(c, "Autosave delay", "", func() {
-				sel := ui.SelectBase(c.Key("autosave-delay"), &f.AutosaveDelay)
-				sel.Trigger.Label(tr(c, "Choose Autosave delay")).Padding(7, 10).Radius(8).Background(a.palette.Raised.Alpha(.5)).OnChange(a.saveSettings).Children(func() {
+				sel := controlSelect(c.Key("autosave-delay"), &f.AutosaveDelay)
+				sel.Trigger.Label(tr(c, "Choose Autosave delay")).OnChange(a.saveSettings).Children(func() {
 					ui.Text(c, autosaveDelayLabel(f.AutosaveDelay, a.state.Settings.General.Language))
 					icon(c, "alt-arrow-down", 13)
 				})
 				sel.Popup(func(panel ui.Element) {
-					panel.Padding(5).Radius(10).Background(a.palette.Overlay).Children(func() {
+					controlSelectPopup(c, panel).Children(func() {
 						for _, delay := range []int{300, 600, 900, 1500, 3000} {
-							item := sel.Item(delay).Padding(7, 10).Radius(6)
-							if item.Highlighted() {
-								item.Background(a.palette.Hover)
-							}
+							item := controlSelectItem(c, sel.Item(delay))
 							item.Children(func() { ui.Text(c, autosaveDelayLabel(delay, a.state.Settings.General.Language)) })
 						}
 					})
@@ -1212,7 +1203,7 @@ func autosaveDelayLabel(delay int, language ...string) string {
 func (a *App) appshotSettings(c *ui.Context) {
 	s := &a.state.Settings.Appshots
 	capabilities := a.state.AppshotCapabilities
-	ui.Text(c, tr(c, "Set up once, one permission at a time. Screen Recording captures the window; Accessibility optionally adds off-screen application text.")).FontSize(design.UISize(c, 13)).FixedLineHeight(design.UISize(c, 20)).TextColor(a.palette.Muted).Margin(0, 8, 8, 8)
+	ui.Text(c, tr(c, "Set up once, one permission at a time. Screen Recording captures the window; Accessibility optionally adds off-screen application text.")).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(a.palette.Muted).Margin(0, 8, 8, 8)
 	a.settingsCard(c, func() {
 		a.settingsRow(c, "Capture Appshots", "Captures are staged for review and never sent automatically.", func() { a.settingsToggle(c, "Capture Appshots", &s.Enabled) })
 		line(c)
@@ -1238,7 +1229,7 @@ func (a *App) appshotSettings(c *ui.Context) {
 			a.settingsChoice(c, "Appshot destination", &s.Destination, []settingOption{{"automatic", "Automatic"}, {"lastSession", "Last session"}, {"newSession", "New session"}}, nil)
 		})
 		line(c)
-		a.settingsRow(c, "Window capture", "Screen Recording lets Zeron capture the frontmost window. macOS may request one restart.", func() {
+		a.settingsRow(c, "Window capture", "Screen Recording lets GCode capture the frontmost window. macOS may request one restart.", func() {
 			a.appshotCapabilityBadge(c, capabilities.WindowCapture)
 			if s.Enabled && capabilities.WindowCapture == "permissionRequired" {
 				textButton(c, tr(c, "Allow window capture")).OnClick(func() { a.dispatch(contracts.Command{Kind: "appshots.permission", ID: "windowCapture"}) })
@@ -1253,7 +1244,7 @@ func (a *App) appshotSettings(c *ui.Context) {
 		})
 	})
 	ui.Row(c).FillWidth().Padding(12, 8, 0, 8).AlignItems(ui.Center).Gap(12).Children(func() {
-		ui.Text(c, tr(c, "Changed a permission? Check again after returning to Zeron.")).Grow(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, "Changed a permission? Check again after returning to GCode.")).Grow(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 		textButton(c, tr(c, "Check again")).Label(tr(c, "Check permissions again")).OnClick(func() { a.dispatch(contracts.Command{Kind: "appshots.permissions.check"}) })
 	})
 }
@@ -1272,9 +1263,11 @@ func (a *App) appshotCapabilityBadge(c *ui.Context, status string) {
 	case "userSelection":
 		text = "Select window"
 	}
-	ui.Text(c, tr(c, text)).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted).Background(a.palette.Raised).Radius(4).Padding(3, 6)
+	ui.Text(c, tr(c, text)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Background(a.palette.Raised).Radius(4).Padding(3, 6)
 }
 
+// archivedSettings is the only surface that lists archived conversations.
+// The sidebar drops them; here they can be opened, restored and deleted.
 func (a *App) archivedSettings(c *ui.Context) {
 	count := 0
 	for _, session := range a.state.Sessions {
@@ -1284,8 +1277,15 @@ func (a *App) archivedSettings(c *ui.Context) {
 		count++
 		s := session
 		a.settingsCard(c, func() {
-			a.settingsRow(c, s.Title, a.projectNameFor(s.ProjectID), func() {
-				textButton(c, tr(c, "Unarchive")).OnClick(func() { a.dispatch(contracts.Command{Kind: "session.archive", ID: s.ID, Enabled: false}) })
+			a.settingsRowWithText(c, "archived-session:"+s.ID, s.Title, a.projectNameFor(s.ProjectID), func() {
+				textButton(c.Key("archived-view-"+s.ID), tr(c, "View")).OnClick(func() { a.navigate("chat/" + s.ID) })
+				textButton(c.Key("archived-restore-"+s.ID), tr(c, "Restore")).OnClick(func() {
+					a.dispatch(contracts.Command{Kind: "session.archive", ID: s.ID, Enabled: false})
+				})
+				dangerButton(c.Key("archived-delete-"+s.ID), tr(c, "Delete")).OnClick(func() {
+					a.sidebarUI.deleteID = s.ID
+					a.sidebarUI.deleteOpen = true
+				})
 			})
 		})
 	}

@@ -1,0 +1,25 @@
+{
+  "repo": "linq-lab/linq-alpha-plugin",
+  "commit": "bfb594b7ccca28dfdcbdb0a64673dfe2e819fd87",
+  "path": "plugins/linq-alpha",
+  "archive_sha256": "54c49708e5f3edf31e6e96fc8ec8a27191d5a98429fdba5b0f0af48838cc4d35",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "icon.svg",
+    "skills/remove/SKILL.md",
+    "skills/research/SKILL.md",
+    "skills/setup/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"linq-alpha\",\n  \"displayName\": \"LinqAlpha\",\n  \"version\": \"0.4.4\",\n  \"description\": \"Connect Claude to LinqAlpha, guide capability-based provider selection, and load the live organization contract without bundling LinqAlpha's internal orchestration policy.\",\n  \"author\": {\n    \"name\": \"LinqAlpha\",\n    \"email\": \"support@linqalpha.com\"\n  },\n  \"license\": \"Apache-2.0\",\n  \"privacyPolicyUrl\": \"https://www.linqalpha.com/privacy-policy\",\n  \"icon\": \"./icon.svg\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"linqalpha\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.linqalpha.com/v1/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/setup/SKILL.md": "\nname: setup\ndescription: Run the LinqAlpha setup flow — connection check, capability tour, default-source opt-in. Use ONLY when the user invokes /linq-alpha:setup or asks to set up or connect the LinqAlpha plugin; for questions about LinqAlpha's capabilities or any research request, use the research skill instead.\n",
+    "skills/remove/SKILL.md": "\nname: remove\ndescription: Delete the saved LinqAlpha default-source preference from Claude's memory. Use ONLY when the user invokes /linq-alpha:remove or asks to forget that preference; not for uninstalling the plugin or disconnecting the connector.\n",
+    "skills/research/SKILL.md": "\nname: research\ndescription: Choose and use LinqAlpha for institutional financial research involving company identity, fundamentals, estimates, ownership, prices, transcripts, disclosures, macro data, rates, FX, commodities, citations, or organization-scoped LinqAlpha data. Use this skill when deciding among overlapping financial-data connectors, when the user asks what LinqAlpha can do, or before planning a LinqAlpha research workflow.\n"
+  }
+}

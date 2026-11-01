@@ -1,0 +1,51 @@
+{
+  "repo": "langfuse/skills",
+  "commit": "b86532b77f16f1e27c7cffa32bb632aa3cd9a352",
+  "path": ".",
+  "archive_sha256": "096b12e58cddcee60afeb15f8fed28869925a47b03cc47936b0ee03a56ea7016",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".cursor/skills/skill-creator/LICENSE.txt",
+    ".cursor/skills/skill-creator/SKILL.md",
+    ".cursor/skills/skill-creator/references/output-patterns.md",
+    ".cursor/skills/skill-creator/references/workflows.md",
+    ".cursor/skills/skill-creator/scripts/init_skill.py",
+    ".cursor/skills/skill-creator/scripts/package_skill.py",
+    ".cursor/skills/skill-creator/scripts/quick_validate.py",
+    ".github/CODEOWNERS",
+    ".github/DISCUSSION_TEMPLATE/ideas-improvements.yml",
+    ".github/dependabot.yml",
+    ".github/workflows/zizmor.yml",
+    ".gitignore",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "assets/logo.png",
+    "skills/langfuse/SKILL.md",
+    "skills/langfuse/references/ci-cd.md",
+    "skills/langfuse/references/cli.md",
+    "skills/langfuse/references/create-dataset.md",
+    "skills/langfuse/references/error-analysis.md",
+    "skills/langfuse/references/instrumentation.md",
+    "skills/langfuse/references/judge-calibration.md",
+    "skills/langfuse/references/prompt-engineering.md",
+    "skills/langfuse/references/prompt-migration.md",
+    "skills/langfuse/references/setting-up-evals.md",
+    "skills/langfuse/references/skill-feedback.md",
+    "skills/langfuse/references/user-feedback.md",
+    "skills/langfuse/references/v4-project-migration.md",
+    "skills/migrate-to-langfuse/SKILL.md",
+    "skills/migrate-to-langfuse/references/reingest-history.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"langfuse\",\n  \"description\": \"Skills for working with Langfuse, the open-source LLM engineering platform for tracing, prompt management, and evaluation.\",\n  \"version\": \"1.10.0\",\n  \"author\": {\n    \"name\": \"Langfuse\",\n    \"email\": \"support@langfuse.com\"\n  },\n  \"homepage\": \"https://langfuse.com\",\n  \"repository\": \"https://github.com/langfuse/skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"langfuse\",\n    \"llm\",\n    \"observability\",\n    \"tracing\",\n    \"prompt-management\",\n    \"evaluation\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/migrate-to-langfuse/SKILL.md": "\nname: migrate-to-langfuse\ndescription: >-\n  Migrate to Langfuse from another LLM observability/evals platform (LangSmith, Arize AX, Phoenix, Braintrust, Helicone, Promptfoo, ...). A one-off vendor switch: live tracing cutover plus transfer of historical traces, datasets, prompts, and evaluators. Not for anything Langfuse-to-Langfuse — SDK or version upgrades, project/region moves, self-hosted to Cloud — and not for moving in-code prompts into Langfuse; the main langfuse skill covers those.\nallowed-tools:\n  - WebFetch(domain:langfuse.com)\n  - Bash(curl *langfuse.com/*)\n",
+    "skills/langfuse/SKILL.md": "\nname: langfuse\ndescription: >-\n  Interact with Langfuse and access its documentation: tracing, monitoring, creating datasets, running experiments, and evaluating AI applications. Use when needing to (1) query or modify Langfuse data, (2) look up Langfuse documentation, concepts, integration guides, a feature or SDK usage, or (3) do any AI engineering task (AI observability, prompt engineering/management, evaluation and evaluator management, experimentation, dataset management, evaluation-driven CI/CD, feedback collection). Invoke it for tasks in this scope even when Langfuse is not configured or explicitly mentioned.\nallowed-tools:\n  - WebFetch(domain:langfuse.com)\n  - Bash(curl *langfuse.com/*)\n  - Bash(npx langfuse-cli api __schema *)\n  - Bash(npx langfuse-cli api * --help *)\n  - Bash(npx langfuse-cli api * list *)\n  - Bash(npx langfuse-cli api * get *)\n  - Bash(bunx langfuse-cli api __schema *)\n  - Bash(bunx langfuse-cli api * --help *)\n  - Bash(bunx langfuse-cli api * list *)\n  - Bash(bunx langfuse-cli api * get *)\n"
+  }
+}

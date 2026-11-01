@@ -21,6 +21,7 @@ type ClipboardAttachment struct {
 }
 
 type AttachmentImportRequest struct {
+	SessionID string               `json:"sessionId,omitempty"`
 	Paths     []string             `json:"paths,omitempty"`
 	Clipboard *ClipboardAttachment `json:"clipboard,omitempty"`
 	// Transfer simulates a cancellable backend transfer after local ingestion.

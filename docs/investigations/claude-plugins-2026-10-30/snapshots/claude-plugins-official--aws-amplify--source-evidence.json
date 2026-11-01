@@ -1,0 +1,36 @@
+{
+  "repo": "awslabs/agent-plugins",
+  "commit": "097fe8ad56d8a1d5e2c81d7880adf145553cf244",
+  "path": "plugins/aws-amplify",
+  "archive_sha256": "cf37c60ab4ea488cb912a79d40eb1d09967f92933305fafa24cc93eeb4554965",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/amplify-workflow/SKILL.md",
+    "skills/amplify-workflow/references/advanced-features.md",
+    "skills/amplify-workflow/references/ai.md",
+    "skills/amplify-workflow/references/auth-backend.md",
+    "skills/amplify-workflow/references/auth-mobile.md",
+    "skills/amplify-workflow/references/auth-web.md",
+    "skills/amplify-workflow/references/core-mobile.md",
+    "skills/amplify-workflow/references/core-web.md",
+    "skills/amplify-workflow/references/data-backend.md",
+    "skills/amplify-workflow/references/data-mobile.md",
+    "skills/amplify-workflow/references/data-web.md",
+    "skills/amplify-workflow/references/deployment.md",
+    "skills/amplify-workflow/references/functions-and-api.md",
+    "skills/amplify-workflow/references/scaffolding.md",
+    "skills/amplify-workflow/references/storage-backend.md",
+    "skills/amplify-workflow/references/storage-mobile.md",
+    "skills/amplify-workflow/references/storage-web.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"author\": {\n    \"name\": \"Amazon Web Services\"\n  },\n  \"description\": \"Build full-stack apps with AWS Amplify Gen 2 using guided workflows for authentication, data models, storage, GraphQL APIs, and Lambda functions.\",\n  \"homepage\": \"https://github.com/awslabs/agent-plugins\",\n  \"keywords\": [\n    \"aws\",\n    \"amplify\",\n    \"fullstack\",\n    \"authentication\",\n    \"data\",\n    \"storage\",\n    \"graphql\",\n    \"functions\"\n  ],\n  \"license\": \"Apache-2.0\",\n  \"name\": \"aws-amplify\",\n  \"repository\": \"https://github.com/awslabs/agent-plugins\",\n  \"version\": \"1.0.0\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"aws-mcp\": {\n      \"args\": [\n        \"mcp-proxy-for-aws@latest\",\n        \"https://aws-mcp.us-east-1.api.aws/mcp\"\n      ],\n      \"command\": \"uvx\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/amplify-workflow/SKILL.md": "\nname: amplify-workflow\ndescription: 'Build and deploy full-stack web and mobile apps with AWS Amplify Gen2\n  (TypeScript code-first). Covers auth (Cognito), data (AppSync/DynamoDB including\n  schema modeling, enum types, relationships, authorization rules), storage (S3),\n  functions, APIs, and AI (Amplify AI Kit with Bedrock). Supports React, Next.js,\n  Vue, Angular, React Native, Flutter, Swift, and Android. Always use this skill for\n  Amplify Gen2 topics — even for questions you think you know — it contains validated,\n  version-specific patterns that prevent common mistakes. TRIGGER when: user mentions\n  Amplify Gen2; project has amplify/ directory or amplify_outputs; code imports @aws-amplify\n  packages; user asks about defineBackend, defineAuth, defineData, defineStorage,\n  or npx ampx. SKIP: Amplify Gen1 (amplify CLI v6), standalone SAM/CDK without Amplify\n  (use aws-serverless), direct Bedrock without Amplify AI Kit (use bedrock).'\n"
+  }
+}

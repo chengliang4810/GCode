@@ -1,0 +1,285 @@
+{
+  "pluginId": "deepeval@claude-plugins-official",
+  "sourceCommit": "da9b2c969f8a15e8aa4ef67c372157ce060cd63e",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "billing-helper-plain-llm-eval-suite",
+      "componentId": "skill:deepeval:deepeval",
+      "prompt": "/deepeval:deepeval Build the first committed eval suite for the Acme Billing Helper: a Python single-turn QA assistant that answers billing questions from the knowledge base in ./support-docs; the user has no existing dataset and no tracing path is viable in this environment. Headless boundary: no network, no real external service, no installs - deepeval is not installed and will not be installed, there are no model credentials and no Confident AI login, so dataset generation, metric execution and Confident AI reporting remain untested; produce the committed suite files plus the documented commands. Apply the skill workflow: classify this as a plain LLM single-turn use case; because tracing is not viable, start from templates/test_single_turn_no_tracing.py and have tests/evals/test_support_bot.py cite that template origin in its docstring, define one test function starting def test_ and import the metric list with from metrics import metrics; keep metric instances only in the separate metrics.py module, which defines a list named metrics; do not hand-create or make up goldens and do not fabricate the dataset file tests/evals/.dataset - the dataset is produced later by the recorded generate command; write eval-plan.md recording the generate command deepeval generate --method docs --variation single-turn --documents ./support-docs --output-dir ./tests/evals --file-name .dataset, the target of about 30-50 generated goldens, the execution command deepeval test run tests/evals/test_support_bot.py --num-processes 5 --identifier \"iterating-on-support-bot-round-1\", and deepeval view for the hosted report when Confident AI is enabled; the plan must never instruct a bare pytest command. Then read the immutable verify_eval_suite.py and run exactly python verify_eval_suite.py using Bash; it validates the suite and writes eval-suite-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state that dataset generation, metric execution and Confident AI reporting remain untested.",
+      "allowCommands": [
+        "python verify_eval_suite.py"
+      ],
+      "verifierOutputs": [
+        "eval-suite-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_eval_suite.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nplan = Path('eval-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'deepeval generate --method docs' in plan, 'the documented dataset generation command is missing'\nassert '--documents ./support-docs' in plan, 'the generation command must read the scenario knowledge base'\nassert '30-50' in plan, 'the documented golden target range is missing'\nassert 'deepeval test run tests/evals/test_support_bot.py' in plan, 'the suite execution command is missing'\nassert '--num-processes 5' in plan, 'the documented parallelism flag is missing'\nassert re.search(r'--identifier \"iterating-on-[^\"]+\"', plan), 'the documented identifier flag is missing'\nassert 'deepeval view' in plan, 'the hosted report command is missing'\nassert 'templates/test_single_turn_no_tracing.py' in plan, 'the no-tracing template choice must be justified'\nassert 'plain llm' in low, 'the use case classification must be recorded'\nassert 'metrics.py' in plan, 'the separate metrics module must be referenced'\nassert 'pytest tests/' not in plan, 'the eval must run via deepeval test run, never a bare pytest command'\neval_file = Path('tests/evals/test_support_bot.py').read_text(encoding='utf-8')\nassert 'from metrics import metrics' in eval_file, 'metric instances must come from the metrics module'\nassert re.search(r'def test_', eval_file), 'the eval file needs a pytest test function'\nassert 'templates/test_single_turn_no_tracing.py' in eval_file, 'the eval file must cite its template origin'\nmetrics_file = Path('metrics.py').read_text(encoding='utf-8')\nassert re.search(r'(?m)^metrics\\s*=', metrics_file), 'metrics.py must define the shared metric list'\nassert not Path('tests/evals/.dataset').exists(), 'goldens must not be hand-created; the dataset comes from deepeval generate'\nassert 'untested' in low, 'the plan must state what remains untested'\n\nreport = {'dataset_from_generate': True, 'no_bare_pytest': True, 'no_handmade_goldens': True, 'run_command': True, 'separate_metrics_module': True, 'single_turn_template': True, 'suite_shape': True, 'untested_declared': True}\nPath('eval-suite-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('eval suite: committed plain-LLM single-turn suite verified; dataset generation, metric execution and Confident AI reporting remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_eval_suite.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nplan = Path('eval-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'deepeval generate --method docs' in plan, 'the documented dataset generation command is missing'\nassert '--documents ./support-docs' in plan, 'the generation command must read the scenario knowledge base'\nassert '30-50' in plan, 'the documented golden target range is missing'\nassert 'deepeval test run tests/evals/test_support_bot.py' in plan, 'the suite execution command is missing'\nassert '--num-processes 5' in plan, 'the documented parallelism flag is missing'\nassert re.search(r'--identifier \"iterating-on-[^\"]+\"', plan), 'the documented identifier flag is missing'\nassert 'deepeval view' in plan, 'the hosted report command is missing'\nassert 'templates/test_single_turn_no_tracing.py' in plan, 'the no-tracing template choice must be justified'\nassert 'plain llm' in low, 'the use case classification must be recorded'\nassert 'metrics.py' in plan, 'the separate metrics module must be referenced'\nassert 'pytest tests/' not in plan, 'the eval must run via deepeval test run, never a bare pytest command'\neval_file = Path('tests/evals/test_support_bot.py').read_text(encoding='utf-8')\nassert 'from metrics import metrics' in eval_file, 'metric instances must come from the metrics module'\nassert re.search(r'def test_', eval_file), 'the eval file needs a pytest test function'\nassert 'templates/test_single_turn_no_tracing.py' in eval_file, 'the eval file must cite its template origin'\nmetrics_file = Path('metrics.py').read_text(encoding='utf-8')\nassert re.search(r'(?m)^metrics\\s*=', metrics_file), 'metrics.py must define the shared metric list'\nassert not Path('tests/evals/.dataset').exists(), 'goldens must not be hand-created; the dataset comes from deepeval generate'\nassert 'untested' in low, 'the plan must state what remains untested'\n\nreport = {'dataset_from_generate': True, 'no_bare_pytest': True, 'no_handmade_goldens': True, 'run_command': True, 'separate_metrics_module': True, 'single_turn_template': True, 'suite_shape': True, 'untested_declared': True}\nPath('eval-suite-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('eval suite: committed plain-LLM single-turn suite verified; dataset generation, metric execution and Confident AI reporting remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "eval-suite-verification.json",
+          "equals": "{\"dataset_from_generate\": true, \"no_bare_pytest\": true, \"no_handmade_goldens\": true, \"run_command\": true, \"separate_metrics_module\": true, \"single_turn_template\": true, \"suite_shape\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "deepeval generate --method docs"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "--documents ./support-docs"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "30-50"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "deepeval test run tests/evals/test_support_bot.py"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "--num-processes 5"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "--identifier \"iterating-on-"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "deepeval view"
+        },
+        {
+          "kind": "file",
+          "path": "eval-plan.md",
+          "contains": "templates/test_single_turn_no_tracing.py"
+        },
+        {
+          "kind": "file",
+          "path": "tests/evals/test_support_bot.py",
+          "contains": "from metrics import metrics"
+        },
+        {
+          "kind": "file",
+          "path": "tests/evals/test_support_bot.py",
+          "contains": "templates/test_single_turn_no_tracing.py"
+        },
+        {
+          "kind": "file-absent",
+          "path": "tests/evals/.dataset"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "eval suite: committed plain-LLM single-turn suite verified; dataset generation, metric execution and Confident AI reporting remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "support-bot-manual-observe-instrumentation",
+      "componentId": "skill:deepeval:deepeval-tracing",
+      "prompt": "/deepeval:deepeval-tracing Instrument the bundled support bot for DeepEval native tracing. support_bot.py is plain Python with no framework: answer_ticket is the agent loop, search_kb is retrieval, call_llm is the model call and create_refund is a tool call; format_receipt is a non-AI helper. Headless boundary: no network, no real external service, no installs - deepeval is not installed, no traces are sent anywhere and there is no Confident AI account, so real trace export and the Observatory remain untested. Write traced_support_bot.py as a copy of support_bot.py instrumented with the DeepEval SDK: import the observe support from deepeval.tracing, decorate exactly the four AI functions with @observe, keep format_receipt undecorated because the skill instruments AI components only, and preserve every function body unchanged. Write tracing-notes.md recording: the span type mapping one line each as answer_ticket -> agent, call_llm -> llm, search_kb -> retriever, create_refund -> tool; that no supported framework integration applies so the manual @observe fallback is used per the skill preference for integrations; that the API key read from the environment is never placed in span attributes, tags or metadata because secrets are never traced; and that sending traces requires deepeval login or the CONFIDENT_API_KEY environment variable, with real export to the Confident AI Observatory remaining untested. Then read the immutable verify_tracing.py and run exactly python verify_tracing.py using Bash; it validates the instrumentation and writes tracing-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state that real trace export remains untested.",
+      "allowCommands": [
+        "python verify_tracing.py"
+      ],
+      "verifierOutputs": [
+        "tracing-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_tracing.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntraced = Path('traced_support_bot.py').read_text(encoding='utf-8')\nnotes = Path('tracing-notes.md').read_text(encoding='utf-8')\nnlow = notes.lower()\nassert 'deepeval.tracing' in traced, 'the instrumentation must import the DeepEval tracing support'\nassert traced.count('@observe') == 4, 'exactly the four AI functions carry @observe'\nfor fn in ('answer_ticket', 'call_llm', 'search_kb', 'create_refund'):\n    assert fn in traced, 'missing instrumented function: ' + fn\nlines = [ln.strip() for ln in traced.splitlines()]\nidx = next((i for i, ln in enumerate(lines) if ln.startswith('def format_receipt')), -1)\nassert idx > 0, 'the non-AI helper must stay in the traced copy'\nassert '@observe' not in lines[idx - 1], 'the non-AI helper must stay undecorated'\nassert 'docs = search_kb(ticket.subject)' in traced, 'the agent-loop body must be preserved'\nassert 'create_refund(ticket.order_id, ticket.amount_cents)' in traced, 'the tool-call body must be preserved'\nfor line in ('answer_ticket -> agent', 'call_llm -> llm', 'search_kb -> retriever', 'create_refund -> tool'):\n    assert line in notes, 'the span type mapping line is missing: ' + line\nassert 'manual' in nlow and '@observe' in notes, 'the notes must justify the manual @observe fallback'\nassert 'never' in nlow and 'secret' in nlow, 'the notes must state secrets are never traced'\nassert 'deepeval login' in notes, 'the documented login requirement is missing'\nassert 'CONFIDENT_API_KEY' in notes, 'the documented key alternative is missing'\nassert 'untested' in nlow, 'the notes must state what remains untested'\n\nreport = {'bodies_preserved': True, 'helper_undecorated': True, 'login_requirement': True, 'no_secret_tracing': True, 'observe_count_four': True, 'sdk_import': True, 'span_type_mapping': True, 'untested_declared': True}\nPath('tracing-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('tracing instrumentation: four AI spans decorated and mapping verified; real trace export to Confident AI remains untested')\n"
+        },
+        {
+          "path": "support_bot.py",
+          "text": "import os\n\nLLM_KEY_ENV = \"SUPPORT_BOT_KEY\"\n\n\ndef search_kb(query):\n    index = _load_index()\n    return index.top_k(query, 5)\n\n\ndef call_llm(prompt):\n    return _client.complete(prompt, api_key=os.environ[LLM_KEY_ENV])\n\n\ndef create_refund(order_id, amount_cents):\n    return _payments.refund(order_id, amount_cents)\n\n\ndef answer_ticket(ticket):\n    docs = search_kb(ticket.subject)\n    draft = call_llm(build_prompt(ticket, docs))\n    if ticket.requests_refund:\n        create_refund(ticket.order_id, ticket.amount_cents)\n    return draft\n\n\ndef format_receipt(ticket, draft):\n    return \"RECEIPT \" + ticket.id + \": \" + draft[:80]\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_tracing.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntraced = Path('traced_support_bot.py').read_text(encoding='utf-8')\nnotes = Path('tracing-notes.md').read_text(encoding='utf-8')\nnlow = notes.lower()\nassert 'deepeval.tracing' in traced, 'the instrumentation must import the DeepEval tracing support'\nassert traced.count('@observe') == 4, 'exactly the four AI functions carry @observe'\nfor fn in ('answer_ticket', 'call_llm', 'search_kb', 'create_refund'):\n    assert fn in traced, 'missing instrumented function: ' + fn\nlines = [ln.strip() for ln in traced.splitlines()]\nidx = next((i for i, ln in enumerate(lines) if ln.startswith('def format_receipt')), -1)\nassert idx > 0, 'the non-AI helper must stay in the traced copy'\nassert '@observe' not in lines[idx - 1], 'the non-AI helper must stay undecorated'\nassert 'docs = search_kb(ticket.subject)' in traced, 'the agent-loop body must be preserved'\nassert 'create_refund(ticket.order_id, ticket.amount_cents)' in traced, 'the tool-call body must be preserved'\nfor line in ('answer_ticket -> agent', 'call_llm -> llm', 'search_kb -> retriever', 'create_refund -> tool'):\n    assert line in notes, 'the span type mapping line is missing: ' + line\nassert 'manual' in nlow and '@observe' in notes, 'the notes must justify the manual @observe fallback'\nassert 'never' in nlow and 'secret' in nlow, 'the notes must state secrets are never traced'\nassert 'deepeval login' in notes, 'the documented login requirement is missing'\nassert 'CONFIDENT_API_KEY' in notes, 'the documented key alternative is missing'\nassert 'untested' in nlow, 'the notes must state what remains untested'\n\nreport = {'bodies_preserved': True, 'helper_undecorated': True, 'login_requirement': True, 'no_secret_tracing': True, 'observe_count_four': True, 'sdk_import': True, 'span_type_mapping': True, 'untested_declared': True}\nPath('tracing-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('tracing instrumentation: four AI spans decorated and mapping verified; real trace export to Confident AI remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-verification.json",
+          "equals": "{\"bodies_preserved\": true, \"helper_undecorated\": true, \"login_requirement\": true, \"no_secret_tracing\": true, \"observe_count_four\": true, \"sdk_import\": true, \"span_type_mapping\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "support_bot.py",
+          "equals": "import os\n\nLLM_KEY_ENV = \"SUPPORT_BOT_KEY\"\n\n\ndef search_kb(query):\n    index = _load_index()\n    return index.top_k(query, 5)\n\n\ndef call_llm(prompt):\n    return _client.complete(prompt, api_key=os.environ[LLM_KEY_ENV])\n\n\ndef create_refund(order_id, amount_cents):\n    return _payments.refund(order_id, amount_cents)\n\n\ndef answer_ticket(ticket):\n    docs = search_kb(ticket.subject)\n    draft = call_llm(build_prompt(ticket, docs))\n    if ticket.requests_refund:\n        create_refund(ticket.order_id, ticket.amount_cents)\n    return draft\n\n\ndef format_receipt(ticket, draft):\n    return \"RECEIPT \" + ticket.id + \": \" + draft[:80]\n"
+        },
+        {
+          "kind": "file",
+          "path": "traced_support_bot.py",
+          "contains": "deepeval.tracing"
+        },
+        {
+          "kind": "file",
+          "path": "traced_support_bot.py",
+          "contains": "answer_ticket"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "answer_ticket -> agent"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "call_llm -> llm"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "search_kb -> retriever"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "create_refund -> tool"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "deepeval login"
+        },
+        {
+          "kind": "file",
+          "path": "tracing-notes.md",
+          "contains": "CONFIDENT_API_KEY"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "tracing instrumentation: four AI spans decorated and mapping verified; real trace export to Confident AI remains untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "billpay-agent-otlp-confident-ai-runbook",
+      "componentId": "skill:deepeval:deepeval-otel",
+      "prompt": "/deepeval:deepeval-otel Write the Confident AI OTLP export runbook for billpay-agent, a Python AI agent whose AI components are the agent loop run_billpay, the LLM call call_model and the tool call pay_invoice; the same process also emits ordinary OpenTelemetry spans for its HTTP handlers through an APM agent; the team will not install the deepeval package and their API key prefix marks the EU region. Headless boundary: no network, no real external service, no installs - there is no Confident AI account and no exporter runs here, so real export and Observatory verification remain untested. Write otel-runbook.md applying the skill: dependencies opentelemetry-sdk and opentelemetry-exporter-otlp-proto-http; export with OTLP/HTTP only and state the endpoint accepts HTTP only and never gRPC; wire the span exporter with the x-confident-api-key header carrying CONFIDENT_API_KEY from the environment, and start from templates/confident_otel_setup.py; record the region decision as region=eu because the endpoint is chosen from the API key region prefix; set confident.span.type on the AI spans with the mapping lines run_billpay: agent, call_model: llm, pay_invoice: tool; put trace-wide fields in confident.trace.* attributes; follow the data-type rules and JSON-encode dicts and metadata using native arrays for string lists; isolate the export under the heading Export only AI spans and add a line starting Non-AI spans: that excludes the APM HTTP handler spans from the Confident AI pipeline; never place secrets in span attributes. Then read the immutable verify_otel_runbook.py and run exactly python verify_otel_runbook.py using Bash; it validates the runbook and writes otel-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real export and Observatory verification remain untested.",
+      "allowCommands": [
+        "python verify_otel_runbook.py"
+      ],
+      "verifierOutputs": [
+        "otel-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_otel_runbook.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('otel-runbook.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'opentelemetry-sdk' in text and 'opentelemetry-exporter-otlp-proto-http' in text, 'the documented Python OTel dependencies are missing'\nassert 'OTLP/HTTP' in text, 'the export must use OTLP/HTTP'\nassert 'never gRPC' in text, 'the endpoint accepts HTTP only and never gRPC - state it'\nassert 'x-confident-api-key' in text, 'the exporter must carry the documented auth header'\nassert 'CONFIDENT_API_KEY' in text, 'the key source must be the documented env var'\nassert 'templates/confident_otel_setup.py' in text, 'the documented starting template must be cited'\nassert 'region prefix' in text, 'the endpoint region rule must be cited'\nassert 'region=eu' in text, 'the scenario EU region decision must be recorded'\nassert 'confident.span.type' in text, 'span types must be set explicitly via confident.span.type'\nassert 'confident.trace.' in text, 'trace-wide fields use confident.trace.* attributes'\nassert 'JSON-encode' in text, 'the data-type rules require JSON-encoding dicts and metadata'\nassert 'Export only AI spans' in text, 'the isolation requirement must be stated'\nassert 'Non-AI spans:' in text, 'the APM HTTP handler exclusion must be explicit'\nfor line in ('run_billpay: agent', 'call_model: llm', 'pay_invoice: tool'):\n    assert line in text, 'the span type mapping line is missing: ' + line\nassert 'billpay-agent' in text, 'the scenario app name must be applied'\nassert 'never' in low and 'secret' in low, 'the runbook must state secrets never enter span attributes'\nassert 'untested' in low, 'the runbook must state what remains untested'\n\nreport = {'ai_only_isolation': True, 'auth_header': True, 'deps_and_endpoint': True, 'datatype_rules': True, 'region_decision': True, 'span_mapping': True, 'trace_attributes': True, 'untested_declared': True}\nPath('otel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('OTLP runbook: endpoint, header, span mapping and AI-only isolation verified; real export and Observatory verification remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_otel_runbook.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('otel-runbook.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'opentelemetry-sdk' in text and 'opentelemetry-exporter-otlp-proto-http' in text, 'the documented Python OTel dependencies are missing'\nassert 'OTLP/HTTP' in text, 'the export must use OTLP/HTTP'\nassert 'never gRPC' in text, 'the endpoint accepts HTTP only and never gRPC - state it'\nassert 'x-confident-api-key' in text, 'the exporter must carry the documented auth header'\nassert 'CONFIDENT_API_KEY' in text, 'the key source must be the documented env var'\nassert 'templates/confident_otel_setup.py' in text, 'the documented starting template must be cited'\nassert 'region prefix' in text, 'the endpoint region rule must be cited'\nassert 'region=eu' in text, 'the scenario EU region decision must be recorded'\nassert 'confident.span.type' in text, 'span types must be set explicitly via confident.span.type'\nassert 'confident.trace.' in text, 'trace-wide fields use confident.trace.* attributes'\nassert 'JSON-encode' in text, 'the data-type rules require JSON-encoding dicts and metadata'\nassert 'Export only AI spans' in text, 'the isolation requirement must be stated'\nassert 'Non-AI spans:' in text, 'the APM HTTP handler exclusion must be explicit'\nfor line in ('run_billpay: agent', 'call_model: llm', 'pay_invoice: tool'):\n    assert line in text, 'the span type mapping line is missing: ' + line\nassert 'billpay-agent' in text, 'the scenario app name must be applied'\nassert 'never' in low and 'secret' in low, 'the runbook must state secrets never enter span attributes'\nassert 'untested' in low, 'the runbook must state what remains untested'\n\nreport = {'ai_only_isolation': True, 'auth_header': True, 'deps_and_endpoint': True, 'datatype_rules': True, 'region_decision': True, 'span_mapping': True, 'trace_attributes': True, 'untested_declared': True}\nPath('otel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('OTLP runbook: endpoint, header, span mapping and AI-only isolation verified; real export and Observatory verification remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "otel-verification.json",
+          "equals": "{\"ai_only_isolation\": true, \"auth_header\": true, \"datatype_rules\": true, \"deps_and_endpoint\": true, \"region_decision\": true, \"span_mapping\": true, \"trace_attributes\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "x-confident-api-key"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "opentelemetry-exporter-otlp-proto-http"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "OTLP/HTTP"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "never gRPC"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "confident.span.type"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "confident.trace."
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "Export only AI spans"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "Non-AI spans:"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "region=eu"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "run_billpay: agent"
+        },
+        {
+          "kind": "file",
+          "path": "otel-runbook.md",
+          "contains": "templates/confident_otel_setup.py"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "OTLP runbook: endpoint, header, span mapping and AI-only isolation verified; real export and Observatory verification remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

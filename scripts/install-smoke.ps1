@@ -8,8 +8,8 @@ $taskInstall=Join-Path $taskOutput 'application'
 foreach ($taskPath in @($taskRelease,$taskOutput,$taskInstall)) {
     if (-not $taskPath.StartsWith($taskRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Smoke paths must stay in this checkout.' }
 }
-$taskRegistry='HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.gcode.zeronui'
-$taskShortcut=Join-Path ([Environment]::GetFolderPath('Programs')) 'Zeron Native UI.lnk'
+$taskRegistry='HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\dev.gcode.rcode'
+$taskShortcut=Join-Path ([Environment]::GetFolderPath('Programs')) 'GCode.lnk'
 $taskOriginalShortcut=Join-Path ([Environment]::GetFolderPath('Programs')) 'Zeron.lnk'
 if ((Test-Path -LiteralPath $taskRegistry) -or (Test-Path -LiteralPath $taskShortcut)) { throw 'An existing replica installation must be preserved; smoke test skipped.' }
 $taskOriginalHash=if (Test-Path -LiteralPath $taskOriginalShortcut) { (Get-FileHash -LiteralPath $taskOriginalShortcut).Hash } else { '' }
@@ -21,9 +21,9 @@ try {
     $taskProcess=Start-Process -FilePath $taskSetup.FullName -ArgumentList @('/S',('/D='+$taskInstall)) -WindowStyle Hidden -PassThru -Wait
     if ($taskProcess.ExitCode -ne 0) { throw "Installer exited $($taskProcess.ExitCode)" }
     $taskRegistration=Get-ItemProperty -LiteralPath $taskRegistry
-    if ($taskRegistration.InstallLocation -ne $taskInstall -or $taskRegistration.DisplayName -ne 'Zeron Native UI') { throw 'Installation identity/location differs from the independent configuration.' }
+    if ($taskRegistration.InstallLocation -ne $taskInstall -or $taskRegistration.DisplayName -ne 'GCode') { throw 'Installation identity/location differs from the configuration.' }
     if (-not (Test-Path -LiteralPath $taskShortcut)) { throw 'Independent Start-menu shortcut is missing.' }
-    $taskExecutable=Join-Path $taskInstall 'Zeron.exe'
+    $taskExecutable=Join-Path $taskInstall 'GCode.exe'
     foreach ($taskCase in @(@{route='chat/chat-0';appearance='light';name='chat'},@{route='terminal';appearance='dark';name='terminal'},@{route='browser';appearance='light';name='browser'})) {
         $taskCapture=Join-Path $taskOutput ($taskCase.name+'.png')
         $taskArguments=@('--scenario','default','--route',$taskCase.route,'--appearance',$taskCase.appearance,'--data-dir',(Join-Path $taskOutput 'profile'),'--capture',$taskCapture,'--capture-delay','8s','--exit-after-capture')

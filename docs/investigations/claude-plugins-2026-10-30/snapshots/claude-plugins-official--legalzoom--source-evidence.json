@@ -1,0 +1,22 @@
+{
+  "repo": "legalzoom/claude-plugins",
+  "commit": "f9fd8a0ca6e1421bc1aacb113a109663a7a6f6d8",
+  "path": "plugins/legalzoom",
+  "archive_sha256": "22b074f6bbf4d19e8d350490d1528c779068fe0916db19bb04f9350571ff76ff",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "CONNECTORS.md",
+    "README.md",
+    "commands/review-contract.md",
+    "skills/attorney-assist/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"legalzoom\",\n  \"description\": \"LegalZoom Plugin - AI-powered business legal assistance with contract review and attorney consultation\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"LegalZoom\",\n    \"email\": \"engineering@legalzoom.com\"\n  },\n  \"homepage\": \"https://github.com/legalzoom/claude-plugins\",\n  \"repository\": \"https://github.com/legalzoom/claude-plugins\",\n  \"license\": \"PROPRIETARY\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"legalzoom\": {\n      \"type\": \"http\",\n      \"url\": \"https://www.legalzoom.com/mcp/claude/v1\",\n      \"description\": \"LegalZoom MCP server for attorney consultations and legal services\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/review-contract.md": "\ndescription: In-depth contract analysis with risk assessment and attorney review recommendations\nargument-hint: \"<contract file or text>\"\n",
+    "skills/attorney-assist/SKILL.md": "\nname: attorney-assist\ndescription: Connects the user with a LegalZoom attorney for legal consultation. Use when a user asks about attorneys, lawyers, or legal help, or when contract review reveals high risks or low-confidence findings.\n"
+  }
+}

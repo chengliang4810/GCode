@@ -31,13 +31,13 @@ func activityFixture() contracts.Message {
 
 func transcriptTester(t *testing.T, a *App, message *contracts.Message, width, height int, dark bool) *ui.Tester {
 	t.Helper()
-	a.palette = design.Palette("zeron", dark)
+	a.palette = design.Palette("rcode", dark)
 	return ui.NewTester(func(c *ui.Context) {
 		c.DisableAnimations()
 		c.SetTheme(a.palette.UI())
 		c.Root().Background(a.palette.Background).Font("Geist").FontSize(13).TextColor(a.palette.Text)
 		a.md.Theme = &markdown.Theme{Font: "Geist", FontSize: 14, FixedLineHeight: 22}
-		ui.Scroll(c).Fill().Padding(24).Children(func() { a.assistantTranscript(c, *message) })
+		ui.Scroll(c).Fill().Padding(24).Children(func() { a.transcriptMessageForTest(c, *message) })
 	}, width, height)
 }
 
@@ -100,8 +100,11 @@ func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.
 	m.Blocks = m.Blocks[:1]
 	m.Streaming = true
 	tt := transcriptTester(t, a, &m, 760, 700, true)
-	if !tt.HasText("I’ll read the layout contract") {
-		t.Fatal("live tail thought did not automatically expand")
+	if _, exists := tt.Find("Activity detail"); exists {
+		t.Fatal("live thought detail opened without user input")
+	}
+	if !tt.HasText(reasoningPreview(m.Blocks[0].Text, true)) {
+		t.Fatal("live thought header did not preview its latest line")
 	}
 	groupID := m.ID + ":activity:" + m.Blocks[0].ID
 	summary := contracts.SummarizeActivity(m.Blocks).Label()
@@ -158,6 +161,62 @@ func TestTranscriptCompactNarrationAndWorkedDuration(t *testing.T) {
 	}
 }
 
+// countExactLabels counts labels whose text is exactly s, so a tip repeating
+// a visible header can be told apart from the header itself.
+func countExactLabels(labels []string, s string) int {
+	count := 0
+	for _, label := range labels {
+		if label == s {
+			count++
+		}
+	}
+	return count
+}
+
+func TestTranscriptActivitySummaryTipOnlyWhereTheHeaderHidesCounts(t *testing.T) {
+	a := testApp(t, "default")
+	m := activityFixture()
+	tt := transcriptTester(t, a, &m, 760, 900, false)
+	summary := contracts.SummarizeActivity(m.Blocks[:len(m.Blocks)-1]).Label()
+	header, ok := tt.Find("Activity: " + summary)
+	if !ok {
+		t.Fatalf("missing activity header: %v", tt.Texts())
+	}
+	tt.Move(header.X+40, header.Y+header.H/2)
+	tt.Advance(time.Second)
+	if count := countExactLabels(tt.Texts(), summary); count != 1 {
+		t.Fatalf("normal header shows its summary %d times, want only the row: %v", count, tt.Texts())
+	}
+
+	compact := testApp(t, "default")
+	compact.state.Settings.General.CompactMode = true
+	message := activityFixture()
+	tt = transcriptTester(t, compact, &message, 760, 900, false)
+	summary = contracts.SummarizeActivity(message.Blocks[:len(message.Blocks)-1]).Label()
+	title := compact.workedFor(message.DurationMS)
+	label, ok := tt.Find(title)
+	if !ok {
+		t.Fatalf("missing worked duration %q: %v", title, tt.Texts())
+	}
+	if countExactLabels(tt.Texts(), summary) != 0 {
+		t.Fatalf("summary tip showed before the pointer rested: %v", tt.Texts())
+	}
+	tt.Move(label.X+label.W/2, label.Y+label.H/2)
+	tt.Advance(time.Second)
+	tip, ok := tt.Find(summary)
+	if !ok {
+		t.Fatalf("compact header tip did not show: %v", tt.Texts())
+	}
+	// The tip follows the visible label, not the middle of the full-width
+	// header row, and keeps off the label itself.
+	if tip.X+tip.W <= label.X || tip.X >= label.X+label.W {
+		t.Fatalf("tip %v does not sit over the worked label %v", tip, label)
+	}
+	if tip.Y+tip.H > label.Y+.5 && tip.Y < label.Y+label.H-.5 {
+		t.Fatalf("tip %v covers the worked label %v", tip, label)
+	}
+}
+
 func TestTranscriptCompactLiveNeverAutoOpensThought(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Settings.General.CompactMode = true
@@ -172,7 +231,7 @@ func TestTranscriptCompactLiveNeverAutoOpensThought(t *testing.T) {
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
-	if !tt.HasText("Thought process") || tt.HasText("I’ll read the layout contract") {
+	if _, exists := tt.Find("Activity detail"); !tt.HasText("Thought process") || exists {
 		t.Fatal("compact live thought automatically opened its detail")
 	}
 	if err := tt.Click("Thought process: thought-1"); err != nil {
@@ -228,6 +287,7 @@ func TestTranscriptSubagentOpensSideTabAndPreservesCentralDraft(t *testing.T) {
 	if err := tt.Click("Open agent: Schema reviewer"); err != nil {
 		t.Fatal(err)
 	}
+	tt.Advance(300 * time.Millisecond)
 	if a.sessionID != "chat-0" || a.draft != "Keep this central draft" || a.workspace.ActiveKind() != "session" {
 		t.Fatal("agent link replaced the central conversation or draft")
 	}
@@ -376,7 +436,7 @@ func TestTranscriptLogicalGeometryAtDesktopScales(t *testing.T) {
 
 func TestTranscriptOfficialFoldHonorsReducedMotionAndParks(t *testing.T) {
 	a := testApp(t, "default")
-	a.palette = design.Palette("zeron", false)
+	a.palette = design.Palette("rcode", false)
 	m := activityFixture()
 	builds, paints := 0, 0
 	tt := ui.NewTester(func(c *ui.Context) {
@@ -385,7 +445,7 @@ func TestTranscriptOfficialFoldHonorsReducedMotionAndParks(t *testing.T) {
 		c.SetTheme(a.palette.UI())
 		c.Root().Background(a.palette.Background).Draw(func(_ *ui.Painter, _ ui.Rect) { paints++ })
 		a.prepareTranscriptMarkdown(c)
-		ui.Scroll(c).Fill().Padding(24).Children(func() { a.assistantTranscript(c, m) })
+		ui.Scroll(c).Fill().Padding(24).Children(func() { a.transcriptMessageForTest(c, m) })
 	}, 760, 900)
 	summary := contracts.SummarizeActivity(m.Blocks[:len(m.Blocks)-1]).Label()
 	if err := tt.Click("Activity: " + summary); err != nil {
@@ -425,9 +485,9 @@ func TestTranscriptOfficialFoldHonorsReducedMotionAndParks(t *testing.T) {
 // Opt-in implementation screenshots. These are evidence of this renderer only;
 // they never become reference goldens or imply native GPUI pixel parity.
 func TestTranscriptRenderEvidence(t *testing.T) {
-	directory := os.Getenv("ZERON_TRANSCRIPT_EVIDENCE")
+	directory := os.Getenv("RCODE_TRANSCRIPT_EVIDENCE")
 	if directory == "" {
-		t.Skip("set ZERON_TRANSCRIPT_EVIDENCE for native-widget implementation PNGs")
+		t.Skip("set RCODE_TRANSCRIPT_EVIDENCE for native-widget implementation PNGs")
 	}
 	if err := os.MkdirAll(directory, 0755); err != nil {
 		t.Fatal(err)

@@ -1,0 +1,40 @@
+{
+  "repo": "carboneio/carbone-skill",
+  "commit": "25207b3f52b97872312eab997ee5c62cc5c9542d",
+  "path": ".",
+  "archive_sha256": "beb574f24b3f843cd03eb72959d33ad1d526e59c576b8486b4fecd872bff8e7b",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".github/ISSUE_TEMPLATE/documentation-error.md",
+    ".github/ISSUE_TEMPLATE/missing-coverage.md",
+    ".github/workflows/release.yml",
+    ".gitignore",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "carbone/SKILL.md",
+    "carbone/references/advanced-features.md",
+    "carbone/references/aliases.md",
+    "carbone/references/docx-tips.md",
+    "carbone/references/format-support.md",
+    "carbone/references/formatters.md",
+    "carbone/references/html-templates.md",
+    "carbone/references/in-template-options.md",
+    "carbone/references/loops-advanced.md",
+    "carbone/references/markdown-templates.md",
+    "carbone/references/pdf-templates.md",
+    "carbone/references/practical-examples.md",
+    "carbone/references/set-patterns.md",
+    "carbone/references/upgrade-guide.md",
+    "carbone/references/xlsx-tips.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"carbone-skill\",\n  \"version\": \"1.6.1\",\n  \"description\": \"Official Carbone skill — complete templating language reference covering tags, loops, conditions, formatters, aggregators, PDF form filling (AcroForm), format support and conversion, and all template formats (DOCX, XLSX, PPTX, ODT, HTML, Markdown, PDF, CSV, TXT, SVG, IDML)\",\n  \"license\": \"Apache-2.0\",\n  \"author\": {\n    \"name\": \"Carbone\",\n    \"email\": \"support@carbone.io\"\n  },\n  \"repository\": \"https://github.com/carboneio/carbone-skill\",\n  \"homepage\": \"https://carbone.io\",\n  \"skills\": \"./carbone\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "carbone/SKILL.md": "\nname: carbone\ndescription: >\n  Carbone templating — merge JSON data into a DOCX (Word), XLSX (Excel), PPTX (PowerPoint), ODT, ODS,\n  HTML, Markdown or PDF template, plus text/XML formats such as CSV, TXT, SVG and IDML. Use this skill\n  to design, validate, fix or explain Carbone syntax: tags, loops, conditions, formatters, aggregators,\n  aliases, and mapping a JSON dataset onto a template. Trigger on: the tag syntax {d.} {c.} {#alias}\n  {$alias} {t()} {o.} or any :formatter chain; a template error such as a missing [i+1]; whether a\n  format supports a feature or what it converts to; filling a PDF form (AcroForm); adding a chart,\n  barcode or dynamic image to a document; dynamic Excel formulas; upgrading between Carbone versions;\n  and any request to build an invoice, contract or report from JSON, mail-merge data into a document,\n  fill a template with data, or convert a document (HTML or Markdown to PDF, DOCX to PDF) — even when\n  Carbone is not named.\nuser-invocable: true\nlicense: Apache-2.0\nmetadata:\n  author: carboneio\n  version: \"1.6.1\"\n  carbone_version: \"5.14.0\"\n  repository: https://github.com/carboneio/carbone-skill\n"
+  }
+}

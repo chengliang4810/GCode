@@ -1,5 +1,10 @@
 # Composer implementation and handoff
 
+2026-10-30 当前状态：权限入口、PR 入口和配置、项目动作、本地账户菜单及模型收藏已移除。
+模型列表顶部及模型行星标已替换为模型设置入口。
+正文保留当时的源码审计与验收证据；当前实施范围见
+[UI 残留清理](ui-residual-cleanup.md)，不再把这些旧入口列为待实现功能。
+
 Reference: Zeron v0.2.128, commit
 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`, read-only `D:/zeron`.
 The resumed-machine source is at `output/reference-sources/zeron`; `D:/zeron`
@@ -13,29 +18,28 @@ headless render or self-test establishes pixel parity or overall completion.
 
 `composer_surface.go` is the one native input/action surface used by the main
 conversation and side tabs. It binds `ui.TextAreaBase` and persistent handles to
-the owner's state. `composerControls` contains only model/reasoning/access/Plan,
-popup and list/widget state. `composerController` references the root App and a
+the owner's state. `composerControls` contains only model/reasoning and
+popup/list/widget state; the old access-mode and Plan state has been removed.
+`composerController` references the root App and a
 captured target session; it does not copy an App, create a service, start a
 worker, own a settings transaction, or subscribe to events.
 
-Main and side composers now use the same model picker, compact effort panel,
-full model list, provider/favorite filtering, model option rows and access/Plan
-popover. Side selections update and send to that side session. Favorites,
-provider memory and model options remain shared preferences, written through the
-root's existing `saveSettings` path. Side session configuration completion is
+Main and side composers use the same model picker, compact effort panel,
+full model list, provider filtering and model option rows.
+Side selections update and send to that side session. Model favorites were
+removed on 2026-10-30; provider memory and model options remain shared
+preferences, written through the root's existing `saveSettings` path. Side session configuration completion is
 correlated through the root `sideCommandFinished` hook; failures retain side
 draft/error ownership and restore the authoritative session configuration.
 
-The access popover follows `pickers.rs::render_access_popover`: 288px panel,
-mode descriptions, selected check, the one-mode explanation and a Plan toggle
-that remains open after activation. Selecting an access mode closes it. The
-passive switch uses the source 44.8×28.8 geometry while native `ToggleBase` owns
-activation and accessibility. Unsupported access modes now resolve using the
-source's lower-or-equal offered mode rule, rather than always choosing the last
-offered mode.
+On 2026-10-29 the access-mode button to the left of the model picker was
+removed from both composers at the user's request, together with its popover,
+Plan toggle and dedicated widget state. Session access/Plan state still flows
+through the existing configuration and send paths. Unsupported access modes
+still resolve using the lower-or-equal offered mode rule.
 
 `workbench.State.OnCloseSession` calls `dismissSideComposer` only when closing a
-session tab. It closes that composer's model/access popovers and pending focus
+session tab. It closes that composer's model popover and pending focus
 request, while preserving its draft. The hook is installed in both App.New and
 Attach. During development an earlier workbench hook placement in `selectTab`
 incorrectly dismissed pickers on tab selection; the workbench owner corrected it
@@ -46,8 +50,10 @@ route-dependent settled geometry, native auto-grow, resize settling and
 preedit-aware capacity measurement. The same keyed `TextAreaBase` and persistent
 handle survive layout changes. A small read-only MyGo `InputDisplayText()` API
 supplies preedit snapshots without committing the draft; native input owns
-wrapping, selection, undo and scrolling. The current source lock is MyGo v0.6.4
-with `zeron-native-ui.3`; see [mygo-patches.md](mygo-patches.md).
+wrapping, selection, undo and scrolling. The current source lock is MyGo v0.7.3
+with `rcode-native-ui.20` (2,034 files, 28 patches, tree
+`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`); see
+[mygo-patches.md](mygo-patches.md).
 
 ## Historical shared-controls checks at handoff
 
@@ -69,10 +75,12 @@ changes. Current layout/input checks and their final runs are recorded in
 | MyGo lifetime/thread vet | `go tool mygo vet .` | Passed |
 | Desktop lint | `output/tools/golangci-lint.exe run ./internal/desktop/...` | 0 issues on final local run |
 
-The existing access test now clicks the native access-popover row instead of
+The historical access test clicked the native access-popover row instead of
 using `Tester.ChooseMenuItem`: the source surface is an application popover,
 not the default context-menu presentation. Plan stays open, so tests dismiss it
-with Escape before opening another control.
+with Escape before opening another control. That menu and its UI tests were
+removed on 2026-10-29; model-selection tests now check preserved run state and
+configuration failure restoration through the model picker.
 
 The handoff freeze interrupted the next layout stage. The unfinished layout
 experiment was removed and the known working shared native surface restored;
@@ -121,12 +129,12 @@ Their paired visual acceptance remains pending.
 
 ## Migration materials and reproduction
 
-Source dependencies remain Go 1.27.3 and MyGo v0.6.4 with the existing local
-`replace ./third_party/mygo`. The shared-controls handoff stage did not change
-the dependency lock or patch tree; the resumed layout stage intentionally adds
-the sixth read-only input-snapshot patch and updates the lock/verifier to
-`zeron-native-ui.3`. The native Collapsible Panel and fixed Rust reference are
-unchanged by this layout work.
+Source dependencies are Go 1.27.3 and MyGo v0.7.3 with the existing local
+`replace ./third_party/mygo`. The current lock is `rcode-native-ui.20`
+(2,034 files, 28 patches). The historical shared-controls handoff stage did not
+change the then-current lock; the resumed layout stage introduced the read-only
+input-snapshot patch, now patch 07 in the v0.7.3 chain. The native Collapsible
+Panel and fixed Rust reference are unchanged by this layout work.
 
 Move the complete repository, including the existing `.agents`, embedded assets,
 reference provenance and third-party source/patch metadata. Keep the current
@@ -144,9 +152,9 @@ Reproduce current headless evidence without desktop interaction in a fresh
 directory, keeping the handoff captures separate:
 
 ```powershell
-$env:ZERON_TRANSCRIPT_EVIDENCE = Join-Path (Get-Location) 'output/captures/transcript-layout-resume'
+$env:RCODE_TRANSCRIPT_EVIDENCE = Join-Path (Get-Location) 'output/captures/transcript-layout-resume'
 go test ./internal/desktop -run '^TestTranscriptRenderEvidence$' -count=1
-Remove-Item Env:ZERON_TRANSCRIPT_EVIDENCE
+Remove-Item Env:RCODE_TRANSCRIPT_EVIDENCE
 ```
 
 No application window was launched and no Computer Use action was performed

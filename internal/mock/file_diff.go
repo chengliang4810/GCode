@@ -39,17 +39,7 @@ func (s *Server) syncFileChangeLocked(file *contracts.File, previous string) {
 }
 
 func (s *Server) removeFileChangeLocked(index int) {
-	id := s.state.Changes[index].ID
 	s.state.Changes = append(s.state.Changes[:index], s.state.Changes[index+1:]...)
-	for i := range s.state.PullRequests {
-		ids := s.state.PullRequests[i].ChangeIDs[:0]
-		for _, changeID := range s.state.PullRequests[i].ChangeIDs {
-			if changeID != id {
-				ids = append(ids, changeID)
-			}
-		}
-		s.state.PullRequests[i].ChangeIDs = ids
-	}
 }
 
 func (s *Server) createFileChangeLocked(file contracts.File) {

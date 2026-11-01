@@ -1,0 +1,21 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/fakechat",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    ".npmrc",
+    "LICENSE",
+    "README.md",
+    "bun.lock",
+    "package.json",
+    "server.ts"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"fakechat\",\n  \"description\": \"Localhost iMessage-style web chat for Claude Code \\u2014 test surface with file upload and edits. No tokens, no access control.\",\n  \"version\": \"0.0.1\",\n  \"keywords\": [\n    \"fakechat\",\n    \"web\",\n    \"localhost\",\n    \"testing\",\n    \"channel\",\n    \"mcp\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"fakechat\": {\n      \"command\": \"bun\",\n      \"args\": [\"run\", \"--cwd\", \"${CLAUDE_PLUGIN_ROOT}\", \"--shell=bun\", \"--silent\", \"start\"]\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

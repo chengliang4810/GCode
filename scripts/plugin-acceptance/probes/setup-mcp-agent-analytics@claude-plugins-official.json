@@ -1,0 +1,110 @@
+{
+  "pluginId": "setup-mcp-agent-analytics@claude-plugins-official",
+  "sourceCommit": "a0f85260c61b93c4511f59545612323a41c3f845",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "wire-pendo-mcp-analytics-for-python-fastmcp-server",
+      "componentId": "skill:setup-mcp-agent-analytics:setup-mcp-agent-analytics",
+      "prompt": "/setup-mcp-agent-analytics:setup-mcp-agent-analytics aa_ledger_92qd - instrument the LedgerBook MCP server with Pendo MCP analytics. The scenario codebase is already in the working directory as immutable fixtures: pyproject.toml (ledger-mcp, depends on the mcp package) and server.py (a FastMCP(\"ledgerbook\") server exposing the tools list_expenses and add_expense, run over stdio). Headless task: no network, no pip install, no real Pendo service, no MCP client; do not modify server.py or pyproject.toml and do not run pip or any installer. Treat this message as the user confirmation the skill asks for in Phase 0 - the server language is detected from the fixtures and the agent ID is given, so do not pause to ask questions. Apply the skill's documented phases and write two files. First instrumented_server.py: the same LedgerBook server with the documented Python wiring added - the exact import line from pendo_sdk.mcp import PendoMCPServer, one PendoMCPServer(server=..., api_key=\"test-api-key\", agent_id=\"aa_ledger_92qd\") construction using the skill's documented obvious placeholder for the not-yet-supplied real API key, both original tools still registered with @mcp.tool(), stderr logging configured per the stdio rule, no print() anywhere in the process, no separate pendo_sdk.init() call (MCP-only is the default), and the documented pendo_sdk.flush() call after the serve loop returns. Second MCP-SETUP-NOTES.md: detection notes (Python SDK; pyproject.toml with mcp; FastMCP in server.py), the install command pip install \"pendo-server-sdk[mcp]\" as a reminder only, the two values to swap in later (the real Public App API key in place of the placeholder and the agent ID aa_ledger_92qd), what the instrumentation does to tools/list and tools/call (user_intent injection and the get_additional_tools virtual tool), how data flow is verified later (the Exported N event(s) stderr line and real JSON-RPC traffic rather than FastMCP's own Python methods), and a clear statement that nothing was installed and no events were sent to Pendo. Then read the immutable verify_pendo_mcp.py and run exactly python verify_pendo_mcp.py using Bash; it validates the wiring and writes pendo-mcp-analytics-verification.json. Do not modify the verifier or the fixtures, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state what remains untested: the real pip install, real MCP client traffic over JSON-RPC, the Pendo export, and Pendo UI visibility.",
+      "allowCommands": [
+        "python verify_pendo_mcp.py"
+      ],
+      "verifierOutputs": [
+        "pendo-mcp-analytics-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_pendo_mcp.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nAGENT_ID = 'aa_ledger_92qd'\nnotes = Path('MCP-SETUP-NOTES.md').read_text(encoding='utf-8')\ncode = Path('instrumented_server.py').read_text(encoding='utf-8')\nserver = Path('server.py').read_text(encoding='utf-8')\npyproject = Path('pyproject.toml').read_text(encoding='utf-8')\nassert 'ledger-mcp' in pyproject and 'mcp' in pyproject, 'scenario fixture guard: pyproject.toml'\nassert 'FastMCP(' in server and 'list_expenses' in server and 'add_expense' in server, \\\n    'scenario fixture guard: server.py'\n\nassert 'from pendo_sdk.mcp import PendoMCPServer' in code, 'the documented Python import is required'\nassert 'from mcp.server.fastmcp import FastMCP' in code, 'the FastMCP server must be kept'\n\ndef call_block(text, start_marker):\n    i = text.find(start_marker)\n    assert i != -1, 'missing ' + start_marker\n    j = text.find('(', i)\n    depth = 0\n    k = j\n    while k < len(text):\n        if text[k] == '(':\n            depth += 1\n        elif text[k] == ')':\n            depth -= 1\n            if depth == 0:\n                return text[i:k + 1]\n        k += 1\n    raise AssertionError('unbalanced call block: ' + start_marker)\n\nwrap_block = call_block(code, 'PendoMCPServer(')\nassert code.count('PendoMCPServer(') == 1, 'exactly one PendoMCPServer for this process'\nassert 'server=' in wrap_block, 'the wrapper must receive the FastMCP server instance'\nassert 'api_key=\"test-api-key\"' in wrap_block, \\\n    'the not-yet-supplied API key must use the documented obvious placeholder'\nassert 'agent_id=\"' + AGENT_ID + '\"' in wrap_block, 'the wrapper must route to the given agent ID'\n\nassert 'pendo_sdk.init(' not in code, 'MCP-only is the default: never call pendo_sdk.init() yourself here'\nassert code.count('@mcp.tool()') >= 2, 'both original tools must stay registered'\nassert 'list_expenses' in code and 'add_expense' in code, 'the original tool names must be preserved'\nassert 'mcp.run()' in code, 'the server must still run'\nassert 'logging.basicConfig(' in code and 'stream=sys.stderr' in code, \\\n    'stdio transport: logging must go to stderr so the JSON-RPC stream stays clean'\nassert not re.search(r'(?m)^\\s*print\\s*\\(', code), 'never print() in tool handlers or anywhere in the process'\nflush_pos = re.search(r'pendo_sdk\\.(?:flush|shutdown)\\s*\\(', code)\nrun_pos = code.find('mcp.run()')\nassert flush_pos and run_pos != -1 and flush_pos.start() > run_pos, \\\n    'call pendo_sdk.flush() (or shutdown()) once the serve loop returns'\n\nfor phrase in ('Python', 'pyproject.toml', 'FastMCP', 'server.py',\n               'pendo-server-sdk[mcp]', 'user_intent', 'get_additional_tools',\n               'Exported', AGENT_ID, 'test-api-key'):\n    assert phrase in notes, 'MCP-SETUP-NOTES.md must document: ' + phrase\nassert re.search(r\"(?i)nothing\\s+was\\s+installed|not\\s+been\\s+installed\", notes), \\\n    'the notes must state clearly that nothing was installed'\nassert re.search(r\"(?i)no\\s+(events|data)\\s+(were|was)\\s+sent|no\\s+events\\s+have\\s+been\\s+sent\", notes), \\\n    'the notes must state clearly that no events were sent to Pendo'\nassert 'real JSON-RPC' in notes, 'verification must call out real protocol traffic, not FastMCP Python methods'\nlow = (notes + ' ' + code).lower()\nfor claim in ('successfully installed', 'i ran pip install', 'installation complete',\n              'events are now visible in pendo', 'export confirmed'):\n    assert claim not in low, 'must not claim completion: ' + claim\n\nreport = {'agent_id_wired': True, 'mcp_only_no_global_init': True,\n          'no_false_completion': True, 'placeholder_api_key': True,\n          'setup_notes_documented': True, 'stdio_safety': True,\n          'shutdown_flush': True}\nPath('pendo-mcp-analytics-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Pendo MCP analytics: Python FastMCP wiring for LedgerBook verified; dependency install, real MCP client traffic and Pendo export remain untested')\n"
+        },
+        {
+          "path": "pyproject.toml",
+          "text": "[project]\nname = \"ledger-mcp\"\nversion = \"0.2.0\"\ndescription = \"LedgerBook expense MCP server\"\ndependencies = [\n  \"mcp>=1.2\",\n  \"httpx>=0.27\",\n]\n\n[project.scripts]\nledger-mcp = \"ledger_mcp.server:main\"\n"
+        },
+        {
+          "path": "server.py",
+          "text": "import logging\nimport sys\n\nfrom mcp.server.fastmcp import FastMCP\n\nmcp = FastMCP(\"ledgerbook\")\n\nDB = {\n    \"2026-09\": [\n        {\"merchant\": \"Blue Bottle\", \"amount_cents\": 1850},\n        {\"merchant\": \"Office Depot\", \"amount_cents\": 12750},\n    ]\n}\n\n\n@mcp.tool()\ndef list_expenses(month: str) -> list[dict]:\n    \"\"\"List expense entries for a month, e.g. 2026-09.\"\"\"\n    return DB.get(month, [])\n\n\n@mcp.tool()\ndef add_expense(month: str, merchant: str, amount_cents: int) -> dict:\n    \"\"\"Record one expense entry for a month.\"\"\"\n    DB.setdefault(month, []).append(\n        {\"merchant\": merchant, \"amount_cents\": amount_cents}\n    )\n    return {\"month\": month, \"merchant\": merchant, \"amount_cents\": amount_cents}\n\n\ndef main() -> None:\n    logging.basicConfig(level=logging.INFO, stream=sys.stderr)\n    mcp.run()\n\n\nif __name__ == \"__main__\":\n    main()\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_pendo_mcp.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nAGENT_ID = 'aa_ledger_92qd'\nnotes = Path('MCP-SETUP-NOTES.md').read_text(encoding='utf-8')\ncode = Path('instrumented_server.py').read_text(encoding='utf-8')\nserver = Path('server.py').read_text(encoding='utf-8')\npyproject = Path('pyproject.toml').read_text(encoding='utf-8')\nassert 'ledger-mcp' in pyproject and 'mcp' in pyproject, 'scenario fixture guard: pyproject.toml'\nassert 'FastMCP(' in server and 'list_expenses' in server and 'add_expense' in server, \\\n    'scenario fixture guard: server.py'\n\nassert 'from pendo_sdk.mcp import PendoMCPServer' in code, 'the documented Python import is required'\nassert 'from mcp.server.fastmcp import FastMCP' in code, 'the FastMCP server must be kept'\n\ndef call_block(text, start_marker):\n    i = text.find(start_marker)\n    assert i != -1, 'missing ' + start_marker\n    j = text.find('(', i)\n    depth = 0\n    k = j\n    while k < len(text):\n        if text[k] == '(':\n            depth += 1\n        elif text[k] == ')':\n            depth -= 1\n            if depth == 0:\n                return text[i:k + 1]\n        k += 1\n    raise AssertionError('unbalanced call block: ' + start_marker)\n\nwrap_block = call_block(code, 'PendoMCPServer(')\nassert code.count('PendoMCPServer(') == 1, 'exactly one PendoMCPServer for this process'\nassert 'server=' in wrap_block, 'the wrapper must receive the FastMCP server instance'\nassert 'api_key=\"test-api-key\"' in wrap_block, \\\n    'the not-yet-supplied API key must use the documented obvious placeholder'\nassert 'agent_id=\"' + AGENT_ID + '\"' in wrap_block, 'the wrapper must route to the given agent ID'\n\nassert 'pendo_sdk.init(' not in code, 'MCP-only is the default: never call pendo_sdk.init() yourself here'\nassert code.count('@mcp.tool()') >= 2, 'both original tools must stay registered'\nassert 'list_expenses' in code and 'add_expense' in code, 'the original tool names must be preserved'\nassert 'mcp.run()' in code, 'the server must still run'\nassert 'logging.basicConfig(' in code and 'stream=sys.stderr' in code, \\\n    'stdio transport: logging must go to stderr so the JSON-RPC stream stays clean'\nassert not re.search(r'(?m)^\\s*print\\s*\\(', code), 'never print() in tool handlers or anywhere in the process'\nflush_pos = re.search(r'pendo_sdk\\.(?:flush|shutdown)\\s*\\(', code)\nrun_pos = code.find('mcp.run()')\nassert flush_pos and run_pos != -1 and flush_pos.start() > run_pos, \\\n    'call pendo_sdk.flush() (or shutdown()) once the serve loop returns'\n\nfor phrase in ('Python', 'pyproject.toml', 'FastMCP', 'server.py',\n               'pendo-server-sdk[mcp]', 'user_intent', 'get_additional_tools',\n               'Exported', AGENT_ID, 'test-api-key'):\n    assert phrase in notes, 'MCP-SETUP-NOTES.md must document: ' + phrase\nassert re.search(r\"(?i)nothing\\s+was\\s+installed|not\\s+been\\s+installed\", notes), \\\n    'the notes must state clearly that nothing was installed'\nassert re.search(r\"(?i)no\\s+(events|data)\\s+(were|was)\\s+sent|no\\s+events\\s+have\\s+been\\s+sent\", notes), \\\n    'the notes must state clearly that no events were sent to Pendo'\nassert 'real JSON-RPC' in notes, 'verification must call out real protocol traffic, not FastMCP Python methods'\nlow = (notes + ' ' + code).lower()\nfor claim in ('successfully installed', 'i ran pip install', 'installation complete',\n              'events are now visible in pendo', 'export confirmed'):\n    assert claim not in low, 'must not claim completion: ' + claim\n\nreport = {'agent_id_wired': True, 'mcp_only_no_global_init': True,\n          'no_false_completion': True, 'placeholder_api_key': True,\n          'setup_notes_documented': True, 'stdio_safety': True,\n          'shutdown_flush': True}\nPath('pendo-mcp-analytics-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Pendo MCP analytics: Python FastMCP wiring for LedgerBook verified; dependency install, real MCP client traffic and Pendo export remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "pyproject.toml",
+          "equals": "[project]\nname = \"ledger-mcp\"\nversion = \"0.2.0\"\ndescription = \"LedgerBook expense MCP server\"\ndependencies = [\n  \"mcp>=1.2\",\n  \"httpx>=0.27\",\n]\n\n[project.scripts]\nledger-mcp = \"ledger_mcp.server:main\"\n"
+        },
+        {
+          "kind": "file",
+          "path": "server.py",
+          "equals": "import logging\nimport sys\n\nfrom mcp.server.fastmcp import FastMCP\n\nmcp = FastMCP(\"ledgerbook\")\n\nDB = {\n    \"2026-09\": [\n        {\"merchant\": \"Blue Bottle\", \"amount_cents\": 1850},\n        {\"merchant\": \"Office Depot\", \"amount_cents\": 12750},\n    ]\n}\n\n\n@mcp.tool()\ndef list_expenses(month: str) -> list[dict]:\n    \"\"\"List expense entries for a month, e.g. 2026-09.\"\"\"\n    return DB.get(month, [])\n\n\n@mcp.tool()\ndef add_expense(month: str, merchant: str, amount_cents: int) -> dict:\n    \"\"\"Record one expense entry for a month.\"\"\"\n    DB.setdefault(month, []).append(\n        {\"merchant\": merchant, \"amount_cents\": amount_cents}\n    )\n    return {\"month\": month, \"merchant\": merchant, \"amount_cents\": amount_cents}\n\n\ndef main() -> None:\n    logging.basicConfig(level=logging.INFO, stream=sys.stderr)\n    mcp.run()\n\n\nif __name__ == \"__main__\":\n    main()\n"
+        },
+        {
+          "kind": "file",
+          "path": "pendo-mcp-analytics-verification.json",
+          "equals": "{\"agent_id_wired\": true, \"mcp_only_no_global_init\": true, \"no_false_completion\": true, \"placeholder_api_key\": true, \"setup_notes_documented\": true, \"shutdown_flush\": true, \"stdio_safety\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "from pendo_sdk.mcp import PendoMCPServer"
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "PendoMCPServer("
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "agent_id=\"aa_ledger_92qd\""
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "api_key=\"test-api-key\""
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "@mcp.tool()"
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "list_expenses"
+        },
+        {
+          "kind": "file",
+          "path": "instrumented_server.py",
+          "contains": "stream=sys.stderr"
+        },
+        {
+          "kind": "file",
+          "path": "MCP-SETUP-NOTES.md",
+          "contains": "pendo-server-sdk[mcp]"
+        },
+        {
+          "kind": "file",
+          "path": "MCP-SETUP-NOTES.md",
+          "contains": "user_intent"
+        },
+        {
+          "kind": "file",
+          "path": "MCP-SETUP-NOTES.md",
+          "contains": "aa_ledger_92qd"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Pendo MCP analytics: Python FastMCP wiring for LedgerBook verified; dependency install, real MCP client traffic and Pendo export remain untested"
+        }
+      ]
+    }
+  ]
+}

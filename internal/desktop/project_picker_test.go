@@ -1,15 +1,19 @@
 package desktop
 
 import (
+	"context"
 	"strings"
 	"testing"
 
+	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
 
 func TestNewProjectDeviceFolderKeyboardAndSubmit(t *testing.T) {
 	a := testApp(t, "default")
 	before := len(a.state.Projects)
+	a.sidebarUI.projectsClosed = true
+	a.draft = "Keep project draft"
 	a.openNewProject()
 	tt := ui.NewTester(a.View, 1320, 880)
 	tt.Key(0, ui.KeyEnter)
@@ -36,6 +40,9 @@ func TestNewProjectDeviceFolderKeyboardAndSubmit(t *testing.T) {
 	project := a.state.Projects[len(a.state.Projects)-1]
 	if project.DeviceID != "local" || project.Name != "internal" {
 		t.Fatalf("create discarded selection: %+v", project)
+	}
+	if a.sidebarUI.projectsClosed || a.draft != "Keep project draft" {
+		t.Fatal("creating a project left it hidden or changed the draft")
 	}
 }
 func TestNewProjectOfflineAndTypedPathRecoverWithoutInventingFolders(t *testing.T) {
@@ -73,24 +80,93 @@ func TestNewProjectOfflineAndTypedPathRecoverWithoutInventingFolders(t *testing.
 		t.Fatal("duplicate path did not stay in picker with error")
 	}
 }
-func TestProjectFilterSourceRowsOfflineGlyphAndPinnedFooter(t *testing.T) {
+func TestProjectPickerListsHostLocations(t *testing.T) {
 	a := testApp(t, "default")
+	a.openNewProject()
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("All projects"); err != nil {
-		t.Fatal(err)
+	tt.Key(0, ui.KeyEnter)
+	if a.newProject.step != 1 || a.newProject.loading {
+		t.Fatalf("device choice: %+v", a.newProject)
 	}
-	if _, ok := tt.Find("Device offline"); !ok {
-		t.Fatal("offline glyph missing")
+	rows := a.projectPickerRows()
+	if len(rows) == 0 || rows[0].key != "home" || rows[0].glyph != "home" {
+		t.Fatalf("home row missing: %+v", rows)
 	}
-	tt.Type("no matching project")
-	if tt.HasText("All projects") { // Sidebar trigger remains; check selectable list instead.
-		if len(a.sidebarProjects()) != 0 {
-			t.Fatal("unexpected project matches")
+	// Every advertised location must be a row the picker can open, and the
+	// backend must serve its listing.
+	if len(rows) != len(a.newProject.locations.Locations) {
+		t.Fatalf("row/location mismatch: %d rows, %d locations", len(rows), len(a.newProject.locations.Locations))
+	}
+	for _, row := range rows {
+		if err := tt.Click("Project folder: " + row.title); err != nil {
+			t.Fatalf("row %q: %v", row.key, err)
+		}
+		if a.newProject.step != 2 || a.newProject.error != "" || a.newProject.listing.Path == "" {
+			t.Fatalf("opening %q: %+v", row.key, a.newProject)
+		}
+		a.projectPickerBack()
+		if a.newProject.step != 1 {
+			t.Fatalf("back from %q did not return to locations", row.key)
 		}
 	}
+}
+func TestProjectPickerLocationsComeFromTheService(t *testing.T) {
+	a := testApp(t, "default")
+	service := &locationRecordingService{Service: a.service, locations: contracts.DirectoryLocations{
+		DeviceID: "local",
+		Locations: []contracts.DirectoryLocation{
+			{Name: "Home", Path: "~/projects", Kind: contracts.LocationHome},
+			{Name: "E:", Path: "E:/", Kind: contracts.LocationVolume},
+		},
+	}}
+	a.service = service
+	a.openNewProject()
+	tt := ui.NewTester(a.View, 900, 600)
 	tt.Key(0, ui.KeyEnter)
-	if !a.projectOpen || a.sidebarProjectMenu {
-		t.Fatal("pinned footer not keyboard selectable when list empty")
+	if service.requested != "local" {
+		t.Fatalf("location query device: %q", service.requested)
+	}
+	if !tt.HasText("E:") {
+		t.Fatal("offered drive is not drawn")
+	}
+	if err := tt.Click("Project folder: E:"); err != nil {
+		t.Fatal(err)
+	}
+	if service.browsed != "E:/" {
+		t.Fatalf("drive row did not browse its root: %q", service.browsed)
+	}
+}
+
+// locationRecordingService answers the picker with fixed locations so the test
+// proves the UI renders backend data instead of its own guess.
+type locationRecordingService struct {
+	contracts.Service
+	locations contracts.DirectoryLocations
+	requested string
+	browsed   string
+}
+
+func (s *locationRecordingService) ListDirectoryLocations(_ context.Context, request contracts.DirectoryRequest) (contracts.DirectoryLocations, error) {
+	s.requested = request.DeviceID
+	return s.locations, nil
+}
+
+func (s *locationRecordingService) ListDirectories(_ context.Context, request contracts.DirectoryRequest) (contracts.DirectoryListing, error) {
+	s.browsed = request.Path
+	return contracts.DirectoryListing{DeviceID: request.DeviceID, Path: request.Path, Parent: "/", Home: "~/projects"}, nil
+}
+
+func TestSidebarNewProjectAndOfflineProject(t *testing.T) {
+	a := testApp(t, "default")
+	tt := ui.NewTester(a.View, 1320, 1100)
+	if !tt.HasText("Device offline") {
+		t.Fatal("offline project state is missing")
+	}
+	if err := tt.Click("New project"); err != nil {
+		t.Fatal(err)
+	}
+	if !a.projectOpen {
+		t.Fatal("project section action did not open the project picker")
 	}
 }
 func TestProjectPickerEvidence(t *testing.T) {
@@ -128,10 +204,10 @@ func TestExplorerAndOfflinePickerEvidence(t *testing.T) {
 		}
 		captureWorkbenchAudit(t, tt, "files-search-"+name)
 		tt.Key(0, ui.KeyEscape)
-		if err := tt.Click("All projects"); err != nil {
+		if err := tt.Click("New project"); err != nil {
 			t.Fatal(err)
 		}
-		captureWorkbenchAudit(t, tt, "project-filter-"+name)
+		captureWorkbenchAudit(t, tt, "sidebar-add-project-"+name)
 	}
 	a := testApp(t, "default")
 	a.openNewProject()

@@ -1,0 +1,41 @@
+{
+  "repo": "wingspanHQ/mcp-claude-plugin",
+  "commit": "7f99cb3d1789a91390fa7abf1571328736b5e0a6",
+  "path": ".",
+  "archive_sha256": "7a9e942b5daa7376416a6ff8183b40d8934dcc0258dd9e95b7caaa508551f69f",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".gitignore",
+    ".mcp.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "docs/tool-surface.md",
+    "skills/checking-payments/SKILL.md",
+    "skills/connect/SKILL.md",
+    "skills/creating-draft-payables/SKILL.md",
+    "skills/finding-contractors/SKILL.md",
+    "skills/finding-contractors/requirement-types.md",
+    "skills/onboarding-contractors/SKILL.md",
+    "skills/outstanding/SKILL.md",
+    "skills/troubleshooting-connection/SKILL.md",
+    "skills/using-wingspan-tools/SKILL.md",
+    "skills/using-wingspan-tools/glossary.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"wingspan\",\n  \"displayName\": \"Wingspan\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Ask Claude about the contractors you pay through Wingspan, what you owe them, and what is holding up a payment — then onboard contractors and log payments as drafts, with a preview before anything is written.\",\n  \"author\": {\n    \"name\": \"Wingspan Engineering\",\n    \"email\": \"engineering@wingspan.app\"\n  },\n  \"homepage\": \"https://github.com/wingspanHQ/mcp-claude-plugin\",\n  \"repository\": \"https://github.com/wingspanHQ/mcp-claude-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"wingspan\",\n    \"contractors\",\n    \"payments\",\n    \"payables\",\n    \"onboarding\",\n    \"1099\",\n    \"mcp\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"wingspan\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.wingspan.app/v3/mcp\",\n      \"oauth\": {\n        \"scopes\": \"offline_access\",\n        \"authServerMetadataUrl\": \"https://api.wingspan.app/.well-known/oauth-authorization-server\"\n      }\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/checking-payments/SKILL.md": "\nname: checking-payments\ndescription: Look up what a company owes its contractors through Wingspan and what has happened to a particular payment. Use for \"what do we owe\", \"what did we pay last month\", \"how much is outstanding\", \"what is awaiting approval\", \"show me [name]'s payments\", \"what happened to this payment\", \"why has this not been paid yet\", \"has this been paid\", \"is this payment disputed\".\n",
+    "skills/using-wingspan-tools/SKILL.md": "\nname: using-wingspan-tools\ndescription: >-\n  The shared rules every Wingspan tool call follows: ids, paging, previewing a write, and what the tools cannot do. Load this before any Wingspan tool call, and whenever someone asks about the people they pay through Wingspan, what they owe, onboarding paperwork, invites, invoices or payments — for example \"who do we pay\", \"what do we owe this month\", \"is this contractor ready to be paid\", \"add these contractors\", \"log a payment\", \"why has this not been paid\".\n",
+    "skills/connect/SKILL.md": "\nname: connect\ndescription: Check the Wingspan connection and report who it is signed in as. Run this after installing the plugin or after re-authorizing, or whenever you want to confirm Claude is reading the right Wingspan account.\ndisable-model-invocation: true\n",
+    "skills/outstanding/SKILL.md": "\nname: outstanding\ndescription: List the contractors who have one named onboarding requirement outstanding, such as a W-9, a certificate of insurance or a background check. Run it with the requirement's name. It reports who has not finished the requirement; it does not confirm whose payments are blocked by it.\ndisable-model-invocation: true\nargument-hint: \"[requirement name]\"\n",
+    "skills/troubleshooting-connection/SKILL.md": "\nname: troubleshooting-connection\ndescription: Diagnose Wingspan connection and permission problems. Use when a Wingspan tool returns an authentication or permission error, when the tools report nothing at all, when an answer looks like it came from the wrong company or the wrong account, or when someone asks \"am I connected to Wingspan\", \"is my login still valid\", \"why can't Claude see my contractors\", \"why is this empty\", \"these are not my contractors\".\n",
+    "skills/creating-draft-payables/SKILL.md": "\nname: creating-draft-payables\ndescription: Create draft payables — new payment obligations to contractors — in Wingspan. Nothing is paid. Use for \"log a payment\", \"pay [name] $500 for [work]\", \"record these payments\", \"add these payments to the [engagement] engagement\", \"create payables\", \"log 12 hours at $85 for [name]\", \"bill this month's work\". Writes to the company's Wingspan account, so it always previews first.\n",
+    "skills/finding-contractors/SKILL.md": "\nname: finding-contractors\ndescription: Find, filter and inspect the contractors a company pays through Wingspan, including who still has onboarding paperwork outstanding. Use for \"who do we pay\", \"list our contractors\", \"find [name]\", \"who has not signed up yet\", \"who is missing their W-9\", \"who is blocked by the certificate of insurance\", \"can we pay [name]\", \"what is [name]'s status\", \"who is on this engagement\".\n",
+    "skills/onboarding-contractors/SKILL.md": "\nname: onboarding-contractors\ndescription: Add contractors to Wingspan, assign them to an existing engagement and send their invites. Use for \"add these contractors\", \"onboard these people\", \"invite [name] to Wingspan\", \"create contractor records\", \"set up these five contractors\", \"invite this roster\", \"add them to the [engagement] engagement\". Writes to the company's Wingspan account, so it always previews first.\n"
+  }
+}

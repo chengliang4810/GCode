@@ -12,7 +12,8 @@
 发布包校验通过。GPU控制实验复现浅色1级差，但实际UI适配器尚未绑定。
 见[阶段证据](reference/validation/tabstrip-r16-result.json)与[对照说明](docs/audit-tabstrip-file-tooltip.md)。
 完整视觉仍未接受，Tooltip延迟/位置/样式待对齐。上述为历史R16结果；当前源码
-使用MyGo `.9`（1,864文件/14补丁），以 `third_party/mygo.lock.json` 为准。
+使用MyGo v0.7.3（修订 `rcode-native-ui.20`，2,034文件/28补丁），以
+`third_party/mygo.lock.json` 为准；`.9`（1,864文件/14补丁）是更早的R17历史指纹。
 菜单请求流失已修；缩窄/收回后的行为另待原版交互核对。
 此前 R8 独立原图组件分数保留原身份，完整视觉与 Mac 实机验收仍待完成。
 

@@ -8,33 +8,30 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func TestSidebarProjectFilterDoesNotChangeComposerProject(t *testing.T) {
+func TestSidebarToggleAllProjectsPreservesComposer(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	composerProject := a.projectID
-	if err := tt.Click("All projects"); err != nil {
+	target := a.projectID
+	a.draft = "Keep draft"
+	if err := tt.Click("Collapse all projects"); err != nil {
 		t.Fatal(err)
 	}
-	if !a.sidebarProjectMenu || a.projectMenu {
-		t.Fatal("sidebar opened composer project picker")
+	if a.sidebarProjectsExpanded() || a.projectID != target || a.draft != "Keep draft" {
+		t.Fatal("collapse all changed the composer or left a project open")
 	}
-	// Filtering owns its own project ID and leaves the new-session target alone.
-	a.sidebarProjectID = "zeron"
-	a.sidebarProjectMenu = false
-	tt.Frame()
-	if a.projectID != composerProject {
-		t.Fatal("sidebar filtering changed composer target")
+	if err := tt.Click("Expand all projects"); err != nil {
+		t.Fatal(err)
 	}
-	for _, session := range a.visibleSessions(false) {
-		if session.ProjectID != "zeron" {
-			t.Fatal("project filter retained an unrelated session")
+	for _, project := range a.state.Projects {
+		if a.expanded["project:"+project.ID] {
+			t.Fatal("expand all left a project closed")
 		}
 	}
 }
 
 func TestSidebarVirtualizesStressRowsAndPreservesGroups(t *testing.T) {
 	a := testApp(t, "stress")
-	a.state.Settings.SidebarGrouping = "project"
+	a.sidebarUI.limits = map[string]int{"project:rcode": 2000, "project:fieldnotes": 2000, "conversations": 2000}
 	tt := ui.NewTester(a.View, 1320, 880)
 	rows := a.sidebarRows()
 	if len(rows) < 990 {
@@ -49,7 +46,7 @@ func TestSidebarVirtualizesStressRowsAndPreservesGroups(t *testing.T) {
 	if visible >= 100 {
 		t.Fatalf("sidebar eagerly rendered %d stress rows", visible)
 	}
-	a.expanded["group:project:fieldnotes"] = true
+	a.expanded["project:fieldnotes"] = true
 	collapsed := a.sidebarRows()
 	for _, row := range collapsed {
 		if row.Header == "" && !row.Session.Pinned && !row.Session.Archived && row.Session.ProjectID == "fieldnotes" {

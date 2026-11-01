@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/richtext"
 )
 
 func TestComposerFlipSourceThresholds(t *testing.T) {
@@ -71,12 +73,14 @@ func TestComposerExpandedHeightMatchesNativeUnicodeWrap(t *testing.T) {
 			a.selectSession("chat-0")
 			draft := tc.text
 			a.draft = draft
-			font := ui.Font{Family: "Geist", Size: composerTextSize}
+			font := ui.Font{Family: "Geist", Size: design.TextBase}
 			var surface ui.Rect
+			document := richtext.NewDocument(richtext.NewText(draft))
+			var measured richtext.EditorState
 			tt := ui.NewTester(func(c *ui.Context) {
 				c.SetTheme(a.palette.UI())
 				ui.Column(c).Children(func() {
-					ui.TextAreaBase(c, &draft).Label("Measured draft").Width(tc.width).Lines(1, 100).Padding(0).Font(font.Family).FontSize(font.Size).FixedLineHeight(composerLineHeight)
+					richtext.EditorBase(c, document, richtext.EditorOptions{Label: "Measured draft", Font: font, NoMarkdown: true, Theme: &richtext.Theme{FixedLineHeight: font.Size * 1.625}, State: &measured}).Width(tc.width).Height(260)
 					ui.Column(c).Width(tc.width + 34).Children(func() {
 						a.nativeComposerSurface(c, composerSurfaceProps{
 							draft: &a.draft, input: &a.composer, surface: &a.composerSurface,
@@ -90,10 +94,9 @@ func TestComposerExpandedHeightMatchesNativeUnicodeWrap(t *testing.T) {
 			}, 500, 1500)
 			tt.Advance(time.Second)
 			tt.Frame()
-			input, _ := tt.Find("Measured draft")
-			want := min(max(input.H+20, 60), 260) + 42 + 2
+			want := min(max(measured.ContentHeight+20, 60), 260) + 42 + 2
 			if math.Abs(float64(surface.H-want)) > .01 {
-				t.Fatalf("composer height %v differs from native content %v plus source insets/actions = %v", surface.H, input.H, want)
+				t.Fatalf("composer height %v differs from native content %v plus source insets/actions = %v", surface.H, measured.ContentHeight, want)
 			}
 		})
 	}
@@ -153,6 +156,63 @@ func TestComposerSettledNativeGeometry(t *testing.T) {
 	}
 }
 
+func TestComposerCompactHasNoVerticalOverflow(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, size := range []float32{12, 14, 16, 18, 20} {
+			t.Run(strconv.FormatBool(dark)+"/"+strconv.Itoa(int(size)), func(t *testing.T) {
+				a := testApp(t, "default")
+				a.palette = design.Palette("rcode", dark)
+				var surface ui.Rect
+				tt := ui.NewTester(func(c *ui.Context) {
+					theme := a.palette.UI()
+					theme.FontSize = size
+					c.SetTheme(theme)
+					c.Root().Background(theme.Background).TextColor(theme.Text)
+					ui.Column(c).Width(1200).Children(func() {
+						a.nativeComposerSurface(c, composerSurfaceProps{
+							draft: &a.draft, input: &a.composer, surface: &a.composerSurface,
+							controls: a.centralControls(), widthHint: 1200,
+							inputLabel: "Draft", attachLabel: "Attach", sendLabel: "Send", stopLabel: "Stop",
+							onSend: func(string) bool { return false }, onChooseAttach: func() {},
+						})
+					})
+					surface = a.composerSurface.Bounds(c)
+				}, 1320, 700)
+				for _, text := range []string{"", "A short draft", "中文输入🙂", strings.Repeat("long draft\n", 100), ""} {
+					a.draft = text
+					// External draft replacement first rebuilds the document,
+					// then publishes native content height after paint.
+					for range 3 {
+						tt.Frame()
+					}
+					tt.Advance(time.Second)
+					tt.Frame()
+					input, ok := tt.Find("Draft")
+					long := strings.Contains(text, "\n")
+					if !ok || (!long && (input.H != 47 || surface.H != 49)) ||
+						(long && (input.H != 260 || surface.H != 304)) {
+						t.Fatalf("unexpected draft geometry (long=%v length=%d): surface=%+v input=%+v", long, len(text), surface, input)
+					}
+					// The editor paints its scrollbar in this otherwise empty
+					// right-hand strip. Compare against adjacent blank pixels.
+					img := tt.Image()
+					x := int(input.X + input.W - 6)
+					scrollbar := false
+					for y := int(input.Y + 5); y < int(input.Y+input.H-5); y++ {
+						if img.RGBAAt(x, y) != img.RGBAAt(x-12, y) {
+							scrollbar = true
+							break
+						}
+					}
+					if scrollbar != long {
+						t.Fatalf("font %g: scrollbar=%v, want %v (draft length %d)", size, scrollbar, long, len(text))
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestComposerPixelHeightCapSurvivesInterfaceFontSizes(t *testing.T) {
 	for _, size := range []float32{12, 13, 14, 15} {
 		for _, hero := range []bool{false, true} {
@@ -167,7 +227,7 @@ func TestComposerPixelHeightCapSurvivesInterfaceFontSizes(t *testing.T) {
 				var surface ui.Rect
 				tt := ui.NewTester(func(c *ui.Context) {
 					theme := a.palette.UI()
-					theme.FontSize = 13 * size / 16 // Same mapping as App.View.
+					theme.FontSize = size // The preference is an actual pixel size.
 					c.SetTheme(theme)
 					ui.Column(c).Width(736).Children(func() {
 						a.nativeComposerSurface(c, composerSurfaceProps{
@@ -190,7 +250,7 @@ func TestComposerPixelHeightCapSurvivesInterfaceFontSizes(t *testing.T) {
 	}
 }
 
-func TestComposerLineHeightStaysAbsoluteAcrossInterfaceFontSizes(t *testing.T) {
+func TestComposerLineHeightFollowsInterfaceFontSize(t *testing.T) {
 	for _, size := range []float32{13, 16, 20} {
 		for _, hero := range []bool{false, true} {
 			route := "dock"
@@ -203,7 +263,7 @@ func TestComposerLineHeightStaysAbsoluteAcrossInterfaceFontSizes(t *testing.T) {
 				a.draft = "first line\nsecond line\nthird line\nfourth line"
 				tt := ui.NewTester(func(c *ui.Context) {
 					theme := a.palette.UI()
-					theme.FontSize = 13 * size / 16
+					theme.FontSize = size
 					c.SetTheme(theme)
 					ui.Column(c).Width(736).Children(func() {
 						a.nativeComposerSurface(c, composerSurfaceProps{
@@ -215,11 +275,9 @@ func TestComposerLineHeightStaysAbsoluteAcrossInterfaceFontSizes(t *testing.T) {
 					})
 				}, 900, 700)
 				tt.Advance(time.Second)
-				// ComposerInput::layout_text uses px(configured_line_height)
-				// even though its surrounding Div declares ui_rems leading.
-				// Four explicit lines plus the native input's16+4px padding.
-				if input, ok := tt.Find("Draft"); !ok || input.H != 4*composerLineHeight+20 {
-					t.Fatalf("font size%g scaled absolute source leading: %+v, %v", size, input, ok)
+				// Four lines use relative leading plus the native input padding.
+				if input, ok := tt.Find("Draft"); !ok || math.Abs(float64(input.H-(4*size*1.625+20))) > 1 {
+					t.Fatalf("font size %g did not produce relative input leading: %+v, %v", size, input, ok)
 				}
 			})
 		}
@@ -229,7 +287,7 @@ func TestComposerLineHeightStaysAbsoluteAcrossInterfaceFontSizes(t *testing.T) {
 func TestComposerNativeCapacityUsesCompactViewport(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession("chat-0")
-	font := ui.Font{Family: "Geist", Size: composerTextSize}
+	font := ui.Font{Family: "Geist", Size: design.TextBase}
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(a.palette.UI())
 		ui.Column(c).Width(736).Children(func() {

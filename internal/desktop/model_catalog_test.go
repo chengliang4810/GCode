@@ -73,13 +73,10 @@ func TestComposerDeviceChoiceResolvesRemoteModelAndSends(t *testing.T) {
 	if a.deviceID != "macbook" || a.selectedModel().ProviderID != "openai" {
 		t.Fatalf("device selection retained a local model: %s / %s", a.deviceID, a.modelID)
 	}
-	if err := tt.Click("Select model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Change model"); err != nil {
-		t.Fatal(err)
-	}
-	if !tt.HasText("GPT-5.4") || tt.HasText("Opus 4.6") || tt.HasText("No agents available") {
+	if !tt.HasText("GPT-5.4") || tt.HasText("Opus 4.6") || tt.HasText("No models configured") {
 		t.Fatalf("remote picker used local catalog status: %v", tt.Texts())
 	}
 	tt.Key(0, ui.KeyEscape)
@@ -119,10 +116,10 @@ func TestSideComposerProviderFlagsUseItsSessionDevice(t *testing.T) {
 	a.integrationUI.ProviderTarget = "cloud-1"
 	a.workspace.OpenSession(child.ID)
 	tt := ui.NewTester(a.View, 1600, 1000)
-	if err := tt.Click("Select model in " + child.Title); err != nil {
+	if err := openTestModelList(tt, "Select model in "+child.Title); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Change model in " + child.Title); err != nil {
+	if err := tt.Click("Codex"); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("GPT-5.4") {
@@ -159,6 +156,7 @@ func TestSideComposerProviderFlagsUseItsSessionDevice(t *testing.T) {
 func TestComposerRejectsProviderSelectionAfterDeviceFlagsChange(t *testing.T) {
 	a := testApp(t, "default")
 	controls := a.centralControls()
+	controls.modelProvider = "openai"
 	rows := controls.modelRows()
 	index := -1
 	for i, row := range rows {
@@ -177,7 +175,6 @@ func TestComposerRejectsProviderSelectionAfterDeviceFlagsChange(t *testing.T) {
 		}
 	}
 	before := a.modelID
-	controls.selectModelProvider("openai")
 	controls.activateModelRow(rows, index)
 	if a.modelID != before {
 		t.Fatalf("a stale picker action selected a disabled provider: %s", a.modelID)
@@ -230,7 +227,6 @@ func TestExistingComposerRetainsOnlyInstalledSelectedProvider(t *testing.T) {
 						t.Fatal("provider rail disagreed with model rows")
 					}
 					if !tc.wantOffered {
-						controls.selectModelProvider("claude")
 						controls.activateModelRow([]modelRow{{model: a.state.Models[1], provider: provider}}, 0)
 						if controls.modelID != "selected" {
 							t.Fatal("a stale action selected an uninstalled provider model")

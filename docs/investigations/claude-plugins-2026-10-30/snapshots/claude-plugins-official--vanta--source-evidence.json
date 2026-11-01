@@ -1,0 +1,28 @@
+{
+  "repo": "VantaInc/vanta-mcp-plugin",
+  "commit": "345d86b55faa649e955b7ea5569cf52d8425c2d5",
+  "path": ".",
+  "archive_sha256": "c98333b00675b6f181ae72e599886c55da3c8b08445c2a484f13181dcbc857d2",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    ".mcp.json",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "plugins/vanta/.claude-plugin/plugin.json",
+    "skills/fix-test/SKILL.md",
+    "skills/list-tests/SKILL.md",
+    "skills/test-remediation/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"vanta\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Vanta MCP server integration for Claude Code\",\n  \"author\": {\n    \"name\": \"Vanta\",\n    \"url\": \"https://www.vanta.com\"\n  },\n  \"homepage\": \"https://github.com/VantaInc/vanta-mcp-plugin\",\n  \"repository\": \"https://github.com/VantaInc/vanta-mcp-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"vanta\", \"security\", \"compliance\", \"mcp\", \"grc\", \"risk\"],\n  \"mcpServers\": \"./.mcp.json\",\n  \"skills\": \"./skills/\"\n}\n",
+    ".mcp.json": "{\n  \"vanta-us\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.vanta.com/mcp\"\n  },\n  \"vanta-eu\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.eu.vanta.com/mcp\"\n  },\n  \"vanta-aus\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.aus.vanta.com/mcp\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/fix-test/SKILL.md": "\ndescription: Fix a failing Vanta compliance test by generating code changes and opening a pull request\nargument-hint: test ID or Vanta test URL\n",
+    "skills/list-tests/SKILL.md": "\ndescription: Show failing Vanta compliance tests, prioritized by what can be fixed from this repository\n",
+    "skills/test-remediation/SKILL.md": "\ndescription: Fix failing Vanta compliance tests using code. Apply when the user mentions Vanta tests, compliance test failures, remediation, test IDs (e.g., \"cloudtrail-log-file-validation\"), Vanta URLs (app.vanta.com), or compliance frameworks (SOC 2, ISO 27001, HIPAA).\n"
+  }
+}

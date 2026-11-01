@@ -1,0 +1,22 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/agent-sdk-dev",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "agents/agent-sdk-verifier-py.md",
+    "agents/agent-sdk-verifier-ts.md",
+    "commands/new-sdk-app.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"agent-sdk-dev\",\n  \"description\": \"Claude Agent SDK Development Plugin\",\n  \"version\": \"1.0.1\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "agents/agent-sdk-verifier-ts.md": "\nname: agent-sdk-verifier-ts\ndescription: Use this agent to verify that a TypeScript Agent SDK application is properly configured, follows SDK best practices and documentation recommendations, and is ready for deployment or testing. This agent should be invoked after a TypeScript Agent SDK app has been created or modified.\nmodel: sonnet\n",
+    "agents/agent-sdk-verifier-py.md": "\nname: agent-sdk-verifier-py\ndescription: Use this agent to verify that a Python Agent SDK application is properly configured, follows SDK best practices and documentation recommendations, and is ready for deployment or testing. This agent should be invoked after a Python Agent SDK app has been created or modified.\nmodel: sonnet\n",
+    "commands/new-sdk-app.md": "\ndescription: Create and setup a new Claude Agent SDK application\nargument-hint: [project-name]\n"
+  }
+}

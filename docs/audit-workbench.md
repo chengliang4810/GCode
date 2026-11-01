@@ -45,7 +45,7 @@
 | L04 | 文件栏偏好先收缩，给聊天 300 和工具 360 DIP 留空间 | 已修复；900 宽的最大文件偏好显示为 240，保留原偏好 | `TestPanelWidthsPreserveConversationAndPreferences` |
 | L05 | 1320 宽，Sidebar 400 / Files 440 / Tools 800 的极值组合 | 显示为 400 / chat 300 / tools 360 / files 260 | 同上 |
 | L06 | 缩小再放大时恢复被 fit 隐藏的列和偏好宽度 | 通过；渲染分配与持久偏好分离 | 实际 `Tester.SetSize` |
-| L07 | Sidebar 拖动保存 242–400 DIP 范围 | 已收紧写回边界；保留分隔线宽度 | `TestSidebarDragPersistsLogicalWidth` |
+| L07 | Sidebar 拖动保存 242–400 DIP 范围 | 已收紧写回边界；保留分隔线宽度；拖拽 1:1 跟手，停手 400 ms 后写一次设置，越过边界播放一次 220 ms / 5 DIP 回弹（见 `panel-resize.md`） | `TestSidebarDragPersistsLogicalWidth`、`TestSidebarDragSavesOnceTheDragRests`、`TestSidebarDragBouncesPastItsMaximum` |
 | L08 | 文件栏拖动更新偏好，范围 220–440 DIP | 通过真实 Tester pointer press/move/release | `TestWorkspacePaneDragAndTakeoverLifecycle` |
 | L09 | 工具栏拖动保留聊天最小宽度 | 通过；窗口挤压不再永久缩小工具偏好 | 同上 |
 | L10 | Takeover 仅消费聊天宽度，保留文件栏分配 | 已核对；无工具区手动分隔条 | 同上及窄窗口纯分配测试 |
@@ -53,7 +53,7 @@
 | L12 | 被 fit 隐藏但仍 open 的面板再次点击应提升优先级 | 标题栏已修复，避免反而关闭；命令面板/设置快捷键仍需统一调用 `togglePanel` | `TestFitHiddenPanelTogglePromotesRatherThanCloses` |
 | L13 | 已经可见的程序化 open 不改变优先级 | 已修复 | 同上 |
 | L14 | 底部终端只占聊天列宽度，不截短工具区或 Files | 已修复并验证矩形；终端原生库显示另验 | `TestWorkspaceTerminalDrawerDoesNotShortenOtherColumns` |
-| L15 | 工具标签在标题栏 38 DIP 带内，不额外占一行 | 已修复；工具正文起点 Y=38 | `TestWorkspaceOverflowEvidence` |
+| L15 | 工具标签在标题栏 38 DIP 带内，不额外占一行 | 已修复；工具面满窗高、顶部与窗口齐平（标题栏改为覆盖层），标签在 38 DIP 带内，正文起点 Y=38。对应用户报告的「右侧边栏没有到顶」：源实现 `render_right_pane` 让面板 `h_full` 并 `pt(TITLEBAR_HEIGHT)`，标题栏是绝对定位的玻璃覆盖层 | `TestWorkspaceOverflowEvidence`、`TestRightPaneSurfaceReachesTheWindowTop`、`TestFilesDockSurfaceReachesTheWindowTop`、`TestTitlebarOverlayStaysClickable` |
 | L16 | 列显隐/fit 的 WidthTween、fit exit 动画 | 尚未完整移植 | 当前检查约束 settled 几何，不能据此宣称动效一致 |
 
 ## 主题和文字
@@ -169,9 +169,9 @@ plus常驻可见也不是本修复的要求。见 [R13审计](audit-tabstrip-rev
 通过环境变量启用截图，默认测试不会写磁盘：
 
 ```powershell
-$env:ZERON_WORKBENCH_EVIDENCE = "$PWD/output/audit-workbench"
+$env:RCODE_WORKBENCH_EVIDENCE = "$PWD/output/audit-workbench"
 go test ./internal/desktop -run 'Test(WorkspaceRenderedColumnOrderAndResizeRestoration|WorkspacePaneDragAndTakeoverLifecycle|WorkspaceTerminalDrawerDoesNotShortenOtherColumns|WorkspaceOverflowEvidence)$' -count=1
-Remove-Item Env:ZERON_WORKBENCH_EVIDENCE
+Remove-Item Env:RCODE_WORKBENCH_EVIDENCE
 ```
 
 - [`columns-1320x880-light.png`](../output/audit-workbench/columns-1320x880-light.png) / [`dark`](../output/audit-workbench/columns-1320x880-dark.png)

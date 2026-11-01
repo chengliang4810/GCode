@@ -10,7 +10,7 @@ $ErrorActionPreference='Stop'
 $taskRoot=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $taskRelease=[IO.Path]::GetFullPath((Join-Path $taskRoot $ReleaseDir))
 if (-not $taskRelease.StartsWith($taskRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Review package must be inside this checkout.' }
-$taskExecutable=Join-Path $taskRelease 'Zeron.exe'
+$taskExecutable=Join-Path $taskRelease 'GCode.exe'
 if (-not (Test-Path -LiteralPath $taskExecutable)) { throw 'Build the current review package with scripts/build.ps1 -OutDir build/ui-audit first.' }
 # An interactive review window is intentionally visible. Scenario data does not
 # reuse the ordinary persisted profile or the installed original application.

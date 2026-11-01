@@ -1,0 +1,17 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/asana",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "commands/asana-setup.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"asana\",\n  \"description\": \"Asana project management integration. Connects Claude Code to Asana's V2 MCP server (https://mcp.asana.com/v2/mcp) to create and manage tasks, search projects, update assignments, and track progress. Requires a one-time setup of your own Asana OAuth app — run /asana-setup after installing.\",\n  \"author\": {\n    \"name\": \"Asana\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/asana-setup.md": "\ndescription: Set up the Asana V2 MCP server connection (one-time OAuth app + claude mcp add)\nargument-hint: \"[client_id]\"\n"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "pluginId": "receipts@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "write-honest-receipt-report-from-miner-json",
+      "componentId": "skill:receipts:receipts",
+      "prompt": "/receipts:receipts Headless acceptance task: no network, no real Claude Code transcripts, no ~/.claude access, no account, no installs. The skill's miner step has already been simulated for this scenario: its exact JSON output is the immutable fixture miner-summary.json, matching the schema documented in the skill. Do not run mine-transcripts.mjs, do not read any .jsonl transcript, and do not run git; apply the skill's documented report rules to the given JSON only. Read miner-summary.json and write the markdown report into the working directory (not the home directory) named by the skill's rule from the JSON dates; this scenario's window is 2026-10-01 to 2026-10-31, so the file is claude-code-receipts-2026-10-01-to-2026-10-31.md. Apply the skill's report rules exactly: lead the header with the userName Dana Reyes; give the period covered and active-days-versus-calendar-days from the JSON; report total sessions and total prompts; label the shipped-lines figure 'lines touched (approx.)' and round it the way the skill's own example shows, never printing the raw unrounded count; report 'commits carrying work Claude Code did' qualified with the gitActiveDayOverlap sentence the skill templates, and never the phrase 'commits made by Claude Code'; report 'PRs opened via Claude Code'; build the by-project table in the JSON's existing order without re-sorting, naming every row with its exact byRepo key (including 'Research & investigation (no project)'), with a '% Spend' column rounded to whole percent, rendering the 0.4 row as '<1%', rendering '(other repos)' as a single 'everything else (3 projects)' row, and showing '–' for null commits since gitUnavailable is absent; add the one-line footnote under the table about which columns do not add up and why; include the manager framing that the report is self-reported and built from local data; and end the file with the one-line disclosure starting 'this receipt names:' listing the byRepo project names. Keep the documented labels intact on one line. Do not invent hours saved, dollar figures, or any spend-by-activity breakdown. Then read the immutable verify_receipts_report.py and run exactly python verify_receipts_report.py using Bash; it checks the report against miner-summary.json and writes receipts-verification.json. Do not modify the verifier or the fixture, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the real miner run, the HTML receipt, git cross-referencing and any publishing remain untested.",
+      "allowCommands": [
+        "python verify_receipts_report.py"
+      ],
+      "verifierOutputs": [
+        "receipts-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_receipts_report.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nsummary = json.loads(Path('miner-summary.json').read_text(encoding='utf-8'))\nassert summary['userName'] == 'Dana Reyes' and summary['since'] == '2026-10-01' and summary['until'] == '2026-10-31', 'scenario fixture guard'\nassert summary['totals']['linesTouched'] == 4637, 'scenario fixture guard'\ntext = Path('claude-code-receipts-2026-10-01-to-2026-10-31.md').read_text(encoding='utf-8')\nassert re.search(r\"Dana\\s+Reyes\", text), 'header must lead with the userName from the miner JSON'\nassert '2026-10-01' in text and '2026-10-31' in text, 'period covered must come from the JSON since/until dates'\nassert re.search(r\"18\\s+of\\s+30\", text), 'active days versus calendar days must come from the JSON totals'\nassert re.search(r\"lines\\s+touched\\s+\\(approx\\.\\)\", text), 'the documented approximation label is required'\nassert '~4,600' in text, 'lines touched must be rounded the way the skill requires'\nassert '4,637' not in text, 'the raw unrounded lines count must not be printed'\n\ndef locate(pattern):\n    found = re.search(pattern, text)\n    assert found, 'report is missing: ' + pattern\n    return found.start()\n\nlocate(r\"commits\\s+carrying\\s+work\\s+Claude\\s+Code\\s+did\")\nassert not re.search(r\"commits\\s+made\\s+by\\s+Claude\\s+Code\", text), 'forbidden framing: the dev may have committed by hand'\nlocate(r\"2\\s+of\\s+your\\s+18\\s+active\\s+days\")\nlocate(r\"PRs\\s+opened\\s+via\\s+Claude\\s+Code\")\nspend_pos = locate(r\"%\\s*Spend\")\nlocate(r\"<1%\")\nresearch_pos = locate(r\"Research\\s+&\\s+investigation\\s+\\(no\\s+project\\)\")\ndownloads_pos = locate(r\"~/Downloads/receipt-viewer\")\nrollup_pos = locate(r\"everything\\s+else\\s+\\(3\\s+projects\\)\")\nassert 'payments-service' in text, 'the by-project table must keep the miner project names'\nassert text.index('payments-service') < research_pos < downloads_pos < rollup_pos, 'rows must keep the miner order with the rollup last'\nassert not re.search(r\"\\$\\s?\\d\", text), 'no dollar figures anywhere'\nassert re.search(r\"(?i)this\\s+receipt\\s+names:\", text), 'the one-line project-name disclosure is required'\nassert re.search(r\"(?i)(self-reported|local data)\", text), 'manager framing must note the report is self-reported from local data'\nassert re.search(r\"(?i)(de-duplicat|deduplicat|appear in both|counts in both|in both rows)\", text), 'the footnote must say which columns do not add up'\nreport = {'commits_and_prs': True, 'honest_approximation': True, 'header_period': True,\n          'manager_framing': True, 'no_dollar_figures': True, 'project_disclosure': True,\n          'table_integrity': True}\nPath('receipts-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Receipts report: documented honesty rules applied to the miner JSON; miner run, HTML receipt and publishing remain untested')\n"
+        },
+        {
+          "path": "miner-summary.json",
+          "text": "{\n  \"generatedAt\": \"2026-10-31T09:15:00.000Z\",\n  \"userName\": \"Dana Reyes\",\n  \"since\": \"2026-10-01\",\n  \"until\": \"2026-10-31\",\n  \"periodDays\": 30,\n  \"filesScanned\": 214,\n  \"linesScanned\": 41022,\n  \"totals\": {\n    \"sessions\": 26,\n    \"prompts\": 88,\n    \"activeDays\": 18,\n    \"calendarDays\": 30,\n    \"filesTouched\": 26,\n    \"linesTouched\": 4637,\n    \"prCreateCmds\": 1,\n    \"commitsWithOurWork\": 2,\n    \"gitActiveDayOverlap\": 2\n  },\n  \"byRepo\": {\n    \"payments-service\": {\n      \"sessions\": 12,\n      \"prompts\": 47,\n      \"activeDays\": 9,\n      \"filesTouched\": 14,\n      \"linesTouched\": 3120,\n      \"prCreateCmds\": 1,\n      \"isRepo\": true,\n      \"commitsWithOurWork\": 2,\n      \"gitActiveDayOverlap\": 2,\n      \"pctSpend\": 41.2\n    },\n    \"Research & investigation (no project)\": {\n      \"sessions\": 6,\n      \"prompts\": 17,\n      \"activeDays\": 3,\n      \"filesTouched\": 0,\n      \"linesTouched\": 0,\n      \"prCreateCmds\": 0,\n      \"isRepo\": null,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 7.1\n    },\n    \"~/Downloads/receipt-viewer\": {\n      \"sessions\": 8,\n      \"prompts\": 24,\n      \"activeDays\": 6,\n      \"filesTouched\": 6,\n      \"linesTouched\": 317,\n      \"prCreateCmds\": 0,\n      \"isRepo\": false,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 0.4\n    },\n    \"(other repos)\": {\n      \"sessions\": 8,\n      \"prompts\": 24,\n      \"activeDays\": 6,\n      \"filesTouched\": 6,\n      \"linesTouched\": 1200,\n      \"prCreateCmds\": 0,\n      \"isRepo\": null,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 51.3,\n      \"projectCount\": 3\n    }\n  }\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_receipts_report.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nsummary = json.loads(Path('miner-summary.json').read_text(encoding='utf-8'))\nassert summary['userName'] == 'Dana Reyes' and summary['since'] == '2026-10-01' and summary['until'] == '2026-10-31', 'scenario fixture guard'\nassert summary['totals']['linesTouched'] == 4637, 'scenario fixture guard'\ntext = Path('claude-code-receipts-2026-10-01-to-2026-10-31.md').read_text(encoding='utf-8')\nassert re.search(r\"Dana\\s+Reyes\", text), 'header must lead with the userName from the miner JSON'\nassert '2026-10-01' in text and '2026-10-31' in text, 'period covered must come from the JSON since/until dates'\nassert re.search(r\"18\\s+of\\s+30\", text), 'active days versus calendar days must come from the JSON totals'\nassert re.search(r\"lines\\s+touched\\s+\\(approx\\.\\)\", text), 'the documented approximation label is required'\nassert '~4,600' in text, 'lines touched must be rounded the way the skill requires'\nassert '4,637' not in text, 'the raw unrounded lines count must not be printed'\n\ndef locate(pattern):\n    found = re.search(pattern, text)\n    assert found, 'report is missing: ' + pattern\n    return found.start()\n\nlocate(r\"commits\\s+carrying\\s+work\\s+Claude\\s+Code\\s+did\")\nassert not re.search(r\"commits\\s+made\\s+by\\s+Claude\\s+Code\", text), 'forbidden framing: the dev may have committed by hand'\nlocate(r\"2\\s+of\\s+your\\s+18\\s+active\\s+days\")\nlocate(r\"PRs\\s+opened\\s+via\\s+Claude\\s+Code\")\nspend_pos = locate(r\"%\\s*Spend\")\nlocate(r\"<1%\")\nresearch_pos = locate(r\"Research\\s+&\\s+investigation\\s+\\(no\\s+project\\)\")\ndownloads_pos = locate(r\"~/Downloads/receipt-viewer\")\nrollup_pos = locate(r\"everything\\s+else\\s+\\(3\\s+projects\\)\")\nassert 'payments-service' in text, 'the by-project table must keep the miner project names'\nassert text.index('payments-service') < research_pos < downloads_pos < rollup_pos, 'rows must keep the miner order with the rollup last'\nassert not re.search(r\"\\$\\s?\\d\", text), 'no dollar figures anywhere'\nassert re.search(r\"(?i)this\\s+receipt\\s+names:\", text), 'the one-line project-name disclosure is required'\nassert re.search(r\"(?i)(self-reported|local data)\", text), 'manager framing must note the report is self-reported from local data'\nassert re.search(r\"(?i)(de-duplicat|deduplicat|appear in both|counts in both|in both rows)\", text), 'the footnote must say which columns do not add up'\nreport = {'commits_and_prs': True, 'honest_approximation': True, 'header_period': True,\n          'manager_framing': True, 'no_dollar_figures': True, 'project_disclosure': True,\n          'table_integrity': True}\nPath('receipts-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Receipts report: documented honesty rules applied to the miner JSON; miner run, HTML receipt and publishing remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "miner-summary.json",
+          "equals": "{\n  \"generatedAt\": \"2026-10-31T09:15:00.000Z\",\n  \"userName\": \"Dana Reyes\",\n  \"since\": \"2026-10-01\",\n  \"until\": \"2026-10-31\",\n  \"periodDays\": 30,\n  \"filesScanned\": 214,\n  \"linesScanned\": 41022,\n  \"totals\": {\n    \"sessions\": 26,\n    \"prompts\": 88,\n    \"activeDays\": 18,\n    \"calendarDays\": 30,\n    \"filesTouched\": 26,\n    \"linesTouched\": 4637,\n    \"prCreateCmds\": 1,\n    \"commitsWithOurWork\": 2,\n    \"gitActiveDayOverlap\": 2\n  },\n  \"byRepo\": {\n    \"payments-service\": {\n      \"sessions\": 12,\n      \"prompts\": 47,\n      \"activeDays\": 9,\n      \"filesTouched\": 14,\n      \"linesTouched\": 3120,\n      \"prCreateCmds\": 1,\n      \"isRepo\": true,\n      \"commitsWithOurWork\": 2,\n      \"gitActiveDayOverlap\": 2,\n      \"pctSpend\": 41.2\n    },\n    \"Research & investigation (no project)\": {\n      \"sessions\": 6,\n      \"prompts\": 17,\n      \"activeDays\": 3,\n      \"filesTouched\": 0,\n      \"linesTouched\": 0,\n      \"prCreateCmds\": 0,\n      \"isRepo\": null,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 7.1\n    },\n    \"~/Downloads/receipt-viewer\": {\n      \"sessions\": 8,\n      \"prompts\": 24,\n      \"activeDays\": 6,\n      \"filesTouched\": 6,\n      \"linesTouched\": 317,\n      \"prCreateCmds\": 0,\n      \"isRepo\": false,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 0.4\n    },\n    \"(other repos)\": {\n      \"sessions\": 8,\n      \"prompts\": 24,\n      \"activeDays\": 6,\n      \"filesTouched\": 6,\n      \"linesTouched\": 1200,\n      \"prCreateCmds\": 0,\n      \"isRepo\": null,\n      \"commitsWithOurWork\": null,\n      \"gitActiveDayOverlap\": null,\n      \"pctSpend\": 51.3,\n      \"projectCount\": 3\n    }\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "receipts-verification.json",
+          "equals": "{\"commits_and_prs\": true, \"header_period\": true, \"honest_approximation\": true, \"manager_framing\": true, \"no_dollar_figures\": true, \"project_disclosure\": true, \"table_integrity\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "contains": "Dana Reyes"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "contains": "2026-10-01"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "contains": "2026-10-31"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "regex": "lines\\s+touched\\s+\\(approx\\.\\)"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "contains": "% Spend"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "contains": "<1%"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "regex": "Research\\s+&\\s+investigation\\s+\\(no\\s+project\\)"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "regex": "commits\\s+carrying\\s+work\\s+Claude\\s+Code\\s+did"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "regex": "everything\\s+else\\s+\\(3\\s+projects\\)"
+        },
+        {
+          "kind": "file",
+          "path": "claude-code-receipts-2026-10-01-to-2026-10-31.md",
+          "regex": "(?i)this\\s+receipt\\s+names:"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Receipts report: documented honesty rules applied to the miner JSON; miner run, HTML receipt and publishing remain untested"
+        }
+      ]
+    }
+  ]
+}

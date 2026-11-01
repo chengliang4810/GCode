@@ -14,7 +14,7 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// This is the unmodified public-page picker from Zeron v0.2.128. It runs only
+// This is the unmodified public-page picker from GCode v0.2.128. It runs only
 // after the user enables annotation in an external browser body, never as UI.
 //
 //go:embed annotate.js
@@ -68,7 +68,7 @@ func (b *browser) stopAnnotation() {
 	b.annotation = nil
 	session.cancel()
 	// A stopped old session must not erase a newer picker on the same page.
-	_ = session.page.post(fmt.Sprintf("(() => { const a=window.__zeronAnnotator; if(a && a.take(%d)!==null) a.stop(); return 'stopped'; })()", session.nonce), "")
+	_ = session.page.post(fmt.Sprintf("(() => { const a=window.__rcodeAnnotator; if(a && a.take(%d)!==null) a.stop(); return 'stopped'; })()", session.nonce), "")
 }
 
 func (s *State) toggleAnnotation(b *browser) {
@@ -103,7 +103,7 @@ func (s *State) pollAnnotations(ctx context.Context, b *browser, session *annota
 		defer cancel()
 		return session.page.EvalContext(callCtx, script)
 	}
-	_, err := evaluate(annotationScript + fmt.Sprintf("\n;window.__zeronAnnotator.start(%d,%s);return 'started';", session.nonce, palette))
+	_, err := evaluate(annotationScript + fmt.Sprintf("\n;window.__rcodeAnnotator.start(%d,%s);return 'started';", session.nonce, palette))
 	if err != nil {
 		s.finishAnnotation(b, session)
 		return
@@ -117,7 +117,7 @@ func (s *State) pollAnnotations(ctx context.Context, b *browser, session *annota
 			return
 		case <-ticker.C:
 		}
-		value, err := evaluate(fmt.Sprintf("(() => { const a=window.__zeronAnnotator; return a ? a.take(%d) : '{\"state\":\"gone\"}'; })()", session.nonce))
+		value, err := evaluate(fmt.Sprintf("(() => { const a=window.__rcodeAnnotator; return a ? a.take(%d) : '{\"state\":\"gone\"}'; })()", session.nonce))
 		poll, parseErr := decodeAnnotationPoll(value)
 		if err != nil || parseErr != nil {
 			misses++
@@ -146,7 +146,7 @@ func (s *State) pollAnnotations(ctx context.Context, b *browser, session *annota
 					s.OnAnnotation(annotation)
 				}
 				marker, number := pick.Marker, annotation.Index
-				_ = session.page.post(fmt.Sprintf("window.__zeronAnnotator?.label(%d,%d)", marker, number), "")
+				_ = session.page.post(fmt.Sprintf("window.__rcodeAnnotator?.label(%d,%d)", marker, number), "")
 			}
 			if finished {
 				b.stopAnnotation()
@@ -190,7 +190,7 @@ func (s *State) keepAnnotations(indices []uint32, coalesce string) {
 	data, _ := json.Marshal(indices)
 	for _, b := range s.browsers {
 		if b.scripts != nil {
-			_ = b.scripts.post("window.__zeronAnnotator?.keep("+string(data)+")", coalesce)
+			_ = b.scripts.post("window.__rcodeAnnotator?.keep("+string(data)+")", coalesce)
 		}
 	}
 }
@@ -198,7 +198,7 @@ func (s *State) keepAnnotations(indices []uint32, coalesce string) {
 func (s *State) FocusAnnotation(index uint32) {
 	for _, b := range s.browsers {
 		if b.scripts != nil {
-			_ = b.scripts.post(fmt.Sprintf("window.__zeronAnnotator?.focus(%d)", index), "focus")
+			_ = b.scripts.post(fmt.Sprintf("window.__rcodeAnnotator?.focus(%d)", index), "focus")
 		}
 	}
 }

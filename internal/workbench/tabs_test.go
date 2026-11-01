@@ -413,7 +413,7 @@ func TestTabStripOpaqueFadesUseSourceBoundsAndThresholds(t *testing.T) {
 
 func TestTabStripGlassDoesNotPaintAnOpaqueFade(t *testing.T) {
 	s, _, snapshot := testWorkspace(t)
-	snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "zeron-light"
+	snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "rcode-light"
 	snapshot.Settings.Appearance.Surface = "frosted"
 	s.Update(snapshot)
 	for i := 0; i < 8; i++ {
@@ -803,7 +803,7 @@ func tabStripTester(s *State, width int, expanded bool) *ui.Tester {
 
 func captureTabStripGeometry(t *testing.T, geometry any) {
 	t.Helper()
-	dir := os.Getenv("ZERON_TABSTRIP_AUDIT_DIR")
+	dir := os.Getenv("RCODE_TABSTRIP_AUDIT_DIR")
 	if dir == "" {
 		return
 	}
@@ -826,10 +826,10 @@ func TestSystemThemeUsesHostAppearanceForAllWorkspaceSurfaces(t *testing.T) {
 			s, _, snapshot := testWorkspace(t)
 			snapshot.Settings.Appearance.Mode = "system"
 			snapshot.Settings.Appearance.ThemeID = ""
-			snapshot.Settings.Appearance.LightThemeID = "zeron-light"
-			snapshot.Settings.Appearance.DarkThemeID = "zeron-dark"
+			snapshot.Settings.Appearance.LightThemeID = "rcode-light"
+			snapshot.Settings.Appearance.DarkThemeID = "rcode-dark"
 			s.Update(snapshot)
-			host := design.Palette("zeron", dark)
+			host := design.Palette("rcode", dark)
 			tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(host.UI()); s.View(c) }, 520, 600)
 			if s.palette().Dark != dark || s.palette().Background != host.Background {
 				t.Fatal("workspace ignored the host's resolved system appearance")
@@ -852,7 +852,7 @@ func TestSystemThemeUsesHostAppearanceForAllWorkspaceSurfaces(t *testing.T) {
 
 func TestExplorerPreservesHostRootMaterialAndTheme(t *testing.T) {
 	s, _, _ := testWorkspace(t)
-	host := design.Palette("zeron-light", false).UI()
+	host := design.Palette("rcode-light", false).UI()
 	rootColor := ui.RGB(23, 45, 67)
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(host)
@@ -1096,7 +1096,7 @@ func TestWorkspaceThemeCatalogAndConfiguredEditorFont(t *testing.T) {
 			if s.palette().Background != p.Background || s.diffs[snapshot.Changes[0].ID].Theme.Background != p.Background {
 				t.Fatal("workspace/diff palette differs from selected theme")
 			}
-			if s.diffs[snapshot.Changes[0].ID].Font.Size != 20*13/12.5 {
+			if s.diffs[snapshot.Changes[0].ID].Font.Size != 20 {
 				t.Fatal("diff ignored code font size")
 			}
 			if _, ok := tt.Find("Workspace tabs"); !ok {

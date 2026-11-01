@@ -1,9 +1,9 @@
 package desktop
 
 import (
-	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -25,29 +25,121 @@ const (
 	activityDetailLines  = 24
 )
 
-func (a *App) assistantTranscript(c *ui.Context, message contracts.Message) {
-	rows := transcriptRows(message, a.state.Settings.General.CompactMode)
-	root := ui.Column(c).FillWidth().Selectable()
-	root.Children(func() {
-		for i, row := range rows {
-			gap := float32(8)
-			if i > 0 && (len(row.Activity) > 0 || len(rows[i-1].Activity) > 0) {
-				gap = 12
-			}
-			if i > 0 {
-				ui.Box(c).Height(gap).Shrink(0)
-			}
-			if len(row.Activity) > 0 {
-				a.activityGroup(c, row, message)
-			} else {
-				c.Key(row.ID)
-				a.transcriptBlock(c, message, row.Block)
-			}
+// transcriptRowLayout is how one pane frames its rows: the main conversation
+// centers them in the transcript width, a side pane fills its column.
+type transcriptRowLayout struct {
+	width   float32 // the centered width; 0 fills the pane
+	padding float32 // horizontal padding inside the row
+	nested  bool    // renders inside another pane's tab
+}
+
+// transcriptPane is where a transcript is shown: the projection cache its rows
+// came from, the scope its selection and hover belong to, and the session the
+// working trailer speaks for.
+type transcriptPane struct {
+	cache   *transcriptCache
+	scope   string
+	session string
+}
+
+// transcriptRowView renders one row of a transcript list: a user message, one
+// projected block of an assistant entry, or an assistant entry that projected
+// no rows. The list builds only the rows in view, so a row carries everything
+// it shows: its share of the message, the message's footer when it is the
+// entry's last row, and the pane's working trailer on the last row of all.
+func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []contracts.Message, rows []conversationRow, index int, layout transcriptRowLayout) {
+	row := rows[index]
+	var message contracts.Message
+	if row.Message >= 0 {
+		message = entries[row.Message]
+	}
+	previousSelection, previousSource := a.linkSelection, a.linkSource
+	if selection := a.transcriptSelections[pane.scope]; selection != nil {
+		a.linkSelection = selection
+	}
+	if message.SessionID != "" {
+		a.linkSource = message.SessionID
+	}
+	// A row shows a block of a side pane's tab inside the pane that opened it.
+	nested := a.nestedMarkdownTable
+	a.nestedMarkdownTable = layout.nested
+	defer func() {
+		a.linkSelection, a.linkSource = previousSelection, previousSource
+		a.nestedMarkdownTable = nested
+	}()
+	// The row keeps its identity by the list row's key, so hover and its
+	// callbacks outlive a rebuild of the row's content.
+	wrapper := ui.Row(c).Key("row:" + row.Key).FillWidth().Justify(ui.Center)
+	wrapper.OnHover(func(over bool) { a.hoverTranscriptRow(pane.scope, row.Key, over) })
+	wrapper.Children(func() {
+		column := ui.Column(c).FillWidth()
+		if layout.width > 0 {
+			column.MaxWidth(layout.width)
 		}
-		if !message.Streaming {
-			a.transcriptFooter(c, message, root.Hovered())
-		}
+		column.Padding(0, layout.padding).Children(func() {
+			if row.TopGap > 0 {
+				ui.Box(c).Height(row.TopGap).Shrink(0)
+			}
+			switch {
+			case row.User:
+				a.userMessage(c, message)
+			case row.Message < 0:
+				// The pane's working row holds only the trailer below.
+			case row.Bare:
+				// An assistant entry with no rows holds only its footer.
+			default:
+				block := a.transcriptRowAt(pane.cache, message, row.Block)
+				if len(block.Activity) > 0 {
+					a.activityGroup(c, block, message)
+				} else {
+					c.Key(block.ID)
+					a.transcriptBlock(c, message, block.Block)
+				}
+			}
+			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {
+				a.transcriptFooter(c, message, a.transcriptEntryHovered(pane.scope, message.ID))
+			}
+			if index == len(rows)-1 {
+				a.workingTrailer(c, pane.session)
+			}
+		})
 	})
+}
+
+// transcriptRowAt returns the projected row the list row shows. The projection
+// is the one the list was built from; an entry the cache no longer holds is
+// projected again, which keeps a row from rendering nothing.
+func (a *App) transcriptRowAt(cache *transcriptCache, message contracts.Message, index int) transcriptRow {
+	rows := cache.rowsOf(message.ID)
+	if index < 0 || index >= len(rows) {
+		rows = cache.rowsFor(message, a.state.Settings.General.CompactMode)
+	}
+	if index < 0 || index >= len(rows) {
+		return transcriptRow{}
+	}
+	return rows[index]
+}
+
+// hoverTranscriptRow records the row the pointer is in. A message's rows are
+// separate list items, so its footer reads back whether any of them holds the
+// pointer, rather than one message element answering for all of them.
+func (a *App) hoverTranscriptRow(pane, key string, over bool) {
+	if a.transcriptHover == nil {
+		a.transcriptHover = map[string]string{}
+	}
+	switch {
+	case over:
+		a.transcriptHover[pane] = key
+	case a.transcriptHover[pane] == key:
+		delete(a.transcriptHover, pane)
+	}
+}
+
+// transcriptEntryHovered reports whether the pointer is over any row of the
+// entry: a row's key is the entry's, or the entry's and its block's.
+func (a *App) transcriptEntryHovered(pane, entryID string) bool {
+	key := a.transcriptHover[pane]
+	return key != "" && (key == entryID || strings.HasPrefix(key, entryID+":"))
 }
 
 // Native CollapsibleBase supplies pointer/keyboard toggling, focus, expanded
@@ -70,10 +162,53 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 			title = a.workedFor(duration)
 		}
 	}
+	// Rows streamed into the group that is still receiving the message's
+	// latest work arrive with the reveal; history and settled work render
+	// whole. The sweep starts with the group and keeps the summary legible
+	// while its work runs. A frame with animations disabled (restoring
+	// state, fixtures) renders every row settled and marks it seen.
+	reduce := a.reduceMotion(c)
+	still := reduce || c.Instant()
+	now := c.Now()
+	streaming := message.Streaming && len(row.Activity) > 0 && len(message.Blocks) > 0 &&
+		row.Activity[len(row.Activity)-1].ID == message.Blocks[len(message.Blocks)-1].ID
+	headerStart, starts := a.activityRevealStarts(row.ID, row.Activity, streaming, streaming && !still, now)
+	headerProgress := activityRevealProgress(headerStart, now, still, activityRowRevealDuration, activityRowRevealEase)
+	shimmerPhase := float32(-1)
+	if streaming && !still && title != "" {
+		shimmerStart := ui.Local(root, "shimmer-start", func() time.Time { return now })
+		shimmerPhase = activityShimmerPhase(*shimmerStart, now)
+		c.After(activityShimmerFrame)
+	}
+	motions := make([]activityRowMotion, len(row.Activity))
+	animating := headerProgress < 1
+	for i := range motions {
+		progress := activityRevealProgress(starts[i], now, still, activityRowRevealDuration, activityRowRevealEase)
+		connector := activityRevealProgress(starts[i], now, still, activityConnectorDuration, activityConnectorEase)
+		incoming, branch := activityConnectorParts(connector, i > 0)
+		next := float32(0)
+		if i+1 < len(starts) {
+			next = activityRevealProgress(starts[i+1], now, reduce, activityConnectorDuration, activityConnectorEase)
+		}
+		motions[i] = activityRowMotion{
+			progress: progress, content: branch, incoming: incoming,
+			continuation: activityContinuation(next),
+			settled:      progress >= 1 && connector >= 1,
+		}
+		animating = animating || !motions[i].settled
+	}
+	if animating && !still {
+		c.After(activityMotionFrame)
+	}
 	root.Children(func() {
-		parts := ui.CollapsibleBase(c, open)
-		trigger := parts.Trigger.FillWidth().Height(activityHeaderHeight).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, "Activity: ") + summary).Tooltip(summary)
-		trigger.OnClick(func() { a.rememberActivityFold(row.ID, *open) })
+		parts := ui.CollapsibleBaseWithAnimation(c.Key("activity-toggle:"+row.ID), open, activityFoldAnimation)
+		trigger := parts.Trigger.FillWidth().Justify(ui.Start).Label(tr(c, "Activity: ") + summary)
+		if headerProgress < 1 {
+			trigger.Height(activityHeaderHeight * headerProgress).ClipY().AlignItems(ui.Start)
+		} else {
+			trigger.Height(activityHeaderHeight).AlignItems(ui.Center)
+		}
+		trigger.OnClick(a.manualActivityFold(c, row.ID, open, ""))
 		trigger.Children(func() {
 			ui.Box(c).Size(22, activityHeaderHeight).Shrink(0).Draw(func(p *ui.Painter, bounds ui.Rect) {
 				if *open {
@@ -84,7 +219,20 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 			if trigger.Hovered() || trigger.FocusVisible() {
 				color = a.palette.Text
 			}
-			ui.Text(c, title).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(color).Grow(1).SingleLine()
+			titleRow := ui.Row(c).Grow(1).MinWidth(0).Height(activityHeaderHeight).AlignItems(ui.Center)
+			titleRow.Children(func() {
+				text := ui.Text(c, title).FontSize(design.TextSize(c, design.TextBase)).TextColor(color).MinWidth(0).Shrink(1).SingleLine()
+				// Compact mode shows the worked duration instead of the
+				// counts. Anchor the tip to the visible label so it points at
+				// that text rather than the middle of the full-width row, and
+				// omit it where the header already shows the same summary.
+				if title != summary {
+					text = text.Tooltip(summary)
+				}
+			})
+			if shimmerPhase >= 0 {
+				a.activityShimmerTitle(c, titleRow, title, shimmerPhase)
+			}
 		})
 		progress, tint := parts.Progress(), a.palette.Muted
 		trigger.DrawOver(func(p *ui.Painter, bounds ui.Rect) { activityChevron(p, bounds.X+5.5, bounds.Y+6, 14, progress, tint) })
@@ -98,7 +246,7 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 				if block.Subagent != nil {
 					ui.Column(c).FillWidth().Height(38).Padding(4, 0).Children(func() { a.transcriptSubagent(c, *block.Subagent) })
 				} else {
-					a.activityItem(c, row.ID+":"+block.ID, block, i+1 < len(row.Activity), live && !row.Compact)
+					a.activityItem(c, row.ID+":"+block.ID, block, i+1 < len(row.Activity), live, motions[i])
 				}
 			}
 		})
@@ -118,22 +266,138 @@ func (a *App) rememberActivityFold(id string, open bool) {
 	a.expanded["activity-open:"+id] = open
 }
 
-func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, continues, live bool) {
+// activityRevealStarts returns the group header's and each activity row's
+// reveal start time. Rows streamed into a live group animate in with a
+// stagger; history and settled work render whole. A streaming group read
+// with animations disabled (animate false) marks its rows seen without
+// starting them, so a snapshot restored mid-stream never replays.
+func (a *App) activityRevealStarts(rowID string, blocks []contracts.Block, streaming, animate bool, now time.Time) (time.Time, []time.Time) {
+	if a.activityReveals == nil {
+		a.activityReveals = map[string]time.Time{}
+	}
+	starts := make([]time.Time, len(blocks))
+	headerStart := a.activityReveals[rowID]
+	hadAny := !headerStart.IsZero()
+	if !hadAny {
+		for _, block := range blocks {
+			if _, ok := a.activityReveals[rowID+":"+block.ID]; ok {
+				hadAny = true
+				break
+			}
+		}
+	}
+	if !streaming {
+		// Keep a reveal that is still running alive, and drop the entries
+		// once it settles so replayed history and old sessions accumulate
+		// nothing.
+		for i, block := range blocks {
+			key := rowID + ":" + block.ID
+			if start, ok := a.activityReveals[key]; ok {
+				starts[i] = start
+				if now.Sub(start) > activityRevealSettleBuffer {
+					delete(a.activityReveals, key)
+				}
+			}
+		}
+		if !headerStart.IsZero() && now.Sub(headerStart) > activityRevealSettleBuffer {
+			delete(a.activityReveals, rowID)
+			headerStart = time.Time{}
+		}
+		return headerStart, starts
+	}
+	if !hadAny && animate {
+		headerStart = now
+		a.activityReveals[rowID] = headerStart
+	}
+	delay := activityFirstRowDelay
+	if hadAny {
+		delay = 0
+	}
+	arrival := 0
+	for i, block := range blocks {
+		key := rowID + ":" + block.ID
+		if start, ok := a.activityReveals[key]; ok {
+			starts[i] = start
+			continue
+		}
+		if !animate {
+			// Mark the row seen without animating it: it reached the view
+			// in a frame that renders changes settled.
+			a.activityReveals[key] = now.Add(-activityRevealSettleBuffer)
+			continue
+		}
+		start := now.Add(delay + time.Duration(arrival)*activityRowStagger)
+		a.activityReveals[key] = start
+		starts[i] = start
+		arrival++
+	}
+	return headerStart, starts
+}
+
+// activityShimmerTitle sweeps a light band across a live group's summary by
+// repainting the shaped line through narrow moving clips, one strip at a
+// time, so the label stays one run of text to shaping and to assistive
+// technology.
+func (a *App) activityShimmerTitle(c *ui.Context, el ui.Element, title string, phase float32) {
+	family, size := c.Theme().Font, design.TextSize(c, design.TextBase)
+	span := ui.Span{Text: title, Font: family, Size: size}
+	advance, _ := c.MeasureText(0, span)
+	if advance <= 0 {
+		return
+	}
+	base, peak := a.palette.Muted, a.palette.Text
+	el.DrawOver(func(p *ui.Painter, r ui.Rect) {
+		width := min(advance, r.W)
+		_, height := p.MeasureText(0, span)
+		y := r.Y + (r.H-height)/2
+		for x := float32(0); x < width; x += activityShimmerStrip {
+			amount := activityShimmerAmount((x+activityShimmerStrip/2)/max(width, 1), phase)
+			if amount <= 0.001 {
+				continue
+			}
+			left, right := r.X+x, min(r.X+x+activityShimmerStrip, r.X+width)
+			p.Clip(ui.Rect{X: left, Y: r.Y, W: right - left, H: r.H}, 0, func() {
+				p.RichText(r.X, y, 0, ui.Span{Text: title, Font: family, Size: size, Color: base.Mix(peak, amount)})
+			})
+		}
+	})
+}
+
+func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, continues, live bool, motion activityRowMotion) {
 	root := ui.Column(c).FillWidth().Key(id)
-	open := ui.Local(root, "open", func() bool { return live && (block.Kind == "reasoning" || block.Kind == "text") })
-	a.activityFold(id, open, live && (block.Kind == "reasoning" || block.Kind == "text"))
+	open := ui.Local(root, "open", func() bool { return false })
+	a.activityFold(id, open, false)
 	label, detail, glyph := activityTitle(block)
+	if block.Kind == "reasoning" && !*open {
+		detail = reasoningPreview(block.Text, live)
+	}
 	color := a.palette.Muted
 	if block.Tool != nil && block.Tool.Failed() {
 		color = a.palette.Danger
 	}
 	root.Draw(func(p *ui.Painter, r ui.Rect) {
-		p.FillPath(activityRailPath(r.X, r.Y, r.H, continues), a.activityInk(.12))
+		if motion.settled {
+			p.FillPath(activityRailPath(r.X, r.Y, r.H, continues), a.activityInk(.12))
+			return
+		}
+		p.FillPath(activityRailRevealPath(r.X, r.Y, r.H, continues, motion.incoming, motion.content, motion.continuation), a.activityInk(.12))
 	})
 	root.Children(func() {
-		parts := ui.CollapsibleBase(c, open)
-		trigger := parts.Trigger.FillWidth().Height(activityRowHeight).AlignItems(ui.Center).Justify(ui.Start).Label(tr(c, label) + ": " + firstNonempty(detail, block.ID))
-		trigger.OnClick(func() { a.rememberActivityFold(id, *open) })
+		parts := ui.CollapsibleBaseWithAnimation(c.Key("activity-item-toggle:"+id), open, activityFoldAnimation)
+		accessibleDetail := firstNonempty(detail, block.ID)
+		if block.Kind == "reasoning" {
+			accessibleDetail = block.ID
+		}
+		trigger := parts.Trigger.FillWidth().Justify(ui.Start).Label(tr(c, label) + ": " + accessibleDetail)
+		if motion.settled {
+			trigger.Height(activityRowHeight).AlignItems(ui.Center)
+		} else {
+			// The row grows in while its content fades and lifts with the
+			// branch leg of the slower connector draw.
+			trigger.Height(activityRowHeight*motion.progress).ClipY().AlignItems(ui.Start).
+				Opacity(motion.content).Margin(activityRevealLift*(1-motion.content), 0, 0, 0)
+		}
+		trigger.OnClick(a.manualActivityFold(c, id, open, strings.TrimSuffix(id, ":"+block.ID)))
 		trigger.Children(func() {
 			ui.Box(c).Width(activityGutter).Height(activityRowHeight).Shrink(0).Children(func() {
 				ui.Row(c).Absolute().Left(activityIconLeft).Top(8).Size(activityIconSize, activityIconSize).TextColor(color).Children(func() { icon(c, glyph, activityIconSize) })
@@ -143,11 +407,11 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 				if trigger.Hovered() && (block.Tool == nil || !block.Tool.Failed()) {
 					text = a.palette.Text
 				}
-				ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(text).SingleLine().Shrink(0)
+				ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine().Shrink(0)
 				if activityFile(block) {
 					a.activityFileBadge(c, block.Tool.Path, color)
 				} else if detail != "" {
-					ui.Text(c, detail).MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(text).SingleLine()
+					ui.Text(c, detail).MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine()
 				}
 				progress := parts.Progress()
 				tile := ui.Box(c).Size(18, 18).Shrink(0)
@@ -159,7 +423,9 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 		})
 		parts.Panel(func() {
 			ui.Column(c).FillWidth().Padding(0, 0, 1, activityGutter+activityTextGap).Gap(0).Children(func() {
-				a.activityDetail(c, block, live)
+				detail := block
+				detail.ID = id
+				a.activityDetail(c, detail, live)
 			})
 		})
 	})
@@ -179,86 +445,30 @@ func (a *App) activityFileBadge(c *ui.Context, path string, color ui.Color) {
 	}
 	badge.Children(func() {
 		ui.Row(c).Size(20, 20).Shrink(0).AlignItems(ui.Center).Justify(ui.Center).Children(func() { ui.Icon(c, workbench.FileIcon(file, a.palette.Dark)).Size(14, 14) })
-		ui.Text(c, activityBasename(path)).SingleLine().FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(color)
+		ui.Text(c, activityBasename(path)).SingleLine().FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color)
 	})
 }
 
 func (a *App) activityDetail(c *ui.Context, block contracts.Block, live bool) {
-	if block.Kind == "reasoning" || block.Kind == "text" {
-		container := ui.Column(c).FillWidth().Padding(6, 0).Gap(0)
-		cache := ui.Local(container, "thought", func() thoughtCache { return thoughtCache{} })
-		if cache.text != block.Text || cache.live != live || cache.lines == nil {
-			cache.text, cache.live = block.Text, live
-			cache.lines, cache.truncated = thoughtLines(block.Text, live)
-		}
-		container.Children(func() {
-			for _, line := range cache.lines {
-				var spans []ui.Span
-				for _, run := range line {
-					span := ui.Span{Text: run.text, Color: a.palette.Faint, Italic: run.style.italic, Strikethrough: run.style.strike}
-					if run.style.bold {
-						span.Weight = 600
-					}
-					if run.style.code {
-						span.Font = design.MonoFont(a.state.Settings.Appearance.CodeFont)
-					}
-					if run.style.link {
-						span.Underline = true
-					}
-					spans = append(spans, span)
-				}
-				if len(spans) == 0 {
-					spans = []ui.Span{{Text: " "}}
-				}
-				ui.RichText(c, spans...).SingleLine().FillWidth().Height(design.UISize(c, 18)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint).Selectable()
-			}
-			a.activityTruncated(c, cache.truncated)
-		})
-		return
-	}
 	if block.Subagent != nil {
-		ui.Text(c, block.Subagent.Task).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
-		ui.Text(c, block.Subagent.Summary).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+		ui.Text(c, block.Subagent.Task).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+		ui.Text(c, block.Subagent.Summary).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 		return
 	}
-	if block.Tool == nil {
+	if block.Tool != nil && block.Tool.Diff != nil {
+		tool := *block.Tool
+		tool.ID = block.ID
+		a.activityDiff(c, tool)
 		return
 	}
-	t := block.Tool
-	invocation := firstNonempty(t.Command, t.Args, t.Path)
-	if invocation != "" {
-		ui.Column(c).FillWidth().Padding(6, 0).Gap(0).Children(func() {
-			for _, line := range activityInvocation(invocation) {
-				ui.Text(c, line).SingleLine().Height(design.UISize(c, 18)).Font(design.MonoFont(a.state.Settings.Appearance.CodeFont)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint).Selectable()
-			}
-		})
-	}
-	if invocation != "" && (t.Diff != nil || t.Output != "") {
-		ui.Box(c).Height(1).Shrink(0)
-	}
-	if t.Diff != nil {
-		a.activityDiff(c, *t.Diff)
-		return
-	}
-	if t.Output != "" {
-		text, truncated := activityLines(t.Output, false, activityDetailLines)
-		ui.Column(c).FillWidth().Padding(6, 0).Gap(0).Children(func() {
-			for _, line := range strings.Split(text, "\n") {
-				ui.Text(c, line).SingleLine().Height(design.UISize(c, 18)).Font(design.MonoFont(a.state.Settings.Appearance.CodeFont)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint).Selectable()
-			}
-			a.activityTruncated(c, truncated)
-		})
-	}
+	a.activityTextDetail(c, block, live)
 }
 
-func (a *App) activityTruncated(c *ui.Context, lines int) {
-	if lines > 0 {
-		ui.Text(c, fmt.Sprintf(tr(c, "… %d more lines"), lines)).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 18)).TextColor(a.palette.Faint)
-	}
-}
-
-func (a *App) activityDiff(c *ui.Context, change contracts.Change) {
-	container := ui.Column(c).FillWidth().MaxHeight(600 * 18).Clip()
+func (a *App) activityDiff(c *ui.Context, tool contracts.ToolCall) {
+	change := *tool.Diff
+	lineHeight := float32(a.state.Settings.Appearance.CodeFontSize) * 1.5
+	container := ui.ScrollBoth(c.Key("activity-diff-viewport:"+tool.ID)).FillWidth().
+		MaxHeight(activityDetailLines*lineHeight+12).Padding(6, 0).Label(tr(c, "Activity diff"))
 	cache := ui.Local(container, "diff", func() activityDiffCache {
 		return activityDiffCache{old: change.OldContent, current: change.NewContent, state: editor.DiffState{Old: editor.NewBuffer(change.OldContent), New: editor.NewBuffer(change.NewContent), Layout: editor.DiffUnified, FitContent: true, Wrap: false, NoLineNumbers: true}}
 	})
@@ -271,10 +481,19 @@ func (a *App) activityDiff(c *ui.Context, change contracts.Change) {
 		cache.state.New.Reset(change.NewContent)
 	}
 	state := &cache.state
-	state.Font = ui.Font{Family: design.MonoFont(a.state.Settings.Appearance.CodeFont), Size: design.UISize(c, 12)}
+	state.Font = ui.Font{Family: design.MonoFont(a.state.Settings.Appearance.CodeFont), Size: float32(a.state.Settings.Appearance.CodeFontSize)}
 	state.LineHeight = 1.5
 	state.Theme = &editor.Theme{Text: a.palette.Muted, Background: ui.Color{}, Added: a.palette.Success, Deleted: a.palette.Danger}
-	container.Children(func() { editor.DiffView(c, state).FillWidth() })
+	container.Children(func() {
+		source := detailSource(contracts.Block{Tool: &tool}, false)
+		font := design.MonoFont(a.state.Settings.Appearance.CodeFont)
+		size := float32(a.state.Settings.Appearance.CodeFontSize)
+		for _, line := range detailLines(source) {
+			ui.RichText(c, detailSpans(line, font, size, a.palette.Faint)...).
+				SingleLine().Height(lineHeight).FontSize(size).Selectable()
+		}
+		editor.DiffView(c, state).FillWidth()
+	})
 }
 
 type activityDiffCache struct {
@@ -284,13 +503,13 @@ type activityDiffCache struct {
 
 func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered bool) {
 	services := c.Services()
-	ui.Row(c).FillWidth().Height(16).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).FillWidth().MinHeight(max(16, design.TextSize(c, design.TextSmall)*1.5)).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
 		row := ui.Row(c).Gap(6).AlignItems(ui.Center)
 		if !hovered {
 			row.Opacity(0)
 		}
 		row.Children(func() {
-			ui.Text(c, date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint)
+			ui.Text(c, date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
 			ui.ButtonBase(c).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
 				var text []string
 				for _, b := range message.Blocks {
@@ -323,22 +542,64 @@ func activityChevron(p *ui.Painter, x, y, size, progress float32, color ui.Color
 // The source unions clockwise 1px ribbons to avoid double-alpha intersections.
 // FillPath's nonzero contour fill gives the same single contribution at forks.
 func activityRailPath(x, y, height float32, continues bool) *ui.Path {
+	return activityRailRevealPath(x, y, height, continues, 1, 1, 1)
+}
+
+// activityRailRevealPath draws the trunk, bend and branch ribbons
+// progressively: incoming grows the trunk to the bend, continuation extends
+// it toward the next arrival, and branch reveals the elbow and tip by
+// distance along their path, so a changing branch length never speeds up.
+func activityRailRevealPath(x, y, height float32, continues bool, incoming, branch, continuation float32) *ui.Path {
 	var path ui.Path
 	trunk := x + activityTrunkX
 	bendY := y + activityRowHeight/2 - activityBend
-	bottom := bendY
-	if continues {
-		bottom = y + height
+	if incoming > 0 {
+		bottom := y + (activityRowHeight/2-activityBend)*incoming
+		if incoming >= 1 && continues && continuation > 0 {
+			bottom = bendY + max(height-(activityRowHeight/2-activityBend), 0)*continuation
+		}
+		activityRibbon(&path, [][2]float32{{trunk, y}, {trunk, bottom}})
 	}
-	activityRibbon(&path, [][2]float32{{trunk, y}, {trunk, bottom}})
+	if branch > 0 {
+		relative := activityBranchPoints(branch)
+		points := make([][2]float32, len(relative))
+		for i, point := range relative {
+			points[i] = [2]float32{trunk + point[0], bendY + point[1]}
+		}
+		activityRibbon(&path, points)
+	}
+	return &path
+}
+
+func activityBranchPoints(progress float32) [][2]float32 {
 	points := make([][2]float32, 0, 26)
 	for i := 0; i <= 24; i++ {
 		t := float32(i) / 24
-		points = append(points, [2]float32{trunk + activityBend*t*t, bendY + activityBend*(2*t-t*t)})
+		points = append(points, [2]float32{activityBend * t * t, activityBend * (2*t - t*t)})
 	}
-	points = append(points, [2]float32{x + activityBranchEnd, y + activityRowHeight/2})
-	activityRibbon(&path, points)
-	return &path
+	points = append(points, [2]float32{activityBranchEnd - activityTrunkX, activityBend})
+	if progress >= 1 {
+		return points
+	}
+	lengths := make([]float32, len(points)-1)
+	total := float32(0)
+	for i := 1; i < len(points); i++ {
+		dx, dy := points[i][0]-points[i-1][0], points[i][1]-points[i-1][1]
+		lengths[i-1] = float32(math.Hypot(float64(dx), float64(dy)))
+		total += lengths[i-1]
+	}
+	remaining := total * max(0, min(progress, 1))
+	visible := make([][2]float32, 0, len(points))
+	visible = append(visible, points[0])
+	for i := 1; i < len(points) && remaining > 0; i++ {
+		t := min(remaining/lengths[i-1], 1)
+		visible = append(visible, [2]float32{
+			points[i-1][0] + (points[i][0]-points[i-1][0])*t,
+			points[i-1][1] + (points[i][1]-points[i-1][1])*t,
+		})
+		remaining -= lengths[i-1]
+	}
+	return visible
 }
 
 func activityRibbon(path *ui.Path, points [][2]float32) {
@@ -358,25 +619,6 @@ func activityRibbon(path *ui.Path, points [][2]float32) {
 		path.LineTo(right[i][0], right[i][1])
 	}
 	path.Close()
-}
-
-func activityLines(text string, tail bool, limit int) (string, int) {
-	lines := strings.Split(strings.TrimRight(text, "\r\n \t"), "\n")
-	truncated := max(len(lines)-limit, 0)
-	if truncated > 0 {
-		if tail {
-			lines = lines[truncated:]
-		} else {
-			lines = lines[:limit]
-		}
-	}
-	for i, line := range lines {
-		runes := []rune(line)
-		if len(runes) > 8192 {
-			lines[i] = string(runes[:8192]) + "…"
-		}
-	}
-	return strings.Join(lines, "\n"), truncated
 }
 
 func activityInvocation(text string) []string {

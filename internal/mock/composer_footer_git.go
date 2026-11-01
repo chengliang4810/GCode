@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"maps"
 	"path"
 	"slices"
@@ -18,18 +17,15 @@ func (s *Server) ensureComposerFooterGitLocked(restored bool) {
 	if s.state.RepoRefs == nil {
 		s.state.RepoRefs = make(map[string]contracts.RepoRefs)
 	}
-	if s.state.CheckoutPR == nil {
-		s.state.CheckoutPR = make(map[string]contracts.CheckoutPRStatus)
-	}
 	if s.gitJobs == nil {
 		s.gitJobs = make(map[string]uint64)
 	}
 	for i := range s.state.Projects {
 		p := &s.state.Projects[i]
-		if !restored && (p.ID == "fieldnotes" || p.ID == "zeron" || p.ID == "backend") {
+		if !restored && (p.ID == "fieldnotes" || p.ID == "rcode" || p.ID == "backend") {
 			p.GitDetected = true
 			p.DefaultBranch = "main"
-			p.CloudRepository = "zeronsh/" + p.ID
+			p.CloudRepository = "r-code/" + p.ID
 		}
 	}
 	for i := range s.state.Sessions {
@@ -56,22 +52,12 @@ func (s *Server) ensureComposerFooterGitLocked(restored bool) {
 				session.Branch = "fieldnotes/command-palette"
 			}
 			session.SourceContext = s.sourceContextLocked(*session, p, session.Branch)
-			key, valid := contracts.SessionCheckoutPRKey(*session)
-			if valid {
-				s.state.CheckoutPR[key.Key()] = contracts.CheckoutPRStatus{Key: key, State: contracts.LoadReady, Summary: s.gitPRSummaryLocked(key)}
-			}
 		}
 	}
 	for key, resource := range s.state.RepoRefs {
 		if resource.State == contracts.LoadLoading {
 			resource.State, resource.Switching = "", ""
 			s.state.RepoRefs[key] = resource
-		}
-	}
-	for key, resource := range s.state.CheckoutPR {
-		if resource.State == contracts.LoadLoading {
-			resource.State, resource.Error = "", ""
-			s.state.CheckoutPR[key] = resource
 		}
 	}
 }
@@ -91,13 +77,13 @@ func (s *Server) migrateComposerFooterGitProjects(data []byte) {
 		return
 	}
 	for _, old := range saved.Snapshot.Projects {
-		if old.GitDetected != nil || old.ID != "fieldnotes" && old.ID != "zeron" && old.ID != "backend" {
+		if old.GitDetected != nil || old.ID != "fieldnotes" && old.ID != "rcode" && old.ID != "backend" {
 			continue
 		}
 		for i := range s.state.Projects {
 			project := &s.state.Projects[i]
 			if project.ID == old.ID {
-				project.GitDetected, project.DefaultBranch, project.CloudRepository = true, "main", "zeronsh/"+project.ID
+				project.GitDetected, project.DefaultBranch, project.CloudRepository = true, "main", "r-code/"+project.ID
 			}
 		}
 	}
@@ -180,12 +166,7 @@ func (s *Server) composerGitCommand(ctx context.Context, command contracts.Comma
 		s.mu.Unlock()
 		return ErrClosed
 	}
-	var err error
-	if command.Kind == "git.pr.refresh" {
-		err = s.refreshCheckoutPRLocked(*command.Git.Source, command.Git.Force)
-	} else {
-		err = s.loadOrSwitchRefsLocked(command)
-	}
+	err := s.loadOrSwitchRefsLocked(command)
 	s.mu.Unlock()
 	if err != nil {
 		return err
@@ -385,11 +366,12 @@ func (s *Server) resolveNewCheckoutLocked(project contracts.Project, sessionID s
 		if base != "HEAD" && !slices.Contains(project.Branches, base) {
 			return session, errors.New("worktree base no longer exists")
 		}
-		branch := "zeron/" + sessionID
-		location := project.Path + "-worktrees"
-		if s.state.Settings.General.CustomWorktreeLocation && s.state.Settings.General.WorktreePath != "" {
-			location = s.state.Settings.General.WorktreePath
+		branch := "rcode/" + sessionID
+		directory := "~/.gcode"
+		if s.state.Runtime != nil && s.state.Runtime.DataDirectory != "" {
+			directory = s.state.Runtime.DataDirectory
 		}
+		location := path.Join(directory, "worktrees")
 		tree := contracts.Worktree{ID: s.idLocked("worktree"), Name: branch, Path: path.Join(location, sessionID), Branch: branch, BaseRef: base}
 		for i := range s.state.Projects {
 			if s.state.Projects[i].ID == project.ID {
@@ -452,97 +434,11 @@ func (s *Server) captureSessionSourceLocked(session *contracts.Session) {
 	session.SourceContext = s.sourceContextLocked(*session, project, branch)
 }
 
-func (s *Server) gitPRSummaryLocked(key contracts.CheckoutPRKey) *contracts.ChangeRequestSummary {
-	for _, session := range s.state.Sessions {
-		owned, ok := contracts.SessionCheckoutPRKey(session)
-		if !ok || owned != key {
-			continue
-		}
-		project, ok := s.gitProjectLocked(session.ProjectID)
-		if !ok {
-			continue
-		}
-		for _, pr := range s.state.PullRequests {
-			if pr.Repository == project.CloudRepository && pr.HeadBranch == key.Branch {
-				return &contracts.ChangeRequestSummary{Provider: "github", Number: pr.Number, Title: pr.Title, URL: fmt.Sprintf("https://github.com/%s/pull/%d", pr.Repository, pr.Number), State: pr.Status, BaseRef: pr.BaseBranch, HeadRef: pr.HeadBranch, DetailID: pr.ID}
-			}
-		}
-	}
-	return nil
-}
-
-// Call after removing the session row. Shared checkout snapshots remain while
-// another conversation owns that source, but last-owner deletion invalidates
-// pending refreshes before dropping the cache.
-func (s *Server) deleteComposerFooterGitSessionLocked(session contracts.Session) {
-	key, valid := contracts.SessionCheckoutPRKey(session)
-	if !valid {
-		return
-	}
-	for _, other := range s.state.Sessions {
-		if candidate, ok := contracts.SessionCheckoutPRKey(other); ok && candidate == key {
-			return
-		}
-	}
-	delete(s.state.CheckoutPR, key.Key())
-	s.gitJobs["pr:"+key.Key()]++
-}
-
-func (s *Server) refreshCheckoutPRLocked(key contracts.CheckoutPRKey, force bool) error {
-	owned := false
-	for _, session := range s.state.Sessions {
-		candidate, ok := contracts.SessionCheckoutPRKey(session)
-		owned = owned || ok && candidate == key
-	}
-	if !owned {
-		return errors.New("conversation source is no longer available")
-	}
-	encoded := key.Key()
-	resource := s.state.CheckoutPR[encoded]
-	if !force && resource.State != "" {
-		return nil
-	}
-	resource.Key, resource.State, resource.Error = key, contracts.LoadLoading, ""
-	resource.Generation++
-	s.state.CheckoutPR[encoded] = resource
-	jobKey := "pr:" + encoded
-	s.gitJobs[jobKey]++
-	generation := s.gitJobs[jobKey]
-	finish := func() {
-		if s.gitJobs[jobKey] != generation {
-			return
-		}
-		current := s.state.CheckoutPR[encoded]
-		if s.opts.GitScenario == "pr-error" {
-			current.State, current.Error = contracts.LoadError, "Could not refresh pull request"
-		} else {
-			current.State, current.Error, current.Summary = contracts.LoadReady, "", s.gitPRSummaryLocked(key)
-		}
-		s.state.CheckoutPR[encoded] = current
-		s.publishLocked("git.pr.updated", "", "", "", "")
-	}
-	s.publishLocked("git.pr.updated", "", "", "", "")
-	if s.opts.Instant {
-		finish()
-	} else {
-		s.gitLaterLocked(finish)
-	}
-	return nil
-}
-
 func cloneComposerFooterGitSnapshots(v *contracts.Snapshot) {
 	v.RepoRefs = maps.Clone(v.RepoRefs)
 	for key, resource := range v.RepoRefs {
 		resource.Rows = slices.Clone(resource.Rows)
 		v.RepoRefs[key] = resource
-	}
-	v.CheckoutPR = maps.Clone(v.CheckoutPR)
-	for key, resource := range v.CheckoutPR {
-		if resource.Summary != nil {
-			copy := *resource.Summary
-			resource.Summary = &copy
-		}
-		v.CheckoutPR[key] = resource
 	}
 	for i := range v.Sessions {
 		if v.Sessions[i].SourceContext != nil {

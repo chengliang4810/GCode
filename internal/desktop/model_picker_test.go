@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"gcode/internal/contracts"
 	"gcode/internal/mock"
-	"image"
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,148 +16,97 @@ import (
 )
 
 func TestCaptureModelPickerAudit(t *testing.T) {
-	dir := os.Getenv("ZERON_MODEL_AUDIT_DIR")
-	if dir == "" {
+	if os.Getenv("RCODE_MODEL_AUDIT_DIR") == "" {
 		t.Skip("explicit audit capture directory required")
 	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	for _, mode := range []string{"light", "dark"} {
-		a := testApp(t, "default")
-		a.state.Settings.Appearance.Mode = mode
-		a.state.Settings.Appearance.ThemeID = "zeron-" + mode
+	for _, appearance := range []string{"light", "dark"} {
+		a := modelSurfaceTestApp(t, appearance)
+		a.effortMenu, a.modelMenu = false, true
 		tt := ui.NewTester(a.View, 1320, 880)
-		save := func(name string) {
-			f, err := os.Create(filepath.Join(dir, name+"-"+mode+".png"))
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := png.Encode(f, tt.Image()); err != nil {
-				_ = f.Close()
-				t.Fatal(err)
-			}
-			if err := f.Close(); err != nil {
-				t.Fatal(err)
-			}
-			if mode == "light" && (name == "compact" || name == "list") {
-				r, ok := tt.Find("Model picker")
-				if !ok {
-					t.Fatal("model popup missing from capture")
-				}
-				bounds := image.Rect(int(r.X)-20, int(r.Y)-20, int(r.X+r.W)+20, int(r.Y+r.H)+20).Intersect(tt.Image().Bounds())
-				focus, err := os.Create(filepath.Join(dir, "focus-"+name+"-"+mode+".png"))
-				if err != nil {
-					t.Fatal(err)
-				}
-				if err := png.Encode(focus, tt.Image().SubImage(bounds)); err != nil {
-					_ = focus.Close()
-					t.Fatal(err)
-				}
-				if err := focus.Close(); err != nil {
-					t.Fatal(err)
-				}
-			}
-		}
-		if err := tt.Click("Select model"); err != nil {
-			t.Fatal(err)
-		}
-		save("compact")
-		if err := tt.Click("Change model"); err != nil {
-			t.Fatal(err)
-		}
-		save("list")
-		a.modelMenu = false
-		a.state.Settings.General.CompactModelPicker = false
-		tt.Frame()
-		if err := tt.Click("Select model"); err != nil {
-			t.Fatal(err)
-		}
-		save("full")
+		writeModelSurfaceEvidence(t, "model-list-"+appearance, tt, map[string]any{"scope": "implementation layout"})
 	}
 }
 
-func TestModelPickerSearchKeyboardAndEscape(t *testing.T) {
+func openTestModelList(tt *ui.Tester, label string) error {
+	if err := tt.Click(label); err != nil {
+		return err
+	}
+	// Exercise the preserved explicit search path even for small catalogs.
+	tt.Key(ui.Cmd, ui.KeyF)
+	return nil
+}
+
+func TestModelPickerUnifiedNavigation(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 900, 600)
-	if err := tt.Click("Select model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Change model"); err != nil {
-		t.Fatal(err)
+	if !tt.Focused("Search models") {
+		t.Fatal("explicit search did not focus")
 	}
-	tt.Type("GPT-5.3")
-	if a.modelQuery != "GPT-5.3" || len(a.modelRows()) != 1 {
-		t.Fatalf("search did not filter models: %q, %d", a.modelQuery, len(a.modelRows()))
-	}
-	tt.Key(0, ui.KeyEnter)
-	if a.modelID != "gpt-5.3-codex" || !a.modelMenu || a.modelListPage {
-		t.Fatalf("Enter did not select and return to options: %q, cursor %d, open %v list %v rows %+v", a.modelID, a.modelCursor, a.modelMenu, a.modelListPage, a.modelRows())
-	}
-	if err := tt.Click("Change model"); err != nil {
-		t.Fatal(err)
-	}
-	tt.Key(0, ui.KeyEscape)
-	if !a.modelMenu || a.modelListPage {
-		t.Fatal("first Escape must return to the compact options")
-	}
-	tt.Key(0, ui.KeyEscape)
-	if a.modelMenu {
-		t.Fatal("second Escape must close the picker")
-	}
-}
-
-func TestStandardPickerProviderMemoryAndStaysOpen(t *testing.T) {
-	a := testApp(t, "default")
-	a.state.Settings.General.CompactModelPicker = false
-	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("Select model"); err != nil {
-		t.Fatal(err)
-	}
-	if err := tt.Click("Sonnet 4.6"); err != nil {
-		t.Fatal(err)
-	}
-	if !a.modelMenu || a.modelID != "claude-sonnet-4-6" {
-		t.Fatal("standard picker should remain open after selecting a model")
+	if _, ok := tt.Find("Change model"); ok {
+		t.Fatal("removed intermediate page remains")
 	}
 	if err := tt.Click("Codex"); err != nil {
 		t.Fatal(err)
 	}
-	if a.selectedModel().ProviderID != "openai" {
-		t.Fatal("provider tab retained the foreign model")
-	}
-	for _, row := range a.modelRows() {
-		if row.provider.ID != "openai" {
-			t.Fatal("standard picker mixed provider scopes")
-		}
-	}
-	if err := tt.Click("Claude Code"); err != nil {
-		t.Fatal(err)
-	}
-	if a.modelID != "claude-sonnet-4-6" {
-		t.Fatalf("provider did not restore previous model: %s", a.modelID)
-	}
-	if err := tt.Click("Search models"); err != nil {
-		t.Fatal(err)
-	}
+	tt.Type("GPT-5.3")
 	tt.Key(0, ui.KeyEnter)
-	if a.modelID != "claude-sonnet-4-6" {
-		t.Fatal("keyboard highlight did not follow the provider's remembered model")
+	if a.modelID != "gpt-5.3-codex" || a.modelMenu {
+		t.Fatal("selection did not commit and dismiss")
 	}
-	if err := tt.Click("Favorites"); err != nil {
+	if err := tt.Click("Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if !tt.HasText("No starred models") {
-		t.Fatal("empty favorites state missing")
+	tt.Key(0, ui.KeyEscape)
+	if a.modelMenu {
+		t.Fatal("Escape did not close the menu directly")
 	}
-	tt.Key(0, ui.KeyEnter)
-	if a.modelID != "claude-sonnet-4-6" {
-		t.Fatal("Enter in an empty list changed the model")
+	payload, _ := json.Marshal(a.state.Settings.General)
+	if strings.Contains(string(payload), "compactModelPicker") {
+		t.Fatal("removed setting is persisted")
 	}
 }
 
+func TestModelPickerProviderFiltersDoNotChangeSelection(t *testing.T) {
+	a := testApp(t, "default")
+	tt := ui.NewTester(a.View, 1320, 880)
+	before := a.modelID
+	if err := openTestModelList(tt, "Select model"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Codex"); err != nil {
+		t.Fatal(err)
+	}
+	if a.modelID != before {
+		t.Fatal("filter changed committed model")
+	}
+	for _, row := range a.modelRows() {
+		if row.provider.ID != "openai" {
+			t.Fatal("provider filter mixed scopes")
+		}
+	}
+	if err := tt.Click("GPT-5.4"); err != nil {
+		t.Fatal(err)
+	}
+	if a.modelID != "gpt-5.4" || a.modelMenu {
+		t.Fatal("model click failed to commit and dismiss")
+	}
+	if err := tt.Click("Select model"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Model management"); err != nil {
+		t.Fatal(err)
+	}
+	if a.route != "settings" || a.section != "Providers" || a.modelID != "gpt-5.4" {
+		t.Fatal("model settings entry changed the selected model or failed to navigate")
+	}
+
+}
+
 func TestCaptureModelCatalogAudit(t *testing.T) {
-	dir := os.Getenv("ZERON_MODEL_AUDIT_DIR")
+	dir := os.Getenv("RCODE_MODEL_AUDIT_DIR")
 	if dir == "" {
 		t.Skip("explicit audit capture directory required")
 	}
@@ -167,17 +116,16 @@ func TestCaptureModelCatalogAudit(t *testing.T) {
 	for _, mode := range []string{"light", "dark"} {
 		for _, status := range []contracts.ModelCatalogStatus{contracts.CatalogLoading, contracts.CatalogError, contracts.CatalogEmpty, contracts.CatalogNoAgents} {
 			a := testApp(t, "default")
-			a.state.Settings.General.CompactModelPicker = false
 			a.state.Settings.Appearance.Mode = mode
 			a.state.Settings.Appearance.ReduceMotion = true
-			a.state.Settings.Appearance.ThemeID = "zeron-" + mode
+			a.state.Settings.Appearance.ThemeID = "rcode-" + mode
 			a.state.ModelCatalog = contracts.ModelCatalogState{State: status, Error: "The model catalog could not be loaded."}
 			if status == contracts.CatalogEmpty || status == contracts.CatalogNoAgents {
 				a.state.Models = nil
 				a.modelID = ""
 			}
 			tt := ui.NewTester(a.View, 1320, 880)
-			if err := tt.Click("Select model"); err != nil {
+			if err := openTestModelList(tt, "Select model"); err != nil {
 				t.Fatal(err)
 			}
 			f, err := os.Create(filepath.Join(dir, "catalog-"+string(status)+"-"+mode+".png"))
@@ -197,26 +145,19 @@ func TestCaptureModelCatalogAudit(t *testing.T) {
 
 func TestModelPickerBoundsAtWindowEdges(t *testing.T) {
 	for _, size := range [][2]int{{900, 600}, {1320, 880}, {1600, 1000}} {
-		for _, compact := range []bool{true, false} {
-			a := testApp(t, "default")
-			a.selectSession("chat-0")
-			a.files, a.right = true, true
-			a.state.Settings.General.CompactModelPicker = compact
-			tt := ui.NewTester(a.View, size[0], size[1])
-			if err := tt.Click("Select model"); err != nil {
-				t.Fatal(err)
-			}
-			r, ok := tt.Find("Model picker")
-			if !ok || r.X < 0 || r.Y < 0 || r.X+r.W > float32(size[0]) || r.Y+r.H > float32(size[1]) {
-				t.Fatalf("picker escaped %v compact=%v: %+v, open %v, selector %+v, texts %v", size, compact, r, a.modelMenu, func() ui.Rect { r, _ := tt.Find("Select model"); return r }(), tt.Texts())
-			}
-			want := float32(304)
-			if compact {
-				want = 256
-			}
-			if r.W != want {
-				t.Fatalf("incorrect popup width: %v, want %v", r.W, want)
-			}
+		a := testApp(t, "default")
+		a.selectSession("chat-0")
+		a.files, a.right = true, true
+		tt := ui.NewTester(a.View, size[0], size[1])
+		if err := openTestModelList(tt, "Select model"); err != nil {
+			t.Fatal(err)
+		}
+		tt.Advance(time.Second)
+		r, ok := tt.Find("Model picker")
+		anchor, _ := tt.Find("Select model")
+		maxWidth := min(modelPickerMaxWidth, float32(size[0]-16))
+		if !ok || r.X < 0 || r.Y < 0 || r.X+r.W > float32(size[0]) || r.Y+r.H > anchor.Y || r.W <= 0 || r.W > maxWidth+.5 {
+			t.Fatalf("popup escaped %v: %+v anchor=%+v", size, r, anchor)
 		}
 	}
 }
@@ -230,10 +171,7 @@ func TestModelPickerVirtualizesLargeCatalogAndNoResults(t *testing.T) {
 	a.modelID = "model-0"
 	a = modelSnapshotApp(t, a.state)
 	tt := ui.NewTester(a.View, 900, 600)
-	if err := tt.Click("Select model"); err != nil {
-		t.Fatal(err)
-	}
-	if err := tt.Click("Change model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
 	first, last := a.modelList.Visible()
@@ -318,7 +256,6 @@ func TestUnresolvedModelCannotSilentlySendDefaultAndRetryResolvesIt(t *testing.T
 
 func TestStandardPickerReopensOnCurrentLockedProvider(t *testing.T) {
 	a := testApp(t, "default")
-	a.state.Settings.General.CompactModelPicker = false
 	a.selectSession("chat-0")
 	a.modelProvider = "claude"
 	for i := range a.state.Sessions {
@@ -329,7 +266,7 @@ func TestStandardPickerReopensOnCurrentLockedProvider(t *testing.T) {
 	}
 	a.selectSession("chat-1")
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("Select model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
 	rows := a.modelRows()
@@ -352,7 +289,7 @@ func TestAllDisabledProvidersHaveNoAgentsButKeepExistingChatModel(t *testing.T) 
 		a.state.Integrations.Providers[i].Enabled = false
 	}
 	a = modelSnapshotApp(t, a.state)
-	if !a.modelNoAgents() || a.modelLabel() != "No agents available" {
+	if !a.modelNoAgents() || a.modelLabel() != "No models configured" {
 		t.Fatal("all-disabled catalog remained a perpetual loading list")
 	}
 	a.selectSession("chat-0")
@@ -361,90 +298,74 @@ func TestAllDisabledProvidersHaveNoAgentsButKeepExistingChatModel(t *testing.T) 
 	}
 }
 
-func TestCompactModelPickerEffortAndSelection(t *testing.T) {
+func TestIndependentReasoningPickerAndModelSelection(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("Select model"); err != nil {
+	if err := tt.Click("Select reasoning effort"); err != nil {
 		t.Fatal(err)
+	}
+	if a.modelMenu || !a.effortMenu {
+		t.Fatal("reasoning control opened the model list")
 	}
 	if err := tt.Click("Reasoning effort"); err != nil {
 		t.Fatal(err)
 	}
 	tt.Key(0, ui.KeyEnd)
 	if a.reasoning != "Max" {
-		t.Fatalf("effort slider did not update model config: %s", a.reasoning)
+		t.Fatal("slider did not update effort")
 	}
-	if err := tt.Click("Change model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
+		t.Fatal(err)
+	}
+	if a.effortMenu || !a.modelMenu {
+		t.Fatal("model list did not replace reasoning popup")
+	}
+	if _, ok := tt.Find("Reasoning effort"); ok {
+		t.Fatal("model list still contains reasoning slider")
+	}
+	if err := tt.Click("Codex"); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.Click("GPT-5.4"); err != nil {
 		t.Fatal(err)
 	}
-	if a.modelID != "gpt-5.4" || a.reasoning == "Max" {
-		t.Fatal("model selection retained unsupported reasoning")
-	}
-	if !a.modelMenu || a.modelListPage {
-		t.Fatal("compact picker did not return to options")
+	if a.modelID != "gpt-5.4" || a.reasoning == "Max" || a.modelMenu {
+		t.Fatal("model choice retained incompatible effort or open list")
 	}
 }
 
-func TestModelFavoritesSearchAndPersistence(t *testing.T) {
+func TestModelSearchMatchesProviderName(t *testing.T) {
 	a := testApp(t, "default")
-	m := a.state.Models[0]
-	a.toggleModelFavorite(m)
-	if !a.isModelFavorite(m) {
-		t.Fatal("favorite was not persisted")
+	a.modelProvider, a.modelQuery = "openai", "codex"
+	if len(a.modelRows()) == 0 {
+		t.Fatal("search did not match provider name")
 	}
-	rows := a.modelRows()
-	if rows[0].group != "favorites" || rows[0].model.ID != m.ID {
-		t.Fatal("favorites did not precede provider groups")
-	}
-	a.modelQuery = "codex"
 	for _, row := range a.modelRows() {
-		if row.model.ProviderID != "openai" {
-			t.Fatal("model search ignored provider name")
+		if row.provider.ID != "openai" {
+			t.Fatal("search mixed provider scopes")
 		}
 	}
-	a.toggleModelFavorite(m)
-	if a.isModelFavorite(m) {
-		t.Fatal("favorite removal did not persist")
-	}
 }
 
-func TestModelPickerKeyboardFavoritesAndAccessMenu(t *testing.T) {
+func TestModelPickerRemovedFavoriteAndNumberShortcuts(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("Access mode"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Plan mode"); err != nil {
-		t.Fatal(err)
-	}
-	if !a.plan {
-		t.Fatal("Plan menu did not update the run config")
-	}
-	tt.Key(0, ui.KeyEscape)
-	if err := tt.Click("Select model"); err != nil {
-		t.Fatal(err)
-	}
-	if err := tt.Click("Change model"); err != nil {
-		t.Fatal(err)
-	}
+	before := a.modelID
+	settingsBefore, _ := json.Marshal(a.state.Settings.ModelPicker)
 	tt.Key(0, ui.KeyDown)
 	tt.Key(ui.Cmd|ui.Shift, ui.KeyF)
-	if !a.isModelFavorite(a.state.Models[1]) {
-		t.Fatal("keyboard favorite did not affect highlighted row")
+	for key := ui.Key1; key <= ui.Key9; key++ {
+		tt.Key(ui.Cmd, key)
 	}
-	tt.Key(ui.Cmd, ui.Key4)
-	// The favorite section adds one row before the four provider rows.
-	if a.modelID != "gpt-5.4" || a.modelListPage {
-		t.Fatalf("number shortcut selected %s", a.modelID)
+	settingsAfter, _ := json.Marshal(a.state.Settings.ModelPicker)
+	if a.modelID != before || string(settingsBefore) != string(settingsAfter) {
+		t.Fatal("removed picker shortcuts changed model configuration")
 	}
-	if a.state.Settings.ModelPicker.ProviderID != "openai" {
-		t.Fatal("last selected provider was not saved")
-	}
-	if a.state.Settings.ModelPicker.Selections["openai"].ModelID != "gpt-5.4" {
-		t.Fatal("provider model memory was not saved")
+	if tt.HasText("Favorites") || strings.Contains(string(settingsAfter), "favorites") {
+		t.Fatal("model favorites remain in the UI or settings")
 	}
 }
 
@@ -463,7 +384,7 @@ func TestModelProviderStaysLockedDuringActiveTurn(t *testing.T) {
 				t.Fatal("active run offered a foreign provider")
 			}
 		}
-		a.selectModelProvider("openai")
+		a.centralControls().activateModelRow([]modelRow{{model: contracts.Model{ID: "gpt-5.4", ProviderID: "openai"}, provider: contracts.Provider{ID: "openai"}}}, 0)
 		if a.selectedModel().ProviderID != provider {
 			t.Fatal("provider changed while a turn was active")
 		}
@@ -474,14 +395,14 @@ func TestModelPickerPreservesShellFillAndProviderChoice(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
 	before := tt.Image().RGBAAt(800, 200)
-	if err := tt.Click("Select model"); err != nil {
-		t.Fatal(err)
-	}
-	if err := tt.Click("Change model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
 	if got := tt.Image().RGBAAt(800, 200); got != before {
 		t.Fatalf("model list changed the shell fill: %v -> %v", before, got)
+	}
+	if err := tt.Click("Codex"); err != nil {
+		t.Fatal(err)
 	}
 	if err := tt.Click("GPT-5.4"); err != nil {
 		t.Fatal(err)
@@ -498,12 +419,11 @@ func TestModelPickerPreservesShellFillAndProviderChoice(t *testing.T) {
 
 func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 	a := testApp(t, "default")
-	a.state.Settings.General.CompactModelPicker = false
 	a.state.Settings.Appearance.ReduceMotion = true
 	a.saveSettings()
 	a.state.ModelCatalog = contracts.ModelCatalogState{State: contracts.CatalogLoading}
 	tt := ui.NewTester(a.View, 900, 600)
-	if err := tt.Click("Select model"); err != nil {
+	if err := openTestModelList(tt, "Select model"); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("Loading models") || tt.HasText("Search models") {
@@ -522,7 +442,7 @@ func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 	if err := tt.Click("Retry"); err != nil {
 		t.Fatal(err)
 	}
-	if a.state.ModelCatalog.State != contracts.CatalogReady || !tt.HasText("Search models") {
+	if a.state.ModelCatalog.State != contracts.CatalogReady || !tt.HasText("Sonnet 4.6") {
 		t.Fatalf("retry did not restore the catalog: %v error %q open %v texts %v", a.state.ModelCatalog, a.errorText, a.modelMenu, tt.Texts())
 	}
 	a.state.ModelCatalog = contracts.ModelCatalogState{State: contracts.CatalogNoAgents}
@@ -530,7 +450,7 @@ func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 		a.state.Integrations.Providers[i].Enabled = false
 	}
 	tt.Frame()
-	if !tt.HasText("No agents available") || !tt.HasText("Enable an installed agent") {
+	if !tt.HasText("No models configured") || !tt.HasText("Configure a provider") {
 		t.Fatal("no agents state missing")
 	}
 	a.modelMenu = false

@@ -145,7 +145,7 @@ func TestAnnotationResetIsAnOrderedBarrier(t *testing.T) {
 	}
 	page.mu.Lock()
 	defer page.mu.Unlock()
-	want := []string{"block", "window.__zeronAnnotator?.keep([])", "label-new", "window.__zeronAnnotator?.keep([1])", "barrier"}
+	want := []string{"block", "window.__rcodeAnnotator?.keep([])", "label-new", "window.__rcodeAnnotator?.keep([1])", "barrier"}
 	if !reflect.DeepEqual(page.calls, want) || s.nextAnnotation != 0 {
 		t.Fatalf("reset was replaced by a later keep: %v; index %d", page.calls, s.nextAnnotation)
 	}

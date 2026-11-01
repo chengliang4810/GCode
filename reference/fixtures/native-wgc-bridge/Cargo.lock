@@ -452,7 +452,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "zeron-fixture-wgc"
+name = "rcode-fixture-wgc"
 version = "0.1.0"
 dependencies = [
  "anyhow",

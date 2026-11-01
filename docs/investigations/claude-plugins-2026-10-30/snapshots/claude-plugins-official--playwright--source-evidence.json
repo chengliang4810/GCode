@@ -1,0 +1,15 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/playwright",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"playwright\",\n  \"description\": \"Browser automation and end-to-end testing MCP server by Microsoft. Enables Claude to interact with web pages, take screenshots, fill forms, click elements, and perform automated browser testing workflows.\",\n  \"author\": {\n    \"name\": \"Microsoft\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"playwright\": {\n    \"command\": \"npx\",\n    \"args\": [\"@playwright/mcp@latest\"]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

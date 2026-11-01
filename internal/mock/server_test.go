@@ -63,7 +63,6 @@ func TestSnapshotIsolation(t *testing.T) {
 	copy1.Providers[0].Models[0] = "mutated"
 	copy1.Settings.Shortcuts[0].Keys = "mutated"
 	copy1.Changes[0].Hunks[0].Lines[0].Text = "mutated"
-	copy1.PullRequests[0].Checks[0].Name = "mutated"
 	copy1.Commits[0].Refs[0] = "mutated"
 	ms := copy1.Messages["chat-0"]
 	q := ms[len(ms)-1].Blocks[0].Question

@@ -1,0 +1,30 @@
+{
+  "repo": "windsor-ai/claude-windsor-ai-plugin",
+  "commit": "d7ba1cb036c7ca765536355fb85f13a3237ea3f9",
+  "path": ".",
+  "archive_sha256": "26c8c06a5ab78b14b88ac0b90575ab46506dd27dc8bda69b74efc3c7b60f9057",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "SUBMISSION.md",
+    "agents/business-data-analyst.md",
+    "commands/campaign-report.md",
+    "commands/windsor-sources.md",
+    "commands/windsor-types.md",
+    "skills/business-data/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"windsor-ai\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Connect Claude Code to 350+ business data sources via Windsor.ai. Query marketing, sales, CRM, ecommerce, finance, and analytics data from Google Ads, Meta, HubSpot, Salesforce, Shopify, Stripe, and hundreds more — directly from your terminal.\",\n  \"author\": {\n    \"name\": \"Windsor.ai\",\n    \"email\": \"support@windsor.ai\",\n    \"url\": \"https://windsor.ai\"\n  },\n  \"repository\": \"https://github.com/windsor-ai/claude-windsor-ai-plugin\",\n  \"homepage\": \"https://windsor.ai\",\n  \"keywords\": [\n    \"data\",\n    \"analytics\",\n    \"marketing\",\n    \"sales\",\n    \"crm\",\n    \"ecommerce\",\n    \"finance\",\n    \"google-ads\",\n    \"facebook-ads\",\n    \"hubspot\",\n    \"salesforce\",\n    \"shopify\",\n    \"stripe\",\n    \"business-intelligence\"\n  ],\n  \"license\": \"MIT\"\n}\n",
+    ".mcp.json": "{\n  \"windsor-ai\": {\n    \"type\": \"url\",\n    \"url\": \"https://mcp.windsor.ai\",\n    \"description\": \"Windsor.ai marketing data — query ad spend, campaigns, and analytics from 50+ sources\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/windsor-types.md": "\nname: windsor-types\ndescription: Generate TypeScript type definitions for a Windsor.ai connector's data schema\n",
+    "agents/business-data-analyst.md": "\nname: business-data-analyst\ndescription: Pull, transform, and integrate business data from Windsor.ai's 350+ connectors\nmodel: sonnet\n",
+    "commands/campaign-report.md": "\nname: campaign-report\ndescription: Generate a quick campaign performance report from any connected data source\n",
+    "skills/business-data/SKILL.md": "\ndisable-model-invocation: false\n",
+    "commands/windsor-sources.md": "\nname: windsor-sources\ndescription: Show all connected data sources and what data is available from each\n"
+  }
+}

@@ -142,12 +142,6 @@ func TestActivityTypedLabelsAndPaths(t *testing.T) {
 }
 
 func TestActivityLineCapsAndElapsedFormatting(t *testing.T) {
-	text := strings.Repeat("line\n", 30) + "last"
-	head, n := activityLines(text, false, 24)
-	tail, m := activityLines(text, true, 24)
-	if n != 7 || m != 7 || strings.Contains(head, "last") || !strings.HasSuffix(tail, "last") {
-		t.Fatal("head/tail cap mismatch")
-	}
 	for _, test := range []struct {
 		name string
 		ms   int64
@@ -164,7 +158,7 @@ func TestActivityLineCapsAndElapsedFormatting(t *testing.T) {
 }
 
 func TestThoughtFlattenUsesSourceRecordLayout(t *testing.T) {
-	lines, _ := thoughtLines("# Check **the panel**\n\n- Read `main.go`\n- Keep *focus*\n\n> Avoid a [new control](https://example.com).\n\n| File | Result |\n|---|---|\n| main.go | pass |", false)
+	lines := thoughtLines("# Check **the panel**\n\n- Read `main.go`\n- Keep *focus*\n\n> Avoid a [new control](https://example.com).\n\n| File | Result |\n|---|---|\n| main.go | pass |", false)
 	var text []string
 	bold, code, italic, link := false, false, false, false
 	for _, line := range lines {
@@ -189,7 +183,7 @@ func TestThoughtFlattenUsesSourceRecordLayout(t *testing.T) {
 		t.Fatal("markdown syntax leaked into record")
 	}
 	long := strings.Repeat("word ", 1000)
-	wrapped, _ := thoughtLines(long, false)
+	wrapped := thoughtLines(long, false)
 	for _, line := range wrapped {
 		if len([]rune(thoughtPlain(line))) > 96 {
 			t.Fatal("thought exceeds 96-column source budget")
@@ -199,9 +193,75 @@ func TestThoughtFlattenUsesSourceRecordLayout(t *testing.T) {
 	for i := 0; i < 31; i++ {
 		fmt.Fprintf(&log, "line %d  \n", i)
 	}
-	head, headCut := thoughtLines(log.String(), false)
-	tail, tailCut := thoughtLines(log.String(), true)
-	if len(head) != 24 || len(tail) != 24 || headCut != 7 || tailCut != 7 || thoughtPlain(head[0]) != "line 0" || thoughtPlain(tail[0]) != "line 7" || thoughtPlain(tail[len(tail)-1]) != "line 30" {
-		t.Fatalf("thought head/tail truncation: head=%v/%d tail=%v/%d", head, headCut, tail, tailCut)
+	for _, live := range []bool{false, true} {
+		lines := thoughtLines(log.String(), live)
+		if len(lines) != 31 || thoughtPlain(lines[0]) != "line 0" || thoughtPlain(lines[len(lines)-1]) != "line 30" {
+			t.Fatalf("thought lost content: live=%t lines=%v", live, lines)
+		}
 	}
+}
+
+func TestTranscriptEntriesJoinsLongTurnInOnePass(t *testing.T) {
+	messages := []contracts.Message{{ID: "user", Role: "user"}}
+	for i := 1; i < 190; i++ {
+		messages = append(messages, contracts.Message{
+			ID: fmt.Sprintf("m%d", i), TurnID: "turn", Role: "assistant",
+			Blocks: []contracts.Block{{ID: fmt.Sprintf("b%d", i), Kind: "tool"}, {ID: fmt.Sprintf("c%d", i), Kind: "reasoning"}},
+		})
+	}
+	joined := transcriptEntries(messages)
+	if len(joined) != 2 || len(joined[1].Blocks) != 2*(len(messages)-1) {
+		t.Fatalf("long turn joined into %d entries with %d blocks", len(joined), len(joined[1].Blocks))
+	}
+	// The turn owns one growing block slice: a join per message must not copy
+	// every block accumulated so far, or a long turn costs O(n²) each frame.
+	if allocs := testing.AllocsPerRun(5, func() { transcriptEntries(messages) }); allocs > 16 {
+		t.Fatalf("joining a long turn allocates %v times per call", allocs)
+	}
+}
+
+func TestTranscriptCacheReusesRowsUntilContentChanges(t *testing.T) {
+	cache := transcriptCache{}
+	messages := []contracts.Message{
+		{ID: "user", Role: "user", Blocks: []contracts.Block{{ID: "u", Kind: "text", Text: "hello"}}},
+		{ID: "reply", Role: "assistant", Blocks: []contracts.Block{{ID: "t", Kind: "tool"}, {ID: "answer", Kind: "text", Text: "done"}}},
+	}
+	entries := cache.entriesFor(7, "chat", messages, false)
+	if len(entries) != 2 {
+		t.Fatalf("entries = %d", len(entries))
+	}
+	rows := cache.rowsFor(entries[1], false)
+	if len(rows) != 2 {
+		t.Fatalf("rows = %d", len(rows))
+	}
+	// The same snapshot reuses both the entries and their rows.
+	if again := cache.entriesFor(7, "chat", messages, false); len(again) != 2 || !sameRows(cache.rowsFor(again[1], false), rows) {
+		t.Fatal("unchanged snapshot re-projected the conversation")
+	}
+	// A streamed delta clones the message it changes: that revision must show
+	// the new text, and must not reuse the old rows.
+	streamed := []contracts.Message{messages[0], {ID: "reply", Role: "assistant", Streaming: true, Blocks: []contracts.Block{{ID: "t", Kind: "tool"}, {ID: "answer", Kind: "text", Text: "done, and more"}}}}
+	entries = cache.entriesFor(8, "chat", streamed, false)
+	if changed := cache.rowsFor(entries[1], false); len(changed) != 2 || changed[1].Block.Text != "done, and more" {
+		t.Fatalf("changed message kept its old text: %+v", changed)
+	} else if changed[1].Block.Text == rows[1].Block.Text {
+		t.Fatal("changed message served the cached rows")
+	}
+	// Compact mode reshapes the rows.
+	entries = cache.entriesFor(8, "chat", streamed, true)
+	if rows := cache.rowsFor(entries[1], true); len(rows) != 2 || !rows[1].Compact {
+		t.Fatalf("compact projection did not reshape: %+v", rows)
+	}
+}
+
+func sameRows(a, b []transcriptRow) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].ID != b[i].ID || a[i].Compact != b[i].Compact {
+			return false
+		}
+	}
+	return true
 }

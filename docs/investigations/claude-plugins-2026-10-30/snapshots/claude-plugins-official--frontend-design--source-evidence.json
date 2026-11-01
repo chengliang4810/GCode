@@ -1,0 +1,19 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/frontend-design",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "skills/frontend-design/LICENSE.txt",
+    "skills/frontend-design/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"frontend-design\",\n  \"description\": \"Frontend design skill for UI/UX implementation\",\n  \"version\": \"1.1.1\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/frontend-design/SKILL.md": "\nname: frontend-design\ndescription: Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.\nlicense: Complete terms in LICENSE.txt\n"
+  }
+}

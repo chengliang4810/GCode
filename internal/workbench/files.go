@@ -12,9 +12,9 @@ import (
 
 func (s *State) codeFont() ui.Font {
 	a := s.snapshot.Settings.Appearance
-	size := float32(a.CodeFontSize) * 13 / 12.5
+	size := float32(a.CodeFontSize)
 	if size <= 0 {
-		size = 13
+		size = design.CodeFontSize
 	}
 	return ui.Font{Family: design.MonoFont(a.CodeFont), Size: size}
 }
@@ -50,4 +50,27 @@ func (s *State) filesIn(parent string) []contracts.File {
 		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 	return files
+}
+
+func (s *State) projectFilesStatus(c *ui.Context) {
+	for _, project := range s.snapshot.Projects {
+		if s.ProjectID != "" && project.ID != s.ProjectID {
+			continue
+		}
+		switch project.FilesState {
+		case contracts.LoadLoading:
+			ui.Text(c.Key("project-files-loading:"+project.ID), tr(c, "Loading project files…")).
+				Label(tr(c, "Loading project files…")).TextColor(s.palette().Muted).
+				Padding(8).FillWidth().FontSize(design.TextSize(c, design.TextBase))
+		case contracts.LoadError:
+			ui.Row(c.Key("project-files-error:" + project.ID)).FillWidth().Padding(8).Gap(4).Children(func() {
+				ui.Text(c, tr(c, "File loading incomplete")+": "+tr(c, project.FilesError)).
+					Label(tr(c, "File loading incomplete") + ": " + tr(c, project.FilesError)).
+					TextColor(s.palette().Muted).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase))
+				s.iconButton(c, "refresh", "Retry", func() {
+					s.command(contracts.Command{Kind: "project.files.refresh", ID: project.ID})
+				})
+			})
+		}
+	}
 }

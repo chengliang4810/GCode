@@ -3,13 +3,13 @@ package desktop
 import (
 	"context"
 	"errors"
+	"gcode/internal/assets"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/mock"
 	"github.com/egoist/mygo/ui"

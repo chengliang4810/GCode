@@ -1,5 +1,9 @@
 # Agent transcript data audit
 
+2026-10-30: Model favorites and their DTO field have been removed; the favorites
+checks below retain their historical audit scope. Current model-picker settings
+contain provider/model selections and option values.
+
 Reference: Zeron v0.2.128, `ab189159f10cf8e63c0502be75a59bbc487e0eaf`.
 Scope: typed contracts and deterministic in-process backend. Native rendering is
 verified separately; this audit cannot establish visual parity.
@@ -27,7 +31,7 @@ verified separately; this audit cannot establish visual parity.
 - [x] Include intermediate assistant prose and a separate final Markdown response.
 - [x] Include a dedicated transcript showcase and a deterministic live-tail playback scenario.
 - [x] Make new sends stream a task-specific activity sequence before their final text.
-- [x] Keep Plan mode free of write/command execution claims.
+- [x] Remove the obsolete Plan branch; sends use the same task execution path.
 - [x] Derive summary counts from actual typed activity, never fixture display labels.
 - [x] Count commands/reads/searches by actual unique tool identity.
 - [x] Deduplicate written/edited paths in the summary while retaining each operation.
@@ -85,7 +89,8 @@ transcript acceptance remains a separate check.
 The review package uses the explicit independent profile option: its launch
 entry must pass `--scenario default` or `--scenario transcript`, with no
 `--data-dir`. This uses fresh in-memory business data and separate framework
-state under `gcode-zeron-ui/acceptance/<scenario>`. Launching the bare executable
+state then under `gcode-zeron-ui/acceptance/<scenario>` (current scenario profiles
+use the isolated MyGo profile; normal startup uses `~/.gcode`). Launching the bare executable
 without arguments remains ordinary persistent mode; renaming it alone does not
 make a new profile.
 

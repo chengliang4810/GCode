@@ -1,0 +1,27 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/imessage",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    ".npmrc",
+    "ACCESS.md",
+    "LICENSE",
+    "README.md",
+    "bun.lock",
+    "package.json",
+    "server.ts",
+    "skills/access/SKILL.md",
+    "skills/configure/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"imessage\",\n  \"description\": \"iMessage channel for Claude Code \\u2014 reads chat.db directly, sends via AppleScript. Built-in access control; manage pairing, allowlists, and policy via /imessage:access.\",\n  \"version\": \"0.2.0\",\n  \"keywords\": [\n    \"imessage\",\n    \"messaging\",\n    \"channel\",\n    \"mcp\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"imessage\": {\n      \"command\": \"bun\",\n      \"args\": [\"run\", \"--cwd\", \"${CLAUDE_PLUGIN_ROOT}\", \"--shell=bun\", \"--silent\", \"start\"]\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/access/SKILL.md": "\nname: access\ndescription: Manage iMessage channel access — approve pairings, edit allowlists, set DM/group policy. Use when the user asks to pair, approve someone, check who's allowed, or change policy for the iMessage channel.\nuser-invocable: true\nallowed-tools:\n  - Read\n  - Write\n  - Bash(ls *)\n  - Bash(mkdir *)\n",
+    "skills/configure/SKILL.md": "\nname: configure\ndescription: Check iMessage channel setup and review access policy. Use when the user asks to configure iMessage, asks \"how do I set this up\" or \"who can reach me,\" or wants to know why texts aren't reaching the assistant.\nuser-invocable: true\nallowed-tools:\n  - Read\n  - Bash(ls *)\n"
+  }
+}

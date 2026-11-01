@@ -36,7 +36,7 @@ func TestComposerFooterNewCheckoutCreatesUniqueWorktreesFromHEAD(t *testing.T) {
 		created := false
 		for _, tree := range footerGitProject(t, after, project.ID).Worktrees {
 			if tree.ID == session.WorktreeID {
-				created = tree.Path == session.CWD && tree.Branch == session.Branch && tree.BaseRef == "HEAD" && strings.HasPrefix(tree.Branch, "zeron/")
+				created = tree.Path == session.CWD && tree.Branch == session.Branch && tree.BaseRef == "HEAD" && strings.HasPrefix(tree.Branch, "rcode/")
 			}
 		}
 		if !created || session.SourceContext == nil || session.SourceContext.CheckoutID != session.WorktreeID || session.SourceContext.RepoRoot != session.CWD {
@@ -102,7 +102,7 @@ func TestComposerFooterCloudCheckoutRequiresRepositoryAndOwnsHost(t *testing.T) 
 				}
 			}
 			if !test.cloudOrigin {
-				s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{ID: "reachable", Name: "zeronsh/fieldnotes", Authorized: true}}
+				s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{ID: "reachable", Name: "r-code/fieldnotes", Authorized: true}}
 			}
 			s.mu.Unlock()
 			before := footerGitSnapshot(t, s)
@@ -143,7 +143,7 @@ func TestComposerFooterCloudHostCopiesCapabilitiesWithoutAccountsOrPreferences(t
 	t.Parallel()
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	s.mu.Lock()
-	s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{Name: "zeronsh/fieldnotes", Authorized: true}}
+	s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{Name: "r-code/fieldnotes", Authorized: true}}
 	for i := range s.state.Integrations.Providers {
 		provider := &s.state.Integrations.Providers[i]
 		if provider.TargetID == "cloud-1" {
@@ -249,7 +249,7 @@ func TestComposerFooterStandardGithubAuthorizationReachesCanonicalProject(t *tes
 			footerGitExecute(t, s, contracts.Command{Kind: "cloud.authorize", Enabled: true, Integration: &contracts.IntegrationRequest{ProviderID: "github"}})
 			footerGitExecute(t, s, contracts.Command{Kind: "cloud.repositories.choose"})
 			selected := footerGitSnapshot(t, s)
-			for _, id := range []string{"fieldnotes", "zeron"} {
+			for _, id := range []string{"fieldnotes", "rcode"} {
 				want := footerGitProject(t, selected, id)
 				if want.CloudRepository == "" || !slices.ContainsFunc(selected.Integrations.Cloud.Repositories, func(repo contracts.CloudRepository) bool {
 					return repo.ID == want.ID && repo.Authorized && repo.Name == want.CloudRepository
@@ -306,11 +306,11 @@ func TestComposerFooterCloudRepositoryMatchesCanonicalName(t *testing.T) {
 		cloudOrigin      bool
 		allowed          bool
 	}{
-		{name: "canonical name ignores ASCII case", cloudState: "ready", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "ZeRoNsH/FiElDnOtEs", Authorized: true}, allowed: true},
-		{name: "canonical-looking ID cannot replace wrong name", cloudState: "ready", repository: contracts.CloudRepository{ID: "zeronsh/fieldnotes", Name: "other-owner/fieldnotes", Authorized: true}},
-		{name: "matching name still requires authorization", cloudState: "ready", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "zeronsh/fieldnotes"}},
-		{name: "Cloud off rejects stale authorized rows", cloudState: "off", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Authorized: true}},
-		{name: "Cloud provisioning rejects stale authorized rows", cloudState: "provisioning", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Authorized: true}},
+		{name: "canonical name ignores ASCII case", cloudState: "ready", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "R-CoDe/FiElDnOtEs", Authorized: true}, allowed: true},
+		{name: "canonical-looking ID cannot replace wrong name", cloudState: "ready", repository: contracts.CloudRepository{ID: "r-code/fieldnotes", Name: "other-owner/fieldnotes", Authorized: true}},
+		{name: "matching name still requires authorization", cloudState: "ready", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "r-code/fieldnotes"}},
+		{name: "Cloud off rejects stale authorized rows", cloudState: "off", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "r-code/fieldnotes", Authorized: true}},
+		{name: "Cloud provisioning rejects stale authorized rows", cloudState: "provisioning", repository: contracts.CloudRepository{ID: "fieldnotes", Name: "r-code/fieldnotes", Authorized: true}},
 		{name: "Cloud-origin project needs no local repository authorization", cloudState: "off", cloudOrigin: true, allowed: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -366,7 +366,7 @@ func TestComposerFooterCheckoutFailuresDoNotCreateConversations(t *testing.T) {
 		{name: "reuse wrong branch", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutReuse, Path: "~/worktrees/fieldnotes-workspace", Branch: "main", WorktreeID: "workspace-tree"}},
 		{name: "Cloud unreachable repository", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutCloud}},
 		{name: "Cloud unauthorized repository", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutCloud}, setup: func(s *Server) {
-			s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{Name: "zeronsh/fieldnotes", Authorized: false}}
+			s.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{Name: "r-code/fieldnotes", Authorized: false}}
 		}},
 		{name: "non Git new worktree", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutNew}, setup: func(s *Server) {
 			for i := range s.state.Projects {
@@ -400,7 +400,7 @@ func TestComposerFooterExistingSendLocksTargetButUpdatesRunConfiguration(t *test
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	before := footerGitSnapshot(t, s)
 	owned := footerGitSession(t, before, "chat-0")
-	request := contracts.SendRequest{SessionID: owned.ID, ProjectID: "zeron", DeviceID: "unknown-host", Branch: "wrong-ref", WorktreeID: "wrong-tree", Checkout: &contracts.CheckoutPlan{Kind: contracts.CheckoutNew}, Text: "Inspect existing checkout", ModelID: "gpt-5.4", ReasoningLevel: "Medium"}
+	request := contracts.SendRequest{SessionID: owned.ID, ProjectID: "rcode", DeviceID: "unknown-host", Branch: "wrong-ref", WorktreeID: "wrong-tree", Checkout: &contracts.CheckoutPlan{Kind: contracts.CheckoutNew}, Text: "Inspect existing checkout", ModelID: "gpt-5.4", ReasoningLevel: "Medium"}
 	if _, err := s.Send(context.Background(), request); err != nil {
 		t.Fatal(err)
 	}
@@ -580,48 +580,26 @@ func TestComposerFooterDraftSwitchFailureAndSingleFlight(t *testing.T) {
 
 func TestComposerFooterGitAsyncRejectsStaleGenerations(t *testing.T) {
 	t.Parallel()
-	for _, kind := range []string{"refs", "PR"} {
-		t.Run(kind, func(t *testing.T) {
-			t.Parallel()
-			s := newTestServer(t, Options{TokenInterval: 10 * time.Millisecond})
-			initial := footerGitSnapshot(t, s)
-			scope := footerGitScope(footerGitProject(t, initial, "fieldnotes"))
-			key := footerGitPRKey(t, footerGitSession(t, initial, "chat-0"))
-			// Hold the mutex across both generations, so the old timer cannot
-			// finish before the newer synchronous request is authoritative.
-			s.mu.Lock()
-			var err error
-			if kind == "refs" {
-				command := contracts.Command{Kind: "git.refs.load", Git: &contracts.GitRequest{Scope: scope, Force: true}}
-				err = s.loadOrSwitchRefsLocked(command)
-				s.opts.Instant = true
-				if err == nil {
-					err = s.loadOrSwitchRefsLocked(command)
-				}
-				s.opts.GitScenario = "refs-error"
-			} else {
-				err = s.refreshCheckoutPRLocked(key, true)
-				s.opts.Instant = true
-				if err == nil {
-					err = s.refreshCheckoutPRLocked(key, true)
-				}
-				s.opts.GitScenario = "pr-error"
-			}
-			s.mu.Unlock()
-			if err != nil {
-				t.Fatal(err)
-			}
-			fresh := footerGitSnapshot(t, s)
-			footerGitWaitJobs(t, s)
-			after := footerGitSnapshot(t, s)
-			if kind == "refs" {
-				if got := after.RepoRefs[scope.Key()]; got.State != contracts.LoadReady || got.Generation != 2 || !reflect.DeepEqual(got, fresh.RepoRefs[scope.Key()]) {
-					t.Fatalf("stale refs callback overwrote newer success: %+v", got)
-				}
-			} else if got := after.CheckoutPR[key.Key()]; got.State != contracts.LoadReady || got.Summary == nil || !reflect.DeepEqual(got, fresh.CheckoutPR[key.Key()]) {
-				t.Fatalf("stale PR callback overwrote newer success: %+v", got)
-			}
-		})
+	s := newTestServer(t, Options{TokenInterval: 10 * time.Millisecond})
+	scope := footerGitScope(footerGitProject(t, footerGitSnapshot(t, s), "fieldnotes"))
+	// Hold both generations so the old timer cannot finish before the fresh response.
+	s.mu.Lock()
+	command := contracts.Command{Kind: "git.refs.load", Git: &contracts.GitRequest{Scope: scope, Force: true}}
+	err := s.loadOrSwitchRefsLocked(command)
+	s.opts.Instant = true
+	if err == nil {
+		err = s.loadOrSwitchRefsLocked(command)
+	}
+	s.opts.GitScenario = "refs-error"
+	s.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fresh := footerGitSnapshot(t, s)
+	footerGitWaitJobs(t, s)
+	got := footerGitSnapshot(t, s).RepoRefs[scope.Key()]
+	if got.State != contracts.LoadReady || got.Generation != 2 || !reflect.DeepEqual(got, fresh.RepoRefs[scope.Key()]) {
+		t.Fatalf("stale refs callback overwrote newer success: %+v", got)
 	}
 }
 
@@ -679,140 +657,16 @@ func TestComposerFooterGitAsyncKeepsRepositoryScopesSeparate(t *testing.T) {
 	}
 }
 
-func TestComposerFooterPRRefreshRetainsErrorAndClearsSuccessfulNone(t *testing.T) {
-	t.Parallel()
-	s := newTestServer(t, Options{Instant: true})
-	initial := footerGitSnapshot(t, s)
-	session := footerGitSession(t, initial, "chat-0")
-	key := footerGitPRKey(t, session)
-	before := initial.CheckoutPR[key.Key()]
-	if before.Summary == nil {
-		t.Fatal("fixture needs a successful PR observation")
-	}
-	s.mu.Lock()
-	s.opts.GitScenario = "pr-error"
-	s.mu.Unlock()
-	footerGitExecute(t, s, contracts.Command{Kind: "git.pr.refresh", Git: &contracts.GitRequest{Source: &key, Force: true}})
-	failed := footerGitSnapshot(t, s)
-	got := failed.CheckoutPR[key.Key()]
-	if got.State != contracts.LoadError || got.Error == "" || !reflect.DeepEqual(got.Summary, before.Summary) || contracts.ChangeRequestForSession(session, failed.CheckoutPR) == nil {
-		t.Fatalf("error erased the same-source successful PR: %+v", got)
-	}
-	s.mu.Lock()
-	s.opts.GitScenario = ""
-	s.state.PullRequests = slices.DeleteFunc(s.state.PullRequests, func(pr contracts.PullRequest) bool {
-		return pr.Repository == "zeronsh/fieldnotes" && pr.HeadBranch == key.Branch
-	})
-	s.mu.Unlock()
-	footerGitExecute(t, s, contracts.Command{Kind: "git.pr.refresh", Git: &contracts.GitRequest{Source: &key, Force: true}})
-	after := footerGitSnapshot(t, s)
-	got = after.CheckoutPR[key.Key()]
-	if got.State != contracts.LoadReady || got.Error != "" || got.Summary != nil || contracts.ChangeRequestForSession(session, after.CheckoutPR) != nil {
-		t.Fatalf("successful no-match retained stale PR: %+v", got)
-	}
-}
-
-func TestComposerFooterPRRefreshNeverBorrowsAnotherSourceKey(t *testing.T) {
-	t.Parallel()
-	for _, test := range []struct {
-		name   string
-		change func(*contracts.Session)
-	}{
-		{name: "host", change: func(session *contracts.Session) { session.DeviceID = "macbook" }},
-		{name: "checkout", change: func(session *contracts.Session) { session.SourceContext.CheckoutID = "new-checkout" }},
-		{name: "repository root", change: func(session *contracts.Session) { session.SourceContext.RepoRoot = "/new-root" }},
-		{name: "branch", change: func(session *contracts.Session) { session.SourceContext.Branch = "other-branch" }},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			s := newTestServer(t, Options{Instant: true, GitScenario: "pr-error"})
-			before := footerGitSnapshot(t, s)
-			oldKey := footerGitPRKey(t, footerGitSession(t, before, "chat-0"))
-			s.mu.Lock()
-			test.change(&s.state.Sessions[s.sessionIndexLocked("chat-0")])
-			s.mu.Unlock()
-			session := footerGitSession(t, footerGitSnapshot(t, s), "chat-0")
-			key := footerGitPRKey(t, session)
-			footerGitExecute(t, s, contracts.Command{Kind: "git.pr.refresh", Git: &contracts.GitRequest{Source: &key, Force: true}})
-			after := footerGitSnapshot(t, s)
-			got := after.CheckoutPR[key.Key()]
-			if got.State != contracts.LoadError || got.Key != key || got.Summary != nil || contracts.ChangeRequestForSession(session, after.CheckoutPR) != nil {
-				t.Fatalf("new source borrowed a prior source's PR: %+v", got)
-			}
-			if !reflect.DeepEqual(after.CheckoutPR[oldKey.Key()], before.CheckoutPR[oldKey.Key()]) {
-				t.Fatal("refresh of another source modified the former successful snapshot")
-			}
-		})
-	}
-}
-
-func TestComposerFooterDeleteKeepsSharedPRUntilLastSourceOwner(t *testing.T) {
-	t.Parallel()
-	s := newTestServer(t, Options{Instant: true})
-	before := footerGitSnapshot(t, s)
-	original := footerGitSession(t, before, "chat-0")
-	key := footerGitPRKey(t, original)
-	s.mu.Lock()
-	shared := clone(original)
-	shared.ID = "same-checkout-owner"
-	s.state.Sessions = append(s.state.Sessions, shared)
-	s.state.Messages[shared.ID] = nil
-	s.mu.Unlock()
-	footerGitExecute(t, s, contracts.Command{Kind: "session.delete", ID: original.ID})
-	afterFirst := footerGitSnapshot(t, s)
-	if !reflect.DeepEqual(afterFirst.CheckoutPR[key.Key()], before.CheckoutPR[key.Key()]) || contracts.ChangeRequestForSession(shared, afterFirst.CheckoutPR) == nil {
-		t.Fatal("deleting one source owner erased another conversation's PR")
-	}
-	footerGitExecute(t, s, contracts.Command{Kind: "session.delete", ID: shared.ID})
-	afterLast := footerGitSnapshot(t, s)
-	if _, remains := afterLast.CheckoutPR[key.Key()]; remains {
-		t.Fatal("last source owner deletion retained its PR snapshot")
-	}
-	if err := s.Execute(context.Background(), contracts.Command{Kind: "git.pr.refresh", Git: &contracts.GitRequest{Source: &key, Force: true}}); err == nil {
-		t.Fatal("deleted source accepted another refresh")
-	}
-	if _, remains := footerGitSnapshot(t, s).CheckoutPR[key.Key()]; remains {
-		t.Fatal("refresh resurrected a deleted source")
-	}
-	for encoded, status := range before.CheckoutPR {
-		if encoded != key.Key() && !reflect.DeepEqual(afterLast.CheckoutPR[encoded], status) {
-			t.Fatal("source deletion changed an unrelated PR snapshot")
-		}
-	}
-}
-
-func TestComposerFooterDeletedSourceCannotBeRevivedByLatePRRefresh(t *testing.T) {
-	t.Parallel()
-	s := newTestServer(t, Options{TokenInterval: 10 * time.Millisecond})
-	initial := footerGitSnapshot(t, s)
-	key := footerGitPRKey(t, footerGitSession(t, initial, "chat-0"))
-	s.mu.Lock()
-	err := s.refreshCheckoutPRLocked(key, true)
-	deleteErr := s.applyLocked(contracts.Command{Kind: "session.delete", ID: "chat-0"})
-	_, remainedAfterDelete := s.state.CheckoutPR[key.Key()]
-	s.mu.Unlock()
-	if err != nil || deleteErr != nil {
-		t.Fatalf("refresh/delete = %v, %v", err, deleteErr)
-	}
-	if remainedAfterDelete {
-		t.Error("delete retained the final owner's pending PR resource")
-	}
-	footerGitWaitJobs(t, s)
-	if got, remains := footerGitSnapshot(t, s).CheckoutPR[key.Key()]; remains {
-		t.Fatalf("late refresh retained or revived a deleted source: %+v", got)
-	}
-}
-
 func TestComposerFooterLegacyGitMetadataMigrationRespectsFieldPresence(t *testing.T) {
 	t.Parallel()
 	base := newTestServer(t, Options{Instant: true})
 	legacy := footerGitSnapshot(t, base)
-	legacy.RepoRefs, legacy.CheckoutPR = nil, nil
+	legacy.RepoRefs = nil
 	for i := range legacy.Sessions {
 		legacy.Sessions[i].SourceContext = nil
 	}
 	for i := range legacy.Projects {
-		if legacy.Projects[i].ID == "zeron" {
+		if legacy.Projects[i].ID == "rcode" {
 			legacy.Projects[i].GitDetected = false
 		}
 	}
@@ -845,10 +699,10 @@ func TestComposerFooterLegacyGitMetadataMigrationRespectsFieldPresence(t *testin
 	restored := newTestServer(t, Options{StatePath: statePath})
 	after := footerGitSnapshot(t, restored)
 	known := footerGitProject(t, after, "fieldnotes")
-	if !known.GitDetected || known.CloudRepository != "zeronsh/fieldnotes" || known.DefaultBranch != "main" {
+	if !known.GitDetected || known.CloudRepository != "r-code/fieldnotes" || known.DefaultBranch != "main" {
 		t.Errorf("missing known mock Git metadata was not migrated: %+v", known)
 	}
-	if got := footerGitProject(t, after, "zeron"); got.GitDetected {
+	if got := footerGitProject(t, after, "rcode"); got.GitDetected {
 		t.Error("explicit false GitDetected was overwritten by seed metadata")
 	}
 	if got := footerGitProject(t, after, "user-project"); got.GitDetected || got.CloudRepository != "" || got.DefaultBranch != "" {
@@ -881,16 +735,13 @@ func TestComposerFooterGitSnapshotsAndSubscribersOwnNestedData(t *testing.T) {
 		resource.Rows[0].Name, resource.Scope.TargetID = "mutated", "mutated"
 		snapshot.RepoRefs[scope.Key()] = resource
 		session := footerGitSession(t, *snapshot, "chat-0")
-		key := footerGitPRKey(t, session)
-		snapshot.CheckoutPR[key.Key()].Summary.Title = "mutated"
 		session.SourceContext.Branch = "mutated"
-		delete(snapshot.CheckoutPR, key.Key())
 	}
 	copy := footerGitSnapshot(t, s)
 	mutate(&copy)
 	mutate(left.Snapshot)
 	if !reflect.DeepEqual(*right.Snapshot, before) || !reflect.DeepEqual(footerGitSnapshot(t, s), before) {
-		t.Fatal("refs rows, PR summary, maps, or conversation source escaped snapshot ownership")
+		t.Fatal("refs rows, maps, or conversation source escaped snapshot ownership")
 	}
 }
 
@@ -927,15 +778,6 @@ func footerGitProject(t *testing.T, snapshot contracts.Snapshot, id string) cont
 
 func footerGitScope(project contracts.Project) contracts.RepoRefScope {
 	return contracts.RepoRefScope{ProjectID: project.ID, TargetID: project.DeviceID, RepoPath: project.Path}
-}
-
-func footerGitPRKey(t *testing.T, session contracts.Session) contracts.CheckoutPRKey {
-	t.Helper()
-	key, ok := contracts.SessionCheckoutPRKey(session)
-	if !ok {
-		t.Fatalf("missing conversation source for %q", session.ID)
-	}
-	return key
 }
 
 func footerGitExecute(t *testing.T, s *Server, command contracts.Command) {

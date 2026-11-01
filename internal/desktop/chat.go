@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/linktarget"
 	"gcode/internal/workbench"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
@@ -11,22 +12,60 @@ import (
 	"unicode/utf8"
 )
 
+const composerStatusHeight = float32(24)
+
 func (a *App) chatView(c *ui.Context) {
-	if a.state.Settings.General.StopWithEscape {
+	composerFocused := a.composer.Focused(c)
+	for _, side := range a.sideComposers {
+		composerFocused = composerFocused || side.Input.Focused(c)
+	}
+	if a.state.Settings.General.StopWithEscape && !composerFocused {
 		c.OnShortcut(0, ui.KeyEscape, a.stopRun)
 	}
-	messages := transcriptEntries(a.state.Messages[a.sessionID])
+	messages := a.transcriptCache.entriesFor(a.state.Revision, a.sessionID, a.state.Messages[a.sessionID], a.state.Settings.General.CompactMode)
+	rows := a.transcriptCache.conversationFor(messages, a.state.Settings.General.CompactMode)
 	reserve, _ := a.infoVisibility()
-	root := ui.Column(c).Grow(1).FillHeight().AlignItems(ui.Stretch).Padding(0, reserve, 0, 0).Clip()
-	if len(messages) == 0 {
-		a.paintConversationBackground(c, root)
+
+	// The blank canvas is the route with no selected session. A send starts
+	// the handoff immediately (launchingNewSession) instead of waiting for
+	// the host to mint the session, so the composer answers the key at once.
+	docked := a.sessionID != "" || a.launchingNewSession
+	reduced := a.reduceMotion(c)
+	frame := a.composerDock.tick(c.Now(), docked, reduced)
+	if reduced {
+		// Without motion the pill switches modes in one frame: the handoff
+		// must not morph its height over the hidden clock.
+		a.composerHandoff = composerHandoff{}
+	} else if frame.Flipped && frame.Active && a.composerPillHeight > 0 {
+		a.composerHandoff = composerHandoff{
+			Amount: 1, Height: a.composerPillHeight,
+			Expanded: a.composerExpanded, Hero: !frame.Previous,
+		}
+	} else if a.composerHandoff.Amount > 0 {
+		if a.composerHandoff.Hero {
+			a.composerHandoff.Amount = 1 - frame.Amount
+		} else {
+			a.composerHandoff.Amount = frame.Amount
+		}
+		if !frame.Active {
+			a.composerHandoff.Amount = 0
+		}
 	}
-	root.Children(func() {
+	if frame.Active {
+		c.AnimationFrame()
+	}
+	a.composerFrame = frame
+
+	root := ui.Column(c).Bind(&a.conversationViewport).Grow(1).FillHeight().AlignItems(ui.Stretch).Padding(0, reserve, 0, 0).Clip()
+	a.paintConversationBackground(c, root, 1-frame.Dissolve)
+	a.transcriptListScope(c, root, &a.messages, a.sessionID, func() {
+		a.goalBanner(c, a.currentSession())
+		a.sessionStorageNotice(c, a.currentSession())
 		if a.expanded["conversation-find"] {
 			ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
 				ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)
-				matches := conversationMatches(messages, a.conversationQuery)
-				ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				matches := a.conversationMatches(&a.transcriptCache, messages, rows, a.conversationQuery)
+				ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				move := func(delta int) {
 					if len(matches) > 0 {
 						a.findIndex = (a.findIndex + delta + len(matches)) % len(matches)
@@ -38,154 +77,154 @@ func (a *App) chatView(c *ui.Context) {
 				iconButton(c, "close", tr(c, "Close find")).OnClick(func() { a.expanded["conversation-find"] = false })
 			})
 		}
-		if len(messages) == 0 {
-			ui.Spacer(c).Grow(1)
-			a.composerView(c, true)
-			ui.Spacer(c).Grow(1)
-		} else {
-			a.messages.Key = func(i int) any { return messages[i].ID }
-			a.messages.FollowEnd = true
-			if !a.reduceMotion(c) && a.state.Settings.Appearance.SmoothScrolling {
-				a.messages.FollowAnimation = &ui.Smooth
-			} else {
-				a.messages.FollowAnimation = nil
+		if docked {
+			transcript := ui.Column(c).Key("chat-transcript").Grow(1).FillWidth().MinHeight(0)
+			if frame.Transcript < .999 {
+				transcript.Opacity(frame.Transcript)
 			}
-			a.prepareTranscriptMarkdown(c)
-			ui.List(c, &a.messages, len(messages), func(i int) {
-				m := messages[i]
-				c.Key(m.ID)
-				ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
-					width := float32(a.state.Settings.Appearance.TranscriptWidth)
-					if width <= 0 {
-						width = 736
-					}
-					ui.Column(c).FillWidth().MaxWidth(width).Padding(0, 24).Children(func() {
-						a.message(c, m)
-						if i == len(messages)-1 {
-							a.workingTrailer(c, a.sessionID)
-						}
-					})
+			transcript.Children(func() {
+				if len(messages) == 0 {
+					ui.Spacer(c).Grow(1)
+					return
+				}
+				a.messages.Key = func(i int) any { return rows[i].Key }
+				a.messages.FollowEnd = true
+				a.prepareTranscriptMarkdown(c)
+				width := float32(a.state.Settings.Appearance.TranscriptWidth)
+				if width <= 0 {
+					width = 736
+				}
+				pane := transcriptPane{cache: &a.transcriptCache, scope: a.sessionID, session: a.sessionID}
+				a.transcriptScope(c, a.sessionID, func() {
+					ui.List(c, &a.messages, len(rows), func(i int) {
+						a.transcriptRowView(c, pane, messages, rows, i, transcriptRowLayout{width: width, padding: 24})
+					}).Grow(1).FillWidth().Gap(0).Padding(28, 0, 24, 0)
 				})
-			}).Grow(1).Gap(16).Padding(28, 0, 24, 0)
-			if !a.messages.AtEnd() {
-				ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
-					iconButton(c, "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
-				})
-			}
-			for _, queued := range a.state.Queue {
-				if queued.SessionID == a.sessionID {
-					q := queued
-					ui.Row(c).Padding(6, 24).Gap(10).AlignItems(ui.Center).Children(func() {
-						icon(c, "clock-circle", 14)
-						ui.Text(c, q.Text).Grow(1).SingleLine().TextColor(a.palette.Muted)
-						iconButton(c, "pen", tr(c, "Edit queued message")).OnClick(func() {
-							a.draft = q.Text
-							a.attachments = append([]contracts.Attachment(nil), q.Attachments...)
-							a.annotations = append([]contracts.Annotation(nil), q.Annotations...)
-							a.accessMode, a.plan = q.AccessMode, q.Plan
-							if q.ModelID != "" {
-								a.modelID = q.ModelID
-							}
-							if q.ReasoningLevel != "" {
-								a.reasoning = q.ReasoningLevel
-							}
-							if q.DeviceID != "" {
-								a.deviceID = q.DeviceID
-							}
-							if q.Branch != "" {
-								a.branch = q.Branch
-							}
-							if q.WorktreeID != "" {
-								a.checkout = "New worktree"
-							} else {
-								a.checkout = "Current checkout"
-							}
-							a.normalizeReasoning()
-							a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID})
-						})
-						iconButton(c, "close", tr(c, "Remove queued message")).OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
+				if !a.messages.AtEnd() {
+					ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
+						iconButton(c, "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
 					})
 				}
-			}
-			a.composerView(c, false)
+				a.queueRows(c, a.sessionID)
+			})
+		} else {
+			ui.Spacer(c).Grow(1)
 		}
-		ui.Row(c).Height(24).Padding(0, 24).Gap(6).AlignItems(ui.Center).Children(func() {
+		a.composerView(c, !docked)
+		if frame.Amount < .999 {
+			// The blank canvas centers the composer between the transcript
+			// area and an equal flexible band below it. The band collapses
+			// with the dock clock, so the block travels to the bottom in
+			// layout: hit testing, carets and overlays follow it exactly, and
+			// a content-height change in the same frame cannot make it lag.
+			ui.Spacer(c).Grow(1 - frame.Amount).MinHeight(0)
+		}
+		ui.Row(c).Height(composerStatusHeight).Padding(0, 24).Gap(6).AlignItems(ui.Center).Children(func() {
 			session := a.currentSession()
 			if session.Status == contracts.Errored {
-				ui.Text(c, tr(c, "Run failed")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Danger)
+				ui.Text(c, tr(c, "Run failed")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
 			}
 		})
 	})
 }
 
-func (a *App) message(c *ui.Context, m contracts.Message) {
-	if m.Role == "user" {
-		bubble := ui.Hex("#000000").Alpha(.04)
-		if a.palette.Dark {
-			bubble = ui.Hex("#ffffff").Alpha(.08)
+// userMessage renders a user message's bubble: its blocks, attachments and
+// annotations. The bubble shares the transcript's selection scope rather than
+// opening its own, so a selection crosses its blocks the way the list's rows
+// do.
+func (a *App) userMessage(c *ui.Context, m contracts.Message) {
+	bubble := ui.Hex("#000000").Alpha(.04)
+	if a.palette.Dark {
+		bubble = ui.Hex("#ffffff").Alpha(.08)
+	}
+	ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+		maxWidth := min(float32(a.state.Settings.Appearance.TranscriptWidth), a.chatWidth) * .8
+		if maxWidth <= 0 {
+			maxWidth = 590
 		}
-		ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
-			maxWidth := min(float32(a.state.Settings.Appearance.TranscriptWidth), a.chatWidth) * .8
-			if maxWidth <= 0 {
-				maxWidth = 590
-			}
-			ui.Column(c).MaxWidth(maxWidth).Padding(10, 16).Radius(16).Background(bubble).Gap(8).Children(func() {
-				for _, b := range m.Blocks {
-					c.Key(b.ID)
-					if b.Text != "" {
-						foldable := strings.Count(b.Text, "\n") >= 5 || utf8.RuneCountInString(b.Text) > 400
-						expanded := a.expanded["user:"+m.ID]
-						body := ui.Column(c).Clip()
-						if foldable && !expanded {
-							body.MaxHeight(110)
-						}
-						body.Children(func() { markdown.View(c, b.Text, &a.userMD) })
-						if foldable {
-							name, label := "alt-arrow-down", "Expand message"
-							if expanded {
-								name, label = "alt-arrow-up", "Collapse message"
-							}
-							iconButton(c, name, tr(c, label)).Size(20, 16).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
-						}
+		root := ui.Column(c).MaxWidth(maxWidth).Padding(10, 16).Radius(16).Background(bubble).Gap(8)
+		root.Children(func() {
+			for _, b := range m.Blocks {
+				c.Key(b.ID)
+				if b.Text != "" {
+					foldable := strings.Count(b.Text, "\n") >= 5 || utf8.RuneCountInString(b.Text) > 400
+					expanded := a.expanded["user:"+m.ID]
+					body := ui.Column(c).Clip()
+					if foldable && !expanded {
+						body.MaxHeight(110)
 					}
-					if b.Attachment != nil {
-						if strings.HasPrefix(b.Attachment.MIME, "image/") {
-							a.imageAttachment(c, *b.Attachment)
-						} else {
-							a.attachmentChip(c, *b.Attachment, false)
+					body.Children(func() { markdown.View(c, linktarget.NormalizeMarkdown(b.Text), a.transcriptOptions(m.SessionID, true)) })
+					if foldable {
+						name, label := "alt-arrow-down", "Expand message"
+						if expanded {
+							name, label = "alt-arrow-up", "Collapse message"
 						}
-					}
-					if b.Annotation != nil {
-						item := *b.Annotation
-						textButton(c, a.annotationLabel(item.Index)).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
+						iconButton(c, name, tr(c, label)).Size(20, 16).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
 					}
 				}
-			})
+				if b.Attachment != nil {
+					if strings.HasPrefix(b.Attachment.MIME, "image/") {
+						a.imageAttachment(c, *b.Attachment)
+					} else {
+						a.attachmentChip(c, *b.Attachment, false)
+					}
+				}
+				if b.Annotation != nil {
+					item := *b.Annotation
+					textButton(c, a.annotationLabel(item.Index)).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
+				}
+			}
 		})
-		return
-	}
-	a.assistantTranscript(c, m)
+	})
 }
 
-func (a *App) composerView(c *ui.Context, home bool) {
+func (a *App) composerView(c *ui.Context, hero bool) {
 	width := float32(a.state.Settings.Appearance.TranscriptWidth)
 	if width <= 0 {
 		width = 736
 	}
 	reserve, _ := a.infoVisibility()
-	outerWidth := composerOuterWidth(a.chatWidth-reserve, width, home)
+	frame := a.composerFrame
+	heroWidth := composerOuterWidth(a.chatWidth-reserve, width, true)
+	threadWidth := composerOuterWidth(a.chatWidth-reserve, width, false)
+	outerWidth := threadWidth + (heroWidth-threadWidth)*frame.Amount
 	ui.Row(c).Key("main-composer").FillWidth().Justify(ui.Center).Children(func() {
-		ui.Column(c).FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16).Gap(8).Children(func() {
-			if home {
-				ui.Row(c).FillWidth().Height(20).Padding(0, 10).Justify(ui.End).Gap(8).Children(func() { a.projectPicker(c); a.devicePicker(c) })
+		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
+		block.Children(func() {
+			if selectors := frame.Selectors; selectors > .001 {
+				// The blank canvas's target selectors leave before the pill
+				// travels; keeping them in one clipped container lets their
+				// height collapse with their opacity instead of jumping.
+				ui.Column(c).Key("composer-selectors").FillWidth().Height(20*selectors).Margin(0, 0, 8*selectors, 0).Clip().Children(func() {
+					ui.Row(c).FillWidth().Height(20).Padding(0, 10).Justify(ui.End).Gap(8).Opacity(selectors).Children(func() {
+						a.projectPicker(c)
+						a.devicePicker(c)
+					})
+				})
+			}
+			running := a.currentSession().Status == contracts.Working
+			canSend := !a.pendingNew && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations))
+			// The reference's SendButtonMode: Stop only with an empty
+			// composer; typing during a run sends by the setting.
+			mode := composerSend
+			switch {
+			case running && !canSend:
+				mode = composerStop
+			case running && a.activeTurnSend() == "queue":
+				mode = composerQueue
+			case running:
+				mode = composerSteer
 			}
 			a.nativeComposerSurface(c, composerSurfaceProps{
 				draft: &a.draft, input: &a.composer, surface: &a.composerSurface, controls: a.centralControls(),
 				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: "Stop response",
-				running:   a.currentSession().Status == contracts.Working,
-				canSend:   !a.pendingNew && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations)),
-				hero:      home,
-				widthHint: max(0, outerWidth-32),
+				steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
+				running:        running,
+				stopWithEscape: a.state.Settings.General.StopWithEscape,
+				canSend:        canSend,
+				hero:           hero,
+				handoff:        a.composerHandoff,
+				widthHint:      max(0, outerWidth-32),
 				renderStaged: func() {
 					if len(a.attachments) > 0 || len(a.annotations) > 0 {
 						ui.Row(c).Wrap().Padding(12, 16, 0, 16).Gap(6).Children(func() {
@@ -201,11 +240,11 @@ func (a *App) composerView(c *ui.Context, home bool) {
 				onFilesDrop: func(paths []string) { a.importAttachments(contracts.AttachmentImportRequest{Paths: paths}) },
 				onMention:   func(file workbench.FileDrag) { a.draft += " @" + file.Path },
 			})
-			ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
+			ui.Box(c).Height(8).Shrink(0)
+			ui.Row(c).Key("composer-footer").FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 				ui.Row(c).Grow(1).MinWidth(0).AlignItems(ui.Center).Children(func() { a.composerFooterGit(c) })
-				if !home {
-					a.composerFooterPRBadge(c)
-					ui.Row(c).Shrink(0).Padding(0, 10, 0, 4).Children(func() { a.composerUsage(c, a.currentSession(), &a.footerUsage, false) })
+				if footer := frame.Footer; footer > .001 {
+					ui.Row(c).Shrink(0).Padding(0, 10, 0, 4).Opacity(footer).Children(func() { a.composerUsage(c, a.currentSession(), &a.footerUsage, false) })
 				}
 			})
 		})
@@ -214,7 +253,7 @@ func (a *App) composerView(c *ui.Context, home bool) {
 func (a *App) projectPicker(c *ui.Context) {
 	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select project")).Children(func() {
 		icon(c, "folder", 12)
-		ui.Text(c, a.projectLabel()).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+		ui.Text(c, a.projectLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)
 	})
 	b.OnClick(func() { a.projectMenu = !a.projectMenu })
@@ -224,7 +263,7 @@ func (a *App) devicePicker(c *ui.Context) {
 	a.reconcileComposerCloudDevice()
 	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select device")).Children(func() {
 		icon(c, "monitor", 12)
-		ui.Text(c, a.deviceLabel()).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+		ui.Text(c, a.deviceLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)
 	})
 	b.OnClick(func() { a.deviceMenu = !a.deviceMenu })
@@ -249,7 +288,7 @@ func (a *App) attachmentChip(c *ui.Context, item contracts.Attachment, removable
 		} else {
 			icon(c, "document", 14)
 		}
-		ui.Text(c, item.Name).FontSize(design.UISize(c, 11)).SingleLine()
+		ui.Text(c, item.Name).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
 		if item.Status == "uploading" || item.Status == "transferring" {
 			ui.Spinner(c).Size(12, 12)
 		}

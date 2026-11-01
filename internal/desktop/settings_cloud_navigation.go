@@ -125,7 +125,7 @@ func cloudSettingsRequest(ctx context.Context, service contracts.Service, comman
 
 func (a *App) cloudSettingsError(c *ui.Context, message, kind string) {
 	ui.Row(c).FillWidth().Padding(12, 16).Gap(10).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, tr(c, message)).Grow(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger)
+		ui.Text(c, tr(c, message)).Grow(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
 		textButton(c, tr(c, "Retry")).Disabled(a.cloudPage.busy != "").OnClick(func() { a.runCloudSettingsCommand(kind) })
 	})
 }

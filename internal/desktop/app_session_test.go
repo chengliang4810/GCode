@@ -78,32 +78,19 @@ func TestSnapshotSelectionReconciliationUsesAcceptedState(t *testing.T) {
 	}
 }
 
-func TestDeletedSelectionPreservesSettingsAndPullRequests(t *testing.T) {
-	for _, route := range []string{"settings/Appearance", "pull-requests"} {
-		t.Run(route, func(t *testing.T) {
-			a := testApp(t, "default")
-			a.selectSession("chat-0")
-			a.OpenRoute(route)
-			tt := ui.NewTester(a.View, 1320, 880)
-			beforeRoute, beforeKind := a.route, a.workspace.ActiveKind()
-			a.dispatch(contracts.Command{Kind: "session.delete", ID: "chat-0"})
-			tt.Frame()
-			if a.sessionID != "" || a.route != beforeRoute {
-				t.Fatalf("deletion changed page or retained missing selection: id=%q route=%q", a.sessionID, a.route)
-			}
-			if route == "pull-requests" {
-				if a.workspace.ActiveKind() != beforeKind || !tt.HasText("Search pull requests") {
-					t.Fatal("clearing chat selection replaced the active pull-request surface")
-				}
-				a.OpenRoute("chat")
-				tt.Frame()
-				if _, ok := tt.Find("Message"); !ok {
-					t.Fatal("returning from pull requests did not restore the canvas")
-				}
-			} else if a.section != "Appearance" || !tt.HasText("Appearance") {
-				t.Fatal("clearing chat selection lost the settings section")
-			}
-		})
+func TestDeletedSelectionPreservesSettings(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	a.OpenRoute("settings/Appearance")
+	tt := ui.NewTester(a.View, 1320, 880)
+	beforeRoute := a.route
+	a.dispatch(contracts.Command{Kind: "session.delete", ID: "chat-0"})
+	tt.Frame()
+	if a.sessionID != "" || a.route != beforeRoute {
+		t.Fatalf("deletion changed page or retained missing selection: id=%q route=%q", a.sessionID, a.route)
+	}
+	if a.section != "Appearance" || !tt.HasText("Appearance") {
+		t.Fatal("clearing chat selection lost the settings section")
 	}
 }
 
@@ -209,7 +196,7 @@ func TestNewConversationRejectsOldCanvasSendFailure(t *testing.T) {
 }
 
 func TestPendingCreationDoesNotAdoptSideChatOrNavigate(t *testing.T) {
-	for _, route := range []string{"chat", "settings/Appearance", "pull-requests", "chat/chat-0"} {
+	for _, route := range []string{"chat", "settings/Appearance", "chat/chat-0"} {
 		t.Run(route, func(t *testing.T) {
 			a := testApp(t, "default")
 			a.pendingNew = true
@@ -247,7 +234,7 @@ func queueCanvasSend(t *testing.T, a *App) contracts.Command {
 }
 
 func TestCreatedSessionAckSurvivesCoalescingAndNavigation(t *testing.T) {
-	for _, route := range []string{"chat", "settings/Appearance", "pull-requests", "chat/chat-0"} {
+	for _, route := range []string{"chat", "settings/Appearance", "chat/chat-0"} {
 		for _, completionFirst := range []bool{true, false} {
 			t.Run(route+map[bool]string{true: "/completion first", false: "/event first"}[completionFirst], func(t *testing.T) {
 				a := testApp(t, "default")
@@ -297,11 +284,11 @@ func TestHistoricalRequestIdentityCannotAdoptOldRun(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "historical-run", SessionID: "chat-0", RequestID: "primary::1"})
 	command := queueCanvasSend(t, a)
-	if command.Send.RequestID != "primary::1" {
-		t.Fatal("fixture must exercise a persisted request-ID collision")
+	if command.Send.RequestID == "primary::1" {
+		t.Fatal("a fresh request reused a historical desktop request ID")
 	}
 	a.apply(a.state)
-	a.applyEvent(contracts.Event{Kind: "run.started", RunID: "historical-run", SessionID: "chat-0", RequestID: command.Send.RequestID})
+	a.applyEvent(contracts.Event{Kind: "run.started", RunID: "historical-run", SessionID: "chat-0", RequestID: "primary::1"})
 	if a.sessionID != "" || !a.pendingNew {
 		t.Fatal("a historical run/ACK was adopted by a new app's first send")
 	}
@@ -319,13 +306,13 @@ func TestHistoricalRequestIdentityCannotAdoptOldRun(t *testing.T) {
 	}
 }
 
-func TestPRDeletionThenSurfaceRouteUsesCanvasProject(t *testing.T) {
+func TestDeletionThenSurfaceRouteUsesCanvasProject(t *testing.T) {
 	for _, route := range []string{"files", "history"} {
 		t.Run(route, func(t *testing.T) {
 			a := testApp(t, "default")
 			a.projectID, a.deviceID = "backend", "remote"
 			a.selectSession("chat-0")
-			a.OpenRoute("pull-requests")
+			a.OpenRoute("history")
 			a.dispatch(contracts.Command{Kind: "session.delete", ID: "chat-0"})
 			a.OpenRoute(route)
 			if a.chatWorkspacePending || a.workspace.ProjectID != "backend" || a.route != "chat" {

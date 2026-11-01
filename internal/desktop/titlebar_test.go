@@ -3,12 +3,15 @@ package desktop
 import (
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"math"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 
+	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -99,7 +102,7 @@ func TestTitlebarSlotsKeepVisibleControlsReachable(t *testing.T) {
 							if err := tt.Click("New surface"); err != nil {
 								t.Fatal(err)
 							}
-							if !reflect.DeepEqual(tt.Menu(), []string{"Files", "Browser", "Terminal", "Diffs", "History"}) {
+							if !reflect.DeepEqual(tt.Menu(), []string{"Side chat", "Files", "Browser", "Terminal", "Diffs", "History"}) {
 								t.Fatalf("New surface center was not reachable: %v", tt.Menu())
 							}
 							tt.CloseMenu()
@@ -150,6 +153,132 @@ func TestTitlebarTakeoverRemovesAndRestoresSessionChrome(t *testing.T) {
 	titlebarRect(t, tt, "Session information")
 }
 
+// The window hides its native caption buttons on Windows, so the title bar
+// draws them from the shared icon buttons: same 28px target, same 4px rhythm
+// and the same center line as the Files and pane toggles beside them.
+func TestTitlebarCaptionControlsMatchAdjacentIconSlots(t *testing.T) {
+	if !HideNativeWindowButtons {
+		t.Skip("the title bar draws caption controls only where the window hides its native ones")
+	}
+	a := testApp(t, "default")
+	a.selectSession(a.state.Sessions[0].ID)
+	a.sidebar, a.right, a.files, a.rightExpanded = true, true, true, false
+	a.captionButtons = true
+	tt := ui.NewTester(a.View, 1320, 880)
+	tt.SetTitleBar(ui.TitleBar{})
+
+	const width, target, topPad, height = float32(1320), float32(28), float32(4), float32(38)
+	center := (height + topPad) / 2
+	files := titlebarRect(t, tt, "Files")
+	pane := titlebarRect(t, tt, "Toggle right pane")
+	minimize := titlebarRect(t, tt, "Minimize window")
+	maximize := titlebarRect(t, tt, "Maximize window")
+	closeButton := titlebarRect(t, tt, "Close window")
+	for label, r := range map[string]ui.Rect{
+		"Minimize window": minimize,
+		"Maximize window": maximize,
+		"Close window":    closeButton,
+	} {
+		if r.W != target || r.H != target {
+			t.Fatalf("%q = %+v, want the shared %gpx caption target", label, r, target)
+		}
+		if !titlebarNear(r.Y+r.H/2, center) {
+			t.Fatalf("%q = %+v, want the %gpx trailing-control center line", label, r, center)
+		}
+		if r.Y != files.Y || r.H != files.H {
+			t.Fatalf("%q = %+v, adjacent Files control = %+v", label, r, files)
+		}
+	}
+	if !titlebarNear(maximize.X-(minimize.X+minimize.W), titlebarControlGap) ||
+		!titlebarNear(closeButton.X-(maximize.X+maximize.W), titlebarControlGap) ||
+		!titlebarNear(minimize.X-(pane.X+pane.W), titlebarControlGap) {
+		t.Fatalf("caption rhythm: minimize=%+v maximize=%+v close=%+v pane=%+v", minimize, maximize, closeButton, pane)
+	}
+	if !titlebarNear(closeButton.X+closeButton.W, width-titlebarEdgeInset) {
+		t.Fatalf("close = %+v, want the %gpx edge inset", closeButton, titlebarEdgeInset)
+	}
+	if tabs, ok := tt.Find("Workspace tabs"); ok && tabs.X+tabs.W > minimize.X {
+		t.Fatalf("tabs crossed the caption cluster: tabs=%+v minimize=%+v", tabs, minimize)
+	}
+	captureTitlebarImage(t, "caption-controls", tt)
+
+	// The shared close variant paints the system red under the pointer; the
+	// other caption buttons keep the titlebar's neutral hover.
+	sample := func(x, y float32) (uint8, uint8, uint8) {
+		r, g, b, _ := tt.Image().At(int(x), int(y)).RGBA()
+		return uint8(r >> 8), uint8(g >> 8), uint8(b >> 8)
+	}
+	tt.Move(closeButton.X+closeButton.W/2, closeButton.Y+closeButton.H/2)
+	tt.Frame()
+	if r, g, b := sample(closeButton.X+3, closeButton.Y+closeButton.H/2); !titlebarNear(float32(r), 0xE8) || !titlebarNear(float32(g), 0x11) || !titlebarNear(float32(b), 0x23) {
+		t.Fatalf("close hover = #%02X%02X%02X, want the system close red", r, g, b)
+	}
+	tt.Move(minimize.X+minimize.W/2, minimize.Y+minimize.H/2)
+	tt.Frame()
+	if r, g, b := sample(minimize.X+3, minimize.Y+minimize.H/2); r > 0xE0 && g < 0x40 && b < 0x60 {
+		t.Fatalf("minimize hover = #%02X%02X%02X, want the neutral titlebar hover", r, g, b)
+	}
+
+	a.navigate("settings/Appearance")
+	tt.Frame()
+	for _, label := range []string{"Minimize window", "Maximize window", "Close window"} {
+		if _, ok := tt.Find(label); !ok {
+			t.Fatalf("Settings lost the window caption control %q", label)
+		}
+	}
+
+	// The glyphs follow the theme's text color in both appearances.
+	for _, mode := range []string{"light", "dark"} {
+		a.state.Settings.Appearance.Mode = mode
+		a.navigate("chat")
+		tt.Frame()
+		for _, label := range []string{"Minimize window", "Maximize window", "Close window"} {
+			titlebarRect(t, tt, label)
+		}
+	}
+}
+
+// A full-screen window shows no caption controls, and a platform that keeps
+// its own controls leaves the drawing to the platform.
+func TestTitlebarCaptionControlsFollowWindowState(t *testing.T) {
+	for _, test := range []struct {
+		hidesNative, fullscreen bool
+		nativeRight             float32
+		want                    bool
+	}{
+		{true, false, 0, true},
+		{true, true, 0, false},
+		{false, false, 0, false},
+		{false, true, 0, false},
+		{true, false, 108, false},
+	} {
+		if got := captionButtonsDrawn(test.hidesNative, test.fullscreen, test.nativeRight); got != test.want {
+			t.Fatalf("drawn(hidesNative=%v fullscreen=%v nativeRight=%g) = %v, want %v", test.hidesNative, test.fullscreen, test.nativeRight, got, test.want)
+		}
+	}
+	for _, test := range []struct {
+		maximized bool
+		want      string
+	}{
+		{false, "caption-maximize"},
+		{true, "caption-restore"},
+	} {
+		if got := captionMaximizeGlyph(test.maximized); got != test.want {
+			t.Fatalf("maximized=%v glyph = %q, want %q", test.maximized, got, test.want)
+		}
+	}
+	// The cluster reserves exactly what it draws: three targets, two gaps and
+	// the separation from the adjacent Files toggle.
+	controls := design.Controls()
+	targets := controls.IconButtonSize*3 + titlebarControlGap*2
+	if titlebarCaptionWidth() != targets {
+		t.Fatalf("caption width = %g, want %g", titlebarCaptionWidth(), targets)
+	}
+	if titlebarCaptionWidth()+titlebarControlGap+titlebarEdgeInset <= targets {
+		t.Fatal("caption clearance must cover the cluster plus its edge insets")
+	}
+}
+
 func TestTitlebarLongTitleAndLargeFontStayWithinSlots(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession(a.state.Sessions[0].ID)
@@ -197,6 +326,7 @@ func TestTitlebarSettingsAfterTakeoverKeepsItsOwnChrome(t *testing.T) {
 	if !a.sidebar || !a.fit.Sidebar {
 		t.Fatal("Settings sidebar button was not reachable")
 	}
+	tt.Advance(250 * time.Millisecond)
 	titlebarRect(t, tt, "Search settings")
 }
 
@@ -397,9 +527,28 @@ func titlebarGeometry(t *testing.T, tt *ui.Tester, rightEdge float32) map[string
 
 func titlebarNear(a, b float32) bool { return math.Abs(float64(a-b)) < .02 }
 
+func captureTitlebarImage(t *testing.T, name string, tt *ui.Tester) {
+	t.Helper()
+	dir := os.Getenv("RCODE_TITLEBAR_AUDIT_DIR")
+	if dir == "" {
+		return
+	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	file, err := os.Create(filepath.Join(dir, name+".png"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	if err := png.Encode(file, tt.Image()); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func captureTitlebarGeometry(t *testing.T, name string, geometry map[string]ui.Rect) {
 	t.Helper()
-	dir := os.Getenv("ZERON_TITLEBAR_AUDIT_DIR")
+	dir := os.Getenv("RCODE_TITLEBAR_AUDIT_DIR")
 	if dir == "" {
 		return
 	}

@@ -1,0 +1,28 @@
+{
+  "repo": "AikidoSec/aikido-claude-plugin",
+  "commit": "8fdc995a44102a30ad54164e0bdd249d158c725c",
+  "path": ".",
+  "archive_sha256": "64ff3de413cf4a4d881cd69668496ec84961ab4fe99995bbebb228ab1c62e499",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/issues/SKILL.md",
+    "skills/pr-comments/SKILL.md",
+    "skills/pr-comments/reference.md",
+    "skills/scan/SKILL.md",
+    "skills/scan/reference.md",
+    "skills/setup/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"aikido\",\n  \"version\": \"1.2.11\",\n  \"description\": \"Aikido Security for Claude Code: scan code (SAST, secrets, IaC) and list all issues from your Aikido feed powered by the Aikido MCP server.\",\n  \"author\": {\n    \"name\": \"Aikido Security\",\n    \"url\": \"https://aikido.dev\"\n  },\n  \"homepage\": \"https://help.aikido.dev/ide-plugins/aikido-mcp\",\n  \"repository\": \"https://github.com/AikidoSec/aikido-claude-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"aikido\",\n    \"security\",\n    \"sast\",\n    \"secrets\",\n    \"iac\",\n    \"sca\",\n    \"scanning\",\n    \"vulnerability\"\n  ],\n  \"mcpServers\": \"./.mcp.json\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"aikido-mcp\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@aikidosec/mcp@1.0.28\"]\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/scan/SKILL.md": "\nname: scan\ndescription: Runs an Aikido security scan on generated, added, or modified code files to detect SAST vulnerabilities and exposed secrets. Use when the user wants to scan code for security issues, after writing or modifying code, or when they mention Aikido, security scan, or SAST. Always run an Aikido scan after generating code to verify the generated code is free of security issues.\n",
+    "skills/pr-comments/SKILL.md": "\nname: pr-comments\ndescription: Fetches comments already posted on a GitHub/GitLab/Azure DevOps pull or merge request (e.g. CI bot results, review feedback, Aikido's own scan-result comment). Use when the user asks what CI/CD said, wants to read/check/summarize PR or MR comments, mentions \"pipeline comments\", or asks about \"Aikido comments\"/\"Aikido feedback\"/what Aikido said or found on a PR — this reads via the native SCM CLI (gh/glab/az), not the Aikido MCP server.\n",
+    "skills/setup/SKILL.md": "\nname: setup\ndescription: Configures the Aikido plugin by signing the user in through the MCP login tool and verifying the MCP server. Use when the user wants to set up or verify the Aikido plugin, after installing it, when aikido mcp tool call fails or is unavailable, or when the user wants to switch Aikido accounts or re-authenticate.\n",
+    "skills/issues/SKILL.md": "\nname: aikido-issues\ndescription: List, count, summarize, or triage security issues from the Aikido security feed. Use when the user asks about Aikido findings, vulnerabilities, leaked secrets, SAST/IaC/SCA results, cloud or container security issues, or EOL/license/malware alerts surfaced by Aikido.\n"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "repo": "SAP/ui-theme-designer-plugins-for-coding-agents",
+  "commit": "3eff5832700d85e550b28a3ae58c1763382e405a",
+  "path": "plugins/ui-theme-designer",
+  "archive_sha256": "42531aca2a8d39e7f566344485e37eb871a27e53b39aa72b8b3f86e652c393dc",
+  "all_plugin_files": [
+    ".github/plugin/plugin.json",
+    "README.md",
+    "plugin.json",
+    "skills/ui-theme-designer-design-tokens/.npmrc",
+    "skills/ui-theme-designer-design-tokens/SKILL.md",
+    "skills/ui-theme-designer-design-tokens/package-lock.json",
+    "skills/ui-theme-designer-design-tokens/package.json",
+    "skills/ui-theme-designer-help/SKILL.md"
+  ],
+  "config": {},
+  "markdown_frontmatter": {
+    "skills/ui-theme-designer-design-tokens/SKILL.md": "\nname: ui-theme-designer-design-tokens\ndescription: \"TRIGGER: questions about the SAP Design System and SAP Fiori design tokens — which themes exist, what value a theme parameter (e.g. sapButton_Background, sapHighlightColor) has in a given theme, how parameters inherit/extend across the theme chain, which parameters a specific UI component (UI5 control, UI5 Web Component, Fundamental Styles component) consumes. SKIP: how-to questions about UI theme designer as a product (creating, publishing, transporting themes — use ui-theme-designer-help).\"\nallowed-tools: Bash(npm ci) Read Glob Grep WebFetch\n",
+    "skills/ui-theme-designer-help/SKILL.md": "\nname: ui-theme-designer-help\ndescription: \"Provides customer-facing UI theme designer help from help.sap.com (BTP / Cloud Foundry edition). Use whenever you need to check what is — or is not — documented for customers about UI theme designer: setup, user/role management, themes and theme sets (creating, editing, publishing, transporting, fallback), quick/detailed/expert theming, writing themeable CSS for custom UI5 controls, best practices for custom control theme files, theming integrations with Build Work Zone / S/4HANA / SAPUI5 / SAP GUI, UI theme designer service constraints (rate limits, size limits, theming-specific security and permissions, accessibility), theming error messages and troubleshooting, what's-new. Also use for 'is X documented?' or 'what does the help say about Y?' questions. SKIP: questions about which themes or parameters exist or what values they have (use ui-theme-designer-design-tokens). SKIP: tenant-specific operational questions about a running system (\\\"which themes do we have?\\\", \\\"which users are assigned?\\\").\"\nallowed-tools: Bash(curl *) Bash(jq *)\n"
+  }
+}

@@ -1,4 +1,4 @@
-// Package distribution describes the replica's external installation identity.
+// Package distribution describes the application's installation identity.
 package distribution
 
 import (
@@ -14,12 +14,6 @@ type Config struct {
 	Name       string `json:"name"`
 	Identifier string `json:"identifier"`
 	Version    string `json:"version"`
-	MacOS      struct {
-		BundleName string `json:"bundleName"`
-	} `json:"macos"`
-	Windows struct {
-		InstallName string `json:"installName"`
-	} `json:"windows"`
 }
 
 func Load(path string) (Config, error) {
@@ -35,21 +29,16 @@ func Load(path string) (Config, error) {
 }
 
 func (c Config) Validate() error {
-	if c.Name != "Zeron" || c.Identifier != "dev.gcode.zeronui" || c.Version == "" || strings.ContainsAny(c.Version, "/\\") {
-		return fmt.Errorf("unexpected replica application identity")
+	if c.Name != "GCode" || c.Identifier != "dev.gcode.rcode" || c.Version == "" || strings.ContainsAny(c.Version, "/\\") {
+		return fmt.Errorf("unexpected application identity")
 	}
-	for _, value := range []string{c.Windows.InstallName, c.MacOS.BundleName} {
-		if value == "" || value != strings.TrimSpace(value) || strings.ContainsAny(value, "/\\:*?\"<>|\r\n") || strings.HasSuffix(value, ".") || strings.EqualFold(value, c.Name) {
-			return fmt.Errorf("replica installation names must be valid and distinct from Zeron")
-		}
-	}
-	if strings.HasSuffix(strings.ToLower(c.MacOS.BundleName), ".app") {
-		return fmt.Errorf("macos.bundleName must omit .app")
+	if c.Name == "" || c.Name != strings.TrimSpace(c.Name) || strings.ContainsAny(c.Name, "/\\:*?\"<>|\r\n") || strings.HasSuffix(c.Name, ".") {
+		return fmt.Errorf("application installation names must be valid")
 	}
 	return nil
 }
 
-func (c Config) BundleFile() string { return c.MacOS.BundleName + ".app" }
+func (c Config) BundleFile() string { return c.Name + ".app" }
 
 func (c Config) Executable(goos string) string {
 	if goos == "darwin" {
@@ -66,7 +55,7 @@ func (c Config) Resources(dir, goos string) string {
 }
 
 func (c Config) WindowsInstallDirectory() string {
-	return `%LOCALAPPDATA%\Programs\` + c.Windows.InstallName
+	return `%LOCALAPPDATA%\Programs\` + c.Name
 }
 
 func (c Config) VerifyInfoPlist(path string) error {
@@ -102,17 +91,6 @@ func (c Config) VerifyInfoPlist(path string) error {
 	}
 	if len(seen) != len(want) {
 		return fmt.Errorf("macOS application identity is incomplete")
-	}
-	return nil
-}
-
-// CheckNoLegacyBundle stops a mixed output directory from shipping the old,
-// collision-prone Zeron.app alongside the newly named application.
-func (c Config) CheckNoLegacyBundle(dir string) error {
-	if _, err := os.Lstat(filepath.Join(dir, c.Name+".app")); err == nil {
-		return fmt.Errorf("legacy Zeron.app remains in output; rebuild into a clean output directory")
-	} else if !os.IsNotExist(err) {
-		return err
 	}
 	return nil
 }

@@ -8,8 +8,11 @@ release package builds passed. Timed original PNGs retain tooltip differences;
 the GPU control reproduces light rounding without yet binding actual UI adapters.
 Full visual/native platform acceptance remains pending.
 Earlier sections retain their original source/executable and acceptance scope.
-Current framework is the adopted, unreleased `.9` R17 tree: 1,864 files and
-14 patches. Its pre-Cloud adoption had 2,931 formal audit inputs. The later Cloud
+The R17 phase recorded here used the adopted, unreleased `.9` tree: 1,864 files
+and 14 patches. The current framework is `rcode-native-ui.20` (MyGo v0.7.3):
+2,034 files, 28 patches and tree
+`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`; see
+`mygo-patches.md`. Its pre-Cloud adoption had 2,931 formal audit inputs. The later Cloud
 four-file adoption below has a separate source identity; that old input manifest
 and canonical packages are not relabeled to cover it. See
 `audit-tabstrip-tooltip-primitives.md` for exact identities and separate V5 evidence.
@@ -78,9 +81,10 @@ package sequence; it is not relabeled as this `.9` result. Skill/diagnostic-path
 restrictions are not product-code defects.
 
 Reference: Zeron `ab189159f10cf8e63c0502be75a59bbc487e0eaf`.
-Latest sealed build target: Go1.27.3 / MyGo0.6.4 + pinned `zeron-native-ui.6`, Windows11 amd64;
-macOS13+ amd64/arm64. The reference is Zeron 0.2.128; the independent replica
-package version is 0.1.0.
+The R16 sealed build target was Go1.27.3 / MyGo0.6.4 + pinned `zeron-native-ui.6`,
+Windows11 amd64; macOS13+ amd64/arm64. The current framework is MyGo v0.7.3 +
+`rcode-native-ui.20` (2,034 files, 28 patches; see `mygo-patches.md`). The
+reference is Zeron 0.2.128; the independent replica package version is 0.1.0.
 This report distinguishes implemented behavior, automated checks, native
 observations and comparison with the reference.
 
@@ -88,19 +92,22 @@ observations and comparison with the reference.
 
 - Native application shell, titlebar, sidebar, session/project/model selection,
   composer, virtualized transcript, streaming, tool/thinking disclosures,
-  questions, permissions, todos, subagent cards, attachments and queue actions.
+  questions, PermissionRequest hook prompts, todos, subagent cards, attachments
+  and queue actions. The separate multi-permission mode was removed on 2026-10-30.
 - Typed in-process service, deterministic scenes, isolated persisted state,
   cancellable/coalescing events, file version conflicts and scripted terminal IO.
 - Native settings pages, theme/font/palette controls, original fonts/icons and
   all30 source theme variants. Voice controls are excluded.
 - File tree, editable buffers, dirty-close/conflict handling, Markdown/image
-  preview, changes/diff, commit history, PR overview/checks/code/comments.
+  preview, changes/diff, commit history. The old PR workbench was removed; the
+  sidebar keeps only the repository PR web link. See `ui-residual-cleanup.md`.
 - System web engine confined to external document content, native browser
   chrome, navigation/loading/error state and overlay support.
 - MyGo terminal over an in-memory Conn, not a shell. Native library packaged
   for each architecture.
 -210 math/diagram SVG resources produced by the original renderer code.
-- Source compact model panel, effort slider, model search and persisted favorites.
+- Source compact model panel, effort slider and model search. Model favorites were
+  removed on 2026-10-30; see `ui-residual-cleanup.md`.
 - Native file selection, external file drop and clipboard image/file ingestion,
   with backend-managed resources and draft/session isolation.
 - Source background cropping, pan/zoom adjustment, five source-space image
@@ -114,8 +121,8 @@ observations and comparison with the reference.
   Its1,836 framework files and eleven patches remain a historical hash-locked snapshot.
   Historical R17 C4 source has1,847 files and thirteen locked patches, including
   tooltip/input/device-scale primitives and bounded Windows package-commit
-  retries. Current `.9` adds the fourteenth Windows glyph-placement patch and
-  the checked tooltip leaf while preserving AX content names; it has1,864
+  retries. The R17 `.9` phase added the fourteenth Windows glyph-placement patch
+  and the checked tooltip leaf while preserving AX content names; it has1,864
   framework files. Evidence scopes are in `audit-tabstrip-tooltip-primitives.md`.
 
 Implementation does not imply complete reference parity. See gaps below.
@@ -138,7 +145,7 @@ failure recovery and distinct per-session responses. These are implementation
 repairs with regression evidence, not a claim that every acceptance case passed.
 
 Earlier running debug executables and `build/coexist-qa-r2` predate these UI
-repairs. Current review packages are built separately under `build/ui-audit`;
+repairs. Review packages from that phase were built separately under `build/ui-audit`;
 `scripts/review-ui.ps1` launches a deterministic fresh scenario without resetting
 the ordinary profile or the installed original app. File hashes identify the
 actual binary; the unchanged in-window Zeron name does not identify its build.

@@ -60,10 +60,10 @@ func TestReferenceArtifactsPresentAndRethemed(t *testing.T) {
 	updated, _ := s.Snapshot(context.Background())
 	for _, m := range updated.Messages["chat-0"] {
 		for _, b := range m.Blocks {
-			if b.Kind == "math" && !strings.Contains(b.Artifact.AssetRef, "math-euler-zeron-light.svg") {
+			if b.Kind == "math" && !strings.Contains(b.Artifact.AssetRef, "math-euler-rcode-light.svg") {
 				t.Fatalf("formula did not follow theme/font: %s", b.Artifact.AssetRef)
 			}
-			if b.Kind == "diagram" && !strings.Contains(b.Artifact.AssetRef, "diagram-zeron-light.svg") {
+			if b.Kind == "diagram" && !strings.Contains(b.Artifact.AssetRef, "diagram-rcode-light.svg") {
 				t.Fatal("diagram did not follow selected light palette")
 			}
 		}

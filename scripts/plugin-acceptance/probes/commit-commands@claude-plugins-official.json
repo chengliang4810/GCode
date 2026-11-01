@@ -1,0 +1,283 @@
+{
+  "pluginId": "commit-commands@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "clean-gone-triage-report",
+      "componentId": "command:commit-commands:clean_gone",
+      "prompt": "/commit-commands:clean_gone Triage the stale branch cleanup for the kite repository from captured listings instead of live execution, because this sandbox has no git repository and no network, so the destructive pipeline from the command must not run here. The captured listings are branch-listing.txt, the output of git branch -v, and worktree-listing.txt, the output of git worktree list. Apply the documented clean_gone logic and write clean-gone-report.md that: (1) identifies exactly the branches marked [gone]: feat/old-api and feat/exp-search; (2) records that the + prefix on feat/exp-search means it has an associated worktree at /workspaces/kite-exp, so per the documented order the worktree is removed first with git worktree remove --force /workspaces/kite-exp and only then the branch is deleted with git branch -D feat/exp-search; (3) deletes the plain gone branch with git branch -D feat/old-api; (4) keeps main and feat/active-api and records exactly this sentence: main and feat/active-api stay untouched because neither is marked [gone].; (5) ends with exactly this line: No destructive git command was executed in this headless triage; real branch and worktree cleanup remains untested. Then read the immutable verify_clean_gone.py and run exactly python verify_clean_gone.py using Bash; it validates the report and writes clean-gone-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: list the branches that would be deleted and the worktree that would be removed, report the actual verifier result, and state that real branch deletion and worktree removal remain untested.",
+      "allowCommands": [
+        "python verify_clean_gone.py"
+      ],
+      "verifierOutputs": [
+        "clean-gone-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "branch-listing.txt",
+          "text": "  feat/active-api     3ab91c4 [ahead 2] Add pagination cursor\n* main                9f31ec2 [behind 4] Release 2026.10\n  feat/old-api        d4e5f67 [gone] Remove legacy export\n+ feat/exp-search     71c02aa [gone] Experiment: semantic ranking\n"
+        },
+        {
+          "path": "worktree-listing.txt",
+          "text": "/workspaces/kite      9f31ec2 [main]\n/workspaces/kite-exp  71c02aa [feat/exp-search]\n"
+        },
+        {
+          "path": "verify_clean_gone.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'gone_branches_exact': True, 'keep_branches': True, 'ordering_worktree_first': True, 'plain_gone_deleted': True, 'report_inputs': True, 'safety_boundary': True}\n\nreport = Path('clean-gone-report.md').read_text(encoding='utf-8')\nfor anchor in ('git branch -v', 'git worktree list', 'feat/old-api', 'feat/exp-search',\n               'git worktree remove --force /workspaces/kite-exp',\n               'git branch -D feat/exp-search', 'git branch -D feat/old-api',\n               'main and feat/active-api stay untouched because neither is marked [gone].',\n               'No destructive git command was executed in this headless triage; real branch '\n               'and worktree cleanup remains untested'):\n    assert anchor in report, 'report missing: ' + anchor\nremove_at = report.find('git worktree remove --force /workspaces/kite-exp')\ndelete_at = report.find('git branch -D feat/exp-search')\nassert remove_at != -1 and delete_at != -1 and remove_at < delete_at, \\\n    'the worktree must be removed before the worktree branch is deleted'\nassert 'git branch -D main' not in report, 'main must never be deleted'\nassert '[gone]' in report, 'the gone marker analysis must be cited'\n\nPath('clean-gone-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Clean-gone triage: worktree-first ordering verified; real branch deletion remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "branch-listing.txt",
+          "equals": "  feat/active-api     3ab91c4 [ahead 2] Add pagination cursor\n* main                9f31ec2 [behind 4] Release 2026.10\n  feat/old-api        d4e5f67 [gone] Remove legacy export\n+ feat/exp-search     71c02aa [gone] Experiment: semantic ranking\n"
+        },
+        {
+          "kind": "file",
+          "path": "worktree-listing.txt",
+          "equals": "/workspaces/kite      9f31ec2 [main]\n/workspaces/kite-exp  71c02aa [feat/exp-search]\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_clean_gone.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'gone_branches_exact': True, 'keep_branches': True, 'ordering_worktree_first': True, 'plain_gone_deleted': True, 'report_inputs': True, 'safety_boundary': True}\n\nreport = Path('clean-gone-report.md').read_text(encoding='utf-8')\nfor anchor in ('git branch -v', 'git worktree list', 'feat/old-api', 'feat/exp-search',\n               'git worktree remove --force /workspaces/kite-exp',\n               'git branch -D feat/exp-search', 'git branch -D feat/old-api',\n               'main and feat/active-api stay untouched because neither is marked [gone].',\n               'No destructive git command was executed in this headless triage; real branch '\n               'and worktree cleanup remains untested'):\n    assert anchor in report, 'report missing: ' + anchor\nremove_at = report.find('git worktree remove --force /workspaces/kite-exp')\ndelete_at = report.find('git branch -D feat/exp-search')\nassert remove_at != -1 and delete_at != -1 and remove_at < delete_at, \\\n    'the worktree must be removed before the worktree branch is deleted'\nassert 'git branch -D main' not in report, 'main must never be deleted'\nassert '[gone]' in report, 'the gone marker analysis must be cited'\n\nPath('clean-gone-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Clean-gone triage: worktree-first ordering verified; real branch deletion remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-verification.json",
+          "equals": "{\"gone_branches_exact\": true, \"keep_branches\": true, \"ordering_worktree_first\": true, \"plain_gone_deleted\": true, \"report_inputs\": true, \"safety_boundary\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "git branch -v"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "git worktree list"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "feat/old-api"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "feat/exp-search"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "git worktree remove --force /workspaces/kite-exp"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "git branch -D feat/exp-search"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "git branch -D feat/old-api"
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "main and feat/active-api stay untouched because neither is marked [gone]."
+        },
+        {
+          "kind": "file",
+          "path": "clean-gone-report.md",
+          "contains": "No destructive git command was executed in this headless triage; real branch and worktree cleanup remains untested"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Clean-gone triage: worktree-first ordering verified; real branch deletion remains untested"
+        }
+      ]
+    },
+    {
+      "id": "commit-invoice-rounding-fix",
+      "componentId": "command:commit-commands:commit",
+      "prompt": "/commit-commands:commit Run the commit command workflow on this fresh sandbox workspace, adapted because the workspace is not yet a git repository and has no history: first run exactly git init using Bash, then analyze the changes by reading invoice.py and notes.txt, where notes.txt explains that rounding now happens once on the order total instead of per addend, and no recent commit style exists in a fresh repo, so follow the documented conventional commit practices. Headless boundary: no network, no remote, no push and no GitHub; remote push and real repository history stay untested. Secret rule from the command documentation: never stage or commit .env or credentials files. Then stage exactly the two project files with one git add command and create a single commit using exactly this command: git -c user.name=GCode -c user.email=acceptance@gcode.invalid commit -m \"fix: round order totals once at the summary step\". Afterwards confirm cleanliness with git status --porcelain, then read the immutable verify_commit.py and run exactly python verify_commit.py using Bash; it validates the commit and writes commit-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. The allowed Bash commands are exactly: git init, git add invoice.py notes.txt, the git commit command above, git status --porcelain, and python verify_commit.py - no prefixes, suffixes, redirection or extra shell operations, and no other git commands. Never stage .env. Final response: report the created commit subject, the actual verifier result, and state that remote push, branch history conventions and real repo workflows remain untested.",
+      "allowCommands": [
+        "git init",
+        "git add invoice.py notes.txt",
+        "git -c user.name=GCode -c user.email=acceptance@gcode.invalid commit -m \"fix: round order totals once at the summary step\"",
+        "git status --porcelain",
+        "python verify_commit.py"
+      ],
+      "verifierOutputs": [
+        "commit-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "invoice.py",
+          "text": "\"\"\"Invoice totals for the Harborside order flow.\"\"\"\n\n\ndef line_total(quantity: int, unit_price: float) -> float:\n    return round(quantity * unit_price, 2)\n\n\ndef order_total(lines) -> float:\n    return round(sum(line_total(q, p) for q, p in lines), 2)\n"
+        },
+        {
+          "path": "notes.txt",
+          "text": "Harborside: rounding now happens once on the order total instead of per addend.\n"
+        },
+        {
+          "path": ".env",
+          "text": "HARBORSIDE_SECRET=do-not-commit-this-value\n"
+        },
+        {
+          "path": "verify_commit.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'exact_subject': True, 'files_staged': True, 'secret_excluded': True, 'single_commit': True}\n\nimport subprocess\n\n\ndef git(*args):\n    proc = subprocess.run(['git'] + list(args), capture_output=True, text=True, timeout=30)\n    assert proc.returncode == 0, 'git ' + args[0] + ' failed: ' + proc.stderr\n    return proc.stdout.strip()\n\nsubject = git('log', '-1', '--pretty=%s')\nassert subject == 'fix: round order totals once at the summary step', \\\n    'unexpected commit subject: ' + subject\nfiles = set(git('ls-files').splitlines())\nassert files == {'invoice.py', 'notes.txt'}, 'tracked files wrong: ' + repr(files)\nassert Path('.env').exists(), 'the secret fixture must remain on disk untracked'\nstatus = git('status', '--porcelain')\nassert any(line.startswith('?? .env') for line in status.splitlines()), \\\n    '.env should still be untracked: ' + status\ncount = git('rev-list', '--count', 'HEAD')\nassert count == '1', 'expected exactly one commit, got ' + count\n\nPath('commit-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Commit verified: exact subject, two files committed, .env kept out of history')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "invoice.py",
+          "equals": "\"\"\"Invoice totals for the Harborside order flow.\"\"\"\n\n\ndef line_total(quantity: int, unit_price: float) -> float:\n    return round(quantity * unit_price, 2)\n\n\ndef order_total(lines) -> float:\n    return round(sum(line_total(q, p) for q, p in lines), 2)\n"
+        },
+        {
+          "kind": "file",
+          "path": "notes.txt",
+          "equals": "Harborside: rounding now happens once on the order total instead of per addend.\n"
+        },
+        {
+          "kind": "file",
+          "path": ".env",
+          "equals": "HARBORSIDE_SECRET=do-not-commit-this-value\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_commit.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'exact_subject': True, 'files_staged': True, 'secret_excluded': True, 'single_commit': True}\n\nimport subprocess\n\n\ndef git(*args):\n    proc = subprocess.run(['git'] + list(args), capture_output=True, text=True, timeout=30)\n    assert proc.returncode == 0, 'git ' + args[0] + ' failed: ' + proc.stderr\n    return proc.stdout.strip()\n\nsubject = git('log', '-1', '--pretty=%s')\nassert subject == 'fix: round order totals once at the summary step', \\\n    'unexpected commit subject: ' + subject\nfiles = set(git('ls-files').splitlines())\nassert files == {'invoice.py', 'notes.txt'}, 'tracked files wrong: ' + repr(files)\nassert Path('.env').exists(), 'the secret fixture must remain on disk untracked'\nstatus = git('status', '--porcelain')\nassert any(line.startswith('?? .env') for line in status.splitlines()), \\\n    '.env should still be untracked: ' + status\ncount = git('rev-list', '--count', 'HEAD')\nassert count == '1', 'expected exactly one commit, got ' + count\n\nPath('commit-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Commit verified: exact subject, two files committed, .env kept out of history')\n"
+        },
+        {
+          "kind": "file",
+          "path": "commit-verification.json",
+          "equals": "{\"exact_subject\": true, \"files_staged\": true, \"secret_excluded\": true, \"single_commit\": true}\n"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "fix: round order totals once at the summary step"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Commit verified: exact subject, two files committed, .env kept out of history"
+        }
+      ]
+    },
+    {
+      "id": "commit-push-pr-handoff",
+      "componentId": "command:commit-commands:commit-push-pr",
+      "prompt": "/commit-commands:commit-push-pr Run the documented commit, push and PR workflow on this fresh sandbox workspace, adapted because the workspace is not yet a git repository, has no origin remote, and has no gh CLI or network: the local git steps run for real, and the push and PR steps become an exact handoff document instead of execution. First run exactly git init using Bash, then create the feature branch with exactly git checkout -b feature/vat-regions, then analyze tax.py and README.md, where README.md announces VAT support for the DE and SE regions. Secret rule from the command documentation: never stage or commit .env or credentials files. Stage exactly the two project files with one git add command and create a single commit using exactly this command: git -c user.name=GCode -c user.email=acceptance@gcode.invalid commit -m \"feat: add VAT rates for DE and SE regions\". Then write pr-handoff.md containing: (1) the exact push command to run later: git push -u origin feature/vat-regions; (2) the exact PR command to run later: gh pr create --title \"feat: add VAT rates for DE and SE regions\" --body-file pr-body.md; (3) a complete pr-body.md draft with a Summary of changes section of one to two bullet points citing tax.py and the DE and SE rates, and a Test plan checklist section with at least two unchecked checklist items; and (4) the note that this sandbox had no origin remote and no gh, per the command requirements. Confirm cleanliness with git status --porcelain, then read the immutable verify_commit_push_pr.py and run exactly python verify_commit_push_pr.py using Bash; it validates the branch, commit and handoff, writing commit-push-pr-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. The allowed Bash commands are exactly: git init, git checkout -b feature/vat-regions, git add tax.py README.md, the git commit command above, git status --porcelain, and python verify_commit_push_pr.py - no prefixes, suffixes, redirection or extra shell operations, and no other git commands. Never stage .env. End pr-handoff.md with exactly this line: The push to origin and the pull request creation did not run in this headless sandbox; remote push and PR creation remain untested. Final response: report the branch and commit subject, the actual verifier result, and state that the remote push and the real PR creation remain untested.",
+      "allowCommands": [
+        "git init",
+        "git checkout -b feature/vat-regions",
+        "git add tax.py README.md",
+        "git -c user.name=GCode -c user.email=acceptance@gcode.invalid commit -m \"feat: add VAT rates for DE and SE regions\"",
+        "git status --porcelain",
+        "python verify_commit_push_pr.py"
+      ],
+      "verifierOutputs": [
+        "commit-push-pr-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "tax.py",
+          "text": "REGIONS = {\"DE\": 0.19, \"SE\": 0.25}\n\n\ndef tax_for(region: str, amount: float) -> float:\n    rate = REGIONS.get(region)\n    if rate is None:\n        raise ValueError(\"unsupported region: \" + region)\n    return round(amount * rate, 2)\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Kiel Cargo Pricing\n\nAdds VAT support for DE and SE regions.\n"
+        },
+        {
+          "path": ".env",
+          "text": "KIEL_SECRET=never-commit-me\n"
+        },
+        {
+          "path": "verify_commit_push_pr.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'branch_created': True, 'commit_subject': True, 'handoff_commands': True, 'honesty_boundary': True, 'pr_body_sections': True, 'secret_excluded': True}\n\nimport subprocess\n\n\ndef git(*args):\n    proc = subprocess.run(['git'] + list(args), capture_output=True, text=True, timeout=30)\n    assert proc.returncode == 0, 'git ' + args[0] + ' failed: ' + proc.stderr\n    return proc.stdout.strip()\n\nbranch = git('rev-parse', '--abbrev-ref', 'HEAD')\nassert branch == 'feature/vat-regions', 'expected the documented feature branch, got ' + branch\nsubject = git('log', '-1', '--pretty=%s')\nassert subject == 'feat: add VAT rates for DE and SE regions', \\\n    'unexpected commit subject: ' + subject\nfiles = set(git('ls-files').splitlines())\nassert files == {'tax.py', 'README.md'}, 'tracked files wrong: ' + repr(files)\nassert Path('.env').exists(), 'the secret fixture must remain on disk untracked'\nhandoff = Path('pr-handoff.md').read_text(encoding='utf-8')\nfor anchor in ('git push -u origin feature/vat-regions', 'gh pr create', 'pr-body.md',\n               'Summary of changes', 'Test plan', 'tax.py',\n               'The push to origin and the pull request creation did not run in this headless '\n               'sandbox; remote push and PR creation remain untested'):\n    assert anchor in handoff, 'handoff missing: ' + anchor\nlines = [l.strip() for l in handoff.splitlines() if l.strip()]\nassert lines and lines[-1].startswith('The push to origin and the pull request creation did not run'), \\\n    'the handoff must end with the exact honesty line'\n\nPath('commit-push-pr-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Commit-push-pr verified: branch, commit and handoff recorded; remote push and PR creation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "tax.py",
+          "equals": "REGIONS = {\"DE\": 0.19, \"SE\": 0.25}\n\n\ndef tax_for(region: str, amount: float) -> float:\n    rate = REGIONS.get(region)\n    if rate is None:\n        raise ValueError(\"unsupported region: \" + region)\n    return round(amount * rate, 2)\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Kiel Cargo Pricing\n\nAdds VAT support for DE and SE regions.\n"
+        },
+        {
+          "kind": "file",
+          "path": ".env",
+          "equals": "KIEL_SECRET=never-commit-me\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_commit_push_pr.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'branch_created': True, 'commit_subject': True, 'handoff_commands': True, 'honesty_boundary': True, 'pr_body_sections': True, 'secret_excluded': True}\n\nimport subprocess\n\n\ndef git(*args):\n    proc = subprocess.run(['git'] + list(args), capture_output=True, text=True, timeout=30)\n    assert proc.returncode == 0, 'git ' + args[0] + ' failed: ' + proc.stderr\n    return proc.stdout.strip()\n\nbranch = git('rev-parse', '--abbrev-ref', 'HEAD')\nassert branch == 'feature/vat-regions', 'expected the documented feature branch, got ' + branch\nsubject = git('log', '-1', '--pretty=%s')\nassert subject == 'feat: add VAT rates for DE and SE regions', \\\n    'unexpected commit subject: ' + subject\nfiles = set(git('ls-files').splitlines())\nassert files == {'tax.py', 'README.md'}, 'tracked files wrong: ' + repr(files)\nassert Path('.env').exists(), 'the secret fixture must remain on disk untracked'\nhandoff = Path('pr-handoff.md').read_text(encoding='utf-8')\nfor anchor in ('git push -u origin feature/vat-regions', 'gh pr create', 'pr-body.md',\n               'Summary of changes', 'Test plan', 'tax.py',\n               'The push to origin and the pull request creation did not run in this headless '\n               'sandbox; remote push and PR creation remain untested'):\n    assert anchor in handoff, 'handoff missing: ' + anchor\nlines = [l.strip() for l in handoff.splitlines() if l.strip()]\nassert lines and lines[-1].startswith('The push to origin and the pull request creation did not run'), \\\n    'the handoff must end with the exact honesty line'\n\nPath('commit-push-pr-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Commit-push-pr verified: branch, commit and handoff recorded; remote push and PR creation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "commit-push-pr-verification.json",
+          "equals": "{\"branch_created\": true, \"commit_subject\": true, \"handoff_commands\": true, \"honesty_boundary\": true, \"pr_body_sections\": true, \"secret_excluded\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "git push -u origin feature/vat-regions"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "gh pr create"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "pr-body.md"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "Summary of changes"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "Test plan"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "tax.py"
+        },
+        {
+          "kind": "file",
+          "path": "pr-handoff.md",
+          "contains": "The push to origin and the pull request creation did not run in this headless sandbox; remote push and PR creation remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "feat: add VAT rates for DE and SE regions"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Commit-push-pr verified: branch, commit and handoff recorded; remote push and PR creation remain untested"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "pluginId": "save-to-spotify@claude-plugins-official",
+  "sourceCommit": "9d05c8cd8c8559552f84e27fe30f46b7693ce69a",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-confirmation-gate-for-deep-dive",
+      "componentId": "skill:save-to-spotify:save-to-spotify",
+      "prompt": "/save-to-spotify:save-to-spotify Use the save-to-spotify skill to handle this request exactly as the skill governs it. The user says: Turn my three postmortem notes about the May checkout outage into a deep dive episode for my show Incident Reviews; use defaults and do not interview me. Headless boundary: the save-to-spotify CLI is not present in this sandbox, no installs, no network, no auth, no TTS; doctor, setup, sourcing, scripting, audio production and any upload remain untested.\n\nApply the defaulting and plan-confirmation rules of the skill and write episode-plan.md: (1) apply the defaults silently - length: a deep dive is ~8 min per the skill's length defaults; voice: the configured default from save-to-spotify tts status --json, recorded as to be confirmed because the CLI cannot run offline; show: the existing show Incident Reviews; cover image: AI-generated; timeline companion images: mixed. (2) record the preflight step save-to-spotify --json doctor as pending (it checks binary, auth, TTS engines and ffmpeg in one call) and note no engine is installed or chosen here; (3) present the one-line plan in the documented shape, starting with the exact words Making a ~8 min deep dive on and naming the May checkout outage and Incident Reviews; (4) present exactly the skill's four choices - Go - start production, Change voice - pick a different TTS voice, Change length - shorter or longer, Change topic - adjust the content scope - and never wait for free-text input; (5) end with the documented gate wording that production does not start until the user confirms the plan; (6) do not mention chapter skipping at all and do not ask about it - it is owned by the separate configure-chapter-skip skill and must never be offered unprompted, so the word chapter must not appear in the file; (7) do not write any user-facing claim that production happened - phrases like your episode is ready must not appear.\n\nThen read the immutable verify_episode_plan.py and run exactly python verify_episode_plan.py using Bash; it validates the plan and writes episode-plan-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: present the one-line plan and the four choices, report the actual verifier result, and state that CLI preflight, TTS, audio production and any upload remain untested.",
+      "allowCommands": [
+        "python verify_episode_plan.py"
+      ],
+      "verifierOutputs": [
+        "episode-plan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_episode_plan.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('episode-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'Making a ~8 min deep dive on' in text, 'the documented one-line plan shape is missing'\nassert 'May checkout outage' in text, 'the scenario topic must appear in the plan'\nassert 'Incident Reviews' in text, 'the scenario show must appear in the plan'\nassert 'start production' in low, 'the Go choice is missing'\nassert 'Change voice' in text and 'pick a different tts voice' in low, 'the change-voice choice is missing'\nassert 'Change length' in text and 'shorter or longer' in low, 'the change-length choice is missing'\nassert 'Change topic' in text and 'adjust the content scope' in low, 'the change-topic choice is missing'\nassert 'save-to-spotify --json doctor' in text, 'the pending preflight step is missing'\nassert 'save-to-spotify tts status --json' in text, 'the documented voice default source is missing'\nassert 'until the user confirms' in low, 'the documented plan-confirmation gate is missing'\nassert 'chapter' not in low, 'chapter-skip must never be offered unprompted by this skill'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('your episode is ready', 'episode is saved', 'saved to spotify', 'upload started', 'production started'):\n    assert claim not in low, 'must not claim production or upload happened: ' + claim\nreport = {'defaults_applied': True, 'four_choices': True, 'no_production_claim': True,\n          'no_unprompted_chapterskip': True, 'plan_line': True, 'preflight_pending': True,\n          'untested_declared': True, 'wait_for_confirmation': True}\nPath('episode-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Episode plan: documented defaults and plan-confirmation gate checks passed; CLI preflight, TTS, audio production and any upload remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_episode_plan.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('episode-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'Making a ~8 min deep dive on' in text, 'the documented one-line plan shape is missing'\nassert 'May checkout outage' in text, 'the scenario topic must appear in the plan'\nassert 'Incident Reviews' in text, 'the scenario show must appear in the plan'\nassert 'start production' in low, 'the Go choice is missing'\nassert 'Change voice' in text and 'pick a different tts voice' in low, 'the change-voice choice is missing'\nassert 'Change length' in text and 'shorter or longer' in low, 'the change-length choice is missing'\nassert 'Change topic' in text and 'adjust the content scope' in low, 'the change-topic choice is missing'\nassert 'save-to-spotify --json doctor' in text, 'the pending preflight step is missing'\nassert 'save-to-spotify tts status --json' in text, 'the documented voice default source is missing'\nassert 'until the user confirms' in low, 'the documented plan-confirmation gate is missing'\nassert 'chapter' not in low, 'chapter-skip must never be offered unprompted by this skill'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('your episode is ready', 'episode is saved', 'saved to spotify', 'upload started', 'production started'):\n    assert claim not in low, 'must not claim production or upload happened: ' + claim\nreport = {'defaults_applied': True, 'four_choices': True, 'no_production_claim': True,\n          'no_unprompted_chapterskip': True, 'plan_line': True, 'preflight_pending': True,\n          'untested_declared': True, 'wait_for_confirmation': True}\nPath('episode-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Episode plan: documented defaults and plan-confirmation gate checks passed; CLI preflight, TTS, audio production and any upload remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan-verification.json",
+          "equals": "{\"defaults_applied\": true, \"four_choices\": true, \"no_production_claim\": true, \"no_unprompted_chapterskip\": true, \"plan_line\": true, \"preflight_pending\": true, \"untested_declared\": true, \"wait_for_confirmation\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "Making a ~8 min deep dive on"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "May checkout outage"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "Incident Reviews"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "start production"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "Change voice"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "Change length"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "Change topic"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "save-to-spotify --json doctor"
+        },
+        {
+          "kind": "file",
+          "path": "episode-plan.md",
+          "contains": "save-to-spotify tts status --json"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Episode plan: documented defaults and plan-confirmation gate checks passed; CLI preflight, TTS, audio production and any upload remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "chapter-skip-new-show-and-existing-show-boundary",
+      "componentId": "skill:save-to-spotify:configure-chapter-skip",
+      "prompt": "/save-to-spotify:configure-chapter-skip Use the configure-chapter-skip skill for these three concrete requests, and write chapter-skip-config.md. Headless boundary: no save-to-spotify CLI, no network, no Spotify backend, no shows are created here; the real CLI calls and the backend confirmation remain untested, and no configuration may be claimed as applied.\n\nRequest 1: the user explicitly says: please set up chapter skip for my new show Nightly Synth Briefings. Per the skill: this trigger phrase makes the skill apply; chapter skip is set when the show is created, so record the documented command save-to-spotify --json shows create with --title \"Nightly Synth Briefings\", an image argument, and --playback-control chapter-skip; record the documented verification caveat that the playback_control field in the JSON output is confirmed by the backend, not echoed from the flag, and if it is missing after passing --playback-control the backend did not apply the setting - do not proceed silently, tell the user, and do not delete and recreate (retrying sends the identical request); record that the upload for this show must pass --show-id \"$SHOW_URI\" and that the new-show upload form cannot set playback control (state that prohibition WITHOUT writing the string upload --new-show anywhere in the file); note Chapters are required for this to be useful - the show's episodes must get timeline chapters or there is nothing to skip to.\n\nRequest 2: the same user later asks: add chapter skip to my existing show Morning Metrics too. Per the skill's creation-time-only rule: show metadata is immutable, so the setting cannot be added to an existing show; state that the show must be deleted and recreated and that this deletes all its episodes, so this must be confirmed with the user before doing anything - and record that nothing was changed for Morning Metrics.\n\nRequest 3: a different user message says: this lecture is long, jumping around would be nice. No documented trigger phrase was said, so record that this skill does not apply, that enabling it on your own initiative is forbidden, and that it must never be triggered proactively.\n\nThen read the immutable verify_chapter_skip.py and run exactly python verify_chapter_skip.py using Bash; it validates the record and writes chapter-skip-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: summarize the three outcomes, report the actual verifier result, and state that real CLI execution and the Spotify backend confirmation remain untested.",
+      "allowCommands": [
+        "python verify_chapter_skip.py"
+      ],
+      "verifierOutputs": [
+        "chapter-skip-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_chapter_skip.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('chapter-skip-config.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '--playback-control chapter-skip' in text, 'the documented shows create flag is missing'\nassert 'save-to-spotify --json shows create' in text, 'the documented creation command is missing'\nassert '--show-id \"$SHOW_URI\"' in text, 'the upload must use the documented --show-id form'\nassert 'upload --new-show' not in text, 'the new-show upload form must not appear anywhere in the file'\nassert 'Nightly Synth Briefings' in text, 'the new-show scenario must be applied'\nassert 'Morning Metrics' in text, 'the existing-show scenario must be applied'\nassert 'creation-time only' in low or 'created when the show is created' in low or 'set when the show is created' in low, 'the creation-time-only rule is missing'\nassert 'this deletes all its episodes' in text, 'the documented data-loss consequence is missing'\nassert 'confirmed by the backend' in text, 'the documented playback_control verification caveat is missing'\nassert 'delete and recreate' in low, 'the documented no-delete-and-recreate retry rule is missing'\nassert 'chapters are required' in low, 'the documented chapters requirement is missing'\nassert 'this skill does not apply' in text, 'the no-trigger-phrase boundary must be recorded'\nassert 'untested' in low, 'the record must state what remains untested'\nfor claim in ('is now enabled', 'has been enabled', 'setting applied', 'chapter skip is on', 'i enabled'):\n    assert claim not in low, 'must not claim the setting was applied: ' + claim\nreport = {'creation_time_only': True, 'explicit_trigger_applied': True, 'no_false_enable_claim': True,\n          'no_newshow_upload_form': True, 'playback_control_backend_check': True, 'show_id_upload_path': True,\n          'untested_skill_boundary': True, 'untested_declared': True}\nPath('chapter-skip-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Chapter-skip record: trigger rule, creation-time-only and upload-path checks passed; real CLI execution and backend confirmation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_chapter_skip.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('chapter-skip-config.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '--playback-control chapter-skip' in text, 'the documented shows create flag is missing'\nassert 'save-to-spotify --json shows create' in text, 'the documented creation command is missing'\nassert '--show-id \"$SHOW_URI\"' in text, 'the upload must use the documented --show-id form'\nassert 'upload --new-show' not in text, 'the new-show upload form must not appear anywhere in the file'\nassert 'Nightly Synth Briefings' in text, 'the new-show scenario must be applied'\nassert 'Morning Metrics' in text, 'the existing-show scenario must be applied'\nassert 'creation-time only' in low or 'created when the show is created' in low or 'set when the show is created' in low, 'the creation-time-only rule is missing'\nassert 'this deletes all its episodes' in text, 'the documented data-loss consequence is missing'\nassert 'confirmed by the backend' in text, 'the documented playback_control verification caveat is missing'\nassert 'delete and recreate' in low, 'the documented no-delete-and-recreate retry rule is missing'\nassert 'chapters are required' in low, 'the documented chapters requirement is missing'\nassert 'this skill does not apply' in text, 'the no-trigger-phrase boundary must be recorded'\nassert 'untested' in low, 'the record must state what remains untested'\nfor claim in ('is now enabled', 'has been enabled', 'setting applied', 'chapter skip is on', 'i enabled'):\n    assert claim not in low, 'must not claim the setting was applied: ' + claim\nreport = {'creation_time_only': True, 'explicit_trigger_applied': True, 'no_false_enable_claim': True,\n          'no_newshow_upload_form': True, 'playback_control_backend_check': True, 'show_id_upload_path': True,\n          'untested_skill_boundary': True, 'untested_declared': True}\nPath('chapter-skip-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Chapter-skip record: trigger rule, creation-time-only and upload-path checks passed; real CLI execution and backend confirmation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-verification.json",
+          "equals": "{\"creation_time_only\": true, \"explicit_trigger_applied\": true, \"no_false_enable_claim\": true, \"no_newshow_upload_form\": true, \"playback_control_backend_check\": true, \"show_id_upload_path\": true, \"untested_declared\": true, \"untested_skill_boundary\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "--playback-control chapter-skip"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "save-to-spotify --json shows create"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "--show-id \"$SHOW_URI\""
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "Nightly Synth Briefings"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "Morning Metrics"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "this deletes all its episodes"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "confirmed by the backend"
+        },
+        {
+          "kind": "file",
+          "path": "chapter-skip-config.md",
+          "contains": "this skill does not apply"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Chapter-skip record: trigger rule, creation-time-only and upload-path checks passed; real CLI execution and backend confirmation remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

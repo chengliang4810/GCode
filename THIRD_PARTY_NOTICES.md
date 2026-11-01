@@ -8,7 +8,7 @@ original license texts and an explicit list of unresolved items.
 
 MyGo automatically packages the contents of `resources/`. On Windows these
 notices appear beside the executable; on macOS they appear in
-`Zeron.app/Contents/Resources/`. The release verifier checks every listed file
+`GCode.app/Contents/Resources/`. The release verifier checks every listed file
 and its checksum before producing release archives.
 
 The original Zeron MIT notice is retained for copied source material and assets.

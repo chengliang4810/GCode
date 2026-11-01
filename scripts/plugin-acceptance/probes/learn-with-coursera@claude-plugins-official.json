@@ -1,0 +1,77 @@
+{
+  "pluginId": "learn-with-coursera@claude-plugins-official",
+  "sourceCommit": "ac28fd6ebf8584e3ee196159bd6d4514fa07de0f",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "route-project-learning-intent-through-documented-pipeline",
+      "componentId": "skill:learn-with-coursera:learn-with-coursera",
+      "prompt": "/learn-with-coursera:learn-with-coursera A teammate named Priya manifests a learning intent: 'I get by but don't understand SQL — I need to get better at writing the queries our reporting dashboard runs.' Headless task: no network, no Coursera catalog tools, no account, no installs, so no Coursera tool may be executed and no catalog results may be invented. Apply the skill's documented pipeline to this confirmed scenario — the three documented diagnose questions (topic, familiarity, modality) are already answered: topic = SQL for reporting queries, familiarity = I get by but don't understand it, modality = Hands-on project; no interview is needed. Write learning-plan.md recording, per the skill's documentation: the three diagnose questions with Priya's answers, noting that the diagnose step uses AskUserQuestion and no Coursera tools; the routing row for her chosen modality Hands-on project, naming the exact documented Coursera tool search_hands_on_learning and its documented output of 1–2 guided projects; and the documented step-3 path-finder follow-up using the documented tools search_courses and get_course_materials. Do not route her delivery through the course, video, or roleplay rows, and do not fabricate course titles, catalog URLs, or search results. State explicitly in the file that the actual catalog search and delivery remain untested in this headless task. Then read the immutable verify_learning_plan.py and run exactly python verify_learning_plan.py using Bash; that validates the plan structure and writes learning-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that catalog search and delivery remain untested.",
+      "allowCommands": [
+        "python verify_learning_plan.py"
+      ],
+      "verifierOutputs": [
+        "learning-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_learning_plan.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('learning-plan.md').read_text(encoding='utf-8')\nassert 'search_hands_on_learning' in text, 'project modality must route to the documented search_hands_on_learning tool'\nassert re.search(r\"1[-–—]2\\s+guided\\s+projects\", text), 'routing output must be the documented 1-2 guided projects'\nassert 'AskUserQuestion' in text, 'the diagnose step must record that it uses AskUserQuestion with no Coursera tools'\nfor dimension in ('topic', 'familiarity', 'modality'):\n    assert dimension in text, 'diagnose questions must cover ' + dimension\nassert 'SQL for reporting queries' in text, 'the plan must record the topic answered in this scenario'\nassert 'Hands-on project' in text, 'the plan must record the modality chosen in this scenario'\nassert 'search_courses' in text, 'the path-finder step must use the documented search_courses tool'\nassert 'get_course_materials' in text, 'the path-finder step must use the documented get_course_materials tool'\nfor fabricated in ('coursera.org/learn', 'coursera.org/professional-certificate'):\n    assert fabricated not in text, 'fabricated catalog link: ' + fabricated\nassert re.search(r\"(?i)(untested|not tested|not executed|were not called)\", text), 'the plan must state what remains untested'\nreport = {'diagnose_questions': True, 'no_fabricated_catalog': True, 'path_finder_tools': True,\n          'project_routing': True, 'scenario_applied': True, 'untested_declared': True}\nPath('learning-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Learn-with-coursera routing: documented pipeline checks passed; catalog search and delivery remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_learning_plan.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('learning-plan.md').read_text(encoding='utf-8')\nassert 'search_hands_on_learning' in text, 'project modality must route to the documented search_hands_on_learning tool'\nassert re.search(r\"1[-–—]2\\s+guided\\s+projects\", text), 'routing output must be the documented 1-2 guided projects'\nassert 'AskUserQuestion' in text, 'the diagnose step must record that it uses AskUserQuestion with no Coursera tools'\nfor dimension in ('topic', 'familiarity', 'modality'):\n    assert dimension in text, 'diagnose questions must cover ' + dimension\nassert 'SQL for reporting queries' in text, 'the plan must record the topic answered in this scenario'\nassert 'Hands-on project' in text, 'the plan must record the modality chosen in this scenario'\nassert 'search_courses' in text, 'the path-finder step must use the documented search_courses tool'\nassert 'get_course_materials' in text, 'the path-finder step must use the documented get_course_materials tool'\nfor fabricated in ('coursera.org/learn', 'coursera.org/professional-certificate'):\n    assert fabricated not in text, 'fabricated catalog link: ' + fabricated\nassert re.search(r\"(?i)(untested|not tested|not executed|were not called)\", text), 'the plan must state what remains untested'\nreport = {'diagnose_questions': True, 'no_fabricated_catalog': True, 'path_finder_tools': True,\n          'project_routing': True, 'scenario_applied': True, 'untested_declared': True}\nPath('learning-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Learn-with-coursera routing: documented pipeline checks passed; catalog search and delivery remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "learning-verification.json",
+          "equals": "{\"diagnose_questions\": true, \"no_fabricated_catalog\": true, \"path_finder_tools\": true, \"project_routing\": true, \"scenario_applied\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "search_hands_on_learning"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "search_courses"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "get_course_materials"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "AskUserQuestion"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "SQL for reporting queries"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "contains": "Hands-on project"
+        },
+        {
+          "kind": "file",
+          "path": "learning-plan.md",
+          "regex": "1[-–—]2\\s+guided\\s+projects"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Learn-with-coursera routing: documented pipeline checks passed; catalog search and delivery remain untested"
+        }
+      ]
+    }
+  ]
+}

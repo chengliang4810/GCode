@@ -112,7 +112,7 @@ $taskReferenceManifest = Read-TabstripJson $taskReferenceManifestPath
 Assert-Tabstrip ($taskReferenceManifest.status -ceq '36-production-tabstrip-scenes-captured' -and $taskReferenceManifest.expectedScenes -eq 36 -and $taskReferenceManifest.referenceCommit -ceq $taskCommit -and $taskReferenceManifest.binarySHA256 -cmatch '^[0-9a-f]{64}$') 'Reference matrix is incomplete or has no binary identity.'
 Assert-Tabstrip ($taskManifest.referenceCommit -ceq $taskCommit -and $taskManifest.captureMode -ceq 'wgc' -and @($taskManifest.captures).Count -eq 36) 'Expected36 implementation WGC scenes at the frozen reference.'
 Assert-Tabstrip ($taskManifest.binarySHA256 -cmatch '^[0-9a-f]{64}$' -and $taskManifest.captureBridgeSHA256 -cmatch '^[0-9a-f]{64}$') 'Missing fixture/bridge binary identity.'
-Assert-Tabstrip ($taskManifest.framework.UpstreamVersion -ceq 'v0.6.4' -and $taskManifest.framework.Revision -ceq 'zeron-native-ui.9' -and $taskManifest.framework.SourceSHA256 -ceq '27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9' -and $taskManifest.sourceStamp -and $taskManifest.sourceStamp -cne 'unstamped') 'Missing/wrong verified framework or fixture source stamp.'
+Assert-Tabstrip ($taskManifest.framework.UpstreamVersion -ceq 'v0.6.4' -and $taskManifest.framework.Revision -ceq 'rcode-native-ui.9' -and $taskManifest.framework.SourceSHA256 -ceq 'b2c4fc2817725ad69b915e53e764b4af08971ed327d933004c773f6fbf44be43' -and $taskManifest.sourceStamp -and $taskManifest.sourceStamp -cne 'unstamped') 'Missing/wrong verified framework or fixture source stamp.'
 $taskInputs = @()
 $taskScale = $null
 $taskProcesses = @($null,$null)

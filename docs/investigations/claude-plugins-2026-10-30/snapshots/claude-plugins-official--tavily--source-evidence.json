@@ -1,0 +1,40 @@
+{
+  "repo": "tavily-ai/skills",
+  "commit": "778122e5f9c680f541eeceda5a5b36405eb7980c",
+  "path": ".",
+  "archive_sha256": "c6d426ef1bb364d3538967d9fe24be4a248ff3ce9b984439f948b6dcf27383f0",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "skills/tavily-best-practices/SKILL.md",
+    "skills/tavily-best-practices/references/crawl.md",
+    "skills/tavily-best-practices/references/extract.md",
+    "skills/tavily-best-practices/references/integrations.md",
+    "skills/tavily-best-practices/references/research.md",
+    "skills/tavily-best-practices/references/sdk.md",
+    "skills/tavily-best-practices/references/search.md",
+    "skills/tavily-cli/SKILL.md",
+    "skills/tavily-crawl/SKILL.md",
+    "skills/tavily-dynamic-search/SKILL.md",
+    "skills/tavily-extract/SKILL.md",
+    "skills/tavily-map/SKILL.md",
+    "skills/tavily-research/SKILL.md",
+    "skills/tavily-search/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"tavily\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Build AI applications with real-time web data using Tavily's search, extract, crawl, and research APIs.\",\n  \"author\": {\n    \"name\": \"Tavily Team\",\n    \"email\": \"dean.sacoransky@tavily.com\",\n    \"url\": \"https://www.tavily.com/\"\n  },\n  \"homepage\": \"https://docs.tavily.com\",\n  \"repository\": \"https://github.com/tavily-ai/skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"search\", \"web-search\", \"rag\", \"agents\", \"llm\", \"research\", \"crawl\", \"extract\"],\n  \"skills\": \"./skills/\"\n}"
+  },
+  "markdown_frontmatter": {
+    "skills/tavily-cli/SKILL.md": "\nname: tavily-cli\ndescription: |\n  Set up, authenticate, update, troubleshoot, or choose between Tavily CLI web commands. Use when the user asks about the Tavily CLI, installing Tavily skills, first-time setup, authentication, keyless limits, CLI updates, or which Tavily command to use. For an ordinary web task, use the specific search, extract, map, crawl, research, or dynamic-search skill instead.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-map/SKILL.md": "\nname: tavily-map\ndescription: |\n  Discover and list all URLs on a website without extracting content, via the Tavily CLI. Use this skill when the user wants to find a specific page on a large site, list all URLs, see the site structure, find where something is on a domain, or says \"map the site\", \"find the URL for\", \"what pages are on\", \"list all pages\", or \"site structure\". Faster than crawling — returns URLs only. Essential when you know the site but not the exact page. Combine with extract for targeted content retrieval.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-crawl/SKILL.md": "\nname: tavily-crawl\ndescription: |\n  Crawl websites and extract content from multiple pages via the Tavily CLI. Use this skill when the user wants to crawl a site, download documentation, extract an entire docs section, bulk-extract pages, save a site as local markdown files, or says \"crawl\", \"get all the pages\", \"download the docs\", \"extract everything under /docs\", \"bulk extract\", or needs content from many pages on the same domain. Supports depth/breadth control, path filtering, semantic instructions, and saving each page as a local markdown file.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-extract/SKILL.md": "\nname: tavily-extract\ndescription: |\n  Extract clean markdown or text content from specific URLs via the Tavily CLI. Use this skill when the user has one or more URLs and wants their content, says \"extract\", \"grab the content from\", \"pull the text from\", \"get the page at\", \"read this webpage\", or needs clean text from web pages. Handles JavaScript-rendered pages, returns LLM-optimized markdown, and supports query-focused chunking for targeted extraction. Can process up to 20 URLs in a single call.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-dynamic-search/SKILL.md": "\nname: tavily-dynamic-search\ndescription: |\n  Programmatic Tavily search with context isolation. Use when web search or extraction will return large results that need filtering, deduplication, or multi-step triage before they enter the model context. Use tavily-search for ordinary lookups and tavily-research for end-to-end cited synthesis.\nallowed-tools: Bash(tvly *), Bash(python3 *), Bash(uv run *), Bash(jq *)\n",
+    "skills/tavily-search/SKILL.md": "\nname: tavily-search\ndescription: |\n  Search the web with LLM-optimized results via the Tavily CLI. Use this skill when the user wants to search the web, find articles, look up information, get recent news, discover sources, or says \"search for\", \"find me\", \"look up\", \"what's the latest on\", \"find articles about\", or needs current information from the internet. Returns relevant results with content snippets, relevance scores, and metadata — optimized for LLM consumption. Supports domain filtering, time ranges, and multiple search depths.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-research/SKILL.md": "\nname: tavily-research\ndescription: |\n  Conduct comprehensive AI-powered research with citations via the Tavily CLI. Use this skill when the user wants deep research, a detailed report, a comparison, market analysis, literature review, or says \"research\", \"investigate\", \"analyze in depth\", \"compare X vs Y\", \"what does the market look like for\", or needs multi-source synthesis with explicit citations. Returns a structured report grounded in web sources. Takes 30-120 seconds. For quick fact-finding, use tavily-search instead.\nallowed-tools: Bash(tvly *)\n",
+    "skills/tavily-best-practices/SKILL.md": "\nname: tavily-best-practices\ndescription: \"Build production-ready Tavily integrations with best practices baked in. Reference documentation for developers using coding assistants (Claude Code, Cursor, etc.) to implement web search, content extraction, crawling, and research in agentic workflows, RAG systems, or autonomous agents.\"\n"
+  }
+}

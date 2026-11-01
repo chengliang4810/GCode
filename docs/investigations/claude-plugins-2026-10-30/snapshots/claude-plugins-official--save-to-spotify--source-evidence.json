@@ -1,0 +1,29 @@
+{
+  "repo": "spotify/save-to-spotify",
+  "commit": "9d05c8cd8c8559552f84e27fe30f46b7693ce69a",
+  "path": "plugin",
+  "archive_sha256": "d8b6fa75dc3a1b2a606041498d085912eedc98077e70d69ecaf878736f303060",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    "skills/configure-chapter-skip/SKILL.md",
+    "skills/save-to-spotify/SKILL.md",
+    "skills/save-to-spotify/references/audio-providers.md",
+    "skills/save-to-spotify/references/cli-usage.md",
+    "skills/save-to-spotify/references/content-quality.md",
+    "skills/save-to-spotify/references/cover-image.md",
+    "skills/save-to-spotify/references/episode-description.md",
+    "skills/save-to-spotify/references/local-preview.md",
+    "skills/save-to-spotify/references/onboarding.md",
+    "skills/save-to-spotify/references/recipes.md",
+    "skills/save-to-spotify/references/spotify-api.md",
+    "skills/save-to-spotify/references/timeline.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"save-to-spotify\",\n  \"version\": \"0.2.0\",\n  \"description\": \"Create polished audio episodes with TTS narration, rich timelines, cover images, and save them to Spotify via the save-to-spotify CLI.\",\n  \"author\": {\n    \"name\": \"Spotify\",\n    \"url\": \"https://github.com/spotify\"\n  },\n  \"homepage\": \"https://github.com/spotify/save-to-spotify\",\n  \"repository\": \"https://github.com/spotify/save-to-spotify\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"spotify\",\n    \"audio\",\n    \"podcast\",\n    \"tts\",\n    \"timeline\",\n    \"save-to-spotify\"\n  ],\n  \"skills\": \"./skills/\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/save-to-spotify/SKILL.md": "\nid: save-to-spotify\nname: save-to-spotify\ndescription: Create polished audio content and save to Spotify. Produces episodes with TTS narration, a rich timeline (chapters plus in-player images, external links, and Spotify entity cards), and a cover image. Also use for raw media saves, show/episode management, and timeline navigation.\nenabled: true\n",
+    "skills/configure-chapter-skip/SKILL.md": "\nid: configure-chapter-skip\nname: configure-chapter-skip\ndescription: Configure chapter-skip playback on a Save to Spotify show — the player's skip buttons jump between chapters instead of seeking 15 seconds. Must be explicitly invoked; use ONLY when the user explicitly says skip-to-topic, skip-to-chapter, chapter skipping, chapter skip, or an equivalent phrase. Never trigger proactively.\nenabled: true\n"
+  }
+}

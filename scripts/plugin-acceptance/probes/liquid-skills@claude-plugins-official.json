@@ -1,0 +1,253 @@
+{
+  "pluginId": "liquid-skills@claude-plugins-official",
+  "sourceCommit": "ae3e4cc3f454923e388bbd841fd931f0c7bf5be4",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "testimonials-section-snippet-locale",
+      "componentId": "skill:liquid-skills:shopify-liquid-themes",
+      "prompt": "/liquid-skills:shopify-liquid-themes Generate the theme code for a customer testimonials module. Write sections/testimonials.liquid that renders up to 6 testimonial blocks: the heading renders from the sections.testimonials.heading key through the t filter and is never hardcoded; each block renders the snippet with the documented render tag passing quote: block.settings.quote and author: block.settings.author; the section schema uses the name t:sections.testimonials.name, declares one block type testimonial whose settings are author with type text and quote with type textarea, sets max_blocks to 6 and includes a presets entry. Write snippets/testimonial-card.liquid starting with a {% doc %} LiquidDoc header that declares @param {string} quote - The testimonial quote and @param {string} author - The testimonial author before {% enddoc %}, then renders the quote and author values. Write locales/en.default.json adding sections.testimonials.heading with the sentence case value What our customers say. Headless boundary: no network, no real external service, no installs and no Shopify store or theme CLI, so editor rendering and store preview remain untested; never use the deprecated include tag. Then read the immutable verify_testimonials.py and run exactly python verify_testimonials.py using Bash; it validates the three files and writes testimonials-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state that theme editor rendering remains untested.",
+      "allowCommands": [
+        "python verify_testimonials.py"
+      ],
+      "verifierOutputs": [
+        "testimonials-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_testimonials.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nsection = Path('sections/testimonials.liquid').read_text(encoding='utf-8')\nsnippet = Path('snippets/testimonial-card.liquid').read_text(encoding='utf-8')\nschema_match = re.search(r'\\{%\\s*schema\\s*%\\}(.*?)\\{%\\s*endschema\\s*%\\}', section, re.S)\nassert schema_match, 'the section must carry a schema tag'\nschema = json.loads(schema_match.group(1))\nassert schema.get('name') == 't:sections.testimonials.name', 'the schema name must use the t: translation prefix'\nassert schema.get('max_blocks') == 6, 'max_blocks must be 6 for this section'\nassert schema.get('presets'), 'the section needs a presets entry'\nblocks = schema.get('blocks') or []\nassert blocks and blocks[0].get('type') == 'testimonial', 'one testimonial block type must be declared'\nsettings = {s.get('id'): s.get('type') for s in blocks[0].get('settings', [])}\nassert settings.get('author') == 'text', 'author must be a text setting'\nassert settings.get('quote') == 'textarea', 'quote must be a textarea setting'\nassert re.search(r'render\\s+[\\'\"]testimonial-card[\\'\"]', section), 'the section must render the snippet'\nassert 'sections.testimonials.heading' in section and re.search(r'\\|\\s*t\\s*\\}\\}', section), 'the heading must render through the t filter'\nassert '{% include' not in section, 'include is deprecated; use render'\nassert 'What our customers say' not in section and 'What Our Customers Say' not in section, 'the heading must not be hardcoded'\nassert '{% doc %}' in snippet and '{% enddoc %}' in snippet, 'the snippet needs a LiquidDoc header'\nassert '@param {string} quote' in snippet, 'the quote param must be declared'\nassert '@param {string} author' in snippet, 'the author param must be declared'\nlocale = json.loads(Path('locales/en.default.json').read_text(encoding='utf-8'))\nassert locale['sections']['testimonials']['heading'] == 'What our customers say', 'the locale heading must be the sentence case value'\n\nreport = {'block_settings': True, 'doc_params': True, 'locale_value': True, 'no_hardcoded_heading': True, 'no_include_tag': True, 'presets_and_max_blocks': True, 'render_call': True, 'schema_name': True}\nPath('testimonials-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('testimonials: section, snippet and locale files verified; theme editor rendering remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_testimonials.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nsection = Path('sections/testimonials.liquid').read_text(encoding='utf-8')\nsnippet = Path('snippets/testimonial-card.liquid').read_text(encoding='utf-8')\nschema_match = re.search(r'\\{%\\s*schema\\s*%\\}(.*?)\\{%\\s*endschema\\s*%\\}', section, re.S)\nassert schema_match, 'the section must carry a schema tag'\nschema = json.loads(schema_match.group(1))\nassert schema.get('name') == 't:sections.testimonials.name', 'the schema name must use the t: translation prefix'\nassert schema.get('max_blocks') == 6, 'max_blocks must be 6 for this section'\nassert schema.get('presets'), 'the section needs a presets entry'\nblocks = schema.get('blocks') or []\nassert blocks and blocks[0].get('type') == 'testimonial', 'one testimonial block type must be declared'\nsettings = {s.get('id'): s.get('type') for s in blocks[0].get('settings', [])}\nassert settings.get('author') == 'text', 'author must be a text setting'\nassert settings.get('quote') == 'textarea', 'quote must be a textarea setting'\nassert re.search(r'render\\s+[\\'\"]testimonial-card[\\'\"]', section), 'the section must render the snippet'\nassert 'sections.testimonials.heading' in section and re.search(r'\\|\\s*t\\s*\\}\\}', section), 'the heading must render through the t filter'\nassert '{% include' not in section, 'include is deprecated; use render'\nassert 'What our customers say' not in section and 'What Our Customers Say' not in section, 'the heading must not be hardcoded'\nassert '{% doc %}' in snippet and '{% enddoc %}' in snippet, 'the snippet needs a LiquidDoc header'\nassert '@param {string} quote' in snippet, 'the quote param must be declared'\nassert '@param {string} author' in snippet, 'the author param must be declared'\nlocale = json.loads(Path('locales/en.default.json').read_text(encoding='utf-8'))\nassert locale['sections']['testimonials']['heading'] == 'What our customers say', 'the locale heading must be the sentence case value'\n\nreport = {'block_settings': True, 'doc_params': True, 'locale_value': True, 'no_hardcoded_heading': True, 'no_include_tag': True, 'presets_and_max_blocks': True, 'render_call': True, 'schema_name': True}\nPath('testimonials-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('testimonials: section, snippet and locale files verified; theme editor rendering remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "testimonials-verification.json",
+          "equals": "{\"block_settings\": true, \"doc_params\": true, \"locale_value\": true, \"no_hardcoded_heading\": true, \"no_include_tag\": true, \"presets_and_max_blocks\": true, \"render_call\": true, \"schema_name\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "{% schema %}"
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "{% render "
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "testimonial-card"
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "t:sections.testimonials.name"
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "sections.testimonials.heading"
+        },
+        {
+          "kind": "file",
+          "path": "sections/testimonials.liquid",
+          "contains": "block.settings.quote"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/testimonial-card.liquid",
+          "contains": "{% doc %}"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/testimonial-card.liquid",
+          "contains": "@param {string} quote"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/testimonial-card.liquid",
+          "contains": "@param {string} author"
+        },
+        {
+          "kind": "file",
+          "path": "locales/en.default.json",
+          "contains": "What our customers say"
+        }
+      ]
+    },
+    {
+      "id": "aurora-gear-cart-drawer-a11y",
+      "componentId": "skill:liquid-skills:liquid-theme-a11y",
+      "prompt": "/liquid-skills:liquid-theme-a11y Build the accessible cart drawer for the Aurora Gear Shopify theme as snippets/cart-drawer.liquid, starting with a Liquid comment that names it the Aurora Gear cart drawer. Apply the skill patterns to this drawer: use the native dialog element whose opening tag carries aria-labelledby pointing at the drawer title and aria-modal=\"true\", and never an aria-label with a literal string on the dialog; the close button uses the documented close label aria-label=\"{{ 'accessibility.close' | t }}\"; iterate line items with {% for item in cart.items %}; every quantity input pairs a visible label and input through matching for and id values, both set to Quantity-{{ item.index }}; every remove button is a clear button carrying the documented remove label aria-label=\"{{ 'cart.remove_item' | t: title: item.title }}\"; the drawer announces cart count updates through a live region exactly <span aria-live=\"polite\" aria-atomic=\"true\">; opening calls showModal() and closing returns focus to the trigger element; the drawer animation respects reduced motion inside one {% stylesheet %} block containing @media (prefers-reduced-motion: reduce), and that is the only stylesheet tag in the file. Headless boundary: no network, no real external service, no installs, no Shopify store and no browser, so rendering, real focus movement and screen reader output remain untested. Then read the immutable verify_cart_drawer.py and run exactly python verify_cart_drawer.py using Bash; it validates the drawer and writes cart-drawer-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that browser rendering and screen reader behavior remain untested.",
+      "allowCommands": [
+        "python verify_cart_drawer.py"
+      ],
+      "verifierOutputs": [
+        "cart-drawer-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cart_drawer.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('snippets/cart-drawer.liquid').read_text(encoding='utf-8')\nassert 'Aurora Gear' in text, 'the drawer must be named for the Aurora Gear theme'\ndialog = re.search(r'<dialog\\b[^>]*>', text, re.S)\nassert dialog, 'the drawer must use the native dialog element'\ntag = dialog.group(0)\nassert 'aria-labelledby' in tag, 'the dialog must be labelled by its title element'\nassert 'aria-label=\"' not in tag, 'the dialog must not carry a literal aria-label string'\nassert 'aria-modal=\"true\"' in tag, 'the dialog must set aria-modal'\nassert re.search(r\"\"\"aria-label=\"\\{\\{\\s*'accessibility\\.close'\\s*\\|\\s*t\\s*\\}\\}\"\"\", text), 'the close button must use the documented close label'\nassert '{% for item in cart.items %}' in text, 'line items must iterate cart.items'\nassert re.search(r\"\"\"for=\"Quantity-\\{\\{ item\\.index \\}\\}\"\"\", text) and re.search(r\"\"\"id=\"Quantity-\\{\\{ item\\.index \\}\\}\"\"\", text), 'the quantity label and input must pair on Quantity-{{ item.index }}'\nassert re.search(r\"\"\"aria-label=\"\\{\\{\\s*'cart\\.remove_item'\\s*\\|\\s*t:\\s*title:\\s*item\\.title\\s*\\}\\}\"\"\", text), 'remove buttons must use the documented remove label'\nassert re.search(r\"\"\"<span aria-live=\"polite\" aria-atomic=\"true\">\"\"\", text), 'the cart count live region pattern is missing'\nassert 'showModal()' in text, 'opening must use the native showModal call'\nassert re.search(r\"\"\"addEventListener\\(\\s*['\"]close['\"]\"\"\", text) and re.search(r'\\.focus\\(\\)', text), 'closing must return focus to the trigger element'\nassert text.count('{% stylesheet %}') == 1 and text.count('{% endstylesheet %}') == 1, 'exactly one stylesheet tag per file'\nassert '@media (prefers-reduced-motion: reduce)' in text, 'the animation must respect reduced motion'\n\nreport = {'aurora_named': True, 'dialog_semantics': True, 'labels_paired': True, 'live_region': True, 'one_stylesheet_tag': True, 'reduced_motion': True, 'remove_and_close_labels': True, 'show_and_refocus': True}\nPath('cart-drawer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('cart drawer: dialog semantics, labels and reduced-motion verified; browser rendering and screen reader behavior remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cart_drawer.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('snippets/cart-drawer.liquid').read_text(encoding='utf-8')\nassert 'Aurora Gear' in text, 'the drawer must be named for the Aurora Gear theme'\ndialog = re.search(r'<dialog\\b[^>]*>', text, re.S)\nassert dialog, 'the drawer must use the native dialog element'\ntag = dialog.group(0)\nassert 'aria-labelledby' in tag, 'the dialog must be labelled by its title element'\nassert 'aria-label=\"' not in tag, 'the dialog must not carry a literal aria-label string'\nassert 'aria-modal=\"true\"' in tag, 'the dialog must set aria-modal'\nassert re.search(r\"\"\"aria-label=\"\\{\\{\\s*'accessibility\\.close'\\s*\\|\\s*t\\s*\\}\\}\"\"\", text), 'the close button must use the documented close label'\nassert '{% for item in cart.items %}' in text, 'line items must iterate cart.items'\nassert re.search(r\"\"\"for=\"Quantity-\\{\\{ item\\.index \\}\\}\"\"\", text) and re.search(r\"\"\"id=\"Quantity-\\{\\{ item\\.index \\}\\}\"\"\", text), 'the quantity label and input must pair on Quantity-{{ item.index }}'\nassert re.search(r\"\"\"aria-label=\"\\{\\{\\s*'cart\\.remove_item'\\s*\\|\\s*t:\\s*title:\\s*item\\.title\\s*\\}\\}\"\"\", text), 'remove buttons must use the documented remove label'\nassert re.search(r\"\"\"<span aria-live=\"polite\" aria-atomic=\"true\">\"\"\", text), 'the cart count live region pattern is missing'\nassert 'showModal()' in text, 'opening must use the native showModal call'\nassert re.search(r\"\"\"addEventListener\\(\\s*['\"]close['\"]\"\"\", text) and re.search(r'\\.focus\\(\\)', text), 'closing must return focus to the trigger element'\nassert text.count('{% stylesheet %}') == 1 and text.count('{% endstylesheet %}') == 1, 'exactly one stylesheet tag per file'\nassert '@media (prefers-reduced-motion: reduce)' in text, 'the animation must respect reduced motion'\n\nreport = {'aurora_named': True, 'dialog_semantics': True, 'labels_paired': True, 'live_region': True, 'one_stylesheet_tag': True, 'reduced_motion': True, 'remove_and_close_labels': True, 'show_and_refocus': True}\nPath('cart-drawer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('cart drawer: dialog semantics, labels and reduced-motion verified; browser rendering and screen reader behavior remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cart-drawer-verification.json",
+          "equals": "{\"aurora_named\": true, \"dialog_semantics\": true, \"labels_paired\": true, \"live_region\": true, \"one_stylesheet_tag\": true, \"reduced_motion\": true, \"remove_and_close_labels\": true, \"show_and_refocus\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "aria-labelledby"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "aria-modal=\"true\""
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "accessibility.close"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "cart.remove_item"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "aria-live=\"polite\" aria-atomic=\"true\""
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "showModal()"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "{% for item in cart.items %}"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "Quantity-{{ item.index }}"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "Aurora Gear"
+        },
+        {
+          "kind": "file",
+          "path": "snippets/cart-drawer.liquid",
+          "contains": "prefers-reduced-motion: reduce"
+        }
+      ]
+    },
+    {
+      "id": "summit-trails-hero-standards-rewrite",
+      "componentId": "skill:liquid-skills:liquid-theme-standards",
+      "prompt": "/liquid-skills:liquid-theme-standards Rewrite the broken hero section from the immutable hero-bad.liquid into a standards-compliant sections/hero.liquid for the Summit Trails theme, keeping the same business content: the headline Summit Trails and the call to action Book a hike. Apply the skill rules: BEM naming with the root class hero and a single element level, so the title class is hero__title and no double-underscore chains like __sub__ appear; the CTA keeps the modifier paired with its base, rendered as class=\"button button--primary\"; replace every hardcoded color and spacing value with CSS custom properties, namespacing component tokens on the component root as --hero-bg and --hero-pad and referencing them with var(); the dynamic background color moves into an inline style attribute on the root div written exactly as style=\"--hero-bg: {{ section.settings.bg_color }};\" because the stylesheet tag does not process Liquid; the stylesheet block must contain no Liquid delimiters, no hex colors, no ID selectors and no !important; use the logical property padding-inline and never padding-left; style state with &:hover and &:focus-visible nesting; move the script into one {% javascript %} tag as a native web component registering the hero-cta element through customElements.define with a private method #handleClick, using for (const iteration and async await instead of forEach or then chains. Headless boundary: no network, no real external service, no installs, no Shopify store and no browser, so visual rendering remains untested. Then read the immutable verify_hero_standards.py and run exactly python verify_hero_standards.py using Bash; it validates the rewrite and writes hero-standards-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that visual rendering in a browser remains untested.",
+      "allowCommands": [
+        "python verify_hero_standards.py"
+      ],
+      "verifierOutputs": [
+        "hero-standards-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_hero_standards.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('sections/hero.liquid').read_text(encoding='utf-8')\nassert 'Summit Trails' in text and 'Book a hike' in text, 'the business content must be preserved'\nassert 'hero__title' in text, 'the title must use BEM element naming'\nassert 'productCard' not in text and '__sub__' not in text, 'the camelCase and double-level element names must go'\nassert 'button button--primary' in text, 'the modifier must stay paired with its base class'\nassert '!important' not in text, 'never use !important'\nassert 'padding-inline' in text and 'padding-left' not in text, 'use logical properties'\nassert re.search(r'style=\"--hero-bg: \\{\\{ section\\.settings\\.bg_color \\}\\};\"', text), 'the dynamic color must move to the inline style attribute'\nassert '--hero-bg' in text and '--hero-pad' in text and 'var(--' in text, 'component tokens must be namespaced and referenced'\nsheet = re.search(r'\\{%\\s*stylesheet\\s*%\\}(.*?)\\{\\%\\s*endstylesheet\\s*%\\}', text, re.S)\nassert sheet, 'the styles must live in a stylesheet tag'\ncss = sheet.group(1)\nassert '{{' not in css and '{%' not in css, 'the stylesheet tag does not process Liquid'\nassert not re.search(r'#[0-9a-fA-F]{3,8}\\b', css), 'no hardcoded hex colors; use tokens'\nassert not re.search(r'(?m)^\\s*#[A-Za-z][\\w-]*\\s*\\{', css), 'no ID selectors'\nassert '&:hover' in css and '&:focus-visible' in css, 'state styling uses nesting with &'\nscript = re.search(r'\\{%\\s*javascript\\s*%\\}(.*?)\\{\\%\\s*endjavascript\\s*%\\}', text, re.S)\nassert script, 'the script must live in a javascript tag'\njs = script.group(1)\nassert re.search(r'customElements\\.define\\(\\s*[\\'\"]hero-cta[\\'\"]', js), 'register the hero-cta web component'\nassert '#handleClick' in js, 'private methods use the hash syntax'\nassert 'for (const' in js, 'loops use for (const'\nassert '.forEach(' not in js and '.then(' not in js, 'no forEach or then chains'\nassert 'async' in js and 'await' in js, 'async/await instead of promise chains'\n\nreport = {'bem_naming': True, 'content_preserved': True, 'modern_js': True, 'modifier_paired': True, 'no_important_or_hex': True, 'state_nesting': True, 'stylesheet_no_liquid': True, 'tokens_namespaced': True}\nPath('hero-standards-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('hero rewrite: BEM, tokens, logical properties and modern JS verified; visual rendering remains untested')\n"
+        },
+        {
+          "path": "hero-bad.liquid",
+          "text": "<div id=\"hero-title\" class=\"productCard\">\n  <h1 style=\"color: #ff6600 !important; padding-left: 2rem;\">Summit Trails</h1>\n  <p class=\"productCard__sub__text\">Guided hikes for every season</p>\n  <button class=\"button--primary\" type=\"button\">Book a hike</button>\n</div>\n{% stylesheet %}\n  .productCard { background: {{ section.settings.bg_color }}; }\n  #hero-title { padding-left: 2rem; }\n  .button--primary:hover { background: #0044cc !important; }\n{% endstylesheet %}\n{% javascript %}\n  items.forEach(function (item) {\n    fetch('/cart/add.js').then(function (response) {\n      return response.json();\n    });\n  });\n{% endjavascript %}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_hero_standards.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('sections/hero.liquid').read_text(encoding='utf-8')\nassert 'Summit Trails' in text and 'Book a hike' in text, 'the business content must be preserved'\nassert 'hero__title' in text, 'the title must use BEM element naming'\nassert 'productCard' not in text and '__sub__' not in text, 'the camelCase and double-level element names must go'\nassert 'button button--primary' in text, 'the modifier must stay paired with its base class'\nassert '!important' not in text, 'never use !important'\nassert 'padding-inline' in text and 'padding-left' not in text, 'use logical properties'\nassert re.search(r'style=\"--hero-bg: \\{\\{ section\\.settings\\.bg_color \\}\\};\"', text), 'the dynamic color must move to the inline style attribute'\nassert '--hero-bg' in text and '--hero-pad' in text and 'var(--' in text, 'component tokens must be namespaced and referenced'\nsheet = re.search(r'\\{%\\s*stylesheet\\s*%\\}(.*?)\\{\\%\\s*endstylesheet\\s*%\\}', text, re.S)\nassert sheet, 'the styles must live in a stylesheet tag'\ncss = sheet.group(1)\nassert '{{' not in css and '{%' not in css, 'the stylesheet tag does not process Liquid'\nassert not re.search(r'#[0-9a-fA-F]{3,8}\\b', css), 'no hardcoded hex colors; use tokens'\nassert not re.search(r'(?m)^\\s*#[A-Za-z][\\w-]*\\s*\\{', css), 'no ID selectors'\nassert '&:hover' in css and '&:focus-visible' in css, 'state styling uses nesting with &'\nscript = re.search(r'\\{%\\s*javascript\\s*%\\}(.*?)\\{\\%\\s*endjavascript\\s*%\\}', text, re.S)\nassert script, 'the script must live in a javascript tag'\njs = script.group(1)\nassert re.search(r'customElements\\.define\\(\\s*[\\'\"]hero-cta[\\'\"]', js), 'register the hero-cta web component'\nassert '#handleClick' in js, 'private methods use the hash syntax'\nassert 'for (const' in js, 'loops use for (const'\nassert '.forEach(' not in js and '.then(' not in js, 'no forEach or then chains'\nassert 'async' in js and 'await' in js, 'async/await instead of promise chains'\n\nreport = {'bem_naming': True, 'content_preserved': True, 'modern_js': True, 'modifier_paired': True, 'no_important_or_hex': True, 'state_nesting': True, 'stylesheet_no_liquid': True, 'tokens_namespaced': True}\nPath('hero-standards-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('hero rewrite: BEM, tokens, logical properties and modern JS verified; visual rendering remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "hero-standards-verification.json",
+          "equals": "{\"bem_naming\": true, \"content_preserved\": true, \"modern_js\": true, \"modifier_paired\": true, \"no_important_or_hex\": true, \"state_nesting\": true, \"stylesheet_no_liquid\": true, \"tokens_namespaced\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "hero-bad.liquid",
+          "equals": "<div id=\"hero-title\" class=\"productCard\">\n  <h1 style=\"color: #ff6600 !important; padding-left: 2rem;\">Summit Trails</h1>\n  <p class=\"productCard__sub__text\">Guided hikes for every season</p>\n  <button class=\"button--primary\" type=\"button\">Book a hike</button>\n</div>\n{% stylesheet %}\n  .productCard { background: {{ section.settings.bg_color }}; }\n  #hero-title { padding-left: 2rem; }\n  .button--primary:hover { background: #0044cc !important; }\n{% endstylesheet %}\n{% javascript %}\n  items.forEach(function (item) {\n    fetch('/cart/add.js').then(function (response) {\n      return response.json();\n    });\n  });\n{% endjavascript %}\n"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "Summit Trails"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "Book a hike"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "hero__title"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "button button--primary"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "padding-inline"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "&:focus-visible"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "--hero-bg"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "style=\"--hero-bg: {{ section.settings.bg_color }};\""
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "for (const"
+        },
+        {
+          "kind": "file",
+          "path": "sections/hero.liquid",
+          "contains": "#handleClick"
+        }
+      ]
+    }
+  ]
+}

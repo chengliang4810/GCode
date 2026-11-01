@@ -45,6 +45,11 @@ type Backend struct {
 	stepping       int
 	quitAfterModal bool
 
+	// orderingChildren tells that child windows are being ordered above
+	// their parent, or out with it (child_window.go): what AppKit tells
+	// of their ordering then orders nothing more.
+	orderingChildren bool
+
 	dockProgress dockProgress
 	// openedAtLogin records whether the system started the app as a login
 	// item (WasOpenedAtLogin).
@@ -357,6 +362,7 @@ func registerAppDelegate() {
 		method("applicationShouldTerminateAfterLastWindowClosed:", func(self id, _ objc.SEL, app id) bool { return false }),
 		method("observeValueForKeyPath:ofObject:change:context:", func(self id, _ objc.SEL, keyPath, object, change id, ctx uintptr) {
 			if goString(keyPath) == "effectiveAppearance" {
+				theBackend.refreshSystemBackings()
 				theBackend.h.ThemeChanged()
 			}
 		}),
@@ -364,6 +370,7 @@ func registerAppDelegate() {
 			theBackend.h.DisplaysChanged()
 		}),
 		method("preferencesChanged:", func(self id, _ objc.SEL, n id) {
+			theBackend.refreshSystemBackings()
 			theBackend.h.ThemeChanged()
 		}),
 		method("localeChanged:", func(self id, _ objc.SEL, n id) {
@@ -387,6 +394,7 @@ func (a appController) WithActivationToken(_ string, fn func()) { fn() }
 func (a appController) Hide()                                   { send(a.b.app, "hide:", 0) }
 func (a appController) Unhide()                                 { send(a.b.app, "unhide:", 0) }
 func (a appController) IsHidden() bool                          { return sendBool(a.b.app, "isHidden") }
+func (a appController) IsActive() bool                          { return sendBool(a.b.app, "isActive") }
 
 func (a appController) SetBadge(label string) {
 	tile := send(a.b.app, "dockTile")
@@ -483,14 +491,8 @@ func (a appController) Package() (platform.PackageInfo, bool) {
 	return info, ok
 }
 
-func (a appController) ClearBrowsingData(done func(error)) {
-	withPool(func() {
-		store := send(class("WKWebsiteDataStore"), "defaultDataStore")
-		types := send(class("WKWebsiteDataStore"), "allWebsiteDataTypes")
-		blk := newBlock(func(_ objc.Block) { a.b.runOnMain(func() { done(nil) }) })
-		send(store, "removeDataOfTypes:modifiedSince:completionHandler:", uintptr(types), uintptr(send(class("NSDate"), "distantPast")), uintptr(blk))
-		blk.Release()
-	})
+func (a appController) ClearBrowsingData(store platform.DataStore, types platform.SiteData, done func(error)) {
+	a.removeData(store, types, done)
 }
 
 // AddRecentDocument and ClearRecentDocuments use the shared document

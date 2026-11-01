@@ -1,0 +1,46 @@
+{
+  "repo": "appwrite/claude-plugin",
+  "commit": "ab3c90b37c95b7068f0c064dc562cf21958e8e19",
+  "path": ".",
+  "archive_sha256": "2761711dc9a243811a6dbbbca7252432e63c5447eb440bb70a7348454f6fd5ff",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "commands/deploy-function.md",
+    "commands/deploy-site.md",
+    "skills/cli/SKILL.md",
+    "skills/dart/SKILL.md",
+    "skills/dotnet/SKILL.md",
+    "skills/go/SKILL.md",
+    "skills/kotlin/SKILL.md",
+    "skills/php/SKILL.md",
+    "skills/python/SKILL.md",
+    "skills/ruby/SKILL.md",
+    "skills/rust/SKILL.md",
+    "skills/swift/SKILL.md",
+    "skills/typescript/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n    \"name\": \"appwrite\",\n    \"version\": \"0.2.0\",\n    \"description\": \"Appwrite tools for Claude Code, including SDK skills, the hosted Appwrite MCP server, and deployment commands.\",\n    \"author\": {\n        \"name\": \"Appwrite\",\n        \"email\": \"team@appwrite.io\"\n    },\n    \"homepage\": \"https://appwrite.io/docs/tooling/ai/ai-dev-tools/claude-code\",\n    \"repository\": \"https://github.com/appwrite/claude-plugin\",\n    \"license\": \"BSD-3-Clause\",\n    \"keywords\": [\n        \"appwrite\",\n        \"claude-code\",\n        \"mcp\",\n        \"skills\"\n    ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"appwrite\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.appwrite.io/\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/deploy-site.md": "\nname: deploy-site\ndescription: Deploy a site using the Appwrite CLI\ndisable-model-invocation: true\n",
+    "skills/python/SKILL.md": "\nname: python\ndescription: Appwrite Python SDK skill. Use when building server-side Python applications with Appwrite, including Django, Flask, and FastAPI integrations. Covers user management, database/table CRUD, file storage, and functions via API keys.\n",
+    "skills/go/SKILL.md": "\nname: go\ndescription: Appwrite Go SDK skill. Use when building server-side Go applications with Appwrite. Covers user management, database/table CRUD, file storage, and functions via API keys. Uses per-service packages and functional options pattern.\n",
+    "skills/php/SKILL.md": "\nname: php\ndescription: Appwrite PHP SDK skill. Use when building server-side PHP applications with Appwrite, including Laravel and Symfony integrations. Covers user management, database/table CRUD, file storage, and functions via API keys.\n",
+    "skills/dart/SKILL.md": "\nname: dart\ndescription: Appwrite Dart SDK skill. Use when building Flutter apps (mobile, web, desktop) or server-side Dart applications with Appwrite. Covers client-side auth (email, OAuth), database queries, file uploads with native file handling, real-time subscriptions, and server-side admin via API keys for user management, database administration, storage, and functions.\n",
+    "skills/kotlin/SKILL.md": "\nname: kotlin\ndescription: Appwrite Kotlin SDK skill. Use when building native Android apps or server-side Kotlin/JVM backends with Appwrite. Covers client-side auth (email, OAuth with Activity integration), database queries, file uploads, real-time subscriptions with coroutine support, and server-side admin via API keys for user management, database administration, storage, and functions.\n",
+    "skills/swift/SKILL.md": "\nname: swift\ndescription: Appwrite Swift SDK skill. Use when building native iOS, macOS, watchOS, or tvOS apps, or server-side Swift applications with Appwrite. Covers client-side auth (email, OAuth), database queries, file uploads, real-time subscriptions with async/await, and server-side admin via API keys for user management, database administration, storage, and functions.\n",
+    "skills/typescript/SKILL.md": "\nname: typescript\ndescription: Appwrite TypeScript SDK skill. Use when building browser-based JavaScript/TypeScript apps, React Native mobile apps, or server-side Node.js/Deno backends with Appwrite. Covers client-side auth (email, OAuth, anonymous), database queries, file uploads, real-time subscriptions, and server-side admin via API keys for user management, database administration, storage, and functions.\n",
+    "skills/cli/SKILL.md": "\nname: cli\ndescription: Appwrite CLI skill. Use when managing Appwrite projects from the command line. Covers installation, login, project initialization, multi-file project configuration, deploying functions/sites/tables/buckets/teams/webhooks/topics, flag-based list queries, non-interactive CI/CD mode, and generating type-safe SDKs.\n",
+    "skills/ruby/SKILL.md": "\nname: ruby\ndescription: Appwrite Ruby SDK skill. Use when building server-side Ruby applications with Appwrite, including Rails and Sinatra integrations. Covers user management, database/table CRUD, file storage, and functions via API keys.\n",
+    "commands/deploy-function.md": "\nname: deploy-function\ndescription: Deploy a function using the Appwrite CLI\ndisable-model-invocation: true\n",
+    "skills/rust/SKILL.md": "\nname: rust\ndescription: Appwrite Rust SDK skill. Use when building server-side Rust applications with Appwrite. Covers async client setup with API keys, user management, TablesDB database/table/row operations, file storage, function executions, permissions, queries, and error handling. Uses the crates.io `appwrite` package and Tokio.\n",
+    "skills/dotnet/SKILL.md": "\nname: dotnet\ndescription: Appwrite .NET SDK skill. Use when building server-side C# or .NET applications with Appwrite, including ASP.NET and Blazor integrations. Covers user management, database/table CRUD, file storage, and functions via API keys.\n"
+  }
+}

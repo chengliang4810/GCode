@@ -1,0 +1,302 @@
+{
+  "pluginId": "amd-skills@claude-plugins-official",
+  "sourceCommit": "6916fb371d1cba40757b223cf16b4cd4912b202f",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "record-hyperloom-launch-gates",
+      "componentId": "skill:amd-skills:hyperloom-workload-optimizer",
+      "prompt": "Use the hyperloom-workload-optimizer skill to prepare the launch readiness record for the Hyperloom 12-hour demo profile on the baremetal host instinct-lab-02. Inputs: the model is Qwen/Qwen3-14B-FP8 at /mnt/nvme/models/Qwen3-14B-FP8, framework vllm, TP=1, EP=1, CONC=64, ISL=1024, OSL=1024, precision fp8, MAX_HOURS=12, TARGET_GAIN=50, RUN_MODE baremetal. Headless boundary: there is no AMD Instinct GPU, no network, no installs, no Hyperloom wheel and no LLM credentials, so no install, preflight or optimize run can happen. Do not claim that any gate or launch ran. Write hyperloom-launch-record.md as the documented launch record: the full launch plan block with the documented field names MODEL_PATH, FRAMEWORK, TP, EP, CONC, ISL, OSL, PRECISION, MAX_HOURS, TARGET_GAIN, profile, flags and RUN_MODE; the documented gate order IR-2 then IR-1 then launch; IR-2 as install.sh and kernel-agent.env.sh in the same shell that spawns optimize; IR-1 as zero foreign serving PIDs and the IR1_VRAM_LIMIT_MIB default of 500 MiB; the resume carve-out with --resume-from and the session manifest.json; the phase discipline that workload questions belong only to Phase 2; the confirmed values persisted to workload.env; and the exact 12-hour flag set --max-hours 12 --precision fp8 --target-gain 50 --max-minutes-framework-pct 0.43 --max-minutes-kernel-pct 0.42, with a note that --max-minutes-explore-pct must not be added because it silently overwrites the framework budget. End the record with an Untested section that contains the exact sentence No optimizer launch ran in this session. and states that the live install, preflight, launch and validated gain remain untested. Then read the immutable verify_hyperloom.py and run exactly python verify_hyperloom.py using Bash to validate the record and write hyperloom-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that GPU execution and the real validated gain remain untested.",
+      "allowCommands": [
+        "python verify_hyperloom.py"
+      ],
+      "verifierOutputs": [
+        "hyperloom-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_hyperloom.py",
+          "text": "import json\nfrom pathlib import Path\n\nrec = Path('hyperloom-launch-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'launch plan' in low and 'MODEL_PATH' in rec, 'the documented launch plan block must be recorded'\nassert '/mnt/nvme/models/Qwen3-14B-FP8' in rec, 'the given model path must appear in the launch plan'\nassert 'MAX_HOURS=12' in rec and 'PRECISION=fp8' in rec, 'the given budget and precision must appear in the launch plan'\nassert 'IR-2' in rec and 'IR-1' in rec and ('ir-2 then ir-1' in low or rec.index('IR-2') < rec.index('IR-1')), 'the documented IR-2 then IR-1 order must be recorded'\nassert 'install.sh' in rec and 'kernel-agent.env.sh' in rec and 'same shell' in low, 'the documented IR-2 install gate must be recorded'\nassert 'IR1_VRAM_LIMIT_MIB' in rec and '500' in rec and 'foreign' in low, 'the documented IR-1 VRAM and foreign process gate must be recorded'\nassert '--resume-from' in rec and 'manifest.json' in rec, 'the documented resume carve-out must be recorded'\nassert 'phase 2' in low and 'workload questions' in low, 'the documented phase discipline for workload questions must be recorded'\nassert 'workload.env' in rec, 'the documented persisted workload file must be recorded'\nassert '--max-minutes-framework-pct 0.43' in rec and '--max-minutes-kernel-pct 0.42' in rec, 'the documented 12-hour flag set must be recorded'\nassert 'no optimizer launch ran in this session' in low, 'the record must state honestly that nothing ran'\n\nreport = {'honest_no_run': True, 'ir1_gate': True, 'ir2_gate': True, 'iron_rule_order': True, 'launch_plan': True, 'phase_discipline': True, 'resume_carveout': True, 'workload_env': True}\nPath('hyperloom-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Hyperloom launch record: documented launch plan, IR-2 and IR-1 gates and phase discipline verified; real optimization remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_hyperloom.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrec = Path('hyperloom-launch-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'launch plan' in low and 'MODEL_PATH' in rec, 'the documented launch plan block must be recorded'\nassert '/mnt/nvme/models/Qwen3-14B-FP8' in rec, 'the given model path must appear in the launch plan'\nassert 'MAX_HOURS=12' in rec and 'PRECISION=fp8' in rec, 'the given budget and precision must appear in the launch plan'\nassert 'IR-2' in rec and 'IR-1' in rec and ('ir-2 then ir-1' in low or rec.index('IR-2') < rec.index('IR-1')), 'the documented IR-2 then IR-1 order must be recorded'\nassert 'install.sh' in rec and 'kernel-agent.env.sh' in rec and 'same shell' in low, 'the documented IR-2 install gate must be recorded'\nassert 'IR1_VRAM_LIMIT_MIB' in rec and '500' in rec and 'foreign' in low, 'the documented IR-1 VRAM and foreign process gate must be recorded'\nassert '--resume-from' in rec and 'manifest.json' in rec, 'the documented resume carve-out must be recorded'\nassert 'phase 2' in low and 'workload questions' in low, 'the documented phase discipline for workload questions must be recorded'\nassert 'workload.env' in rec, 'the documented persisted workload file must be recorded'\nassert '--max-minutes-framework-pct 0.43' in rec and '--max-minutes-kernel-pct 0.42' in rec, 'the documented 12-hour flag set must be recorded'\nassert 'no optimizer launch ran in this session' in low, 'the record must state honestly that nothing ran'\n\nreport = {'honest_no_run': True, 'ir1_gate': True, 'ir2_gate': True, 'iron_rule_order': True, 'launch_plan': True, 'phase_discipline': True, 'resume_carveout': True, 'workload_env': True}\nPath('hyperloom-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Hyperloom launch record: documented launch plan, IR-2 and IR-1 gates and phase discipline verified; real optimization remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-verification.json",
+          "equals": "{\"honest_no_run\": true, \"ir1_gate\": true, \"ir2_gate\": true, \"iron_rule_order\": true, \"launch_plan\": true, \"phase_discipline\": true, \"resume_carveout\": true, \"workload_env\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "Launch plan"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "IR1_VRAM_LIMIT_MIB"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "--resume-from"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "workload.env"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "/mnt/nvme/models/Qwen3-14B-FP8"
+        },
+        {
+          "kind": "file",
+          "path": "hyperloom-launch-record.md",
+          "contains": "instinct-lab-02"
+        }
+      ]
+    },
+    {
+      "id": "plan-local-ai-app-integration",
+      "componentId": "skill:amd-skills:local-ai-app-integration",
+      "prompt": "Use the local-ai-app-integration skill to prepare the Embeddable Lemonade integration plan for Lumen Notes, a Python desktop note app at C:/work/lumen-notes that calls the cloud with openai-python. The survey found exactly two places that matter: the single client construction site is lumen_notes/ai/client.py and the API-key onboarding gate is lumen_notes/ui/onboarding.py. The app primary modality is text chat, the target platform is Windows x64, and the app must ship a local mode with no separate end-user install. Headless boundary: no network, no Lemonade binary, no model download and no installs, so nothing can be launched or pulled. Do not claim that lemond ran. Write lumen-notes-integration-plan.md as the documented integration plan: the survey of client library, modalities, the single base URL and key construction point and the key gating; the one default model and recipe profile with its rationale; the full package placement under vendor/lemonade/ including resources/; the lemond_launcher.py contract with secrets.token_urlsafe(32), a free localhost port and a GET /api/v1/health readiness poll; the three mandatory client changes base_url http://127.0.0.1:{port}/api/v1, the launcher key and a 120 second timeout; the backend install and POST /api/v1/pull step before first inference; and the rule that local mode needs no cloud API key at all. End the plan with an Untested section that contains the exact sentence No integration was built in this session. and states that the real lemond subprocess, model pull and first inference remain untested. Then read the immutable verify_local_app.py and run exactly python verify_local_app.py using Bash to validate the plan and write local-app-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that real process spawn, model download and live inference remain untested.",
+      "allowCommands": [
+        "python verify_local_app.py"
+      ],
+      "verifierOutputs": [
+        "local-app-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_local_app.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('lumen-notes-integration-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'lumen notes' in low and 'lumen_notes/ai/client.py' in plan and 'lumen_notes/ui/onboarding.py' in plan, 'the given app and survey locations must be recorded'\nassert 'openai-python' in plan and 'chat' in low, 'the documented survey of client library and modality must be recorded'\nassert 'qwen3-4b-gguf' in low and 'llamacpp' in low, 'the documented general chat default profile must be recorded'\nassert 'vendor/lemonade/' in plan and 'resources/' in plan, 'the documented full package placement must be recorded'\nassert 'lemond_launcher.py' in plan, 'the documented launcher module must be recorded'\nassert 'secrets.token_urlsafe(32)' in plan and 'get /api/v1/health' in low, 'the documented launcher key and readiness check must be recorded'\nassert 'http://127.0.0.1:' in plan and '/api/v1' in plan, 'the documented local base_url must be recorded'\nassert 'timeout' in low and '120' in plan, 'the mandatory 120 second timeout must be recorded'\nassert 'post /api/v1/pull' in low, 'the documented pull before first use must be recorded'\nassert 'no cloud api key' in low, 'the documented local mode key rule must be recorded'\nassert 'no integration was built in this session' in low, 'the plan must state honestly that nothing was built'\n\nreport = {'client_changes': True, 'honest_no_build': True, 'launcher_contract': True, 'local_mode_no_key': True, 'model_profile': True, 'package_layout': True, 'pull_step': True, 'survey': True}\nPath('local-app-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Local AI app integration plan: documented survey, model profile and launcher contract verified; real lemond integration remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_local_app.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('lumen-notes-integration-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'lumen notes' in low and 'lumen_notes/ai/client.py' in plan and 'lumen_notes/ui/onboarding.py' in plan, 'the given app and survey locations must be recorded'\nassert 'openai-python' in plan and 'chat' in low, 'the documented survey of client library and modality must be recorded'\nassert 'qwen3-4b-gguf' in low and 'llamacpp' in low, 'the documented general chat default profile must be recorded'\nassert 'vendor/lemonade/' in plan and 'resources/' in plan, 'the documented full package placement must be recorded'\nassert 'lemond_launcher.py' in plan, 'the documented launcher module must be recorded'\nassert 'secrets.token_urlsafe(32)' in plan and 'get /api/v1/health' in low, 'the documented launcher key and readiness check must be recorded'\nassert 'http://127.0.0.1:' in plan and '/api/v1' in plan, 'the documented local base_url must be recorded'\nassert 'timeout' in low and '120' in plan, 'the mandatory 120 second timeout must be recorded'\nassert 'post /api/v1/pull' in low, 'the documented pull before first use must be recorded'\nassert 'no cloud api key' in low, 'the documented local mode key rule must be recorded'\nassert 'no integration was built in this session' in low, 'the plan must state honestly that nothing was built'\n\nreport = {'client_changes': True, 'honest_no_build': True, 'launcher_contract': True, 'local_mode_no_key': True, 'model_profile': True, 'package_layout': True, 'pull_step': True, 'survey': True}\nPath('local-app-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Local AI app integration plan: documented survey, model profile and launcher contract verified; real lemond integration remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "local-app-verification.json",
+          "equals": "{\"client_changes\": true, \"honest_no_build\": true, \"launcher_contract\": true, \"local_mode_no_key\": true, \"model_profile\": true, \"package_layout\": true, \"pull_step\": true, \"survey\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "Qwen3-4B-GGUF"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "vendor/lemonade/"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "secrets.token_urlsafe(32)"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "POST /api/v1/pull"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "Lumen Notes"
+        },
+        {
+          "kind": "file",
+          "path": "lumen-notes-integration-plan.md",
+          "contains": "lumen_notes/ui/onboarding.py"
+        }
+      ]
+    },
+    {
+      "id": "write-local-ai-use-routing-rule",
+      "componentId": "skill:amd-skills:local-ai-use",
+      "prompt": "Use the local-ai-use skill to write the persistent routing rule for the atlas-notes workspace at /home/dev/atlas-notes on Ubuntu 24.04. The user wants image generation to run locally on Lemonade while chat stays on the cloud provider, and wants the default text-to-speech and speech-to-text routes covered too. Because the image workload matters more than size, select SDXL-Turbo with the documented --image-model override. Headless boundary: there is no Lemonade install, no sudo, no network and no model download, so nothing can be installed, started or pulled. Do not claim that the service is running. Write atlas-notes-routing-rule.md as the exact block to append to the target file /home/dev/atlas-notes/AGENTS.md: the documented BEGIN and END markers for amd-skills:local-ai-use around the rule; the endpoint http://localhost:13305/api/v1; the image route POST /api/v1/images/generations with SDXL-Turbo, the ban on cloud image APIs and the ban on the built-in GenerateImage tool; the TTS route POST /api/v1/audio/speech with kokoro-v1; the STT route POST /api/v1/audio/transcriptions with Whisper-Tiny and the disclosure that a fallback transcript came from a different engine; the fallback rule that a cloud call is allowed only after one local attempt failed and the user was told; the setup command python scripts/setup_local_ai.py; the capability checks lemonade status and lemonade backends --all; and the fact that modern Lemonade has no lemonade serve command and does not download models during setup. End the record with an Untested section that contains the exact sentence No Lemonade install, service start or model pull ran in this session. and states that live routing and the first local image request remain untested. Then read the immutable verify_local_use.py and run exactly python verify_local_use.py using Bash to validate the record and write local-use-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that installation, service start and real local inference remain untested.",
+      "allowCommands": [
+        "python verify_local_use.py"
+      ],
+      "verifierOutputs": [
+        "local-use-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_local_use.py",
+          "text": "import json\nfrom pathlib import Path\n\nrule = Path('atlas-notes-routing-rule.md').read_text(encoding='utf-8')\nlow = rule.lower()\nassert '<!-- BEGIN amd-skills:local-ai-use -->' in rule and '<!-- END amd-skills:local-ai-use -->' in rule, 'the documented rule markers must be recorded'\nassert '/home/dev/atlas-notes/AGENTS.md' in rule, 'the given workspace rule file must be recorded'\nassert 'http://localhost:13305/api/v1' in rule, 'the documented Lemonade endpoint must be recorded'\nassert 'post /api/v1/images/generations' in low and 'sdxl-turbo' in low, 'the image route and the given model must be recorded'\nassert 'generateimage' in low and 'cloud image' in low, 'the documented image tool and cloud bans must be recorded'\nassert 'post /api/v1/audio/speech' in low and 'kokoro-v1' in low, 'the TTS route and documented model must be recorded'\nassert 'post /api/v1/audio/transcriptions' in low and 'whisper-tiny' in low, 'the STT route and documented model must be recorded'\nassert 'different engine' in low, 'the documented mixed-engine disclosure must be recorded'\nassert 'one local attempt' in low and 'told' in low, 'the documented fallback rule must be recorded'\nassert 'lemonade status' in low and 'lemonade backends --all' in low, 'the documented capability checks must be recorded'\nassert 'no lemonade serve' in low, 'the record must state that modern Lemonade has no serve command'\nassert 'no lemonade install, service start or model pull ran in this session' in low, 'the record must state honestly that nothing ran'\n\nreport = {'endpoint': True, 'fallback_rule': True, 'honest_no_install': True, 'image_route': True, 'marker_block': True, 'model_defaults': True, 'readiness_checks': True, 'stt_route': True, 'tts_route': True}\nPath('local-use-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Local AI use rule: documented markers, three modality routes and fallback gate verified; live Lemonade routing remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_local_use.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrule = Path('atlas-notes-routing-rule.md').read_text(encoding='utf-8')\nlow = rule.lower()\nassert '<!-- BEGIN amd-skills:local-ai-use -->' in rule and '<!-- END amd-skills:local-ai-use -->' in rule, 'the documented rule markers must be recorded'\nassert '/home/dev/atlas-notes/AGENTS.md' in rule, 'the given workspace rule file must be recorded'\nassert 'http://localhost:13305/api/v1' in rule, 'the documented Lemonade endpoint must be recorded'\nassert 'post /api/v1/images/generations' in low and 'sdxl-turbo' in low, 'the image route and the given model must be recorded'\nassert 'generateimage' in low and 'cloud image' in low, 'the documented image tool and cloud bans must be recorded'\nassert 'post /api/v1/audio/speech' in low and 'kokoro-v1' in low, 'the TTS route and documented model must be recorded'\nassert 'post /api/v1/audio/transcriptions' in low and 'whisper-tiny' in low, 'the STT route and documented model must be recorded'\nassert 'different engine' in low, 'the documented mixed-engine disclosure must be recorded'\nassert 'one local attempt' in low and 'told' in low, 'the documented fallback rule must be recorded'\nassert 'lemonade status' in low and 'lemonade backends --all' in low, 'the documented capability checks must be recorded'\nassert 'no lemonade serve' in low, 'the record must state that modern Lemonade has no serve command'\nassert 'no lemonade install, service start or model pull ran in this session' in low, 'the record must state honestly that nothing ran'\n\nreport = {'endpoint': True, 'fallback_rule': True, 'honest_no_install': True, 'image_route': True, 'marker_block': True, 'model_defaults': True, 'readiness_checks': True, 'stt_route': True, 'tts_route': True}\nPath('local-use-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Local AI use rule: documented markers, three modality routes and fallback gate verified; live Lemonade routing remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "local-use-verification.json",
+          "equals": "{\"endpoint\": true, \"fallback_rule\": true, \"honest_no_install\": true, \"image_route\": true, \"marker_block\": true, \"model_defaults\": true, \"readiness_checks\": true, \"stt_route\": true, \"tts_route\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "<!-- BEGIN amd-skills:local-ai-use -->"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "http://localhost:13305/api/v1"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "POST /api/v1/images/generations"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "--image-model SDXL-Turbo"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "atlas-notes"
+        },
+        {
+          "kind": "file",
+          "path": "atlas-notes-routing-rule.md",
+          "contains": "/home/dev/atlas-notes/AGENTS.md"
+        }
+      ]
+    },
+    {
+      "id": "plan-serving-qwen35-on-instinct",
+      "componentId": "skill:amd-skills:serving-llms-on-instinct",
+      "prompt": "Use the serving-llms-on-instinct skill to prepare the vLLM serving plan for the model Qwen/Qwen3.5-122B-Instruct on the AMD Instinct host instinct-lab-07. The given host has 8 MI300X GPUs at 192 GB each (gfx942), reachable as ops@instinct-lab-07, the HF cache is ~/.cache/huggingface and the endpoint must listen on port 8080 with container name vllm-qwen35-122b. Headless boundary: there is no AMD GPU, no Docker, no network and no HuggingFace token here, so nothing can be detected, validated, pulled or launched. Do not claim that any command ran. Write serving-plan-instinct-lab-07.md as the documented serving plan: the GPU detection and environment validation commands with --host ops@instinct-lab-07 and the ready gate; the recipes_cache.json and blacklist.json checks plus the 24 hour refresh rule; the docker command built from docker_flags, the HF cache mount, -p 8080:8080, the merged env, --env HF_TOKEN=${HF_TOKEN}, the resolved docker image, --model Qwen/Qwen3.5-122B-Instruct, --enable-auto-tool-choice and --tensor-parallel-size 8; the estimate_vram.py fit check with the remaining_for_kv_gb thresholds and the --enforce-eager recovery; the gfx942 native precision set bf16, fp16, fp8_fnuz and int8; the confirmation summary fields; and the launch verification with ss -tlnp, the /health poll loop and the warmup request. End the plan with an Untested section that contains the exact sentence No vLLM server was launched in this session. and states that GPU detection, image pull, container start and real throughput remain untested. Then read the immutable verify_serving.py and run exactly python verify_serving.py using Bash to validate the plan and write serving-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that hardware validation and the live endpoint remain untested.",
+      "allowCommands": [
+        "python verify_serving.py"
+      ],
+      "verifierOutputs": [
+        "serving-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_serving.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('serving-plan-instinct-lab-07.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'scripts/detect.py' in plan and 'ops@instinct-lab-07' in plan, 'the documented GPU detection command for the given host must be recorded'\nassert 'scripts/validate.py --auto-fix' in plan and 'ready' in low, 'the documented environment validation and ready gate must be recorded'\nassert 'recipes_cache.json' in plan and 'blacklist.json' in plan, 'the documented recipe and blacklist checks must be recorded'\nassert 'sync_recipes.py' in plan and '24 hours' in low, 'the documented recipe refresh rule must be recorded'\nassert 'docker run' in plan and '--name' in plan and 'vllm-qwen35-122b' in plan, 'the given container name must appear in the docker command'\nassert 'docker_flags' in plan and '-p 8080:8080' in plan, 'the documented docker flags and given port must be recorded'\nassert '--env HF_TOKEN=${HF_TOKEN}' in plan, 'the documented HF token environment must be recorded'\nassert '--model Qwen/Qwen3.5-122B-Instruct' in plan, 'the given model id must appear in the docker command'\nassert '--enable-auto-tool-choice' in plan and '--tensor-parallel-size 8' in plan, 'the documented vLLM args and given TP must be recorded'\nassert 'estimate_vram.py' in plan and 'remaining_for_kv_gb' in plan, 'the documented VRAM fit check must be recorded'\nassert '--enforce-eager' in plan and 'gfx942' in plan, 'the documented tight-fit recovery and given GPU family must be recorded'\nassert 'fp8_fnuz' in plan and 'bf16' in low, 'the documented gfx942 native precision set must be recorded'\nassert 'ss -tlnp' in plan and '/health' in plan, 'the documented port check and health poll must be recorded'\nassert 'no vllm server was launched in this session' in low, 'the plan must state honestly that nothing launched'\n\nreport = {'docker_command': True, 'environment_validation': True, 'honest_no_launch': True, 'launch_verification': True, 'precision': True, 'recipe_checks': True, 'vllm_args': True, 'vram_fit': True}\nPath('serving-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Serving plan: documented detection, docker build, VRAM fit and health checks verified; real GPU launch remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_serving.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('serving-plan-instinct-lab-07.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'scripts/detect.py' in plan and 'ops@instinct-lab-07' in plan, 'the documented GPU detection command for the given host must be recorded'\nassert 'scripts/validate.py --auto-fix' in plan and 'ready' in low, 'the documented environment validation and ready gate must be recorded'\nassert 'recipes_cache.json' in plan and 'blacklist.json' in plan, 'the documented recipe and blacklist checks must be recorded'\nassert 'sync_recipes.py' in plan and '24 hours' in low, 'the documented recipe refresh rule must be recorded'\nassert 'docker run' in plan and '--name' in plan and 'vllm-qwen35-122b' in plan, 'the given container name must appear in the docker command'\nassert 'docker_flags' in plan and '-p 8080:8080' in plan, 'the documented docker flags and given port must be recorded'\nassert '--env HF_TOKEN=${HF_TOKEN}' in plan, 'the documented HF token environment must be recorded'\nassert '--model Qwen/Qwen3.5-122B-Instruct' in plan, 'the given model id must appear in the docker command'\nassert '--enable-auto-tool-choice' in plan and '--tensor-parallel-size 8' in plan, 'the documented vLLM args and given TP must be recorded'\nassert 'estimate_vram.py' in plan and 'remaining_for_kv_gb' in plan, 'the documented VRAM fit check must be recorded'\nassert '--enforce-eager' in plan and 'gfx942' in plan, 'the documented tight-fit recovery and given GPU family must be recorded'\nassert 'fp8_fnuz' in plan and 'bf16' in low, 'the documented gfx942 native precision set must be recorded'\nassert 'ss -tlnp' in plan and '/health' in plan, 'the documented port check and health poll must be recorded'\nassert 'no vllm server was launched in this session' in low, 'the plan must state honestly that nothing launched'\n\nreport = {'docker_command': True, 'environment_validation': True, 'honest_no_launch': True, 'launch_verification': True, 'precision': True, 'recipe_checks': True, 'vllm_args': True, 'vram_fit': True}\nPath('serving-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Serving plan: documented detection, docker build, VRAM fit and health checks verified; real GPU launch remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "serving-verification.json",
+          "equals": "{\"docker_command\": true, \"environment_validation\": true, \"honest_no_launch\": true, \"launch_verification\": true, \"precision\": true, \"recipe_checks\": true, \"vllm_args\": true, \"vram_fit\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "scripts/detect.py"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "remaining_for_kv_gb"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "--tensor-parallel-size"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "ops@instinct-lab-07"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "vllm-qwen35-122b"
+        },
+        {
+          "kind": "file",
+          "path": "serving-plan-instinct-lab-07.md",
+          "contains": "8080"
+        }
+      ]
+    },
+    {
+      "id": "plan-tracelens-comparative-analysis",
+      "componentId": "skill:amd-skills:tracelens-analysis-orchestrator",
+      "prompt": "Use the tracelens-analysis-orchestrator skill to prepare the analysis plan for a comparative TraceLens run named tracelens-llama3-70b on an AMD Instinct MI300X training host. The two given PyTorch profiler traces are /data/traces/llama3-70b/step_1200.pt.trace.json and /data/traces/llama3-70b/step_1210.pt.trace.json, and the analysis mode is comparative, training against training. Headless boundary: no trace file, no PyTorch profiler, no TraceLens package and no network exist here, so no report, subagent or analysis.md can be produced. Do not claim that any TraceLens command ran. Write tracelens-analysis-plan.md as the documented analysis plan: the Step 0 inputs with platform, both trace paths, analysis mode and environment setup; the workflow steps from Query User Inputs through Generate analysis.md, including the Trace-Quality Gate and its deterministic fallback, Prepare Category Data, the parallel System-Level Analysis and Compute Kernel Subagents, the Step 8.5 Aggregate into priority_data.json::findings[], Validate Subagent Outputs, Model Identification into metadata/model_info.json and the optional PNG render; the primary deliverable <output_dir>/analysis.md and the internals system_findings/, category_findings/, category_data/ and metadata/; the documented subagent boundary that the Task tool is used only at Steps 7, 8 and 10 with the checked-in agent files under TraceLens/Agent/Analysis/skills/analysis-orchestrator/agents/; and the command prefix source cache/cmd_prefix.txt with {CMD} substitution. End the plan with an Untested section that contains the exact sentence No trace analysis ran in this session. and states that the trace load, the subagents, the Excel report and analysis.md remain untested. Then read the immutable verify_tracelens.py and run exactly python verify_tracelens.py using Bash to validate the plan and write tracelens-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that trace processing, subagent runs and the final report remain untested.",
+      "allowCommands": [
+        "python verify_tracelens.py"
+      ],
+      "verifierOutputs": [
+        "tracelens-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_tracelens.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('tracelens-analysis-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'mi300x' in low and '/data/traces/llama3-70b/step_1200.pt.trace.json' in plan and '/data/traces/llama3-70b/step_1210.pt.trace.json' in plan, 'the given platform and both trace paths must be recorded'\nassert 'comparative' in low, 'the given analysis mode must be recorded'\nassert 'query user inputs' in low and 'generate performance report' in low, 'the documented workflow start must be recorded'\nassert 'trace-quality gate' in low and 'deterministic fallback' in low, 'the documented quality gate and fallback must be recorded'\nassert 'prepare category data' in low and 'system-level analysis' in low and 'compute kernel subagents' in low, 'the documented parallel analysis steps must be recorded'\nassert 'priority_data.json::findings[]' in plan and 'metadata/model_info.json' in plan, 'the documented aggregation and model identification outputs must be recorded'\nassert '<output_dir>/analysis.md' in plan and 'system_findings/' in plan and 'category_findings/' in plan and 'category_data/' in plan, 'the documented primary outputs must be recorded'\nassert 'task tool' in low and 'steps 7, 8 and 10' in low, 'the documented subagent boundary must be recorded'\nassert 'TraceLens/Agent/Analysis/skills/analysis-orchestrator/agents/' in plan, 'the documented agent layout must be recorded'\nassert 'cache/cmd_prefix.txt' in plan and '{CMD}' in plan, 'the documented command prefix source must be recorded'\nassert 'no trace analysis ran in this session' in low, 'the plan must state honestly that nothing ran'\n\nreport = {'aggregation_outputs': True, 'command_prefix': True, 'honest_no_run': True, 'inputs': True, 'primary_outputs': True, 'quality_gate': True, 'subagent_boundary': True, 'workflow': True}\nPath('tracelens-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('TraceLens analysis plan: documented inputs, workflow, parallel subagents and outputs verified; real trace analysis remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_tracelens.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('tracelens-analysis-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'mi300x' in low and '/data/traces/llama3-70b/step_1200.pt.trace.json' in plan and '/data/traces/llama3-70b/step_1210.pt.trace.json' in plan, 'the given platform and both trace paths must be recorded'\nassert 'comparative' in low, 'the given analysis mode must be recorded'\nassert 'query user inputs' in low and 'generate performance report' in low, 'the documented workflow start must be recorded'\nassert 'trace-quality gate' in low and 'deterministic fallback' in low, 'the documented quality gate and fallback must be recorded'\nassert 'prepare category data' in low and 'system-level analysis' in low and 'compute kernel subagents' in low, 'the documented parallel analysis steps must be recorded'\nassert 'priority_data.json::findings[]' in plan and 'metadata/model_info.json' in plan, 'the documented aggregation and model identification outputs must be recorded'\nassert '<output_dir>/analysis.md' in plan and 'system_findings/' in plan and 'category_findings/' in plan and 'category_data/' in plan, 'the documented primary outputs must be recorded'\nassert 'task tool' in low and 'steps 7, 8 and 10' in low, 'the documented subagent boundary must be recorded'\nassert 'TraceLens/Agent/Analysis/skills/analysis-orchestrator/agents/' in plan, 'the documented agent layout must be recorded'\nassert 'cache/cmd_prefix.txt' in plan and '{CMD}' in plan, 'the documented command prefix source must be recorded'\nassert 'no trace analysis ran in this session' in low, 'the plan must state honestly that nothing ran'\n\nreport = {'aggregation_outputs': True, 'command_prefix': True, 'honest_no_run': True, 'inputs': True, 'primary_outputs': True, 'quality_gate': True, 'subagent_boundary': True, 'workflow': True}\nPath('tracelens-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('TraceLens analysis plan: documented inputs, workflow, parallel subagents and outputs verified; real trace analysis remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-verification.json",
+          "equals": "{\"aggregation_outputs\": true, \"command_prefix\": true, \"honest_no_run\": true, \"inputs\": true, \"primary_outputs\": true, \"quality_gate\": true, \"subagent_boundary\": true, \"workflow\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "priority_data.json::findings[]"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "metadata/model_info.json"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "cache/cmd_prefix.txt"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "TraceLens/Agent/Analysis/skills/analysis-orchestrator/agents/"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "/data/traces/llama3-70b/step_1200.pt.trace.json"
+        },
+        {
+          "kind": "file",
+          "path": "tracelens-analysis-plan.md",
+          "contains": "tracelens-llama3-70b"
+        }
+      ]
+    }
+  ]
+}

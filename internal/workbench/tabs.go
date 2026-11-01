@@ -1,7 +1,6 @@
 package workbench
 
 import (
-	"fmt"
 	"time"
 
 	"gcode/internal/assets"
@@ -94,7 +93,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 						if selected {
 							color = p.Text
 						}
-						ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.UISize(c, 11.5)).TextColor(color)
+						ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
 						close := ui.ButtonBase(c).Label(tr(c, "Close tab ")+s.tabTitle(tab)).Description(tr(c, "Close tab")).Size(18, 18).Shrink(0).Radius(4).OnClick(func() { s.closeTab(i) })
 						s.tabTooltip.observe(c, &tips, i, true, tr(c, "Close tab"), close)
 						close.Children(func() {
@@ -113,12 +112,21 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 				plus := tabStripButton(c, "add-surface", "New surface", "New tab", "plus", 24, 13, p)
 				s.tabObserver.bind("plus", "", plus)
 				plus.Menu(func(menu *ui.Menu) {
+					if s.OnNewSideChat != nil && s.scopeID != "" {
+						if menu.Item(tr(c, "Side chat")).Disabled(!s.canNewSideChat()).Chosen() {
+							s.OpenSurface("sidechat")
+						}
+					}
 					for _, item := range []struct{ kind, title string }{{"files", "Files"}, {"browser", "Browser"}, {"terminal", "Terminal"}, {"changes", "Diffs"}, {"history", "History"}} {
 						if (item.kind == "changes" || item.kind == "history") && !s.hasGit() {
 							continue
 						}
 						if menu.Item(tr(c, item.title)).Chosen() {
-							s.OpenSurface(item.kind)
+							if item.kind == "terminal" {
+								s.NewTerminal()
+							} else {
+								s.OpenSurface(item.kind)
+							}
 						}
 					}
 				})
@@ -186,8 +194,6 @@ func tabIcon(kind string) string {
 		return "git-branch"
 	case "diff", "changes":
 		return "list"
-	case "pr", "pullrequests":
-		return "pull-request"
 	case "files":
 		return "folder"
 	default:
@@ -201,16 +207,6 @@ func (s *State) tabDetail(tab surface) string {
 	}
 	if b := s.browsers[tab.id]; tab.kind == "browser" && b != nil {
 		return b.data.URL
-	}
-	if tab.kind == "pr" {
-		for _, pr := range s.snapshot.PullRequests {
-			if pr.ID == tab.id {
-				if pr.Number > 0 {
-					return fmt.Sprintf("#%d %s", pr.Number, pr.Title)
-				}
-				return pr.Title
-			}
-		}
 	}
 	return ""
 }

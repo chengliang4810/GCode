@@ -11,6 +11,17 @@ type branchCreation struct {
 	side                bool
 }
 
+func (a *App) canNewSideChat() bool {
+	session := a.currentSession()
+	return a.route == "chat" && session.ID != "" && !session.Archived && session.SubagentType == "" && a.branchCreation == nil
+}
+
+func (a *App) newSideChat() {
+	if a.canNewSideChat() {
+		a.createRelatedSession(a.sessionID, true)
+	}
+}
+
 func (a *App) createRelatedSession(parentID string, side bool) {
 	if a.branchCreation != nil || !a.hasSession(parentID) {
 		return

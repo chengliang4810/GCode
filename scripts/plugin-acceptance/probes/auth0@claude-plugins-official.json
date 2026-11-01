@@ -1,0 +1,96 @@
+{
+  "pluginId": "auth0@claude-plugins-official",
+  "sourceCommit": "7b3821d533430eef35fd7406a87b7b8d02302bdf",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-nextjs-login-integration-via-documented-decision-path",
+      "componentId": "skill:auth0:auth0",
+      "prompt": "/auth0:auth0 Use the auth0 skill to plan authentication for this concrete project. Scenario: VoyageBoard, a Next.js booking dashboard, must add login so users can sign in and create accounts. The project's immutable fixture package.json is already in the working directory; its dependencies include @auth0/nextjs-auth0 4.0.1 and @auth0/auth0-react 12.2.0 (plus next 15.1.0, react 19.0.0 and react-dom 19.0.0). Headless planning task: no network, no Auth0 tenant, no npm install, no SDK download. The skill's reference files are not present in this environment: do not attempt to read them - naming them is the deliverable. Real Auth0 tenant configuration, real dependency installation and the working login flow remain untested. Apply the skill's documented decision path (Step 1 detect intent, Step 2 detect framework, Step 3 detect tooling, Step 4 list reference files) and write auth0-integration-plan.md containing exactly these labeled lines, each on its own line: Project: VoyageBoard; Intent: <the intent keyword from the skill's Step 1 table for this request>; Framework: <the framework id from the skill's Step 2 tables, applying the stop-at-first-tier rule and the most-specific-first row order>; Tier: <the tier heading from the skill's Step 2 that produced the framework>; Detected SDK: <the exact most-specific Auth0 package name in package.json> <its exact version>; Install: npm install <that same package name>; Tooling: <the tooling reference file the skill's Step 3 table selects for this project, exactly as written in the skill>; References: <the two reference file paths from the skill's Step 4 block for this intent, with {framework} and {tooling} replaced by your detected ids, comma-separated>. The plan must also quote verbatim the two Read: lines of the skill's Step 4 block for this intent (placeholders unsubstituted), state that the co-installed @auth0/auth0-react row is less specific so the most-specific-first rule picks the other SDK, and state that this document is a plan only: nothing was installed, no tenant was connected, and login is not yet working. Do not claim the SDK was installed or that login works. Do not run npm, git or any other CLI. Then read the immutable verify_auth0_plan.py and run exactly python verify_auth0_plan.py using Bash; it validates the decision-path lines against package.json and writes auth0-verification.json. Do not modify the verifier or the fixture, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state what remains untested (Auth0 tenant configuration, dependency installation, the real login flow, and the contents of the skill's reference files).",
+      "allowCommands": [
+        "python verify_auth0_plan.py"
+      ],
+      "verifierOutputs": [
+        "auth0-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_auth0_plan.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\npkg = json.loads(Path('package.json').read_text(encoding='utf-8'))\ndeps = pkg['dependencies']\nassert deps.get('@auth0/nextjs-auth0') == '4.0.1', 'scenario fixture guard: nextjs SDK version'\nassert deps.get('@auth0/auth0-react') == '12.2.0', 'scenario fixture guard: react SDK version'\n\ntext = Path('auth0-integration-plan.md').read_text(encoding='utf-8')\n\ndef need_line(pattern, message):\n    assert re.search(pattern, text), message\n\nneed_line(r\"(?m)^Project: VoyageBoard$\", 'plan must name the scenario project')\nneed_line(r\"(?m)^Intent: integrate$\", 'the add-login request maps to the skill integrate intent')\nneed_line(r\"(?m)^Framework: nextjs$\", 'the Tier 1 most-specific match is the nextjs SDK row')\nneed_line(r\"(?m)^Tier: Tier 1$\", 'detection must stop at Tier 1 because an Auth0 SDK is already installed')\nneed_line(r\"(?m)^Detected SDK: @auth0/nextjs-auth0 4\\.0\\.1$\", 'the detected SDK must be the most-specific installed package with its exact version')\nneed_line(r\"(?m)^Install: npm install @auth0/nextjs-auth0$\", 'the install command must target the detected SDK package')\nneed_line(r\"(?m)^Tooling: tooling-cli/index\\.md$\", 'with no terraform, MCP or Vercel signal the documented default is the CLI tooling reference')\nneed_line(r\"(?m)^References: references/framework-nextjs/index\\.md, references/tooling-cli/index\\.md$\", 'the Step 4 paths must be substituted with the detected framework and tooling')\nassert 'Read: references/framework-{framework}/index.md' in text, 'the Step 4 integrate block must be quoted with the framework placeholder'\nassert 'Read: references/tooling-{tooling}/index.md' in text, 'the Step 4 integrate block must be quoted with the tooling placeholder'\nassert '@auth0/auth0-react' in text, 'the co-installed less-specific SDK row must be named and outranked'\nassert re.search(r\"most-specific[ -]first\", text), 'the most-specific-first row rule must be cited'\nfor wrong in (r\"(?m)^Framework: react$\", r\"(?m)^Framework: spa-js$\", r\"(?m)^Intent: feature:mfa$\"):\n    assert not re.search(wrong, text), 'wrong decision-path result: ' + wrong\nlow = text.lower()\nfor claim in ('successfully installed', 'login is now working', 'connected to your auth0 tenant', 'npm install was run'):\n    assert claim not in low, 'must not claim completion: ' + claim\nreport = {'distractor_outranked': True, 'framework_tier1': True, 'intent_integrate': True,\n          'install_command': True, 'no_false_completion': True, 'reference_plan': True,\n          'scenario_fixture': True, 'tooling_default': True}\nPath('auth0-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Auth0 integration plan: documented decision path applied to VoyageBoard; tenant configuration, dependency install and the live login flow remain untested')\n"
+        },
+        {
+          "path": "package.json",
+          "text": "{\n  \"name\": \"voyageboard\",\n  \"version\": \"0.3.0\",\n  \"private\": true,\n  \"dependencies\": {\n    \"@auth0/auth0-react\": \"12.2.0\",\n    \"@auth0/nextjs-auth0\": \"4.0.1\",\n    \"next\": \"15.1.0\",\n    \"react\": \"19.0.0\",\n    \"react-dom\": \"19.0.0\"\n  }\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_auth0_plan.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\npkg = json.loads(Path('package.json').read_text(encoding='utf-8'))\ndeps = pkg['dependencies']\nassert deps.get('@auth0/nextjs-auth0') == '4.0.1', 'scenario fixture guard: nextjs SDK version'\nassert deps.get('@auth0/auth0-react') == '12.2.0', 'scenario fixture guard: react SDK version'\n\ntext = Path('auth0-integration-plan.md').read_text(encoding='utf-8')\n\ndef need_line(pattern, message):\n    assert re.search(pattern, text), message\n\nneed_line(r\"(?m)^Project: VoyageBoard$\", 'plan must name the scenario project')\nneed_line(r\"(?m)^Intent: integrate$\", 'the add-login request maps to the skill integrate intent')\nneed_line(r\"(?m)^Framework: nextjs$\", 'the Tier 1 most-specific match is the nextjs SDK row')\nneed_line(r\"(?m)^Tier: Tier 1$\", 'detection must stop at Tier 1 because an Auth0 SDK is already installed')\nneed_line(r\"(?m)^Detected SDK: @auth0/nextjs-auth0 4\\.0\\.1$\", 'the detected SDK must be the most-specific installed package with its exact version')\nneed_line(r\"(?m)^Install: npm install @auth0/nextjs-auth0$\", 'the install command must target the detected SDK package')\nneed_line(r\"(?m)^Tooling: tooling-cli/index\\.md$\", 'with no terraform, MCP or Vercel signal the documented default is the CLI tooling reference')\nneed_line(r\"(?m)^References: references/framework-nextjs/index\\.md, references/tooling-cli/index\\.md$\", 'the Step 4 paths must be substituted with the detected framework and tooling')\nassert 'Read: references/framework-{framework}/index.md' in text, 'the Step 4 integrate block must be quoted with the framework placeholder'\nassert 'Read: references/tooling-{tooling}/index.md' in text, 'the Step 4 integrate block must be quoted with the tooling placeholder'\nassert '@auth0/auth0-react' in text, 'the co-installed less-specific SDK row must be named and outranked'\nassert re.search(r\"most-specific[ -]first\", text), 'the most-specific-first row rule must be cited'\nfor wrong in (r\"(?m)^Framework: react$\", r\"(?m)^Framework: spa-js$\", r\"(?m)^Intent: feature:mfa$\"):\n    assert not re.search(wrong, text), 'wrong decision-path result: ' + wrong\nlow = text.lower()\nfor claim in ('successfully installed', 'login is now working', 'connected to your auth0 tenant', 'npm install was run'):\n    assert claim not in low, 'must not claim completion: ' + claim\nreport = {'distractor_outranked': True, 'framework_tier1': True, 'intent_integrate': True,\n          'install_command': True, 'no_false_completion': True, 'reference_plan': True,\n          'scenario_fixture': True, 'tooling_default': True}\nPath('auth0-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Auth0 integration plan: documented decision path applied to VoyageBoard; tenant configuration, dependency install and the live login flow remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "package.json",
+          "equals": "{\n  \"name\": \"voyageboard\",\n  \"version\": \"0.3.0\",\n  \"private\": true,\n  \"dependencies\": {\n    \"@auth0/auth0-react\": \"12.2.0\",\n    \"@auth0/nextjs-auth0\": \"4.0.1\",\n    \"next\": \"15.1.0\",\n    \"react\": \"19.0.0\",\n    \"react-dom\": \"19.0.0\"\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-verification.json",
+          "equals": "{\"distractor_outranked\": true, \"framework_tier1\": true, \"install_command\": true, \"intent_integrate\": true, \"no_false_completion\": true, \"reference_plan\": true, \"scenario_fixture\": true, \"tooling_default\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "VoyageBoard"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "integrate"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "Tier 1"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "nextjs"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "@auth0/nextjs-auth0"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "@auth0/auth0-react"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "4.0.1"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "tooling-cli/index.md"
+        },
+        {
+          "kind": "file",
+          "path": "auth0-integration-plan.md",
+          "contains": "Read: references/framework-{framework}/index.md"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Auth0 integration plan: documented decision path applied to VoyageBoard; tenant configuration, dependency install and the live login flow remain untested"
+        }
+      ]
+    }
+  ]
+}

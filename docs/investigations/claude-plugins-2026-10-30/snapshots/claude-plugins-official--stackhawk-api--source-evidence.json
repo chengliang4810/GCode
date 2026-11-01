@@ -1,0 +1,21 @@
+{
+  "repo": "stackhawk/agent-skills",
+  "commit": "d0eea864c42f7c2e872334bb3df424daa1fbaadc",
+  "path": "plugins/api",
+  "archive_sha256": "8dc4a6ef904014965117ea6ae6a233ec60bb2d3a4632b8c3d300f4de691a3ed3",
+  "all_plugin_files": [
+    ".claude-plugin/icon.svg",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    "README.md",
+    "skills/api/SKILL.md",
+    "skills/api/references/hawk-op-shortcuts.md",
+    "skills/api/references/reporting-recipes.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"stackhawk-api\",\n  \"version\": \"2.7.0\",\n  \"description\": \"Query the StackHawk platform API for security posture reporting, findings analysis, and app management. Uses the combined hawk CLI (hawk op \\u2026) for all platform queries.\",\n  \"author\": {\n    \"name\": \"StackHawk\",\n    \"email\": \"support@stackhawk.com\",\n    \"url\": \"https://www.stackhawk.com\"\n  },\n  \"homepage\": \"https://docs.stackhawk.com\",\n  \"privacyPolicyUrl\": \"https://www.stackhawk.com/privacy-policy/\",\n  \"termsOfServiceUrl\": \"https://www.stackhawk.com/terms-of-service/\",\n  \"supportUrl\": \"https://docs.stackhawk.com/support/\",\n  \"documentationUrl\": \"https://docs.stackhawk.com/ai-security/agent-skills/\",\n  \"repository\": \"https://github.com/stackhawk/agent-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"security\",\n    \"appsec\",\n    \"stackhawk\",\n    \"api\",\n    \"reporting\",\n    \"findings\",\n    \"posture\",\n    \"triage\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/api/SKILL.md": "\nname: api\nversion: 2.7.0\ndescription: >\n  Use this skill when a user or agent needs to query the StackHawk platform for\n  security reporting, findings analysis, or app management. Triggers include:\n  \"stackhawk api\", \"security posture\", \"findings report\", \"show me findings\",\n  \"untriaged findings\", \"which apps\", \"scan history\", \"security dashboard\",\n  \"triage\", \"what needs attention\". Uses the hawk CLI (`hawk op` subcommand) for\n  all platform queries. Do NOT use for running scans (use the hawkscan skill for\n  \"scan my app\", \"hawkscan\", \"stackhawk.yml\", \"DAST\") or for fixing/remediating\n  code or vulnerabilities — this skill only reads and reports platform data.\n"
+  }
+}

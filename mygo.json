@@ -1,10 +1,15 @@
 {
-  "name": "Zeron",
-  "identifier": "dev.gcode.zeronui",
+  "name": "GCode",
+  "identifier": "dev.gcode.rcode",
   "version": "0.1.0",
-  "main": "./cmd/zeron",
+  "main": "./cmd/rcode",
   "out": "build",
-  "icon": "internal/assets/data/app-icon.png",
-  "macos": { "minimumSystemVersion": "13.0", "bundleName": "Zeron Native UI" },
-  "windows": { "installName": "Zeron Native UI" }
+  "icon": "internal/assets/branding/app-icon.png",
+  "updates": {
+    "publicKey": "kzzgWvx9T8TdqJuOZ7l7PDEPoaHm6PQ/HEFmRJu9kxI=",
+    "github": "chengliang4810/GCode"
+  },
+  "macos": {
+    "minimumSystemVersion": "13.0"
+  }
 }

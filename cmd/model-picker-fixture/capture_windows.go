@@ -51,14 +51,14 @@ func loadFixtureWGC(path string) (*syscall.Proc, error) {
 		fixtureWGC.err = err
 		return nil, err
 	}
-	version, err := dll.FindProc("zeron_fixture_wgc_abi_version")
+	version, err := dll.FindProc("rcode_fixture_wgc_abi_version")
 	if err != nil {
 		return fail(fmt.Errorf("find capture bridge ABI: %w", err))
 	}
 	if value, _, _ := version.Call(); value != 1 {
 		return fail(fmt.Errorf("unsupported capture bridge ABI %d", value))
 	}
-	proc, err := dll.FindProc("zeron_fixture_wgc_capture")
+	proc, err := dll.FindProc("rcode_fixture_wgc_capture")
 	if err != nil {
 		return fail(fmt.Errorf("find capture bridge entry point: %w", err))
 	}

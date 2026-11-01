@@ -1,0 +1,141 @@
+{
+  "pluginId": "netsuite-finance-analyst@claude-plugins-official",
+  "sourceCommit": "23793a10a9bb557c684c5cb8a97f926eb3463f12",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "october-revenue-review-with-response-pattern-and-materiality",
+      "componentId": "skill:netsuite-finance-analyst:netsuite-finance-analyst",
+      "prompt": "/netsuite-finance-analyst:netsuite-finance-analyst Use the netsuite-finance-analyst skill to answer this finance question from simulated data. Headless task: no NetSuite account, no MCP tools, no network; everything you need is the immutable fixture period-data.json in the working directory: Solstice Outfitters, period October 2026 with periodStatus open, subsidiary consolidated, currency USD, accounting book primary, comparison basis prior period; revenue 4,200,000 current versus 3,800,000 prior; drivers Wholesale channel +350,000, Promotional markdowns -120,000, FX translation +170,000; AR aging current-to-30 980,000, 31-to-60 240,000, 61-to-90 145,000, over-90 60,000; 12 pending approvals and 34 unposted transactions. Apply the skill read-only: do not create or update any record and do not claim to have done so. Write the answer to finance-answer.md using the skill's Response Pattern with lines starting exactly Headline:, Scope:, What changed:, Risks: and Action:, plus these requirements: - Headline: one sentence carrying the key number - the current revenue figure and the change versus prior period in percent with one decimal. - Scope: the skill's five-field scope line filled with October 2026 | consolidated | USD | primary book | preliminary, because the period is open. - Immediately after the Scope line add exactly: Outstanding: 12 pending approvals, 34 unposted transactions. - What changed: quantify all three drivers in dollars as signed figures like +350,000 / -120,000 and as a percent of the total revenue change with one decimal, keeping the sign, and state that the comparison basis is prior period. - Risks: apply the skill's aging tier language to each AR bucket with its amount, using the skill's exact phrase for the over-90 bucket. - Add a line starting FLAG: for the item that exceeds the skill's default financial-statement materiality dollar floor, and include the skill's default materiality disclosure sentence verbatim: using default materiality thresholds (calibrated for 10M-100M revenue; may not reflect this entity's scale) - Action: a concrete next step addressing the flagged item, with the owner being the revenue controller and the timing before the November 5 close, in the skill's three-part form. Then read the immutable verify_netsuite_finance.py and run exactly python verify_netsuite_finance.py using Bash; it checks the answer against period-data.json and writes netsuite-finance-verification.json. Do not modify the verifier or the fixture, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state what remains untested (live NetSuite data access, MCP tool execution, and the real accounting system).",
+      "allowCommands": [
+        "python verify_netsuite_finance.py"
+      ],
+      "verifierOutputs": [
+        "netsuite-finance-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_netsuite_finance.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ndata = json.loads(Path('period-data.json').read_text(encoding='utf-8'))\nassert data['company'] == 'Solstice Outfitters' and data['period'] == 'October 2026', 'scenario fixture guard'\nassert data['periodStatus'] == 'open', 'scenario fixture guard'\nassert data['revenue']['current'] == 4200000 and data['revenue']['prior'] == 3800000, 'scenario fixture guard'\nassert data['arAging']['over90'] == 60000 and data['pendingApprovals'] == 12 and data['unpostedTransactions'] == 34, 'scenario fixture guard'\n\ntext = Path('finance-answer.md').read_text(encoding='utf-8')\n\nfor label in ('Headline:', 'Scope:', 'What changed:', 'Risks:', 'Action:'):\n    assert re.search(r'(?m)^' + re.escape(label), text), 'response pattern line missing: ' + label\nheadline = re.search(r'(?m)^Headline: (.+)$', text).group(1)\nassert ('4,200,000' in headline or '4.2M' in headline) and '10.5%' in headline, 'the headline must carry the current revenue figure and the percent change versus prior period'\nassert re.search(r'(?m)^Scope: October 2026 \\| consolidated \\| USD \\| primary book \\| preliminary$', text), 'the scope line must state the confirmed five-field scope and mark the open period preliminary'\nassert re.search(r'(?m)^Outstanding: 12 pending approvals, 34 unposted transactions\\.$', text), 'the open period requires stating what is still outstanding'\nchanged = re.search(r'(?m)^What changed: (.+)$', text).group(1)\nfor value in ('350,000', '120,000', '170,000', '87.5%', '30.0%', '42.5%'):\n    assert value in changed, 'each driver must be quantified in dollars and as a percent of the 400,000 change: ' + value\nassert 'prior period' in changed, 'the comparison basis must be stated'\nfor bucket in ('980,000', '240,000', '145,000', '60,000'):\n    assert bucket in text, 'each AR aging bucket must be named with its amount: ' + bucket\nassert 'monitor' in text and 'escalate' in text, 'the 31-60 and 61-90 buckets must use the documented tier language'\nassert 'stale item requiring management review' in text, 'the over-90 bucket must use the exact documented tier phrase'\nflag = re.search(r'(?m)^FLAG: (.+)$', text)\nassert flag and '60,000' in flag.group(1), 'the over-90 item above the 50000 dollar materiality floor must carry a FLAG: line'\nassert \"using default materiality thresholds (calibrated for 10M-100M revenue; may not reflect this entity's scale)\" in text, 'the default materiality disclosure sentence must appear verbatim'\naction = re.search(r'(?m)^Action: (.+)$', text).group(1)\nassert action.count('|') >= 2, 'the action must use the three-part form (next step | owner | by when)'\nassert 'revenue controller' in action and 'November 5' in action, 'the action must name the scenario owner and timing'\nlow = text.lower()\nfor claim in ('i created', 'i updated', 'i posted'):\n    assert claim not in low, 'read-only analysis must not claim record changes: ' + claim\nreport = {'action_owner_timing': True, 'headline_quantified': True, 'materiality_disclosure': True,\n          'no_mutation_claims': True, 'open_period_preliminary': True, 'response_pattern': True,\n          'scenario_fixture': True, 'variance_drivers': True}\nPath('netsuite-finance-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Finance analyst answer: response pattern, materiality disclosure and open-period honesty applied to the October scenario; live NetSuite data and MCP tool execution remain untested')\n"
+        },
+        {
+          "path": "period-data.json",
+          "text": "{\n  \"company\": \"Solstice Outfitters\",\n  \"period\": \"October 2026\",\n  \"periodStatus\": \"open\",\n  \"subsidiary\": \"consolidated\",\n  \"currency\": \"USD\",\n  \"accountingBook\": \"primary\",\n  \"comparisonBasis\": \"prior period\",\n  \"revenue\": {\"current\": 4200000, \"prior\": 3800000},\n  \"revenueDrivers\": [\n    {\"name\": \"Wholesale channel\", \"delta\": 350000},\n    {\"name\": \"Promotional markdowns\", \"delta\": -120000},\n    {\"name\": \"FX translation\", \"delta\": 170000}\n  ],\n  \"arAging\": {\"currentTo30\": 980000, \"days31to60\": 240000, \"days61to90\": 145000, \"over90\": 60000},\n  \"pendingApprovals\": 12,\n  \"unpostedTransactions\": 34\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_netsuite_finance.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ndata = json.loads(Path('period-data.json').read_text(encoding='utf-8'))\nassert data['company'] == 'Solstice Outfitters' and data['period'] == 'October 2026', 'scenario fixture guard'\nassert data['periodStatus'] == 'open', 'scenario fixture guard'\nassert data['revenue']['current'] == 4200000 and data['revenue']['prior'] == 3800000, 'scenario fixture guard'\nassert data['arAging']['over90'] == 60000 and data['pendingApprovals'] == 12 and data['unpostedTransactions'] == 34, 'scenario fixture guard'\n\ntext = Path('finance-answer.md').read_text(encoding='utf-8')\n\nfor label in ('Headline:', 'Scope:', 'What changed:', 'Risks:', 'Action:'):\n    assert re.search(r'(?m)^' + re.escape(label), text), 'response pattern line missing: ' + label\nheadline = re.search(r'(?m)^Headline: (.+)$', text).group(1)\nassert ('4,200,000' in headline or '4.2M' in headline) and '10.5%' in headline, 'the headline must carry the current revenue figure and the percent change versus prior period'\nassert re.search(r'(?m)^Scope: October 2026 \\| consolidated \\| USD \\| primary book \\| preliminary$', text), 'the scope line must state the confirmed five-field scope and mark the open period preliminary'\nassert re.search(r'(?m)^Outstanding: 12 pending approvals, 34 unposted transactions\\.$', text), 'the open period requires stating what is still outstanding'\nchanged = re.search(r'(?m)^What changed: (.+)$', text).group(1)\nfor value in ('350,000', '120,000', '170,000', '87.5%', '30.0%', '42.5%'):\n    assert value in changed, 'each driver must be quantified in dollars and as a percent of the 400,000 change: ' + value\nassert 'prior period' in changed, 'the comparison basis must be stated'\nfor bucket in ('980,000', '240,000', '145,000', '60,000'):\n    assert bucket in text, 'each AR aging bucket must be named with its amount: ' + bucket\nassert 'monitor' in text and 'escalate' in text, 'the 31-60 and 61-90 buckets must use the documented tier language'\nassert 'stale item requiring management review' in text, 'the over-90 bucket must use the exact documented tier phrase'\nflag = re.search(r'(?m)^FLAG: (.+)$', text)\nassert flag and '60,000' in flag.group(1), 'the over-90 item above the 50000 dollar materiality floor must carry a FLAG: line'\nassert \"using default materiality thresholds (calibrated for 10M-100M revenue; may not reflect this entity's scale)\" in text, 'the default materiality disclosure sentence must appear verbatim'\naction = re.search(r'(?m)^Action: (.+)$', text).group(1)\nassert action.count('|') >= 2, 'the action must use the three-part form (next step | owner | by when)'\nassert 'revenue controller' in action and 'November 5' in action, 'the action must name the scenario owner and timing'\nlow = text.lower()\nfor claim in ('i created', 'i updated', 'i posted'):\n    assert claim not in low, 'read-only analysis must not claim record changes: ' + claim\nreport = {'action_owner_timing': True, 'headline_quantified': True, 'materiality_disclosure': True,\n          'no_mutation_claims': True, 'open_period_preliminary': True, 'response_pattern': True,\n          'scenario_fixture': True, 'variance_drivers': True}\nPath('netsuite-finance-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Finance analyst answer: response pattern, materiality disclosure and open-period honesty applied to the October scenario; live NetSuite data and MCP tool execution remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "period-data.json",
+          "equals": "{\n  \"company\": \"Solstice Outfitters\",\n  \"period\": \"October 2026\",\n  \"periodStatus\": \"open\",\n  \"subsidiary\": \"consolidated\",\n  \"currency\": \"USD\",\n  \"accountingBook\": \"primary\",\n  \"comparisonBasis\": \"prior period\",\n  \"revenue\": {\"current\": 4200000, \"prior\": 3800000},\n  \"revenueDrivers\": [\n    {\"name\": \"Wholesale channel\", \"delta\": 350000},\n    {\"name\": \"Promotional markdowns\", \"delta\": -120000},\n    {\"name\": \"FX translation\", \"delta\": 170000}\n  ],\n  \"arAging\": {\"currentTo30\": 980000, \"days31to60\": 240000, \"days61to90\": 145000, \"over90\": 60000},\n  \"pendingApprovals\": 12,\n  \"unpostedTransactions\": 34\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "netsuite-finance-verification.json",
+          "equals": "{\"action_owner_timing\": true, \"headline_quantified\": true, \"materiality_disclosure\": true, \"no_mutation_claims\": true, \"open_period_preliminary\": true, \"response_pattern\": true, \"scenario_fixture\": true, \"variance_drivers\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "Solstice Outfitters"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "October 2026"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "Headline:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "Scope:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "What changed:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "Risks:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "Action:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "FLAG:"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "preliminary"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "prior period"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "monitor"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "escalate"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "stale item requiring management review"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "calibrated for 10M-100M revenue; may not reflect this entity's scale"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "4,200,000"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "3,800,000"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "350,000"
+        },
+        {
+          "kind": "file",
+          "path": "finance-answer.md",
+          "contains": "60,000"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Finance analyst answer: response pattern, materiality disclosure and open-period honesty applied to the October scenario; live NetSuite data and MCP tool execution remain untested"
+        }
+      ]
+    }
+  ]
+}

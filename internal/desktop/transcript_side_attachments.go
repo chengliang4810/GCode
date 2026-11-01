@@ -25,6 +25,7 @@ func (a *App) sideAttachmentWork(sessionID string, state *sideComposerState, req
 	}
 	state.Importing++
 	request = request.Clone()
+	request.SessionID = sessionID
 	window, ctx, picker := a.win, a.ctx, a.pickAttachmentFiles
 	work := func() func() {
 		var err error

@@ -14,12 +14,29 @@ type media struct {
 	svg    *ui.SVG
 }
 
-var mediaCache sync.Map
+// mediaCache keeps recently shown attachment images decodable once. Entries
+// hold full decoded bitmaps, so the cache is bounded: the oldest image falls
+// out past mediaCacheLimit and decodes again when it is shown later.
+var mediaKeys []string
+var mediaCache = map[string]media{}
+var mediaCacheMu sync.Mutex
+
+const mediaCacheLimit = 16
 
 func loadMedia(ref string) media {
-	if cached, ok := mediaCache.Load(ref); ok {
-		return cached.(media)
+	mediaCacheMu.Lock()
+	if hit, ok := mediaCache[ref]; ok {
+		for i, key := range mediaKeys {
+			if key == ref {
+				mediaKeys = append(mediaKeys[:i], mediaKeys[i+1:]...)
+				break
+			}
+		}
+		mediaKeys = append(mediaKeys, ref)
+		mediaCacheMu.Unlock()
+		return hit
 	}
+	mediaCacheMu.Unlock()
 	data, err := assets.Read(strings.TrimPrefix(ref, "asset://"))
 	if err != nil {
 		return media{}
@@ -30,8 +47,36 @@ func loadMedia(ref string) media {
 	} else {
 		result.bitmap, _ = ui.DecodeBitmap(data)
 	}
-	mediaCache.Store(ref, result)
+	storeMedia(ref, result)
 	return result
+}
+
+// hasMedia reports whether a decoded image for ref is cached, for preload
+// loops that would otherwise decode it again.
+func hasMedia(ref string) bool {
+	mediaCacheMu.Lock()
+	defer mediaCacheMu.Unlock()
+	_, ok := mediaCache[ref]
+	return ok
+}
+
+// storeMedia caches a decoded image, evicting the least recently shown one
+// past the limit.
+func storeMedia(ref string, result media) {
+	mediaCacheMu.Lock()
+	defer mediaCacheMu.Unlock()
+	for i, key := range mediaKeys {
+		if key == ref {
+			mediaKeys = append(mediaKeys[:i], mediaKeys[i+1:]...)
+			break
+		}
+	}
+	mediaKeys = append(mediaKeys, ref)
+	mediaCache[ref] = result
+	for len(mediaKeys) > mediaCacheLimit {
+		delete(mediaCache, mediaKeys[0])
+		mediaKeys = mediaKeys[1:]
+	}
 }
 func drawMedia(c *ui.Context, image media, width, height float32) ui.Element {
 	if image.svg != nil {
@@ -53,7 +98,7 @@ func (a *App) imageAttachment(c *ui.Context, item contracts.Attachment) {
 	h *= scale
 	ui.Column(c).Gap(6).Children(func() {
 		drawMedia(c, image, w, h).Radius(10).Label(tr(c, "Open ") + item.Name).OnClick(func() { a.imageRef = item.AssetRef; a.imageZoom = 1; a.imageOpen = true })
-		ui.Text(c, item.Name).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+		ui.Text(c, item.Name).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 	})
 }
 func (a *App) imageDialog(c *ui.Context) {

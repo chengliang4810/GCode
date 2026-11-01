@@ -24,7 +24,7 @@
 | 打开 | 文件→原生编辑器，内容→对应行列，目录→独立 Files 面板并展开祖先；最近打开文件顺序按会话隔离 |
 | 文件树搜索 | 独立200ms原生查询任务，只搜文件名；匹配结果保留实际 DTO 的祖先目录，目录折叠、上下键/Enter、Escape、拖动和上下文菜单 |
 | 项目过滤器 | 空查询显示 All projects，非空隐藏；原版单行项目名，设备/路径为 tooltip，离线为 wifi-off 图标；New project 底行始终固定并能键盘选择 |
-| 新建项目 | 设备→Home→真实虚拟目录；路径编辑、目录面包屑、目录名过滤、Tab补全、末尾 `/` 下钻、上下/Enter/左键返回、Mod+Enter 添加当前目录 |
+| 新建项目 | 设备→位置（Home 与设备磁盘卷）→真实目录；位置由宿主 `ListDirectoryLocations` 提供，不硬编码；路径编辑、目录面包屑、目录名过滤、Tab补全、末尾 `/` 下钻、上下/Enter/左键返回、Mod+Enter 添加当前目录 |
 | 业务变更 | typed `ProjectCreate` 保留所选设备；后端拒绝离线设备和同设备同路径重复，失败留在选择器；排队载荷 Clone，不引用调用方可变字段 |
 | 材质与生命周期 | 工作区与 Files 使用 `design.PanelBackground`，遵循根已解析主题；session tab 仅关闭时触发 `OnCloseSession`，打开/切换不会误清 composer picker |
 
@@ -36,8 +36,11 @@
 
 - `WorkspaceSearchService.SearchWorkspace(ctx, WorkspaceSearchRequest) (WorkspaceSearchResult, error)`。
 - `ProjectDirectoryService.ListDirectories(ctx, DirectoryRequest) (DirectoryListing, error)`。
+- `ProjectDirectoryService.ListDirectoryLocations(ctx, DirectoryRequest) (DirectoryLocations, error)`：位置列表由宿主在当时枚举。
+  本地引擎返回 Home 加真实磁盘卷（Windows 用 `GetLogicalDrives`/`GetDriveType` 过滤空软驱与光驱，
+  POSIX 返回 `/`）；远程客户端走 `/v1/directory-locations` 取宿主自己的卷，不枚举客户端机器。
 - `Command.ProjectCreate *ProjectCreate`，仅用于 `project.create`，Clone 冻结载荷。
-- 搜索结果包含 `FileID/Path/Kind` 或 `FileID/Path/Line/Column/Text/Ranges` 和当前 `Revision`。目录来自 mock 项目路径及虚拟文件树，不枚举真实电脑目录。
+- 搜索结果包含 `FileID/Path/Kind` 或 `FileID/Path/Line/Column/Text/Ranges` 和当前 `Revision`。mock 场景的目录与位置同样只来自虚拟项目路径及虚拟文件树，不枚举真实电脑目录。
 - `contracts.SearchRanges` 在原文 UTF-8 字节空间返回合并范围，避免 Unicode 大小写映射改变编码长度后定位错误。
 - `workbench.State.OpenFileAt(id, line, column)`：1基行、0基 UTF-8 字节列；line=0 保留原有光标。
 - `RevealFile(id)`、`RecentFiles()`、`OnCloseSession func(string)` 为应用接线点。主任务已接子会话关闭回调。
@@ -56,7 +59,7 @@
 `docs/evidence/command-palette/` 保存17张PNG与相应17个JSON：浅/深四页8张，新项目四步4张，文件树查询浅/深2张，项目过滤浅/深2张，900×600离线错误1张。`manifest.json` 列出源文件与图片哈希。它们是**实现证据**，不能当作参考 golden。
 
 ```powershell
-$env:ZERON_WORKBENCH_EVIDENCE = Join-Path (Get-Location) 'docs/evidence/command-palette'
+$env:RCODE_WORKBENCH_EVIDENCE = Join-Path (Get-Location) 'docs/evidence/command-palette'
 go test ./internal/desktop -run 'TestCommandPaletteEvidence|TestProjectPickerEvidence|TestExplorerAndOfflinePickerEvidence' -count=1
 go test ./internal/desktop ./internal/workbench ./internal/contracts ./internal/mock -run 'TestCommandPalette|TestNewProject|TestProjectFilter|TestProjectPicker|TestExplorer|TestOpenSearch|TestRevealDirectory|TestClosingSide|TestSearchRanges|TestProjectCreate|TestWorkspaceSearch|TestDirectoryBrowse' -count=1
 go vet ./internal/desktop ./internal/workbench ./internal/contracts ./internal/mock

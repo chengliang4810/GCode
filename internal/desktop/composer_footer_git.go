@@ -2,9 +2,7 @@ package desktop
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
-	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -24,10 +22,6 @@ type composerFooterGitState struct {
 	Cursor                 int
 	HeldRef                *contracts.RepoRef
 	Kinds                  map[string]contracts.CheckoutKind
-	PRRequested            string
-	PRKey                  string
-	PRHoverStarted         time.Time
-	PRHoverOpen            bool
 }
 
 func footerCloudDevice(id string) bool { return id == "cloud" || strings.HasPrefix(id, "cloud-") }
@@ -213,7 +207,10 @@ func (a *App) composerFooterCheckoutPlan() *contracts.CheckoutPlan {
 	if a.sessionID != "" {
 		return nil
 	}
-	_, resource, _ := a.syncComposerFooterGit()
+	_, resource, git := a.syncComposerFooterGit()
+	if !git {
+		return nil
+	}
 	f := &a.footerGit
 	name := f.effectiveRef(resource)
 	switch f.Kind {
@@ -222,8 +219,13 @@ func (a *App) composerFooterCheckoutPlan() *contracts.CheckoutPlan {
 	case contracts.CheckoutCloud:
 		return &contracts.CheckoutPlan{Kind: contracts.CheckoutCloud, Branch: name}
 	default:
-		if row := f.selectedRef(resource); row != nil && row.WorktreePath != "" {
-			return &contracts.CheckoutPlan{Kind: contracts.CheckoutReuse, Path: row.WorktreePath, Branch: row.Name}
+		if row := f.selectedRef(resource); row != nil {
+			if row.Current {
+				return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: row.Name}
+			}
+			if row.WorktreePath != "" {
+				return &contracts.CheckoutPlan{Kind: contracts.CheckoutReuse, Path: row.WorktreePath, Branch: row.Name}
+			}
 		}
 		return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: name}
 	}
@@ -269,7 +271,7 @@ func (a *App) composerFooterGitCommandFinished(command contracts.Command, err er
 	if !contracts.IsComposerGitCommand(command.Kind) {
 		return false
 	}
-	if command.Git == nil || command.Kind == "git.pr.refresh" {
+	if command.Git == nil {
 		return true
 	}
 	f := &a.footerGit
@@ -363,18 +365,18 @@ func footerGitLabel(c *ui.Context, p design.Tokens, glyph, text, label string, m
 	}
 	row.Children(func() {
 		icon(c, glyph, 12)
-		ui.Text(c, text).MinWidth(0).Shrink(1).SingleLine().FontSize(design.UISize(c, 12)).FontWeight(500)
+		ui.Text(c, text).MinWidth(0).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 	})
 }
 
 func (a *App) footerGitTrigger(c *ui.Context, glyph, text, label string, open bool) ui.Element {
-	b := ui.ButtonBase(c).Height(20).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(6).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label))
+	b := ui.ButtonBase(c.Key(label)).Height(20).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(6).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label))
 	if open || b.Hovered() {
 		b.Background(a.palette.Hover)
 	}
 	b.Children(func() {
 		icon(c, glyph, 12)
-		ui.Text(c, text).MinWidth(0).Shrink(1).SingleLine().FontSize(design.UISize(c, 12)).FontWeight(500)
+		ui.Text(c, text).MinWidth(0).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 		icon(c, "alt-arrow-down", 12)
 	})
 	return b
@@ -382,17 +384,19 @@ func (a *App) footerGitTrigger(c *ui.Context, glyph, text, label string, open bo
 
 // popover.rs::popover_card uses the same opaque input surface and shadow_lg
 // as the model picker, with a 4px inset and 2px menu gap.
-func (a *App) footerGitPopoverCard(panel ui.Element) {
-	palette := a.centralControls().modelPopupPalette()
-	panel.Padding(4).Gap(2).Radius(12).FontSize(13).FontWeight(500).TextColor(palette.Text).
-		Background(palette.Dialog).Border(1, palette.Border).
-		Shadow(0, 10, 2*15, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 2*6, -4, ui.RGBA(0, 0, 0, .1)).Clip()
+func (a *App) footerGitPopoverCard(c *ui.Context, panel ui.Element) {
+	palette := a.centralControls().modelPopupPalette(c)
+	panel.Padding(4).Gap(2).Radius(12).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(palette.Text).Clip()
+	if !a.frosted(c) {
+		panel.Shadow(0, 10, 2*15, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 2*6, -4, ui.RGBA(0, 0, 0, .1))
+	}
+	a.floatingSurface(c, panel, 12)
 }
 
 func (a *App) footerCheckoutPopover(c *ui.Context, anchor ui.Element) {
 	f := &a.footerGit
 	ui.PopoverBase(c, anchor, &f.CheckoutOpen, func(panel ui.Element) {
-		a.footerGitPopoverCard(panel)
+		a.footerGitPopoverCard(c, panel)
 		panel.Label(tr(c, "Checkout picker")).Width(224).Focusable().AutoFocus()
 		a.footerGitPopoverPosition(c, panel, anchor)
 		local := "Current checkout"
@@ -408,11 +412,14 @@ func (a *App) footerCheckoutPopover(c *ui.Context, anchor ui.Element) {
 		c.OnShortcut(0, ui.KeyEnter, func() { a.pickComposerFooterCheckout(items[f.Cursor].kind) })
 		for i, item := range items {
 			item := item
-			button := ui.ButtonBase(c).Height(30).FillWidth().Padding(0, 8).Gap(8).Radius(8).Justify(ui.Start).Label(tr(c, item.label))
+			button := ui.ButtonBase(c.Key("checkout-"+string(item.kind))).Height(30).FillWidth().Padding(0, 8).Gap(8).Radius(8).Justify(ui.Start).Label(tr(c, item.label))
 			if button.Hovered() || f.Kind == item.kind || f.Cursor == i {
 				button.Background(a.palette.Hover)
 			}
-			button.OnClick(func() { a.pickComposerFooterCheckout(item.kind) }).Children(func() { icon(c, item.glyph, 14); ui.Text(c, tr(c, item.label)).FontSize(design.UISize(c, 13)) })
+			button.OnClick(func() { a.pickComposerFooterCheckout(item.kind) }).Children(func() {
+				icon(c, item.glyph, 14)
+				ui.Text(c, tr(c, item.label)).FontSize(design.TextSize(c, design.TextBase))
+			})
 		}
 	})
 }
@@ -431,10 +438,10 @@ func (a *App) footerGitPopoverPosition(c *ui.Context, panel, anchor ui.Element) 
 func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 	f := &a.footerGit
 	ui.PopoverBase(c, anchor, &f.RefOpen, func(panel ui.Element) {
-		a.footerGitPopoverCard(panel)
+		a.footerGitPopoverCard(c, panel)
 		panel.Label(tr(c, "Ref picker")).Width(320)
 		budget := a.footerGitPopoverPosition(c, panel, anchor)
-		search := ui.TextInputBase(c.Key("composer-ref-search"), &f.Query).Label(tr(c, "Search refs")).Placeholder(tr(c, "Search refs…")).Height(32).FillWidth().Padding(0, 8).FontSize(design.UISize(c, 13)).AutoFocus().OnChange(func() { f.Cursor = 0 })
+		search := ui.TextInputBase(c.Key("composer-ref-search"), &f.Query).Label(tr(c, "Search refs")).Placeholder(tr(c, "Search refs…")).Height(32).FillWidth().Padding(0, 8).FontSize(design.TextSize(c, design.TextBase)).AutoFocus().OnChange(func() { f.Cursor = 0 })
 		composing := search.Composing()
 		search.OnTextKey(func(key ui.TextKey) bool {
 			pressed := key.Key
@@ -474,12 +481,12 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 		}
 		switch resource.State {
 		case contracts.LoadError:
-			ui.Text(c, resource.Error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger).Padding(8)
+			ui.Text(c, resource.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Padding(8)
 			textButton(c, tr(c, "Retry refs")).OnClick(func() { a.ensureComposerFooterRefs(true) })
 		case contracts.LoadReady:
 			rows := footerFilteredRefs(resource, f.Query)
 			if len(rows) == 0 {
-				ui.Text(c, tr(c, "No refs found.")).FontSize(design.UISize(c, 12)).Padding(8)
+				ui.Text(c, tr(c, "No refs found.")).FontSize(design.TextSize(c, design.TextBase)).Padding(8)
 			}
 			if len(rows) > 0 {
 				// pickers.rs caps the filtered rows and keyboard cursor at 300.
@@ -495,7 +502,7 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 							b.ScrollIntoView()
 						}
 						b.OnClick(func() { a.pickComposerFooterRef(row) }).Children(func() {
-							ui.Text(c, row.Name).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 13))
+							ui.Text(c, row.Name).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextBase))
 							tag := ""
 							if row.Current {
 								tag = "current"
@@ -506,13 +513,13 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 								tag = "switching…"
 							}
 							if tag != "" {
-								ui.Text(c, tr(c, tag)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
+								ui.Text(c, tr(c, tag)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Muted)
 							}
 						})
 					}
 				})
 				if len(rows) > 300 {
-					ui.Text(c, fmt.Sprintf(tr(c, "Showing 300 of %d refs"), len(rows))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint).Padding(4, 8)
+					ui.Text(c, fmt.Sprintf(tr(c, "Showing 300 of %d refs"), len(rows))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Padding(4, 8)
 				}
 			}
 		default:
@@ -521,7 +528,7 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 			}
 		}
 		if f.SwitchError != "" {
-			ui.Text(c, f.SwitchError).FontSize(design.UISize(c, 11)).TextColor(a.palette.Danger).Padding(4, 8)
+			ui.Text(c, f.SwitchError).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger).Padding(4, 8)
 		}
 	})
 }
@@ -541,90 +548,4 @@ func footerFilteredRefs(resource contracts.RepoRefs, query string) []contracts.R
 		}
 	}
 	return append(prefix, remainder...)
-}
-
-func (a *App) composerFooterPRBadge(c *ui.Context) {
-	project, ok := a.footerGitProject()
-	session := a.currentSession()
-	if !ok || !project.GitDetected || session.ID == "" {
-		return
-	}
-	key, valid := contracts.SessionCheckoutPRKey(session)
-	if !valid {
-		return
-	}
-	f := &a.footerGit
-	if f.PRKey != key.Key() {
-		f.PRKey, f.PRHoverStarted, f.PRHoverOpen = key.Key(), time.Time{}, false
-	}
-	if resource := a.state.CheckoutPR[key.Key()]; resource.State == "" && f.PRRequested != key.Key() {
-		f.PRRequested = key.Key()
-		a.dispatch(contracts.Command{Kind: "git.pr.refresh", Git: &contracts.GitRequest{Source: &key}})
-	}
-	summary := contracts.ChangeRequestForSession(session, a.state.CheckoutPR)
-	if summary == nil {
-		return
-	}
-	copy := *summary
-	copy.Title = strings.NewReplacer("\r", " ", "\n", " ").Replace(copy.Title)
-	color := a.palette.Success
-	state := "Open"
-	switch copy.State {
-	case "merged":
-		// theme.rs resolves code_text from the selected accent's primary.
-		color, state = a.palette.Accent, "Merged"
-	case "closed":
-		color, state = a.palette.Danger, "Closed"
-	}
-	b := ui.ButtonBase(c).Height(20).Padding(0, 7).Gap(5).Radius(6).AlignItems(ui.Center).FontWeight(500).TextColor(color.Alpha(.85)).Role(ui.RoleLink).
-		Label(fmt.Sprintf(tr(c, "Open pull request %d: %s"), copy.Number, copy.Title)).Background(color.Alpha(.08))
-	if b.Hovered() {
-		b.Background(color.Alpha(.16)).TextColor(color)
-	}
-	b.OnClick(func() { a.openComposerFooterPR(copy) }).Children(func() {
-		icon(c, "pull-request", 11)
-		ui.Text(c, fmt.Sprintf("%d", copy.Number)).Font("Geist Mono").FontSize(11)
-	})
-	if b.Hovered() {
-		if f.PRHoverStarted.IsZero() {
-			f.PRHoverStarted = c.Now()
-		}
-		f.PRHoverOpen = c.Now().Sub(f.PRHoverStarted) >= 350*time.Millisecond
-		if !f.PRHoverOpen {
-			c.After(350*time.Millisecond - c.Now().Sub(f.PRHoverStarted))
-		}
-	} else {
-		f.PRHoverStarted = time.Time{}
-		f.PRHoverOpen = false
-	}
-	ui.PopoverBase(c, b, &f.PRHoverOpen, func(panel ui.Element) {
-		panel.Label(tr(c, "Pull request details")).MaxWidth(320).Padding(7, 9).Gap(3).Radius(6).Background(a.centralControls().modelPopupPalette().Dialog).Border(1, a.palette.BorderStrong).
-			Shadow(0, 4, 2*6, -1, ui.RGBA(0, 0, 0, .1)).Shadow(0, 2, 2*4, -2, ui.RGBA(0, 0, 0, .1)).AttachTo(b, ui.AnchorTopEnd, ui.AnchorBottomEnd).Margin(0, 0, 6, 0)
-		ui.Text(c, fmt.Sprintf(tr(c, "PR #%d · %s"), copy.Number, state)).FontSize(11).FontWeight(500).TextColor(color)
-		ui.Text(c, copy.Title).FontSize(11).TextColor(a.palette.Muted).MinWidth(0).SingleLine()
-	})
-}
-
-func composerFooterPRDestination(summary contracts.ChangeRequestSummary, preference string) string {
-	u, err := url.Parse(summary.URL)
-	if preference == "browser" {
-		return "browser"
-	}
-	if preference == "pullRequest" && err == nil && u.Hostname() == "github.com" && summary.DetailID != "" {
-		return "pullRequest"
-	}
-	return "external"
-}
-
-func (a *App) openComposerFooterPR(summary contracts.ChangeRequestSummary) {
-	switch composerFooterPRDestination(summary, a.state.Settings.General.PRDestination) {
-	case "pullRequest":
-		a.workspace.OpenPR(summary.DetailID)
-		a.setPanel(1, true)
-	case "browser":
-		a.workspace.OpenBrowser(summary.URL)
-		a.setPanel(1, true)
-	default:
-		a.services.OpenURL(summary.URL)
-	}
 }

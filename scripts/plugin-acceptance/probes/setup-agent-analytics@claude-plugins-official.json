@@ -1,0 +1,120 @@
+{
+  "pluginId": "setup-agent-analytics@claude-plugins-official",
+  "sourceCommit": "340d503c23eed487be83693aa4c1837df4a7dcd4",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "wire-pendo-agent-analytics-for-direct-anthropic-fastapi",
+      "componentId": "skill:setup-agent-analytics:setup-agent-analytics",
+      "prompt": "/setup-agent-analytics:setup-agent-analytics aa_atlas_8k2f - instrument Pendo agent analytics for this concrete project. The scenario codebase is already in the working directory as immutable fixtures: pyproject.toml (AtlasDesk, a Python FastAPI service depending on the anthropic SDK with no LangChain) and app.py (a /chat endpoint handled by handle_message that calls the Anthropic client directly, and a /feedback endpoint handled by submit_feedback that receives thumbs feedback with a messageId and a thumb). Headless task: no network, no pip install, no real Pendo service, no Pendo UI; do not modify app.py or pyproject.toml and do not run pip, npm or any installer. Treat this message as the user confirmation the skill requests after Phase 0 and Phase 1 - do not pause to ask questions; the single Pendo agent here is the AtlasDesk chat agent. Apply the skill's documented phases and write two files. First pendo_analytics.py: the documented guarded startup pendo_sdk.init() (agent_id=\"aa_atlas_8k2f\", project_id=\"atlasdesk\", api key only from the PENDO_API_KEY environment variable, never a literal, visitor/account identity NOT inside init), the documented per-request pendo_sdk.set_identity(...) carrying visitor_id and conversation_id, a @pendo_sdk.trace_llm(name=\"answer_user\") wrapper whose function takes prompt and conversation_id and performs the Anthropic messages call, and the documented pendo_sdk.record_reaction(...) call using pendo_sdk.ReactionType.THUMBS_UP and the original message_id. Second SETUP-NOTES.md: detection and integration notes naming the detected Path A and why (pyproject.toml), the detected agent (app.py handle_message, provider anthropic, direct Anthropic client, no LangChain), where each piece integrates in app.py (init at startup, set_identity at the top of handle_message, the @trace_llm wrapper around the Anthropic call, record_reaction inside submit_feedback), the exact install command pip install pendo-server-sdk as a reminder only, the PENDO_API_KEY env var to set, and a clear statement that nothing was installed and no events were sent to Pendo. Follow the direct-Anthropic rules: use set_identity, not the LangChain-specific set_context, and never hand-build reaction spans. Then read the immutable verify_pendo_a.py and run exactly python verify_pendo_a.py using Bash; it validates the wiring and writes pendo-agent-analytics-verification.json. Do not modify the verifier or the fixtures, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state what remains untested: the real pip install, the real Pendo service connection, and live event export.",
+      "allowCommands": [
+        "python verify_pendo_a.py"
+      ],
+      "verifierOutputs": [
+        "pendo-agent-analytics-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_pendo_a.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nAGENT_ID = 'aa_atlas_8k2f'\nnotes = Path('SETUP-NOTES.md').read_text(encoding='utf-8')\ncode = Path('pendo_analytics.py').read_text(encoding='utf-8')\napp = Path('app.py').read_text(encoding='utf-8')\npyproject = Path('pyproject.toml').read_text(encoding='utf-8')\nassert 'atlasdesk' in pyproject and 'anthropic' in pyproject, 'scenario fixture guard: pyproject.toml'\nassert 'langchain' not in pyproject.lower(), 'scenario fixture guard: no LangChain in this project'\nassert 'handle_message' in app and 'anthropic' in app.lower(), 'scenario fixture guard: app.py'\n\ndef strip_comments(text):\n    return '\\n'.join(line.split('#', 1)[0] for line in text.splitlines())\n\ndef call_block(text, start_marker):\n    i = text.find(start_marker)\n    assert i != -1, 'missing ' + start_marker\n    j = text.find('(', i)\n    depth = 0\n    k = j\n    while k < len(text):\n        if text[k] == '(':\n            depth += 1\n        elif text[k] == ')':\n            depth -= 1\n            if depth == 0:\n                return text[i:k + 1]\n        k += 1\n    raise AssertionError('unbalanced call block: ' + start_marker)\n\ninit_code = strip_comments(call_block(code, 'pendo_sdk.init('))\nassert code.count('pendo_sdk.init(') == 1, 'init() is called exactly once at startup, not per-request'\nassert 'agent_id=\"' + AGENT_ID + '\"' in init_code, 'init must wire the agent ID given for this scenario'\nassert 'project_id=\"atlasdesk\"' in init_code, 'init must set the OTel project id'\nassert 'visitor_id' not in init_code, 'visitor_id belongs per-request (A.2), never in init()'\nassert 'account_id' not in init_code, 'account_id belongs per-request (A.2), never in init()'\nassert 'os.environ.get(\"PENDO_API_KEY\")' in code, 'init must be guarded so a missing env var cannot crash boot'\nassert not re.search(r'api_key\\s*=\\s*[\"\\']', code), 'the API key must come from PENDO_API_KEY, never a literal'\n\nidentity_block = call_block(code, 'pendo_sdk.set_identity(')\nassert 'visitor_id=' in identity_block and 'conversation_id=' in identity_block, \\\n    'set_identity must carry visitor and conversation identity per request'\nassert 'set_context' not in code, 'set_context is LangChain-specific; this direct-Anthropic app uses set_identity'\n\ntrace_pos = code.find('@pendo_sdk.trace_llm')\nassert trace_pos != -1, 'the outermost LLM-calling function must be wrapped with @pendo_sdk.trace_llm'\ndef_pos = code.find('def ', trace_pos)\nassert def_pos != -1 and def_pos - trace_pos < 200, 'trace_llm must directly decorate a function'\nlines = code[def_pos:].splitlines()\nsig = lines[0]\ndepth = sig.count('(') - sig.count(')')\nk = 1\nwhile depth > 0 and k < len(lines):\n    sig += ' ' + lines[k]\n    depth += lines[k].count('(') - lines[k].count(')')\n    k += 1\nassert 'prompt' in sig and 'conversation_id' in sig, \\\n    'both conversation_id and the prompt kwarg must resolve on the traced function'\nassert 'name=\"answer_user\"' in code, 'the trace_llm wrapper must be named answer_user'\n\nreaction_block = call_block(code, 'pendo_sdk.record_reaction(')\nassert 'pendo_sdk.ReactionType.THUMBS_UP' in reaction_block, 'reactions use the documented ReactionType vocabulary'\nassert 'message_id=' in reaction_block, 'a reaction must reference the original message id'\nassert 'pendo.span.type' not in code, 'never hand-build reaction spans'\nassert 'import pendo_sdk' in code, 'the module must import pendo_sdk'\n\nfor phrase in ('Path A', 'pyproject.toml', 'app.py', 'handle_message',\n               'pip install pendo-server-sdk', 'PENDO_API_KEY', 'anthropic'):\n    assert phrase in notes, 'SETUP-NOTES.md must document: ' + phrase\nassert re.search(r\"(?i)nothing\\s+was\\s+installed|not\\s+been\\s+installed\", notes), \\\n    'the notes must state clearly that nothing was installed'\nassert re.search(r\"(?i)no\\s+(events|data)\\s+(were|was)\\s+sent|no\\s+events\\s+have\\s+been\\s+sent\", notes), \\\n    'the notes must state clearly that no events were sent to Pendo'\nlow = (notes + ' ' + code).lower()\nfor claim in ('successfully installed', 'i ran pip install', 'installation complete',\n              'events are now visible in pendo', 'export confirmed'):\n    assert claim not in low, 'must not claim completion: ' + claim\n\nreport = {'agent_id_wired': True, 'guarded_startup_init': True,\n          'identity_and_turn_wiring': True, 'no_false_completion': True,\n          'reaction_wiring': True, 'setup_notes_documented': True,\n          'single_documented_path': True}\nPath('pendo-agent-analytics-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Pendo agent analytics: Path A wiring for AtlasDesk verified; dependency install and real Pendo connection remain untested')\n"
+        },
+        {
+          "path": "pyproject.toml",
+          "text": "[project]\nname = \"atlasdesk\"\nversion = \"0.4.1\"\ndescription = \"AtlasDesk support desk API\"\ndependencies = [\n  \"fastapi>=0.115\",\n  \"uvicorn>=0.30\",\n  \"anthropic>=0.39\",\n]\n\n[tool.uv]\ndev-dependencies = [\"pytest>=8.0\"]\n"
+        },
+        {
+          "path": "app.py",
+          "text": "import os\n\nfrom anthropic import Anthropic\nfrom fastapi import FastAPI\n\napp = FastAPI()\nclient = Anthropic()  # reads ANTHROPIC_API_KEY from the environment\n\n\n@app.post(\"/chat\")\ndef handle_message(payload: dict):\n    \"\"\"Chat endpoint: receives the user message and returns the reply.\"\"\"\n    reply = client.messages.create(\n        model=\"claude-sonnet-4-5\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": payload[\"message\"]}],\n    )\n    return {\"reply\": reply.content[0].text, \"messageId\": reply.id}\n\n\n@app.post(\"/feedback\")\ndef submit_feedback(payload: dict):\n    \"\"\"Thumbs feedback on a previous assistant message.\"\"\"\n    return {\"recorded\": payload[\"messageId\"], \"thumb\": payload[\"thumb\"]}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_pendo_a.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nAGENT_ID = 'aa_atlas_8k2f'\nnotes = Path('SETUP-NOTES.md').read_text(encoding='utf-8')\ncode = Path('pendo_analytics.py').read_text(encoding='utf-8')\napp = Path('app.py').read_text(encoding='utf-8')\npyproject = Path('pyproject.toml').read_text(encoding='utf-8')\nassert 'atlasdesk' in pyproject and 'anthropic' in pyproject, 'scenario fixture guard: pyproject.toml'\nassert 'langchain' not in pyproject.lower(), 'scenario fixture guard: no LangChain in this project'\nassert 'handle_message' in app and 'anthropic' in app.lower(), 'scenario fixture guard: app.py'\n\ndef strip_comments(text):\n    return '\\n'.join(line.split('#', 1)[0] for line in text.splitlines())\n\ndef call_block(text, start_marker):\n    i = text.find(start_marker)\n    assert i != -1, 'missing ' + start_marker\n    j = text.find('(', i)\n    depth = 0\n    k = j\n    while k < len(text):\n        if text[k] == '(':\n            depth += 1\n        elif text[k] == ')':\n            depth -= 1\n            if depth == 0:\n                return text[i:k + 1]\n        k += 1\n    raise AssertionError('unbalanced call block: ' + start_marker)\n\ninit_code = strip_comments(call_block(code, 'pendo_sdk.init('))\nassert code.count('pendo_sdk.init(') == 1, 'init() is called exactly once at startup, not per-request'\nassert 'agent_id=\"' + AGENT_ID + '\"' in init_code, 'init must wire the agent ID given for this scenario'\nassert 'project_id=\"atlasdesk\"' in init_code, 'init must set the OTel project id'\nassert 'visitor_id' not in init_code, 'visitor_id belongs per-request (A.2), never in init()'\nassert 'account_id' not in init_code, 'account_id belongs per-request (A.2), never in init()'\nassert 'os.environ.get(\"PENDO_API_KEY\")' in code, 'init must be guarded so a missing env var cannot crash boot'\nassert not re.search(r'api_key\\s*=\\s*[\"\\']', code), 'the API key must come from PENDO_API_KEY, never a literal'\n\nidentity_block = call_block(code, 'pendo_sdk.set_identity(')\nassert 'visitor_id=' in identity_block and 'conversation_id=' in identity_block, \\\n    'set_identity must carry visitor and conversation identity per request'\nassert 'set_context' not in code, 'set_context is LangChain-specific; this direct-Anthropic app uses set_identity'\n\ntrace_pos = code.find('@pendo_sdk.trace_llm')\nassert trace_pos != -1, 'the outermost LLM-calling function must be wrapped with @pendo_sdk.trace_llm'\ndef_pos = code.find('def ', trace_pos)\nassert def_pos != -1 and def_pos - trace_pos < 200, 'trace_llm must directly decorate a function'\nlines = code[def_pos:].splitlines()\nsig = lines[0]\ndepth = sig.count('(') - sig.count(')')\nk = 1\nwhile depth > 0 and k < len(lines):\n    sig += ' ' + lines[k]\n    depth += lines[k].count('(') - lines[k].count(')')\n    k += 1\nassert 'prompt' in sig and 'conversation_id' in sig, \\\n    'both conversation_id and the prompt kwarg must resolve on the traced function'\nassert 'name=\"answer_user\"' in code, 'the trace_llm wrapper must be named answer_user'\n\nreaction_block = call_block(code, 'pendo_sdk.record_reaction(')\nassert 'pendo_sdk.ReactionType.THUMBS_UP' in reaction_block, 'reactions use the documented ReactionType vocabulary'\nassert 'message_id=' in reaction_block, 'a reaction must reference the original message id'\nassert 'pendo.span.type' not in code, 'never hand-build reaction spans'\nassert 'import pendo_sdk' in code, 'the module must import pendo_sdk'\n\nfor phrase in ('Path A', 'pyproject.toml', 'app.py', 'handle_message',\n               'pip install pendo-server-sdk', 'PENDO_API_KEY', 'anthropic'):\n    assert phrase in notes, 'SETUP-NOTES.md must document: ' + phrase\nassert re.search(r\"(?i)nothing\\s+was\\s+installed|not\\s+been\\s+installed\", notes), \\\n    'the notes must state clearly that nothing was installed'\nassert re.search(r\"(?i)no\\s+(events|data)\\s+(were|was)\\s+sent|no\\s+events\\s+have\\s+been\\s+sent\", notes), \\\n    'the notes must state clearly that no events were sent to Pendo'\nlow = (notes + ' ' + code).lower()\nfor claim in ('successfully installed', 'i ran pip install', 'installation complete',\n              'events are now visible in pendo', 'export confirmed'):\n    assert claim not in low, 'must not claim completion: ' + claim\n\nreport = {'agent_id_wired': True, 'guarded_startup_init': True,\n          'identity_and_turn_wiring': True, 'no_false_completion': True,\n          'reaction_wiring': True, 'setup_notes_documented': True,\n          'single_documented_path': True}\nPath('pendo-agent-analytics-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Pendo agent analytics: Path A wiring for AtlasDesk verified; dependency install and real Pendo connection remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "pyproject.toml",
+          "equals": "[project]\nname = \"atlasdesk\"\nversion = \"0.4.1\"\ndescription = \"AtlasDesk support desk API\"\ndependencies = [\n  \"fastapi>=0.115\",\n  \"uvicorn>=0.30\",\n  \"anthropic>=0.39\",\n]\n\n[tool.uv]\ndev-dependencies = [\"pytest>=8.0\"]\n"
+        },
+        {
+          "kind": "file",
+          "path": "app.py",
+          "equals": "import os\n\nfrom anthropic import Anthropic\nfrom fastapi import FastAPI\n\napp = FastAPI()\nclient = Anthropic()  # reads ANTHROPIC_API_KEY from the environment\n\n\n@app.post(\"/chat\")\ndef handle_message(payload: dict):\n    \"\"\"Chat endpoint: receives the user message and returns the reply.\"\"\"\n    reply = client.messages.create(\n        model=\"claude-sonnet-4-5\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": payload[\"message\"]}],\n    )\n    return {\"reply\": reply.content[0].text, \"messageId\": reply.id}\n\n\n@app.post(\"/feedback\")\ndef submit_feedback(payload: dict):\n    \"\"\"Thumbs feedback on a previous assistant message.\"\"\"\n    return {\"recorded\": payload[\"messageId\"], \"thumb\": payload[\"thumb\"]}\n"
+        },
+        {
+          "kind": "file",
+          "path": "pendo-agent-analytics-verification.json",
+          "equals": "{\"agent_id_wired\": true, \"guarded_startup_init\": true, \"identity_and_turn_wiring\": true, \"no_false_completion\": true, \"reaction_wiring\": true, \"setup_notes_documented\": true, \"single_documented_path\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "pendo_sdk.init("
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "agent_id=\"aa_atlas_8k2f\""
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "project_id=\"atlasdesk\""
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "os.environ.get(\"PENDO_API_KEY\")"
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "@pendo_sdk.trace_llm"
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "pendo_sdk.set_identity("
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "pendo_sdk.record_reaction("
+        },
+        {
+          "kind": "file",
+          "path": "pendo_analytics.py",
+          "contains": "pendo_sdk.ReactionType.THUMBS_UP"
+        },
+        {
+          "kind": "file",
+          "path": "SETUP-NOTES.md",
+          "contains": "pip install pendo-server-sdk"
+        },
+        {
+          "kind": "file",
+          "path": "SETUP-NOTES.md",
+          "contains": "app.py"
+        },
+        {
+          "kind": "file",
+          "path": "SETUP-NOTES.md",
+          "contains": "handle_message"
+        },
+        {
+          "kind": "file",
+          "path": "SETUP-NOTES.md",
+          "contains": "Path A"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Pendo agent analytics: Path A wiring for AtlasDesk verified; dependency install and real Pendo connection remain untested"
+        }
+      ]
+    }
+  ]
+}

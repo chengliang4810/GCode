@@ -11,7 +11,8 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// SourceCommit is the sole visual source baseline for this implementation.
+// SourceCommit identifies the frozen palette and geometry reference.
+// Interface typography follows the separately documented ZCode scale.
 const SourceCommit = "ab189159f10cf8e63c0502be75a59bbc487e0eaf"
 
 // Dimensions are logical pixels, extracted from crates/ui/src/{settings,theme,lib}.rs.
@@ -40,13 +41,12 @@ const (
 	TerminalMaxFraction float32 = .55
 	BubbleRadius        float32 = 16
 	PanelRadius         float32 = 10
-	ControlRadius       float32 = 6
 	SpaceXS             float32 = 4
 	SpaceSM             float32 = 8
 	SpaceMD             float32 = 12
 	SpaceLG             float32 = 16
-	UIFontSize          float32 = 16
-	CodeFontSize        float32 = 12.5
+	UIFontSize          float32 = 14
+	CodeFontSize        float32 = 12
 	TerminalFontSize    float32 = 13
 )
 
@@ -105,7 +105,7 @@ func load() {
 			} `json:"families"`
 		}
 		if err := json.Unmarshal(registryJSON, &registry); err != nil {
-			panic("invalid embedded Zeron theme registry: " + err.Error())
+			panic("invalid embedded GCode theme registry: " + err.Error())
 		}
 		for _, family := range registry.Families {
 			variants = append(variants, family.Variants...)
@@ -132,7 +132,7 @@ type Tokens struct {
 	Background, Shell, Raised, Card, Dialog, Overlay          ui.Color
 	Text, Muted, Faint, Solid, OnSolid                        ui.Color
 	Accent, AccentStrong, AccentOn, Selection, Caret          ui.Color
-	Border, BorderStrong, Hover, Active, Input                ui.Color
+	Border, BorderStrong, Hover, Active, Input, CodeWash      ui.Color
 	Danger, Warning, Success, DiffAdd, DiffDelete, DiffHunk   ui.Color
 	TerminalBackground, TerminalForeground, TerminalSelection ui.Color
 	Glyph                                                     [3]ui.Color
@@ -140,7 +140,7 @@ type Tokens struct {
 	Syntax                                                    map[string]ui.Color
 }
 
-// Palette resolves a variant id or family id, falling back to Zeron in the requested appearance.
+// Palette resolves a variant id or family id, falling back to GCode in the requested appearance.
 func Palette(themeID string, dark bool) Tokens {
 	load()
 	appearance := "light"
@@ -160,14 +160,14 @@ func Palette(themeID string, dark bool) Tokens {
 	}
 	if chosen == nil {
 		for i := range variants {
-			if variants[i].ID == "zeron-"+appearance {
+			if variants[i].ID == "rcode-"+appearance {
 				chosen = &variants[i]
 				break
 			}
 		}
 	}
 	if chosen == nil {
-		panic("Zeron palette is missing from the embedded registry")
+		panic("GCode palette is missing from the embedded registry")
 	}
 	v := chosen
 	c := func(role string) ui.Color { return ui.Hex(v.Colors[role]) }
@@ -175,7 +175,7 @@ func Palette(themeID string, dark bool) Tokens {
 		Background: c("background"), Shell: c("shell"), Raised: c("raised"), Card: c("card"), Dialog: c("dialog"), Overlay: c("overlay"),
 		Text: c("text"), Muted: c("textMuted"), Faint: c("textFaint"), Solid: c("solid"), OnSolid: c("onSolid"),
 		Accent: ui.Hex(v.Accent.Primary), AccentStrong: ui.Hex(v.Accent.Strong), AccentOn: ui.Hex(v.Accent.On), Selection: ui.Hex(v.Accent.Selection), Caret: ui.Hex(v.Accent.Caret),
-		Border: c("border"), BorderStrong: c("borderStrong"), Hover: c("hover"), Active: c("active"), Input: c("input"),
+		Border: c("border"), BorderStrong: c("borderStrong"), Hover: c("hover"), Active: c("active"), Input: c("input"), CodeWash: c("codeWash"),
 		Danger: c("danger"), Warning: c("warning"), Success: c("success"), DiffAdd: c("diffAdd"), DiffDelete: c("diffDelete"), DiffHunk: c("diffHunk"),
 		TerminalBackground: ui.Hex(v.Terminal.Background), TerminalForeground: ui.Hex(v.Terminal.Foreground), TerminalSelection: ui.Hex(v.Terminal.Selection), Syntax: make(map[string]ui.Color)}
 	for i, color := range v.Terminal.ANSI {
@@ -190,12 +190,12 @@ func Palette(themeID string, dark bool) Tokens {
 	return t
 }
 
-// UI builds a fresh theme for native widgets, using source roles and source metrics.
+// UI builds a fresh native theme with the semantic palette and shared font base.
 func (t Tokens) UI() *ui.Theme {
 	return &ui.Theme{Dark: t.Dark, Background: t.Background, Surface: t.Input, SurfaceHover: t.Hover.Over(t.Input), SurfacePressed: t.Active.Over(t.Input),
 		Border: t.Border, Text: t.Text, TextMuted: t.Muted, Accent: t.Accent, AccentHover: t.AccentStrong, AccentPressed: t.AccentStrong, AccentText: t.AccentOn,
 		Danger: t.Danger, Warning: t.Warning, Success: t.Success, Selection: t.Selection, Focus: t.Accent, Inverse: t.Solid, InverseText: t.OnSolid,
-		Scrollbar: t.Muted.Alpha(.35), ScrollbarWidth: 6, Radius: ControlRadius, Spacing: SpaceXS, FontSize: 13, Font: "Geist"}
+		Scrollbar: t.Muted.Alpha(.35), ScrollbarWidth: 6, Radius: Controls().InputRadius, Spacing: SpaceXS, FontSize: UIFontSize, Font: "Geist"}
 }
 
 // Font normalizes persisted source font identifiers into native family names.
@@ -220,13 +220,4 @@ func MonoFont(name string) string {
 		return "monospace"
 	}
 	return Font(name)
-}
-
-// UISize maps an authored ui_rems pixel size to the selected UI rem base.
-// Editor and terminal font settings use their own absolute pixel sizes.
-func UISize(c *ui.Context, authored float32) float32 {
-	if c.Theme().FontSize <= 0 {
-		return authored
-	}
-	return authored * c.Theme().FontSize / 13
 }

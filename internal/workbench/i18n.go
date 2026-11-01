@@ -17,7 +17,7 @@ func (s *State) t(message string) string {
 
 func (s *State) tabTitle(tab surface) string {
 	switch tab.kind {
-	case "files", "changes", "history", "pullrequests", "picker":
+	case "files", "changes", "history", "picker", "terminal":
 		return s.t(tab.title)
 	}
 	return tab.title

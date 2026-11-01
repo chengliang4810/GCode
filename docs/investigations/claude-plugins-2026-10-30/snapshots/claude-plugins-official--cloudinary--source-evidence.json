@@ -1,0 +1,35 @@
+{
+  "repo": "cloudinary-devs/cloudinary-plugin",
+  "commit": "86be53409e3fb1c465cd5ff4d1dc937a2860f45c",
+  "path": ".",
+  "archive_sha256": "1130b37f17c9144ae0a0862b18028007f6f09f6643fcb741da99a087a9e86194",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".gitignore",
+    "README.md",
+    "assets/logo.svg",
+    "mcp.json",
+    "plugin.json",
+    "skills/claimable-cloud/SKILL.md",
+    "skills/cloudinary-docs/SKILL.md",
+    "skills/cloudinary-transformations/SKILL.md",
+    "skills/cloudinary-transformations/references/advanced-features.md",
+    "skills/cloudinary-transformations/references/ai-transformations.md",
+    "skills/cloudinary-transformations/references/debugging.md",
+    "skills/cloudinary-transformations/references/examples.md",
+    "skills/cloudinary-transformations/references/named-transformations.md",
+    "skills/cloudinary-transformations/references/responsive-images.md",
+    "skills/cloudinary-transformations/references/transformation-costs.md",
+    "skills/cloudinary-transformations/references/video-transformations.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"cloudinary\",\n  \"version\": \"1.2.0\",\n  \"description\": \"Use Cloudinary directly in Claude. Upload, manage, optimize, and transform images and videos at scale using natural language.\",\n  \"author\": {\n    \"name\": \"Cloudinary\",\n    \"email\": \"support@cloudinary.com\"\n  },\n  \"homepage\": \"https://cloudinary.com\",\n  \"repository\": \"https://github.com/cloudinary-devs/cloudinary-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"cloudinary\",\n    \"media\",\n    \"images\",\n    \"video\",\n    \"transformations\",\n    \"asset-management\",\n    \"optimization\",\n    \"mcp\"\n  ],\n  \"skills\": \"./skills/\",\n  \"mcpServers\": \"./mcp.json\"\n}\n",
+    "mcp.json": "{\n  \"$schema\": \"https://agent-plugins.org/schemas/1.0.0/mcp.schema.json\",\n  \"mcpServers\": {\n    \"cloudinary-asset-mgmt\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://asset-management.mcp.cloudinary.com/mcp\"\n    },\n    \"cloudinary-env-config\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://environment-config.mcp.cloudinary.com/mcp\"\n    },\n    \"cloudinary-smd\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://structured-metadata.mcp.cloudinary.com/mcp\"\n    },\n    \"cloudinary-analysis\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://analysis.mcp.cloudinary.com/mcp\"\n    },\n    \"cloudinary-mediaflows\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://mediaflows.mcp.cloudinary.com/v2/mcp\",\n      \"headers\": {\n        \"cld-cloud-name\": \"cloud_name\",\n        \"cld-api-key\": \"api_key\",\n        \"cld-secret\": \"api_secret\"\n      }\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/claimable-cloud/SKILL.md": "\nname: claimable-cloud\ndescription: Provision a working Cloudinary cloud with no signup (a Claimable Cloud) when the user wants to build with Cloudinary but has no credentials. Use when a Cloudinary task such as an upload, transformation or SDK setup can't proceed because no CLOUDINARY_URL or API credentials are available. Do not use when working credentials already exist.\nlicense: MIT\nmetadata:\n  author: cloudinary\n  version: '1.0.0'\n",
+    "skills/cloudinary-transformations/SKILL.md": "\nname: cloudinary-transformations\ndescription: Create and debug Cloudinary transformation URLs from natural language instructions. Use when building Cloudinary delivery URLs, applying image/video transformations, optimizing media, or debugging transformation syntax errors.\nlicense: MIT\nmetadata:\n  author: cloudinary\n  version: '1.0.4'\n",
+    "skills/cloudinary-docs/SKILL.md": "\nname: cloudinary-docs\ndescription: Looks up implementation details in the latest Cloudinary docs via the relevant llms.txt file. Use when building code or answering questions relating to image or video uploads, management, SDKs, APIs, webhooks, or integrations. For topics covered by a specialized Cloudinary skill, prefer that skill. Use this skill alongside it when the full use-case requires capabilities outside that skill's scope.\nlicense: MIT\nmetadata:\n  author: cloudinary\n  version: '1.1.0'\n"
+  }
+}

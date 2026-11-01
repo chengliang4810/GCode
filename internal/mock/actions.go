@@ -47,7 +47,7 @@ func (s *Server) CreateSession(ctx context.Context, projectID string) (contracts
 		}
 	}
 	now := s.opts.Now().UTC()
-	v := contracts.Session{ID: s.idLocked("session"), Title: "New session", ProjectID: projectID, DeviceID: project.DeviceID, CWD: project.Path, ModelID: "claude-opus-4-6", Branch: project.Branch, Status: contracts.Idle, CreatedAt: now, UpdatedAt: now, AccessMode: contracts.AccessFullAccess, ReasoningLevel: "High"}
+	v := contracts.Session{ID: s.idLocked("session"), Title: "New session", ProjectID: projectID, DeviceID: project.DeviceID, CWD: project.Path, ModelID: "claude-opus-4-6", Branch: project.Branch, Status: contracts.Idle, CreatedAt: now, UpdatedAt: now, ReasoningLevel: "High"}
 	if v.DeviceID == "" {
 		v.DeviceID = "local"
 	}
@@ -122,10 +122,6 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 		s.mu.Unlock()
 		return errors.New("title is empty")
 	}
-	if u.AccessMode != nil && !u.AccessMode.Valid() {
-		s.mu.Unlock()
-		return errors.New("invalid access mode")
-	}
 	if u.ModelID != nil {
 		found := false
 		for _, m := range s.state.Models {
@@ -153,12 +149,6 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 		}
 	}
 	v := &s.state.Sessions[i]
-	if u.AccessMode != nil {
-		v.AccessMode = *u.AccessMode
-	}
-	if u.Plan != nil {
-		v.Plan = *u.Plan
-	}
 	if u.Title != nil {
 		v.Title = strings.TrimSpace(*u.Title)
 	}
@@ -266,9 +256,104 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 	if u.DeviceID != nil {
 		v.DeviceID = *u.DeviceID
 	}
-	s.normalizeSessionCapabilitiesLocked(v)
+	if u.GroupID != nil {
+		if *u.GroupID != "" && s.sessionGroupIndexLocked(*u.GroupID) < 0 {
+			s.mu.Unlock()
+			return errors.New("unknown session group")
+		}
+		v.GroupID = *u.GroupID
+	}
+	if u.GroupOrder != nil {
+		v.GroupOrder = *u.GroupOrder
+	}
 	v.UpdatedAt = s.opts.Now().UTC()
 	s.publishLocked("session.updated", u.ID, "", "", "")
+	s.mu.Unlock()
+	return s.persist()
+}
+
+func (s *Server) sessionGroupIndexLocked(id string) int {
+	for i := range s.state.SessionGroups {
+		if s.state.SessionGroups[i].ID == id {
+			return i
+		}
+	}
+	return -1
+}
+
+// GroupCreate adds an empty conversation group ordered after existing groups.
+func (s *Server) GroupCreate(ctx context.Context, title string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return errors.New("title is empty")
+	}
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return ErrClosed
+	}
+	order := 0
+	for _, group := range s.state.SessionGroups {
+		order = max(order, group.Order+1)
+	}
+	s.state.SessionGroups = append(s.state.SessionGroups, contracts.SessionGroup{ID: s.idLocked("group"), Title: title, Order: order})
+	s.publishLocked("session.grouped", "", "", "", "")
+	s.mu.Unlock()
+	return s.persist()
+}
+
+// GroupRename renames a conversation group in place.
+func (s *Server) GroupRename(ctx context.Context, id, title string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return errors.New("title is empty")
+	}
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return ErrClosed
+	}
+	i := s.sessionGroupIndexLocked(id)
+	if i < 0 {
+		s.mu.Unlock()
+		return ErrNotFound
+	}
+	s.state.SessionGroups[i].Title = title
+	s.publishLocked("session.grouped", "", "", "", "")
+	s.mu.Unlock()
+	return s.persist()
+}
+
+// GroupDelete removes a group; its conversations return to the ungrouped list.
+func (s *Server) GroupDelete(ctx context.Context, id string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return ErrClosed
+	}
+	i := s.sessionGroupIndexLocked(id)
+	if i < 0 {
+		s.mu.Unlock()
+		return ErrNotFound
+	}
+	removed := s.state.SessionGroups[i].ID
+	s.state.SessionGroups = slices.Delete(s.state.SessionGroups, i, i+1)
+	for j := range s.state.Sessions {
+		if s.state.Sessions[j].GroupID == removed {
+			s.state.Sessions[j].GroupID = ""
+			s.state.Sessions[j].GroupOrder = 0
+		}
+	}
+	s.publishLocked("session.grouped", "", "", "", "")
 	s.mu.Unlock()
 	return s.persist()
 }
@@ -281,9 +366,6 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 	req.Text = strings.TrimSpace(req.Text)
 	if req.Text == "" && len(req.Attachments) == 0 && len(req.Annotations) == 0 {
 		return contracts.Run{}, errors.New("message is empty")
-	}
-	if req.AccessMode != "" && !req.AccessMode.Valid() {
-		return contracts.Run{}, errors.New("invalid access mode")
 	}
 	for i := range req.Annotations {
 		req.Annotations[i] = req.Annotations[i].Bounded()
@@ -357,7 +439,7 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 		}
 		v := resolved
 		v.Title, v.ModelID, v.Status = "New session", "claude-opus-4-6", contracts.Idle
-		v.CreatedAt, v.UpdatedAt, v.AccessMode, v.ReasoningLevel = now, now, contracts.AccessFullAccess, "High"
+		v.CreatedAt, v.UpdatedAt, v.ReasoningLevel = now, now, "High"
 		s.state.Sessions = append([]contracts.Session{v}, s.state.Sessions...)
 		s.state.Messages[v.ID] = []contracts.Message{}
 		req.SessionID = v.ID
@@ -388,10 +470,7 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 		if req.WorktreeID == "" {
 			req.WorktreeID = current.WorktreeID
 		}
-		if req.AccessMode == "" {
-			req.AccessMode = current.AccessMode
-		}
-		q := contracts.QueuedMessage{ID: s.idLocked("queue"), SessionID: req.SessionID, Text: req.Text, Attachments: req.Attachments, CreatedAt: s.opts.Now().UTC(), ModelID: req.ModelID, ReasoningLevel: req.ReasoningLevel, DeviceID: req.DeviceID, Branch: req.Branch, WorktreeID: req.WorktreeID, AccessMode: req.AccessMode, Plan: req.Plan, Annotations: req.Annotations}
+		q := contracts.QueuedMessage{ID: s.idLocked("queue"), SessionID: req.SessionID, Text: req.Text, Attachments: req.Attachments, CreatedAt: s.opts.Now().UTC(), ModelID: req.ModelID, ReasoningLevel: req.ReasoningLevel, DeviceID: req.DeviceID, Branch: req.Branch, WorktreeID: req.WorktreeID, Annotations: req.Annotations}
 		s.state.Queue = append(s.state.Queue, q)
 		s.publishLocked("queue.changed", req.SessionID, "", req.RequestID, "")
 		s.mu.Unlock()
@@ -422,13 +501,6 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 	}
 	now := s.opts.Now().UTC()
 	session := &s.state.Sessions[i]
-	if req.AccessMode != "" {
-		session.AccessMode = req.AccessMode
-	}
-	if session.AccessMode == "" {
-		session.AccessMode = contracts.AccessFullAccess
-	}
-	session.Plan = req.Plan
 	if req.ModelID != "" {
 		session.ModelID = req.ModelID
 	}
@@ -436,8 +508,7 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 		session.ReasoningLevel = req.ReasoningLevel
 	}
 	s.captureSessionSourceLocked(session)
-	s.normalizeSessionCapabilitiesLocked(session)
-	run := contracts.Run{ID: s.idLocked("run"), RequestID: req.RequestID, SessionID: session.ID, Status: "running", StartedAt: now, AccessMode: session.AccessMode, Plan: session.Plan}
+	run := contracts.Run{ID: s.idLocked("run"), RequestID: req.RequestID, SessionID: session.ID, Status: "running", StartedAt: now}
 	runIndex := -1
 	if turnID != "" {
 		for ri, previous := range s.state.Runs {
@@ -503,12 +574,7 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 	ctx, cancel := context.WithCancel(context.Background())
 	s.runs[session.ID] = activeRun{id: run.ID, cancel: cancel}
 	s.publishLocked("run.started", session.ID, run.ID, req.RequestID, "")
-	text := response(req.Text)
-	if run.Plan {
-		task := taskDefinition(taskIndex(req.Text))
-		text = fmt.Sprintf("## Proposed plan\n\n1. Read `%s` and its existing checks.\n2. Trace the behavior described in this request.\n3. Propose the smallest change to the recorded state transition.\n4. Verify the affected checks and review the result.\n\nFocus: %s\n\nNo project changes have been made. The plan is ready for review.", task.path, task.prompt)
-	}
-	if turnID == "" && !run.Plan && strings.Contains(strings.ToLower(req.Text), "permission") {
+	if turnID == "" && strings.Contains(strings.ToLower(req.Text), "permission") {
 		ms := s.state.Messages[session.ID]
 		last := &ms[len(ms)-1]
 		last.Streaming = false
@@ -530,40 +596,8 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 		s.publishLocked("request.created", session.ID, run.ID, req.RequestID, "")
 		return run
 	}
-	if run.Plan {
-		s.launchLocked(ctx, session.ID, run.ID, text)
-	} else {
-		s.launchActivityLocked(ctx, session.ID, run.ID, req.Text)
-	}
+	s.launchActivityLocked(ctx, session.ID, run.ID, req.Text)
 	return run
-}
-
-func (s *Server) launchLocked(ctx context.Context, sessionID, runID, text string) {
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		runes := []rune(text)
-		offset := 0
-		if !s.opts.Instant {
-			ticker := time.NewTicker(s.opts.TokenInterval)
-			defer ticker.Stop()
-			for offset < len(runes) {
-				select {
-				case <-ctx.Done():
-					return
-				case <-s.done:
-					return
-				case <-ticker.C:
-				}
-				offset = min(len(runes), offset+12)
-				if !s.advanceRun(sessionID, runID, string(runes[:offset]), offset == len(runes)) {
-					return
-				}
-			}
-		} else {
-			s.advanceRun(sessionID, runID, text, true)
-		}
-	}()
 }
 
 func (s *Server) advanceRun(sessionID, runID, text string, done bool) bool {
@@ -631,7 +665,7 @@ func (s *Server) advanceRun(sessionID, runID, text string, done bool) bool {
 		for qi, q := range s.state.Queue {
 			if q.SessionID == sessionID && si >= 0 {
 				s.state.Queue = append(s.state.Queue[:qi], s.state.Queue[qi+1:]...)
-				s.startLocked(si, contracts.SendRequest{SessionID: sessionID, Text: q.Text, Attachments: q.Attachments, ModelID: q.ModelID, ReasoningLevel: q.ReasoningLevel, DeviceID: q.DeviceID, Branch: q.Branch, WorktreeID: q.WorktreeID, AccessMode: q.AccessMode, Plan: q.Plan, Annotations: q.Annotations}, true)
+				s.startLocked(si, contracts.SendRequest{SessionID: sessionID, Text: q.Text, Attachments: q.Attachments, ModelID: q.ModelID, ReasoningLevel: q.ReasoningLevel, DeviceID: q.DeviceID, Branch: q.Branch, WorktreeID: q.WorktreeID, Annotations: q.Annotations}, true)
 				break
 			}
 		}
@@ -723,7 +757,7 @@ func (s *Server) Retry(ctx context.Context, sessionID string) (contracts.Run, er
 		s.mu.Unlock()
 		return contracts.Run{}, errors.New("a run is already active")
 	}
-	req := contracts.SendRequest{SessionID: sessionID, AccessMode: s.state.Sessions[i].AccessMode, Plan: s.state.Sessions[i].Plan}
+	req := contracts.SendRequest{SessionID: sessionID}
 	ms := s.state.Messages[sessionID]
 	for m := len(ms) - 1; m >= 0; m-- {
 		if ms[m].Role == "user" {
@@ -832,7 +866,7 @@ func (s *Server) Answer(ctx context.Context, id, answer string) error {
 						s.state.Messages[sid] = append(s.state.Messages[sid], contracts.Message{ID: s.idLocked("message"), SessionID: sid, TurnID: ms[mi].TurnID, ContinuationOf: ms[mi].ID, Role: "assistant", CreatedAt: s.opts.Now().UTC(), Blocks: []contracts.Block{{ID: s.idLocked("block"), Kind: "text", Text: "I won’t run that command. You can continue with another approach."}}})
 						s.publishLocked("permission.denied", sid, "", id, answer)
 					} else if si >= 0 {
-						s.startContinuationLocked(si, contracts.SendRequest{SessionID: sid, Text: "Continue with " + answer, AccessMode: s.state.Sessions[si].AccessMode, Plan: s.state.Sessions[si].Plan}, false, ms[mi].TurnID, ms[mi].ID)
+						s.startContinuationLocked(si, contracts.SendRequest{SessionID: sid, Text: "Continue with " + answer}, false, ms[mi].TurnID, ms[mi].ID)
 					}
 					s.mu.Unlock()
 					return s.persist()
@@ -908,6 +942,7 @@ func normalizeSettings(v *contracts.Settings) {
 	v.RightPaneWidth = clamp(v.RightPaneWidth, 360, 2000)
 	v.TerminalHeight = clamp(v.TerminalHeight, 160, 2000)
 	a := &v.Appearance
+	a.EffortTheme = contracts.NormalizeEffortTheme(a.EffortTheme)
 	a.BackgroundAdjustment = normalizeAdjustment(a.BackgroundAdjustment)
 	a.FontSize = clamp(a.FontSize, 12, 20)
 	a.CodeFontSize = clamp(a.CodeFontSize, 8, 32)
@@ -945,7 +980,7 @@ func (s *Server) TerminalInput(ctx context.Context, id, input string) (string, e
 			case "git status":
 				output = "On branch main\r\nChanges not staged for commit:\r\n  \x1b[31mmodified: internal/layout.go\x1b[0m\r\n"
 			case "go test ./...":
-				output = "\x1b[32mok\x1b[0m  zeron/internal/layout  0.012s\r\n\x1b[32mok\x1b[0m  zeron/internal/session  0.008s\r\n"
+				output = "\x1b[32mok\x1b[0m  rcode/internal/layout  0.012s\r\n\x1b[32mok\x1b[0m  rcode/internal/session  0.008s\r\n"
 			case "help":
 				output = "Available commands: pwd, ls, git status, go test ./..., echo, clear\r\n"
 			case "":
@@ -978,8 +1013,4 @@ func (s *Server) removeQueueLocked(sessionID string) {
 		}
 	}
 	s.state.Queue = out
-}
-
-func response(prompt string) string {
-	return taskDefinition(taskIndex(prompt)).final
 }

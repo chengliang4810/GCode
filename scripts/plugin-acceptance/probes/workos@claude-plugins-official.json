@@ -1,0 +1,241 @@
+{
+  "pluginId": "workos@claude-plugins-official",
+  "sourceCommit": "e25141bae047a7c837d93817347f95977598720f",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "route-sso-okta-management-request",
+      "componentId": "skill:workos:workos",
+      "prompt": "/workos:workos Our app tessera-web is a Next.js project and we need to add Okta SSO for enterprise customers, and our platform team also wants to manage WorkOS organizations from this agent session. Produce the routing and setup record this skill requires, adapted to a headless sandbox. Headless boundary: no network, no WebFetch, no workos CLI, no WorkOS MCP tools, no Dashboard access and no installs; docs fetching, CLI preflight and live verification stay untested. Write workos-routing-record.md containing: (1) routing decisions with reasons: the SSO feature request routes to references/workos-sso.md, the Okta IdP setup references references/workos-integrations.md, and the organization management request routes to references/workos-management.md; state that feature wins over framework, so AuthKit framework detection is not the primary route even though the fixture package.json contains next; (2) framework note: the fixture package.json would map to references/workos-authkit-nextjs.md under the AuthKit installation rule, recorded as a secondary reference only; (3) guardrails copied into the plan: never invent workos CLI commands and verify named commands with WORKOS_MODE=agent workos --help --json; run the documented preflight WORKOS_MODE=agent workos doctor --json --skip-ai before setup or debugging; prefer connected WorkOS MCP tools exposing whoami, list_operations, query and mutate for workspace reads and writes when they exist; treat a HOST_EXECUTION_UNTRUSTED doctor finding as a hard trust boundary and defer host-sensitive commands to the user shell; and never commit to unverified Dashboard click-paths; (4) application URL checklist from the AuthKit setup reference: callback URL, Sign-out URI and Initiate login URI must be configured and verified via references/workos-authkit-setup.md before the integration is called complete. End the file with exactly this line: No WorkOS docs page was fetched and no workos CLI or MCP call ran in this headless run; docs fetching, CLI preflight and live verification remain untested. Then read the immutable verify_workos_routing.py and run exactly python verify_workos_routing.py using Bash; it validates the record and writes workos-routing-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that docs fetching, CLI preflight and live SSO verification remain untested.",
+      "allowCommands": [
+        "python verify_workos_routing.py"
+      ],
+      "verifierOutputs": [
+        "workos-routing-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "package.json",
+          "text": "{\n  \"name\": \"tessera-web\",\n  \"private\": true,\n  \"dependencies\": {\n    \"next\": \"15.1.0\",\n    \"react\": \"19.0.0\",\n    \"react-dom\": \"19.0.0\"\n  }\n}\n"
+        },
+        {
+          "path": "verify_workos_routing.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'app_url_checklist': True, 'cli_guardrails': True, 'honesty_boundary': True, 'input_scenario': True, 'mcp_preference': True, 'routing_feature_wins': True, 'secondary_framework': True, 'trust_boundary': True}\n\nrecord = Path('workos-routing-record.md').read_text(encoding='utf-8')\nfor anchor in ('tessera-web', 'Okta', 'next', 'references/workos-sso.md',\n               'references/workos-integrations.md', 'references/workos-management.md',\n               'feature wins over framework', 'references/workos-authkit-nextjs.md',\n               'WORKOS_MODE=agent workos --help --json',\n               'WORKOS_MODE=agent workos doctor --json --skip-ai', 'list_operations',\n               'HOST_EXECUTION_UNTRUSTED', 'Initiate login URI',\n               'references/workos-authkit-setup.md',\n               'No WorkOS docs page was fetched and no workos CLI or MCP call ran in this '\n               'headless run'):\n    assert anchor in record, 'missing documented anchor: ' + anchor\nassert 'dashboard.workos.com/' not in record, \\\n    'unverified Dashboard click-paths are forbidden by the guardrails'\npkg = Path('package.json').read_text(encoding='utf-8')\nassert '\"next\"' in pkg, 'fixture package.json must still detect the Next.js signal'\n\nPath('workos-routing-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('WorkOS routing record: feature routing and guardrails verified; docs fetching and CLI preflight remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "package.json",
+          "equals": "{\n  \"name\": \"tessera-web\",\n  \"private\": true,\n  \"dependencies\": {\n    \"next\": \"15.1.0\",\n    \"react\": \"19.0.0\",\n    \"react-dom\": \"19.0.0\"\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_workos_routing.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'app_url_checklist': True, 'cli_guardrails': True, 'honesty_boundary': True, 'input_scenario': True, 'mcp_preference': True, 'routing_feature_wins': True, 'secondary_framework': True, 'trust_boundary': True}\n\nrecord = Path('workos-routing-record.md').read_text(encoding='utf-8')\nfor anchor in ('tessera-web', 'Okta', 'next', 'references/workos-sso.md',\n               'references/workos-integrations.md', 'references/workos-management.md',\n               'feature wins over framework', 'references/workos-authkit-nextjs.md',\n               'WORKOS_MODE=agent workos --help --json',\n               'WORKOS_MODE=agent workos doctor --json --skip-ai', 'list_operations',\n               'HOST_EXECUTION_UNTRUSTED', 'Initiate login URI',\n               'references/workos-authkit-setup.md',\n               'No WorkOS docs page was fetched and no workos CLI or MCP call ran in this '\n               'headless run'):\n    assert anchor in record, 'missing documented anchor: ' + anchor\nassert 'dashboard.workos.com/' not in record, \\\n    'unverified Dashboard click-paths are forbidden by the guardrails'\npkg = Path('package.json').read_text(encoding='utf-8')\nassert '\"next\"' in pkg, 'fixture package.json must still detect the Next.js signal'\n\nPath('workos-routing-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('WorkOS routing record: feature routing and guardrails verified; docs fetching and CLI preflight remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-verification.json",
+          "equals": "{\"app_url_checklist\": true, \"cli_guardrails\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"mcp_preference\": true, \"routing_feature_wins\": true, \"secondary_framework\": true, \"trust_boundary\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "tessera-web"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "Okta"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "next"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "references/workos-sso.md"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "references/workos-integrations.md"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "references/workos-management.md"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "feature wins over framework"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "references/workos-authkit-nextjs.md"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "WORKOS_MODE=agent workos --help --json"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "WORKOS_MODE=agent workos doctor --json --skip-ai"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "list_operations"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "HOST_EXECUTION_UNTRUSTED"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "Initiate login URI"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "references/workos-authkit-setup.md"
+        },
+        {
+          "kind": "file",
+          "path": "workos-routing-record.md",
+          "contains": "No WorkOS docs page was fetched and no workos CLI or MCP call ran in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "WorkOS routing record: feature routing and guardrails verified; docs fetching and CLI preflight remain untested"
+        }
+      ]
+    },
+    {
+      "id": "plan-user-management-widget-tessera",
+      "componentId": "skill:workos:workos-widgets",
+      "prompt": "/workos:workos-widgets Our admin console tessera is a Next.js app router project with a backend API layer, and we want the User Management widget embedded on the team page, with the widget access token issued by our backend at /api/workos/widget-token. Produce the integration plan this skill requires, adapted to a headless sandbox. Headless boundary: no network, no package installs, no WorkOS project and no rendering; dependency installation, token issuance and live widget data stay untested. WorkOS is not yet present in the project, so the plan must include the documented gate: ask the user to run WORKOS_MODE=agent npx workos@latest install and wait for confirmation before continuing; do not claim the install happened. Write tessera-widget-integration.md containing: (1) widget target identified as user-management and the reference loading plan for the detected stack: references/detection.md, references/token-strategies.md, references/fetching-apis.md, references/styling-and-components.md, references/react-ts-standards.md, references/framework-nextjs.md and references/widget-user-management.md; (2) token strategy: a backend token endpoint at /api/workos/widget-token issues the accessToken consumed by the widget component, matching the documented requirement that the widget accepts accessToken: string; (3) schema grounding: endpoint paths and methods come from the bundled OpenAPI spec, queried with node references/scripts/query-spec.cjs --widget user-management, and the plan must not hardcode invented endpoint paths; (4) a JSX sketch of the team page rendering the UserManagement component fed by the token endpoint; (5) validation checklist from the skill: loading, empty and error states explicit and user-visible; mutation outcomes refresh affected data; no existing component receives className or style overrides; and installs use the detected package manager only when strictly necessary. End the file with exactly this line: No dependency was installed and no WorkOS project exists in this sandbox; token issuance, spec queries and live widget rendering remain untested. Then read the immutable verify_workos_widgets.py and run exactly python verify_workos_widgets.py using Bash; it validates the plan and writes workos-widgets-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that installs, token issuance and live rendering remain untested.",
+      "allowCommands": [
+        "python verify_workos_widgets.py"
+      ],
+      "verifierOutputs": [
+        "workos-widgets-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_workos_widgets.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'gate_recorded': True, 'honesty_boundary': True, 'input_scenario': True, 'reference_loading': True, 'schema_grounding': True, 'token_strategy': True, 'validation_checklist': True, 'widget_target': True}\n\nplan_doc = Path('tessera-widget-integration.md').read_text(encoding='utf-8')\nfor anchor in ('user-management', 'references/detection.md', 'references/token-strategies.md',\n               'references/fetching-apis.md', 'references/styling-and-components.md',\n               'references/react-ts-standards.md', 'references/framework-nextjs.md',\n               'references/widget-user-management.md', '/api/workos/widget-token',\n               'accessToken: string',\n               'node references/scripts/query-spec.cjs --widget user-management',\n               '<UserManagement', 'WORKOS_MODE=agent npx workos@latest install', 'tessera',\n               'className',\n               'No dependency was installed and no WorkOS project exists in this sandbox'):\n    assert anchor in plan_doc, 'missing documented anchor: ' + anchor\nassert 'api.workos.com' not in plan_doc, \\\n    'endpoint paths must come from the bundled spec, not be hardcoded'\nassert 'install completed' not in plan_doc.lower() and 'successfully installed' not in plan_doc.lower(), \\\n    'the plan must not claim the WorkOS install happened'\n\nPath('workos-widgets-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('WorkOS widgets plan: stack, token and spec grounding verified; installs and live rendering remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_workos_widgets.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'gate_recorded': True, 'honesty_boundary': True, 'input_scenario': True, 'reference_loading': True, 'schema_grounding': True, 'token_strategy': True, 'validation_checklist': True, 'widget_target': True}\n\nplan_doc = Path('tessera-widget-integration.md').read_text(encoding='utf-8')\nfor anchor in ('user-management', 'references/detection.md', 'references/token-strategies.md',\n               'references/fetching-apis.md', 'references/styling-and-components.md',\n               'references/react-ts-standards.md', 'references/framework-nextjs.md',\n               'references/widget-user-management.md', '/api/workos/widget-token',\n               'accessToken: string',\n               'node references/scripts/query-spec.cjs --widget user-management',\n               '<UserManagement', 'WORKOS_MODE=agent npx workos@latest install', 'tessera',\n               'className',\n               'No dependency was installed and no WorkOS project exists in this sandbox'):\n    assert anchor in plan_doc, 'missing documented anchor: ' + anchor\nassert 'api.workos.com' not in plan_doc, \\\n    'endpoint paths must come from the bundled spec, not be hardcoded'\nassert 'install completed' not in plan_doc.lower() and 'successfully installed' not in plan_doc.lower(), \\\n    'the plan must not claim the WorkOS install happened'\n\nPath('workos-widgets-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('WorkOS widgets plan: stack, token and spec grounding verified; installs and live rendering remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "workos-widgets-verification.json",
+          "equals": "{\"gate_recorded\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"reference_loading\": true, \"schema_grounding\": true, \"token_strategy\": true, \"validation_checklist\": true, \"widget_target\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "user-management"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/detection.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/token-strategies.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/fetching-apis.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/styling-and-components.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/react-ts-standards.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/framework-nextjs.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "references/widget-user-management.md"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "/api/workos/widget-token"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "accessToken: string"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "node references/scripts/query-spec.cjs --widget user-management"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "<UserManagement"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "WORKOS_MODE=agent npx workos@latest install"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "tessera"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "className"
+        },
+        {
+          "kind": "file",
+          "path": "tessera-widget-integration.md",
+          "contains": "No dependency was installed and no WorkOS project exists in this sandbox"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "WorkOS widgets plan: stack, token and spec grounding verified; installs and live rendering remain untested"
+        }
+      ]
+    }
+  ]
+}

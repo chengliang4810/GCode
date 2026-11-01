@@ -93,78 +93,18 @@ type ConversationSourceContext struct {
 	ObservedAt time.Time `json:"observedAt"`
 }
 
-type CheckoutPRKey struct {
-	TargetID   string `json:"targetId"`
-	CheckoutID string `json:"checkoutId"`
-	RepoRoot   string `json:"repoRoot"`
-	Branch     string `json:"branch"`
-}
-
-func (k CheckoutPRKey) Key() string {
-	data, _ := json.Marshal(k)
-	return string(data)
-}
-
-func SessionCheckoutPRKey(session Session) (CheckoutPRKey, bool) {
-	source := session.SourceContext
-	if source == nil || source.CheckoutID == "" || source.RepoRoot == "" || strings.TrimSpace(source.Branch) == "" || session.DeviceID == "" {
-		return CheckoutPRKey{}, false
-	}
-	return CheckoutPRKey{TargetID: session.DeviceID, CheckoutID: source.CheckoutID, RepoRoot: source.RepoRoot, Branch: strings.TrimSpace(source.Branch)}, true
-}
-
-type ChangeRequestSummary struct {
-	Provider string `json:"provider"`
-	Number   int    `json:"number"`
-	Title    string `json:"title"`
-	URL      string `json:"url"`
-	State    string `json:"state"`
-	BaseRef  string `json:"baseRef"`
-	HeadRef  string `json:"headRef"`
-	DetailID string `json:"detailId,omitempty"`
-}
-
-// A successful nil Summary authoritatively clears a former PR. Failed refresh
-// preserves the last successful Summary for this exact source key.
-type CheckoutPRStatus struct {
-	Key        CheckoutPRKey         `json:"key"`
-	State      LoadStatus            `json:"state"`
-	Summary    *ChangeRequestSummary `json:"summary,omitempty"`
-	Error      string                `json:"error,omitempty"`
-	Generation uint64                `json:"generation"`
-}
-
-func ChangeRequestForSession(session Session, snapshots map[string]CheckoutPRStatus) *ChangeRequestSummary {
-	key, ok := SessionCheckoutPRKey(session)
-	if !ok {
-		return nil
-	}
-	snapshot, ok := snapshots[key.Key()]
-	if !ok || snapshot.Key != key {
-		return nil
-	}
-	return snapshot.Summary
-}
-
 type GitRequest struct {
-	Scope  RepoRefScope   `json:"scope"`
-	Ref    string         `json:"ref,omitempty"`
-	Force  bool           `json:"force"`
-	Source *CheckoutPRKey `json:"source,omitempty"`
+	Scope RepoRefScope `json:"scope"`
+	Ref   string       `json:"ref,omitempty"`
+	Force bool         `json:"force"`
 }
 
 func IsComposerGitCommand(kind string) bool {
-	return kind == "git.refs.load" || kind == "git.ref.switch" || kind == "git.pr.refresh"
+	return kind == "git.refs.load" || kind == "git.ref.switch"
 }
 
 func (r GitRequest) Validate(kind string) error {
-	if kind == "git.pr.refresh" {
-		if r.Source == nil || r.Source.TargetID == "" || r.Source.CheckoutID == "" || r.Source.RepoRoot == "" || strings.TrimSpace(r.Source.Branch) == "" || r.Ref != "" || r.Scope != (RepoRefScope{}) {
-			return errors.New("checkout source is required for a PR refresh")
-		}
-		return nil
-	}
-	if !r.Scope.Valid() || r.Source != nil {
+	if !r.Scope.Valid() {
 		return errors.New("repository scope is required")
 	}
 	if kind == "git.ref.switch" && (strings.TrimSpace(r.Ref) == "" || r.Scope.CloudRepository != "") {

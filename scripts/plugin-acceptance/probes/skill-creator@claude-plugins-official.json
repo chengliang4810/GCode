@@ -1,0 +1,46 @@
+{
+  "pluginId": "skill-creator@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "draft-expense-skill-with-real-local-script",
+      "componentId": "skill:skill-creator:skill-creator",
+      "prompt": "/skill-creator:skill-creator Create a first draft of a reusable expense CSV summary skill. I have confirmed its scope and success criteria below; no interview is needed. I only want the initial skill, a reusable local script, and two proposed eval prompts now. Do not run the full with/without-model benchmark, human review viewer, description optimization or packaging; I will review this draft first, as the skill's flexible workflow permits.\nWrite expense-summary/SKILL.md with name expense-summary and a useful description triggering on requests to summarize expense CSVs; reference scripts/summarize.py and explain input/output, quoted CSV categories, negative refunds, and invalid input handling. Write expense-summary/scripts/summarize.py using only Python standard libraries csv, decimal, json, sys (no dependencies, network or shell). The script takes one positional CSV file path, reads category,amount columns, ignores fully blank rows, supports quoted category names and refunds, and writes exactly one JSON object to stdout with keys count (nonblank data rows), total (decimal string with exactly 2 fractional digits), by_category (map of category to such strings). Use Decimal so 0.10+0.20 is 0.30. Empty input with a header returns count 0,total \"0.00\",empty map. Invalid amount must exit nonzero with \"invalid amount\" on stderr and empty stdout. Do not hardcode supplied examples or known file names. Write expense-summary/evals/evals.json using the skill's schema: skill_name expense-summary, at least two eval entries with distinct id,prompt,expected_output,files. These are proposed tests, not claimed model benchmark results.\nKeep SKILL.md under 100 lines and the script under 90 lines. Read the immutable verify_skill.py, then execute exactly python verify_skill.py using Bash after creating the draft. That command validates real script execution on several CSVs. Do not modify the verifier or read/write its skill-verification.json output using model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes,suffixes,redirection or extra shell operations. Do not execute any other CLI or access accounts. Final response should briefly identify the draft files and report the actual verifier result, without claiming full benchmark completion.",
+      "allowCommands": [
+        "python verify_skill.py"
+      ],
+      "verifierOutputs": [
+        "skill-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_skill.py",
+          "text": "import json\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\n\nskill = Path('expense-summary/SKILL.md').read_text(encoding='utf-8')\nassert skill.startswith('---\\n'), 'Missing skill frontmatter'\nfront = skill.split('---', 2)[1]\nassert re.search(r'(?m)^name:\\s*expense-summary\\s*$', front), 'Incorrect skill name'\nassert re.search(r'(?im)^description:.*(expense|csv)', front), 'Missing useful trigger description'\nassert 'scripts/summarize.py' in skill, 'Script not discoverable from skill'\nassert re.search(r'(?i)(refund|negative)', skill), 'Refund behavior undocumented'\nassert re.search(r'(?i)(invalid|malformed)', skill), 'Invalid amount behavior undocumented'\nevals = json.loads(Path('expense-summary/evals/evals.json').read_text(encoding='utf-8'))\nassert evals['skill_name'] == 'expense-summary'\nassert len(evals['evals']) >= 2\nassert len({e['id'] for e in evals['evals']}) == len(evals['evals'])\nassert all(e['prompt'] and e['expected_output'] for e in evals['evals'])\nscript = Path('expense-summary/scripts/summarize.py').resolve()\ncases = [\n    ('category,amount\\nTravel,12.50\\nMeals,7.25\\nTravel,-2.50\\n\"Office, supplies\",3.00\\n', {'count': 4, 'total': '20.25', 'by_category': {'Travel': '10.00', 'Meals': '7.25', 'Office, supplies': '3.00'}}),\n    ('category,amount\\n', {'count': 0, 'total': '0.00', 'by_category': {}}),\n    ('category,amount\\nMeals,0.10\\nMeals,0.20\\n', {'count': 2, 'total': '0.30', 'by_category': {'Meals': '0.30'}}),\n]\nwith tempfile.TemporaryDirectory(prefix='expense-check-', dir='.') as folder:\n    for index, (csv, expected) in enumerate(cases):\n        source = Path(folder) / ('case-' + str(index) + '.csv')\n        source.write_text(csv, encoding='utf-8')\n        result = subprocess.run([sys.executable, str(script), str(source)], capture_output=True, text=True, timeout=10)\n        assert result.returncode == 0, result.stderr\n        assert json.loads(result.stdout) == expected, result.stdout\n    source = Path(folder) / 'bad.csv'\n    source.write_text('category,amount\\nMeals,oops\\n', encoding='utf-8')\n    result = subprocess.run([sys.executable, str(script), str(source)], capture_output=True, text=True, timeout=10)\n    assert result.returncode != 0 and 'invalid amount' in result.stderr.lower() and not result.stdout.strip(), 'Invalid input silently accepted'\nreport = {'cases': 4, 'quoted_category': True, 'refunds': True, 'decimal_exactness': True, 'invalid_rejected': True, 'draft_metadata': True}\nPath('skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Expense skill: 4 real CLI cases; metadata and eval draft verified')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_skill.py",
+          "equals": "import json\nimport re\nimport subprocess\nimport sys\nimport tempfile\nfrom pathlib import Path\n\nskill = Path('expense-summary/SKILL.md').read_text(encoding='utf-8')\nassert skill.startswith('---\\n'), 'Missing skill frontmatter'\nfront = skill.split('---', 2)[1]\nassert re.search(r'(?m)^name:\\s*expense-summary\\s*$', front), 'Incorrect skill name'\nassert re.search(r'(?im)^description:.*(expense|csv)', front), 'Missing useful trigger description'\nassert 'scripts/summarize.py' in skill, 'Script not discoverable from skill'\nassert re.search(r'(?i)(refund|negative)', skill), 'Refund behavior undocumented'\nassert re.search(r'(?i)(invalid|malformed)', skill), 'Invalid amount behavior undocumented'\nevals = json.loads(Path('expense-summary/evals/evals.json').read_text(encoding='utf-8'))\nassert evals['skill_name'] == 'expense-summary'\nassert len(evals['evals']) >= 2\nassert len({e['id'] for e in evals['evals']}) == len(evals['evals'])\nassert all(e['prompt'] and e['expected_output'] for e in evals['evals'])\nscript = Path('expense-summary/scripts/summarize.py').resolve()\ncases = [\n    ('category,amount\\nTravel,12.50\\nMeals,7.25\\nTravel,-2.50\\n\"Office, supplies\",3.00\\n', {'count': 4, 'total': '20.25', 'by_category': {'Travel': '10.00', 'Meals': '7.25', 'Office, supplies': '3.00'}}),\n    ('category,amount\\n', {'count': 0, 'total': '0.00', 'by_category': {}}),\n    ('category,amount\\nMeals,0.10\\nMeals,0.20\\n', {'count': 2, 'total': '0.30', 'by_category': {'Meals': '0.30'}}),\n]\nwith tempfile.TemporaryDirectory(prefix='expense-check-', dir='.') as folder:\n    for index, (csv, expected) in enumerate(cases):\n        source = Path(folder) / ('case-' + str(index) + '.csv')\n        source.write_text(csv, encoding='utf-8')\n        result = subprocess.run([sys.executable, str(script), str(source)], capture_output=True, text=True, timeout=10)\n        assert result.returncode == 0, result.stderr\n        assert json.loads(result.stdout) == expected, result.stdout\n    source = Path(folder) / 'bad.csv'\n    source.write_text('category,amount\\nMeals,oops\\n', encoding='utf-8')\n    result = subprocess.run([sys.executable, str(script), str(source)], capture_output=True, text=True, timeout=10)\n    assert result.returncode != 0 and 'invalid amount' in result.stderr.lower() and not result.stdout.strip(), 'Invalid input silently accepted'\nreport = {'cases': 4, 'quoted_category': True, 'refunds': True, 'decimal_exactness': True, 'invalid_rejected': True, 'draft_metadata': True}\nPath('skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Expense skill: 4 real CLI cases; metadata and eval draft verified')\n"
+        },
+        {
+          "kind": "file",
+          "path": "skill-verification.json",
+          "equals": "{\"cases\": 4, \"decimal_exactness\": true, \"draft_metadata\": true, \"invalid_rejected\": true, \"quoted_category\": true, \"refunds\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "expense-summary/SKILL.md",
+          "contains": "scripts/summarize.py"
+        },
+        {
+          "kind": "file",
+          "path": "expense-summary/SKILL.md",
+          "contains": "expense-summary"
+        }
+      ]
+    }
+  ]
+}

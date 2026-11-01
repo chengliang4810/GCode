@@ -1,0 +1,16 @@
+{
+  "repo": "ServiceNow/sdk",
+  "commit": "6f01c0e26cbe597b8a129de0bd2706ec1c0e327c",
+  "path": "providers/claude/plugin",
+  "archive_sha256": "43950a4bbb061e4725f8a9a3e1c822ea06803eb2cee4d2c4cbb1d026f2e1fc92",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/now-sdk/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"servicenow-sdk\",\n  \"description\": \"Create, edit, and deploy ServiceNow applications with the Fluent SDK effortlessly through Claude AI\",\n  \"version\": \"1.2.0\",\n  \"author\": {\n    \"name\": \"ServiceNow\",\n    \"url\": \"https://www.servicenow.com\"\n  },\n  \"homepage\": \"https://servicenow.github.io/sdk/\",\n  \"repository\": \"https://github.com/ServiceNow/sdk\",\n  \"keywords\": [\"servicenow\", \"fluent\", \"now-sdk\", \"platform\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/now-sdk/SKILL.md": "\nname: now-sdk\ndescription: Use whenever the user mentions fluent, ServiceNow, or the now-sdk, OR when the user prompts for edits within a fluent application (identified by a now.config.json at the project root). Also use when the user needs live instance data — looking up a sys_id, inspecting table columns or schema, checking whether a record already exists, fetching choice values, or reading role or scope info.\nargument-hint: \"[topic or table]\"\n"
+  }
+}

@@ -48,7 +48,7 @@ func TestBackgroundAdjustmentAppliesDraftAndCancelPreservesSavedCrop(t *testing.
 	}
 	app.apply(snapshot)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 1800)
 	if tt.HasText("Image path") || tt.HasText("Background image path") || !tt.HasText("Replace image") {
 		t.Fatal("background choice flow differs from source")
@@ -123,7 +123,7 @@ func TestBackgroundAdjustmentCannotApplyToReplacementImage(t *testing.T) {
 	}
 	app.apply(snapshot)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 1800)
 	if err = tt.Click("Adjust background"); err != nil {
 		t.Fatal(err)
@@ -165,7 +165,7 @@ func TestBackgroundAdjustmentFitsMinimumWindow(t *testing.T) {
 	}
 	app.apply(snapshot)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.expanded["settings-target:New thread background"] = true
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	if err = tt.Click("Adjust background"); err != nil {
@@ -205,7 +205,7 @@ func TestBackgroundViewsDoNotStartResourceWork(t *testing.T) {
 	}
 	t.Cleanup(app.Close)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	preparedReads := service.reads
 	if preparedReads != 1 || app.background.Bitmap == nil {
 		t.Fatal("controller did not prepare background before view")

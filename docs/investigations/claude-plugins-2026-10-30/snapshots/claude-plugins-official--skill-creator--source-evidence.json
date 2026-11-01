@@ -1,0 +1,35 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/skill-creator",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "skills/skill-creator/LICENSE.txt",
+    "skills/skill-creator/SKILL.md",
+    "skills/skill-creator/agents/analyzer.md",
+    "skills/skill-creator/agents/comparator.md",
+    "skills/skill-creator/agents/grader.md",
+    "skills/skill-creator/assets/eval_review.html",
+    "skills/skill-creator/eval-viewer/generate_review.py",
+    "skills/skill-creator/eval-viewer/viewer.html",
+    "skills/skill-creator/references/schemas.md",
+    "skills/skill-creator/scripts/__init__.py",
+    "skills/skill-creator/scripts/aggregate_benchmark.py",
+    "skills/skill-creator/scripts/generate_report.py",
+    "skills/skill-creator/scripts/improve_description.py",
+    "skills/skill-creator/scripts/package_skill.py",
+    "skills/skill-creator/scripts/quick_validate.py",
+    "skills/skill-creator/scripts/run_eval.py",
+    "skills/skill-creator/scripts/run_loop.py",
+    "skills/skill-creator/scripts/utils.py"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"skill-creator\",\n  \"description\": \"Create new skills, improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, update or optimize an existing skill, run evals to test a skill, or benchmark skill performance with variance analysis.\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/skill-creator/SKILL.md": "\nname: skill-creator\ndescription: Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.\n"
+  }
+}

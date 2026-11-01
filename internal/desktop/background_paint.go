@@ -33,8 +33,11 @@ func Fragment(dst vec4, pos vec2) vec4 {
 }`)
 })
 
-func (a *App) paintConversationBackground(c *ui.Context, root ui.Element) {
-	if a.background.Bitmap == nil {
+// paintConversationBackground draws the blank canvas's artwork at fade, the
+// dock handoff's dissolve. The composer cutout follows the pill's painted
+// position, so the mask travels with it.
+func (a *App) paintConversationBackground(c *ui.Context, root ui.Element, fade float32) {
+	if a.background.Bitmap == nil || fade <= .001 {
 		return
 	}
 	bitmap := a.background.Bitmap
@@ -45,12 +48,12 @@ func (a *App) paintConversationBackground(c *ui.Context, root ui.Element) {
 		heroWidth -= a.visibleSidebarWidth
 	}
 	if a.fit.Files {
-		heroWidth -= a.filesWidth
+		heroWidth -= a.frameColumns.Files
 	}
-	opacity := float32(1)
+	opacity := max(0, min(fade, 1))
 	surface := a.state.Settings.Appearance.Surface
 	if (a.palette.Frosted || strings.EqualFold(surface, "frosted")) && !strings.EqualFold(surface, "opaque") {
-		opacity = .84
+		opacity *= .84
 	}
 	root.Draw(func(p *ui.Painter, bounds ui.Rect) {
 		composer := a.composerSurface.Bounds(c)

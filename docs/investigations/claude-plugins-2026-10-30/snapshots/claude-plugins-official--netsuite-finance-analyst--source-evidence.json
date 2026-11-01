@@ -1,0 +1,23 @@
+{
+  "repo": "oracle/netsuite-suitecloud-sdk",
+  "commit": "23793a10a9bb557c684c5cb8a97f926eb3463f12",
+  "path": "anthropic/netsuite-finance-analyst",
+  "archive_sha256": "69164ebb41049b24f3054d620ae142ef283351fbba004c0c3d372e541157a416",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE.txt",
+    "README.md",
+    "skills/netsuite-finance-analyst/SKILL.md",
+    "skills/netsuite-finance-analyst/references/executive-output.md",
+    "skills/netsuite-finance-analyst/references/finance-analysis-playbook.md",
+    "skills/netsuite-finance-analyst/references/period-close-and-controls.md",
+    "skills/netsuite-finance-analyst/references/project-onboarding.md",
+    "skills/netsuite-finance-analyst/references/query-patterns.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"netsuite-finance-analyst\",\n  \"displayName\": \"NetSuite Finance Analyst\",\n  \"description\": \"Deliver Director-level finance analysis on live NetSuite data.\",\n  \"author\": {\n    \"name\": \"Oracle NetSuite\",\n    \"url\": \"https://www.netsuite.com\"\n  },\n  \"license\": \"The Universal Permissive License (UPL), Version 1.0\",\n  \"keywords\": [\n    \"netsuite\",\n    \"finance\",\n    \"mcp\"\n  ],\n  \"homepage\": \"https://github.com/oracle/netsuite-suitecloud-sdk/tree/ai-plugins-dist/anthropic/netsuite-finance-analyst\",\n  \"repository\": \"https://github.com/oracle/netsuite-suitecloud-sdk\",\n  \"version\": \"1.0.0\",\n  \"skills\": \"./skills/\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/netsuite-finance-analyst/SKILL.md": "\nname: netsuite-finance-analyst\ndescription: Use this skill when the user needs NetSuite-based finance analysis, Director of Financial Analysis support, period-close guidance, variance review, reconciliation review, cash reporting, or executive-ready financial narrative generation. Apply it to requests involving income statements, balance sheets, cash flow, budget versus actuals, AR or AP aging, month-end close, SOX-oriented finance checks, journal entry review, and board or CFO reporting. Prefer it when the request clearly involves NetSuite financial data interpretation or finance operations, but do not use it for general NetSuite development or non-finance administration tasks.\ncompatibility: Designed for Codex and Agent Skills-style clients with access to NetSuite MCP tools or equivalent finance data sources. Defaults to read-only analysis unless the user explicitly authorizes a record mutation.\nlicense: The Universal Permissive License (UPL), Version 1.0\nmetadata:\n  author: Oracle NetSuite\n  version: \"1.0\"\n  audience: finance-ops\n  scope: user-level\n  primary-use: netsuite-finance-analysis\n"
+  }
+}

@@ -1,5 +1,12 @@
 # 新机恢复记录 — 2026-10-28
 
+> 桌面测试已接入 MyGo Automation，原子命令引用使用富文本输入框；本记录时源码修订为 `rcode-native-ui.12`。
+> 当前框架见 `mygo-patches.md`（MyGo v0.7.3 + `rcode-native-ui.20`）。
+> 入口、固定来源和验证边界见 [desktop-testing.md](desktop-testing.md)；
+> 下文 R16/R17 的 `.9` 及更早指纹继续保留其历史证据身份。
+
+> 2026-10-29 后端实现更新：普通启动已使用原生 Go 核心，默认数据目录为 `~/.gcode`。当前运行说明见 [backend-v1.md](backend-v1.md)；本页其余内容保留对应 UI 阶段的历史证据。
+
 > 2026-10-29 更新：用户确认当前 UI 基本满意，已暂停继续优化；i18n、账户菜单
 > 边界和新建侧边聊天按后续请求完成。现按用户要求创建本地 UI 基线提交，下一阶段
 > 实现真实后端。以下 active 与 R16/R17 内容保留其历史阶段身份，不代表继续执行
@@ -11,7 +18,7 @@
 
 最新封存为R16：`reference/validation/tabstrip-r16-result.json`，详见
 `audit-tabstrip-file-tooltip.md`。文件图片`.78`和无详情标签提示已修；R16 框架为`.6`。
-当前源码已接入尚未发布验收的 [R17 `.9`](audit-tabstrip-tooltip-primitives.md)：
+当时源码已接入尚未发布验收的 [R17 `.9`](audit-tabstrip-tooltip-primitives.md)：
 MyGo1,864文件、14补丁、树`27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。
 该次采用时2931项正式输入与受审提案一致；当时AX app961保留真实内容名称，只新增
 已测的checked quarter tooltip leaf。其后Cloud四文件采用另记下文，不将旧输入表/包

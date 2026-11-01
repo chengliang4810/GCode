@@ -56,7 +56,7 @@ func TestCatalogEmptyAndNoAgentStatesStayDistinct(t *testing.T) {
 
 func TestSidebarDefaultsFollowReferenceShowFlags(t *testing.T) {
 	settings := DefaultSettings()
-	if !settings.SidebarCompact || settings.SidebarGrouping != "list" || settings.SidebarSort != "updated" || !settings.ShowIcons || !settings.ShowProjectLabels || !settings.SidebarShowHarness || !settings.SidebarShowBranch || !settings.SidebarShowPullRequest || !settings.SidebarShowProjectFilter || !settings.SidebarShowArchived {
-		t.Fatal("sidebar defaults differ from source settings.rs:1295-1305")
+	if settings.SidebarGrouping != "projects" || !settings.ShowIcons {
+		t.Fatal("sidebar defaults do not preserve the current shared display controls")
 	}
 }

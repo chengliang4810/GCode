@@ -1,0 +1,12 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/lua-lsp",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    "LICENSE",
+    "README.md"
+  ],
+  "config": {},
+  "markdown_frontmatter": {}
+}

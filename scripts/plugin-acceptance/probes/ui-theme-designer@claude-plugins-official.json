@@ -1,0 +1,166 @@
+{
+  "pluginId": "ui-theme-designer@claude-plugins-official",
+  "sourceCommit": "3eff5832700d85e550b28a3ae58c1763382e405a",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "resolved-value-lookup-mini-themerepo",
+      "componentId": "skill:ui-theme-designer:ui-theme-designer-design-tokens",
+      "prompt": "/ui-theme-designer:ui-theme-designer-design-tokens Use the ui-theme-designer-design-tokens skill to answer this concrete question. The question: what values do the parameters sapButton_Background, sapButton_Hover_Background and sapHighlightColor have in the theme sap_nightfall? And a reviewer suggests reading design-tokens.json for those values - is that correct? Headless boundary: the real skill needs $THIS/node_modules installed with npm ci, which is not available here - no npm install, no network, no real SAP theming repository. Instead this task provides a miniature theme repository fixture at theme-repo/content/Base/baseLib/sap_nightfall/ mirroring the documented baseLib layout, containing only the flat pre-resolved css_variables.css artifact. The full inheritance-chain traversal (merged LESS via oExtends) and the real theming-base-content remain untested.\n\nWrite token-lookup-answer.md applying the resolved-value lookup procedure of the skill: this is a plain value lookup for a known theme, so read the flat pre-resolved artifact of the theme from the baseLib theme directory - prefer css_variables.css - and take each value directly; report each of the three parameters with its resolved value exactly as written in theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css and cite that file path as the source; then answer the reviewer: do not read design-tokens.json for values, because its color value fields are HSLA references such as hsla({Main._sapBrandColorH}, ...) and not final values - quote that documented reason including the hsla({Main._sapBrandColorH} form. Also note that the real skill repository root is node_modules/@sap-theming/theming-base-content/content/Base/baseLib and that this sandbox substitutes the miniature fixture; do not copy example values from the docs of the skill (no #fff may appear in the answer). Close by stating that the real npm ci, the full theme repository and the LESS inheritance chain remain untested.\n\nThen read the immutable verify_token_lookup.py and run exactly python verify_token_lookup.py using Bash; it validates the answer against the fixture and writes token-lookup-verification.json. Do not modify the verifier or the fixture, and do not read/write the skill output file of the verifier with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: report the three values and the design-tokens.json verdict, report the actual verifier result, and state that the real theme repository and inheritance chain remain untested.",
+      "allowCommands": [
+        "python verify_token_lookup.py"
+      ],
+      "verifierOutputs": [
+        "token-lookup-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_token_lookup.py",
+          "text": "import json\nfrom pathlib import Path\n\nfixture = Path('theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css').read_text(encoding='utf-8')\nassert '--sapBrandColor: #1a73e8;' in fixture, 'fixture guard'\nassert '--sapButton_Background: #12325a;' in fixture, 'fixture guard'\nassert '--sapButton_Hover_Background: #2a5db0;' in fixture, 'fixture guard'\nassert '--sapHighlightColor: #e69b02;' in fixture, 'fixture guard'\ntext = Path('token-lookup-answer.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '--sapButton_Background: #12325a;' in text, 'the resolved sapButton_Background value must be taken from the fixture artifact'\nassert '--sapButton_Hover_Background: #2a5db0;' in text, 'the resolved sapButton_Hover_Background value must be taken from the fixture artifact'\nassert '--sapHighlightColor: #e69b02;' in text, 'the resolved sapHighlightColor value must be taken from the fixture artifact'\nassert 'sap_nightfall' in text, 'the scenario theme must be applied'\nassert 'css_variables.css' in text, 'the preferred resolved-value source must be named'\nassert 'theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css' in text, 'the concrete source path must be cited'\nassert 'theming-base-content/content/Base/baseLib' in text, 'the real skill repository root must be referenced'\nassert 'design-tokens.json' in text, 'the reviewer question must be addressed by name'\nassert 'hsla({Main._sapBrandColorH}' in text, 'the documented HSLA-reference reason must be quoted'\nassert 'final values' in low, 'the not-final-values rule must be stated'\nassert '#fff' not in text, 'doc example values must not be copied; use only fixture values'\nassert 'untested' in low, 'the answer must state what remains untested'\nfor claim in ('i installed', 'npm ci completed', 'node_modules is installed', 'inheritance resolved'):\n    assert claim not in low, 'must not claim the real toolchain ran: ' + claim\nreport = {'background_value': True, 'design_tokens_rejected': True, 'highlight_value': True, 'hover_value': True,\n          'no_doc_example_value': True, 'source_path_cited': True, 'untested_declared': True}\nPath('token-lookup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Token lookup: resolved values match the miniature theme fixture; the real theme repository and inheritance chain remain untested')\n"
+        },
+        {
+          "path": "theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css",
+          "text": "/* sap_nightfall resolved custom properties - miniature fixture for a headless lookup probe */\n--sapBrandColor: #1a73e8;\n--sapButton_Background: #12325a;\n--sapButton_Hover_Background: #2a5db0;\n--sapHighlightColor: #e69b02;\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_token_lookup.py",
+          "equals": "import json\nfrom pathlib import Path\n\nfixture = Path('theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css').read_text(encoding='utf-8')\nassert '--sapBrandColor: #1a73e8;' in fixture, 'fixture guard'\nassert '--sapButton_Background: #12325a;' in fixture, 'fixture guard'\nassert '--sapButton_Hover_Background: #2a5db0;' in fixture, 'fixture guard'\nassert '--sapHighlightColor: #e69b02;' in fixture, 'fixture guard'\ntext = Path('token-lookup-answer.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '--sapButton_Background: #12325a;' in text, 'the resolved sapButton_Background value must be taken from the fixture artifact'\nassert '--sapButton_Hover_Background: #2a5db0;' in text, 'the resolved sapButton_Hover_Background value must be taken from the fixture artifact'\nassert '--sapHighlightColor: #e69b02;' in text, 'the resolved sapHighlightColor value must be taken from the fixture artifact'\nassert 'sap_nightfall' in text, 'the scenario theme must be applied'\nassert 'css_variables.css' in text, 'the preferred resolved-value source must be named'\nassert 'theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css' in text, 'the concrete source path must be cited'\nassert 'theming-base-content/content/Base/baseLib' in text, 'the real skill repository root must be referenced'\nassert 'design-tokens.json' in text, 'the reviewer question must be addressed by name'\nassert 'hsla({Main._sapBrandColorH}' in text, 'the documented HSLA-reference reason must be quoted'\nassert 'final values' in low, 'the not-final-values rule must be stated'\nassert '#fff' not in text, 'doc example values must not be copied; use only fixture values'\nassert 'untested' in low, 'the answer must state what remains untested'\nfor claim in ('i installed', 'npm ci completed', 'node_modules is installed', 'inheritance resolved'):\n    assert claim not in low, 'must not claim the real toolchain ran: ' + claim\nreport = {'background_value': True, 'design_tokens_rejected': True, 'highlight_value': True, 'hover_value': True,\n          'no_doc_example_value': True, 'source_path_cited': True, 'untested_declared': True}\nPath('token-lookup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Token lookup: resolved values match the miniature theme fixture; the real theme repository and inheritance chain remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "theme-repo/content/Base/baseLib/sap_nightfall/css_variables.css",
+          "equals": "/* sap_nightfall resolved custom properties - miniature fixture for a headless lookup probe */\n--sapBrandColor: #1a73e8;\n--sapButton_Background: #12325a;\n--sapButton_Hover_Background: #2a5db0;\n--sapHighlightColor: #e69b02;\n"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-verification.json",
+          "equals": "{\"background_value\": true, \"design_tokens_rejected\": true, \"highlight_value\": true, \"hover_value\": true, \"no_doc_example_value\": true, \"source_path_cited\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "sapButton_Hover_Background"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "sapHighlightColor"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "sap_nightfall"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "css_variables.css"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "design-tokens.json"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "hsla({Main._sapBrandColorH}"
+        },
+        {
+          "kind": "file",
+          "path": "token-lookup-answer.md",
+          "contains": "theming-base-content/content/Base/baseLib"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Token lookup: resolved values match the miniature theme fixture; the real theme repository and inheritance chain remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "help-routing-and-offline-curl-plan",
+      "componentId": "skill:ui-theme-designer:ui-theme-designer-help",
+      "prompt": "/ui-theme-designer:ui-theme-designer-help Use the ui-theme-designer-help skill to plan answers for three customer questions, and write help-research-plan.md. The questions: (A) Is there a documented size limit for themes in the UI theme designer service? (B) What value does sapButton_Background have in quartz? (C) Which themes do we have in our tenant? Headless boundary: no network, no help.sap.com access, and curl is not executed here - the deliverable metadata, TOC and page content cannot be fetched, so whether a size limit is documented, the real TOC entries and the real answer remain untested; the plan records the exact documented commands with their {id}/{buildNo}/{filePath}/{loio} placeholders left unfilled.\n\nThe plan must: (1) classify the questions per the skill's scope rules: A is in scope (service constraints such as rate limits, size limits), B is out of scope - questions about which themes or parameters exist or what values they have use ui-theme-designer-design-tokens, so record that B routes to ui-theme-designer-design-tokens; C is a tenant-specific operational question about a running system, which the customer-facing documentation does not answer - record that C is out of scope for the documentation; (2) for A record the documented two-step fetch in the skill's exact command form: first curl -s \"https://help.sap.com/http.svc/deliverableMetadata?product_url=btp&deliverable_url=ui-theme-designer&version=LATEST\" | jq '{id: .data.deliverable.id, buildNo: .data.deliverable.buildNo, filePath: .data.filePath}' to obtain deliverable_id, buildNo and filePath, then the pagecontent call with deliverableInfo=1 to obtain the fullToc tree; (3) record the documented candidate step: from the TOC identify the topic(s) whose title best matches the size-limit question, picking 2-3 candidates if uncertain, and do not invent TOC topic titles since nothing can be fetched offline; (4) record the documented per-candidate content fetch using jq -r '.data.body' | sed 's/<[^>]*>//g' | tr -s '\n' to strip HTML tags; (5) end by stating what remains untested: the real fetches, the TOC contents and the documented answer to A. Do not invent TOC topic titles or a documented limit value.\n\nThen read the immutable verify_help_plan.py and run exactly python verify_help_plan.py using Bash; it validates the plan and writes help-plan-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: summarize the three classifications, report the actual verifier result, and state that the real help.sap.com fetches remain untested.",
+      "allowCommands": [
+        "python verify_help_plan.py"
+      ],
+      "verifierOutputs": [
+        "help-plan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_help_plan.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('help-research-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'deliverableMetadata?product_url=btp&deliverable_url=ui-theme-designer&version=LATEST' in text, 'the documented deliverable metadata endpoint is missing'\nassert 'deliverableInfo=1' in text, 'the TOC-fetching parameter is missing'\nassert 'fullToc' in text, 'the full TOC tree step is missing'\nassert \"jq -r '.data.body'\" in text, 'the documented page-content extraction is missing'\nassert \"sed 's/<[^>]*>//g'\" in text, 'the documented HTML tag stripping is missing'\nassert 'ui-theme-designer-design-tokens' in text, 'the token-value question must route to ui-theme-designer-design-tokens'\nassert 'sapButton_Background' in text and 'quartz' in low, 'the out-of-scope question must be named'\nassert 'which themes do we have' in low, 'the tenant-ops question must be named'\nassert 'size limit' in low, 'the in-scope question must be named'\nassert 'curl' in text and 'jq' in text, 'the documented tooling must be recorded'\nassert 'candidate' in low, 'the documented candidate-topic step is missing'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('i fetched', 'help.sap.com returned', 'the toc shows', 'the documented limit is'):\n    assert claim not in low, 'must not claim a real fetch or a known answer: ' + claim\nreport = {'candidate_step_recorded': True, 'help_scope_answer': True, 'routing_design_tokens': True,\n          'routing_tenant_out_of_scope': True, 'toc_fetch_steps': True, 'untested_declared': True}\nPath('help-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Help research plan: scope routing and documented fetch commands checks passed; the real help.sap.com fetches remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_help_plan.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('help-research-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'deliverableMetadata?product_url=btp&deliverable_url=ui-theme-designer&version=LATEST' in text, 'the documented deliverable metadata endpoint is missing'\nassert 'deliverableInfo=1' in text, 'the TOC-fetching parameter is missing'\nassert 'fullToc' in text, 'the full TOC tree step is missing'\nassert \"jq -r '.data.body'\" in text, 'the documented page-content extraction is missing'\nassert \"sed 's/<[^>]*>//g'\" in text, 'the documented HTML tag stripping is missing'\nassert 'ui-theme-designer-design-tokens' in text, 'the token-value question must route to ui-theme-designer-design-tokens'\nassert 'sapButton_Background' in text and 'quartz' in low, 'the out-of-scope question must be named'\nassert 'which themes do we have' in low, 'the tenant-ops question must be named'\nassert 'size limit' in low, 'the in-scope question must be named'\nassert 'curl' in text and 'jq' in text, 'the documented tooling must be recorded'\nassert 'candidate' in low, 'the documented candidate-topic step is missing'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('i fetched', 'help.sap.com returned', 'the toc shows', 'the documented limit is'):\n    assert claim not in low, 'must not claim a real fetch or a known answer: ' + claim\nreport = {'candidate_step_recorded': True, 'help_scope_answer': True, 'routing_design_tokens': True,\n          'routing_tenant_out_of_scope': True, 'toc_fetch_steps': True, 'untested_declared': True}\nPath('help-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Help research plan: scope routing and documented fetch commands checks passed; the real help.sap.com fetches remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "help-plan-verification.json",
+          "equals": "{\"candidate_step_recorded\": true, \"help_scope_answer\": true, \"routing_design_tokens\": true, \"routing_tenant_out_of_scope\": true, \"toc_fetch_steps\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "deliverableMetadata?product_url=btp&deliverable_url=ui-theme-designer&version=LATEST"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "deliverableInfo=1"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "fullToc"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "jq -r '.data.body'"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "sed 's/<[^>]*>//g'"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "ui-theme-designer-design-tokens"
+        },
+        {
+          "kind": "file",
+          "path": "help-research-plan.md",
+          "contains": "size limit"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Help research plan: scope routing and documented fetch commands checks passed; the real help.sap.com fetches remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

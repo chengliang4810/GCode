@@ -107,3 +107,68 @@ func TestExplorerSearchNeverUsesContentAsFilename(t *testing.T) {
 	}
 	s.search.result = contracts.WorkspaceSearchResult{}
 }
+
+func TestWorkspaceAndDockExplorerOwnTheirFocusListsAndDialogs(t *testing.T) {
+	s, _, _ := testWorkspace(t)
+	s.ProjectID = "fieldnotes"
+	s.OpenSurface("files")
+	showDock := true
+	var workspaceInput, dockInput ui.Rect
+	var workspaceTreeFocused, dockTreeFocused bool
+	tt := ui.NewTester(func(c *ui.Context) {
+		ui.Row(c).Fill().Children(func() {
+			ui.Column(c.Key("workspace-host")).Width(400).FillHeight().Children(func() { s.View(c) })
+			if showDock {
+				ui.Column(c.Key("dock-host")).Width(286).FillHeight().Children(func() { s.FilesDockView(c) })
+			}
+		})
+		workspaceInput = s.search.workspace.input.Bounds(c)
+		dockInput = s.search.dock.input.Bounds(c)
+		workspaceTreeFocused = s.search.workspace.tree.Focused(c)
+		dockTreeFocused = s.search.dock.tree.Focused(c)
+	}, 686, 600)
+	tt.Frame()
+	if workspaceInput.W == 0 || dockInput.W == 0 || workspaceInput == dockInput {
+		t.Fatal("explorers do not have distinct search controls")
+	}
+	tt.ClickAt(dockInput.X+dockInput.W/2, dockInput.Y+dockInput.H/2)
+	tt.Type("layout")
+	if len(s.search.rows) != 2 {
+		t.Fatal("dock search did not update shared workspace results")
+	}
+	tt.Key(0, ui.KeyEscape)
+	tt.Frame()
+	if s.fileSearch != "" || !dockTreeFocused || workspaceTreeFocused {
+		t.Fatal("Escape from dock search did not focus only the dock tree")
+	}
+	tt.ClickAt(workspaceInput.X+workspaceInput.W/2, workspaceInput.Y+workspaceInput.H/2)
+	tt.Type("layout")
+	tt.Key(0, ui.KeyDown)
+	tt.Key(0, ui.KeyEnter)
+	if s.activeFile() != "file-layout" {
+		t.Fatal("workspace search could not open a file")
+	}
+	s.OpenSurface("files")
+	for range 3 {
+		showDock = false
+		tt.Frame()
+		showDock = true
+		tt.Frame()
+	}
+	for _, host := range []string{"workspace", "dock"} {
+		s.requestFileAction("create", "", host)
+		tt.Frame()
+		names := 0
+		for _, label := range tt.Texts() {
+			if label == "Name" {
+				names++
+			}
+		}
+		if names != 1 {
+			t.Fatalf("%s opened %d file dialogs instead of one", host, names)
+		}
+		if err := tt.Click("Cancel"); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

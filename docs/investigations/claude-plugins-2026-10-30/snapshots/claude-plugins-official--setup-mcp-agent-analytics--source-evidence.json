@@ -1,0 +1,16 @@
+{
+  "repo": "pendo-io/claude-pendo-plugin",
+  "commit": "a0f85260c61b93c4511f59545612323a41c3f845",
+  "path": "plugins/setup-mcp-agent-analytics",
+  "archive_sha256": "e288c7c4ae4995c5e528c45729f1caeab467ca9185eb85c49505a75e9ef18436",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/setup-mcp-agent-analytics/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"setup-mcp-agent-analytics\",\n  \"displayName\": \"Setup MCP Agent Analytics\",\n  \"version\": \"1.1.0\",\n  \"description\": \"Detect an MCP server's language (Python, TypeScript, Go, or Java) and instrument it with the matching Pendo SDK so MCP tool calls flow into Pendo Agent Analytics\",\n  \"author\": {\n    \"name\": \"Pendo\",\n    \"email\": \"plugins@pendo.io\"\n  },\n  \"homepage\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"repository\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"pendo\", \"analytics\", \"mcp\", \"instrumentation\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/setup-mcp-agent-analytics/SKILL.md": "\nname: setup-mcp-agent-analytics\ndescription: >-\n  Instrument an MCP server with Pendo MCP analytics in Python, TypeScript,\n  Go, or Java. Detects which language/SDK the server is built with and wires\n  up the matching Pendo integration — PendoMCPServer (Python), initMcp()\n  (TypeScript), gosdk.Instrument() (Go), or PendoMcpServer.wrapAll() (Java,\n  io.pendo:pendo-sdk-mcp) — then verifies data is flowing to Pendo Agent\n  Analytics. Use this whenever the user wants Pendo analytics on an MCP\n  server, mentions \"MCP analytics\", \"track MCP tool calls\", \"PendoMCPServer\",\n  \"PendoMcpServer\", \"initMcp\", \"pendo-sdk-mcp\", \"instrument my MCP server\",\n  or has an MCP server (including a Spring AI MCP server) and asks for\n  Pendo/agent analytics — even if they don't say \"MCP analytics\" verbatim.\n  NOT for instrumenting regular (non-MCP) agents — use setup-agent-analytics\n  for that.\nallowed-tools: Read, Grep, Glob, Bash, Edit, Write\n"
+  }
+}

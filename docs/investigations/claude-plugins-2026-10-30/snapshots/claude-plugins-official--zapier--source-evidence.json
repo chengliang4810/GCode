@@ -1,0 +1,33 @@
+{
+  "repo": "zapier/zapier-mcp",
+  "commit": "5360f152b96735712e5f925ad728732cb86888df",
+  "path": "plugins/zapier",
+  "archive_sha256": "2a326529b3a3f47d8dec752ce1b80ceb809cf17d386326c573e1b82323f83122",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".github/plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "agents/zapier-mcp.agent.md",
+    "assets/icon.svg",
+    "assets/logo.svg",
+    "rules/zapier-lifecycle.mdc",
+    "skills/zapier-demo/SKILL.md",
+    "skills/zapier-explore/SKILL.md",
+    "skills/zapier-onboard/SKILL.md",
+    "skills/zapier-status/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"zapier\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Connect 9,000+ apps to your AI workflow. Discover, enable, and execute Zapier actions directly from your client.\",\n  \"author\": {\n    \"name\": \"Zapier\",\n    \"email\": \"support@zapier.com\"\n  },\n  \"homepage\": \"https://github.com/zapier/zapier-mcp\",\n  \"repository\": \"https://github.com/zapier/zapier-mcp\",\n  \"keywords\": [\n    \"zapier\",\n    \"mcp\",\n    \"model-context-protocol\",\n    \"automation\",\n    \"integrations\",\n    \"workflow\",\n    \"ai-actions\",\n    \"api\",\n    \"no-code\",\n    \"ai-tools\",\n    \"productivity\"\n  ],\n  \"skills\": \"./skills/\",\n  \"mcpServers\": \"./.mcp.json\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"zapier\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.zapier.com/api/v1/connect\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/zapier-demo/SKILL.md": "\nname: zapier-demo\ndescription: Walk a new user through setting up their first Zapier action and running it live — the smallest possible win. Asks what app they use, recommends one read action to enable, guides them to mcp.zapier.com to add it, then demonstrates it working in the same chat. Use when the user asks \"show me how Zapier works\", \"set up my first action\", \"give me a quick demo\", \"I want to try it\", \"what's the fastest way to see this work\", \"minimal setup\", \"hello world\", or \"smallest example\".\n",
+    "skills/zapier-status/SKILL.md": "\nname: zapier-status\ndescription: Check the health of your Zapier MCP setup. Three modes — health check (dashboard view), audit (find waste and duplicates), diagnose (systematic troubleshooting). Use when asking \"is my MCP working?\", \"check my tools\", \"audit my setup\", \"what's broken?\", or \"zapier status\".\n",
+    "skills/zapier-explore/SKILL.md": "\nname: zapier-explore\ndescription: Explore what Zapier MCP can do for the user — interview them about their role and the apps they live in, suggest specific use cases as on-demand prompts, then walk them through enabling the actions to make those use cases real. The natural next step after `zapier-demo`. Use when the user asks \"what else can Zapier do for me\", \"set up more tools\", \"add a starter pack for my role\", \"what should I enable next\", \"suggest workflows\", \"help me figure out what to do with Zapier\", \"I don't know where to start\", or \"give me Zapier examples\".\n",
+    "agents/zapier-mcp.agent.md": "\nname: Zapier MCP Specialist\ndescription: Uses Zapier MCP to discover, enable, audit, and execute app actions safely and efficiently while following Zapier's read/write confirmation lifecycle.\ntarget: any\ntools: [\"*\"]\n",
+    "skills/zapier-onboard/SKILL.md": "\nname: zapier-onboard\ndescription: Onboard a new user to Zapier MCP — introduce what it can do, walk through authentication, and route into the right flow based on the state of their setup. Use when getting started, troubleshooting connection issues, or when the user asks \"what is Zapier MCP\", \"how do I get started with Zapier\", \"set me up\", \"what can I do with Zapier\", or \"tell me about Zapier\".\n"
+  }
+}

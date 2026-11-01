@@ -1,0 +1,20 @@
+{
+  "repo": "sonatype/sonatype-guide-claude-plugin",
+  "commit": "1dae73980f591d3196f5532ac72186513563d028",
+  "path": ".",
+  "archive_sha256": "0f6350112d04cea6e3befc026859dcd913f03e41398054945c53a142975ece02",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/sonatype-guide/SKILL.md",
+    "skills/sonatype-guide/references/purl-ecosystems.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"sonatype-guide\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Sonatype Guide MCP server for software supply chain intelligence and dependency security analysis. Scan dependencies for vulnerabilities, get version recommendations, and check component quality metrics.\",\n  \"author\": {\n    \"name\": \"Sonatype\"\n  },\n  \"homepage\": \"https://guide.sonatype.com\",\n  \"repository\": \"https://github.com/sonatype/guide-claude-plugin\"\n}\n",
+    ".mcp.json": "{\n  \"sonatype-guide\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.guide.sonatype.com/mcp\",\n    \"headers\": {\n      \"Authorization\": \"Bearer ${SONATYPE_GUIDE_TOKEN}\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/sonatype-guide/SKILL.md": "\nname: sonatype-guide\ndescription: >-\n  MUST use before installing, adding, or upgrading any dependency. Trigger when: running pip install,\n  npm install, cargo add, go get, or any package manager command; adding a package to requirements.txt,\n  package.json, pyproject.toml, Cargo.toml, go.mod, pom.xml, build.gradle, or Gemfile; choosing which\n  library to use for a task; upgrading or changing dependency versions; or auditing existing dependencies.\n  Uses the Sonatype Guide MCP server to check vulnerabilities, Developer Trust Scores, license risks,\n  malicious package detection, and policy compliance. Do not install or recommend a dependency without\n  checking it here first.\n"
+  }
+}

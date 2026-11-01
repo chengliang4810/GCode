@@ -116,7 +116,7 @@ func TestIntegrationsTargetScopeLastAgentAndOffline(t *testing.T) {
 	}
 }
 
-func TestIntegrationsCancelledFlowCannotCompleteAfterReplacementOrSignOut(t *testing.T) {
+func TestIntegrationsCancelledFlowCannotCompleteAfterReplacement(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Millisecond})
 	ctx := context.Background()
 	executeIntegration(t, s, integrationRequest("provider.login.start", "openai"))
@@ -134,11 +134,6 @@ func TestIntegrationsCancelledFlowCannotCompleteAfterReplacementOrSignOut(t *tes
 	v, _ = s.Snapshot(ctx)
 	if v.Integrations.Login == nil || v.Integrations.Login.ID != newID || v.Integrations.Login.State != "waiting" {
 		t.Fatal("old browser completion changed current code flow")
-	}
-	executeIntegration(t, s, contracts.Command{Kind: "account.signout"})
-	v, _ = s.Snapshot(ctx)
-	if v.Integrations.Login != nil || v.Integrations.Cloud.Available || v.Integrations.Billing.Available {
-		t.Fatal("sign-out left an account-bound flow available")
 	}
 }
 

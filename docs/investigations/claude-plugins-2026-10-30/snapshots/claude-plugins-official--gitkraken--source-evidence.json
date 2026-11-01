@@ -1,0 +1,18 @@
+{
+  "repo": "gitkraken/claude-plugin",
+  "commit": "f7a53b2cd138c22eccb977b9d93494ea6d423d12",
+  "path": ".",
+  "archive_sha256": "cc059fc52743f5d318e4d3b08d206575cfbb9e991a02b31d0f1900fe87f0cb5f",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "mcp.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"gitkraken\",\n  \"description\": \"This plugin gives Claude access to your real Git and project context: commits, branches, pull requests, and issues across every repo you work in. Ask the agent a question about your work, and it answers from what's actually in your history and your trackers, not what it can guess from the open file.\\n\\nWorks with GitHub, GitLab, Azure DevOps, Bitbucket, and Jira.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"GitKraken\"\n  },\n  \"mcpServers\": \"./mcp.json\"\n}\n",
+    "mcp.json": "{\n  \"mcpServers\": {\n    \"gitkraken\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@gitkraken/gk\", \"mcp\", \"--plugin\", \"--host=claude\"]\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

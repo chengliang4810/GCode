@@ -1,0 +1,16 @@
+{
+  "repo": "Shopify/liquid-skills",
+  "commit": "ae3e4cc3f454923e388bbd841fd931f0c7bf5be4",
+  "path": "plugins/liquid-lsp",
+  "archive_sha256": "bfe95bc1069fc54265dfe4b23ac4deb7df1de7efa0faac2b580cd98541445c66",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".lsp.json",
+    "README.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"liquid-lsp\",\n  \"description\": \"LSP integration for Shopify Liquid templates via the Shopify CLI theme language server\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"James Meng\"\n  },\n  \"repository\": \"https://github.com/Shopify/liquid-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"lsp\", \"liquid\", \"shopify\", \"theme\"]\n}\n",
+    ".lsp.json": "{\n  \"theme-language-server\": {\n    \"command\": \"shopify\",\n    \"args\": [\"theme\", \"language-server\"],\n    \"extensionToLanguage\": {\n      \".liquid\": \"liquid\",\n      \".json\": \"json\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

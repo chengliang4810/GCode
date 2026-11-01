@@ -1,0 +1,15 @@
+{
+  "repo": "prisma/claude-plugin",
+  "commit": "815dbc4a045a29e3b81510ba0e3ab806f1baaf0e",
+  "path": ".",
+  "archive_sha256": "ae0b24dc6f99d7fe4139ba7593d6905db81e575f2feb946ca8dc94cbe7435477",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"prisma\",\n  \"description\": \"Prisma MCP integration for Postgres database management, schema migrations, SQL queries, and connection string management. Provision Prisma Postgres databases, run migrations, and interact with your data directly.\",\n  \"author\": {\n    \"name\": \"Prisma\"\n  }\n}",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"Prisma-Local\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"prisma\", \"mcp\"]\n    },\n    \"Prisma-Remote\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.prisma.io/mcp\"\n    }\n  }\n}"
+  },
+  "markdown_frontmatter": {}
+}

@@ -22,7 +22,6 @@ func cloneSnapshot(v contracts.Snapshot) contracts.Snapshot {
 	}
 	v.Projects = slices.Clone(v.Projects)
 	for i := range v.Projects {
-		v.Projects[i].Actions = slices.Clone(v.Projects[i].Actions)
 		v.Projects[i].Branches = slices.Clone(v.Projects[i].Branches)
 		v.Projects[i].Worktrees = slices.Clone(v.Projects[i].Worktrees)
 	}
@@ -56,11 +55,9 @@ func cloneSnapshot(v contracts.Snapshot) contracts.Snapshot {
 	}
 	v.Providers = slices.Clone(v.Providers)
 	for i := range v.Providers {
-		v.Providers[i].AccessModes = slices.Clone(v.Providers[i].AccessModes)
 		v.Providers[i].Models = slices.Clone(v.Providers[i].Models)
 	}
 	v.Settings.Shortcuts = slices.Clone(v.Settings.Shortcuts)
-	v.Settings.ModelPicker.Favorites = slices.Clone(v.Settings.ModelPicker.Favorites)
 	v.Settings.ModelPicker.Options = maps.Clone(v.Settings.ModelPicker.Options)
 	v.Settings.ModelPicker.Selections = maps.Clone(v.Settings.ModelPicker.Selections)
 	v.Files = slices.Clone(v.Files)
@@ -75,12 +72,6 @@ func cloneSnapshot(v contracts.Snapshot) contracts.Snapshot {
 	for i := range v.Commits {
 		v.Commits[i].Parents = slices.Clone(v.Commits[i].Parents)
 		v.Commits[i].Refs = slices.Clone(v.Commits[i].Refs)
-	}
-	v.PullRequests = slices.Clone(v.PullRequests)
-	for i := range v.PullRequests {
-		v.PullRequests[i].Checks = slices.Clone(v.PullRequests[i].Checks)
-		v.PullRequests[i].Comments = slices.Clone(v.PullRequests[i].Comments)
-		v.PullRequests[i].ChangeIDs = slices.Clone(v.PullRequests[i].ChangeIDs)
 	}
 	v.Terminals = slices.Clone(v.Terminals)
 	v.Queue = slices.Clone(v.Queue)

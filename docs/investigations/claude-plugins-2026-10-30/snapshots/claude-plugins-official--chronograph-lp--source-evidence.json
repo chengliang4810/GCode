@@ -1,0 +1,41 @@
+{
+  "repo": "chronograph-pe/chronograph-lp-claude-plugin",
+  "commit": "322b2d3fbd4db0a2eeed117e3b3c31522408ae6f",
+  "path": ".",
+  "archive_sha256": "ff8845169997dd00b85f891c37baf500c66a8d2d514464854f1324389649e7cd",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "agents/chronograph-cashflow-forecast.md",
+    "agents/chronograph-commitment-pacing-planner.md",
+    "agents/chronograph-gp-meeting-prep.md",
+    "agents/chronograph-look-through-exposure-scan.md",
+    "agents/chronograph-lp-analyst.md",
+    "skills/.gitkeep",
+    "skills/chronograph-cashflow-forecast/SKILL.md",
+    "skills/chronograph-cashflow-forecast/references/chronograph-mcp-map.md",
+    "skills/chronograph-cashflow-forecast/references/model-methodology.md",
+    "skills/chronograph-commitment-pacing-planner/SKILL.md",
+    "skills/chronograph-gp-meeting-prep/SKILL.md",
+    "skills/chronograph-gp-meeting-prep/references/meeting-brief-template.md",
+    "skills/chronograph-gp-meeting-prep/references/question-bank.md",
+    "skills/chronograph-gp-meeting-prep/references/report-review-checklist.md",
+    "skills/chronograph-look-through-exposure-scan/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-plugin-manifest.json\",\n  \"name\": \"chronograph-lp\",\n  \"displayName\": \"Chronograph LP\",\n  \"version\": \"0.2.4\",\n  \"description\": \"Portfolio monitoring and analytics for private capital LP teams. Cashflow forecasting, commitment pacing, look-through exposure scans, and GP-meeting prep against your Chronograph data.\",\n  \"author\": {\n    \"name\": \"Chronograph\",\n    \"url\": \"https://www.chronograph.pe/\"\n  },\n  \"homepage\": \"https://www.chronograph.pe/\",\n  \"repository\": \"https://github.com/chronograph-pe/chronograph-lp-claude-plugin\",\n  \"license\": \"Apache-2.0\",\n  \"privacy\": \"https://www.chronograph.pe/legal/privacy-policy/\",\n  \"privacy_policies\": [\n    \"https://www.chronograph.pe/legal/privacy-policy/\"\n  ],\n  \"keywords\": [\n    \"private capital\",\n    \"private equity\",\n    \"portfolio monitoring\",\n    \"fund analytics\",\n    \"limited partner\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "agents/chronograph-gp-meeting-prep.md": "\nname: chronograph-gp-meeting-prep\ndescription: LP-side meeting preparation agent (preparing an LP to meet their GP) — reviews fund reporting, surfaces period-over-period changes, and drafts prioritized questions for GP meetings.\nmodel: opus\neffort: high\nmaxTurns: 40\nskills:\n  - chronograph-gp-meeting-prep\n",
+    "agents/chronograph-look-through-exposure-scan.md": "\nname: chronograph-look-through-exposure-scan\ndescription: Look-through exposure agent — aggregates underlying exposure across funds and surfaces concentration using the Chronograph top-exposures tool.\nmodel: opus\neffort: high\nmaxTurns: 40\nskills:\n  - chronograph-look-through-exposure-scan\n",
+    "skills/chronograph-look-through-exposure-scan/SKILL.md": "\nname: chronograph-look-through-exposure-scan\ndescription: Aggregate an LP's look-through portfolio exposure across funds — by company, sector,\n  geography, vintage, strategy, and currency — and surface concentration, using the Chronograph\n  top-exposures tool.\nwhen_to_use: 'Use when an LP or fund-of-funds wants to understand its true underlying exposure\n  across managers. Triggers: \"what do we actually own\", \"look-through exposure\", \"how concentrated\n  are we\", \"single-name exposure across funds\", \"sector/geography breakdown\", \"are we overexposed to\n  X\". Not for single-fund or single-company reporting.'\n",
+    "agents/chronograph-cashflow-forecast.md": "\nname: chronograph-cashflow-forecast\ndescription: Private capital cashflow forecasting agent for LP-level portfolio analysis using the Chronograph MCP and a Takahashi-Alexander style model.\nmodel: opus\neffort: high\nmaxTurns: 40\nskills:\n  - chronograph-cashflow-forecast\n",
+    "skills/chronograph-cashflow-forecast/SKILL.md": "\nname: chronograph-cashflow-forecast\ndescription: Forecast LP-level private capital cashflows for existing portfolios using Chronograph\n  MCP data and a Takahashi-Alexander style model.\nwhen_to_use: Use when analyzing or forecasting LP-level contributions, distributions, NAV, unfunded\n  exposure, net cashflows, or Excel-style cashflow forecast outputs from existing Chronograph funds,\n  commitments, groups, or portfolios. Not for building GP portfolio-company one-pagers, tearsheets,\n  or investor reports — use chronograph-portfolio-company-one-pager.\n",
+    "agents/chronograph-commitment-pacing-planner.md": "\nname: chronograph-commitment-pacing-planner\ndescription: Commitment pacing agent — plans forward fund commitments to reach and hold a target private capital allocation using Chronograph data and a cashflow-projection model.\nmodel: opus\neffort: high\nmaxTurns: 40\nskills:\n  - chronograph-commitment-pacing-planner\n",
+    "agents/chronograph-lp-analyst.md": "\nname: chronograph-lp-analyst\ndescription: End-to-end LP portfolio analysis orchestrator — cashflow forecasting, commitment pacing, look-through exposure scans, and GP-meeting prep, all from permissioned Chronograph data. Use for LP-side portfolio and manager-monitoring work; not for GP-side portfolio-company or fund reporting (use the Chronograph GP plugin).\nmodel: opus\neffort: high\nmaxTurns: 60\ntools: Read, Write, Edit, Grep, Glob, mcp__chronograph__*\nskills:\n  - chronograph-cashflow-forecast\n  - chronograph-commitment-pacing-planner\n  - chronograph-gp-meeting-prep\n  - chronograph-look-through-exposure-scan\n",
+    "skills/chronograph-commitment-pacing-planner/SKILL.md": "\nname: chronograph-commitment-pacing-planner\ndescription: Plan forward fund commitments to reach and hold a target private capital allocation,\n  using Chronograph portfolio data and a cashflow-projection model.\nwhen_to_use: \"Use when an LP wants to build or stress-test a commitment pacing plan — how much to\n  commit per year, by strategy or vintage, to hit a target allocation or keep exposure steady.\n  Triggers: \\\"how much should we commit next year\\\", \\\"build a pacing plan\\\", \\\"what pace keeps us\n  at X% private markets\\\", \\\"model our vintage diversification\\\". Not for forecasting an existing\n  portfolio's runoff alone (use chronograph-cashflow-forecast).\"\n",
+    "skills/chronograph-gp-meeting-prep/SKILL.md": "\nname: chronograph-gp-meeting-prep\ndescription: >\n  Prepare an LP (investor) to meet with their fund manager (GP) — an LP-side skill where the user is\n  the LP, not the GP. Review the fund's latest reporting, surface what changed since last period,\n  and draft the questions worth raising. Draws on Chronograph fund and portfolio data when connected\n  — captured reporting such as fund performance, schedules of investments, and portfolio company KPI\n  profiles — and asks the LP to provide anything else it needs, such as a capital account statement,\n  investor letter, or AGM or board deck.\nwhen_to_use: >\n  Use when someone is getting ready for a manager call, quarterly check-in, annual meeting, LPAC\n  meeting, or a re-up decision — for example \"I have my quarterly call with this manager next week,\n  help me prep,\" \"what changed in this fund this quarter,\" \"what should I ask them about these\n  marks,\" or \"what are the red flags in this reporting package.\" Not for generating GP\n  portfolio-company reports or one-pagers — use chronograph-portfolio-company-one-pager.\n"
+  }
+}

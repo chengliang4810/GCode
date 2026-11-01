@@ -62,9 +62,9 @@
       },
       {
         "actions": null,
-        "id": "zeron",
-        "name": "Zeron",
-        "path": "~/projects/zeron",
+        "id": "rcode",
+        "name": "RCode",
+        "path": "~/projects/rcode",
         "deviceId": "local",
         "icon": "",
         "branch": "main",
@@ -267,7 +267,7 @@
         "sideChat": false,
         "id": "chat-6",
         "title": "Update project documentation",
-        "projectId": "zeron",
+        "projectId": "rcode",
         "deviceId": "local",
         "modelId": "claude-opus-4-6",
         "reasoningLevel": "High",
@@ -290,7 +290,7 @@
         "sideChat": false,
         "id": "chat-7",
         "title": "Refine composer spacing",
-        "projectId": "zeron",
+        "projectId": "rcode",
         "deviceId": "local",
         "modelId": "claude-opus-4-6",
         "reasoningLevel": "High",
@@ -513,7 +513,7 @@
               "kind": "image",
               "attachment": {
                 "id": "attachment-icon",
-                "name": "Zeron.png",
+                "name": "RCode.png",
                 "mime": "image/png",
                 "size": 0,
                 "width": 1024,
@@ -527,7 +527,7 @@
               "kind": "math",
               "artifact": {
                 "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
-                "assetRef": "asset://artifacts/math-fira-zeron-dark.svg",
+                "assetRef": "asset://artifacts/math-fira-rcode-dark.svg",
                 "width": 129.34292602539062,
                 "height": 46.10063934326172,
                 "baseline": 28.820640563964844
@@ -538,7 +538,7 @@
               "kind": "diagram",
               "artifact": {
                 "source": "flowchart LR\n A[Request] --\u003e B{Ready?}\n B --\u003e|Yes| C[Response]\n B --\u003e|No| D[Wait]",
-                "assetRef": "asset://artifacts/diagram-zeron-dark.svg",
+                "assetRef": "asset://artifacts/diagram-rcode-dark.svg",
                 "width": 381.6848,
                 "height": 139.9095,
                 "baseline": 0
@@ -1112,7 +1112,6 @@
     ],
     "settings": {
       "modelPicker": {
-        "favorites": null,
         "providerId": "",
         "options": null
       },
@@ -1126,8 +1125,8 @@
         "mathScale": 100,
         "mode": "dark",
         "themeId": "",
-        "lightThemeId": "zeron-light",
-        "darkThemeId": "zeron-dark",
+        "lightThemeId": "rcode-light",
+        "darkThemeId": "rcode-dark",
         "accent": "theme",
         "surface": "theme",
         "font": "Geist",
@@ -1151,13 +1150,12 @@
       "general": {
         "sendBehavior": "enter",
         "compactMode": false,
-        "compactModelPicker": true,
         "stopWithEscape": false,
         "prDestination": "pullRequest",
         "threadNamingModel": "Automatic",
         "customWorktreeLocation": false,
         "worktreePath": "~/worktrees",
-        "creditZeron": true,
+        "creditRCode": true,
         "launchAtLogin": false,
         "restoreWindows": true
       },
@@ -1710,7 +1708,7 @@
       {
         "id": "pr-412",
         "number": 412,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Refine the workspace layout",
         "author": "alex",
         "status": "open",
@@ -1753,7 +1751,7 @@
       {
         "id": "pr-413",
         "number": 413,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Polish the command palette",
         "author": "alex",
         "status": "open",
@@ -1775,7 +1773,7 @@
       {
         "id": "pr-405",
         "number": 405,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Add project grouping",
         "author": "sam",
         "status": "merged",

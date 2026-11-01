@@ -1,0 +1,38 @@
+{
+  "pluginId": "learning-output-style@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [
+    "hook:SessionStart/0/0"
+  ],
+  "probes": [
+    {
+      "id": "session-start-injects-learning-mode",
+      "componentId": "hook:SessionStart/0/0",
+      "prompt": "Reply with the single word: ready. (SessionStart hook verification task; the hook itself is the component under test. This probe verifies only the SessionStart hook execution and its injected context; whether the model later follows the injected output-style behavior in real coding sessions remains untested.)",
+      "allowCommands": [],
+      "verifierOutputs": [],
+      "fixtures": [],
+      "assertions": [
+        {
+          "kind": "exit",
+          "exitCode": 0
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "learning' output style mode"
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "When to Request User Contributions"
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "★ Insight"
+        }
+      ]
+    }
+  ]
+}

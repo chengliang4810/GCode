@@ -1,0 +1,20 @@
+{
+  "repo": "forcedotcom/informatica-claude-plugins",
+  "commit": "554d02e0f7f2adafeaeeedbde04435b7bd310a47",
+  "path": "informatica-for-claude-platform",
+  "archive_sha256": "6231f4676b43b2b5264346a213a29fa56ac068ff19e72d5d70aa68b3570658d6",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "CLAUDE.md",
+    "README.md",
+    "skills/catalog-and-data-discovery/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"informatica-for-claude-platform\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Informatica plugin for Claude Platform (Claude Code & Claude CoWork) — governed catalog discovery, data Q&A, powered by Informatica's Data catalog and Governance to understand and evaluate enterprise data assets without bypassing governance. Discover, Explore, Enrich, Govern and Manage Data Assets across the entire enterprise estate through natural language\",\n  \"author\": {\n    \"name\": \"informatica\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"informatica-catalog-discovery\": {\n      \"type\": \"http\",\n      \"url\": \"\"\n    },\n    \"informatica-data-exploration\": {\n      \"type\": \"http\",\n      \"url\": \"\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/catalog-and-data-discovery/SKILL.md": "\nname: catalog-and-data-discovery\ndescription: \"Enterprise catalog discovery and governance over CDGC. Finds data assets from the catalog — tables, columns, files, reports, glossary terms, domains, policies — and evaluates their trustworthiness, business meaning, ownership, sensitivity, applicable policy, and safe use, grounded exclusively in catalog metadata. Use whenever the user asks a data or metadata question — 'find', 'where is', 'show me', 'what tables have X', 'is there a report on Y', 'give me [topic] data', 'who owns', 'what does column X mean', 'is this the authoritative source', 'can I rely on this', 'is this sensitive / PII', 'what policy applies', 'can I safely use this for [purpose]'. Covers business assets (domains, glossaries, policies) and technical assets (tables, columns, files). Always run BEFORE reading actual data through other MCPs so the caller picks the right, trusted, compliant asset.\"\n"
+  }
+}

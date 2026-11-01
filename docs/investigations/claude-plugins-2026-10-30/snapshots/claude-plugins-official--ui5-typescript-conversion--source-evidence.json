@@ -1,0 +1,20 @@
+{
+  "repo": "UI5/plugins-coding-agents",
+  "commit": "2b8c4a944e39609214bce7aef3b05260985f0e91",
+  "path": "plugins/ui5-typescript-conversion",
+  "archive_sha256": "bcaa2c842b8b9794b44d943c1d238561e4a037124b28febff443fc3d59dc57fc",
+  "all_plugin_files": [
+    ".github/plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "plugin.json",
+    "skills/ui5-typescript-conversion/SKILL.md",
+    "skills/ui5-typescript-conversion/references/test_conversion.md"
+  ],
+  "config": {
+    ".mcp.json": "{}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/ui5-typescript-conversion/SKILL.md": "\nname: ui5-typescript-conversion\ndescription: A skill for converting UI5 (SAPUI5/OpenUI5) projects to TypeScript.\n"
+  }
+}

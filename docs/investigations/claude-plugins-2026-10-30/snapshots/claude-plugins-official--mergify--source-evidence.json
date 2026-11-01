@@ -1,0 +1,36 @@
+{
+  "repo": "mergifyio/mergify-cli",
+  "commit": "6307ed10e8628c6fefe408e398ea48af16c94cfd",
+  "path": ".",
+  "archive_sha256": "ca625c27b2c32a44863aa984dfb87c0726ca82cf07a132f1c696a83dc6886579",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".github/workflows/ci.yaml",
+    ".mergify.yml",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "assets/mergify-icon-black.png",
+    "install.sh",
+    "renovate.json",
+    "skills/mergify-ci/SKILL.md",
+    "skills/mergify-config/SKILL.md",
+    "skills/mergify-events/SKILL.md",
+    "skills/mergify-merge-protections/SKILL.md",
+    "skills/mergify-merge-queue/SKILL.md",
+    "skills/mergify-stack/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"mergify\",\n  \"description\": \"Skills for the Mergify CLI: manage merge queues, stacked pull requests, Test Engine (flaky tests, quarantine), merge protections, and Mergify configuration directly from the terminal.\",\n  \"author\": {\n    \"name\": \"Mergify\"\n  },\n  \"keywords\": [\n    \"git\",\n    \"pr\",\n    \"stacked-prs\",\n    \"merge-queue\",\n    \"ci\",\n    \"test-engine\",\n    \"test-insights\",\n    \"flaky-tests\",\n    \"quarantine\",\n    \"freeze\",\n    \"config\",\n    \"push\",\n    \"commit\",\n    \"branch\",\n    \"rebase\",\n    \"checkout\",\n    \"workflow\"\n  ],\n  \"license\": \"LicenseRef-Mergify-Proprietary\",\n  \"homepage\": \"https://mergify.com\",\n  \"repository\": \"https://github.com/Mergifyio/mergify-cli\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/mergify-config/SKILL.md": "\nname: mergify-config\ndescription: Use Mergify config commands to validate configuration files, simulate Mergify actions, and write Mergify configuration. ALWAYS use this skill when validating, writing, editing, or simulating Mergify config. Triggers on config validate, config simulate, mergify configuration, mergify.yml, .mergify.yml, merge queue config, workflow rules, conditions.\n",
+    "skills/mergify-ci/SKILL.md": "\nname: mergify-ci\ndescription: Use Mergify CI commands to upload JUnit test results, detect git references, manage CI scopes, and retrieve merge queue metadata. ALWAYS use this skill when working with CI pipelines, test result uploads, quarantine, scopes detection, or merge queue CI context. Triggers on CI, JUnit, test results, quarantine, scopes, git refs, CI insights.\n",
+    "skills/mergify-merge-queue/SKILL.md": "\nname: mergify-merge-queue\ndescription: Use Mergify merge queue to queue/dequeue PRs, to monitor and inspect the queue, and to diagnose a dequeued PR — whether it is queued, why it was dequeued, where its CI failure is, and what to do next. ALWAYS use this skill when queuing or dequeuing a PR, checking queue status, investigating PR merge state, finding out why a PR left the queue, pausing/unpausing the queue, or debugging merge failures. Triggers on queue a PR, requeue, dequeue, dequeued, why was my PR dequeued, dequeue reason, merge queue, queue status, queue pause, queue show, pause, unpause, frozen, bisecting, batch, CI checks, CHECKS_FAILED, PULL_REQUEST_UPDATED.\n",
+    "skills/mergify-stack/SKILL.md": "\nname: mergify-stack\ndescription: Use Mergify stacks for git push, commit, branch, and PR creation. ALWAYS use this skill when pushing code, creating commits, creating branches, or creating PRs. Triggers on push, commit, branch, PR, pull request, stack, stacked, git, rebase, checkout, reorder, move, sync, amend, note, revision history.\n",
+    "skills/mergify-merge-protections/SKILL.md": "\nname: mergify-merge-protections\ndescription: Use Mergify merge protections to control when PRs merge — PR dependencies (Depends-On header), delayed merges (Merge-After header), and scheduled freezes (CLI). ALWAYS use this skill when managing merge freezes, deployment windows, temporarily blocking merges, setting up PR dependencies, blocking a PR on another PR, coordinating cross-repo merges, scheduling a merge for a specific time, or adding Depends-On or Merge-After headers to PRs. Triggers on freeze, scheduled freeze, merge freeze, deployment freeze, halt merges, depends on, dependency, block merge, merge after, merge later, schedule merge, delayed merge, cross-repo, merge protection.\n",
+    "skills/mergify-events/SKILL.md": "\nname: mergify-events\ndescription: Use `mergify events` to browse the Mergify activity log — every event Mergify recorded for a repository or one pull request (queue enters/leaves, merges, commands, CI Insights, freezes), as a human timeline or JSON. ALWAYS use this skill when investigating what Mergify did to a PR or repository and when, reconstructing a pull request's merge-queue lifecycle, auditing Mergify actions, or filtering events by type. Triggers on activity log, event log, events, what did Mergify do, queue lifecycle, queue history, event timeline, event_type, action.queue.\n"
+  }
+}

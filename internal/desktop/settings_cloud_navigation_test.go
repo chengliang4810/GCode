@@ -53,8 +53,7 @@ func (s *cloudNavigationService) Snapshot(ctx context.Context) (contracts.Snapsh
 func cloudNavigationTestApp(t *testing.T) (*App, *cloudNavigationService) {
 	t.Helper()
 	a, _ := settingsTestApp(t)
-	// Reach the real typed backend's signed-in/off state without signing in
-	// again, since sign-in already enables Cloud in the existing mock.
+	// Start with the mock account available and its Cloud instance turned off.
 	a.dispatch(contracts.Command{Kind: "cloud.delete"})
 	service := &cloudNavigationService{Service: a.service}
 	a.service = service
@@ -89,15 +88,13 @@ func TestCloudSettingsNavigationEnablesOnlyFreshAvailableOff(t *testing.T) {
 				t.Fatal(err)
 			}
 		}, want: []string{"cloud.refresh"}},
-		{name: "signed out", setup: func(t *testing.T, a *App, service *cloudNavigationService) {
-			if err := service.Service.Execute(a.ctx, contracts.Command{Kind: "account.signout"}); err != nil {
-				t.Fatal(err)
+		{name: "signed out", setup: func(_ *testing.T, a *App, service *cloudNavigationService) {
+			service.adjustSnapshot = func(snapshot *contracts.Snapshot) {
+				snapshot.User.SignedIn = false
+				snapshot.Integrations.Cloud.Available = false
+				snapshot.Integrations.Billing.Available = false
 			}
-			snapshot, err := service.Service.Snapshot(a.ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			a.apply(snapshot)
+			service.adjustSnapshot(&a.state)
 		}},
 		{name: "unavailable", setup: func(_ *testing.T, _ *App, service *cloudNavigationService) {
 			service.adjustSnapshot = func(snapshot *contracts.Snapshot) { snapshot.Integrations.Cloud.Available = false }

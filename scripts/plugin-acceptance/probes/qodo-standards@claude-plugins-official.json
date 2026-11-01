@@ -1,0 +1,187 @@
+{
+  "pluginId": "qodo-standards@claude-plugins-official",
+  "sourceCommit": "b8c21854199c538b1c35c981c12a93bab4839ef2",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "structured-queries-for-three-tasks",
+      "componentId": "skill:qodo-standards:qodo-get-rules",
+      "prompt": "/qodo-standards:qodo-get-rules Use the qodo-get-rules skill to prepare rule retrieval for three concrete tasks in the repo whose origin is https://gitlab.example.com/acme/platform/dispatch-service.git, and write qodo-retrieval-plan.md. The tasks: (A) add retry with exponential backoff to the Go webhook dispatcher; (B) split the payment module into repository and service layers; (C) add structured request logging with trace IDs. Headless boundary: no qodo CLI, no MCP server, no network; the version probe, identity check and the actual rules search never run here, so retrieval stays untested and no rules may be presented as retrieved - the skill's guardrail says don't fabricate rules.\n\nThe plan must record, per the skill: (1) the unadorned compatibility probe qodo --version as the FIRST step (not run here); (2) provenance stamping on the first authenticated call with the exact documented flags --skill qodo-get-rules --skill-version 1.1.6 --distribution marketplace --host claude-code; (3) the repository scope derived from the origin per the documented rule (full path after the host, .git stripped, deeper hosted paths preserved - do not collapse to two segments), written as /acme/platform/dispatch-service/; (4) for EACH of the three tasks a topic query in the documented three-line block form with a Name: line, a Category: line and a Content: line that names the stack: task A must use the exact line Category: Reliability (fault tolerance is Reliability), task B the exact line Category: Architecture (structural work is Architecture), task C the exact line Category: Observability (instrumentation is Observability) - never Category: Security or Category: Correctness for these three tasks; (5) the one shared cross-cutting query using the documented default starting Name: Code Quality and Standards Compliance with Category: Architecture and its Content adjusted to the Go stack; (6) the search commands with the detected scope: qodo read rules search --query \"$TOPIC_QUERY\" --top-k 20 --scopes \"/acme/platform/dispatch-service/\" --json and the same form for \"$CROSS_QUERY\"; (7) the merge rule: topic results first (in order), then cross-cutting results not already present, dedup by rule id, and an empty merged list is a valid outcome - not an error; (8) a closing line stating that retrieval did not run in this headless task, no rules were retrieved, and nothing is applied.\n\nThen read the immutable verify_qodo_retrieval.py and run exactly python verify_qodo_retrieval.py using Bash; it validates the plan and writes qodo-retrieval-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the actual rules retrieval, identity and catalog checks remain untested.",
+      "allowCommands": [
+        "python verify_qodo_retrieval.py"
+      ],
+      "verifierOutputs": [
+        "qodo-retrieval-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_qodo_retrieval.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('qodo-retrieval-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '/acme/platform/dispatch-service/' in text, 'the repo scope must keep all three hosted path segments'\nassert 'qodo --version' in text, 'the unadorned compatibility probe must be the first recorded step'\nassert '--skill qodo-get-rules --skill-version 1.1.6 --distribution marketplace --host claude-code' in text, 'the documented provenance flags are missing'\nassert 'Category: Reliability' in text, 'task A (retry/fault tolerance) must map to Reliability'\nassert 'Category: Architecture' in text, 'task B (structural work) must map to Architecture'\nassert 'Category: Observability' in text, 'task C (instrumentation) must map to Observability'\nassert 'Category: Security' not in text and 'Category: Correctness' not in text, 'no task may be misclassified as Security or Correctness'\nassert 'Name: Code Quality and Standards Compliance' in text, 'the documented default cross-cutting query is missing'\nassert '--top-k 20' in text, 'the documented top-k is missing'\nassert '--scopes \"/acme/platform/dispatch-service/\"' in text, 'the search commands must carry the concrete scenario scope'\nassert 'qodo read rules search' in text, 'the documented CLI search command is missing'\nassert 'exponential backoff' in low, 'task A inputs must appear in the topic query'\nassert 'payment' in low, 'task B inputs must appear in the topic query'\nassert 'trace id' in low, 'task C inputs must appear in the topic query'\nassert 'cross-cutting results not already present' in text, 'the documented merge order is missing'\nassert 'dedup' in low, 'the dedup-by-rule-id merge rule is missing'\nassert re.search(r'empty\\s+merged\\s+list\\s+is\\s+a\\s+valid\\s+outcome', text), 'an empty merged list must be recorded as a valid outcome'\nassert text.count('Category:') >= 4 and text.count('Content:') >= 4 and text.count('Name:') >= 4, 'three topic queries plus one cross-cutting query are required'\nassert 'no rules were retrieved' in text, 'the plan must state that no rules were retrieved'\nassert 'untested' in low, 'the plan must state what remains untested'\nreport = {'category_mapping': True, 'cross_cutting_query': True, 'empty_result_valid': True, 'merge_order': True,\n          'no_fabricated_rules': True, 'provenance_stamp': True, 'scope_derivation': True, 'three_topic_queries': True}\nPath('qodo-retrieval-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Qodo retrieval plan: structured queries, scope derivation and merge rules checks passed; the actual rules retrieval remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_qodo_retrieval.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('qodo-retrieval-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '/acme/platform/dispatch-service/' in text, 'the repo scope must keep all three hosted path segments'\nassert 'qodo --version' in text, 'the unadorned compatibility probe must be the first recorded step'\nassert '--skill qodo-get-rules --skill-version 1.1.6 --distribution marketplace --host claude-code' in text, 'the documented provenance flags are missing'\nassert 'Category: Reliability' in text, 'task A (retry/fault tolerance) must map to Reliability'\nassert 'Category: Architecture' in text, 'task B (structural work) must map to Architecture'\nassert 'Category: Observability' in text, 'task C (instrumentation) must map to Observability'\nassert 'Category: Security' not in text and 'Category: Correctness' not in text, 'no task may be misclassified as Security or Correctness'\nassert 'Name: Code Quality and Standards Compliance' in text, 'the documented default cross-cutting query is missing'\nassert '--top-k 20' in text, 'the documented top-k is missing'\nassert '--scopes \"/acme/platform/dispatch-service/\"' in text, 'the search commands must carry the concrete scenario scope'\nassert 'qodo read rules search' in text, 'the documented CLI search command is missing'\nassert 'exponential backoff' in low, 'task A inputs must appear in the topic query'\nassert 'payment' in low, 'task B inputs must appear in the topic query'\nassert 'trace id' in low, 'task C inputs must appear in the topic query'\nassert 'cross-cutting results not already present' in text, 'the documented merge order is missing'\nassert 'dedup' in low, 'the dedup-by-rule-id merge rule is missing'\nassert re.search(r'empty\\s+merged\\s+list\\s+is\\s+a\\s+valid\\s+outcome', text), 'an empty merged list must be recorded as a valid outcome'\nassert text.count('Category:') >= 4 and text.count('Content:') >= 4 and text.count('Name:') >= 4, 'three topic queries plus one cross-cutting query are required'\nassert 'no rules were retrieved' in text, 'the plan must state that no rules were retrieved'\nassert 'untested' in low, 'the plan must state what remains untested'\nreport = {'category_mapping': True, 'cross_cutting_query': True, 'empty_result_valid': True, 'merge_order': True,\n          'no_fabricated_rules': True, 'provenance_stamp': True, 'scope_derivation': True, 'three_topic_queries': True}\nPath('qodo-retrieval-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Qodo retrieval plan: structured queries, scope derivation and merge rules checks passed; the actual rules retrieval remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-verification.json",
+          "equals": "{\"category_mapping\": true, \"cross_cutting_query\": true, \"empty_result_valid\": true, \"merge_order\": true, \"no_fabricated_rules\": true, \"provenance_stamp\": true, \"scope_derivation\": true, \"three_topic_queries\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "/acme/platform/dispatch-service/"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "qodo --version"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "--skill qodo-get-rules --skill-version 1.1.6 --distribution marketplace --host claude-code"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "Category: Reliability"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "Category: Architecture"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "Category: Observability"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "Name: Code Quality and Standards Compliance"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "--top-k 20"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "--scopes \"/acme/platform/dispatch-service/\""
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "cross-cutting results not already present"
+        },
+        {
+          "kind": "file",
+          "path": "qodo-retrieval-plan.md",
+          "contains": "exponential backoff"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Qodo retrieval plan: structured queries, scope derivation and merge rules checks passed; the actual rules retrieval remains untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "capture-logging-rule-draft-and-reject-triage",
+      "componentId": "skill:qodo-standards:qodo-manage-standards",
+      "prompt": "/qodo-standards:qodo-manage-standards Use the qodo-manage-standards skill to prepare two standards changes for the workspace, and write standards-change-plan.md. Scenario: (A) mid-session the team agreed on the convention Every Go service must emit structured logs with a trace ID on every request, and wants it captured as a rule for the repo https://github.com/acme/dispatch-service; no code snippets were discussed. (B) the same user then says: also just reject the five pending suggestions with rule ids 31, 32, 33, 34 and 35 so the queue is clean. Headless boundary: no qodo CLI, no workspace, no network; nothing is created, updated or rejected here, so the real writes remain untested and no created/rejected outcome may be claimed.\n\nWrite the plan per the skill's rules: for (A) present the full draft BEFORE any create call: a concise unique name (for example Structured Logging With Trace IDs); record qodo read rules metadata as the preparation step for picking an existing category (not run) and use the exact line Category: Observability for this logging convention; severity must be warning (the documented default for a convention that is not a hard security/correctness rule), so --severity error must not appear anywhere; content of 1-3 sentences in imperative voice mentioning trace IDs and Go services; good_examples and bad_examples must be empty strings - the conversation had no snippets, so pass \"\" rather than fabricating an example (the exact flags --good-examples \"\" and --bad-examples \"\" appear in the command); scopes propose the current repo derived per the skill as /acme/dispatch-service/ (confirmed with the user, not workspace-wide). Then show the exact create command in the documented form qodo rules create --name \"...\" --category \"...\" --severity warning --content \"...\" --good-examples \"\" --bad-examples \"\" --scopes \"/acme/dispatch-service/\" --json with the scenario values filled in, marked as NOT executed, and include the documented caveat that non-admin callers create a pending suggestion instead of an active rule - tell the user plainly: an admin needs to approve it before it's enforced. For (B): reject permanently deletes pending suggestions and is irreversible, so record the documented dry-run-first bulk call qodo rules bulk --args '{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35],\"dry_run\":true}' --json as a preview only; state that the matched count and the rule names/ids that will be permanently lost must be shown and explicit confirmation obtained before any real call, that the ids came from the user (never invent a rule_id), and that the real reject command without dry_run must not appear anywhere in this plan. Close by stating the actual CLI calls and the real workspace mutation remain untested.\n\nThen read the immutable verify_standards_plan.py and run exactly python verify_standards_plan.py using Bash; it validates the plan and writes standards-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the real rule creation and suggestion rejection remain untested.",
+      "allowCommands": [
+        "python verify_standards_plan.py"
+      ],
+      "verifierOutputs": [
+        "standards-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_standards_plan.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('standards-change-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '/acme/dispatch-service/' in text, 'the derived repo scope must appear'\nassert 'qodo rules create' in text, 'the documented create command form is missing'\nassert '--severity warning' in text, 'the convention default severity must be warning'\nassert '--severity error' not in text, 'a logging convention must default to warning, not error'\nassert '--good-examples \"\"' in text and '--bad-examples \"\"' in text, 'undiscussed examples must be passed as empty strings, not fabricated'\nassert 'qodo read rules metadata' in text, 'categories must be checked via rules metadata before creating'\nassert '{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35],\"dry_run\":true}' in text, 'the bulk reject must be previewed with the documented dry-run-first form'\nassert '{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35]}' not in text, 'the real reject command without dry_run must not appear'\nassert 'irreversible' in low, 'reject must be acknowledged as irreversible'\nassert 'never invent a rule_id' in text, 'the documented id rule is missing'\nassert 'pending suggestion' in text, 'the non-admin pending-suggestion caveat is missing'\nassert \"an admin needs to approve it before it's enforced\" in text, 'the documented pending wording is missing'\nassert 'trace id' in low and 'go service' in low, 'the scenario convention must be applied to the draft content'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('rule was created', 'suggestions were rejected', 'is now active', 'queue is clean', 'i created the rule'):\n    assert claim not in low, 'must not claim a workspace write happened: ' + claim\nreport = {'approval_gate_present': True, 'defaults_applied': True, 'dry_run_reject_first': True,\n          'empty_examples_not_fabricated': True, 'irreversible_acknowledged': True, 'no_execution_claim': True,\n          'pending_suggestion_caveat': True, 'scope_derived': True}\nPath('standards-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Standards change plan: draft-first capture, dry-run reject and approval gates checks passed; real rule creation and suggestion rejection remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_standards_plan.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('standards-change-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert '/acme/dispatch-service/' in text, 'the derived repo scope must appear'\nassert 'qodo rules create' in text, 'the documented create command form is missing'\nassert '--severity warning' in text, 'the convention default severity must be warning'\nassert '--severity error' not in text, 'a logging convention must default to warning, not error'\nassert '--good-examples \"\"' in text and '--bad-examples \"\"' in text, 'undiscussed examples must be passed as empty strings, not fabricated'\nassert 'qodo read rules metadata' in text, 'categories must be checked via rules metadata before creating'\nassert '{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35],\"dry_run\":true}' in text, 'the bulk reject must be previewed with the documented dry-run-first form'\nassert '{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35]}' not in text, 'the real reject command without dry_run must not appear'\nassert 'irreversible' in low, 'reject must be acknowledged as irreversible'\nassert 'never invent a rule_id' in text, 'the documented id rule is missing'\nassert 'pending suggestion' in text, 'the non-admin pending-suggestion caveat is missing'\nassert \"an admin needs to approve it before it's enforced\" in text, 'the documented pending wording is missing'\nassert 'trace id' in low and 'go service' in low, 'the scenario convention must be applied to the draft content'\nassert 'untested' in low, 'the plan must state what remains untested'\nfor claim in ('rule was created', 'suggestions were rejected', 'is now active', 'queue is clean', 'i created the rule'):\n    assert claim not in low, 'must not claim a workspace write happened: ' + claim\nreport = {'approval_gate_present': True, 'defaults_applied': True, 'dry_run_reject_first': True,\n          'empty_examples_not_fabricated': True, 'irreversible_acknowledged': True, 'no_execution_claim': True,\n          'pending_suggestion_caveat': True, 'scope_derived': True}\nPath('standards-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Standards change plan: draft-first capture, dry-run reject and approval gates checks passed; real rule creation and suggestion rejection remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "standards-verification.json",
+          "equals": "{\"approval_gate_present\": true, \"defaults_applied\": true, \"dry_run_reject_first\": true, \"empty_examples_not_fabricated\": true, \"irreversible_acknowledged\": true, \"no_execution_claim\": true, \"pending_suggestion_caveat\": true, \"scope_derived\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "/acme/dispatch-service/"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "qodo rules create"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "--severity warning"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "--good-examples \"\""
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "qodo read rules metadata"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "{\"operation\":\"reject\",\"rule_ids\":[31,32,33,34,35],\"dry_run\":true}"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "pending suggestion"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "an admin needs to approve it before it's enforced"
+        },
+        {
+          "kind": "file",
+          "path": "standards-change-plan.md",
+          "contains": "trace ID"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Standards change plan: draft-first capture, dry-run reject and approval gates checks passed; real rule creation and suggestion rejection remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

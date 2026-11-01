@@ -23,7 +23,7 @@ func contextSnapshot(t *testing.T, s *Server) contracts.Snapshot {
 
 func heldContextRun(t *testing.T, s *Server, sessionID, modelID string) contracts.Run {
 	t.Helper()
-	run, err := s.Send(context.Background(), contracts.SendRequest{SessionID: sessionID, Text: "Inspect the context snapshot", ModelID: modelID, Plan: true})
+	run, err := s.Send(context.Background(), contracts.SendRequest{SessionID: sessionID, Text: "Inspect the context snapshot", ModelID: modelID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func TestContextUsageProviderResumeAndRunOwnership(t *testing.T) {
 	runB := heldContextRun(t, s, "chat-0", modelB)
 	genB := contextGeneration(s, "chat-0")
 	reset := contextSnapshot(t, s).ContextUsage["chat-0"]
-	if reset.Tokens != nil || !reset.HasWindow() || *reset.Window != 1000000 {
+	if reset.Tokens == nil || *reset.Tokens != 4416 || !reset.HasWindow() || *reset.Window != 1000000 {
 		t.Fatalf("new provider did not reset to its host capacity: %+v", reset)
 	}
 	if reportContext(s, "chat-0", runA.ID, genA, contracts.ContextUsage{Tokens: contextCount(90000)}) || reportContext(s, "chat-0", runB.ID, genA, contracts.ContextUsage{Tokens: contextCount(90000)}) {
@@ -178,15 +178,15 @@ func TestContextUsageProviderResumeAndRunOwnership(t *testing.T) {
 		t.Fatal("late provider B report rejected")
 	}
 	runA2 := heldContextRun(t, s, "chat-0", "claude-sonnet-4-6")
-	// The resumed provider A has not yet emitted a fresh report. Keep the last
-	// visible snapshot, while its host baseline comes from A's saved occupancy.
-	if *contextSnapshot(t, s).ContextUsage["chat-0"].Tokens != 77000 {
-		t.Fatal("resuming provider A cleared the previous snapshot before a report")
+	// Starting the resumed execution emits its first reasoning report, using
+	// provider A's saved occupancy rather than provider B's last report.
+	if *contextSnapshot(t, s).ContextUsage["chat-0"].Tokens != 16320 {
+		t.Fatal("resuming provider A used the wrong baseline for its reasoning report")
 	}
 	s.mu.Lock()
 	s.publishLocked("message.delta", "chat-0", runA2.ID, "", "")
 	s.mu.Unlock()
-	if tokens := *contextSnapshot(t, s).ContextUsage["chat-0"].Tokens; tokens != 16640 {
+	if tokens := *contextSnapshot(t, s).ContextUsage["chat-0"].Tokens; tokens != 16960 {
 		t.Fatalf("provider A resumed the wrong host occupancy: %d", tokens)
 	}
 }
@@ -222,12 +222,12 @@ func TestContextUsageQueuedRunTakesOwnershipAfterFinalReport(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	first := heldContextRun(t, s, "chat-0", "claude-opus-4-6")
 	oldGeneration := contextGeneration(s, "chat-0")
-	if _, err := s.Send(context.Background(), contracts.SendRequest{SessionID: "chat-0", Text: "Queued plan", ModelID: "gpt-5.4", Plan: true}); err != nil {
+	if _, err := s.Send(context.Background(), contracts.SendRequest{SessionID: "chat-0", Text: "Queued inspection", ModelID: "gpt-5.4"}); err != nil {
 		t.Fatal(err)
 	}
 	s.advanceRun("chat-0", first.ID, "First done", true)
 	after := contextSnapshot(t, s)
-	if len(after.Queue) != 0 || after.ContextUsage["chat-0"].Tokens != nil || *after.ContextUsage["chat-0"].Window != 1000000 {
+	if len(after.Queue) != 0 || after.ContextUsage["chat-0"].Tokens == nil || *after.ContextUsage["chat-0"].Tokens != 4416 || *after.ContextUsage["chat-0"].Window != 1000000 {
 		t.Fatal("queued new provider did not reset after the prior final context report")
 	}
 	if reportContext(s, "chat-0", first.ID, oldGeneration, contracts.ContextUsage{Tokens: contextCount(99999)}) {
@@ -370,7 +370,7 @@ func TestContextUsagePersistenceAndOldState(t *testing.T) {
 	restored.mu.Lock()
 	restored.publishLocked("message.delta", "chat-0", resumed.ID, "", "")
 	restored.mu.Unlock()
-	if *contextSnapshot(t, restored).ContextUsage["chat-0"].Tokens != 18340 {
+	if *contextSnapshot(t, restored).ContextUsage["chat-0"].Tokens != 18660 {
 		t.Fatal("restart lost the provider session's context baseline")
 	}
 	// Existing saves without this additive field stay unknown. Never reconstruct
@@ -414,15 +414,14 @@ func TestContextUsageTransactionalSavesPreserveProviderResume(t *testing.T) {
 			}
 			// Open the saved transaction before Close can overwrite it again.
 			restored := newTestServer(t, Options{StatePath: path, TokenInterval: time.Hour})
-			prior := contextSnapshot(t, restored).ContextUsage["chat-0"]
 			resumed := heldContextRun(t, restored, "chat-0", "claude-sonnet-4-6")
-			if !reflect.DeepEqual(prior, contextSnapshot(t, restored).ContextUsage["chat-0"]) {
+			if *contextSnapshot(t, restored).ContextUsage["chat-0"].Tokens != 15320 {
 				t.Fatal("transaction dropped the earlier provider's resume scope")
 			}
 			restored.mu.Lock()
 			restored.publishLocked("message.delta", "chat-0", resumed.ID, "", "")
 			restored.mu.Unlock()
-			if *contextSnapshot(t, restored).ContextUsage["chat-0"].Tokens != 15640 {
+			if *contextSnapshot(t, restored).ContextUsage["chat-0"].Tokens != 15960 {
 				t.Fatal("transaction lost provider A's independent host baseline")
 			}
 		})

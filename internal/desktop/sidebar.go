@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"gcode/internal/contracts"
 	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 	"time"
@@ -24,27 +23,10 @@ func (a *App) deviceNameFor(id string) string {
 	return "This device"
 }
 
-func sidebarGrouping(value string) string {
-	switch value {
-	case "project", "By project":
-		return "project"
-	case "device", "By device":
-		return "device"
-	default:
-		return "list"
-	}
-}
-
-func relativeAge(at time.Time, sessions []contracts.Session, language ...string) string {
+func relativeAge(at, now time.Time, language ...string) string {
 	lang := "en"
 	if len(language) > 0 {
 		lang = language[0]
-	}
-	now := at
-	for _, s := range sessions {
-		if s.UpdatedAt.After(now) {
-			now = s.UpdatedAt
-		}
 	}
 	d := now.Sub(at)
 	if d < time.Minute {

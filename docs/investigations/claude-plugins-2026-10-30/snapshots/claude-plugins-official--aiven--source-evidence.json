@@ -1,0 +1,30 @@
+{
+  "repo": "aiven/aiven-ai-plugins",
+  "commit": "634f41d6852957cb9280e9245f2ea6f74645b4f1",
+  "path": ".",
+  "archive_sha256": "a19428479680a63e172f86914f664e992ba869978845d950f23ae3d246313724",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".claude/settings.json",
+    ".cursor-plugin/marketplace.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "assets/claude-plugin-auth.png",
+    "assets/cursor-plugin-discover.png",
+    "assets/cursor-plugin-enable.png",
+    "assets/cursor-plugin-install.png",
+    "assets/logo.svg",
+    "skills/aiven-getting-started/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-plugin-manifest.json\",\n  \"name\": \"aiven\",\n  \"version\": \"1.0.6\",\n  \"description\": \"Easily deploy managed PostgreSQL (pg), Kafka, OpenSearch, Clickhouse and other databases, streaming and apps. Free tier available, up and running in minutes.\",\n  \"author\": {\n    \"name\": \"Aiven\",\n    \"url\": \"https://aiven.io\"\n  },\n  \"homepage\": \"https://aiven.io\",\n  \"repository\": \"https://github.com/aiven/aiven-ai-plugins\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"aiven\", \"postgres\", \"pg\", \"kafka\", \"database\", \"streaming\", \"cloud\", \"opensearch\", \"clickhouse\", \"valkey\", \"kafka-connect\", \"apps\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"aiven\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.aiven.live/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/aiven-getting-started/SKILL.md": "\nname: aiven-getting-started\ndescription: \"This skill should be used when: (1) the user mentions Aiven, asks about databases, Kafka, streaming, or managed services, and the Aiven MCP tools are unavailable or unauthenticated; (2) the user asks to \\\"get started with Aiven\\\", \\\"set up Aiven\\\", \\\"I'm new to Aiven\\\", \\\"how to start using Aiven\\\", \\\"connect my Aiven account\\\", \\\"use Aiven\\\", \\\"try Aiven\\\", \\\"sign up for Aiven\\\", or \\\"create an Aiven account\\\"; (3) any Aiven tool call fails due to authentication or connection issues. Handles authentication and onboarding so the user can start using Aiven services.\"\n"
+  }
+}

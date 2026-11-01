@@ -7,9 +7,22 @@ import (
 	"testing"
 
 	"gcode/internal/contracts"
+	"github.com/egoist/mygo/ui"
 )
 
 type countedCloser struct{ calls atomic.Int32 }
+
+func TestTerminalDisplaysStorageFailure(t *testing.T) {
+	s, _, _ := testWorkspace(t)
+	message := "The latest terminal output could not be saved."
+	s.terminals["history"] = &terminalView{meta: contracts.Terminal{ID: "history", StorageError: message}}
+	tt := ui.NewTester(func(c *ui.Context) {
+		ui.Column(c).Fill().Children(func() { s.terminalView(c, "history") })
+	}, 640, 400)
+	if !tt.HasText(message) {
+		t.Fatal("terminal storage failure was hidden")
+	}
+}
 
 func (c *countedCloser) Close() error { c.calls.Add(1); return nil }
 

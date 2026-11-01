@@ -1,0 +1,43 @@
+{
+  "repo": "val-town/plugins",
+  "commit": "555ff7492c9c70ada2c4e9b66d7dea9367d7ce71",
+  "path": "plugin",
+  "archive_sha256": "6151d742ad89b324388ef614da0f4bef2c7751970f5088a6b9871baa2baa0660",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "assets/icon.svg",
+    "mcp.json",
+    "skills/blob-storage/SKILL.md",
+    "skills/client-side-js/SKILL.md",
+    "skills/create-skill/SKILL.md",
+    "skills/cron-and-intervals/SKILL.md",
+    "skills/email/SKILL.md",
+    "skills/http-endpoints/SKILL.md",
+    "skills/oauth/SKILL.md",
+    "skills/react-ui/SKILL.md",
+    "skills/restricted-access/SKILL.md",
+    "skills/serve-html",
+    "skills/sqlite-storage/SKILL.md",
+    "skills/third-party-integrations/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"valtown\",\n  \"displayName\": \"Val Town\",\n  \"description\": \"Build and deploy on Val Town. Bundles the Val Town MCP server and platform skills (HTTP vals, cron/intervals, SQLite, email, OAuth, React UI, third-party integrations).\",\n  \"version\": \"0.4.0\",\n  \"author\": {\n    \"name\": \"Val Town\"\n  },\n  \"homepage\": \"https://val.town\",\n  \"repository\": \"https://github.com/val-town/plugins\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"val-town\",\n    \"deno\",\n    \"serverless\",\n    \"typescript\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"valtown\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.val.town/v3/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/email/SKILL.md": "\nname: email\ndescription: Use when a val sends email, receives email, or is triggered by an incoming email. Covers email-type vals (the Email handler shape, attachment limits, the assigned val email address) and sending mail via std/email.\ntriggers: [email, mail, inbox, send, sending, smtp, imap, attachment, message, notification]\n",
+    "skills/http-endpoints/SKILL.md": "\nname: http-endpoints\ndescription: Use when building an HTTP val — a web endpoint, API route, webhook receiver, or any val that responds to HTTP requests. Covers the handler signature, Hono usage, the endpoint URL, CORS behavior, redirects, and Val Town-specific limitations.\ntriggers: [http, endpoint, webhook, api, request, response, hono, web, route, fetch, cors, redirect]\n",
+    "skills/blob-storage/SKILL.md": "\nname: blob-storage\ndescription: Use when a val needs simple key/value persistence — JSON documents, cached responses, uploaded files, or binary assets. Covers the std/blob API, listing and deleting keys, account-global or val scoping, and storage limits.\ntriggers: [blob, storage, kv, key-value, persistence, cache, store, upload, file, json, asset, binary]\n",
+    "skills/react-ui/SKILL.md": "\nname: react-ui\ndescription: Use when building any val with a user interface — dashboards, web apps, landing pages, forms, admin tools, anything users see in a browser. Covers JSX/React conventions, Twind/Tailwind styling, React version pinning, the view-source link requirement, and what to avoid (template-string HTML, external assets).\ntriggers: [react, jsx, tsx, ui, frontend, component, dashboard, page, app, twind, tailwind, styling, css, html]\n",
+    "skills/oauth/SKILL.md": "\nname: oauth\ndescription: Use when a val needs to require login with a Val Town account — gating routes behind authentication, identifying the current user, building user-specific dashboards. Covers std/oauth's `oauthMiddleware` and `getOAuthUserData`, the auto-managed `/auth/*` routes, and session behavior. For third-party OAuth providers (Google, GitHub, etc.) see the `third-party-integrations` skill instead.\ntriggers: [oauth, auth, login, signin, sign-in, logout, session, user, authentication, account, gated, protected, private]\n",
+    "skills/third-party-integrations/SKILL.md": "\nname: third-party-integrations\ndescription: Use when a val talks to an external service — Slack, Discord, Telegram, Stripe, GitHub, Gmail, Google Sheets, Postgres/Supabase/Upstash/Neon, browser automation (Playwright, Browserbase, Kernel, Steel), web scraping, PDF generation, push notifications, RSS, or any other third-party API. Covers the required workflow (fetch the Val Town guide, get credentials, test, store secrets) and the catalog of available guides.\ntriggers: [integration, third-party, external, service, api, slack, discord, telegram, stripe, github, gmail, sheets, google, neon, postgres, supabase, upstash, database, playwright, browser, browserbase, kernel, steel, browserless, scraping, scrape, pdf, rss, push, notification, webhook]\n",
+    "skills/sqlite-storage/SKILL.md": "\nname: sqlite-storage\ndescription: Use when a val needs to store structured or relational data. Covers the std/sqlite API, parameterized queries, transactions, and the val-scoped vs organization-scoped database distinction.\ntriggers: [sqlite, database, sql, persistence, storage, table, query, migration]\n",
+    "skills/restricted-access/SKILL.md": "\nname: restricted-access\ndescription: Use when a val's HTTP endpoints should not be open to the whole internet — limiting an app to a team, understanding why an endpoint redirects to a login page, letting a webhook through, or identifying which Val Town user is viewing an app. Covers app access (`httpPrivacy`), org grants, bypass tokens for automation, and the `X-Val-Town-User` identity header. For building your own login flow inside a val, see the `oauth` skill instead.\ntriggers: [restricted, access, private, permission, grant, allowed, team, internal, intranet, bypass, token, viewer, identity, login, redirect, \"302\", gated, unauthorized, forbidden]\n",
+    "skills/client-side-js/SKILL.md": "\nname: client-side-js\ndescription: Use when a val needs to ship JavaScript that runs in the browser — React apps, vanilla DOM scripts, canvas/games, htmx/Alpine, or any client-side module beyond a single inline snippet. Explains how Val Town serves transpiled .ts/.tsx/.jsx modules with no build step, how the browser resolves their imports, and how to load third-party deps.\ntriggers: [client, browser, frontend, script, module, esm, bundle, build, hydrate, react-dom, mount, interactive, canvas, alpine, htmx, serveFile, type=module]\n",
+    "skills/create-skill/SKILL.md": "\nname: create-skill\ndescription: Use when the user wants to persist a preference, skill, or knowledge. Use when it would aid future val development to store a memory of how best to build something.\ntriggers: [skill, preference, knowledge, memory]\n",
+    "skills/cron-and-intervals/SKILL.md": "\nname: cron-and-intervals\ndescription: Use when building a val that runs on a schedule — periodic jobs, recurring tasks, polling, cron jobs, monitoring, alerting. Covers the interval handler signature, cron expressions, the UTC timezone constraint, and the `lastRunAt` pattern for detecting new items since the previous run.\ntriggers: [cron, interval, scheduled, schedule, recurring, periodic, timer, poll, polling, job, daily, hourly]\n"
+  }
+}

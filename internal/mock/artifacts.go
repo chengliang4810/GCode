@@ -40,12 +40,12 @@ func artifactFor(kind string, settings contracts.AppearanceSettings) *contracts.
 		if strings.EqualFold(settings.Mode, "light") {
 			theme = settings.LightThemeID
 			if theme == "" {
-				theme = "zeron-light"
+				theme = "rcode-light"
 			}
 		} else {
 			theme = settings.DarkThemeID
 			if theme == "" {
-				theme = "zeron-dark"
+				theme = "rcode-dark"
 			}
 		}
 	}

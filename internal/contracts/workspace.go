@@ -3,6 +3,7 @@ package contracts
 import "time"
 
 type File struct {
+	Loaded    bool   `json:"loaded"`
 	ID        string `json:"id"`
 	ProjectID string `json:"projectId"`
 	Path      string `json:"path"`
@@ -18,6 +19,7 @@ type File struct {
 }
 type Change struct {
 	ID         string     `json:"id"`
+	SessionID  string     `json:"sessionId,omitempty"`
 	ProjectID  string     `json:"projectId"`
 	Path       string     `json:"path"`
 	OldPath    string     `json:"oldPath,omitempty"`
@@ -48,44 +50,21 @@ type Commit struct {
 	AuthoredAt time.Time `json:"authoredAt"`
 	Refs       []string  `json:"refs"`
 }
-type PullRequest struct {
-	ID         string    `json:"id"`
-	Number     int       `json:"number"`
-	Repository string    `json:"repository"`
-	Title      string    `json:"title"`
-	Author     string    `json:"author"`
-	Status     string    `json:"status"`
-	Draft      bool      `json:"draft"`
-	BaseBranch string    `json:"baseBranch"`
-	HeadBranch string    `json:"headBranch"`
-	Body       string    `json:"body"`
-	Checks     []Check   `json:"checks"`
-	Comments   []Comment `json:"comments"`
-	ChangeIDs  []string  `json:"changeIds"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-}
-type Check struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-	Detail string `json:"detail"`
-}
-type Comment struct {
-	ID        string    `json:"id"`
-	Author    string    `json:"author"`
-	Body      string    `json:"body"`
-	Path      string    `json:"path,omitempty"`
-	Line      int       `json:"line,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-}
 type Terminal struct {
-	ID        string `json:"id"`
-	ProjectID string `json:"projectId"`
-	Title     string `json:"title"`
-	CWD       string `json:"cwd"`
-	Columns   int    `json:"columns"`
-	Rows      int    `json:"rows"`
-	Status    string `json:"status"`
-	Output    string `json:"output"`
+	StorageRootID    string `json:"storageRootId"`
+	OutputRef        string `json:"outputRef,omitempty"`
+	OutputIncomplete bool   `json:"outputIncomplete,omitempty"`
+	StorageError     string `json:"storageError,omitempty"`
+	SessionID        string `json:"sessionId"`
+	ExitCode         int    `json:"exitCode"`
+	ID               string `json:"id"`
+	ProjectID        string `json:"projectId"`
+	Title            string `json:"title"`
+	CWD              string `json:"cwd"`
+	Columns          int    `json:"columns"`
+	Rows             int    `json:"rows"`
+	Status           string `json:"status"`
+	Output           string `json:"output"`
 }
 type Account struct {
 	Plan         string        `json:"plan"`

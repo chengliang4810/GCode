@@ -1,0 +1,16 @@
+{
+  "repo": "coursera/skills",
+  "commit": "ac28fd6ebf8584e3ee196159bd6d4514fa07de0f",
+  "path": "skills",
+  "archive_sha256": "6dd8234ce9e96702210bd5144abeac53fd4e580cc160f90a1b5ed579ba0c49d9",
+  "all_plugin_files": [
+    "learn-with-coursera/DIAGNOSE.md",
+    "learn-with-coursera/PATH-FINDER.md",
+    "learn-with-coursera/SEARCH-DELIVER.md",
+    "learn-with-coursera/SKILL.md"
+  ],
+  "config": {},
+  "markdown_frontmatter": {
+    "learn-with-coursera/SKILL.md": "\nname: learn-with-coursera\ndescription: >\n  Turns a learning intent or an intent to practice a skill into a personalized experience: asks 3\n  questions (topic, familiarity, modality), searches the catalog, delivers the right learning\n  experience (course, project, video, or roleplay), then acts as a path finder connecting users to\n  the right Coursera learning path. Trigger when a user manifests a learning intent. Some examples\n  of users manifesting a learning intent or a skill practice intent are: \"teach me\",\n  \"I want to learn X\", \"I need to get better at X\", \"upskill in\", \"prepare for an interview\",\n  \"I keep searching this but I don't get it\", \"I get by but don't understand it\",\n  \"I use AI for this but want a real foundation\", \"my team uses X and I'm lost\",\n  \"I need to practice how to X\", \"help me prepare for X conversation\". Covers technical topics\n  (SQL, Python, data, cloud), professional interpersonal skills (negotiation, communication,\n  leadership), certification prep, interview prep, professional tools, and new skills.\n"
+  }
+}

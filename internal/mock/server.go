@@ -144,9 +144,6 @@ func New(opts Options) (*Server, error) {
 		s.state.Messages = make(map[string][]contracts.Message)
 	}
 	for i := range s.state.Sessions {
-		if s.state.Sessions[i].AccessMode == "" {
-			s.state.Sessions[i].AccessMode = contracts.AccessFullAccess
-		}
 		if s.state.Sessions[i].ReasoningLevel == "" {
 			s.state.Sessions[i].ReasoningLevel = "High"
 		}
@@ -410,6 +407,12 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 		return s.UpdateSession(ctx, *c.Session)
 	case "session.archive":
 		return s.UpdateSession(ctx, contracts.SessionUpdate{ID: c.ID, Archived: &c.Enabled})
+	case "group.create":
+		return s.GroupCreate(ctx, c.Text)
+	case "group.rename":
+		return s.GroupRename(ctx, c.ID, c.Text)
+	case "group.delete":
+		return s.GroupDelete(ctx, c.ID)
 	case "session.pin":
 		return s.UpdateSession(ctx, contracts.SessionUpdate{ID: c.ID, Pinned: &c.Enabled})
 	case "session.rename":
@@ -461,6 +464,12 @@ func (s *Server) applyLocked(c contracts.Command) error {
 		return s.integrationCommandLocked(c)
 	}
 	switch c.Kind {
+	case "provider.reorder", "provider.models.reorder":
+		return s.reorderProvidersLocked(c)
+	case "group.reorder":
+		return s.reorderGroupsLocked(c)
+	case "session.reorder":
+		return s.reorderSessionLocked(c)
 	case "catalog.retry":
 		s.state.ModelCatalog.Error = ""
 		if catalogStatus(s.state) == contracts.CatalogNoAgents {
@@ -495,8 +504,6 @@ func (s *Server) applyLocked(c contracts.Command) error {
 			return errors.New("unknown Appshots permission")
 		}
 		return nil
-	case "project.action.create", "project.action.update", "project.action.delete", "project.action.run":
-		return s.projectActionLocked(c)
 	case "session.fork", "session.sidechat":
 		return s.branchSessionLocked(c)
 	case "theme.analyze", "theme.select", "theme.import", "theme.remove", "theme.reload", "theme.duplicate":
@@ -511,7 +518,6 @@ func (s *Server) applyLocked(c contracts.Command) error {
 					delete(s.runs, v.ID)
 				}
 				s.state.Sessions = append(s.state.Sessions[:i], s.state.Sessions[i+1:]...)
-				s.deleteComposerFooterGitSessionLocked(v)
 				delete(s.state.Messages, c.ID)
 				s.deleteContextUsageLocked(c.ID)
 				s.removeQueueLocked(c.ID)
@@ -569,27 +575,6 @@ func (s *Server) applyLocked(c contracts.Command) error {
 			}
 		}
 		return ErrNotFound
-	case "pr.comment", "pr.merge":
-		if c.Comment != nil {
-			c.Text = c.Comment.Body
-			c.Path = c.Comment.Path
-			c.Version = uint64(max(0, c.Comment.Line))
-		}
-		for i, v := range s.state.PullRequests {
-			if v.ID == c.ID {
-				if c.Kind == "pr.merge" {
-					s.state.PullRequests[i].Status = "merged"
-				} else {
-					if strings.TrimSpace(c.Text) == "" {
-						return errors.New("comment is empty")
-					}
-					s.state.PullRequests[i].Comments = append(s.state.PullRequests[i].Comments, contracts.Comment{ID: s.idLocked("comment"), Author: s.state.User.Name, Body: c.Text, Path: c.Path, Line: int(c.Version), CreatedAt: s.opts.Now().UTC()})
-				}
-				s.state.PullRequests[i].UpdatedAt = s.opts.Now().UTC()
-				return nil
-			}
-		}
-		return ErrNotFound
 	case "terminal.create":
 		cwd := "~"
 		if c.ProjectID != "" {
@@ -636,16 +621,6 @@ func (s *Server) applyLocked(c contracts.Command) error {
 		return ErrNotFound
 	case "update.check":
 		s.state.Update.Status = "upToDate"
-		return nil
-	case "account.signin":
-		s.state.User.SignedIn = true
-		s.state.Capabilities.Cloud = true
-		s.accountIntegrationsChangedLocked(true)
-		return nil
-	case "account.signout":
-		s.state.User.SignedIn = false
-		s.state.Capabilities.Cloud = false
-		s.accountIntegrationsChangedLocked(false)
 		return nil
 	case "cloud.toggle":
 		kind := "cloud.delete"

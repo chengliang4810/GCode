@@ -1,0 +1,45 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/hookify",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "agents/conversation-analyzer.md",
+    "commands/configure.md",
+    "commands/help.md",
+    "commands/hookify.md",
+    "commands/list.md",
+    "core/__init__.py",
+    "core/config_loader.py",
+    "core/rule_engine.py",
+    "examples/console-log-warning.local.md",
+    "examples/dangerous-rm.local.md",
+    "examples/require-tests-stop.local.md",
+    "examples/sensitive-files-warning.local.md",
+    "hooks/__init__.py",
+    "hooks/hooks.json",
+    "hooks/posttooluse.py",
+    "hooks/pretooluse.py",
+    "hooks/stop.py",
+    "hooks/userpromptsubmit.py",
+    "matchers/__init__.py",
+    "skills/writing-rules/SKILL.md",
+    "utils/__init__.py"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"Hookify plugin - User-configurable hooks from .local.md files\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${CLAUDE_PLUGIN_ROOT}/hooks/stop.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 \\\"${CLAUDE_PLUGIN_ROOT}/hooks/userpromptsubmit.py\\\"\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"hookify\",\n  \"description\": \"Easily create hooks to prevent unwanted behaviors by analyzing conversation patterns\",\n  \"version\": \"0.1.1\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/list.md": "\ndescription: List all configured hookify rules\nallowed-tools: [\"Glob\", \"Read\", \"Skill\"]\n",
+    "commands/help.md": "\ndescription: Get help with the hookify plugin\nallowed-tools: [\"Read\"]\n",
+    "skills/writing-rules/SKILL.md": "\nname: writing-hookify-rules\ndescription: This skill should be used when the user asks to \"create a hookify rule\", \"write a hook rule\", \"configure hookify\", \"add a hookify rule\", or needs guidance on hookify rule syntax and patterns.\nversion: 0.1.0\n",
+    "commands/configure.md": "\ndescription: Enable or disable hookify rules interactively\nallowed-tools: [\"Glob\", \"Read\", \"Edit\", \"AskUserQuestion\", \"Skill\"]\n",
+    "agents/conversation-analyzer.md": "\nname: conversation-analyzer\ndescription: Use this agent when analyzing conversation transcripts to find behaviors worth preventing with hooks. Typical triggers include the /hookify command being invoked without arguments, or the user explicitly asking to look back at the current conversation and surface mistakes that should be prevented in the future. See \"When to invoke\" in the agent body for worked scenarios.\nmodel: inherit\ncolor: yellow\ntools: [\"Read\", \"Grep\"]\n",
+    "commands/hookify.md": "\ndescription: Create hooks to prevent unwanted behaviors from conversation analysis or explicit instructions\nargument-hint: Optional specific behavior to address\nallowed-tools: [\"Read\", \"Write\", \"AskUserQuestion\", \"Task\", \"Grep\", \"TodoWrite\", \"Skill\"]\n"
+  }
+}

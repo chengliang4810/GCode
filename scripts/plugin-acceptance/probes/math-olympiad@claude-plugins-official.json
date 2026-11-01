@@ -1,0 +1,41 @@
+{
+  "pluginId": "math-olympiad@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "refute-finite-prime-polynomial-proof",
+      "prompt": "/math-olympiad:math-olympiad Is this competition-math proof correct? Claim: for every positive integer n, n^2+n+41 is prime. Proposed proof: direct checks for all n from 1 through 39 give primes. The difference between successive values is even, so after this checked range the expression remains odd and has no small prime divisor. Thus it is prime for every positive integer. Use the skill's existing proof-verification path (step 4), not its solve-a-new-problem workflow. Load its adversarial reference and use two separate fresh Agent reviewers (general-purpose), giving each only this statement and proposed proof, the reference attack instructions, and the instruction THINKING ONLY: no Bash, Python, search, Read, Write or computation tools. Neither reviewer may see the other review or your own analysis. Each reviewer should independently try to refute the universal claim and return VERDICT: INCORRECT/CORRECT/GAP with the smallest positive integer counterexample if possible. Stop once two independent reviewers refute it as permitted by the skill's early-exit rule. Do not revise this false claim into another theorem or launch candidate solvers. In your final response state the counterexample n, the resulting composite value, its nontrivial factorization, and why checking a finite range and oddness do not prove primality. Avoid PDF/LaTeX output. No files should be created or changed; no shell or network is allowed. Each review and your final response can be under 220 words.",
+      "allowCommands": [],
+      "verifierOutputs": [],
+      "fixtures": [],
+      "assertions": [
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "1681"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "41"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "regex": "(?i)(n\\s*=\\s*40|n\\s*is\\s*40|n\\s*of\\s*40)"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "regex": "(?i)(finite|oddness|odd.*prime|39.*not)"
+        },
+        {
+          "kind": "file-absent",
+          "path": "proof.pdf"
+        }
+      ],
+      "componentId": "skill:math-olympiad:math-olympiad"
+    }
+  ]
+}

@@ -18,6 +18,29 @@ type completingAttachmentService struct {
 	afterImport func()
 }
 
+type sessionAttachmentService struct {
+	contracts.Service
+	sessions *[]string
+}
+
+func (s sessionAttachmentService) ImportAttachments(_ context.Context, request contracts.AttachmentImportRequest) ([]contracts.Attachment, error) {
+	*s.sessions = append(*s.sessions, request.SessionID)
+	return nil, nil
+}
+
+func TestAttachmentImportUsesItsComposerSession(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	var sessions []string
+	a.service = sessionAttachmentService{Service: a.service, sessions: &sessions}
+	request := contracts.AttachmentImportRequest{Clipboard: &contracts.ClipboardAttachment{Name: "notes.txt", Data: []byte("notes")}}
+	a.importAttachments(request)
+	a.sideAttachmentWork("chat-1", a.sideComposer("chat-1"), request, false)
+	if len(sessions) != 2 || sessions[0] != "chat-0" || sessions[1] != "chat-1" {
+		t.Fatalf("composer imports lost their source session: %v", sessions)
+	}
+}
+
 func (s completingAttachmentService) ImportAttachments(ctx context.Context, request contracts.AttachmentImportRequest) ([]contracts.Attachment, error) {
 	items, err := s.importer.ImportAttachments(ctx, request)
 	s.afterImport()

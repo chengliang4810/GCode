@@ -28,8 +28,8 @@ func TestFrozenResolvedThemeCatalog(t *testing.T) {
 			if p.ID != variant.ID || p.Background.A != 255 || p.Text.A != 255 || len(p.Syntax) < 12 {
 				t.Fatal("incomplete semantic palette")
 			}
-			if p.UI().Font != "Geist" || p.UI().FontSize != 13 || p.UI().Radius != 6 {
-				t.Fatal("source UI metrics changed")
+			if p.UI().Font != "Geist" || p.UI().FontSize != UIFontSize || p.UI().Radius != 6 {
+				t.Fatal("shared UI metrics changed")
 			}
 			for _, c := range p.ANSI {
 				if c.A != 255 {
@@ -44,10 +44,10 @@ func TestFrozenResolvedThemeCatalog(t *testing.T) {
 }
 
 func TestPaletteResolutionAndCopyIsolation(t *testing.T) {
-	if p := Palette("not-a-theme", false); p.ID != "zeron-light" || p.Background != ui.Hex("#ffffff") {
+	if p := Palette("not-a-theme", false); p.ID != "rcode-light" || p.Background != ui.Hex("#ffffff") {
 		t.Fatal("bad light fallback")
 	}
-	if p := Palette("zeron", true); p.ID != "zeron-dark" || p.Background != ui.Hex("#060606") {
+	if p := Palette("rcode", true); p.ID != "rcode-dark" || p.Background != ui.Hex("#060606") {
 		t.Fatal("bad dark family resolution")
 	}
 	themes := Themes()
@@ -55,9 +55,9 @@ func TestPaletteResolutionAndCopyIsolation(t *testing.T) {
 	if Palette(themes[0].ID, false).Background == ui.Hex("#ff0000") {
 		t.Fatal("caller changed embedded registry")
 	}
-	first := Palette("zeron-dark", true)
+	first := Palette("rcode-dark", true)
 	first.Syntax["keyword"] = ui.Hex("#ff0000")
-	if Palette("zeron-dark", true).Syntax["keyword"] == ui.Hex("#ff0000") {
+	if Palette("rcode-dark", true).Syntax["keyword"] == ui.Hex("#ff0000") {
 		t.Fatal("palette maps are shared")
 	}
 }

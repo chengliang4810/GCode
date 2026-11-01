@@ -1,0 +1,43 @@
+{
+  "repo": "preset-io/agent-skills",
+  "commit": "838f0a408dc1a50adc94175b387550c81371554e",
+  "path": "plugins/preset-cli-skills",
+  "archive_sha256": "86ba44a7240cc8ccde7a417e9bdc5510b51c3f7d0cf28f23685b4b975ad90ca9",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".github/copilot-instructions.md",
+    "AGENTS.md",
+    "README.md",
+    "assets/README.md",
+    "skills/preset-cli-mutations/SKILL.md",
+    "skills/preset-cli-mutations/references/confirmation-and-dry-run.md",
+    "skills/preset-cli-mutations/references/confirmation-template.md",
+    "skills/preset-cli-mutations/references/cross-workspace-sync.md",
+    "skills/preset-cli-mutations/references/preview-and-dry-run.md",
+    "skills/preset-cli-mutations/references/sync-templating-and-rollback.md",
+    "skills/preset-cli-mutations/references/write-operations.md",
+    "skills/preset-cli/SKILL.md",
+    "skills/preset-cli/references/asset-filter-matrix.md",
+    "skills/preset-cli/references/assets-read.md",
+    "skills/preset-cli/references/cli-vs-api.md",
+    "skills/preset-cli/references/command-coverage.md",
+    "skills/preset-cli/references/command-examples.md",
+    "skills/preset-cli/references/config-precedence.md",
+    "skills/preset-cli/references/install-and-auth.md",
+    "skills/preset-cli/references/output-formats.md",
+    "skills/preset-cli/references/safety-policy.md",
+    "skills/preset-cli/references/saved-query-reads.md",
+    "skills/preset-cli/references/sql-and-query.md",
+    "skills/preset-cli/references/sql-data-safety.md",
+    "skills/preset-cli/references/workspace-and-config.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"preset-cli-skills\",\n  \"displayName\": \"Preset CLI Skills\",\n  \"version\": \"0.5.0\",\n  \"description\": \"Preset CLI skills for explicit shell, scripting, and CI/CD workflows driven by the `sup` CLI (PyPI package `superset-sup`). Use only for CLI workflows; do not use for MCP-only work or as a substitute for direct API calls when the user wants HTTP/SDK code.\",\n  \"author\": {\n    \"name\": \"Preset\",\n    \"url\": \"https://preset.io/\"\n  },\n  \"homepage\": \"https://github.com/preset-io/agent-skills\",\n  \"repository\": \"https://github.com/preset-io/agent-skills\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"preset\",\n    \"superset\",\n    \"sup\",\n    \"cli\",\n    \"shell\",\n    \"scripting\",\n    \"ci-cd\",\n    \"automation\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/preset-cli/SKILL.md": "\nname: preset-cli\ndescription: Drive Preset's `sup` CLI (PyPI package `superset-sup`) for shell, scripting, CI/CD, and agent-driven Preset workflows. Use only for CLI workflows; Do not use for MCP-only work or for direct HTTP/SDK code paths.\n",
+    "skills/preset-cli-mutations/SKILL.md": "\nname: preset-cli-mutations\ndescription: \"State-changing Preset `sup` CLI workflows: chart/dashboard/dataset push, user push/invite, destructive flags, and cross-workspace sync. Use only for CLI mutation workflows. Do not use for MCP-only work. Do not use for direct HTTP/SDK mutations.\"\n"
+  }
+}

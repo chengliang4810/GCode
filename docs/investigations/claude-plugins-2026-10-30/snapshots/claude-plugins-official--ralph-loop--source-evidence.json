@@ -1,0 +1,26 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/ralph-loop",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "commands/cancel-ralph.md",
+    "commands/help.md",
+    "commands/ralph-loop.md",
+    "hooks/hooks.json",
+    "hooks/stop-hook.sh",
+    "scripts/setup-ralph-loop.sh"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"Ralph Loop plugin stop hook for self-referential loops\",\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash \\\"${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.sh\\\"\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"ralph-loop\",\n  \"version\": \"1.0.1\",\n  \"description\": \"Continuous self-referential AI loops for interactive iterative development, implementing the Ralph Wiggum technique. Run Claude in a while-true loop with the same prompt until task completion.\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/ralph-loop.md": "\ndescription: \"Start Ralph Loop in current session\"\nargument-hint: \"PROMPT [--max-iterations N] [--completion-promise TEXT]\"\nallowed-tools: [\"Bash(${CLAUDE_PLUGIN_ROOT}/scripts/setup-ralph-loop.sh:*)\"]\nhide-from-slash-command-tool: \"true\"\n",
+    "commands/help.md": "\ndescription: \"Explain Ralph Loop plugin and available commands\"\n",
+    "commands/cancel-ralph.md": "\ndescription: \"Cancel active Ralph Loop\"\nallowed-tools: [\"Bash(test -f .claude/ralph-loop.local.md:*)\", \"Bash(rm .claude/ralph-loop.local.md)\", \"Read(.claude/ralph-loop.local.md)\"]\nhide-from-slash-command-tool: \"true\"\n"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "repo": "pendo-io/claude-pendo-plugin",
+  "commit": "a0f85260c61b93c4511f59545612323a41c3f845",
+  "path": "plugins/pendo-analytics",
+  "archive_sha256": "e288c7c4ae4995c5e528c45729f1caeab467ca9185eb85c49505a75e9ef18436",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/account-health/SKILL.md",
+    "skills/app-health/SKILL.md",
+    "skills/data-informed-planning/SKILL.md",
+    "skills/data-informed-planning/classifier.md",
+    "skills/feature-adoption/SKILL.md",
+    "skills/feedback-analysis/SKILL.md",
+    "skills/replay-triage/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"pendo-analytics\",\n  \"displayName\": \"Pendo Analytics\",\n  \"version\": \"1.4.0\",\n  \"description\": \"Bring Pendo analytics into Claude Code with skills for app health, account health, feature adoption, session replays, feedback analysis, and data-informed planning\",\n  \"author\": {\n    \"name\": \"Pendo\",\n    \"email\": \"plugins@pendo.io\"\n  },\n  \"homepage\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"repository\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"pendo\", \"analytics\", \"customer-success\", \"product-management\"],\n  \"mcpServers\": {\n    \"pendo-external\": {\n      \"type\": \"http\",\n      \"url\": \"https://app.pendo.io/mcp/v0/shttp\"\n    },\n    \"novus\": {\n      \"type\": \"http\",\n      \"url\": \"https://novus-api.pendo.io/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/data-informed-planning/SKILL.md": "\nname: data-informed-planning\ndescription: Use when planning a product feature, fix, or prioritization task where Pendo usage data, signals, issues, or customer feedback could ground the plan in real product behavior — e.g. \"plan a fix for the pricing-page dropoff\", \"what should I build next\", \"improve the welcome flow\". Skip for pure code refactors, infra, or tooling work.\n",
+    "skills/feature-adoption/SKILL.md": "\nname: feature-adoption\ndescription: Analyze feature adoption rates, identify power users vs laggards, and track adoption trends using Pendo analytics. Use this skill whenever someone asks about feature adoption, feature usage, who's using a feature, adoption rates, feature rollout progress, or wants to understand how a specific feature is performing. Also trigger when users mention tracking a feature launch, finding champions or power users of a feature, identifying accounts that haven't adopted a feature, comparing adoption across segments, or analyzing usage trends over time — even if they don't say \"adoption\" explicitly. If someone asks \"who's using X\" or \"how is feature Y doing\", this is the right skill.\n",
+    "skills/app-health/SKILL.md": "\nname: app-health\ndescription: Generate a shareable health report for one application, summarizing engagement, acquisition, retention, average time, stickiness, frustration signals, and survey scores into a verdict and next steps. Use this skill whenever someone asks how healthy an app is, wants an app health report, wants an overall picture of how an application is doing, or asks about an app's engagement, retention, stickiness, or friction at the application level — even if they don't say \"app health\" explicitly. This is app-level (a whole application), not account-level — for a single customer account use account-health, and for a single feature use feature-adoption.\n",
+    "skills/replay-triage/SKILL.md": "\nname: replay-triage\ndescription: Triage issues captured in a Pendo session replay by fetching devlogs, mapping errors to the local codebase, proposing fixes, and prompting for a pull request. Accepts either a replay URL directly or a ticket reference (e.g. Jira key or URL, GitHub issue URL, etc.) and will pull the replay link from the ticket. Use whenever someone hands off a user-reported bug — via a replay link or a ticket that contains one — and asks to investigate, diagnose, debug, triage, or fix it. Requires Pendo connector; uses whatever ticketing MCP or CLI is available (Atlassian, `gh`, etc.) when a ticket is supplied.\n",
+    "skills/account-health/SKILL.md": "\nname: account-health\ndescription: Prepare for a customer call by synthesizing engagement, sentiment, and feedback from Pendo analytics. Use this skill whenever someone asks about account health, wants to prepare for a customer call, needs an account health report, asks about engagement or usage for a specific customer, or wants a summary of how an account is doing. Also trigger when users mention preparing for a QBR, checking on a customer, or reviewing an account before a meeting — even if they don't say \"account health\" explicitly.\n",
+    "skills/feedback-analysis/SKILL.md": "\nname: feedback-analysis\ndescription: Analyze customer feedback using Pendo's feedback tools — cluster themes, extract insights, and surface churn/frustration risks. Use whenever the user asks about feedback trends, top complaints, feature requests, Voice of the Customer, churn risks, or what customers are saying about a topic or account. Triggers on phrases like \"feedback report\", \"what are customers asking for\", \"any red flags in sentiment\", or \"what's the feedback looking like\". Requires Pendo connector.\n"
+  }
+}

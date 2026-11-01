@@ -1,0 +1,102 @@
+{
+  "pluginId": "grafana-assistant@claude-plugins-official",
+  "sourceCommit": "12be5634a492f73c189d466c5449d09b853ad7a4",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "author-two-instance-config-with-documented-yaml-schema",
+      "componentId": "skill:grafana-assistant:grafana-assistant-cli",
+      "prompt": "/grafana-assistant:grafana-assistant-cli Use the grafana-assistant skill to author the CLI's local configuration file for this concrete two-instance scenario. Headless authoring task: no network, no real Grafana instance, no install, no browser auth; the skill's own text forbids auto-installing grafana-assistant, so actually running any grafana-assistant subcommand and any live Grafana connection stay untested. Write grafana-assistant.yaml using ONLY the config file format documented in this skill, for this scenario: instance dev-local with url http://localhost:3000 and the literal token glsa_dev_7f3k; instance acme-prod with url https://observability.acme-corp.grafana.net whose service-account token must use the skill's documented env-var expansion form ${ACME_PROD_GRAFANA_TOKEN} and must never be inlined; current-instance set to acme-prod; one project named payments-api at ~/work/payments-api; and tunnel security exactly as follows: the filesystem tool with allowed_paths including /var/log/payments-api and deny_paths including **/*.key, and the terminal tool with allowed_commands including git and kubectl, deny_commands including rm -rf, and passthrough_env including KUBECONFIG. Do not invent config keys, instances, or sections that the documented config format does not define. Then read the immutable verify_grafana_config.py and run exactly python verify_grafana_config.py using Bash; that validates the documented YAML structure and writes grafana-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that a live Grafana connection and real CLI execution remain untested.",
+      "allowCommands": [
+        "python verify_grafana_config.py"
+      ],
+      "verifierOutputs": [
+        "grafana-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_grafana_config.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('grafana-assistant.yaml').read_text(encoding='utf-8')\nassert re.search(r\"(?m)^current-instance:\\s*['\\\"]?acme-prod['\\\"]?\\s*$\", text), 'current-instance must be acme-prod'\nassert re.search(r\"(?m)^instances:\", text), 'missing top-level instances block'\nassert re.search(r\"(?m)^\\s+acme-prod:\\s*$\", text), 'missing acme-prod instance entry under instances'\nassert re.search(r\"(?m)^\\s+dev-local:\\s*$\", text), 'missing dev-local instance entry under instances'\nassert re.search(r\"url:\\s*https://observability\\.acme-corp\\.grafana\\.net\", text), 'prod url missing or wrong'\nassert re.search(r\"token:\\s*['\\\"]?\\$\\{ACME_PROD_GRAFANA_TOKEN\\}['\\\"]?\", text), 'prod token must use the documented ${VAR} env-var expansion'\nassert re.search(r\"url:\\s*http://localhost:3000\", text), 'dev url missing or wrong'\nassert re.search(r\"token:\\s*['\\\"]?glsa_dev_7f3k['\\\"]?\\s*(#.*)?$\", text, re.M), 'dev token must be the literal glsa_dev_7f3k'\nassert text.count('glsa_') == 1, 'a literal token may appear only for dev-local; never inline a prod secret'\nassert re.search(r\"(?m)^projects:\", text), 'missing top-level projects block'\nassert re.search(r\"name:\\s*['\\\"]?payments-api['\\\"]?\", text), 'missing payments-api project name'\nassert re.search(r\"path:\\s*['\\\"]?~/work/payments-api['\\\"]?\", text), 'missing payments-api project path'\nassert re.search(r\"(?m)^tunnel:\", text), 'missing top-level tunnel block'\nassert 'allowed_paths:' in text and '/var/log/payments-api' in text, 'filesystem allowed_paths must include /var/log/payments-api'\nassert 'deny_paths:' in text and '**/*.key' in text, 'filesystem deny_paths must include **/*.key'\nassert 'allowed_commands:' in text and re.search(r\"\\bgit\\b\", text) and re.search(r\"\\bkubectl\\b\", text), 'terminal allowed_commands must include git and kubectl'\nassert 'deny_commands:' in text and 'rm -rf' in text, 'terminal deny_commands must include rm -rf'\nassert 'passthrough_env:' in text and 'KUBECONFIG' in text, 'passthrough_env must include KUBECONFIG'\nfor invented in ('password:', 'api_key:', 'bearer:'):\n    assert invented not in text, 'invented config key not in the documented schema: ' + invented\nreport = {'current_instance': True, 'dev_instance': True, 'no_invented_keys': True,\n          'prod_env_expansion': True, 'project_entry': True, 'single_literal_token': True,\n          'tunnel_security': True}\nPath('grafana-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Grafana assistant config: documented two-instance YAML structure checks passed; live Grafana connection and CLI execution remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_grafana_config.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('grafana-assistant.yaml').read_text(encoding='utf-8')\nassert re.search(r\"(?m)^current-instance:\\s*['\\\"]?acme-prod['\\\"]?\\s*$\", text), 'current-instance must be acme-prod'\nassert re.search(r\"(?m)^instances:\", text), 'missing top-level instances block'\nassert re.search(r\"(?m)^\\s+acme-prod:\\s*$\", text), 'missing acme-prod instance entry under instances'\nassert re.search(r\"(?m)^\\s+dev-local:\\s*$\", text), 'missing dev-local instance entry under instances'\nassert re.search(r\"url:\\s*https://observability\\.acme-corp\\.grafana\\.net\", text), 'prod url missing or wrong'\nassert re.search(r\"token:\\s*['\\\"]?\\$\\{ACME_PROD_GRAFANA_TOKEN\\}['\\\"]?\", text), 'prod token must use the documented ${VAR} env-var expansion'\nassert re.search(r\"url:\\s*http://localhost:3000\", text), 'dev url missing or wrong'\nassert re.search(r\"token:\\s*['\\\"]?glsa_dev_7f3k['\\\"]?\\s*(#.*)?$\", text, re.M), 'dev token must be the literal glsa_dev_7f3k'\nassert text.count('glsa_') == 1, 'a literal token may appear only for dev-local; never inline a prod secret'\nassert re.search(r\"(?m)^projects:\", text), 'missing top-level projects block'\nassert re.search(r\"name:\\s*['\\\"]?payments-api['\\\"]?\", text), 'missing payments-api project name'\nassert re.search(r\"path:\\s*['\\\"]?~/work/payments-api['\\\"]?\", text), 'missing payments-api project path'\nassert re.search(r\"(?m)^tunnel:\", text), 'missing top-level tunnel block'\nassert 'allowed_paths:' in text and '/var/log/payments-api' in text, 'filesystem allowed_paths must include /var/log/payments-api'\nassert 'deny_paths:' in text and '**/*.key' in text, 'filesystem deny_paths must include **/*.key'\nassert 'allowed_commands:' in text and re.search(r\"\\bgit\\b\", text) and re.search(r\"\\bkubectl\\b\", text), 'terminal allowed_commands must include git and kubectl'\nassert 'deny_commands:' in text and 'rm -rf' in text, 'terminal deny_commands must include rm -rf'\nassert 'passthrough_env:' in text and 'KUBECONFIG' in text, 'passthrough_env must include KUBECONFIG'\nfor invented in ('password:', 'api_key:', 'bearer:'):\n    assert invented not in text, 'invented config key not in the documented schema: ' + invented\nreport = {'current_instance': True, 'dev_instance': True, 'no_invented_keys': True,\n          'prod_env_expansion': True, 'project_entry': True, 'single_literal_token': True,\n          'tunnel_security': True}\nPath('grafana-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Grafana assistant config: documented two-instance YAML structure checks passed; live Grafana connection and CLI execution remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-verification.json",
+          "equals": "{\"current_instance\": true, \"dev_instance\": true, \"no_invented_keys\": true, \"prod_env_expansion\": true, \"project_entry\": true, \"single_literal_token\": true, \"tunnel_security\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "current-instance"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "acme-prod"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "https://observability.acme-corp.grafana.net"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "${ACME_PROD_GRAFANA_TOKEN}"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "dev-local"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "http://localhost:3000"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "glsa_dev_7f3k"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "~/work/payments-api"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "/var/log/payments-api"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "**/*.key"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "rm -rf"
+        },
+        {
+          "kind": "file",
+          "path": "grafana-assistant.yaml",
+          "contains": "KUBECONFIG"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Grafana assistant config: documented two-instance YAML structure checks passed; live Grafana connection and CLI execution remain untested"
+        }
+      ]
+    }
+  ]
+}

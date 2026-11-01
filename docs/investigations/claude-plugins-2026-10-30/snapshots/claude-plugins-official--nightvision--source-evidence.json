@@ -1,0 +1,32 @@
+{
+  "repo": "nvsecurity/nightvision-skills",
+  "commit": "957db6bb934839275c0f643042101bbb675ddbf7",
+  "path": ".",
+  "archive_sha256": "4b3be1c9aafdacb2d91a07964ac1487c72dafa85c8965826338aa3075ce32d4b",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "assets/nv-icon-dark.png",
+    "assets/nv-icon.png",
+    "skills/api-discovery/SKILL.md",
+    "skills/api-discovery/references/framework-support.md",
+    "skills/app-security-scan/SKILL.md",
+    "skills/ci-cd-integration/SKILL.md",
+    "skills/ci-cd-integration/references/ci-platforms.md",
+    "skills/scan-configuration/SKILL.md",
+    "skills/scan-triage/SKILL.md",
+    "skills/scan-triage/references/vulnerability-guide.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"nightvision\",\n  \"version\": \"1.1.0\",\n  \"description\": \"Skills for working with NightVision, a DAST and API Discovery platform that finds exploitable vulnerabilities in web applications and REST APIs\",\n  \"author\": {\n    \"name\": \"NightVision Engineering\",\n    \"email\": \"support@nightviz.ai\",\n    \"url\": \"https://nightviz.ai\"\n  },\n  \"homepage\": \"https://nightviz.ai\",\n  \"repository\": \"https://github.com/nvsecurity/nightvision-skills\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"dast\", \"api-discovery\", \"security-scanning\", \"ci-cd\", \"openapi\", \"vulnerability-detection\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/api-discovery/SKILL.md": "\nname: api-discovery\ndescription: Guide for agents to help users extract OpenAPI specs from source code using NightVision API Discovery. Use when running swagger extract, identifying framework support, troubleshooting extraction, handling unresolved variables, comparing API specs, or understanding Code Traceback.\nallowed-tools: Bash\n",
+    "skills/scan-triage/SKILL.md": "\nname: scan-triage\ndescription: Guide for agents to help users interpret and act on NightVision DAST scan results. Use when reading SARIF/CSV findings, explaining vulnerabilities, locating vulnerable code, validating findings with curl, prioritizing by severity, suggesting remediations, or marking false positives.\nallowed-tools: Bash, Read, Grep\n",
+    "skills/scan-configuration/SKILL.md": "\nname: scan-configuration\ndescription: Guide for agents to help users configure NightVision DAST scans. Use when creating targets, setting up authentication (Playwright, headers, cookies), recording HTTP traffic, managing projects, configuring scope exclusions, or preparing private network scans.\nallowed-tools: Bash\n",
+    "skills/ci-cd-integration/SKILL.md": "\nname: ci-cd-integration\ndescription: Guide for agents to help users integrate NightVision DAST scanning into CI/CD pipelines. Use when setting up security scans in GitHub Actions, GitLab CI, Azure DevOps, Jenkins, BitBucket, or JFrog pipelines, configuring NightVision tokens, creating targets, running scans, exporting results as SARIF/CSV, or detecting API breaking changes.\nallowed-tools: Bash\n",
+    "skills/app-security-scan/SKILL.md": "\nname: app-security-scan\ndescription: DAST-first NightVision scan for an app you just built or changed. Use when a user, or a project or org agent-instructions rule, wants a local, private, staging, or internal web app/API security-scanned. Drives the NightVision MCP `run-app-security-scan` harness.\nallowed-tools: Bash, Read, Grep, mcp__nightvision__auth-status, mcp__nightvision__preflight-app, mcp__nightvision__run-app-security-scan, mcp__nightvision__wait-for-scan, mcp__nightvision__get-scan-status, mcp__nightvision__summarize-scan-findings, mcp__nightvision__export-sarif\n"
+  }
+}

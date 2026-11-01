@@ -1,0 +1,430 @@
+package desktop
+
+import (
+	"context"
+	"encoding/json"
+	"image/png"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+
+	"gcode/internal/contracts"
+	"gcode/internal/design"
+	"github.com/egoist/mygo/ui"
+)
+
+type pluginUIService struct {
+	contracts.Service
+	state    contracts.PluginState
+	commands []contracts.Command
+}
+
+func (s *pluginUIService) Execute(_ context.Context, command contracts.Command) error {
+	if strings.HasPrefix(command.Kind, "plugins.") || command.Kind == "request.answer" {
+		if err := command.Validate(); err != nil {
+			return err
+		}
+		s.commands = append(s.commands, command.Clone())
+		return nil
+	}
+	return nil
+}
+
+func (s *pluginUIService) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+	snapshot, err := s.Service.Snapshot(ctx)
+	snapshot.Plugins = s.state.Clone()
+	return snapshot, err
+}
+
+func pluginUIFixture(t *testing.T) (*App, *pluginUIService) {
+	t.Helper()
+	app, _ := runtimeSettingsTestApp(t)
+	state := contracts.PluginState{
+		Marketplaces: []contracts.PluginMarketplace{
+			{ID: "official", Name: "Official", Source: "owner/repository", Kind: "github", State: "ready", PluginCount: 1},
+			{ID: "community", Name: "Community", Source: "owner/community", Kind: "github", State: "ready"},
+		},
+		Catalog: []contracts.PluginCatalogItem{
+			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill", Components: []string{"skills"}, Issues: []string{"Fixture dependency issue"}},
+		},
+		Installed: []contracts.InstalledPlugin{
+			{ID: "fixture@official:user", CatalogID: "fixture@official", Name: "fixture", Marketplace: "official", Scope: "user", Enabled: true,
+				Config: []contracts.PluginConfigField{{Key: "token", Title: "Plugin token", Type: "string", Sensitive: true, Configured: true, Saved: true}}},
+		},
+	}
+	service := &pluginUIService{Service: app.service, state: state}
+	app.service, app.state.Plugins = service, state.Clone()
+	app.state.Projects = []contracts.Project{{ID: "project-id", Name: "Project fixture", Path: t.TempDir()}}
+	return app, service
+}
+
+func pluginUITester(app *App) *ui.Tester {
+	return ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		ui.Column(c).Fill().Padding(16).Gap(10).Children(func() { app.pluginSettings(c) })
+	}, 900, 1200)
+}
+
+func TestPluginSettingsInstallUsesHostProjectPath(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	app.capabilityUI.plugins.scope = "project"
+	tt := pluginUITester(app)
+	if err := tt.Click("Installation scope"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Installation scope local"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Project directory"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Project directory " + app.state.Projects[0].Path); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Install fixture"); err != nil {
+		t.Fatal(err)
+	}
+	if len(service.commands) != 1 {
+		t.Fatalf("expected one typed installation command: %#v; %s", service.commands, app.errorText)
+	}
+	command := service.commands[0]
+	if command.Kind != "plugins.install" || command.Plugin.Install.Scope != "local" ||
+		command.Plugin.Install.ProjectPath != app.state.Projects[0].Path ||
+		command.Plugin.Install.ProjectPath == "project-id" {
+		t.Fatalf("installation lost scope or host path: %+v", command)
+	}
+}
+
+func TestPluginSettingsFiltersAndSources(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	tt := pluginUITester(app)
+	app.capabilityUI.plugins.query = "missing"
+	tt.Frame()
+	if _, ok := tt.Find("Install fixture"); ok {
+		t.Fatal("search did not filter catalog")
+	}
+	app.capabilityUI.plugins.query = "fixture"
+	app.capabilityUI.plugins.marketplace = "community"
+	tt.Frame()
+	if _, ok := tt.Find("Install fixture"); ok {
+		t.Fatal("market filter did not filter catalog")
+	}
+	if err := tt.Click("Sources"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Refresh official"); err != nil {
+		t.Fatal(err)
+	}
+	if len(service.commands) != 1 || service.commands[0].Kind != "plugins.source.refresh" {
+		t.Fatalf("refresh did not dispatch typed source operation: %#v", service.commands)
+	}
+	if err := tt.Click("Edit official"); err != nil {
+		t.Fatal(err)
+	}
+	app.capabilityUI.plugins.source.Ref = "pinned-commit"
+	tt.Frame()
+	if err := tt.Click("Save"); err != nil {
+		t.Fatal(err)
+	}
+	saved := service.commands[len(service.commands)-1]
+	if saved.Kind != "plugins.source.save" || saved.Plugin.Marketplace.ID != "official" || saved.Plugin.Marketplace.Ref != "pinned-commit" {
+		t.Fatalf("source update lost identity or ref: %+v", saved)
+	}
+}
+
+func TestPluginSettingsRecognizesInstalledEntryWithDifferentRuntimeName(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	app.state.Plugins.Installed[0].Name = "runtime-namespace"
+	app.capabilityUI.plugins.scope = "user"
+	tt := pluginUITester(app)
+	_ = tt.Click("Install fixture")
+	if len(service.commands) != 0 {
+		t.Fatal("runtime name difference allowed a duplicate catalog installation")
+	}
+}
+
+func TestPluginSettingsSecretDraftAndActions(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	app.capabilityUI.plugins.tab = "installed"
+	tt := pluginUITester(app)
+	id := service.state.Installed[0].ID
+	if err := tt.Click("Enable " + id); err != nil {
+		t.Fatal(err)
+	}
+	if len(service.commands) != 1 || service.commands[0].Kind != "plugins.disable" {
+		t.Fatal("toggle did not dispatch disable")
+	}
+	if err := tt.Click("Configure " + id); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("Plugin token") {
+		t.Fatal("configuration metadata not rendered")
+	}
+	if err := tt.Click("Plugin configuration Plugin token"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Type("draft-secret")
+	if tt.HasText("draft-secret") {
+		t.Fatal("secret was rendered as public text")
+	}
+	if err := tt.Click("Save plugin configuration"); err != nil {
+		t.Fatal(err)
+	}
+	command := service.commands[len(service.commands)-1]
+	if command.Kind != "plugins.configure" || command.Plugin.Configuration["token"] != "draft-secret" {
+		t.Fatalf("typed configuration missing: %+v", command)
+	}
+	if app.capabilityUI.plugins.config != nil {
+		t.Fatal("submitted secret draft retained")
+	}
+	if err := tt.Click("Configure " + id); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Remove saved value Plugin token"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Save plugin configuration"); err != nil {
+		t.Fatal(err)
+	}
+	command = service.commands[len(service.commands)-1]
+	if !slices.Equal(command.Plugin.RemoveConfigKeys, []string{"token"}) || len(command.Plugin.Configuration) != 0 {
+		t.Fatalf("explicit configuration removal missing: %+v", command.Plugin)
+	}
+	if err := tt.Click("Configure " + id); err != nil {
+		t.Fatal(err)
+	}
+	*app.capabilityUI.plugins.config["token"] = "cancelled-secret"
+	app.selectSettingsSection("General")
+	if app.capabilityUI.plugins.config != nil {
+		t.Fatal("leaving plugin settings retained a secret")
+	}
+}
+
+func TestPluginSettingsConfigurationTypesAndDefaultOwnership(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	minimum, maximum := 1.0, 5.0
+	fields := []contracts.PluginConfigField{
+		{Key: "default_token", Title: "Default token", Type: "string", Sensitive: true, Configured: true, DefaultConfigured: true},
+		{Key: "aliases", Title: "Aliases", Type: "string", Multiple: true},
+		{Key: "retries", Title: "Retries", Type: "number", Min: &minimum, Max: &maximum},
+		{Key: "enabled", Title: "Enabled", Type: "boolean", Configured: true, DefaultConfigured: true},
+		{Key: "mode", Title: "Mode", Type: "string", Required: true, Options: []string{"fast", "slow"}},
+	}
+	app.state.Plugins.Installed[0].Config = fields
+	service.state.Installed[0].Config = fields
+	app.capabilityUI.plugins.tab = "installed"
+	tt := pluginUITester(app)
+	id := service.state.Installed[0].ID
+	if err := tt.Click("Configure " + id); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := tt.Find("Remove saved value Default token"); ok {
+		t.Fatal("a schema default was presented as a removable saved value")
+	}
+	for _, title := range []string{"Aliases (JSON string[])", "Retries (Number ≥ 1 ≤ 5)", "Enabled (true / false)"} {
+		if !tt.HasText(title) {
+			t.Fatalf("input format or numeric bounds missing: %q", title)
+		}
+	}
+	if err := tt.Click("Save plugin configuration"); err != nil {
+		t.Fatal(err)
+	}
+	first := service.commands[len(service.commands)-1].Plugin
+	if len(first.Configuration) != 0 || len(first.RemoveConfigKeys) != 0 {
+		t.Fatalf("unchanged defaults became saved overrides: %+v", first)
+	}
+	if err := tt.Click("Configure " + id); err != nil {
+		t.Fatal(err)
+	}
+	for _, input := range []struct{ label, text string }{
+		{"Aliases", `["alpha","beta"]`}, {"Retries", "3.5"},
+	} {
+		if err := tt.Click("Plugin configuration " + input.label); err != nil {
+			t.Fatal(err)
+		}
+		tt.Type(input.text)
+	}
+	for _, input := range []struct{ label, option string }{{"Enabled", "false"}, {"Mode", "fast"}} {
+		if err := tt.Click("Plugin configuration " + input.label); err != nil {
+			t.Fatal(err)
+		}
+		if err := tt.Click("Plugin configuration " + input.label + " " + input.option); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := tt.Click("Save plugin configuration"); err != nil {
+		t.Fatal(err)
+	}
+	saved := service.commands[len(service.commands)-1].Plugin.Configuration
+	if saved["enabled"] != "false" || saved["mode"] != "fast" || saved["retries"] != "3.5" || saved["aliases"] != `["alpha","beta"]` {
+		t.Fatalf("typed configuration format changed: %+v", saved)
+	}
+	if _, exists := saved["default_token"]; exists {
+		t.Fatal("public default metadata supplied a secret value")
+	}
+}
+
+func TestPluginSettingsThemesNarrowAndOperationState(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		width int
+		dark  bool
+	}{{"light", 1320, false}, {"dark", 1320, true}, {"narrow-dark", 700, true}} {
+		t.Run(test.name, func(t *testing.T) {
+			app, _ := pluginUIFixture(t)
+			app.palette = design.Palette("rcode-light", false)
+			if test.dark {
+				app.palette = design.Palette("rcode-dark", true)
+			}
+			app.section = "Plugins"
+			app.state.Plugins.Operations = []contracts.PluginOperation{
+				{ID: "running", Kind: "plugins.source.refresh", TargetID: "official", State: "running"},
+				{ID: "failed", Kind: "plugins.install", TargetID: "fixture", State: "failed", Error: "fixture install error"},
+			}
+			tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, test.width, 1100)
+			for _, label := range []string{"Settings page viewport", "Settings page content", "Settings page heading: Plugins", "Search plugins"} {
+				if _, ok := tt.Find(label); !ok {
+					t.Fatalf("missing shared page/control %q", label)
+				}
+			}
+			if !tt.HasText("fixture install error") || !tt.HasText("Fixture dependency issue") {
+				t.Fatal("operation error or component issue omitted")
+			}
+			for _, tab := range []struct{ value, control string }{
+				{"catalog", "Search plugins"}, {"installed", "Configure fixture@official:user"}, {"sources", "Add marketplace"},
+			} {
+				app.capabilityUI.plugins.tab = tab.value
+				tt.Frame()
+				rect, ok := tt.Find(tab.control)
+				if !ok || rect.X < 0 || rect.X+rect.W > float32(test.width)+1 {
+					t.Fatalf("%s control overflows the shared narrow page: %+v", tab.value, rect)
+				}
+				if os.Getenv("RCODE_CAPTURE_PLUGIN_SETTINGS") == "1" {
+					folder := filepath.Join("..", "..", "output", "plugin-settings")
+					if err := os.MkdirAll(folder, 0o755); err != nil {
+						t.Fatal(err)
+					}
+					file, err := os.Create(filepath.Join(folder, test.name+"-"+tab.value+".png"))
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = png.Encode(file, tt.Image())
+					file.Close()
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestHookEditorPreservesCommandForm(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		args []string
+	}{{"shell", nil}, {"exec-no-args", []string{}}, {"exec-with-args", []string{"a b", ""}}} {
+		t.Run(test.name, func(t *testing.T) {
+			app, _ := runtimeSettingsTestApp(t)
+			hook := contracts.HookRule{ID: "form", Type: "command", Event: contracts.HookPreToolUse, Command: "program", Args: test.args}
+			app.editHook(&hook)
+			result, err := app.hookDraft()
+			if err != nil || (result.Args == nil) != (test.args == nil) || !slices.Equal(result.Args, test.args) {
+				t.Fatalf("command form changed: %#v -> %#v; %v", test.args, result.Args, err)
+			}
+		})
+	}
+}
+
+func TestHookEditorFractionalTimeoutAndInvalidNumbers(t *testing.T) {
+	app, _ := runtimeSettingsTestApp(t)
+	hook := contracts.HookRule{ID: "fractional-timeout", Type: "command", Event: contracts.HookPreToolUse,
+		Command: "echo fixture", TimeoutSeconds: 0.125}
+	app.editHook(&hook)
+	if app.capabilityUI.hookTimeout != "0.125" {
+		t.Fatalf("fractional timeout was truncated in the editor: %q", app.capabilityUI.hookTimeout)
+	}
+	got, err := app.hookDraft()
+	if err != nil || got.TimeoutSeconds != 0.125 {
+		t.Fatalf("fractional timeout was lost: %g; %v", got.TimeoutSeconds, err)
+	}
+	for _, value := range []string{"NaN", "Inf", "-Inf", "1e309", "-0.1", "", "invalid"} {
+		t.Run(value, func(t *testing.T) {
+			app.capabilityUI.hookTimeout = value
+			if _, err := app.hookDraft(); err == nil {
+				t.Fatalf("invalid timeout %q accepted", value)
+			}
+		})
+	}
+}
+
+func TestHookEditorTypedHandlersAndEventCatalog(t *testing.T) {
+	app, _ := runtimeSettingsTestApp(t)
+	for _, test := range []struct {
+		name string
+		hook contracts.HookRule
+	}{
+		{"http", contracts.HookRule{Type: "http", URL: "https://example.invalid/hook", Headers: map[string]string{"X-Fixture": "value"}, AllowedEnvVars: []string{"FIXTURE"}}},
+		{"prompt", contracts.HookRule{Type: "prompt", Prompt: "Check $ARGUMENTS", Model: "haiku"}},
+		{"agent", contracts.HookRule{Type: "agent", Prompt: "Inspect the result", Model: "sonnet"}},
+		{"mcp-tool", contracts.HookRule{Type: "mcp_tool", MCPServer: "fixture", ToolName: "validate", ToolInput: json.RawMessage(`{"value":"fixture"}`)}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			test.hook.ID, test.hook.Event, test.hook.Enabled = "typed", contracts.HookPreToolUse, true
+			app.editHook(&test.hook)
+			hook, err := app.hookDraft()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := contracts.ValidateHookRules([]contracts.HookRule{hook}); err != nil {
+				t.Fatal(err)
+			}
+			before, _ := json.Marshal(test.hook)
+			after, _ := json.Marshal(hook)
+			if string(before) != string(after) {
+				t.Fatalf("handler changed while editing:\n%s\n%s", before, after)
+			}
+		})
+	}
+	app.editHook(nil)
+	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.hookSettings(c) }, 1000, 1200)
+	if err := tt.Click("Hook event"); err != nil {
+		t.Fatal(err)
+	}
+	for _, event := range contracts.HookEvents() {
+		if _, ok := tt.Find("Hook event " + string(event)); !ok {
+			t.Fatalf("event %s missing from shared catalog", event)
+		}
+	}
+}
+
+func TestQuestionMultipleSelectionWaitsForSubmit(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	question := &contracts.Question{ID: "multiple", Title: "Choose features", Header: "Features", MultiSelect: true,
+		Options: []string{"Skills", "Hooks"}, OptionDescriptions: []string{"Reusable instructions", "Lifecycle callbacks"}}
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		app.transcriptBlock(c, contracts.Message{}, contracts.Block{Kind: "question", Question: question})
+	}, 700, 800)
+	if !tt.HasText("Reusable instructions") || !tt.HasText("Features") {
+		t.Fatal("question metadata omitted")
+	}
+	for _, option := range question.Options {
+		if err := tt.Click(option); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(service.commands) != 0 {
+		t.Fatal("checkbox selection prematurely answered the question")
+	}
+	if err := tt.Click("Submit"); err != nil {
+		t.Fatal(err)
+	}
+	var answers []string
+	if len(service.commands) != 1 || json.Unmarshal([]byte(service.commands[0].Text), &answers) != nil ||
+		!slices.Equal(answers, question.Options) {
+		t.Fatalf("multi-select answer lost labels: %+v", service.commands)
+	}
+}

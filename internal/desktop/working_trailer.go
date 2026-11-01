@@ -17,10 +17,13 @@ type primaryPendingSend struct {
 	DraftEpoch uint64
 	StartedAt  time.Time
 	Queued     bool
+	// Steer tells that the queued message joins the live response instead
+	// of waiting for its end.
+	Steer bool
 }
 
 // These are the source's decorative activity captions, not reasoning content.
-var activityWords = [...]string{"Zeroning", "Thinking", "Pondering", "Scheming", "Brewing", "Weaving", "Tinkering", "Musing", "Composing", "Sifting", "Untangling", "Distilling", "Sketching", "Plotting", "Riffing", "Combobulating", "Percolating", "Marinating", "Noodling", "Puzzling", "Conjuring"}
+var activityWords = [...]string{"Coding", "Thinking", "Pondering", "Scheming", "Brewing", "Weaving", "Tinkering", "Musing", "Composing", "Sifting", "Untangling", "Distilling", "Sketching", "Plotting", "Riffing", "Combobulating", "Percolating", "Marinating", "Noodling", "Puzzling", "Conjuring"}
 
 func activityWord(sessionID string, seconds int64) string {
 	hash := fnv.New64a()
@@ -30,12 +33,18 @@ func activityWord(sessionID string, seconds int64) string {
 
 func (a *App) workingState(sessionID string) (word, elapsed string, visible bool) {
 	if pending, ok := a.pendingSends[sessionID]; ok {
+		if pending.Steer {
+			return "Steering the running response", "", true
+		}
 		if pending.Queued {
 			return "Queued — will send automatically", "", true
 		}
 		return "Sending…", "", true
 	}
 	if side := a.sideComposers[sessionID]; side != nil && side.Pending != nil {
+		if side.Pending.Steer {
+			return "Steering the running response", "", true
+		}
 		if side.Pending.Queued {
 			return "Queued — will send automatically", "", true
 		}
@@ -79,9 +88,9 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 		if word == "Queued — will send automatically" {
 			color = a.palette.Warning
 		}
-		ui.Text(c, caption).FontSize(design.UISize(c, 12)).TextColor(color)
+		ui.Text(c, caption).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
 		if elapsed != "" {
-			ui.Text(c, elapsed).FontSize(design.UISize(c, 11)).TextColor(a.palette.Faint).Margin(1, 0, 0, 0)
+			ui.Text(c, elapsed).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Margin(1, 0, 0, 0)
 		}
 	})
 	// Elapsed time is meaningful state even when animation is disabled.

@@ -26,7 +26,6 @@ remain independent.
 | Transcript | transcript.rs, markdown/, tool_images.rs | rich text, code/table/math/diagram, reasoning/tools/questions/permissions/todo/subagents, images, selection, streaming and anchored scroll |
 | Files | files/ | tree/search/context menus, edit/rename/save/readonly/conflict, tabs, code/Markdown/image preview |
 | Git | changes.rs, history.rs | changes/diff/comment/history/refs/commit, empty/error |
-| Pull requests | pull_requests.rs, pull_request_*.rs | board/detail/checks/discussion/code/comment/destination, loading/empty/error |
 | Terminal | terminal/ | mock Conn, ANSI output, input, tabs, selection, search, resize, long scrollback |
 | Browser | browser/ | fixed page and public URL, navigation/tabs/loading/error/zoom, overlays and focus |
 | Settings | settings.rs, settings/ | General, Appearance, Notifications, Shortcuts, Providers, Devices, Cloud, Billing, Files, Archived; search/theme/font/shortcut subflows |

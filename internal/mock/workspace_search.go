@@ -121,6 +121,73 @@ func searchWords(query, text string) bool {
 	return true
 }
 
+// directoryDeviceLocked resolves the requested device and rejects offline hosts
+// before any virtual path is resolved.
+func (s *Server) directoryDeviceLocked(deviceID string) (contracts.Device, error) {
+	for _, device := range s.state.Devices {
+		if device.ID != deviceID {
+			continue
+		}
+		if device.Status != "online" && device.Status != "connected" && !device.Current {
+			return contracts.Device{}, errors.New("device is offline")
+		}
+		return device, nil
+	}
+	return contracts.Device{}, errors.New("device not found")
+}
+
+// ListDirectoryLocations offers the virtual workspace home and the virtual
+// roots that hold configured projects. It never enumerates the real machine.
+func (s *Server) ListDirectoryLocations(ctx context.Context, request contracts.DirectoryRequest) (contracts.DirectoryLocations, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.DirectoryLocations{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.DirectoryLocations{}, ErrClosed
+	}
+	device, err := s.directoryDeviceLocked(request.DeviceID)
+	if err != nil {
+		return contracts.DirectoryLocations{}, err
+	}
+	home := "~/projects"
+	roots := map[string]bool{}
+	for _, project := range s.state.Projects {
+		if project.DeviceID != device.ID {
+			continue
+		}
+		projectPath := path.Clean(strings.ReplaceAll(project.Path, "\\", "/"))
+		home = path.Dir(projectPath)
+		if volume := virtualVolume(projectPath); volume != "" {
+			roots[volume] = true
+		}
+	}
+	names := make([]string, 0, len(roots))
+	for root := range roots {
+		names = append(names, root)
+	}
+	slices.Sort(names)
+	result := contracts.DirectoryLocations{DeviceID: device.ID}
+	result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: "Home", Path: home, Kind: contracts.LocationHome})
+	for _, root := range names {
+		result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: root, Path: root, Kind: contracts.LocationVolume})
+	}
+	return result, nil
+}
+
+// virtualVolume returns the drive letter or leading POSIX root of a virtual
+// project path, so the picker can offer the same roots the projects live under.
+func virtualVolume(projectPath string) string {
+	if len(projectPath) >= 2 && projectPath[1] == ':' {
+		return projectPath[:2]
+	}
+	if strings.HasPrefix(projectPath, "/") {
+		return "/"
+	}
+	return ""
+}
+
 // ListDirectories exposes directories derived from virtual project paths. The
 // picker never offers access to the real local or remote filesystem.
 func (s *Server) ListDirectories(ctx context.Context, request contracts.DirectoryRequest) (contracts.DirectoryListing, error) {
@@ -132,18 +199,8 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 	if s.closed {
 		return contracts.DirectoryListing{}, ErrClosed
 	}
-	var device *contracts.Device
-	for i := range s.state.Devices {
-		if s.state.Devices[i].ID == request.DeviceID {
-			device = &s.state.Devices[i]
-			break
-		}
-	}
-	if device == nil {
-		return contracts.DirectoryListing{}, errors.New("device not found")
-	}
-	if device.Status != "online" && device.Status != "connected" && !device.Current {
-		return contracts.DirectoryListing{}, errors.New("device is offline")
+	if _, err := s.directoryDeviceLocked(request.DeviceID); err != nil {
+		return contracts.DirectoryListing{}, err
 	}
 	home := "~/projects"
 	for _, project := range s.state.Projects {

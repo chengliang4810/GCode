@@ -44,9 +44,9 @@ func TestWGCCaptureRejectsInvalidInputsBeforeLoadingBridge(t *testing.T) {
 }
 
 func TestWGCBridgeABIRejectsInvalidHWNDWithoutCapture(t *testing.T) {
-	path := os.Getenv("ZERON_UIFIXTURE_WGC_TEST_DLL")
+	path := os.Getenv("RCODE_UIFIXTURE_WGC_TEST_DLL")
 	if path == "" {
-		t.Skip("set ZERON_UIFIXTURE_WGC_TEST_DLL to test the built fixture DLL without capturing")
+		t.Skip("set RCODE_UIFIXTURE_WGC_TEST_DLL to test the built fixture DLL without capturing")
 	}
 	proc, err := loadFixtureWGC(path)
 	if err != nil {
@@ -67,7 +67,7 @@ func TestWGCBridgeABIRejectsInvalidHWNDWithoutCapture(t *testing.T) {
 	if _, err := os.Stat(output); !os.IsNotExist(err) {
 		t.Fatalf("invalid HWND created a file: %v", err)
 	}
-	if reparse := os.Getenv("ZERON_UIFIXTURE_WGC_TEST_REPARSE_OUTPUT"); reparse != "" {
+	if reparse := os.Getenv("RCODE_UIFIXTURE_WGC_TEST_REPARSE_OUTPUT"); reparse != "" {
 		t.Run("reparse-output-ancestor", func(t *testing.T) {
 			path := []byte(reparse)
 			message := make([]byte, 1024)

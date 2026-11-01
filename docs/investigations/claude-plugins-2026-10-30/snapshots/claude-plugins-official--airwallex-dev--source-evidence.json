@@ -1,0 +1,51 @@
+{
+  "repo": "airwallex/airwallex-marketplace",
+  "commit": "877551077786664d1cbeb32013443291c66e69e6",
+  "path": "plugins/airwallex-dev",
+  "archive_sha256": "e1836a5589367d557cdd526ecb9bb53ae85d0a76483097b28f7b0d8117845672",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-mcp.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "assets/icon.svg",
+    "assets/logo.svg",
+    "skills/airwallex-ai-provider-card-mit/SKILL.md",
+    "skills/airwallex-ai-provider-card-mit/references/airwallex-objects-and-consents.md",
+    "skills/airwallex-ai-provider-card-mit/references/fraud-data-standards.md",
+    "skills/airwallex-ai-provider-card-mit/references/frontend-split-card-elements.md",
+    "skills/airwallex-ai-provider-card-mit/references/interaction-flows.md",
+    "skills/airwallex-ai-provider-card-mit/references/server-and-webhooks.md",
+    "skills/airwallex-ai-provider-card-mit/references/ux-copy-and-checklists.md",
+    "skills/airwallex-billing-checkout/SKILL.md",
+    "skills/airwallex-billing-checkout/references/api-reference.md",
+    "skills/airwallex-dropin/SKILL.md",
+    "skills/airwallex-dropin/references/scenarios.md",
+    "skills/airwallex-dropin/references/styling.md",
+    "skills/airwallex-hpp/SKILL.md",
+    "skills/airwallex-hpp/references/scenarios.md",
+    "skills/airwallex-hpp/references/styling.md",
+    "skills/airwallex-kyc/SKILL.md",
+    "skills/airwallex-kyc/references/scenarios.md",
+    "skills/airwallex-kyc/references/theme.md",
+    "skills/airwallex-split-card/SKILL.md",
+    "skills/airwallex-split-card/references/error-handling.md",
+    "skills/airwallex-split-card/references/frontend-implementation.md",
+    "skills/airwallex-split-card/references/scenarios.md",
+    "skills/airwallex-split-card/references/styling.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"airwallex-dev\",\n  \"description\": \"Airwallex integration skills for Claude. Code-generation workflows that scaffold, configure, and wire Airwallex APIs into your project.\",\n  \"version\": \"0.1.3\",\n  \"author\": {\n    \"name\": \"Airwallex\",\n    \"url\": \"https://www.airwallex.com\"\n  },\n  \"homepage\": \"https://www.airwallex.com/docs\",\n  \"repository\": \"https://github.com/airwallex/airwallex-marketplace.git\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"airwallex\",\n    \"integration\",\n    \"developer\",\n    \"sdk\",\n    \"code-generation\",\n    \"payments\",\n    \"checkout\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"airwallex-dev\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.sandbox.airwallex.com/developer\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/airwallex-split-card/SKILL.md": "\nname: airwallex-split-card\ndescription: Generate Airwallex Split Card Element integration code. Use when user mentions Split Card, cardNumber element, expiry/cvc element, individual card inputs, custom card form, 拆分卡元素, or 自定义卡输入. Do NOT use for Drop-in (multi-method) or HPP (redirect) flows.\nallowed-tools: Read Grep Bash Write Edit WebFetch\nargument-hint: \"[scenario: guest | save-card | save-only | saved-card | mit | styling | full]\"\n",
+    "skills/airwallex-ai-provider-card-mit/SKILL.md": "\nname: airwallex-ai-provider-card-mit\ndescription: Use this skill to guide an end-to-end implementation plan document for card-only Airwallex Payments flows used by AI providers that self-manage subscriptions, token balances, manual top-ups, and auto-recharge with merchant-initiated transactions. Covers Web JS SDK Split Card Elements, card binding, billing information collection, fraud-data checks, scheduled MIT consent for subscriptions, unscheduled MIT consent for recharge, webhooks, and merchant-owned ledger, invoice, receipt, retry, notification, and cancellation logic. Do not use for non-card methods, customer-initiated one-click checkout, hosted checkout, Drop-in, HPP, or provider-managed subscription products.\nallowed-tools: Read Grep Bash Write Edit WebFetch\nargument-hint: \"[scenario: plan | recharge | auto-recharge | subscription | saved-card | renewal | full]\"\n",
+    "skills/airwallex-billing-checkout/SKILL.md": "\nname: airwallex-billing-checkout\ndescription: Guide integration of Airwallex Billing Hosted Checkout for subscription, one-off payment (PAYMENT), and card-saving (SETUP) scenarios. Covers authentication, product/price creation, free trial, coupons, success page, webhooks, troubleshooting, and API version via .env. Use when user mentions billing checkout, subscription integration, recurring billing, free trial, coupon, promo code, billing_checkouts API, hosted billing page, 订阅, 周期扣款, 优惠券. Do NOT use for HPP / Hosted Payment Page / PaymentIntent; those belong to Online Payments, not Billing.\nallowed-tools: Read Grep Bash Write Edit WebFetch\n",
+    "skills/airwallex-hpp/SKILL.md": "\nname: airwallex-hpp\ndescription: Generate Airwallex Hosted Payment Page (HPP) integration code. Use when user mentions HPP, hosted payment page, redirectToCheckout, PaymentIntent, guest checkout, save card, 托管支付页, 跳转支付, 一次性收单. Do NOT use for Billing Hosted Checkout (subscription/billing_checkouts); that's a different product.\nallowed-tools: Read Grep Bash Write Edit WebFetch\nargument-hint: \"[scenario: guest | save-card | save-only | saved-card | mit | styling | full]\"\n",
+    "skills/airwallex-kyc/SKILL.md": "\nname: airwallex-kyc\ndescription: Generate Airwallex Connected Account KYC onboarding integration code. Use when user mentions KYC, embedded KYC element, createElement('kyc'), hosted KYC flow, connected account onboarding, 开户认证, 连接账户. Do NOT use for payment collection flows (HPP, Drop-in, Split Card); those are separate payment integration skills.\nallowed-tools: Read Grep Bash Write Edit WebFetch\nargument-hint: \"[scenario: embedded-kyc-component | hosted-flow]\"\n",
+    "skills/airwallex-dropin/SKILL.md": "\nname: airwallex-dropin\ndescription: Generate Airwallex Drop-in Element integration code. Use when user mentions Drop-in, dropIn element, embedded payment UI, createElement('dropIn'), multi-method checkout, Apple Pay, Google Pay, 嵌入式支付, 多支付方式. Do NOT use for redirect-based HPP or single card-only Split Card flows.\nallowed-tools: Read Grep Bash Write Edit WebFetch\nargument-hint: \"[scenario: guest | save-card | save-only | saved-card | mit | styling | full]\"\n"
+  }
+}

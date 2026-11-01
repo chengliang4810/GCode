@@ -26,10 +26,10 @@ function Resolve-BridgeWrite([string]$Path) {
 }
 $taskOutput = Resolve-BridgeWrite $OutputDirectory
 $taskTarget = Resolve-BridgeWrite (Join-Path $taskOutput 'target')
-$taskDLL = Resolve-BridgeWrite (Join-Path $taskOutput 'zeron_fixture_wgc.dll')
+$taskDLL = Resolve-BridgeWrite (Join-Path $taskOutput 'rcode_fixture_wgc.dll')
 $taskLog = Resolve-BridgeWrite (Join-Path $taskOutput 'build.log')
 $taskProvenance = Resolve-BridgeWrite (Join-Path $taskRoot 'reference/validation/native-wgc-bridge.json')
-foreach ($taskSubdirectory in @('debug/build', 'debug/deps', 'debug/.fingerprint', 'debug/incremental', 'debug/zeron_fixture_wgc.dll')) { $null = Resolve-BridgeWrite (Join-Path $taskTarget $taskSubdirectory) }
+foreach ($taskSubdirectory in @('debug/build', 'debug/deps', 'debug/.fingerprint', 'debug/incremental', 'debug/rcode_fixture_wgc.dll')) { $null = Resolve-BridgeWrite (Join-Path $taskTarget $taskSubdirectory) }
 $taskProject = Join-Path $taskRoot 'reference/fixtures/native-wgc-bridge'
 $taskManifest = Join-Path $taskProject 'Cargo.toml'
 $taskLock = Join-Path $taskProject 'Cargo.lock'
@@ -59,7 +59,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Fixture WGC bridge contract tests failed.' }
     & cargo build --offline --locked -j 2 --manifest-path $taskManifest 2>&1 | Tee-Object -FilePath $taskLog -Append
     if ($LASTEXITCODE -ne 0) { throw 'Fixture WGC bridge build failed.' }
-    $taskBuiltDLL = Join-Path $taskTarget 'debug/zeron_fixture_wgc.dll'
+    $taskBuiltDLL = Join-Path $taskTarget 'debug/rcode_fixture_wgc.dll'
     [IO.File]::Copy($taskBuiltDLL, $taskDLL, $true)
     $taskEvidence.status = 'built-contract-tests-passed'
     $taskEvidence.dll = [IO.Path]::GetRelativePath($taskRoot, $taskDLL).Replace('\', '/')

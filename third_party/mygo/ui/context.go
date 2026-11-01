@@ -268,7 +268,7 @@ func (c *context) rekey(e *node, k any) {
 		// Another element of the pass has the key under the same parent.
 		rt.duplicateKey(id, k)
 	}
-	e.id, e.st = id, st
+	e.id, e.st, e.key = id, st, k
 	if rt.insp.open {
 		rt.insp.noteKey(id, k)
 		if id == rt.insp.selected {
@@ -411,6 +411,11 @@ func (c *context) DisableAnimations() { c.rt.instantFrame = c.rt.frame }
 // instant reports whether this frame shows changes at once
 // (DisableAnimations).
 func (rt *engine) instant() bool { return rt.instantFrame == rt.frame && rt.frame != 0 }
+
+// Instant reports whether this frame shows animated values at once
+// (DisableAnimations). Views read it to render a change settled in the same
+// frames where its animations are disabled.
+func (c *context) Instant() bool { return c.rt.instant() }
 
 // After asks for another frame after d, for something that changes with
 // time, such as a clock.

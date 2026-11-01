@@ -1,0 +1,71 @@
+{
+  "pluginId": "carbone-skill@claude-plugins-official",
+  "sourceCommit": "25207b3f52b97872312eab997ee5c62cc5c9542d",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "author-invoice-template-with-documented-syntax",
+      "componentId": "skill:carbone-skill:carbone",
+      "prompt": "/carbone-skill:carbone Use the carbone skill to author a Carbone HTML template for this invoice dataset: {\"customer\": {\"name\": \"Harbor Reading Room\"}, \"invoice\": {\"paid\": true}, \"items\": [{\"name\": \"Room hire\", \"qty\": 2, \"unit_price\": 12.5}, {\"name\": \"Coffee\", \"qty\": 4, \"unit_price\": 3.25}]}. Headless authoring task: no Carbone engine, no network, no browser; the engine render stays untested. Write invoice-template.html that uses ONLY syntax documented in this skill: nested access for customer.name; a loop over items rendering name, qty, unit_price and a per-line total computed by multiplying qty by unit_price with exactly two decimals using the documented number formatter; the loop end marker row exactly as the skill's loop rules require; and a 'Paid - thank you' section shown only when invoice.paid is true using the documented conditional-block form. Do not use ENTERPRISE features (no aggregators, no smart conditions, no :set) and do not invent formatters or foreign templating syntax such as Handlebars or Jinja. Keep the template under 60 lines. Then read the immutable verify_carbone.py and run exactly python verify_carbone.py using Bash; that validates the template structure and writes carbone-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file and report the actual verifier result, and state that the engine render remains untested.",
+      "allowCommands": [
+        "python verify_carbone.py"
+      ],
+      "verifierOutputs": [
+        "carbone-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_carbone.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('invoice-template.html').read_text(encoding='utf-8')\nassert '{d.customer.name}' in text, 'missing nested customer access'\nassert '{d.items[i].name}' in text, 'missing loop row'\nassert '{d.items[i+1].name}' in text, 'missing [i+1] loop end marker'\nassert ':mul(.unit_price)' in text, 'line total must multiply qty by unit_price'\nassert ':formatN(2)' in text, 'line total must use two-decimal number formatting'\nassert ':showBegin' in text and ':showEnd' in text, 'missing conditional block markers'\nassert text.count(':showBegin') == text.count(':showEnd'), 'unbalanced show block'\nfor foreign in ('{{', '{%', '{c.', ':aggSum', ':set('):\n    assert foreign not in text, 'foreign or enterprise syntax found: ' + foreign\nreport = {'computed_line_total': True, 'conditional_block': True, 'loop_end_marker': True,\n          'nested_access': True, 'no_enterprise_features': True, 'no_foreign_syntax': True}\nPath('carbone-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Carbone template: documented-syntax checks passed; no foreign or enterprise syntax found')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_carbone.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('invoice-template.html').read_text(encoding='utf-8')\nassert '{d.customer.name}' in text, 'missing nested customer access'\nassert '{d.items[i].name}' in text, 'missing loop row'\nassert '{d.items[i+1].name}' in text, 'missing [i+1] loop end marker'\nassert ':mul(.unit_price)' in text, 'line total must multiply qty by unit_price'\nassert ':formatN(2)' in text, 'line total must use two-decimal number formatting'\nassert ':showBegin' in text and ':showEnd' in text, 'missing conditional block markers'\nassert text.count(':showBegin') == text.count(':showEnd'), 'unbalanced show block'\nfor foreign in ('{{', '{%', '{c.', ':aggSum', ':set('):\n    assert foreign not in text, 'foreign or enterprise syntax found: ' + foreign\nreport = {'computed_line_total': True, 'conditional_block': True, 'loop_end_marker': True,\n          'nested_access': True, 'no_enterprise_features': True, 'no_foreign_syntax': True}\nPath('carbone-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Carbone template: documented-syntax checks passed; no foreign or enterprise syntax found')\n"
+        },
+        {
+          "kind": "file",
+          "path": "carbone-verification.json",
+          "equals": "{\"computed_line_total\": true, \"conditional_block\": true, \"loop_end_marker\": true, \"nested_access\": true, \"no_enterprise_features\": true, \"no_foreign_syntax\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": "{d.customer.name}"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": "{d.items[i].name}"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": "{d.items[i+1].name}"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": ":mul(.unit_price)"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": ":formatN(2)"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": ":showBegin"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-template.html",
+          "contains": ":showEnd"
+        }
+      ]
+    }
+  ]
+}

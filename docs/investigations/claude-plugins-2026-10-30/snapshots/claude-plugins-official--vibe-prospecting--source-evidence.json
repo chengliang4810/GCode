@@ -1,0 +1,44 @@
+{
+  "repo": "explorium-ai/vibeprospecting-plugin",
+  "commit": "ca43f6d92395462d8915dc31364bbce6a83e4006",
+  "path": ".",
+  "archive_sha256": "6616e79ca703ec75ee456aa3fe9cb0ef46bed2e44697e0b1fd65a5bb3e57d89f",
+  "all_plugin_files": [
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".codexignore",
+    ".github/workflows/hol-plugin-scanner.yml",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "assets/icon.png",
+    "commands/skip_sample.md",
+    "docs/install-claude-chat.md",
+    "docs/install-claude-code.md",
+    "docs/install-claude-cowork.md",
+    "docs/install-codex.md",
+    "docs/install-grok-build.md",
+    "docs/install-openclaw.md",
+    "docs/install-other.md",
+    "package.json",
+    "scripts/commands-to-openclaw-skills.sh",
+    "scripts/compress-openclaw.sh",
+    "scripts/compress.sh",
+    "skills/vibe-prospecting/SKILL.md",
+    "skills/vibe-prospecting/platforms/claude-chat.md",
+    "skills/vibe-prospecting/platforms/claude-code.md",
+    "skills/vibe-prospecting/platforms/codex.md",
+    "skills/vibe-prospecting/platforms/cowork.md",
+    "skills/vibe-prospecting/platforms/openclaw.md",
+    "skills/vibe-prospecting/platforms/other.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n    \"name\": \"vpai\",\n    \"version\": \"0.1.107\",\n    \"description\": \"Power your chat with B2B data to create lead lists, research companies, personalize your outreach, and more. Search any company or professional to access emails, phone numbers, roles, growth signals, tech stack details, business events, website changes, and more.\",\n    \"author\": {\n      \"name\": \"vibeprospecting.ai\",\n      \"email\": \"support@vibeprospecting.ai\",\n      \"url\": \"https://vibeprospecting.ai\"\n    },\n    \"homepage\": \"https://vibeprospecting.ai\",\n    \"repository\": \"https://github.com/explorium-ai/vibeprospecting-plugin\",\n    \"license\": \"MIT\",\n    \"keywords\": [\n      \"b2b\",\n      \"prospecting\",\n      \"leads\",\n      \"sales\",\n      \"enrichment\",\n      \"companies\",\n      \"contacts\"\n    ],\n    \"skills\": \"./skills/\",\n    \"interface\": {\n      \"displayName\": \"Vibe Prospecting\",\n      \"shortDescription\": \"B2B company and contact intelligence for prospecting workflows.\",\n      \"longDescription\": \"Power your chat with live B2B data to create lead lists, research companies, enrich contacts, personalize outreach, and inspect business signals, technology stacks, events, and website changes.\",\n      \"developerName\": \"vibeprospecting.ai\",\n      \"category\": \"Productivity\",\n      \"capabilities\": [\n        \"Interactive\",\n        \"Read\",\n        \"Write\"\n      ],\n      \"websiteURL\": \"https://vibeprospecting.ai\",\n      \"privacyPolicyURL\": \"https://vibeprospecting.ai\",\n      \"termsOfServiceURL\": \"https://vibeprospecting.ai\",\n      \"defaultPrompt\": [\n        \"Find prospects at SaaS companies in New York.\",\n        \"Research the engineering leaders at Palo Alto Networks.\",\n        \"Build a lead list of companies using Salesforce.\"\n      ],\n      \"brandColor\": \"#1769FF\"\n    }\n  }"
+  },
+  "markdown_frontmatter": {
+    "skills/vibe-prospecting/SKILL.md": "\nname: \"vibe-prospecting\"\ndescription: \"Find company & contact data. Turn your agent into a prospecting platform. Get contact information, roles, tech stack, business events, website changes, intent data. Build lead lists, research prospects, identify talent. 150M+ companies, 800M+ professionals, 50+ data sources.\"\nmetadata:\n  version: \"0.1.108\"\n",
+    "commands/skip_sample.md": "\ndescription: Skip sample-first mode for this request — fetch/enrich at full scale without a 5-entity preview\n"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "repo": "hostinger/claude-plugin",
+  "commit": "569880c60681a7068b3ca8ca84e2fe7ab6cfa7ff",
+  "path": ".",
+  "archive_sha256": "f42570df83c21d73871d300a1fa7b768d14d7dc7f127913c75f36913f2a75105",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/agency-hosting-deploy-php-site/SKILL.md",
+    "skills/agency-hosting-deploy-static-site/SKILL.md",
+    "skills/hosting-deploy-nodejs-app/SKILL.md",
+    "skills/hosting-deploy-static-site/SKILL.md",
+    "skills/hosting-deploy-wordpress-plugin/SKILL.md",
+    "skills/hosting-deploy-wordpress-site/SKILL.md",
+    "skills/hosting-deploy-wordpress-theme/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"hostinger\",\n  \"description\": \"Deploy, manage and monitor Hostinger services — Websites, Domains & DNS, Ecommerce, Email, Email Marketing, WordPress, Subscriptions & Payments, and VPS. Runs as a remote MCP server with browser (OAuth) sign-in — nothing to install locally.\",\n  \"version\": \"1.2.0\",\n  \"author\": {\n    \"name\": \"Hostinger\",\n    \"url\": \"https://www.hostinger.com\"\n  },\n  \"homepage\": \"https://developers.hostinger.com\",\n  \"repository\": \"https://github.com/hostinger/claude-plugin\",\n  \"license\": \"MIT\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"hostinger\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.hostinger.com\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/hosting-deploy-wordpress-plugin/SKILL.md": "\nname: hosting-deploy-wordpress-plugin\ndescription: >-\n  Deploy a WordPress plugin (a directory of files, not a single archive) to a Hostinger\n  \"hosting\" WordPress website via public-api, using standalone MCP tools/plain curl instead of a\n  filesystem-driven deploy tool. Use when asked to deploy/upload a WP plugin.\n",
+    "skills/hosting-deploy-wordpress-theme/SKILL.md": "\nname: hosting-deploy-wordpress-theme\ndescription: >-\n  Deploy a WordPress theme (a directory of files, not a single archive) to a Hostinger \"hosting\"\n  WordPress website via public-api, using standalone MCP tools/plain curl instead of a\n  filesystem-driven deploy tool. Use when asked to deploy/upload a WP theme.\n",
+    "skills/hosting-deploy-nodejs-app/SKILL.md": "\nname: hosting-deploy-nodejs-app\ndescription: >-\n  Deploy a Node.js application (needs a build step) to a Hostinger \"hosting\" website via\n  public-api, using standalone MCP tools/plain curl instead of a filesystem-driven deploy tool.\n  Use when asked to deploy/build a Node.js/JS app on hosting (not Agency Plan).\n",
+    "skills/hosting-deploy-static-site/SKILL.md": "\nname: hosting-deploy-static-site\ndescription: >-\n  Deploy a pre-built static site (HTML/CSS/JS, no build step) to a Hostinger \"hosting\" website\n  via public-api, using standalone MCP tools/plain curl instead of a filesystem-driven deploy\n  tool. Use when asked to deploy/upload a static site to hosting (not Agency Plan).\n",
+    "skills/agency-hosting-deploy-php-site/SKILL.md": "\nname: agency-hosting-deploy-php-site\ndescription: >-\n  Deploy a PHP (or other no-build) Agency Plan website from an archive via public-api, using\n  standalone MCP tools/plain curl instead of a filesystem-driven deploy tool. Use when asked to\n  deploy a PHP app to an Agency Plan / h5g / agency-hosting website.\n",
+    "skills/agency-hosting-deploy-static-site/SKILL.md": "\nname: agency-hosting-deploy-static-site\ndescription: >-\n  Deploy a node-static Agency Plan website (Node.js-built static site, or a plain simple static\n  site) from an archive via public-api, using standalone MCP tools/plain curl instead of a\n  filesystem-driven deploy tool. Use when asked to deploy/build a static or node-static app on\n  an Agency Plan / h5g / agency-hosting website.\n",
+    "skills/hosting-deploy-wordpress-site/SKILL.md": "\nname: hosting-deploy-wordpress-site\ndescription: >-\n  Import a full WordPress website (archive + database dump) into a Hostinger \"hosting\" website\n  via public-api, using standalone MCP tools/plain curl instead of a filesystem-driven deploy\n  tool. Use when asked to import/restore a whole WordPress site on hosting (not Agency Plan).\n"
+  }
+}

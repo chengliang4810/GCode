@@ -14,23 +14,21 @@ import (
 )
 
 func TestSceneReadinessRequiresMatchingCommittedGeometry(t *testing.T) {
-	scene := scene{appearance: "light", page: "list", width: 360, height: 560}
-	box := desktop.CompactPickerFixtureBounds{X: 24, Y: 496, Width: 120, Height: 32}
-	state := desktop.CompactPickerFixtureState{
-		Appearance: "light", Page: "list", Width: 360, Height: 560, PopoverOpen: true, GeometryStable: true,
-		Geometry: desktop.CompactPickerFixtureGeometry{Header: box, Row: box, Anchor: box, Popup: box},
+	scene := scene{appearance: "light", width: 360, height: 560}
+	box := desktop.ModelPickerFixtureBounds{X: 24, Y: 496, Width: 120, Height: 32}
+	state := desktop.ModelPickerFixtureState{
+		Appearance: "light", Width: 360, Height: 560, PopoverOpen: true, GeometryStable: true,
+		Geometry: desktop.ModelPickerFixtureGeometry{Header: box, Row: box, Anchor: box, Popup: box},
 	}
 	if !scene.ready(state) {
 		t.Fatal("matching committed scene did not become ready")
 	}
-	for _, missing := range []string{"appearance", "page", "width", "height", "open", "header", "row", "anchor", "popup", "stable", "error"} {
+	for _, missing := range []string{"appearance", "width", "height", "open", "header", "row", "anchor", "popup", "stable", "error"} {
 		t.Run(missing, func(t *testing.T) {
 			stale := state
 			switch missing {
 			case "appearance":
 				stale.Appearance = "dark"
-			case "page":
-				stale.Page = "panel"
 			case "width":
 				stale.Width = 840
 			case "height":
@@ -38,13 +36,13 @@ func TestSceneReadinessRequiresMatchingCommittedGeometry(t *testing.T) {
 			case "open":
 				stale.PopoverOpen = false
 			case "header":
-				stale.Geometry.Header = desktop.CompactPickerFixtureBounds{}
+				stale.Geometry.Header = desktop.ModelPickerFixtureBounds{}
 			case "row":
-				stale.Geometry.Row = desktop.CompactPickerFixtureBounds{}
+				stale.Geometry.Row = desktop.ModelPickerFixtureBounds{}
 			case "anchor":
-				stale.Geometry.Anchor = desktop.CompactPickerFixtureBounds{}
+				stale.Geometry.Anchor = desktop.ModelPickerFixtureBounds{}
 			case "popup":
-				stale.Geometry.Popup = desktop.CompactPickerFixtureBounds{}
+				stale.Geometry.Popup = desktop.ModelPickerFixtureBounds{}
 			case "stable":
 				stale.GeometryStable = false
 			case "error":
@@ -59,7 +57,7 @@ func TestSceneReadinessRequiresMatchingCommittedGeometry(t *testing.T) {
 
 func TestCaptureModesKeepOSAppearanceSeparateFromScene(t *testing.T) {
 	client, err := newCaptureSettings("client", "")
-	if err != nil || client.title() != "Compact picker fixture" || client.theme("dark") != mygo.ThemeDark || client.theme("light") != mygo.ThemeLight {
+	if err != nil || client.title() != "Model picker fixture" || client.theme("dark") != mygo.ThemeDark || client.theme("light") != mygo.ThemeLight {
 		t.Fatalf("default client capture behavior changed: %+v, %v", client, err)
 	}
 	bridge := filepath.Join(t.TempDir(), "fixture-capture.dll")

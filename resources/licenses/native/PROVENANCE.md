@@ -1,6 +1,6 @@
 # Ghostty-VT native library provenance
 
-The terminal uses the native library selected by MyGo v0.6.4's
+The terminal uses the native library selected by the pinned MyGo's
 `plugins/terminal/mygo-plugin.json`, copied verbatim as `ghostty-vt-manifest.json`.
 Its source is **ghostty-org/ghostty commit
 `befcdfd2c3a1cb24d9ec886e93c95b2b5daa7028`**. The exact upstream root license is

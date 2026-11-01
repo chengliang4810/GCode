@@ -1,0 +1,17 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "95380b3cd58f7fbf575ebda0fe291224ba028317",
+  "path": "plugins/code-review",
+  "archive_sha256": "4bb8a835f7363cc7ef6b2b5bbc6d2211e8679dd6d0104784ff9bd070ee589050",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "commands/code-review.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"code-review\",\n  \"description\": \"Automated code review for pull requests using multiple specialized agents with confidence-based scoring\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n\n"
+  },
+  "markdown_frontmatter": {
+    "commands/code-review.md": "\nallowed-tools: Bash(gh issue view:*), Bash(gh search:*), Bash(gh issue list:*), Bash(gh pr comment:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr list:*)\ndescription: Code review a pull request\ndisable-model-invocation: false\n"
+  }
+}

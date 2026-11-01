@@ -1,0 +1,57 @@
+{
+  "pluginId": "code-review@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "headless-diff-review-high-signal",
+      "componentId": "command:code-review:code-review",
+      "prompt": "/code-review:code-review Review the following change WITHOUT the --comment argument, following this command's documented review process adapted to a headless sandbox. Headless boundary: no network, no gh CLI, no GitHub, no MCP tools and no repo mutation; the step 1 PR preconditions (closed/draft/already-commented checks via gh) cannot run here and stay untested, and no GitHub comments may be posted or simulated as posted.\n\nThe change under review is this diff against a single file:\n\n```diff\n--- a/cart/total.py\n+++ b/cart/total.py\n@@ -1,3 +1,10 @@\n def summarize(cart):\n     \"\"\"Return the cart total.\"\"\"\n-    return sum(item.price for item in cart)\n+    total = 0\n+    for item in cart:\n+        total = ttoal + item.price\n+    return apply_loyalty(total)\n+\n+def apply_loyalty(amount):\n+    return amount * 0.95\n```\n\nThe repository CLAUDE.md contains exactly this rule section:\n\n```\n# Project rules\n\n- Every new Python function must include a docstring.\n```\n\nApply the command's HIGH SIGNAL bar: flag only issues where the code will fail to compile or parse, will definitely produce wrong results regardless of inputs, or is an unambiguous CLAUDE.md violation where you quote the exact rule being broken; do NOT flag style, naming, magic numbers, test coverage, pre-existing or linter-only concerns; if you are not certain an issue is real, do not flag it. PR title for context: \"Add loyalty discount to cart totals\". PR description: \"Applies a 5% loyalty discount inside summarize().\"\n\nWrite the review summary you would output to the terminal verbatim into code-review-report.md, and give the same summary in your final response. Requirements for the summary: findings must cite the changed file path cart/total.py and reference the identifiers involved (ttoal, apply_loyalty); the CLAUDE.md finding must quote the exact rule line Every new Python function must include a docstring.; and per the documented no---comment behavior the summary must include the line no GitHub comments were posted. Do not create, modify or delete any repository files; the diff is analysis input only.\n\nThen read the immutable verify_code_review.py and run exactly python verify_code_review.py using Bash; it validates the review record and writes code-review-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: give the review summary, report the actual verifier result, and state that the real PR preconditions, gh-based PR inspection and any comment posting remain untested.",
+      "allowCommands": [
+        "python verify_code_review.py"
+      ],
+      "verifierOutputs": [
+        "code-review-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_code_review.py",
+          "text": "import json\nfrom pathlib import Path\n\nreview = Path('code-review-report.md').read_text(encoding='utf-8')\nlow = review.lower()\nassert 'ttoal' in review, 'the undefined name ttoal must be flagged'\nassert 'apply_loyalty' in review, 'the undocumented new function must be flagged'\nassert 'Every new Python function must include a docstring.' in review, 'the CLAUDE.md rule must be quoted exactly'\nassert 'cart/total.py' in review, 'findings must cite the changed file'\nassert 'no github comments were posted' in low, 'the documented no-comment stop behavior must be stated'\nassert 'successfully posted' not in low, 'the report must not claim any comment was posted'\nreport = {'bug_flagged': True, 'claude_rule_quoted': True, 'file_cited': True,\n          'no_comment_boundary': True, 'no_gh_calls': True}\nPath('code-review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code review report: high-signal findings and no-comment boundary verified; real PR preconditions and gh inspection remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_code_review.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreview = Path('code-review-report.md').read_text(encoding='utf-8')\nlow = review.lower()\nassert 'ttoal' in review, 'the undefined name ttoal must be flagged'\nassert 'apply_loyalty' in review, 'the undocumented new function must be flagged'\nassert 'Every new Python function must include a docstring.' in review, 'the CLAUDE.md rule must be quoted exactly'\nassert 'cart/total.py' in review, 'findings must cite the changed file'\nassert 'no github comments were posted' in low, 'the documented no-comment stop behavior must be stated'\nassert 'successfully posted' not in low, 'the report must not claim any comment was posted'\nreport = {'bug_flagged': True, 'claude_rule_quoted': True, 'file_cited': True,\n          'no_comment_boundary': True, 'no_gh_calls': True}\nPath('code-review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code review report: high-signal findings and no-comment boundary verified; real PR preconditions and gh inspection remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "code-review-verification.json",
+          "equals": "{\"bug_flagged\": true, \"claude_rule_quoted\": true, \"file_cited\": true, \"no_comment_boundary\": true, \"no_gh_calls\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "code-review-report.md",
+          "contains": "ttoal"
+        },
+        {
+          "kind": "file",
+          "path": "code-review-report.md",
+          "contains": "Every new Python function must include a docstring."
+        },
+        {
+          "kind": "file",
+          "path": "code-review-report.md",
+          "contains": "cart/total.py"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Code review report: high-signal findings and no-comment boundary verified; real PR preconditions and gh inspection remain untested"
+        }
+      ]
+    }
+  ]
+}

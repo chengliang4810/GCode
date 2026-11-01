@@ -1,0 +1,27 @@
+{
+  "repo": "qodo-ai/qodo-skills",
+  "commit": "b8c21854199c538b1c35c981c12a93bab4839ef2",
+  "path": "packages/qodo-standards",
+  "archive_sha256": "c26825e7145032714fd4060426521b4bdf077d1ead27a6bb54608b9a7573cc24",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "plugin.json",
+    "skills/qodo-get-rules/SKILL.md",
+    "skills/qodo-get-rules/agents/openai.yaml",
+    "skills/qodo-get-rules/references/skill-updates.md",
+    "skills/qodo-get-rules/references/windows-launcher.md",
+    "skills/qodo-get-rules/references/windows-shells.md",
+    "skills/qodo-manage-standards/SKILL.md",
+    "skills/qodo-manage-standards/agents/openai.yaml",
+    "skills/qodo-manage-standards/references/skill-updates.md",
+    "skills/qodo-manage-standards/references/windows-launcher.md",
+    "skills/qodo-manage-standards/references/windows-shells.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"qodo-standards\",\n  \"version\": \"2.1.2\",\n  \"description\": \"Optional Qodo standards discovery and review rules/skills administration workflows.\",\n  \"author\": {\n    \"name\": \"Qodo\",\n    \"email\": \"support@qodo.ai\",\n    \"url\": \"https://www.qodo.ai\"\n  },\n  \"homepage\": \"https://www.qodo.ai\",\n  \"repository\": \"https://github.com/qodo-ai/qodo-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"qodo\",\n    \"code-review\",\n    \"code-intelligence\",\n    \"standards\",\n    \"coding-agents\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/qodo-get-rules/SKILL.md": "\nname: qodo-get-rules\ndescription: Retrieve and apply Qodo coding rules relevant to implementation, planning, refactoring, or code review. Use on \"get rules\", \"load qodo rules\", or \"relevant standards\" and when starting a concrete coding task. Reuse rules already retrieved for the same workspace, repository, and task scope; refresh when that scope changes.\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.1.6\"\n  recommended: \"false\"\n  package: \"qodo-standards\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n",
+    "skills/qodo-manage-standards/SKILL.md": "\nname: qodo-manage-standards\ndescription: Discover, configure, and manage Qodo Review Standards using managed tools through MCP or the CLI. Use to set up a skills/plugin repository for reviews, map review skills to target repositories, change skill scope or rules/steering mode, capture a convention as a rule, edit or deactivate rules, or triage suggestions. For reading and applying rules use qodo-get-rules; installing local coding-agent skills uses qodo-setup.\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.0.7\"\n  recommended: \"false\"\n  package: \"qodo-standards\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n"
+  }
+}

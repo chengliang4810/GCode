@@ -1,0 +1,22 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/commit-commands",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "commands/clean_gone.md",
+    "commands/commit-push-pr.md",
+    "commands/commit.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"commit-commands\",\n  \"description\": \"Streamline your git workflow with simple commands for committing, pushing, and creating pull requests\",\n  \"version\": \"1.0.1\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n\n"
+  },
+  "markdown_frontmatter": {
+    "commands/commit-push-pr.md": "\nallowed-tools: Bash(git checkout --branch:*), Bash(git add:*), Bash(git status:*), Bash(git push:*), Bash(git commit:*), Bash(gh pr create:*)\ndescription: Commit, push, and open a PR\n",
+    "commands/clean_gone.md": "\ndescription: Cleans up all git branches marked as [gone] (branches that have been deleted on the remote but still exist locally), including removing associated worktrees.\n",
+    "commands/commit.md": "\nallowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*)\ndescription: Create a git commit\n"
+  }
+}

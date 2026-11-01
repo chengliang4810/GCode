@@ -1,0 +1,518 @@
+diff --git a/third_party/mygo/ui/access.go b/third_party/mygo/ui/access.go
+index b665ae3..2c1112b 100644
+--- a/third_party/mygo/ui/access.go
++++ b/third_party/mygo/ui/access.go
+@@ -499,6 +499,9 @@ func (rt *engine) accessDetails(e *node, n *platform.AccessNode) {
+ 			n.SelStart, n.SelEnd = ed.selection()
+ 		}
+ 	}
++	if e.textClient != nil {
++		n.Actions |= platform.ActionSetValue
++	}
+ 	if e.accFill != nil {
+ 		e.accFill(n)
+ 	}
+@@ -593,12 +596,23 @@ func (rt *engine) accessAction(ev platform.SurfaceEvent) {
+ 			s.input(InputEvent{Kind: InputSelect, Start: ev.From, End: ev.To, Time: rt.now()})
+ 		}
+ 	case platform.AccessSetValue:
++		if s.textClient != nil {
++			rt.focusOn(s)
++			_, span := s.textClient.TextForRange(TextInputRange{End: int(^uint(0) >> 1)})
++			s.textClient.ReplaceText(&span, ev.Text)
++			break
++		}
+ 		if s.editor == nil || s.flags&flagEditable == 0 || s.editor.readOnly {
+ 			return
+ 		}
+ 		rt.focusOn(s)
+ 		s.editor.queue = append(s.editor.queue, editEvent{kind: editCommand, text: "selectAll"}, editEvent{kind: editInsert, text: ev.Text})
+ 	case platform.AccessInsertText:
++		if s.textClient != nil {
++			rt.focusOn(s)
++			s.textClient.ReplaceText(nil, ev.Text)
++			break
++		}
+ 		if s.editor == nil || s.flags&flagEditable == 0 || s.editor.readOnly {
+ 			return
+ 		}
+diff --git a/third_party/mygo/ui/access_text_client_test.go b/third_party/mygo/ui/access_text_client_test.go
+new file mode 100644
+index 0000000..91eb98c
+--- /dev/null
++++ b/third_party/mygo/ui/access_text_client_test.go
+@@ -0,0 +1,38 @@
++package ui
++
++import (
++	"testing"
++
++	"github.com/egoist/mygo/internal/platform"
++)
++
++func TestAccessibilityEditsCustomTextInputClient(t *testing.T) {
++	client := &primitiveClient{text: "A😀bc"}
++	disabled := false
++	tt := coreNewTester(func(c *context) {
++		coreBox(c).Size(250, 80).Role(RoleTextField).Label("Custom editor").
++			HandleTextInput(client).Disabled(disabled).
++			Access(func(n *platform.AccessNode) { n.Value = client.text })
++	}, 300, 100)
++	defer tt.rt.close()
++	tt.send(platform.SurfaceEvent{Kind: platform.AccessibilityOn})
++	field := accessNode(t, tt.h.access, platform.RoleTextField, "Custom editor")
++	if field.Actions&platform.ActionSetValue == 0 {
++		t.Fatal("custom text client does not advertise setValue")
++	}
++	tt.send(platform.SurfaceEvent{Kind: platform.AccessAction, ID: field.ID, Action: platform.AccessSetValue, Text: "你😀"})
++	if client.text != "你😀" || tt.h.access.Focus != field.ID {
++		t.Fatalf("setValue text %q, focus %d", client.text, tt.h.access.Focus)
++	}
++	client.selection.Range = TextInputRange{Start: 1, End: 3}
++	tt.send(platform.SurfaceEvent{Kind: platform.AccessAction, ID: field.ID, Action: platform.AccessInsertText, Text: "X"})
++	if client.text != "你X" {
++		t.Fatalf("insertText did not replace the UTF-16 selection: %q", client.text)
++	}
++	disabled = true
++	tt.Frame()
++	tt.send(platform.SurfaceEvent{Kind: platform.AccessAction, ID: field.ID, Action: platform.AccessSetValue, Text: "blocked"})
++	if client.text != "你X" {
++		t.Fatalf("disabled client was edited: %q", client.text)
++	}
++}
+diff --git a/third_party/mygo/ui/richtext/clipboard.go b/third_party/mygo/ui/richtext/clipboard.go
+index 1d44ead..ebcac52 100644
+--- a/third_party/mygo/ui/richtext/clipboard.go
++++ b/third_party/mygo/ui/richtext/clipboard.go
+@@ -178,9 +178,18 @@ func (c clipText) text() Text {
+ 	return TextOf(paras...)
+ }
+ 
+-// PlainText returns t as plain text, its attachments left out.
++// PlainText returns t as plain text, replacing attachments with their names.
++// Unnamed attachments are left out.
+ func (t Text) PlainText() string {
+-	return strings.ReplaceAll(t.String(), string(ObjectReplacement), "")
++	var out strings.Builder
++	for _, run := range t.Runs(0, t.Len()) {
++		name := ""
++		if a := run.Attributes.Attachment; a != nil {
++			name = a.Name
++		}
++		out.WriteString(strings.ReplaceAll(run.Text, string(ObjectReplacement), name))
++	}
++	return out.String()
+ }
+ 
+ // clipboardData returns t as the clipboard takes it: in the format of
+diff --git a/third_party/mygo/ui/richtext/composer_hooks_test.go b/third_party/mygo/ui/richtext/composer_hooks_test.go
+new file mode 100644
+index 0000000..c442e26
+--- /dev/null
++++ b/third_party/mygo/ui/richtext/composer_hooks_test.go
+@@ -0,0 +1,184 @@
++package richtext
++
++import (
++	"math"
++	"strings"
++	"testing"
++
++	"github.com/egoist/mygo/transfer"
++	"github.com/egoist/mygo/ui"
++)
++
++func TestEditorKeyHookSeesCurrentDocumentAndConsumesEnter(t *testing.T) {
++	doc := NewDocument(Text{})
++	var sent string
++	var state EditorState
++	tt := ui.NewTester(func(c *ui.Context) {
++		EditorBase(c, doc, EditorOptions{
++			State: &state, NoMarkdown: true,
++			OnKey: func(ev ui.InputEvent, composing bool) bool {
++				if ev.Key != ui.KeyEnter {
++					return false
++				}
++				if composing {
++					return true
++				}
++				sent = doc.Text().String()
++				doc.SetText(Text{})
++				return true
++			},
++		}).Fill().AutoFocus()
++	}, 300, 100)
++	tt.Type("最新文字")
++	tt.Key(0, ui.KeyEnter)
++	if sent != "最新文字" || doc.Text().String() != "" || state.DisplayText != "" {
++		t.Fatalf("sent %q, document %q, display %q", sent, doc.Text().String(), state.DisplayText)
++	}
++	tt.Type("ab")
++	tt.Key(0, ui.KeyLeft)
++	tt.Type("x")
++	if got := doc.Text().String(); got != "axb" {
++		t.Fatalf("unconsumed key did not retain native editing: %q", got)
++	}
++}
++
++func TestEditorKeyHookLeavesCompositionUncommitted(t *testing.T) {
++	doc := NewDocument(NewText("A"))
++	var state EditorState
++	seen := false
++	v := view{doc: doc, caret: 1, selAnchor: 1, opts: EditorOptions{
++		State: &state,
++		OnKey: func(ev ui.InputEvent, composing bool) bool {
++			seen = composing && ev.Key == ui.KeyEnter
++			return seen
++		},
++	}}
++	v.sync()
++	v.SetMarkedText(nil, "你好", ui.TextInputRange{Start: 2, End: 2})
++	if !v.input(ui.InputEvent{Kind: ui.InputKeyDown, Key: ui.KeyEnter}) {
++		t.Fatal("composition Enter was not consumed")
++	}
++	if !seen || doc.Text().String() != "A" || state.DisplayText != "A你好" || !state.Composing {
++		t.Fatalf("seen %v, text %q, state %+v", seen, doc.Text().String(), state)
++	}
++	if v.compose != "你好" {
++		t.Fatalf("marked text changed to %q", v.compose)
++	}
++}
++
++func TestEditorPasteHookSupportsShortcutMenuAndFallthrough(t *testing.T) {
++	doc := NewDocument(NewText("A"))
++	taken, calls := true, 0
++	var state EditorState
++	tt := ui.NewTester(func(c *ui.Context) {
++		EditorBase(c, doc, EditorOptions{
++			State:   &state,
++			OnPaste: func() bool { calls++; return taken },
++		}).Fill().AutoFocus()
++	}, 300, 100)
++	tt.SetClipboard("paste")
++	tt.Key(ui.Cmd, ui.KeyV)
++	tt.Command("paste")
++	if calls != 2 || doc.Text().String() != "A" || doc.CanUndo() {
++		t.Fatalf("consumed paste calls %d, text %q, undo %v", calls, doc.Text().String(), doc.CanUndo())
++	}
++	taken = false
++	tt.Command("pasteAndMatchStyle")
++	if calls != 3 || doc.Text().String() != "Apaste" {
++		t.Fatalf("fallthrough calls %d, text %q", calls, doc.Text().String())
++	}
++	tt.Key(ui.Cmd, ui.KeyZ)
++	if got := doc.Text().String(); got != "A" {
++		t.Fatalf("paste undo %q", got)
++	}
++}
++
++func TestEditorStateMeasuresWrapsContentAndFixedLineHeight(t *testing.T) {
++	doc := NewDocument(NewText("a\nb\nc"))
++	var state EditorState
++	width := float32(300)
++	var heightSeenByView float32
++	theme := &Theme{FixedLineHeight: 22.75}
++	tt := ui.NewTester(func(c *ui.Context) {
++		heightSeenByView = state.ContentHeight
++		EditorBase(c, doc, EditorOptions{State: &state, Theme: theme, Font: ui.Font{Size: 14}}).
++			Width(width).Height(35).AutoFocus()
++	}, 400, 100)
++	if got := state.ContentHeight; math.Abs(float64(got-3*22.75)) > 0.01 {
++		t.Fatalf("three fixed-height lines measure %v", got)
++	}
++	if heightSeenByView != state.ContentHeight {
++		t.Fatalf("measurement did not request a frame: view %v, state %v", heightSeenByView, state.ContentHeight)
++	}
++	doc.SetText(NewText(strings.Repeat("word ", 18)))
++	tt.Frame()
++	wide := state.ContentHeight
++	width = 80
++	tt.Frame()
++	narrow := state.ContentHeight
++	if narrow <= wide {
++		t.Fatalf("width change did not update height: wide %v, narrow %v", wide, narrow)
++	}
++	if heightSeenByView != narrow {
++		t.Fatalf("width measurement did not request a frame: view %v, state %v", heightSeenByView, narrow)
++	}
++	doc.SetText(NewText("short"))
++	tt.Frame()
++	if math.Abs(float64(state.ContentHeight-22.75)) > 0.01 || state.DisplayText != "short" {
++		t.Fatalf("content change did not update state: %+v", state)
++	}
++	doc.InsertAttachment(&Attachment{Name: "Skill", Width: 30, Height: 14})
++	tt.Frame()
++	if !strings.ContainsRune(state.DisplayText, ObjectReplacement) || strings.Contains(state.DisplayText, "Skill") {
++		t.Fatalf("display must keep the object replacement character: %q", state.DisplayText)
++	}
++}
++
++func TestEditorContentPaddingSetsAsymmetricTextBounds(t *testing.T) {
++	doc := NewDocument(NewText("one two three four five six"))
++	var state EditorState
++	var editor *view
++	padding := [4]float32{16, 23, 4, 11}
++	tt := ui.NewTester(func(c *ui.Context) {
++		element := EditorBase(c, doc, EditorOptions{
++			State: &state, ContentPadding: padding, Theme: &Theme{FixedLineHeight: 22.75},
++		}).Width(160).Height(90).AutoFocus()
++		editor = ui.Local(element, "richtext", func() view { return view{} })
++	}, 220, 120)
++	if editor.width != 126 || editor.viewH != 70 {
++		t.Fatalf("content box %v x %v, want 126 x 70", editor.width, editor.viewH)
++	}
++	if editor.padX != 11 || editor.padY != 16 || editor.padRight != 23 || editor.padBottom != 4 {
++		t.Fatalf("padding %+v", editor.opts.ContentPadding)
++	}
++	paddedHeight := state.ContentHeight
++	padding = [4]float32{}
++	tt.Frame()
++	if editor.width != 160 || editor.viewH != 90 || editor.padX != 0 || editor.padY != 0 {
++		t.Fatalf("default EditorBase bounds: %v x %v, padding %v,%v", editor.width, editor.viewH, editor.padX, editor.padY)
++	}
++	if state.ContentHeight > paddedHeight {
++		t.Fatalf("removing padding increased wrap height: %v > %v", state.ContentHeight, paddedHeight)
++	}
++}
++
++func TestAttachmentNamesSurvivePlainTextClipboard(t *testing.T) {
++	named := Attributes{Attachment: &Attachment{Name: "Review"}}
++	unnamed := Attributes{Attachment: &Attachment{}}
++	text := TextOf(
++		Paragraph{Runs: []Run{
++			{Text: "Use "}, {Text: string(ObjectReplacement), Attributes: named},
++			{Text: " and "}, {Text: string(ObjectReplacement), Attributes: unnamed},
++		}},
++		Paragraph{Runs: []Run{{Text: "Second "}, {Text: string(ObjectReplacement), Attributes: named}}},
++	)
++	want := "Use Review and \nSecond Review"
++	if got := text.PlainText(); got != want {
++		t.Fatalf("plain text %q, want %q", got, want)
++	}
++	data := clipboardData(text)
++	plain, err := data.Read(transfer.Text)
++	if err != nil || string(plain) != want {
++		t.Fatalf("clipboard plain text %q, %v", plain, err)
++	}
++}
+diff --git a/third_party/mygo/ui/richtext/editor_state.go b/third_party/mygo/ui/richtext/editor_state.go
+new file mode 100644
+index 0000000..cea5e23
+--- /dev/null
++++ b/third_party/mygo/ui/richtext/editor_state.go
+@@ -0,0 +1,16 @@
++package richtext
++
++// publishState copies current display data without changing the document, its
++// selection or its undo history. The editor's layout remains private.
++func (v *view) publishState() {
++	if state := v.opts.State; state != nil {
++		state.Composing = v.compose != ""
++		text := v.shown.String()
++		if v.compose != "" {
++			runes := []rune(text)
++			at := min(max(v.caret, 0), len(runes))
++			text = string(runes[:at]) + v.compose + string(runes[at:])
++		}
++		state.DisplayText = text
++	}
++}
+diff --git a/third_party/mygo/ui/richtext/input.go b/third_party/mygo/ui/richtext/input.go
+index 7542179..7ded747 100644
+--- a/third_party/mygo/ui/richtext/input.go
++++ b/third_party/mygo/ui/richtext/input.go
+@@ -17,6 +17,16 @@ func (v *view) input(ev ui.InputEvent) bool {
+ 	defer v.publish()
+ 	switch ev.Kind {
+ 	case ui.InputKeyDown:
++		if v.opts.OnKey != nil {
++			v.publish()
++			taken := v.opts.OnKey(ev, v.compose != "")
++			v.sync()
++			v.publishState()
++			if taken {
++				v.blinkStart = ev.Time
++				return true
++			}
++		}
+ 		if v.key(ev.Key, ev.Mods) {
+ 			v.blinkStart = ev.Time
+ 			return true
+@@ -494,6 +504,14 @@ func (v *view) editCommand(name string) bool {
+ 		return true
+ 	case "paste", "pasteAndMatchStyle":
+ 		if !v.opts.ReadOnly {
++			if v.opts.OnPaste != nil {
++				v.publish()
++				taken := v.opts.OnPaste()
++				v.sync()
++				if taken {
++					return true
++				}
++			}
+ 			v.paste(name == "pasteAndMatchStyle")
+ 		}
+ 		return true
+diff --git a/third_party/mygo/ui/richtext/paint.go b/third_party/mygo/ui/richtext/paint.go
+index 085ef8a..0f485fa 100644
+--- a/third_party/mygo/ui/richtext/paint.go
++++ b/third_party/mygo/ui/richtext/paint.go
+@@ -12,12 +12,24 @@ import (
+ // composition, the caret and the scroll bar.
+ func (v *view) paint(p *ui.Painter, r ui.Rect) {
+ 	v.rect = r
+-	w, h := max(r.W-2*v.padX, 1), max(r.H-2*v.padY, 1)
++	w, h := max(r.W-v.padX-v.padRight, 1), max(r.H-v.padY-v.padBottom, 1)
+ 	v.layout(w, h)
++	if state := v.opts.State; state != nil {
++		for i := range v.paras {
++			v.paraLayout(i)
++		}
++		v.layout(w, h)
++		height := float32(v.hs.top(len(v.paras)))
++		if state.ContentHeight != height {
++			state.ContentHeight = height
++			v.services.Invalidate()
++		}
++		v.publishState()
++	}
+ 	ox, oy := r.X+v.padX, r.Y+v.padY
+ 	look := &v.look
+ 	if v.shown.Len() == 0 && v.compose == "" && v.opts.Placeholder != "" {
+-		pl := ui.ShapeRichTextWith([]ui.Span{{Text: v.opts.Placeholder}}, v.paraFont(v.para(0).style), ui.TextShape{Width: w})
++		pl := ui.ShapeRichTextWith([]ui.Span{{Text: v.opts.Placeholder}}, v.paraFont(v.para(0).style), ui.TextShape{Width: w, FixedLineHeight: look.FixedLineHeight})
+ 		p.TextLayout(pl, ox, oy, look.Muted)
+ 	}
+ 	a, z := v.selection()
+diff --git a/third_party/mygo/ui/richtext/theme.go b/third_party/mygo/ui/richtext/theme.go
+index c843352..71b2572 100644
+--- a/third_party/mygo/ui/richtext/theme.go
++++ b/third_party/mygo/ui/richtext/theme.go
+@@ -11,6 +11,9 @@ import "github.com/egoist/mygo/ui"
+ //
+ // Lengths in ems are times the editor's font size (EditorOptions.Font).
+ type Theme struct {
++	// FixedLineHeight sets every line's height in DIPs, independent of font
++	// fallback metrics. Zero keeps the natural line height.
++	FixedLineHeight float32
+ 	// Text colors text, Muted the placeholder, the text of tasks done and
+ 	// the boxes of those to do, and Link links.
+ 	Text, Muted, Link ui.Color
+diff --git a/third_party/mygo/ui/richtext/view.go b/third_party/mygo/ui/richtext/view.go
+index 9a50b44..66e68b5 100644
+--- a/third_party/mygo/ui/richtext/view.go
++++ b/third_party/mygo/ui/richtext/view.go
+@@ -16,6 +16,20 @@ import (
+ 
+ // EditorOptions configure an Editor.
+ type EditorOptions struct {
++	// OnKey sees a key before the editor handles it. The document contains
++	// the latest text and selection. Returning true consumes the key.
++	// composing reports an input method's uncommitted marked text.
++	OnKey func(ev ui.InputEvent, composing bool) bool
++	// OnPaste sees paste commands before the editor reads the clipboard.
++	// Returning true consumes the paste, as when an app handles an image.
++	OnPaste func() bool
++	// State receives plain snapshots on the UI thread. Requesting it also
++	// measures all paragraphs for ContentHeight, rather than estimating
++	// paragraphs outside the viewport.
++	State *EditorState
++	// ContentPadding overrides the text's internal padding, in DIPs:
++	// top, right, bottom, left. An all-zero value keeps the default.
++	ContentPadding [4]float32
+ 	// Label names the editor to assistive technology; "Rich text" when
+ 	// empty.
+ 	Label string
+@@ -45,6 +59,16 @@ type EditorOptions struct {
+ 	Theme *Theme
+ }
+ 
++// EditorState contains data snapshots, never build-scoped UI values. DisplayText
++// includes uncommitted marked text and keeps attachments as U+FFFC. ContentHeight
++// is the measured text height in DIPs, excluding the editor's padding; it updates
++// after layout, and requests another frame when it changes.
++type EditorState struct {
++	Composing     bool
++	DisplayText   string
++	ContentHeight float32
++}
++
+ // Editor creates an editor of doc's attributed text, as NSTextView edits
+ // attributed text: bold, italic, underline, strikethrough, code, fonts,
+ // sizes and colors, links, headings, lists, tasks, quotations, blocks of
+@@ -100,14 +124,14 @@ type view struct {
+ 	// the room around the text in the element.
+ 	width, viewH float32
+ 	// laidLook is the look the layouts were made in.
+-	laidLook    lookKey
+-	padX, padY  float32
+-	rect        ui.Rect
+-	scroll      float64
+-	anchor      int
+-	anchorOff   float64
+-	reveal      bool
+-	first, last int
++	laidLook                        lookKey
++	padX, padY, padRight, padBottom float32
++	rect                            ui.Rect
++	scroll                          float64
++	anchor                          int
++	anchorOff                       float64
++	reveal                          bool
++	first, last                     int
+ 	// The selection, in runes: anchor and caret, and the caret's visual
+ 	// edge.
+ 	selAnchor, caret int
+@@ -215,6 +239,7 @@ func build(c *ui.Context, doc *Document, options []EditorOptions, styled bool) u
+ 	v.services = c.Services()
+ 	v.setLook(t, styled)
+ 	v.sync()
++	v.publishState()
+ 	focused := e.Focused()
+ 	if focused != v.focused {
+ 		v.focused = focused
+@@ -279,6 +304,10 @@ func (v *view) setLook(t *ui.Theme, styled bool) {
+ 	} else {
+ 		v.padX, v.padY = 0, 0
+ 	}
++	v.padRight, v.padBottom = v.padX, v.padY
++	if p := v.opts.ContentPadding; p != ([4]float32{}) {
++		v.padY, v.padRight, v.padBottom, v.padX = max(0, p[0]), max(0, p[1]), max(0, p[2]), max(0, p[3])
++	}
+ }
+ 
+ // sync gets the editor in step with its document: the paragraphs that
+@@ -612,7 +641,7 @@ func (v *view) paraLayout(p int) *paraView {
+ 	}
+ 	// The indent is on the side the paragraph starts at, the right of one
+ 	// reading right to left.
+-	shape := ui.TextShape{Width: v.look.width, Align: para.style.Align, Indent: indent}
++	shape := ui.TextShape{Width: v.look.width, Align: para.style.Align, Indent: indent, FixedLineHeight: v.look.FixedLineHeight}
+ 	l := ui.ShapeRichTextWith(spans, v.paraFont(para.style), shape)
+ 	units := pv.units[:0]
+ 	units = append(units, 0)
+diff --git a/third_party/mygo/ui/text_layout.go b/third_party/mygo/ui/text_layout.go
+index 2f00b21..aab58be 100644
+--- a/third_party/mygo/ui/text_layout.go
++++ b/third_party/mygo/ui/text_layout.go
+@@ -97,6 +97,9 @@ func ShapeRichText(spans []Span, font Font, width float32) *TextLayout {
+ type TextShape struct {
+ 	// Width wraps lines at it, in DIPs; zero only breaks at newlines.
+ 	Width float32
++	// FixedLineHeight sets the height of lines in DIPs. Zero keeps the
++	// font's natural line height, as before.
++	FixedLineHeight float32
+ 	// Align aligns the lines within Width: Start (the default, the right
+ 	// in right-to-left paragraphs, and of a right-to-left Direction),
+ 	// Center or End.
+@@ -141,8 +144,8 @@ func shapeText(s string, font Font, width float32, spans []Span) *TextLayout {
+ func shapeTextAligned(s string, font Font, shape TextShape, spans []Span) *TextLayout {
+ 	params := text.Params{Text: s, Style: font.style(), Width: shape.Width, KeepSpaces: true, Spans: encodeSpans(spans), RTL: shape.Direction == RightToLeft,
+ 		Justify: shape.Justify, Indent: shape.Indent, NoBreakWords: shape.NoBreakWords}
+-	if shape.Justify {
+-		text.Shared().UseJustify()
++	if shape.FixedLineHeight > 0 {
++		params.Style.LineHeight = shape.FixedLineHeight / params.Style.FontSize()
+ 	}
+ 	switch {
+ 	case shape.Align == Center:

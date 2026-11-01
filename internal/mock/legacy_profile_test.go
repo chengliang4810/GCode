@@ -27,7 +27,7 @@ func TestLegacyProfileHistoryAndEditsStayIsolatedFromFreshReviewScenario(t *test
 	legacy.Sessions[0].Title = "My renamed conversation"
 	legacy.Settings.Appearance.Mode = "light"
 	legacy.Settings.Appearance.FontSize = 18
-	legacy.Settings.SidebarCompact = false
+	legacy.Settings.SidebarGrouping = "timeline"
 	legacy.Settings.ModelPicker.Selections = map[string]contracts.ModelSelection{"openai": {ModelID: "gpt-5.4", Reasoning: "Extra high"}}
 	for i := range legacy.Files {
 		if legacy.Files[i].ID == "file-layout" {
@@ -62,7 +62,7 @@ func TestLegacyProfileHistoryAndEditsStayIsolatedFromFreshReviewScenario(t *test
 	if loaded.Sessions[0].Title != "My renamed conversation" || len(loaded.Messages["chat-0"]) != 4 || loaded.Messages["chat-0"][1].Blocks[0].Text != legacyReply || loaded.Messages["chat-0"][3].Blocks[0].Text != "This is stored user history." {
 		t.Fatal("old fixture identification rewrote or removed user history")
 	}
-	if loaded.Settings.Appearance.Mode != "light" || loaded.Settings.Appearance.FontSize != 18 || loaded.Settings.SidebarCompact || loaded.Settings.ModelPicker.Selections["openai"].ModelID != "gpt-5.4" {
+	if loaded.Settings.Appearance.Mode != "light" || loaded.Settings.Appearance.FontSize != 18 || loaded.Settings.SidebarGrouping != "timeline" || loaded.Settings.ModelPicker.Selections["openai"].ModelID != "gpt-5.4" {
 		t.Fatal("opening old profile replaced saved preferences")
 	}
 	for _, file := range loaded.Files {

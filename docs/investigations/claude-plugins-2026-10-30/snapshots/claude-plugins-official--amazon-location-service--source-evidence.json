@@ -1,0 +1,30 @@
+{
+  "repo": "awslabs/agent-plugins",
+  "commit": "097fe8ad56d8a1d5e2c81d7880adf145553cf244",
+  "path": "plugins/amazon-location-service",
+  "archive_sha256": "cf37c60ab4ea488cb912a79d40eb1d09967f92933305fafa24cc93eeb4554965",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "skills/amazon-location-service/SKILL.md",
+    "skills/amazon-location-service/references/address-input.md",
+    "skills/amazon-location-service/references/address-verification.md",
+    "skills/amazon-location-service/references/calculate-routes.md",
+    "skills/amazon-location-service/references/device-tracking.md",
+    "skills/amazon-location-service/references/dynamic-map.md",
+    "skills/amazon-location-service/references/google-migration-android.md",
+    "skills/amazon-location-service/references/google-migration-ios.md",
+    "skills/amazon-location-service/references/google-migration-web.md",
+    "skills/amazon-location-service/references/places-search.md",
+    "skills/amazon-location-service/references/web-javascript.md",
+    "skills/amazon-location-service/references/zone-alerts.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"author\": {\n    \"name\": \"Amazon Web Services\"\n  },\n  \"description\": \"Guide developers through adding maps, places search, geocoding, routing, and other geospatial features with Amazon Location Service, including authentication setup, SDK integration, and best practices.\",\n  \"keywords\": [\n    \"location\",\n    \"maps\",\n    \"geocoding\",\n    \"routing\",\n    \"places\",\n    \"geofencing\",\n    \"tracking\",\n    \"amazon-location\",\n    \"maplibre\",\n    \"address\",\n    \"coordinates\"\n  ],\n  \"license\": \"Apache-2.0\",\n  \"name\": \"amazon-location-service\",\n  \"repository\": \"https://github.com/awslabs/agent-plugins\",\n  \"version\": \"1.1.0\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"aws-mcp\": {\n      \"args\": [\n        \"mcp-proxy-for-aws@latest\",\n        \"https://aws-mcp.us-east-1.api.aws/mcp\"\n      ],\n      \"command\": \"uvx\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/amazon-location-service/SKILL.md": "\nname: amazon-location-service\ndescription: Integrates Amazon Location Service APIs for AWS applications. Use this skill when users want to add maps (interactive MapLibre or static images); geocode addresses to coordinates or reverse geocode coordinates to addresses; calculate routes, travel times, or service areas; find places and businesses through text search, nearby search, or autocomplete suggestions; retrieve detailed place information including hours, contacts, and addresses; monitor geographical boundaries with geofences; or track device locations. Covers authentication, SDK integration, and all Amazon Location Service capabilities.\nlicense: Apache-2.0\nmetadata:\n  author: aws-geospatial\n  version: \"1.1\"\n"
+  }
+}

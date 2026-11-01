@@ -37,7 +37,7 @@ Full-view and focused-region reference comparison therefore remain blocked.
   result pending recheck.
 - Assets: source fonts/icons byte-verified; formula/diagram resources use
   original renderers. Image/diagram sizing and preview behavior need visual QA.
-- Copy/content: Zeron branding and English retained, no mock banners; all
+- Copy/content: GCode branding; Simplified Chinese by default with optional English, no mock banners; all
   source copy and conditional state combinations still require full audit.
 
 ## Iteration history
@@ -59,8 +59,9 @@ do not remove the reference/native interaction blockers described above.
 3. OS observation: light Windows backdrop under forced dark UI reduced contrast.
    Implemented native theme source sync and original window tint contrast guard.
    User stopped Computer Use before the next native iteration.
-4. Source 0.2.128 interaction pass: added model effort/favorites, native clipboard
-   and file drop, source background effects and exact Markdown line heights.
+4. Source 0.2.128 interaction pass: added model effort and favorites (favorites
+   were removed on 2026-10-30), native clipboard and file drop, source background
+   effects and exact Markdown line heights.
    Seventy-seven deterministic implementation captures were generated; no
    reference equality is inferred from their successful rendering.
 5. Screenshot review exposed Mermaid's missing SVG text. The reference usvg/

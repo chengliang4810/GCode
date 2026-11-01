@@ -1,0 +1,34 @@
+{
+  "repo": "Shopify/liquid-skills",
+  "commit": "ae3e4cc3f454923e388bbd841fd931f0c7bf5be4",
+  "path": "plugins/liquid-skills",
+  "archive_sha256": "bfe95bc1069fc54265dfe4b23ac4deb7df1de7efa0faac2b580cd98541445c66",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/liquid-theme-a11y/SKILL.md",
+    "skills/liquid-theme-a11y/references/component-patterns.md",
+    "skills/liquid-theme-a11y/references/focus-and-keyboard.md",
+    "skills/liquid-theme-standards/SKILL.md",
+    "skills/liquid-theme-standards/references/css-patterns.md",
+    "skills/liquid-theme-standards/references/javascript-patterns.md",
+    "skills/shopify-liquid-themes/SKILL.md",
+    "skills/shopify-liquid-themes/references/examples.md",
+    "skills/shopify-liquid-themes/references/filters-commerce.md",
+    "skills/shopify-liquid-themes/references/filters-html-media.md",
+    "skills/shopify-liquid-themes/references/filters-language.md",
+    "skills/shopify-liquid-themes/references/objects-commerce.md",
+    "skills/shopify-liquid-themes/references/objects-content.md",
+    "skills/shopify-liquid-themes/references/objects-tier2.md",
+    "skills/shopify-liquid-themes/references/objects-tier3.md",
+    "skills/shopify-liquid-themes/references/schema-and-settings.md",
+    "skills/shopify-liquid-themes/references/tags.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"liquid-skills\",\n  \"description\": \"Liquid language fundamentals, CSS/JS/HTML coding standards, and WCAG accessibility patterns for Shopify themes\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"Shopify\"\n  },\n  \"repository\": \"https://github.com/Shopify/liquid-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"liquid\", \"shopify\", \"theme\", \"accessibility\", \"css\", \"javascript\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/liquid-theme-a11y/SKILL.md": "\nname: liquid-theme-a11y\ndescription: \"Implement WCAG 2.2 accessibility patterns in Shopify Liquid themes. Covers e-commerce-specific components including product cards, carousels, cart drawers, price display, forms, filters, and modals. Use when building accessible theme components, fixing accessibility issues, or reviewing ARIA patterns in .liquid files.\"\n",
+    "skills/shopify-liquid-themes/SKILL.md": "\nname: shopify-liquid-themes\ndescription: \"Generate Shopify Liquid theme code (sections, blocks, snippets) with correct schema JSON, LiquidDoc headers, translation keys, and CSS/JS patterns. Use when creating or editing .liquid files for Shopify themes, working with schema, doc, stylesheet, javascript tags, or Shopify Liquid objects/filters/tags.\"\n",
+    "skills/liquid-theme-standards/SKILL.md": "\nname: liquid-theme-standards\ndescription: \"CSS, JavaScript, and HTML coding standards for Shopify Liquid themes. Covers BEM naming inside stylesheet tags, design tokens, CSS custom properties, Web Components for themes, defensive CSS, and progressive enhancement. Use when writing CSS/JS/HTML in .liquid files or theme asset files.\"\n"
+  }
+}

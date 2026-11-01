@@ -1,0 +1,29 @@
+{
+  "repo": "EpicGames/unreal-engine-skills-for-claude-code-plugin",
+  "commit": "a6aa73ada02a9fb1f5415bec491f9942c519b297",
+  "path": ".",
+  "archive_sha256": "d091941cc80bff11e3190c20611e6740680fde13daee0d00e9c6e659bd3618cf",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "CODEOWNERS",
+    "LICENSE",
+    "README.md",
+    "hooks/hooks.json",
+    "hooks/unreal-context.sh",
+    "skills/create-toolset/SKILL.md",
+    "skills/unreal-mcp/SKILL.md",
+    "skills/unreal-mcp/references/operations.md",
+    "skills/unreal-mcp/references/setup.md",
+    "skills/unreal-skill/SKILL.md"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"Unreal Engine Skills for Claude Code hooks\",\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"matcher\": \"startup|resume|clear\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash ${CLAUDE_PLUGIN_ROOT}/hooks/unreal-context.sh\",\n            \"timeout\": 5\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"unreal-engine-skills-for-claude-code\",\n  \"version\": \"3.1.1\",\n  \"description\": \"Control Unreal Editor directly from Claude Code via MCP. Hundreds of tools exposed via Unreal's ToolsetRegistry across 30+ toolsets: actors, blueprints, materials, Niagara, Control Rigs, Sequencer, State Trees, widgets, Gameplay Ability System, automation testing, and more.\",\n  \"author\": {\n    \"name\": \"Thomas Mansencal\",\n    \"email\": \"thomas.mansencal@epicgames.com\"\n  },\n  \"license\": \"MIT\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/create-toolset/SKILL.md": "\nname: create-toolset\ndescription: \"Use this skill when authoring or extending an Unreal Engine toolset, a class of static, AI-callable functions registered with `ToolsetRegistry` and exposed through the unreal-mcp server. Trigger when the user wants to add, expose, or register a new tool method, create a new toolset, or extend an existing one such as `BlueprintTools`, `StaticMeshTools`, `ObjectTools`, `LevelTools`, or `MaterialTools`. Concrete triggers: 'add a tool to X', 'expose this via MCP', 'register a function so Claude/the agent can call it', 'wire this into the toolset registry', 'create a new toolset for Y', 'add a Python toolset', 'make this AI-callable'; adding a `static` method to a `*Tools.cpp/.h/.py` file; editing files under a `Toolsets/` folder; designing tool parameters, return types, or struct schemas for a toolset. SKIP for: invoking existing tools at runtime (use unreal-mcp instead), authoring an Agent Skill (use unreal-skill), generic refactors that happen to touch a toolset file but don't add or redesign a tool, or unrelated uses of the word 'toolset'.\"\n",
+    "skills/unreal-skill/SKILL.md": "\nname: unreal-skill\ndescription: \"Use this skill when creating, editing, or reviewing an Unreal Engine Agent Skill, a named bundle of instructions registered with the unreal-mcp server (distinct from Claude Code's harness skills under `.claude/skills/`). Trigger when the user wants to add or change a skill that the in-editor agent will load. Concrete triggers: 'create a new Agent Skill', 'add a skill for X workflow', 'edit/update this skill', 'review my skill', 'make a Python skill class', 'create a skill UAsset', 'register a skill so Claude picks it up'; writing or editing a `SKILL.md` inside a UE plugin's `Skills/` or `Python/skills/` folder; defining a Python skill class registered with the skill registry; calling `CreateSkill`, `ListSkills`, or `GetSkills` MCP tools; designing a skill's name, description, or instruction body. SKIP for: authoring a toolset (use create-toolset), invoking an existing skill at runtime (use unreal-mcp), editing harness-level Claude Code skills under `.claude/skills/` or `~/.claude/skills/`, or generic uses of the word 'skill'.\"\n",
+    "skills/unreal-mcp/SKILL.md": "\nname: unreal-mcp\ndescription: \"Use this skill to perform actions inside an Unreal Engine project via a live-editor MCP connection. Trigger when the user wants to change, query, or run something in their Unreal Engine project, not for conceptual or docs questions. Concrete triggers: spawn/move/duplicate/transform actors in a level, open a `.uproject`, add things around a PlayerStart, create or edit a Blueprint/Widget/Material/Niagara/Control Rig/Sequencer/Behavior Tree/GAS ability, read or write properties on actors (e.g. `bIsLocked` on `BP_DoorActor`), Live Coding recompile after editing C++ (`AActor`, `UMyComponent::Method`, `UPROPERTY`), or modify Static/Skeletal Mesh assets. Treat as Unreal context even without the word \\\"Unreal\\\": asset prefixes `BP_`, `WBP_`, `M_`, `MI_`, `NS_`, `CR_`, `SK_`, `SM_`, `ABP_`; UE C++ types/macros; `.uproject`; Content Browser; Outliner; PlayerStart; \\\"in my game\\\" plus UE signals. Skip for: pure conceptual/docs questions, Unity, Godot, or unrelated uses of \\\"blueprint\\\"/\\\"sequencer\\\"/\\\"widget\\\".\"\n"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "repo": "fullstorydev/fullstory-skills",
+  "commit": "ca872d97f5c35dc41ee2eecfc6e392a5895ac171",
+  "path": ".",
+  "archive_sha256": "110203c875967a1cc545fbf616c3a36b54331e401132b3866f643840150b0c66",
+  "all_plugin_files": [
+    ".claude-plugin/icon.svg",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/marketplace.json",
+    ".cursor-plugin/plugin.json",
+    ".gitignore",
+    ".mcp.json",
+    "GEMINI.md",
+    "README.md",
+    "agents/session-context.md",
+    "assets/fullstory.svg",
+    "gemini-extension.json",
+    "plugin.json",
+    "skills/comparisons/SKILL.md",
+    "skills/friction-analysis/SKILL.md",
+    "skills/general-analysis/SKILL.md",
+    "skills/general-analysis/references/funnels.md",
+    "skills/general-analysis/references/journeys.md",
+    "skills/general-analysis/references/metrics.md",
+    "skills/general-analysis/references/sessions.md",
+    "skills/general-analysis/references/validation.md",
+    "skills/idea-generation/SKILL.md",
+    "skills/session-review/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"fullstory\",\n  \"displayName\": \"Fullstory\",\n  \"version\": \"0.2.0\",\n  \"description\": \"Connect Claude to Fullstory to query behavioral analytics, session replays, and customer experience insights.\",\n  \"author\": {\n    \"name\": \"Fullstory\"\n  },\n  \"homepage\": \"https://www.fullstory.com\",\n  \"privacyPolicyUrl\": \"https://www.fullstory.com/legal/privacy-policy/\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"analytics\",\n    \"customer-experience\",\n    \"behavioral-analytics\",\n    \"session-replay\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"fullstory\": {\n      \"type\": \"http\",\n      \"url\": \"https://api.fullstory.com/mcp/fullstory\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/general-analysis/SKILL.md": "\nname: general-analysis\ndescription: Fullstory analytics workflow — the default way to answer any question about user behavior. Use whenever someone asks how many, what percentage, which pages, whether something is trending, where users drop off, what users did before or after an action, or how two cohorts compare — and also when they describe a business question that needs numbers behind it without ever saying \"metric\", \"funnel\", or \"segment\". Covers building and computing metrics, segments, funnels, and journeys, verifying that what got built is what was actually asked for, and pulling sessions to explain why the numbers look the way they do. Not for reviewing one specific session, or for setting up capture and instrumentation.\n",
+    "skills/comparisons/SKILL.md": "\nname: comparisons\ndescription: How to structure A vs B comparisons in Fullstory — when to use dimensionality (event/session properties) vs separate segments (user-level properties), and why the distinction matters for correctness.\nuser-invocable: false\n",
+    "skills/friction-analysis/SKILL.md": "\nname: friction-analysis\ndescription: Finds where users struggle on a page or flow and whether a suspected problem is real. Ranks Fullstory's frustration and error signals, separates real problems from buttons people are meant to click many times, measures how many users each problem affects, and uses session replays to show what happened. Use when someone asks where users are struggling, what is broken on a page or flow, for top pain points or a friction audit, why users give up at a step, whether a rage click is real, whether pages feel slow, whether people keep retrying, re-typing or going back and forth, whether a mobile app keeps crashing, or whether a problem from support tickets is widespread or affects only a few people.\n",
+    "skills/idea-generation/SKILL.md": "\nname: idea-generation\ndescription: Finds product improvement ideas a team has not already considered. Searches the metrics, segments and funnels the team already built, builds the ones that are missing, measures how many users each idea affects against a baseline, and pulls session replays as evidence. Returns 3 to 5 ranked proposals, each with what is new about it, a user count with its baseline, and replay links. Use when someone asks what to build next, how to improve a product area or flow, what the team is missing, for data-backed product ideas or proposals, or what changed after a release. If the user only wants the list of Fullstory Opportunities, call the Opportunities tools directly instead. For counts, rates and trends use general-analysis, for A vs B mechanics use comparisons, and for one session use session-review.\n",
+    "agents/session-context.md": "\nname: session-context\ndescription: Loads a single FullStory session's event transcript into an isolated context window and answers a specific task about it. Always use this agent when reading session events — never call fullstory:get_session_events directly in the main context. Pass device_id, session_id, and a focused task question. Returns only what the task asks for.\ntools:\n  - fullstory:get_session_events\n",
+    "skills/session-review/SKILL.md": "\nname: session-review\ndescription: Use when diagnosing user-reported issues, investigating bugs, analyzing user behavior, or validating UI correctness using Fullstory session recordings.\n"
+  }
+}

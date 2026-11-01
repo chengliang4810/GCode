@@ -2,11 +2,11 @@ package desktop
 
 import (
 	"context"
+	"gcode/internal/assets"
 	"strings"
 	"testing"
 	"time"
 
-	"gcode/internal/assets"
 	"gcode/internal/design"
 	"gcode/internal/mock"
 	"github.com/egoist/mygo/ui"
@@ -35,7 +35,7 @@ func TestSettingsPagesRenderWithoutVoiceOrHorizontalOverflow(t *testing.T) {
 	for _, section := range app.sections() {
 		t.Run(section, func(t *testing.T) {
 			app.section = section
-			app.palette = design.Palette("zeron-dark", true)
+			app.palette = design.Palette("rcode-dark", true)
 			tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 			if !tt.HasText(section) {
 				t.Fatal("missing page heading")
@@ -79,7 +79,7 @@ func TestSettingsAppearanceSupportsAllOriginalPalettes(t *testing.T) {
 func TestSettingsTogglePersistsThroughBackend(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "General"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	before := app.state.Settings.General.CompactMode
 	if err := tt.Click("Toggle Compact mode"); err != nil {
@@ -103,9 +103,9 @@ func TestSettingsTogglePersistsThroughBackend(t *testing.T) {
 func TestAppearanceSelectionChangesModeAndClearsOverride(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.state.Settings.Appearance.Mode = "dark"
-	app.state.Settings.Appearance.ThemeID = "zeron-dark"
+	app.state.Settings.Appearance.ThemeID = "rcode-dark"
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	if err := tt.Click("Appearance Light"); err != nil {
 		t.Fatal(err)
@@ -122,7 +122,7 @@ func TestAppearanceSelectionChangesModeAndClearsOverride(t *testing.T) {
 
 func TestSettingsSearchNavigatesToAppearance(t *testing.T) {
 	app, _ := settingsTestApp(t)
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.section = "General"
 	app.settingsSearch = "theme"
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsNavigation(c) }, 256, 880)
@@ -169,7 +169,7 @@ func TestSettingsSearchRanksAndCorrectsTypos(t *testing.T) {
 func TestSettingsSearchRevealsTargetRowOnce(t *testing.T) {
 	app, _ := settingsTestApp(t)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.expanded["settings-target:Terminal font"] = true
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	r, ok := tt.Find("Terminal font")
@@ -188,7 +188,7 @@ func TestSettingsSearchRevealsTargetRowOnce(t *testing.T) {
 func TestShortcutRecorderCapturesNativeKeysAndPersists(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Shortcuts"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	if err := tt.Click("Edit shortcut for New session"); err != nil {
 		t.Fatal(err)
@@ -213,7 +213,7 @@ func TestShortcutRecorderCapturesNativeKeysAndPersists(t *testing.T) {
 func TestShortcutRecorderRejectsDuplicatesAndEscapeCancels(t *testing.T) {
 	app, _ := settingsTestApp(t)
 	app.section = "Shortcuts"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
 	if err := tt.Click("Edit shortcut for New session"); err != nil {
 		t.Fatal(err)
@@ -231,7 +231,7 @@ func TestShortcutRecorderRejectsDuplicatesAndEscapeCancels(t *testing.T) {
 func TestThemeImportDialogUsesBackendPreviewAndLibrary(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 1800)
 	if err := tt.Click("Add theme"); err != nil {
 		t.Fatal(err)
@@ -280,7 +280,7 @@ func TestPersistedShortcutIsUsedAndRecorderSuppressesGlobalActions(t *testing.T)
 	app, _ := settingsTestApp(t)
 	app.section = "Shortcuts"
 	app.route = "settings"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.state.Settings.Shortcuts[0].Keys = "Mod+Shift+P"
 	app.saveSettings()
 	tt := ui.NewTester(func(c *ui.Context) {
@@ -310,7 +310,7 @@ func TestPersistedShortcutIsUsedAndRecorderSuppressesGlobalActions(t *testing.T)
 func TestFontPickerFiltersAndPersistsSelection(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Appearance"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 1800)
 	if err := tt.Click("Choose Interface font"); err != nil {
 		t.Fatal(err)
@@ -342,22 +342,25 @@ func TestFontPickerFiltersAndPersistsSelection(t *testing.T) {
 func TestNotificationChildrenFollowParentAvailability(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Notifications"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.state.Settings.Notifications.Sound = false
 	app.state.Settings.Notifications.Completion = true
 	app.state.Settings.Notifications.Enabled = false
-	app.state.Settings.Notifications.AgentUpdates = true
+	app.state.Settings.Notifications.WhenFocused = false
 	app.saveSettings()
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 900)
 	_ = tt.Click("Toggle Task completed")
-	_ = tt.Click("Toggle Agent updates")
-	if !app.state.Settings.Notifications.Completion || !app.state.Settings.Notifications.AgentUpdates {
+	_ = tt.Click("Toggle Only when in the background")
+	if !app.state.Settings.Notifications.Completion || app.state.Settings.Notifications.WhenFocused {
 		t.Fatal("disabled child changed its preference")
 	}
 	if err := tt.Click("Toggle Desktop notifications"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Toggle Agent updates"); err != nil {
+	if err := tt.Click("Toggle Session sounds"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Toggle Task completed"); err != nil {
 		t.Fatal(err)
 	}
 	before := app.state.Settings.Notifications.WhenFocused
@@ -368,7 +371,8 @@ func TestNotificationChildrenFollowParentAvailability(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !snapshot.Settings.Notifications.Enabled || snapshot.Settings.Notifications.AgentUpdates || snapshot.Settings.Notifications.WhenFocused == before {
+	n := snapshot.Settings.Notifications
+	if !n.Enabled || !n.Sound || n.Completion || n.WhenFocused == before {
 		t.Fatal("notification preferences did not persist independently")
 	}
 }
@@ -376,7 +380,7 @@ func TestNotificationChildrenFollowParentAvailability(t *testing.T) {
 func TestFilesAutosaveOnlyShowsOriginalDelayChoices(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Files"
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	app.state.Settings.Files.Autosave = false
 	app.saveSettings()
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
@@ -409,7 +413,7 @@ func TestSettingsSearchTargetsParentOfHiddenRow(t *testing.T) {
 	app.section = "General"
 	app.settingsSearch = "autosave delay"
 	app.state.Settings.Files.Autosave = false
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsNavigation(c) }, 256, 880)
 	if err := tt.Click("Autosave delay"); err != nil {
 		t.Fatal(err)
@@ -433,7 +437,7 @@ func TestAppshotsUsesNativeRecordingAndBackendPermissionStates(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(app.Close)
-	app.palette = design.Palette("zeron-dark", true)
+	app.palette = design.Palette("rcode-dark", true)
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(app.palette.UI())
 		ui.Scroll(c).FillWidth().FillHeight().Children(func() {

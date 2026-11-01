@@ -1,12 +1,31 @@
-# Imported source artwork
+# Application artwork
+
+`branding/app-icon-small.svg` is GCode's GC monogram adjusted for native icon
+sizes: enlarged counters, a clear C shoulder, white strokes on a dark rounded
+square, no wordmark. `go run ./scripts/app-icon` regenerates the SVG and PNGs
+directly from the same paths at 16/20/24/32/40/48/64/96/128/256/1024 pixels.
+There is no bitmap-to-bitmap downscale in this generator.
+
+Windows windows load the dedicated size matching the title bar and taskbar
+at their DPI using `AppIconForSize`; the owned native handles are refreshed on
+DPI resize and released when the window closes. `mygo.json` uses the 1024px
+`branding/app-icon.png` for executable, installer and bundle artwork.
+The original approved concept and prompts remain in
+`output/gcode-logo-c-20261030/`. These branding files are separate from frozen
+upstream imports.
+
+## Imported source artwork
 
 The 507 original files listed in `manifest.json` are copied byte-for-byte from
 D:/zeron at commit ab189159f10cf8e63c0502be75a59bbc487e0eaf. The manifest records
 their SHA-256, size and original repository path. Original icons and typefaces
 are not redrawn.
 
+`data/app-icon.png` and `data/icons/rcode-logo.svg` remain unmodified upstream
+artwork for provenance; they are not the GCode desktop application icon.
+
 `data/artifacts/` additionally contains generated vector resources from the
-original math and Mermaid renderers. Mermaid's SVG text is converted to glyph
+original math and Mermaid renderers. Mermaid's SVG text was converted to glyph
 outlines using the original Geist fonts and original usvg/fontdb versions,
 because the native icon SVG parser does not paint text nodes. Raw SVG inputs
 are retained under `reference/mermaid/raw`; `diagram-manifest.json` records

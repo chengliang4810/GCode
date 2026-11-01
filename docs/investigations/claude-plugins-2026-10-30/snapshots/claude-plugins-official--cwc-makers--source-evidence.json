@@ -1,0 +1,22 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/cwc-makers",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "commands/maker-setup.md",
+    "skills/cardputer-buddy/SKILL.md",
+    "skills/m5-onboard/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"cwc-makers\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Seamless onboarding for the Code-with-Claude Makers Cardputer: one /maker-setup command clones the build-with-claude repo, flashes UIFlow firmware, and installs the Claude Buddy app bundle onto a freshly-plugged-in M5Stack Cardputer-Adv.\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  },\n  \"homepage\": \"https://claude.com/cwc-makers\",\n  \"repository\": \"https://github.com/moremas/build-with-claude\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"cardputer\",\n    \"m5stack\",\n    \"esp32\",\n    \"hardware\",\n    \"maker\",\n    \"onboarding\",\n    \"cwc\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/maker-setup.md": "\ndescription: Onboard a Code-with-Claude Makers Cardputer — fetch the build-with-claude repo, flash firmware, and install the Claude Buddy apps.\ndisable-model-invocation: true\n",
+    "skills/m5-onboard/SKILL.md": "\nname: m5-onboard\ndescription: End-to-end onboarding for a freshly-plugged-in M5Stack ESP32 device (Cardputer, Cardputer-Adv, Core, CoreS3, Stick) — detect on USB, flash UIFlow 2.0 firmware, and install the Claude Buddy MicroPython app bundle. Use whenever the user plugs in or wants to flash/provision/reset an M5Stack or ESP32 board, or says \"m5-onboard go\".\n",
+    "skills/cardputer-buddy/SKILL.md": "\nname: cardputer-buddy\ndescription: Iterate on the Cardputer-Adv MicroPython app bundle (Claude Buddy, Snake, Hello) after the device is already provisioned via m5-onboard. Use when the user wants to add a new app, push a single changed .py without re-flashing, watch device serial logs, or run a one-shot REPL command. Trigger on \"add an app\", \"push to the cardputer\", \"tail the device\", \"run on the device\", or follow-up work after /maker-setup.\n"
+  }
+}

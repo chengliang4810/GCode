@@ -1,0 +1,54 @@
+{
+  "pluginId": "code-simplifier@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "simplify-shipping-preserve-boundaries",
+      "componentId": "agent:code-simplifier:code-simplifier",
+      "prompt": "Use the Agent tool with subagent_type \"code-simplifier:code-simplifier\" and model role \"opus\" to simplify ONLY shipping.mjs in this private temporary workspace. This exact file is the requested scope even though there is no Git history. Pass the child the complete task: preserve the named shippingCost API and all standard/express outputs for negative, zero, integer and fractional weights and strict boolean express handling; remove the redundant total variable and nested else branches using readable early returns; follow CLAUDE.md; never modify verify_shipping.mjs. The parent must wait for the actual child to finish, then run `node verify_shipping.mjs` to produce shipping-verification.json and verify all twelve boundary cases and the structural simplification. No network, dependency installs, GitHub, commits or outside-workspace operations. Do not produce a fabricated verification file; the supplied immutable Node verifier writes it from actual imported code. Tell the child that the only approved Bash command is exactly `node verify_shipping.mjs`, with no prefix, suffix, redirect or extra shell statements. Do not read or write shipping-verification.json through model file tools; only the immutable verifier may generate it, and the acceptance runner inspects it directly.",
+      "fixtures": [
+        {
+          "path": "shipping.mjs",
+          "text": "export function shippingCost(weight, express) {\n  let total;\n  if (weight <= 0) {\n    total = 0;\n  } else {\n    if (express === true) {\n      total = 10 + weight * 3;\n    } else {\n      total = 5 + weight * 2;\n    }\n  }\n  return total;\n}\n"
+        },
+        {
+          "path": "verify_shipping.mjs",
+          "text": "import assert from 'node:assert/strict';\nimport { readFileSync, writeFileSync } from 'node:fs';\nimport { shippingCost } from './shipping.mjs';\nconst weights = [-2, 0, 1, 1.25];\nconst standard = weights.map(weight => shippingCost(weight, false));\nconst express = weights.map(weight => shippingCost(weight, true));\nassert.deepEqual(standard, [0, 0, 7, 7.5]);\nassert.deepEqual(express, [0, 0, 13, 13.75]);\nconst nonBooleanExpress = [1, 'yes', undefined, null].map(flag => shippingCost(1, flag));\nassert.deepEqual(nonBooleanExpress, [7, 7, 7, 7]);\nconst source = readFileSync('shipping.mjs', 'utf8');\nassert.match(source, /export function shippingCost/);\nassert.ok(!/\\belse\\b/.test(source), 'Use early returns rather than nested else branches');\nassert.ok(!/\\blet total\\b/.test(source), 'Remove the redundant accumulator');\nconst report = { cases: 12, standard, express, nonBooleanExpress, earlyReturns: true };\nwriteFileSync('shipping-verification.json', JSON.stringify(report) + '\\n');\nconsole.log('Shipping parity: 12 boundary cases; early returns verified');\n"
+        },
+        {
+          "path": "CLAUDE.md",
+          "text": "# Shipping module\n\nUse ES modules and named exported functions. Preserve the shippingCost API. Keep verification fixtures unchanged. Prefer readable early returns.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "shipping.mjs",
+          "contains": "export function shippingCost"
+        },
+        {
+          "kind": "file",
+          "path": "shipping-verification.json",
+          "equals": "{\"cases\":12,\"standard\":[0,0,7,7.5],\"express\":[0,0,13,13.75],\"nonBooleanExpress\":[7,7,7,7],\"earlyReturns\":true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_shipping.mjs",
+          "equals": "import assert from 'node:assert/strict';\nimport { readFileSync, writeFileSync } from 'node:fs';\nimport { shippingCost } from './shipping.mjs';\nconst weights = [-2, 0, 1, 1.25];\nconst standard = weights.map(weight => shippingCost(weight, false));\nconst express = weights.map(weight => shippingCost(weight, true));\nassert.deepEqual(standard, [0, 0, 7, 7.5]);\nassert.deepEqual(express, [0, 0, 13, 13.75]);\nconst nonBooleanExpress = [1, 'yes', undefined, null].map(flag => shippingCost(1, flag));\nassert.deepEqual(nonBooleanExpress, [7, 7, 7, 7]);\nconst source = readFileSync('shipping.mjs', 'utf8');\nassert.match(source, /export function shippingCost/);\nassert.ok(!/\\belse\\b/.test(source), 'Use early returns rather than nested else branches');\nassert.ok(!/\\blet total\\b/.test(source), 'Remove the redundant accumulator');\nconst report = { cases: 12, standard, express, nonBooleanExpress, earlyReturns: true };\nwriteFileSync('shipping-verification.json', JSON.stringify(report) + '\\n');\nconsole.log('Shipping parity: 12 boundary cases; early returns verified');\n"
+        },
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "equals": "# Shipping module\n\nUse ES modules and named exported functions. Preserve the shippingCost API. Keep verification fixtures unchanged. Prefer readable early returns.\n"
+        }
+      ],
+      "allowCommands": [
+        "node verify_shipping.mjs"
+      ],
+      "verifierOutputs": [
+        "shipping-verification.json"
+      ]
+    }
+  ]
+}

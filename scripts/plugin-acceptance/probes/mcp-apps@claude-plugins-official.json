@@ -1,0 +1,172 @@
+{
+  "pluginId": "mcp-apps@claude-plugins-official",
+  "sourceCommit": "6d9bdc7babf275b759225aa722cbf5510c4c6021",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "create-freight-mcp-app",
+      "componentId": "skill:mcp-apps:create-mcp-app",
+      "prompt": "/mcp-apps:create-mcp-app Create an MCP App that shows a Freight shipment list with a filter widget. Headless authoring task: no npm install, no network, no MCP host and no browser; do not run any package manager. Produce the documented artifacts only: server.ts registering the tool with registerAppTool and the bundled UI with registerAppResource, linking them through the tool metadata field _meta.ui.resourceUri and a ui:// resource URI, returning both the structured content and the text fallback content, plus widget.html that connects to the host and loads its script through a src attribute without any remote script. Use only the documented SDK patterns from this skill; do not invent SDK functions. Then read the immutable verify_create_mcp_app.py and run exactly python verify_create_mcp_app.py using Bash to validate both files and write create-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name both artifacts, report the actual verifier output line, and state that installing dependencies, the MCP host rendering the widget and browser behaviour remain untested.",
+      "allowCommands": [
+        "python verify_create_mcp_app.py"
+      ],
+      "verifierOutputs": [
+        "create-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_create_mcp_app.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nserver = Path('server.ts').read_text(encoding='utf-8')\nwidget = Path('widget.html').read_text(encoding='utf-8')\nassert 'registerAppTool' in server, 'the tool must be registered with registerAppTool'\nassert 'registerAppResource' in server, 'the resource must be registered with registerAppResource'\nassert '_meta' in server and 'resourceUri' in server, 'the tool must link its resource through _meta.ui.resourceUri'\nassert 'ui://' in server, 'the resource URI must use the ui scheme'\nassert 'structuredContent' in server, 'the tool result must carry structuredContent for the UI'\nassert 'content' in server, 'the tool result must keep the text fallback content'\nassert 'app.connect()' in widget or 'connect(' in widget, 'the widget must connect to the host'\nassert '<script' in widget and 'src=' in widget, 'the widget must load its script from a src attribute'\nassert 'http://' not in widget.replace('http://www.w3.org', ''), 'the widget must not inline remote scripts'\nassert 'Freight' in server or 'Freight' in widget, 'the artifacts must be grounded in the given domain'\nreport = {'host_connect': True, 'no_remote_script': True, 'resource_registered': True,\n          'structured_result': True, 'text_fallback': True, 'tool_resource_link': True,\n          'tool_registered': True, 'ui_scheme': True}\nPath('create-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP App created: tool and resource registered with the documented UI metadata; host rendering untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_create_mcp_app.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nserver = Path('server.ts').read_text(encoding='utf-8')\nwidget = Path('widget.html').read_text(encoding='utf-8')\nassert 'registerAppTool' in server, 'the tool must be registered with registerAppTool'\nassert 'registerAppResource' in server, 'the resource must be registered with registerAppResource'\nassert '_meta' in server and 'resourceUri' in server, 'the tool must link its resource through _meta.ui.resourceUri'\nassert 'ui://' in server, 'the resource URI must use the ui scheme'\nassert 'structuredContent' in server, 'the tool result must carry structuredContent for the UI'\nassert 'content' in server, 'the tool result must keep the text fallback content'\nassert 'app.connect()' in widget or 'connect(' in widget, 'the widget must connect to the host'\nassert '<script' in widget and 'src=' in widget, 'the widget must load its script from a src attribute'\nassert 'http://' not in widget.replace('http://www.w3.org', ''), 'the widget must not inline remote scripts'\nassert 'Freight' in server or 'Freight' in widget, 'the artifacts must be grounded in the given domain'\nreport = {'host_connect': True, 'no_remote_script': True, 'resource_registered': True,\n          'structured_result': True, 'text_fallback': True, 'tool_resource_link': True,\n          'tool_registered': True, 'ui_scheme': True}\nPath('create-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP App created: tool and resource registered with the documented UI metadata; host rendering untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "create-verification.json",
+          "equals": "{\"host_connect\": true, \"no_remote_script\": true, \"resource_registered\": true, \"structured_result\": true, \"text_fallback\": true, \"tool_registered\": true, \"tool_resource_link\": true, \"ui_scheme\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "registerAppTool"
+        },
+        {
+          "kind": "file",
+          "path": "widget.html",
+          "contains": "<script"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "MCP App created: tool and resource registered with the documented UI metadata"
+        }
+      ]
+    },
+    {
+      "id": "plan-ui-for-existing-freight-server",
+      "componentId": "skill:mcp-apps:add-app-to-server",
+      "prompt": "/mcp-apps:add-app-to-server Add an interactive Freight tracking UI to the existing MCP server in this project. Headless authoring task: no npm install, no network, no MCP host and no browser. Do not modify the existing server files. Produce the documented plan add-app-plan.md that records: the analysis of the existing tools the skill requires, the tool registration with registerAppTool and the resource registration with registerAppResource, the UI capability check with getUiCapability, and the domain declarations for this given scenario with connectDomains for the API origin https://api.freight.example.com, resourceDomains for the static assets origin https://cdn.freight.example.com and frameDomains for any embedded frame origin. Then read the immutable verify_add_app_to_server.py and run exactly python verify_add_app_to_server.py using Bash to validate the plan and write add-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that dependency installation, the real build and host rendering remain untested.",
+      "allowCommands": [
+        "python verify_add_app_to_server.py"
+      ],
+      "verifierOutputs": [
+        "add-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_add_app_to_server.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('add-app-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'connectdomains' in low, 'the documented connectDomains declaration must be present'\nassert 'resourcedomains' in low, 'the documented resourceDomains declaration must be present'\nassert 'framedomains' in low, 'the documented frameDomains declaration must be present'\nassert 'registerapptool' in low or 'register_app_tool' in low, 'the documented tool registration must be planned'\nassert 'registerappresource' in low or 'register_app_resource' in low, 'the documented resource registration must be planned'\nassert 'getuicapability' in low, 'the documented UI capability check must be planned'\nassert 'https://api.freight.example.com' in plan, 'the given API domain must be declared'\nassert 'https://cdn.freight.example.com' in plan, 'the given CDN domain must be declared'\nreport = {'connect_domains': True, 'domain_roles': True, 'frame_domains': True,\n          'resource_registration': True, 'tool_registration': True, 'ui_capability_check': True}\nPath('add-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP App added to server: documented registration and domain declarations planned; host build untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_add_app_to_server.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('add-app-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'connectdomains' in low, 'the documented connectDomains declaration must be present'\nassert 'resourcedomains' in low, 'the documented resourceDomains declaration must be present'\nassert 'framedomains' in low, 'the documented frameDomains declaration must be present'\nassert 'registerapptool' in low or 'register_app_tool' in low, 'the documented tool registration must be planned'\nassert 'registerappresource' in low or 'register_app_resource' in low, 'the documented resource registration must be planned'\nassert 'getuicapability' in low, 'the documented UI capability check must be planned'\nassert 'https://api.freight.example.com' in plan, 'the given API domain must be declared'\nassert 'https://cdn.freight.example.com' in plan, 'the given CDN domain must be declared'\nreport = {'connect_domains': True, 'domain_roles': True, 'frame_domains': True,\n          'resource_registration': True, 'tool_registration': True, 'ui_capability_check': True}\nPath('add-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP App added to server: documented registration and domain declarations planned; host build untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "add-verification.json",
+          "equals": "{\"connect_domains\": true, \"domain_roles\": true, \"frame_domains\": true, \"resource_registration\": true, \"tool_registration\": true, \"ui_capability_check\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "add-app-plan.md",
+          "contains": "connectDomains"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "MCP App added to server: documented registration and domain declarations planned"
+        }
+      ]
+    },
+    {
+      "id": "plan-web-app-mcp-support",
+      "componentId": "skill:mcp-apps:convert-web-app",
+      "prompt": "/mcp-apps:convert-web-app Add MCP App support to the Freight web app in this project. Headless authoring task: no npm install, no network, no MCP host and no browser. Do not modify the application files. Produce the documented plan convert-plan.md that records the analysis the skill requires: what to investigate in the existing web app, the data source mapping for the Freight shipment data the app already shows, the investigation of the content security policy requirements, and the MCP server setup with its widget resource. Then read the immutable verify_convert_web_app.py and run exactly python verify_convert_web_app.py using Bash to validate the plan and write convert-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that the real conversion, dependency installation and host rendering remain untested.",
+      "allowCommands": [
+        "python verify_convert_web_app.py"
+      ],
+      "verifierOutputs": [
+        "convert-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_convert_web_app.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('convert-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'csp' in low, 'the documented CSP investigation must be recorded'\nassert 'data source' in low, 'the documented data source mapping must be recorded'\nassert 'mcp server' in low, 'the MCP server setup step must be recorded'\nassert 'widget' in low, 'the widget resource must be planned'\nassert 'freight' in low, 'the plan must be grounded in the given web app'\nassert 'http://localhost:5173' in plan or 'localhost' in plan, 'the local web app origin must be inspected'\nreport = {'csp_investigation': True, 'data_source_mapping': True, 'grounded_in_app': True,\n          'mcp_server_step': True, 'widget_planned': True}\nPath('convert-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Web app converted: documented analysis, CSP and server steps planned; conversion execution untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_convert_web_app.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('convert-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'csp' in low, 'the documented CSP investigation must be recorded'\nassert 'data source' in low, 'the documented data source mapping must be recorded'\nassert 'mcp server' in low, 'the MCP server setup step must be recorded'\nassert 'widget' in low, 'the widget resource must be planned'\nassert 'freight' in low, 'the plan must be grounded in the given web app'\nassert 'http://localhost:5173' in plan or 'localhost' in plan, 'the local web app origin must be inspected'\nreport = {'csp_investigation': True, 'data_source_mapping': True, 'grounded_in_app': True,\n          'mcp_server_step': True, 'widget_planned': True}\nPath('convert-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Web app converted: documented analysis, CSP and server steps planned; conversion execution untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "convert-verification.json",
+          "equals": "{\"csp_investigation\": true, \"data_source_mapping\": true, \"grounded_in_app\": true, \"mcp_server_step\": true, \"widget_planned\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "convert-plan.md",
+          "contains": "CSP"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Web app converted: documented analysis, CSP and server steps planned"
+        }
+      ]
+    },
+    {
+      "id": "plan-openai-app-migration",
+      "componentId": "skill:mcp-apps:migrate-oai-app",
+      "prompt": "/mcp-apps:migrate-oai-app Migrate the existing Freight OpenAI app in this project to an MCP App. Headless authoring task: no npm install, no network, no MCP host and no browser. Do not modify the application files. Produce the documented migration plan migrate-plan.md recording the key conceptual changes the skill lists for the server side and for the client side, the CORS configuration work, the content security policy investigation, and the documented list of features that are not yet available in MCP Apps so the migration does not silently drop them. Then read the immutable verify_migrate_oai_app.py and run exactly python verify_migrate_oai_app.py using Bash to validate the plan and write migrate-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that the real migration, dependency installation and host rendering remain untested.",
+      "allowCommands": [
+        "python verify_migrate_oai_app.py"
+      ],
+      "verifierOutputs": [
+        "migrate-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_migrate_oai_app.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('migrate-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'cors' in low, 'the documented CORS configuration step must be recorded'\nassert 'csp' in low, 'the documented CSP investigation must be recorded'\nassert 'server-side' in low, 'the documented server-side changes must be recorded'\nassert 'client-side' in low, 'the documented client-side changes must be recorded'\nassert 'not yet available' in low, 'the documented list of features not yet available in MCP Apps must be recorded'\nassert 'freight' in low, 'the plan must be grounded in the given app'\nreport = {'client_side': True, 'cors': True, 'csp': True, 'feature_gaps': True,\n          'grounded_in_app': True, 'server_side': True}\nPath('migrate-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('OpenAI app migration: documented server, client, CORS and CSP changes planned; migration untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_migrate_oai_app.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('migrate-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'cors' in low, 'the documented CORS configuration step must be recorded'\nassert 'csp' in low, 'the documented CSP investigation must be recorded'\nassert 'server-side' in low, 'the documented server-side changes must be recorded'\nassert 'client-side' in low, 'the documented client-side changes must be recorded'\nassert 'not yet available' in low, 'the documented list of features not yet available in MCP Apps must be recorded'\nassert 'freight' in low, 'the plan must be grounded in the given app'\nreport = {'client_side': True, 'cors': True, 'csp': True, 'feature_gaps': True,\n          'grounded_in_app': True, 'server_side': True}\nPath('migrate-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('OpenAI app migration: documented server, client, CORS and CSP changes planned; migration untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "migrate-verification.json",
+          "equals": "{\"client_side\": true, \"cors\": true, \"csp\": true, \"feature_gaps\": true, \"grounded_in_app\": true, \"server_side\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "migrate-plan.md",
+          "contains": "CORS"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "OpenAI app migration: documented server, client, CORS and CSP changes planned"
+        }
+      ]
+    }
+  ]
+}

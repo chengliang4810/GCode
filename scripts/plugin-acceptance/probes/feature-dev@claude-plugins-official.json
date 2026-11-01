@@ -1,0 +1,372 @@
+{
+  "pluginId": "feature-dev@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-cancel-order-through-documented-phases",
+      "componentId": "command:feature-dev:feature-dev",
+      "prompt": "/feature-dev:feature-dev Add a cancel-order endpoint that marks an order as cancelled instead of deleting it. Headless authoring task: this is a planning-only session. Do not implement anything, do not modify code, and do not run installs or network calls. Follow the documented feature development workflow exactly up to its approval gate: record the discovery summary for the given orders service in app/, produce the documented codebase exploration findings over app/main.py, app/orders.py and tests/test_orders.py, state at least one concrete clarifying question that Phase 3 requires before design, then present two or three architecture approaches with a trade-off comparison and your recommendation with reasoning, and stop at the documented approval gate stating that no implementation was started because user approval has not been given. Write this as feature-plan.md. Then read the immutable verify_feature_dev.py and run exactly python verify_feature_dev.py using Bash to validate the plan and write command-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that implementation remains untested pending approval.",
+      "allowCommands": [
+        "python verify_feature_dev.py"
+      ],
+      "verifierOutputs": [
+        "command-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_feature_dev.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('feature-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'discovery' in low, 'the documented discovery phase must be recorded'\nassert 'clarifying questions' in low, 'the documented clarifying questions phase must not be skipped'\nassert '?' in plan, 'at least one concrete clarifying question is required'\nassert 'architecture' in low and ('approach' in low or 'option' in low), 'the documented architecture approaches must be recorded'\nassert 'trade-off' in low or 'tradeoff' in low, 'the documented trade-off comparison must be recorded'\nassert 'recommend' in low, 'the documented recommendation with reasoning must be recorded'\nassert 'approval' in low, 'the documented approval gate before implementation must be recorded'\nassert 'no implementation was started' in low or 'not start' in low, 'the plan must state honestly that implementation waits for approval'\nassert 'app/orders.py' in plan or 'app/main.py' in plan, 'the plan must reference the given codebase files'\nreport = {'approval_gate': True, 'architecture_approaches': True, 'clarifying_questions': True,\n          'codebase_referenced': True, 'discovery': True, 'honest_no_implementation': True,\n          'recommendation': True, 'tradeoffs': True}\nPath('command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Feature dev command: documented phases planned up to the approval gate; implementation untested')\n"
+        },
+        {
+          "path": "app/__init__.py",
+          "text": ""
+        },
+        {
+          "path": "app/main.py",
+          "text": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "path": "app/orders.py",
+          "text": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "path": "tests/test_orders.py",
+          "text": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        },
+        {
+          "path": "app/__init__.py",
+          "text": ""
+        },
+        {
+          "path": "app/main.py",
+          "text": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "path": "app/orders.py",
+          "text": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "path": "tests/test_orders.py",
+          "text": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_feature_dev.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('feature-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'discovery' in low, 'the documented discovery phase must be recorded'\nassert 'clarifying questions' in low, 'the documented clarifying questions phase must not be skipped'\nassert '?' in plan, 'at least one concrete clarifying question is required'\nassert 'architecture' in low and ('approach' in low or 'option' in low), 'the documented architecture approaches must be recorded'\nassert 'trade-off' in low or 'tradeoff' in low, 'the documented trade-off comparison must be recorded'\nassert 'recommend' in low, 'the documented recommendation with reasoning must be recorded'\nassert 'approval' in low, 'the documented approval gate before implementation must be recorded'\nassert 'no implementation was started' in low or 'not start' in low, 'the plan must state honestly that implementation waits for approval'\nassert 'app/orders.py' in plan or 'app/main.py' in plan, 'the plan must reference the given codebase files'\nreport = {'approval_gate': True, 'architecture_approaches': True, 'clarifying_questions': True,\n          'codebase_referenced': True, 'discovery': True, 'honest_no_implementation': True,\n          'recommendation': True, 'tradeoffs': True}\nPath('command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Feature dev command: documented phases planned up to the approval gate; implementation untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "command-verification.json",
+          "equals": "{\"approval_gate\": true, \"architecture_approaches\": true, \"clarifying_questions\": true, \"codebase_referenced\": true, \"discovery\": true, \"honest_no_implementation\": true, \"recommendation\": true, \"tradeoffs\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "feature-plan.md",
+          "contains": "clarifying questions"
+        },
+        {
+          "kind": "file",
+          "path": "feature-plan.md",
+          "contains": "approval"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Feature dev command: documented phases planned up to the approval gate"
+        },
+        {
+          "kind": "file",
+          "path": "app/__init__.py",
+          "equals": ""
+        },
+        {
+          "kind": "file",
+          "path": "app/main.py",
+          "equals": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "app/orders.py",
+          "equals": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "tests/test_orders.py",
+          "equals": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ]
+    },
+    {
+      "id": "explore-order-creation-path",
+      "componentId": "agent:feature-dev:code-explorer",
+      "prompt": "Use the code-explorer subagent to analyze how order creation works in the given small service under app/. Headless authoring task: no network, no installs, do not modify code. The deliverable is the exploration report the agent is documented to produce, written to exploration-report.md: the feature entry points, the call chain from the FastAPI route through the orders module, the architecture layers involved, the dependencies and state changes, and the documented list of 5-10 key files to read (as bullet lines including app/main.py and app/orders.py). Then read the immutable verify_feature_explorer.py and run exactly python verify_feature_explorer.py using Bash to validate the report and write explorer-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that deeper static analysis remains untested.",
+      "allowCommands": [
+        "python verify_feature_explorer.py"
+      ],
+      "verifierOutputs": [
+        "explorer-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_feature_explorer.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport_text = Path('exploration-report.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'entry point' in low or 'fastapi' in low, 'the documented entry point discovery must be recorded'\nassert 'call chain' in low or 'trace' in low, 'the documented code flow tracing must be recorded'\nassert 'layer' in low, 'the documented architecture layer mapping must be recorded'\nassert 'dependency' in low or 'dependencies' in low, 'the documented dependency documentation must be recorded'\nassert 'app/orders.py' in report_text, 'the key file list must include app/orders.py'\nassert 'app/main.py' in report_text, 'the key file list must include app/main.py'\nfiles = [line for line in report_text.splitlines() if line.strip().startswith('-')]\nassert len(files) >= 2, 'the documented 5-10 key files list must be present as bullets'\nreport = {'architecture_layers': True, 'call_chain_tracing': True, 'dependencies': True,\n          'entry_points': True, 'key_file_list': True}\nPath('explorer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code explorer agent: documented execution tracing and key file list produced; live codebase mutation untested')\n"
+        },
+        {
+          "path": "app/__init__.py",
+          "text": ""
+        },
+        {
+          "path": "app/main.py",
+          "text": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "path": "app/orders.py",
+          "text": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "path": "tests/test_orders.py",
+          "text": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_feature_explorer.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport_text = Path('exploration-report.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'entry point' in low or 'fastapi' in low, 'the documented entry point discovery must be recorded'\nassert 'call chain' in low or 'trace' in low, 'the documented code flow tracing must be recorded'\nassert 'layer' in low, 'the documented architecture layer mapping must be recorded'\nassert 'dependency' in low or 'dependencies' in low, 'the documented dependency documentation must be recorded'\nassert 'app/orders.py' in report_text, 'the key file list must include app/orders.py'\nassert 'app/main.py' in report_text, 'the key file list must include app/main.py'\nfiles = [line for line in report_text.splitlines() if line.strip().startswith('-')]\nassert len(files) >= 2, 'the documented 5-10 key files list must be present as bullets'\nreport = {'architecture_layers': True, 'call_chain_tracing': True, 'dependencies': True,\n          'entry_points': True, 'key_file_list': True}\nPath('explorer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code explorer agent: documented execution tracing and key file list produced; live codebase mutation untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "explorer-verification.json",
+          "equals": "{\"architecture_layers\": true, \"call_chain_tracing\": true, \"dependencies\": true, \"entry_points\": true, \"key_file_list\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "exploration-report.md",
+          "contains": "app/orders.py"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Code explorer agent: documented execution tracing and key file list produced"
+        },
+        {
+          "kind": "file",
+          "path": "app/__init__.py",
+          "equals": ""
+        },
+        {
+          "kind": "file",
+          "path": "app/main.py",
+          "equals": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "app/orders.py",
+          "equals": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "tests/test_orders.py",
+          "equals": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ]
+    },
+    {
+      "id": "design-cancellation-approaches",
+      "componentId": "agent:feature-dev:code-architect",
+      "prompt": "Use the code-architect subagent to design approaches for adding order cancellation to the given service in app/. Headless authoring task: no network, no installs, do not implement anything. The deliverable is architecture-approaches.md with the documented comparison of two or three approaches: a minimal changes approach with maximum reuse, a clean architecture approach focused on maintainability and elegant abstractions, and optionally a pragmatic balance, each described for the cancel-order feature with its trade-offs analyzed against the existing app/orders.py module. Then read the immutable verify_feature_architect.py and run exactly python verify_feature_architect.py using Bash to validate the document and write architect-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that the recommendation and implementation remain untested pending user choice.",
+      "allowCommands": [
+        "python verify_feature_architect.py"
+      ],
+      "verifierOutputs": [
+        "architect-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_feature_architect.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport_text = Path('architecture-approaches.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert low.count('approach') >= 2 or low.count('option') >= 2, 'multiple approaches are required'\nassert 'minimal' in low, 'the documented minimal-change approach focus must appear'\nassert 'clean architecture' in low or 'maintainability' in low, 'the documented clean architecture approach must appear'\nassert 'trade-off' in low or 'tradeoff' in low, 'the documented trade-off comparison must appear'\nassert 'cancel' in low, 'the approaches must address the given cancellation feature'\nassert 'app/orders.py' in report_text, 'the design must reference the module it changes'\nreport = {'clean_architecture_approach': True, 'feature_grounded': True, 'minimal_approach': True,\n          'module_referenced': True, 'tradeoffs': True}\nPath('architect-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code architect agent: documented multi-approach design with trade-offs produced; implementation untested')\n"
+        },
+        {
+          "path": "app/__init__.py",
+          "text": ""
+        },
+        {
+          "path": "app/main.py",
+          "text": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "path": "app/orders.py",
+          "text": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "path": "tests/test_orders.py",
+          "text": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_feature_architect.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport_text = Path('architecture-approaches.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert low.count('approach') >= 2 or low.count('option') >= 2, 'multiple approaches are required'\nassert 'minimal' in low, 'the documented minimal-change approach focus must appear'\nassert 'clean architecture' in low or 'maintainability' in low, 'the documented clean architecture approach must appear'\nassert 'trade-off' in low or 'tradeoff' in low, 'the documented trade-off comparison must appear'\nassert 'cancel' in low, 'the approaches must address the given cancellation feature'\nassert 'app/orders.py' in report_text, 'the design must reference the module it changes'\nreport = {'clean_architecture_approach': True, 'feature_grounded': True, 'minimal_approach': True,\n          'module_referenced': True, 'tradeoffs': True}\nPath('architect-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code architect agent: documented multi-approach design with trade-offs produced; implementation untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "architect-verification.json",
+          "equals": "{\"clean_architecture_approach\": true, \"feature_grounded\": true, \"minimal_approach\": true, \"module_referenced\": true, \"tradeoffs\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "architecture-approaches.md",
+          "contains": "trade-off"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Code architect agent: documented multi-approach design with trade-offs produced"
+        },
+        {
+          "kind": "file",
+          "path": "app/__init__.py",
+          "equals": ""
+        },
+        {
+          "kind": "file",
+          "path": "app/main.py",
+          "equals": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "app/orders.py",
+          "equals": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "tests/test_orders.py",
+          "equals": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ]
+    },
+    {
+      "id": "review-cancel-order-change",
+      "componentId": "agent:feature-dev:code-reviewer",
+      "prompt": "Use the code-reviewer subagent to review the uncommitted change that adds cancel_order to app/orders.py. Headless authoring task: no network, no installs, do not change code. The deliverable is the review report the agent is documented to produce, written to code-review-report.md: findings each tagged with one of the documented severity levels, concrete file and line references into app/orders.py, and an explicit statement that no code was changed during the review. Findings must be honest: if the change is sound this must be said rather than inventing defects. Then read the immutable verify_feature_reviewer.py and run exactly python verify_feature_reviewer.py using Bash to validate the report and write reviewer-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that applying review fixes remains untested.",
+      "allowCommands": [
+        "python verify_feature_reviewer.py"
+      ],
+      "verifierOutputs": [
+        "reviewer-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_feature_reviewer.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport_text = Path('code-review-report.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'severity' in low or 'critical' in low, 'the documented finding severity must be recorded'\nassert low.count('finding') >= 1 or low.count('issue') >= 1, 'the review must contain findings or issues'\nassert 'app/orders.py' in report_text, 'the review must reference the reviewed file'\nassert 'line' in low, 'the documented file and line references must be present'\nassert 'no code was changed' in low or 'did not modify' in low, 'the review must state honestly that no code was changed'\nreport = {'file_line_refs': True, 'findings_present': True, 'honest_no_changes': True,\n          'reviewed_module': True, 'severity': True}\nPath('reviewer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code reviewer agent: documented severity-tagged review produced; fixes untested')\n"
+        },
+        {
+          "path": "app/__init__.py",
+          "text": ""
+        },
+        {
+          "path": "app/main.py",
+          "text": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "path": "app/orders.py",
+          "text": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "path": "tests/test_orders.py",
+          "text": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_feature_reviewer.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport_text = Path('code-review-report.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'severity' in low or 'critical' in low, 'the documented finding severity must be recorded'\nassert low.count('finding') >= 1 or low.count('issue') >= 1, 'the review must contain findings or issues'\nassert 'app/orders.py' in report_text, 'the review must reference the reviewed file'\nassert 'line' in low, 'the documented file and line references must be present'\nassert 'no code was changed' in low or 'did not modify' in low, 'the review must state honestly that no code was changed'\nreport = {'file_line_refs': True, 'findings_present': True, 'honest_no_changes': True,\n          'reviewed_module': True, 'severity': True}\nPath('reviewer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Code reviewer agent: documented severity-tagged review produced; fixes untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "reviewer-verification.json",
+          "equals": "{\"file_line_refs\": true, \"findings_present\": true, \"honest_no_changes\": true, \"reviewed_module\": true, \"severity\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "code-review-report.md",
+          "contains": "app/orders.py"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Code reviewer agent: documented severity-tagged review produced"
+        },
+        {
+          "kind": "file",
+          "path": "app/__init__.py",
+          "equals": ""
+        },
+        {
+          "kind": "file",
+          "path": "app/main.py",
+          "equals": "from fastapi import FastAPI\nfrom app.orders import create_order, get_order\n\napp = FastAPI()\n\n@app.post('/orders')\ndef post_order(sku: str, quantity: int):\n    return create_order(sku, quantity)\n\n@app.get('/orders/{order_id}')\ndef read_order(order_id: str):\n    return get_order(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "app/orders.py",
+          "equals": "ORDERS = {}\n\ndef create_order(sku, quantity):\n    order_id = str(len(ORDERS) + 1)\n    ORDERS[order_id] = {'sku': sku, 'quantity': quantity}\n    return {'id': order_id, 'sku': sku, 'quantity': quantity}\n\ndef get_order(order_id):\n    return ORDERS.get(order_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "tests/test_orders.py",
+          "equals": "from app.orders import create_order, get_order\n\ndef test_create_and_get():\n    created = create_order('SKU-1', 2)\n    assert get_order(created['id'])['sku'] == 'SKU-1'\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Orders Service\n\nA minimal order service used for feature development exercises.\n"
+        }
+      ]
+    }
+  ]
+}

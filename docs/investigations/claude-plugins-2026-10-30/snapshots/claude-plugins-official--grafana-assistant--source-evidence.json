@@ -1,0 +1,22 @@
+{
+  "repo": "grafana/ai-marketplace",
+  "commit": "12be5634a492f73c189d466c5449d09b853ad7a4",
+  "path": "plugins/grafana-assistant",
+  "archive_sha256": "f3991f61131485ebce0b934d84d1d06d10bf659432c3f0e46c6746d3e18551cb",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    "POWER.md",
+    "README.md",
+    "assets/logo.svg",
+    "rules/grafana-assistant.mdc",
+    "skills/grafana-assistant-cli/SKILL.md",
+    "steering/grafana-assistant-cli.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"grafana-assistant\",\n  \"version\": \"0.2.0\",\n  \"description\": \"Skills and rules for developing and using the Grafana Assistant app and CLI.\",\n  \"author\": {\n    \"name\": \"Grafana Labs\",\n    \"email\": \"grafana-assistant@grafana.com\"\n  },\n  \"homepage\": \"https://github.com/grafana/ai-marketplace/tree/main/plugins/grafana-assistant\",\n  \"repository\": \"https://github.com/grafana/ai-marketplace\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"grafana\", \"assistant\", \"a2a\", \"cli\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/grafana-assistant-cli/SKILL.md": "\nname: grafana-assistant-cli\ndescription: Use the grafana-assistant CLI to interact with Grafana Assistant via A2A API. Covers installation, configuration, prompting, keeping conversation context, and practical patterns for ops investigations. Use when the user mentions grafana-assistant, Grafana Assistant CLI, assistant tunnel, or wants to query a Grafana instance via the assistant.\n"
+  }
+}

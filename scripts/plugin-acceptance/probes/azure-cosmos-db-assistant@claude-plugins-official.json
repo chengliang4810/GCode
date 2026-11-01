@@ -1,0 +1,355 @@
+{
+  "pluginId": "azure-cosmos-db-assistant@claude-plugins-official",
+  "sourceCommit": "f1e0498579a9251e5f3179b92d25d6ce3409bae5",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "review-telemetry-data-model-rules",
+      "componentId": "skill:azure-cosmos-db-assistant:cosmosdb-best-practices",
+      "prompt": "Use the cosmosdb-best-practices skill to review the proposed Cosmos DB data model for the northwind-fleet telemetry platform. Inputs: one container named telemetry with partition key /deviceId, 400 devices, about 5M readings per day, about 2 KB per reading, 90 day retention, and each reading embeds a small device metadata snapshot. The dominant query is the latest readings for one device over a timestamp range. Headless boundary: there is no Azure account, no Cosmos DB endpoint and no network, so no RU measurement, no query execution and no emulator run can happen. Do not claim that any rule was validated against a live account. Write telemetry-data-model-review.md as the documented review: apply the relevant rule ids by prefix, naming each rule file id and saying how it lands on this model, covering data modeling, partition key design, query optimization, SDK usage, indexing and throughput; state the 2 MB item limit and the 20 GB logical partition limit explicitly; record that only the relevant rule files were loaded rather than all 73+ rules at once; and give a concrete recommendation for the partition key and the per-reading document shape. End the review with an Untested section that contains the exact sentence No Cosmos DB account exists in this session. and states that live RU measurement and query statistics remain untested. Then read the immutable verify_cosmos_skill.py and run exactly python verify_cosmos_skill.py using Bash to validate the review and write cosmos-skill-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that live partition statistics and RU cost remain untested.",
+      "allowCommands": [
+        "python verify_cosmos_skill.py"
+      ],
+      "verifierOutputs": [
+        "cosmos-skill-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cosmos_skill.py",
+          "text": "import json\nfrom pathlib import Path\n\ndoc = Path('telemetry-data-model-review.md').read_text(encoding='utf-8')\nlow = doc.lower()\nassert 'northwind-fleet' in doc and 'telemetry' in doc and '/deviceid' in low, 'the given fleet, container and partition key must be recorded'\nassert '400' in doc and '5m' in low, 'the given device count and daily write rate must be recorded'\nassert 'model-embed-related' in doc and 'model-avoid-2mb-limit' in doc, 'the documented data modeling rules must be applied'\nassert 'partition-high-cardinality' in doc and 'partition-20gb-limit' in doc, 'the documented partition rules must be applied'\nassert '20 gb' in low, 'the documented logical partition limit must be recorded'\nassert 'query-avoid-cross-partition' in doc and 'query-use-projections' in doc, 'the documented query rules must be applied'\nassert 'sdk-singleton-client' in doc and 'index-composite' in doc, 'the documented SDK and indexing rules must be applied'\nassert 'throughput-autoscale' in doc, 'the documented throughput rule must be applied'\nassert '73+' in doc and ('not loaded at once' in low or 'only the relevant' in low), 'the documented rule loading scope must be recorded'\nassert 'no cosmos db account exists in this session' in low, 'the review must state honestly that no live account exists'\n\nreport = {'honest_no_account': True, 'input_grounded': True, 'model_rules': True, 'partition_rules': True, 'query_rules': True, 'rule_scope': True, 'sdk_index_rules': True, 'throughput_rule': True}\nPath('cosmos-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB best practices review: documented data modeling, partition, query, SDK and throughput rules applied; live RU measurement remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cosmos_skill.py",
+          "equals": "import json\nfrom pathlib import Path\n\ndoc = Path('telemetry-data-model-review.md').read_text(encoding='utf-8')\nlow = doc.lower()\nassert 'northwind-fleet' in doc and 'telemetry' in doc and '/deviceid' in low, 'the given fleet, container and partition key must be recorded'\nassert '400' in doc and '5m' in low, 'the given device count and daily write rate must be recorded'\nassert 'model-embed-related' in doc and 'model-avoid-2mb-limit' in doc, 'the documented data modeling rules must be applied'\nassert 'partition-high-cardinality' in doc and 'partition-20gb-limit' in doc, 'the documented partition rules must be applied'\nassert '20 gb' in low, 'the documented logical partition limit must be recorded'\nassert 'query-avoid-cross-partition' in doc and 'query-use-projections' in doc, 'the documented query rules must be applied'\nassert 'sdk-singleton-client' in doc and 'index-composite' in doc, 'the documented SDK and indexing rules must be applied'\nassert 'throughput-autoscale' in doc, 'the documented throughput rule must be applied'\nassert '73+' in doc and ('not loaded at once' in low or 'only the relevant' in low), 'the documented rule loading scope must be recorded'\nassert 'no cosmos db account exists in this session' in low, 'the review must state honestly that no live account exists'\n\nreport = {'honest_no_account': True, 'input_grounded': True, 'model_rules': True, 'partition_rules': True, 'query_rules': True, 'rule_scope': True, 'sdk_index_rules': True, 'throughput_rule': True}\nPath('cosmos-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB best practices review: documented data modeling, partition, query, SDK and throughput rules applied; live RU measurement remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-skill-verification.json",
+          "equals": "{\"honest_no_account\": true, \"input_grounded\": true, \"model_rules\": true, \"partition_rules\": true, \"query_rules\": true, \"rule_scope\": true, \"sdk_index_rules\": true, \"throughput_rule\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "model-embed-related"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "partition-20gb-limit"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "throughput-autoscale"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "northwind-fleet"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "telemetry"
+        },
+        {
+          "kind": "file",
+          "path": "telemetry-data-model-review.md",
+          "contains": "/deviceId"
+        }
+      ]
+    },
+    {
+      "id": "review-order-service-with-checklist",
+      "componentId": "command:azure-cosmos-db-assistant:cosmos-review",
+      "prompt": "/azure-cosmos-db-assistant:cosmos-review Review the fixture repository in this directory. The Python service is services/orders_repo.py and its README.md declares the container settings. Headless boundary: there is no Azure account, no Cosmos DB endpoint, no network and no installs, so the code cannot be executed against a live account and no RU metric can be measured. Do not claim that any query ran. Write cosmos-review-report.md following the documented output format: for each finding give Rule, Severity, Current code, Issue and Fix; order the findings by the documented priority order CRITICAL, HIGH, MEDIUM, LOW-MEDIUM; map each finding to a documented rule id from the cosmosdb-best-practices skill; name the fixture file and line numbers; and cover the client lifecycle, the partition key choice, query parameterization, projections, cross-partition queries, ETag concurrency, retry policy and diagnostics logging. Do not invent issues that the fixture does not show, and do not change any code. End the report with an Untested section that contains the exact sentence No code was changed in this review. and states that live RU and latency measurement remain untested. Then read the immutable verify_cosmos_review.py and run exactly python verify_cosmos_review.py using Bash to validate the report and write cosmos-review-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that applying fixes and live RU validation remain untested.",
+      "allowCommands": [
+        "python verify_cosmos_review.py"
+      ],
+      "verifierOutputs": [
+        "cosmos-review-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cosmos_review.py",
+          "text": "import json\nfrom pathlib import Path\n\nrep = Path('cosmos-review-report.md').read_text(encoding='utf-8')\nlow = rep.lower()\nassert 'services/orders_repo.py' in rep and 'line' in low, 'the reviewed fixture file and line references must be recorded'\nfor field in ('Rule', 'Severity', 'Current code', 'Issue', 'Fix'):\n    assert field in rep, 'the documented finding field must appear: ' + field\nassert 'sdk-singleton-client' in rep and 'CosmosClient' in rep, 'the documented client lifecycle rule must be applied'\nassert 'partition-query-patterns' in rep or 'partition-high-cardinality' in rep, 'the documented partition key rule must be applied'\nassert 'query-parameterize' in rep and 'query-use-projections' in rep and 'query-avoid-cross-partition' in rep, 'the documented query rules must be applied'\nassert 'sdk-etag-concurrency' in rep and 'ETag' in rep, 'the documented concurrency rule must be applied'\nassert 'sdk-retry-429' in rep, 'the documented retry rule must be applied'\nassert 'sdk-diagnostics' in rep, 'the documented diagnostics rule must be applied'\nfor sev in ('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'):\n    assert sev in rep, 'the documented severity must appear: ' + sev\nassert 'no code was changed in this review' in low, 'the review must state honestly that no code changed'\n\nreport = {'client_lifecycle': True, 'concurrency_rule': True, 'diagnostics_rule': True, 'finding_format': True, 'honest_no_change': True, 'partition_rule': True, 'query_rules': True, 'retry_rule': True, 'severity_scale': True}\nPath('cosmos-review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB review command: documented finding format and severity checklist applied to the fixture; live RU validation remains untested')\n"
+        },
+        {
+          "path": "services/orders_repo.py",
+          "text": "import uuid\nfrom azure.cosmos import CosmosClient\n\nENDPOINT = \"https://orders-prod.documents.azure.com:443/\"\nKEY = \"account-key-from-env\"\n\n\ndef get_client():\n    return CosmosClient(ENDPOINT, KEY)\n\n\ndef find_order(order_id):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    query = f\"SELECT * FROM c WHERE c.id = {order_id}\"\n    return list(container.query_items(query, enable_cross_partition_query=True))[0]\n\n\ndef list_orders(customer_id):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    query = f\"SELECT * FROM c WHERE c.customer_id = {customer_id} AND c.status = 'open'\"\n    return list(container.query_items(query, enable_cross_partition_query=True))\n\n\ndef update_status(order_id, status):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    item = container.read_item(order_id, partition_key=order_id)\n    item[\"status\"] = status\n    container.replace_item(order_id, item)\n    return item\n"
+        },
+        {
+          "path": "README.md",
+          "text": "# Orders Service\n\nA small Python service backed by Azure Cosmos DB.\n\n- Database: shop\n- Container: orders\n- Partition key: /id\n- Provisioned throughput: 10000 RU/s fixed\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cosmos_review.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrep = Path('cosmos-review-report.md').read_text(encoding='utf-8')\nlow = rep.lower()\nassert 'services/orders_repo.py' in rep and 'line' in low, 'the reviewed fixture file and line references must be recorded'\nfor field in ('Rule', 'Severity', 'Current code', 'Issue', 'Fix'):\n    assert field in rep, 'the documented finding field must appear: ' + field\nassert 'sdk-singleton-client' in rep and 'CosmosClient' in rep, 'the documented client lifecycle rule must be applied'\nassert 'partition-query-patterns' in rep or 'partition-high-cardinality' in rep, 'the documented partition key rule must be applied'\nassert 'query-parameterize' in rep and 'query-use-projections' in rep and 'query-avoid-cross-partition' in rep, 'the documented query rules must be applied'\nassert 'sdk-etag-concurrency' in rep and 'ETag' in rep, 'the documented concurrency rule must be applied'\nassert 'sdk-retry-429' in rep, 'the documented retry rule must be applied'\nassert 'sdk-diagnostics' in rep, 'the documented diagnostics rule must be applied'\nfor sev in ('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'):\n    assert sev in rep, 'the documented severity must appear: ' + sev\nassert 'no code was changed in this review' in low, 'the review must state honestly that no code changed'\n\nreport = {'client_lifecycle': True, 'concurrency_rule': True, 'diagnostics_rule': True, 'finding_format': True, 'honest_no_change': True, 'partition_rule': True, 'query_rules': True, 'retry_rule': True, 'severity_scale': True}\nPath('cosmos-review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB review command: documented finding format and severity checklist applied to the fixture; live RU validation remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-verification.json",
+          "equals": "{\"client_lifecycle\": true, \"concurrency_rule\": true, \"diagnostics_rule\": true, \"finding_format\": true, \"honest_no_change\": true, \"partition_rule\": true, \"query_rules\": true, \"retry_rule\": true, \"severity_scale\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "services/orders_repo.py",
+          "equals": "import uuid\nfrom azure.cosmos import CosmosClient\n\nENDPOINT = \"https://orders-prod.documents.azure.com:443/\"\nKEY = \"account-key-from-env\"\n\n\ndef get_client():\n    return CosmosClient(ENDPOINT, KEY)\n\n\ndef find_order(order_id):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    query = f\"SELECT * FROM c WHERE c.id = {order_id}\"\n    return list(container.query_items(query, enable_cross_partition_query=True))[0]\n\n\ndef list_orders(customer_id):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    query = f\"SELECT * FROM c WHERE c.customer_id = {customer_id} AND c.status = 'open'\"\n    return list(container.query_items(query, enable_cross_partition_query=True))\n\n\ndef update_status(order_id, status):\n    client = get_client()\n    container = client.get_database_client(\"shop\").get_container_client(\"orders\")\n    item = container.read_item(order_id, partition_key=order_id)\n    item[\"status\"] = status\n    container.replace_item(order_id, item)\n    return item\n"
+        },
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Orders Service\n\nA small Python service backed by Azure Cosmos DB.\n\n- Database: shop\n- Container: orders\n- Partition key: /id\n- Provisioned throughput: 10000 RU/s fixed\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-report.md",
+          "contains": "lifecycle"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-report.md",
+          "contains": "cross-partition"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-report.md",
+          "contains": "CRITICAL"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-report.md",
+          "contains": "Severity"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-review-report.md",
+          "contains": "services/orders_repo.py"
+        }
+      ]
+    },
+    {
+      "id": "record-mcp-toolkit-setup-steps",
+      "componentId": "command:azure-cosmos-db-assistant:cosmos-setup",
+      "prompt": "/azure-cosmos-db-assistant:cosmos-setup Configure the optional Azure Cosmos DB MCP Toolkit connection for the northwind-portal project at /work/northwind-portal. Inputs: the Azure Cosmos DB account northwind-cosmos-prod exists, the MCP Toolkit is deployed at https://mcp.cosmos.northwind.example.com, and the Entra App Client ID from deployment-info.json is 7f3c9a1e-2b44-4d18-9a6f-1e0c55b7d902. Headless boundary: there is no Azure account, no Entra login, no MCP Toolkit deployment, no network and no installs in this session, so no JWT can be issued and no MCP connection can be opened. Do not claim that any az command ran or that any database was listed. Write cosmos-mcp-setup-record.md as the documented setup record with the five documented steps: prerequisites with the two documented links and the note that the connection is optional; connection details read from deployment-info.json, with az login and az account get-access-token --resource and --query accessToken -o tsv; the environment variables COSMOSDB_MCP_SERVER_URL and COSMOSDB_MCP_JWT_TOKEN plus the warning that JWT tokens expire after about 1 hour; copying .mcp.example.json to .mcp.json in the project root; and verification by restarting Claude Code, listing databases through the MCP tools and using the troubleshooting in SETUP.md on failure. End the record with an Untested section that contains the exact sentence No Azure account or MCP Toolkit connection exists in this session. and states that token issuance, the MCP connection and live database listing remain untested. Then read the immutable verify_cosmos_setup.py and run exactly python verify_cosmos_setup.py using Bash to validate the record and write cosmos-setup-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that the live MCP connection and database listing remain untested.",
+      "allowCommands": [
+        "python verify_cosmos_setup.py"
+      ],
+      "verifierOutputs": [
+        "cosmos-setup-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cosmos_setup.py",
+          "text": "import json\nfrom pathlib import Path\n\nrec = Path('cosmos-mcp-setup-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'https://learn.microsoft.com/azure/cosmos-db/nosql/quickstart-portal' in rec, 'the documented account prerequisite link must be recorded'\nassert 'https://github.com/AzureCosmosDB/MCPToolKit#quick-start' in rec, 'the documented toolkit prerequisite link must be recorded'\nassert 'deployment-info.json' in rec, 'the documented connection detail source must be recorded'\nassert 'az login' in rec and 'az account get-access-token --resource' in rec and '--query accessToken -o tsv' in rec, 'the documented token commands must be recorded'\nassert 'COSMOSDB_MCP_SERVER_URL' in rec and 'COSMOSDB_MCP_JWT_TOKEN' in rec, 'the documented environment variables must be recorded'\nassert '1 hour' in low, 'the documented token lifetime must be recorded'\nassert '.mcp.example.json' in rec and '.mcp.json' in rec, 'the documented MCP config copy must be recorded'\nassert 'SETUP.md' in rec and 'restart' in low, 'the documented verification and troubleshooting must be recorded'\nassert 'https://mcp.cosmos.northwind.example.com' in rec and '7f3c9a1e-2b44-4d18-9a6f-1e0c55b7d902' in rec, 'the given toolkit URL and client ID must appear'\nassert 'no azure account or mcp toolkit connection exists in this session' in low, 'the record must state honestly that no connection was made'\n\nreport = {'connection_details': True, 'environment_variables': True, 'honest_no_connection': True, 'input_grounded': True, 'mcp_config': True, 'prerequisites': True, 'token_command': True, 'verification': True}\nPath('cosmos-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB MCP setup record: documented prerequisites, token commands and config steps verified; live connection remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cosmos_setup.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrec = Path('cosmos-mcp-setup-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'https://learn.microsoft.com/azure/cosmos-db/nosql/quickstart-portal' in rec, 'the documented account prerequisite link must be recorded'\nassert 'https://github.com/AzureCosmosDB/MCPToolKit#quick-start' in rec, 'the documented toolkit prerequisite link must be recorded'\nassert 'deployment-info.json' in rec, 'the documented connection detail source must be recorded'\nassert 'az login' in rec and 'az account get-access-token --resource' in rec and '--query accessToken -o tsv' in rec, 'the documented token commands must be recorded'\nassert 'COSMOSDB_MCP_SERVER_URL' in rec and 'COSMOSDB_MCP_JWT_TOKEN' in rec, 'the documented environment variables must be recorded'\nassert '1 hour' in low, 'the documented token lifetime must be recorded'\nassert '.mcp.example.json' in rec and '.mcp.json' in rec, 'the documented MCP config copy must be recorded'\nassert 'SETUP.md' in rec and 'restart' in low, 'the documented verification and troubleshooting must be recorded'\nassert 'https://mcp.cosmos.northwind.example.com' in rec and '7f3c9a1e-2b44-4d18-9a6f-1e0c55b7d902' in rec, 'the given toolkit URL and client ID must appear'\nassert 'no azure account or mcp toolkit connection exists in this session' in low, 'the record must state honestly that no connection was made'\n\nreport = {'connection_details': True, 'environment_variables': True, 'honest_no_connection': True, 'input_grounded': True, 'mcp_config': True, 'prerequisites': True, 'token_command': True, 'verification': True}\nPath('cosmos-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB MCP setup record: documented prerequisites, token commands and config steps verified; live connection remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-setup-verification.json",
+          "equals": "{\"connection_details\": true, \"environment_variables\": true, \"honest_no_connection\": true, \"input_grounded\": true, \"mcp_config\": true, \"prerequisites\": true, \"token_command\": true, \"verification\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": "COSMOSDB_MCP_SERVER_URL"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": "COSMOSDB_MCP_JWT_TOKEN"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": "deployment-info.json"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": ".mcp.example.json"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": "https://mcp.cosmos.northwind.example.com"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-mcp-setup-record.md",
+          "contains": "7f3c9a1e-2b44-4d18-9a6f-1e0c55b7d902"
+        }
+      ]
+    },
+    {
+      "id": "record-rules-sync-from-upstream",
+      "componentId": "command:azure-cosmos-db-assistant:generate-skills",
+      "prompt": "/azure-cosmos-db-assistant:generate-skills Sync the local best-practice rules with the frozen upstream listing in upstream-listing.json. The local rule directory is skills/cosmosdb-best-practices/rules and the workspace has 73 local rule files; the three files provided as fixtures are the ones touched by this sync. Headless boundary: there is no network access, no GitHub API call, no downloads and no installs, so no rule file can actually be fetched or rewritten. Do not claim that any download ran and do not edit the local rule files. Write cosmos-rules-sync-record.md as the documented sync record: the documented contents API URL, the documented raw download URL pattern with {filename}, and the documented save path skills/cosmosdb-best-practices/rules/{filename}; the comparison step that reports new rules added, existing rules updated and rules removed upstream; the SKILL.md Rule Index update and the total rule count update; the full ten prefix to category mapping; the exclusion of metadata files that start with an underscore such as _sections.md and _template.md; and the concrete change summary for the given listing, naming vector-hybrid-search.md as new, sdk-retry-429.md as updated, throughput-burst.md as removed and model-embed-related.md as unchanged. End the record with an Untested section that contains the exact sentence No network access was available in this session. and states that the real GitHub API fetch and file rewrite remain untested. Then read the immutable verify_cosmos_sync.py and run exactly python verify_cosmos_sync.py using Bash to validate the record and write cosmos-sync-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that the live sync and the SKILL.md rewrite remain untested.",
+      "allowCommands": [
+        "python verify_cosmos_sync.py"
+      ],
+      "verifierOutputs": [
+        "cosmos-sync-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cosmos_sync.py",
+          "text": "import json\nfrom pathlib import Path\n\nrec = Path('cosmos-rules-sync-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'https://api.github.com/repos/AzureCosmosDB/cosmosdb-agent-kit/contents/skills/cosmosdb-best-practices/rules' in rec, 'the documented contents API must be recorded'\nassert 'https://raw.githubusercontent.com/AzureCosmosDB/cosmosdb-agent-kit/main/skills/cosmosdb-best-practices/rules/{filename}' in rec, 'the documented download pattern must be recorded'\nassert 'skills/cosmosdb-best-practices/rules/{filename}' in rec, 'the documented save path must be recorded'\nfor token in ('vector-hybrid-search.md', 'sdk-retry-429.md', 'throughput-burst.md', 'model-embed-related.md'):\n    assert token in rec, 'the given sync input must appear: ' + token\nassert 'new' in low and 'updated' in low and 'removed' in low, 'the documented comparison report must be recorded'\nassert 'Rule Index' in rec and '73' in rec, 'the documented rule index and count update must be recorded'\nfor prefix in ('model-', 'partition-', 'query-', 'sdk-', 'index-', 'throughput-', 'global-', 'monitoring-', 'pattern-', 'vector-'):\n    assert prefix in rec, 'the documented prefix category must be recorded: ' + prefix\nassert '_sections.md' in rec and '_template.md' in rec, 'the documented metadata exclusion must be recorded'\nassert 'no network access was available in this session' in low, 'the record must state honestly that no fetch ran'\n\nreport = {'comparison': True, 'honest_no_fetch': True, 'input_grounded': True, 'metadata_exclusion': True, 'prefix_categories': True, 'rule_index_update': True, 'save_path': True, 'sync_source': True}\nPath('cosmos-sync-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB rules sync record: documented API, save path, comparison and prefix map verified; real fetch remains untested')\n"
+        },
+        {
+          "path": "upstream-listing.json",
+          "text": "{\n  \"fetched_at\": \"2026-10-31T09:15:00Z\",\n  \"files\": [\n    \"model-embed-related.md\",\n    \"sdk-retry-429.md\",\n    \"vector-hybrid-search.md\"\n  ]\n}\n"
+        },
+        {
+          "path": "skills/cosmosdb-best-practices/rules/model-embed-related.md",
+          "text": "# model-embed-related\n\nEmbed related data that is retrieved together.\n"
+        },
+        {
+          "path": "skills/cosmosdb-best-practices/rules/sdk-retry-429.md",
+          "text": "# sdk-retry-429\n\nHandle 429 responses with the retry-after interval.\n"
+        },
+        {
+          "path": "skills/cosmosdb-best-practices/rules/throughput-burst.md",
+          "text": "# throughput-burst\n\nUnderstand burst capacity.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cosmos_sync.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrec = Path('cosmos-rules-sync-record.md').read_text(encoding='utf-8')\nlow = rec.lower()\nassert 'https://api.github.com/repos/AzureCosmosDB/cosmosdb-agent-kit/contents/skills/cosmosdb-best-practices/rules' in rec, 'the documented contents API must be recorded'\nassert 'https://raw.githubusercontent.com/AzureCosmosDB/cosmosdb-agent-kit/main/skills/cosmosdb-best-practices/rules/{filename}' in rec, 'the documented download pattern must be recorded'\nassert 'skills/cosmosdb-best-practices/rules/{filename}' in rec, 'the documented save path must be recorded'\nfor token in ('vector-hybrid-search.md', 'sdk-retry-429.md', 'throughput-burst.md', 'model-embed-related.md'):\n    assert token in rec, 'the given sync input must appear: ' + token\nassert 'new' in low and 'updated' in low and 'removed' in low, 'the documented comparison report must be recorded'\nassert 'Rule Index' in rec and '73' in rec, 'the documented rule index and count update must be recorded'\nfor prefix in ('model-', 'partition-', 'query-', 'sdk-', 'index-', 'throughput-', 'global-', 'monitoring-', 'pattern-', 'vector-'):\n    assert prefix in rec, 'the documented prefix category must be recorded: ' + prefix\nassert '_sections.md' in rec and '_template.md' in rec, 'the documented metadata exclusion must be recorded'\nassert 'no network access was available in this session' in low, 'the record must state honestly that no fetch ran'\n\nreport = {'comparison': True, 'honest_no_fetch': True, 'input_grounded': True, 'metadata_exclusion': True, 'prefix_categories': True, 'rule_index_update': True, 'save_path': True, 'sync_source': True}\nPath('cosmos-sync-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB rules sync record: documented API, save path, comparison and prefix map verified; real fetch remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-sync-verification.json",
+          "equals": "{\"comparison\": true, \"honest_no_fetch\": true, \"input_grounded\": true, \"metadata_exclusion\": true, \"prefix_categories\": true, \"rule_index_update\": true, \"save_path\": true, \"sync_source\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "upstream-listing.json",
+          "equals": "{\n  \"fetched_at\": \"2026-10-31T09:15:00Z\",\n  \"files\": [\n    \"model-embed-related.md\",\n    \"sdk-retry-429.md\",\n    \"vector-hybrid-search.md\"\n  ]\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "skills/cosmosdb-best-practices/rules/model-embed-related.md",
+          "equals": "# model-embed-related\n\nEmbed related data that is retrieved together.\n"
+        },
+        {
+          "kind": "file",
+          "path": "skills/cosmosdb-best-practices/rules/sdk-retry-429.md",
+          "equals": "# sdk-retry-429\n\nHandle 429 responses with the retry-after interval.\n"
+        },
+        {
+          "kind": "file",
+          "path": "skills/cosmosdb-best-practices/rules/throughput-burst.md",
+          "equals": "# throughput-burst\n\nUnderstand burst capacity.\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-rules-sync-record.md",
+          "contains": "skills/cosmosdb-best-practices/rules/{filename}"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-rules-sync-record.md",
+          "contains": "_sections.md"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-rules-sync-record.md",
+          "contains": "Rule Index"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-rules-sync-record.md",
+          "contains": "vector-hybrid-search.md"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-rules-sync-record.md",
+          "contains": "throughput-burst.md"
+        }
+      ]
+    },
+    {
+      "id": "delegate-vector-model-expert-review",
+      "componentId": "agent:azure-cosmos-db-assistant:cosmosdb-expert",
+      "prompt": "Use the Agent tool to delegate this task to the cosmosdb-expert subagent: set subagent_type to cosmosdb-expert, or to the plugin-scoped name azure-cosmos-db-assistant:cosmosdb-expert if the bare name is not offered, and do not perform the review in this session and do not launch any other subagent. The current directory is the run directory. The immutable proposed model is schema/proposed-model.json for a multi-tenant document search service named knowledge, with container documents, partition key /tenantId, one item that stores the whole body plus every chunk and embedding, and a flat vector index on /embedding. Headless boundary: there is no Azure account, no Cosmos DB endpoint and no network, so no index build, no vector query and no RU measurement can run. The child must write cosmos-expert-review.md: the verdict line Verdict: CHANGES REQUIRED, then findings that each name a documented rule id from the cosmosdb-best-practices skill, a severity from CRITICAL, HIGH, MEDIUM or LOW, the evidence in schema/proposed-model.json, the issue and the fix. Cover the item size limit, the 20 GB logical partition limit for the largest tenant, the vector index choice, the similarity query with VectorDistance and embedding normalization. The report must state that no schema was changed. End the report with an Untested section that states that live index build, vector query latency and RU measurement remain untested. After the child returns, read the immutable verify_cosmos_agent.py and run exactly python verify_cosmos_agent.py using Bash to validate the report and write cosmos-agent-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that the recorded completed child agent session is the business evidence while the live database validation remains untested.",
+      "allowCommands": [
+        "python verify_cosmos_agent.py"
+      ],
+      "verifierOutputs": [
+        "cosmos-agent-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cosmos_agent.py",
+          "text": "import json\nfrom pathlib import Path\n\nrep = Path('cosmos-expert-review.md').read_text(encoding='utf-8')\nlow = rep.lower()\nassert 'verdict' in low and 'changes required' in low, 'the review must carry an explicit verdict'\nassert 'schema/proposed-model.json' in rep, 'the given proposed model must be referenced'\nassert 'model-avoid-2mb-limit' in rep and '2 mb' in low, 'the documented item size rule must be applied'\nassert 'partition-20gb-limit' in rep and 'tenantid' in low, 'the documented partition limit rule must be applied to the given key'\nassert 'vector-index-type' in rep and 'diskann' in low, 'the documented vector index rule must be applied'\nassert 'vector-distance-query' in rep and 'VectorDistance' in rep, 'the documented similarity query rule must be applied'\nassert 'vector-normalize-embeddings' in rep, 'the documented normalization rule must be applied'\nfor sev in ('CRITICAL', 'HIGH', 'MEDIUM'):\n    assert sev in rep, 'the documented severity must appear: ' + sev\nassert 'no schema was changed' in low, 'the review must state honestly that nothing changed'\n\nreport = {'honest_no_change': True, 'input_grounded': True, 'model_rules': True, 'partition_rules': True, 'severity_scale': True, 'verdict': True, 'vector_rules': True}\nPath('cosmos-agent-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB expert agent: delegated review produced the documented model, partition and vector findings; live database validation remains untested')\n"
+        },
+        {
+          "path": "schema/proposed-model.json",
+          "text": "{\n  \"database\": \"knowledge\",\n  \"container\": \"documents\",\n  \"partitionKey\": \"/tenantId\",\n  \"indexingPolicy\": {\n    \"vectorIndexes\": [\n      {\"path\": \"/embedding\", \"type\": \"flat\"}\n    ]\n  },\n  \"item\": {\n    \"id\": \"doc-0001\",\n    \"tenantId\": \"acme-legal\",\n    \"title\": \"Master services agreement\",\n    \"body\": \"Full contract text with every section inline.\",\n    \"embedding\": [0.0123, -0.0456, 0.0789],\n    \"chunks\": [\n      {\"index\": 0, \"text\": \"Section 1\", \"embedding\": [0.0123, -0.0456, 0.0789]},\n      {\"index\": 1, \"text\": \"Section 2\", \"embedding\": [0.0321, -0.0654, 0.0987]}\n    ]\n  }\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cosmos_agent.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrep = Path('cosmos-expert-review.md').read_text(encoding='utf-8')\nlow = rep.lower()\nassert 'verdict' in low and 'changes required' in low, 'the review must carry an explicit verdict'\nassert 'schema/proposed-model.json' in rep, 'the given proposed model must be referenced'\nassert 'model-avoid-2mb-limit' in rep and '2 mb' in low, 'the documented item size rule must be applied'\nassert 'partition-20gb-limit' in rep and 'tenantid' in low, 'the documented partition limit rule must be applied to the given key'\nassert 'vector-index-type' in rep and 'diskann' in low, 'the documented vector index rule must be applied'\nassert 'vector-distance-query' in rep and 'VectorDistance' in rep, 'the documented similarity query rule must be applied'\nassert 'vector-normalize-embeddings' in rep, 'the documented normalization rule must be applied'\nfor sev in ('CRITICAL', 'HIGH', 'MEDIUM'):\n    assert sev in rep, 'the documented severity must appear: ' + sev\nassert 'no schema was changed' in low, 'the review must state honestly that nothing changed'\n\nreport = {'honest_no_change': True, 'input_grounded': True, 'model_rules': True, 'partition_rules': True, 'severity_scale': True, 'verdict': True, 'vector_rules': True}\nPath('cosmos-agent-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Cosmos DB expert agent: delegated review produced the documented model, partition and vector findings; live database validation remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-agent-verification.json",
+          "equals": "{\"honest_no_change\": true, \"input_grounded\": true, \"model_rules\": true, \"partition_rules\": true, \"severity_scale\": true, \"vector_rules\": true, \"verdict\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "schema/proposed-model.json",
+          "equals": "{\n  \"database\": \"knowledge\",\n  \"container\": \"documents\",\n  \"partitionKey\": \"/tenantId\",\n  \"indexingPolicy\": {\n    \"vectorIndexes\": [\n      {\"path\": \"/embedding\", \"type\": \"flat\"}\n    ]\n  },\n  \"item\": {\n    \"id\": \"doc-0001\",\n    \"tenantId\": \"acme-legal\",\n    \"title\": \"Master services agreement\",\n    \"body\": \"Full contract text with every section inline.\",\n    \"embedding\": [0.0123, -0.0456, 0.0789],\n    \"chunks\": [\n      {\"index\": 0, \"text\": \"Section 1\", \"embedding\": [0.0123, -0.0456, 0.0789]},\n      {\"index\": 1, \"text\": \"Section 2\", \"embedding\": [0.0321, -0.0654, 0.0987]}\n    ]\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "model-avoid-2mb-limit"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "partition-20gb-limit"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "vector-index-type"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "VectorDistance"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "schema/proposed-model.json"
+        },
+        {
+          "kind": "file",
+          "path": "cosmos-expert-review.md",
+          "contains": "CHANGES REQUIRED"
+        }
+      ]
+    }
+  ]
+}

@@ -5,22 +5,34 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
+
+	"gcode/internal/model"
 )
 
 // Clone freezes a command before it crosses a goroutine/queue boundary.
 func (c Command) Clone() Command {
+	c.Plugin = c.Plugin.Clone()
+	c.Resource = c.Resource.Clone()
+	c.Goal = copyPointer(c.Goal)
+	if c.Goal != nil {
+		c.Goal.TokenBudget = copyPointer(c.Goal.TokenBudget)
+		c.Goal.References = slices.Clone(c.Goal.References)
+	}
+	c.Provider = copyPointer(c.Provider)
+	c.Reorder = copyPointer(c.Reorder)
+	if c.Provider != nil {
+		c.Provider.Provider = model.CloneProvider(c.Provider.Provider)
+	}
 	c.ProjectCreate = copyPointer(c.ProjectCreate)
 	c.Integration = copyPointer(c.Integration)
 	c.Git = copyPointer(c.Git)
-	if c.Git != nil {
-		c.Git.Source = copyPointer(c.Git.Source)
-	}
-	c.Action = copyPointer(c.Action)
 	c.Adjustment = copyPointer(c.Adjustment)
 	if c.Settings != nil {
 		v := *c.Settings
 		v.Shortcuts = slices.Clone(v.Shortcuts)
-		v.ModelPicker.Favorites = slices.Clone(v.ModelPicker.Favorites)
+		v.Subagents = CloneSubagentProfiles(v.Subagents)
+		v.Hooks = CloneHookRules(v.Hooks)
 		v.ModelPicker.Options = maps.Clone(v.ModelPicker.Options)
 		v.ModelPicker.Selections = maps.Clone(v.ModelPicker.Selections)
 		c.Settings = &v
@@ -37,13 +49,13 @@ func (c Command) Clone() Command {
 	}
 	if c.Session != nil {
 		v := *c.Session
-		v.AccessMode = copyPointer(v.AccessMode)
-		v.Plan = copyPointer(v.Plan)
 		v.Title = copyPointer(v.Title)
 		v.Pinned = copyPointer(v.Pinned)
 		v.Archived = copyPointer(v.Archived)
 		v.Unread = copyPointer(v.Unread)
 		v.PinOrder = copyPointer(v.PinOrder)
+		v.GroupID = copyPointer(v.GroupID)
+		v.GroupOrder = copyPointer(v.GroupOrder)
 		v.ModelID = copyPointer(v.ModelID)
 		v.ReasoningLevel = copyPointer(v.ReasoningLevel)
 		v.Branch = copyPointer(v.Branch)
@@ -53,7 +65,6 @@ func (c Command) Clone() Command {
 	}
 	c.Attachment = copyPointer(c.Attachment)
 	c.TerminalSize = copyPointer(c.TerminalSize)
-	c.Comment = copyPointer(c.Comment)
 	return c
 }
 func copyPointer[T any](p *T) *T {
@@ -66,14 +77,77 @@ func copyPointer[T any](p *T) *T {
 
 // Validate rejects ambiguous tagged payloads before any state is mutated.
 func (c Command) Validate() error {
-	if c.RequestID != "" && c.Kind != "session.sidechat" && c.Kind != "session.fork" {
+	if err := c.validatePlugins(); err != nil {
+		return err
+	}
+	if strings.HasPrefix(c.Kind, "plugins.") {
+		return nil
+	}
+	isReorder := IsReorderCommand(c.Kind)
+	if c.Reorder != nil && !isReorder {
+		return errors.New("reorder payload does not match command")
+	}
+	if isReorder {
+		if c.Reorder == nil {
+			return errors.New("reorder payload is required")
+		}
+		if c.Resource != nil || c.Goal != nil || c.Provider != nil || c.ProjectCreate != nil ||
+			c.Integration != nil || c.Git != nil || c.Adjustment != nil ||
+			c.Settings != nil || c.Send != nil || c.Session != nil || c.Attachment != nil ||
+			c.TerminalSize != nil {
+			return errors.New("reorder command requires only its typed reorder payload")
+		}
+		return c.Reorder.Validate(c.Kind)
+	}
+	if err := c.validateResource(); err != nil {
+		return err
+	}
+	if strings.HasPrefix(c.Kind, "resource.") {
+		return nil
+	}
+	if c.Goal != nil && c.Kind != "goal.set" {
+		return errors.New("goal payload does not match command")
+	}
+	switch c.Kind {
+	case "goal.set":
+		if c.SessionID == "" || c.Goal == nil {
+			return errors.New("a session and goal payload are required")
+		}
+		return c.Goal.Validate()
+	case "goal.pause", "goal.resume", "goal.clear":
+		if c.SessionID == "" || c.ID == "" {
+			return errors.New("a session and goal ID are required")
+		}
+		return nil
+	}
+	if c.Provider != nil && c.Kind != "provider.save" {
+		return errors.New("provider configuration does not match command")
+	}
+	switch c.Kind {
+	case "provider.save":
+		if c.Provider == nil {
+			return errors.New("provider configuration is required")
+		}
+		return c.Provider.Provider.Validate()
+	case "provider.delete", "provider.test":
+		if c.ID == "" {
+			return errors.New("provider ID is required")
+		}
+		return nil
+	case "storage.change":
+		if c.Path == "" {
+			return errors.New("data directory is required")
+		}
+		return nil
+	}
+	if c.RequestID != "" && c.Kind != "session.sidechat" && c.Kind != "session.fork" && c.Kind != "session.create" {
 		return errors.New("conversation request ID does not match command")
 	}
 	if c.Git != nil && !IsComposerGitCommand(c.Kind) {
 		return errors.New("git payload does not match command")
 	}
 	if IsComposerGitCommand(c.Kind) {
-		if c.Git == nil || c.Integration != nil || c.Send != nil || c.Session != nil || c.Settings != nil || c.Attachment != nil || c.ProjectCreate != nil || c.Action != nil || c.Adjustment != nil || c.Comment != nil || c.TerminalSize != nil {
+		if c.Git == nil || c.Integration != nil || c.Send != nil || c.Session != nil || c.Settings != nil || c.Attachment != nil || c.ProjectCreate != nil || c.Adjustment != nil || c.TerminalSize != nil {
 			return errors.New("git command requires only its typed git payload")
 		}
 		return c.Git.Validate(c.Kind)
@@ -95,9 +169,6 @@ func (c Command) Validate() error {
 	if c.Adjustment != nil && c.Kind != "background.adjust" {
 		return errors.New("background adjustment does not match command")
 	}
-	if c.Action != nil && c.Kind != "project.action.create" && c.Kind != "project.action.update" {
-		return errors.New("project action payload does not match command")
-	}
 	if c.Send != nil && c.Kind != "message.send" {
 		return errors.New("send payload does not match command")
 	}
@@ -110,13 +181,15 @@ func (c Command) Validate() error {
 	if c.Attachment != nil && c.Kind != "attachment.add" {
 		return errors.New("attachment payload does not match command")
 	}
-	if c.Comment != nil && c.Kind != "pr.comment" {
-		return errors.New("comment payload does not match command")
-	}
 	if c.TerminalSize != nil && c.Kind != "terminal.resize" {
 		return errors.New("terminal size payload does not match command")
 	}
 	switch c.Kind {
+	case "project.files.refresh", "project.delete":
+		if c.ID == "" {
+			return errors.New("project ID is required")
+		}
+		return nil
 	case "catalog.retry":
 		return nil
 	case "background.install":
@@ -138,16 +211,6 @@ func (c Command) Validate() error {
 			return errors.New("unknown Appshots permission")
 		}
 		return nil
-	case "project.action.create", "project.action.update":
-		if c.ProjectID == "" || c.Action == nil {
-			return errors.New("project and action payload are required")
-		}
-		return nil
-	case "project.action.delete", "project.action.run":
-		if c.ProjectID == "" || c.ID == "" {
-			return errors.New("project and action ID are required")
-		}
-		return nil
 	case "session.fork", "session.sidechat":
 		if c.SessionID == "" && c.ID == "" {
 			return errors.New("parent session ID is required")
@@ -160,9 +223,9 @@ func (c Command) Validate() error {
 			return errors.New("theme ID is required")
 		}
 		return nil
-	case "message.send", "session.create", "project.create", "terminal.create", "account.signin", "account.signout", "cloud.toggle", "update.check", "file.create":
+	case "message.send", "session.create", "project.create", "terminal.create", "cloud.toggle", "update.check", "file.create":
 		return nil
-	case "message.stop", "message.retry":
+	case "message.stop", "message.retry", "session.storage.retry":
 		if c.SessionID == "" {
 			return errors.New("session ID is required")
 		}
@@ -174,13 +237,32 @@ func (c Command) Validate() error {
 		if c.Settings == nil {
 			return errors.New("settings payload is required")
 		}
+		if err := ValidateHookRules(c.Settings.Hooks); err != nil {
+			return err
+		}
+		return ValidateSubagentProfiles(c.Settings.Subagents)
 	case "attachment.add":
 		if c.Attachment == nil || c.Attachment.ID == "" {
 			return errors.New("attachment with ID is required")
 		}
-	case "session.archive", "session.pin", "session.rename", "session.delete", "queue.remove", "queue.update", "request.answer", "file.save", "file.rename", "file.delete", "provider.toggle", "provider.connect", "device.toggle", "pr.comment", "pr.merge", "terminal.input", "terminal.close", "terminal.resize":
+	case "session.archive", "session.pin", "session.rename", "session.delete", "queue.remove", "queue.update", "queue.steer", "queue.send", "request.answer", "file.open", "file.save", "file.rename", "file.delete", "provider.toggle", "provider.connect", "device.toggle", "terminal.input", "terminal.close", "terminal.resize", "terminal.clear":
 		if c.ID == "" {
 			return errors.New("object ID is required")
+		}
+	case "group.create":
+		if strings.TrimSpace(c.Text) == "" {
+			return errors.New("group title is required")
+		}
+	case "group.rename":
+		if c.ID == "" {
+			return errors.New("group ID is required")
+		}
+		if strings.TrimSpace(c.Text) == "" {
+			return errors.New("group title is required")
+		}
+	case "group.delete":
+		if c.ID == "" {
+			return errors.New("group ID is required")
 		}
 	default:
 		return fmt.Errorf("unsupported command %q", c.Kind)

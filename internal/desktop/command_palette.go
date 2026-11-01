@@ -69,10 +69,10 @@ func (a *App) paletteKeyHint(c *ui.Context, key, label string) {
 			case "↵":
 				ui.Icon(c, assets.Icon("return")).Size(12.5, 12.5).TextColor(a.palette.Muted)
 			default:
-				ui.Text(c, key).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, key).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			}
 		})
-		ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Muted)
 	})
 }
 func sourcePaletteInk(dark bool, alpha float32) ui.Color {
@@ -103,7 +103,7 @@ func paletteScrim(dark bool) ui.Color {
 }
 
 func paletteSessionHeight(session contracts.Session, settings contracts.Settings) float32 {
-	return sidebarRowHeight(settings.SidebarCompact, settings.ShowProjectLabels, settings.SidebarShowBranch && session.Branch != "", settings.SidebarShowPullRequest && session.PullRequestNumber > 0)
+	return design.Sidebar().RowHeight
 }
 
 func (a *App) toggleCommandPalette() {
@@ -213,17 +213,10 @@ func scorePaletteField(text, term string, weight int) int {
 	return score
 }
 func (a *App) paletteThreadScore(session contracts.Session, query string) int {
-	pr := ""
-	for _, request := range a.state.PullRequests {
-		if request.Number == session.PullRequestNumber {
-			pr = fmt.Sprintf("#%d %s %s %s", request.Number, request.Title, request.HeadBranch, request.BaseBranch)
-			break
-		}
-	}
 	fields := []struct {
 		text   string
 		weight int
-	}{{session.Title, 100}, {a.projectNameFor(session.ProjectID), 40}, {session.Branch, 30}, {a.deviceNameFor(session.DeviceID), 20}, {pr, 20}}
+	}{{session.Title, 100}, {a.projectNameFor(session.ProjectID), 40}, {session.Branch, 30}, {a.deviceNameFor(session.DeviceID), 20}}
 	score := 0
 	for _, term := range strings.Fields(strings.ToLower(query)) {
 		best := 0
@@ -383,7 +376,7 @@ func (a *App) activatePalette(row paletteRow) {
 	case "settings":
 		a.navigate("settings")
 	case "archive":
-		a.archiveSidebarSession(a.sessionID, true)
+		a.archiveSidebarSession(a.sessionID)
 	}
 	if row.session != nil {
 		a.navigate("chat/" + row.session.ID)
@@ -413,8 +406,8 @@ func (a *App) commandPalette(c *ui.Context) {
 			var input ui.Element
 			ui.Row(c).Height(44).Padding(8, 16).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				ui.Icon(c, assets.Icon("palette-search")).Size(16, 16).TextColor(a.palette.Muted)
-				input = ui.TextInputBase(c, &a.paletteQuery).Bind(&p.input).Label(tr(c, "Command search")).Placeholder(tr(c, "Search anything…")).AutoFocus().Grow(1).MinWidth(0).FontSize(design.UISize(c, 14)).OnChange(func() { p.selected = 0; p.activeKey = ""; a.refreshPaletteSearch() })
-				ui.Text(c, paletteShortcut("Mod+K")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				input = ui.TextInputBase(c.Key("command-search"), &a.paletteQuery).Bind(&p.input).Label(tr(c, "Command search")).Placeholder(tr(c, "Search anything…")).AutoFocus().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).OnChange(func() { p.selected = 0; p.activeKey = ""; a.refreshPaletteSearch() })
+				ui.Text(c, paletteShortcut("Mod+K")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			})
 			changeTab := func(index int) {
 				p.tab = index
@@ -430,8 +423,8 @@ func (a *App) commandPalette(c *ui.Context) {
 						row.Background(sourcePaletteWash(a.palette.Dark, .1))
 					}
 					row.Children(func() {
-						ui.Text(c, tr(c, title)).FontSize(design.UISize(c, 12))
-						ui.Text(c, paletteShortcut(fmt.Sprintf("Mod+%d", i+1))).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+						ui.Text(c, tr(c, title)).FontSize(design.TextSize(c, design.TextBase))
+						ui.Text(c, paletteShortcut(fmt.Sprintf("Mod+%d", i+1))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 					})
 				}
 			})
@@ -464,7 +457,7 @@ func (a *App) commandPalette(c *ui.Context) {
 			for i, key := range []ui.Key{ui.Key1, ui.Key2, ui.Key3, ui.Key4} {
 				input.OnShortcut(ui.Ctrl, key, func() { changeTab(i) }).OnShortcut(ui.Super, key, func() { changeTab(i) })
 			}
-			p.list.Key = func(i int) any { return rows[i].key }
+			p.list.Key = func(i int) any { return "command-list-row:" + rows[i].key }
 			p.list.Label = func(i int) string { return a.paletteRowTitle(rows[i]) }
 			listHeight := float32(0)
 			for i, row := range rows {
@@ -488,7 +481,7 @@ func (a *App) commandPalette(c *ui.Context) {
 							if i > 0 {
 								ui.Box(c).Height(1).FillWidth().Background(a.palette.Border).Margin(8, 0)
 							}
-							ui.Text(c, tr(c, row.section)).Height(20).Padding(2, 16, 4).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+							ui.Text(c, tr(c, row.section)).Height(20).Padding(2, 16, 4).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 						}
 						a.paletteResult(c, row, i, p.selected == i, execute)
 					})
@@ -508,7 +501,7 @@ func (a *App) commandPalette(c *ui.Context) {
 				if p.error != "" {
 					status = p.error
 				}
-				ui.Text(c, tr(c, status)).Padding(4, 16).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, status)).Padding(4, 16).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			}
 			ui.Row(c).Padding(7, 16).Gap(12).BorderWidth(1, 0, 0, 0).BorderColor(a.palette.Border).Children(func() {
 				a.paletteKeyHint(c, "↑ ↓", "Navigate")
@@ -526,7 +519,7 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 	if row.session != nil {
 		height = paletteSessionHeight(*row.session, a.state.Settings)
 	}
-	button := ui.ButtonBase(c).Key(row.key).Label(tr(c, "Command: ")+a.paletteRowTitle(row)).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
+	button := ui.ButtonBase(c.Key(row.key)).Label(tr(c, "Command: ")+a.paletteRowTitle(row)).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
 	button.HandleInput(func(event ui.InputEvent) bool {
 		if event.Kind == ui.InputPointerMove && event.Button < 0 {
 			a.commands.selected = index
@@ -550,7 +543,7 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 		} else {
 			ui.Icon(c, assets.Icon(row.glyph)).Size(16, 16).TextColor(a.palette.Muted)
 		}
-		title := paletteHighlight(c, a.paletteRowTitle(row), a.paletteQuery, a.palette.Accent).SingleLine().MinWidth(0).MaxWidth(240).FontSize(design.UISize(c, 13))
+		title := paletteHighlight(c, a.paletteRowTitle(row), a.paletteQuery, a.palette.Accent).SingleLine().MinWidth(0).MaxWidth(240).FontSize(design.TextSize(c, design.TextBase))
 		if row.command != "" {
 			title.Grow(1).MaxWidth(10000)
 			bindingID := ""
@@ -573,11 +566,11 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 				}
 			}
 			if combo != "" {
-				ui.Text(c, paletteShortcut(combo)).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, paletteShortcut(combo)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			}
 		}
 		if row.preview != "" {
-			paletteHighlightRanges(c, row.preview, row.ranges, a.palette.Accent).SingleLine().MinWidth(0).Grow(1).Font("Geist Mono").FontSize(design.UISize(c, 13)).TextColor(a.palette.Text)
+			paletteHighlightRanges(c, row.preview, row.ranges, a.palette.Accent).SingleLine().MinWidth(0).Grow(1).Font("Geist Mono").FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Text)
 		} else if row.subtitle != "" && row.subtitle != "." {
 			ui.Text(c, row.subtitle).SingleLine().MinWidth(0).Grow(1).TextColor(a.palette.Muted)
 		}
@@ -609,49 +602,12 @@ func paletteHighlightRanges(c *ui.Context, text string, ranges []contracts.Match
 }
 func (a *App) paletteThread(c *ui.Context, session contracts.Session) {
 	settings := a.state.Settings
-	compact := settings.SidebarCompact
-	branch := settings.SidebarShowBranch && session.Branch != ""
-	pr := settings.SidebarShowPullRequest && session.PullRequestNumber > 0
-	ui.Column(c).Grow(1).MinWidth(0).Gap(2).Children(func() {
-		if !compact && settings.ShowProjectLabels {
-			ui.Row(c).Height(14).MinWidth(0).Gap(4).AlignItems(ui.Center).Children(func() {
-				paletteHighlight(c, a.projectNameFor(session.ProjectID)+" @ "+a.deviceNameFor(session.DeviceID), a.paletteQuery, a.palette.Accent).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
-				a.sidebarSessionCorner(c, session, false, false)
-			})
+	ui.Row(c).Height(17).Gap(4).MinWidth(0).AlignItems(ui.Center).Children(func() {
+		a.sidebarStatusGlyph(c, session)
+		if settings.ShowIcons {
+			icon(c, "folder", 13)
 		}
-		ui.Row(c).Height(17).Gap(4).MinWidth(0).AlignItems(ui.Center).Children(func() {
-			if compact {
-				a.sidebarStatusGlyph(c, session)
-			}
-			if settings.SidebarShowHarness {
-				icon(c, a.sessionHarnessIcon(session), 13)
-			}
-			if settings.ShowIcons {
-				icon(c, "folder", 13)
-			}
-			paletteHighlight(c, session.Title, a.paletteQuery, a.palette.Accent).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 13))
-			if compact {
-				if pr {
-					a.sidebarPRBadge(c, session)
-				}
-				a.sidebarSessionCorner(c, session, false, true)
-			}
-		})
-		if !compact && (branch || pr) {
-			height := float32(14)
-			if pr {
-				height = 16
-			}
-			ui.Row(c).Height(height).Gap(6).MinWidth(0).AlignItems(ui.Center).Children(func() {
-				if branch {
-					paletteHighlight(c, session.Branch, a.paletteQuery, a.palette.Accent).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 10)).TextColor(a.palette.Faint)
-				} else {
-					ui.Spacer(c)
-				}
-				if pr {
-					a.sidebarPRBadge(c, session)
-				}
-			})
-		}
+		paletteHighlight(c, session.Title, a.paletteQuery, a.palette.Accent).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextBase))
+		a.sidebarSessionCorner(c, session, false)
 	})
 }

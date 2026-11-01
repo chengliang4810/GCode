@@ -1,0 +1,26 @@
+{
+  "repo": "NVIDIA/skills",
+  "commit": "029363a2023c0b24b1a75ddbeac11cd286d74afb",
+  "path": "plugins/nvidia-skills",
+  "archive_sha256": "121b46fb75d8862a3e39d13badc573ef6718277d10743432c45fef0e3ce7dc88",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    "README.md",
+    "assets/nvidia.png",
+    "skills/nvidia-skill-finder/BENCHMARK.md",
+    "skills/nvidia-skill-finder/SKILL.md",
+    "skills/nvidia-skill-finder/agents/openai.yaml",
+    "skills/nvidia-skill-finder/evals/evals.json",
+    "skills/nvidia-skill-finder/references/taxonomy-routing.md",
+    "skills/nvidia-skill-finder/skill-card.md",
+    "skills/nvidia-skill-finder/skill.oms.sig"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n    \"name\": \"nvidia-skills\",\n    \"version\": \"1.4.0\",\n    \"description\": \"Find the right NVIDIA skill for GPU acceleration, CUDA, AI agents, data loading, training, inference, robotics, Physical AI, Omniverse, simulation, and other NVIDIA-powered workflows.\",\n    \"displayName\": \"NVIDIA Skills\",\n    \"author\": {\n        \"name\": \"NVIDIA\",\n        \"url\": \"https://github.com/NVIDIA/skills\"\n    },\n    \"homepage\": \"https://build.nvidia.com/skills/\",\n    \"repository\": \"https://github.com/NVIDIA/skills\",\n    \"license\": \"Apache-2.0 AND CC-BY-4.0\",\n    \"keywords\": [\n        \"nvidia\",\n        \"gpu\",\n        \"cuda\",\n        \"ai-agents\",\n        \"data-loading\",\n        \"training\",\n        \"inference\",\n        \"llm-serving\",\n        \"robotics\",\n        \"simulation\",\n        \"omniverse\",\n        \"openusd\",\n        \"digital-twin\",\n        \"physical-ai\",\n        \"cad\"\n    ],\n    \"skills\": [\n        \"./skills/\"\n    ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/nvidia-skill-finder/SKILL.md": "\nname: nvidia-skill-finder\ndescription: >-\n  Use for NVIDIA-related requests where an NVIDIA skill might help, even if the user did not ask for a skill. Trigger on NVIDIA products, hardware, software, SDKs, GPUs, Jetson/JetPack/L4T/BSP/SDK Manager/driver/flashing/setup, CUDA, NIM, NeMo, Omniverse/OpenUSD/SimReady, Isaac, RAPIDS/cuDF, cuPyNumeric, cuOpt, Dynamo, Holoscan, TensorRT, DeepStream, VSS, TAO, NGC/NVCF. Do not use for generic non-NVIDIA route, optimize, deploy, AI, video, data, or infrastructure tasks.\nlicense: CC-BY-4.0 AND Apache-2.0\nmetadata:\n  author: NVIDIA\n  tags: \"nvidia, skills, discovery, catalog, router\"\n  domain: agent-skills\n"
+  }
+}

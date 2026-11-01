@@ -3,7 +3,7 @@ package workbench
 import (
 	"fmt"
 	"gcode/internal/design"
-	"net/url"
+	"gcode/internal/linktarget"
 	"strings"
 
 	"gcode/internal/assets"
@@ -14,15 +14,17 @@ import (
 )
 
 type browser struct {
-	data       contracts.BrowserTab
-	address    string
-	view       *mygo.WebView
-	off        []func()
-	zoom       float64
-	annotation *annotationSession
-	scripts    *scriptQueue
-	body       ui.Handle
-	focusBody  bool
+	data         contracts.BrowserTab
+	address      string
+	view         *mygo.WebView
+	off          []func()
+	zoom         float64
+	annotation   *annotationSession
+	scripts      *scriptQueue
+	body         ui.Handle
+	focusBody    bool
+	addressInput ui.Handle
+	focusAddress bool
 }
 
 // NormalizeURL accepts public HTTP(S) navigation only. App pages and local files
@@ -35,11 +37,11 @@ func NormalizeURL(raw string) (string, error) {
 	if !strings.Contains(raw, "://") {
 		raw = "https://" + raw
 	}
-	u, err := url.Parse(raw)
-	if err != nil || u.Hostname() == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil {
+	target, err := linktarget.Parse(raw)
+	if err != nil || target.Kind != linktarget.Web {
 		return "", fmt.Errorf("enter an HTTP or HTTPS website address")
 	}
-	return u.String(), nil
+	return target.URL, nil
 }
 
 func (s *State) OpenBrowser(address string) { s.openBrowser(address) }
@@ -48,21 +50,25 @@ func (s *State) openBrowser(address string) {
 	if s.closed.Load() {
 		return
 	}
-	normalized, err := NormalizeURL(address)
-	if err != nil {
-		s.Error = err.Error()
-		return
+	normalized := ""
+	if strings.TrimSpace(address) != "" {
+		var err error
+		normalized, err = NormalizeURL(address)
+		if err != nil {
+			s.Error = err.Error()
+			return
+		}
 	}
 	s.nextBrowser++
 	id := fmt.Sprintf("browser-%d", s.nextBrowser)
-	b := &browser{data: contracts.BrowserTab{ID: id, URL: normalized, Title: "Browser"}, address: normalized, zoom: 1, focusBody: true}
+	b := &browser{data: contracts.BrowserTab{ID: id, URL: normalized, Title: "Browser"}, address: normalized, zoom: 1, focusBody: normalized != "", focusAddress: normalized == ""}
 	s.browsers[id] = b
 	s.choose("browser", id, "Browser")
 	s.createBrowserView(b)
 }
 
 func (s *State) createBrowserView(b *browser) {
-	if s.win == nil {
+	if s.win == nil || b.data.URL == "" {
 		return
 	}
 	b.data.Loading = true
@@ -173,7 +179,7 @@ func (s *State) browserView(c *ui.Context, id string) {
 				b.view.Page().GoForward()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-right")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c).Label(tr(c, "Reload page")).Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
+		ui.ButtonBase(c).Label(tr(c, "Reload page")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.data.Loading = true
@@ -184,7 +190,11 @@ func (s *State) browserView(c *ui.Context, id string) {
 		}).Children(func() { ui.Icon(c, assets.Icon("refresh")).Size(14, 14).TextColor(p.Muted) })
 		ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
 			ui.Icon(c, assets.Icon("globe")).Size(12, 12).TextColor(p.Faint)
-			in := ui.TextInputBase(c, &b.address).Label(tr(c, "Website address")).Placeholder(tr(c, "Enter URL")).Grow(1).FontSize(design.UISize(c, 11.5)).OnSubmit(func() { s.navigateBrowser(b) })
+			in := ui.TextInputBase(c.Key("browser-address:"+id), &b.address).Bind(&b.addressInput).Label(tr(c, "Website address")).Placeholder(tr(c, "Enter URL")).Grow(1).FontSize(design.TextSize(c, design.TextBase)).OnSubmit(func() { s.navigateBrowser(b) })
+			if b.focusAddress {
+				in.Focus()
+				b.focusAddress = false
+			}
 			if in.Focused() || b.address != b.data.URL {
 				ui.ButtonBase(c).Label(tr(c, "Go to address")).Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
 			}
@@ -204,7 +214,7 @@ func (s *State) browserView(c *ui.Context, id string) {
 	})
 	if b.data.Error != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {
-			ui.Text(c, tr(c, "This page could not be loaded.")).FontSize(design.UISize(c, 16))
+			ui.Text(c, tr(c, "This page could not be loaded.")).FontSize(design.TextSize(c, design.TextLarge))
 			ui.Text(c, b.data.Error).TextColor(p.Muted).MaxWidth(400)
 			ui.Button(c, tr(c, "Try again")).OnClick(func() { s.navigateBrowser(b) })
 		})
@@ -220,7 +230,7 @@ func (s *State) browserView(c *ui.Context, id string) {
 		return
 	}
 	ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {
-		ui.Text(c, tr(c, "Open a website")).FontSize(design.UISize(c, 16))
+		ui.Text(c, tr(c, "Open a website")).FontSize(design.TextSize(c, design.TextLarge))
 		ui.Text(c, b.data.URL).TextColor(p.Muted)
 	})
 }

@@ -12,8 +12,6 @@ import (
 // than the hero's (DockLayout::thread_height); both share the same upper cap.
 const (
 	composerCompactHeight = float32(49)
-	composerTextSize      = float32(14)
-	composerLineHeight    = float32(22.75)
 	composerActionsHeight = float32(42)
 	composerFooterHeight  = float32(24)
 	composerResizeSettle  = 150 * time.Millisecond

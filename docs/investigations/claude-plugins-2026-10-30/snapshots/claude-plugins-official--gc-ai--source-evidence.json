@@ -1,0 +1,26 @@
+{
+  "repo": "GC-AI-Inc/gc-ai-claude-plugin",
+  "commit": "efda779972c7b7162e79234e164bc2f359a8a518",
+  "path": ".",
+  "archive_sha256": "a1de5a6a45597a4a19fbd655900044b763735d5e86d800e6a53b33179ad62e51",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "agents/gc-ai-analyst.md",
+    "skills/ask/SKILL.md",
+    "skills/organize-matter/SKILL.md",
+    "skills/review-document/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-plugin-manifest.json\",\n  \"name\": \"gc-ai\",\n  \"displayName\": \"GC AI\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Work in your GC AI legal knowledge base from Claude: upload documents, run review playbooks, and ask questions grounded in your own files, all as you.\",\n  \"author\": {\n    \"name\": \"GC AI\",\n    \"email\": \"support@gc.ai\",\n    \"url\": \"https://gc.ai\"\n  },\n  \"homepage\": \"https://github.com/GC-AI-Inc/gc-ai-claude-plugin\",\n  \"repository\": \"https://github.com/GC-AI-Inc/gc-ai-claude-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"legal\", \"contracts\", \"document-review\", \"playbooks\", \"gc-ai\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"gc-ai\": {\n      \"type\": \"http\",\n      \"url\": \"https://app.gc.ai/api/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "agents/gc-ai-analyst.md": "\nname: gc-ai-analyst\ndescription: Autonomously runs a complete GC AI legal task end to end (upload documents, run a review playbook, or ask grounded questions) and reports back with cited findings. Use to delegate a full document-review or research workflow to GC AI, especially in Cowork or background runs.\n",
+    "skills/ask/SKILL.md": "\nname: ask\ndescription: Ask a legal question grounded in the user's GC AI knowledge base, optionally against specific documents. Use for legal research, summarization, or Q&A over the user's own files, playbooks, and skills rather than the model's general knowledge.\n",
+    "skills/organize-matter/SKILL.md": "\nname: organize-matter\ndescription: Group documents into a GC AI project (matter) so later review and questions are scoped to it. Use when the user is starting a new matter, deal, or case, or wants a set of files kept and worked on together.\n",
+    "skills/review-document/SKILL.md": "\nname: review-document\ndescription: Review one or more documents against a GC AI playbook and summarize the findings. Use when the user wants a contract or document checked, redlined, or run through a review playbook in their GC AI knowledge base.\n"
+  }
+}

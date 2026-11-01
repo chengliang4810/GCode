@@ -1,0 +1,21 @@
+{
+  "repo": "pendo-io/claude-pendo-plugin",
+  "commit": "340d503c23eed487be83693aa4c1837df4a7dcd4",
+  "path": "plugins/pendo-guides",
+  "archive_sha256": "58508209af4ed5252ad3b185528408d1ba331590789e521737f35345f95c02b4",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/pendo-guide-creator/SKILL.md",
+    "skills/pendo-guide-creator/components/pendo-poll.js",
+    "skills/pendo-guide-creator/components/register.min.js",
+    "skills/pendo-guide-creator/references/guide-types.md",
+    "skills/pendo-guide-creator/references/html-generation.md",
+    "skills/pendo-guide-creator/references/pendo-components.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"pendo-guides\",\n  \"displayName\": \"Pendo Guides\",\n  \"version\": \"1.3.0\",\n  \"description\": \"Create production-ready Pendo in-app guides (walkthroughs, announcements, alerts, polls, promotions) as HTML/CSS/JS from a short intake conversation\",\n  \"author\": {\n    \"name\": \"Pendo\",\n    \"email\": \"plugins@pendo.io\"\n  },\n  \"homepage\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"repository\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"pendo\", \"guides\", \"in-app\", \"onboarding\", \"product-management\"],\n  \"mcpServers\": {\n    \"pendo-external\": {\n      \"type\": \"http\",\n      \"url\": \"https://app.pendo.io/mcp/v0/shttp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/pendo-guide-creator/SKILL.md": "\nname: pendo-guide-creator\ndescription: >\n  Creates production-ready Pendo in-app guides as HTML/CSS/JS files, drawing on guide type best practices,\n  org-specific content guidelines, and user-provided context. Trigger this skill whenever a user types\n  /pendo-guides:pendo-guide-creator or uses natural language like \"create a guide\", \"build a Pendo guide\", \"write a\n  walkthrough\", \"make an announcement guide\", \"create an alert\", \"build a poll\", or \"write an in-app\n  message\". Also trigger when the user describes a guide use case — e.g. \"I want to onboard new users\",\n  \"we're launching a feature and want to notify users in-app\", or \"I need to collect feedback in the product.\"\n  Always use this skill proactively when any Pendo guide creation is requested, even if the request is casual\n  or incomplete — the skill handles gathering missing context from the user.\n"
+  }
+}

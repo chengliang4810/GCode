@@ -1,5 +1,13 @@
 # 侧栏分项审查与本轮修复
 
+历史审查记录。2026-10-30 起，项目筛选及列表/设备分组已由项目折叠面板替换，
+sidebarShowProjectFilter、sidebarGrouping 字段已删除；同日删除了会话行运行框架
+（Harness）图标、sidebarShowHarness/sidebarShowArchived 字段与侧栏 Archived 分组，
+归档数据改为只在设置页“已归档对话”中查看、还原和删除。当前规则与验收见
+[左侧栏排版](sidebar-layout.md)。下文保留 2026-10-28 的源代码审查与历史证据，
+其中旧分组、项目筛选、Harness 图标、侧栏归档分组、29/45/61/63 DIP 尺寸和
+账户 footer 不描述当前实现。
+
 日期：2026-10-28。参考源码固定为 Zeron **v0.2.128 / ab189159f10cf8e63c0502be75a59bbc487e0eaf**，`D:/zeron` 只读。
 优先核对官方 `D:/projects/mygo`，实际 API 再检查固定 MyGo v0.6.4 的 `ui/list.go`、`list_builder.go`、`menu.go`、`textinput.go` 和 gallery List 示例。
 
@@ -85,9 +93,9 @@ Location 对应 ShowProjectLabels，Project icon 对应 ShowIcons；契约中的
 其余文件覆盖 light/dark × list/project/device × compact/regular 的全部 12 种组合。
 
 ```powershell
-$env:ZERON_WORKBENCH_EVIDENCE = "$PWD/output/audit-sidebar"
+$env:RCODE_WORKBENCH_EVIDENCE = "$PWD/output/audit-sidebar"
 go test ./internal/desktop -run '^TestSidebarAudit(Evidence|TransientEvidence)$' -count=1
-Remove-Item Env:ZERON_WORKBENCH_EVIDENCE
+Remove-Item Env:RCODE_WORKBENCH_EVIDENCE
 ```
 
 ## 待继续验收/补齐

@@ -36,6 +36,8 @@ var required = []string{
 	"go/Go-runtime-BSD-3-Clause.txt", "go/purego-Apache-2.0.txt", "go/go-text-typesetting-LICENSE.txt",
 	"go/go-text-harfbuzz-MIT.txt", "go/x-image-BSD-3-Clause.txt", "go/x-net-BSD-3-Clause.txt", "go/x-text-BSD-3-Clause.txt",
 	"go/Go-runtime-PATENTS.txt", "go/x-image-PATENTS.txt", "go/x-net-PATENTS.txt", "go/x-text-PATENTS.txt",
+	"go/go-latex-BSD-3-Clause.txt", "go/x-sys-BSD-3-Clause.txt", "go/x-sys-PATENTS.txt",
+	"go/yaml-v3-LICENSE.txt", "go/yaml-v3-NOTICE.txt", "go/regexp2-MIT.txt", "go/regexp2-ATTRIB.txt",
 	"native/Ghostty-MIT.txt", "native/ghostty-vt-manifest.json", "native/PROVENANCE.md",
 	"native/uucode-LICENSE.md", "native/uucode-Bjoern-Hoehrmann-MIT.txt", "native/uucode-Unicode.txt",
 	"native/Highway-Apache-2.0.txt", "native/simdutf-9.0.0-MIT.txt", "native/simdutf-9.0.0-Apache-2.0.txt",

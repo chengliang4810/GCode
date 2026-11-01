@@ -13,26 +13,21 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// The compact panel geometry follows pickers/compact.rs.
-const compactModelWidth float32 = 256
+const (
+	modelPickerMaxWidth   float32 = 440
+	modelPickerGap        float32 = 6
+	providerPanelMinWidth float32 = 120
+	providerPanelMaxWidth float32 = 240
+	modelPanelMinWidth    float32 = 192
+	providerRowChrome     float32 = 74
+	managementRowChrome   float32 = 52
+	modelRowChrome        float32 = 36
+)
 
-func (a *composerController) compactPanelShortcuts(c *ui.Context) {
-	for _, key := range []ui.Key{ui.KeyUp, ui.KeyDown, ui.KeyEnter, ui.KeySpace} {
-		c.OnShortcut(0, key, func() {
-			a.openModelList()
-			if count := len(a.modelRows()); count > 0 && (key == ui.KeyUp || key == ui.KeyDown) {
-				delta := 1
-				if key == ui.KeyUp {
-					delta = -1
-				}
-				a.modelCursor = (a.modelCursor + delta + count) % count
-				a.modelList.ScrollIntoView(a.modelCursor)
-			}
-		})
-	}
+func (a *composerController) effortPanelShortcuts(c *ui.Context) {
 	for _, key := range []ui.Key{ui.KeyLeft, ui.KeyRight, ui.KeyHome, ui.KeyEnd} {
 		c.OnShortcut(0, key, func() {
-			effort := a.compactEffort()
+			effort := a.reasoningChoice()
 			if len(effort.levels) == 0 {
 				return
 			}
@@ -47,67 +42,34 @@ func (a *composerController) compactPanelShortcuts(c *ui.Context) {
 			case ui.KeyEnd:
 				next = len(effort.levels) - 1
 			}
-			a.pickCompactEffort(effort, next)
+			a.pickReasoningChoice(effort, next)
 		})
 	}
-	c.OnShortcut(0, ui.KeyF, func() {
-		model := a.selectedModel()
-		option, on, off, fast := a.compactFastOption(model)
-		if option.ID == "" {
-			return
-		}
-		choice := on
-		if fast {
-			choice = off
-		}
-		a.pickModelOption(model, option, choice)
-	})
-	c.OnShortcut(0, ui.KeyTab, func() { a.cycleCompactProvider(1) })
-	c.OnShortcut(ui.Shift, ui.KeyTab, func() { a.cycleCompactProvider(-1) })
 }
 
-func (a *composerController) cycleCompactProvider(delta int) {
-	if a.modelProviderLocked() {
-		return
-	}
-	var providers []string
-	for _, provider := range a.state.Providers {
-		if a.modelProviderOffered(provider) {
-			providers = append(providers, provider.ID)
-		}
-	}
-	if len(providers) == 0 {
-		return
-	}
-	current := slices.Index(providers, a.selectedModel().ProviderID)
-	next := 0
-	if current >= 0 {
-		next = (current + delta + len(providers)) % len(providers)
-	} else if delta < 0 {
-		next = len(providers) - 1
-	}
-	a.selectModelProvider(providers[next])
+type reasoningChoiceState struct {
+	levels      []string
+	selected    int
+	option      contracts.ModelOption
+	unavailable string
 }
 
-type compactEffortState struct {
-	levels   []string
-	selected int
-	option   contracts.ModelOption
-}
-
-func (e compactEffortState) label() string {
+func (e reasoningChoiceState) label() string {
+	if e.unavailable != "" {
+		return e.unavailable
+	}
 	if e.option.ID != "" {
 		return modelOptionChoiceLabel(e.option, e.levels[e.selected])
 	}
 	return e.levels[e.selected]
 }
 
-func (a *composerController) compactEffort() compactEffortState {
+func (a *composerController) reasoningChoice() reasoningChoiceState {
 	if a.sessionID == "" && a.modelNoAgents() {
-		return compactEffortState{}
+		return reasoningChoiceState{}
 	}
 	model := a.selectedModel()
-	effort := compactEffortState{levels: model.ReasoningLevels}
+	effort := reasoningChoiceState{levels: model.ReasoningLevels}
 	value := a.reasoning
 	if len(effort.levels) == 0 {
 		for _, option := range model.Options {
@@ -119,11 +81,14 @@ func (a *composerController) compactEffort() compactEffortState {
 		}
 	}
 	effort.selected = max(0, slices.Index(effort.levels, value))
+	if a.state.Runtime != nil && value != "" && !slices.Contains(effort.levels, value) {
+		effort.unavailable = a.t("Unavailable") + " · " + value
+	}
 	return effort
 }
 
-func (a *composerController) pickCompactEffort(effort compactEffortState, index int) {
-	if index < 0 || index >= len(effort.levels) || index == effort.selected {
+func (a *composerController) pickReasoningChoice(effort reasoningChoiceState, index int) {
+	if index < 0 || index >= len(effort.levels) || (index == effort.selected && effort.unavailable == "") {
 		return
 	}
 	if effort.option.ID != "" {
@@ -189,7 +154,7 @@ func fastModeValues(option contracts.ModelOption) (on, off string) {
 	return "", ""
 }
 
-func (a *composerController) compactFastOption(model contracts.Model) (option contracts.ModelOption, on, off string, fast bool) {
+func (a *composerController) fastModelOption(model contracts.Model) (option contracts.ModelOption, on, off string, fast bool) {
 	for _, option := range model.Options {
 		on, off := fastModeValues(option)
 		if on != "" {
@@ -199,119 +164,198 @@ func (a *composerController) compactFastOption(model contracts.Model) (option co
 	return contracts.ModelOption{}, "", "", false
 }
 
-func (a *composerController) modelPopupPalette() design.Tokens {
+// effortPalette is the device-local reasoning-slider preset resolved against
+// the current theme and accent.
+func (a *composerController) effortPalette() design.EffortPalette {
+	return design.EffortPaletteFor(a.state.Settings.Appearance.EffortTheme, a.palette)
+}
+
+func (a *composerController) modelPopupPalette(c *ui.Context) design.Tokens {
 	palette := a.palette
-	// popover.rs::surface_bg uses Theme::input_glass_bg. Native opaque
-	// surfaces flatten the input tint over the page, not the dialog plane.
-	palette.Dialog = palette.Input.Over(palette.Background)
+	// popover.rs::surface_bg: the frosted card's tint over the backdrop
+	// blur; native opaque surfaces flatten the input tint over the page,
+	// not the dialog plane.
+	palette.Dialog = design.FloatingSurface(a.palette, a.state.Settings.Appearance.Surface, c.Vibrancy())
 	return palette
 }
 
+// modelPickerColumns measures each card from its own content, as the
+// reference picker does, so a fixed split cannot truncate long model names.
+func (a *composerController) modelPickerColumns(c *ui.Context) (providerWidth, modelWidth float32) {
+	fontSize := design.TextSize(c, design.TextBase)
+	measure := func(text string, weight int) float32 {
+		advance, _ := c.MeasureText(0, ui.Span{Text: text, Font: c.Theme().Font, Size: fontSize, Weight: weight, Features: "kern=0"})
+		return advance
+	}
+	providerWidth = providerPanelMinWidth
+	for _, provider := range a.state.Providers {
+		if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
+			providerWidth = max(providerWidth, measure(provider.Name, 400)+providerRowChrome)
+		}
+	}
+	providerWidth = max(providerWidth, measure(tr(c, "Model management"), 400)+managementRowChrome)
+	providerWidth = min(providerWidth, providerPanelMaxWidth)
+
+	providerID := a.modelProvider
+	if providerID == "" {
+		providerID = a.selectedProvider().ID
+	}
+	modelWidth = modelPanelMinWidth
+	measured := 0
+	for _, option := range a.state.Models {
+		if option.ProviderID != providerID {
+			continue
+		}
+		modelWidth = max(modelWidth, measure(option.Label, 500)+modelRowChrome)
+		measured++
+		if measured == 40 {
+			break
+		}
+	}
+	modelWidth = max(modelWidth, measure(a.selectedModel().Label, 500)+modelRowChrome)
+	return providerWidth, modelWidth
+}
+
 func (a *composerController) modelPopover(c *ui.Context, anchor ui.Element) ui.Element {
-	palette := a.modelPopupPalette()
 	return ui.PopoverBase(c, anchor, &a.modelMenu, func(panel ui.Element) {
-		if a.state.Settings.General.CompactModelPicker && a.modelListPage && panel.Shortcut(0, ui.KeyEscape) {
-			a.modelListPage = false
+		panel.OnShortcut(ui.Cmd, ui.KeyF, func() { a.modelSearchOpen = true; a.modelSearch.Focus(c) })
+		a.modelOptionsShortcuts(c)
+		budget := promptMenuHeight(c, panel, anchor)
+		placeComposerSelector(panel, anchor, false)
+		viewportWidth, _ := c.Size()
+		providerWidth, modelWidth := a.modelPickerColumns(c)
+		width := min(providerWidth+modelPickerGap+modelWidth, min(modelPickerMaxWidth, max(float32(0), viewportWidth-16)))
+		providerWidth = min(providerWidth, max(float32(0), width-modelPickerGap))
+		modelWidth = max(float32(0), width-providerWidth-modelPickerGap)
+		providerOffset := providerWidth / 2
+		trigger := anchor.Bounds()
+		// Keep the provider card's centerline on the trigger. The model list
+		// goes beside it, to the right unless the window lacks that room.
+		modelsOnLeft := trigger.X+trigger.W/2+width-providerOffset > viewportWidth-8
+		if modelsOnLeft {
+			providerOffset = width - providerOffset
 		}
-		width := compactModelWidth
-		if !a.state.Settings.General.CompactModelPicker {
-			width = 304
-		}
-		budget, openBelow := composerMenuPlacement(c, panel, anchor, a.sessionID == "", a.state.Settings.General.CompactModelPicker)
-		if openBelow {
-			panel.AttachTo(anchor, ui.AnchorBottomEnd, ui.AnchorTopEnd).Margin(6, 0, 0, 0)
-		} else {
-			panel.AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).Margin(0, 0, 6, 0)
-		}
-		panel.SnapToWindow(8)
-		// GPUI attaches this overlay inside the medium-weight trigger chip.
-		// MyGo overlays have a separate parent, so retain that inherited weight.
-		panel.Label(tr(c, a.controlLabel("Model picker"))).Width(width).MaxHeight(min(float32(640), budget)).Padding(0).Radius(12).FontWeight(500).Background(palette.Dialog).Border(1, palette.Border).Shadow(0, 10, 2*15, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 2*6, -4, ui.RGBA(0, 0, 0, .1)).Clip()
-		if a.state.Settings.General.CompactModelPicker && !a.modelListPage {
-			ui.Column(c).Key("compact-model-panel").FillWidth().Padding(4).Focusable().KeepFocus().AutoFocus().Children(func() { a.compactModelPanel(c) })
-		} else {
-			a.modelListPanel(c, min(float32(640), budget))
-		}
+		panel.Left(width - providerOffset - trigger.W/2)
+		panel.Label(tr(c, a.controlLabel("Model picker"))).Width(width).MaxHeight(budget).Padding(0).FontWeight(500)
+		a.modelListPanel(c, budget, providerWidth, modelWidth, modelsOnLeft)
 	})
 }
 
-func (a *composerController) compactModelPanel(c *ui.Context) {
-	a.compactPanelShortcuts(c)
-	model := a.selectedModel()
-	effort := a.compactEffort()
-	levels := effort.levels
-	height := float32(36)
-	if len(levels) > 0 {
-		height = 48
+func placeComposerSelector(panel, anchor ui.Element, below bool) {
+	if below {
+		panel.AttachTo(anchor, ui.AnchorBottomEnd, ui.AnchorTopEnd).Margin(6, 0, 0, 0)
+	} else {
+		panel.AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).Margin(0, 0, 6, 0)
 	}
-	fastOption, fastOn, fastOff, fast := a.compactFastOption(model)
-	hoverInk := ui.Hex("#ffffff").Alpha(.05)
-	if !a.palette.Dark {
-		hoverInk = ui.Hex("#000000").Alpha(.05)
+	panel.SnapToWindow(8)
+}
+
+func (a *composerController) reasoningTrigger(c *ui.Context) (anchor, panel ui.Element) {
+	effort := a.reasoningChoice()
+	if len(effort.levels) == 0 {
+		a.effortMenu = false
+		return ui.Element{}, ui.Element{}
 	}
-	ui.Row(c).Height(height).FillWidth().Gap(4).Children(func() {
-		button := ui.ButtonBase(c).Height(height).Grow(1).MinWidth(0).Padding(8).Radius(7).Label(tr(c, a.controlLabel("Change model"))).AlignItems(ui.Center).Justify(ui.Start).OnClick(a.openModelList)
-		if button.Hovered() {
-			button.Background(hoverInk)
-		}
-		button.Children(func() {
-			ui.Column(c).Grow(1).AlignItems(ui.Start).Children(func() {
-				if len(levels) > 0 {
-					ui.Text(c, tr(c, effort.label())).FontSize(design.UISize(c, 14)).FontWeight(600).FixedLineHeight(17)
-				}
-				ui.Row(c).Gap(3).AlignItems(ui.Center).Children(func() {
-					size := float32(12)
-					if len(levels) == 0 {
-						size = 14
-					}
-					color, weight, lineHeight := a.palette.Muted, 500, float32(15)
-					if len(levels) == 0 {
-						color, weight, lineHeight = a.palette.Text, 600, 17
-					}
-					ui.Text(c, a.modelLabel()).FontSize(design.UISize(c, size)).FontWeight(weight).TextColor(color).FixedLineHeight(lineHeight).SingleLine()
-					ui.Box(c).Size(10, 10).TextColor(a.palette.Muted.Alpha(.55)).Children(func() { icon(c, "alt-arrow-right", 10) })
-				})
-			})
-		})
-		if fastOption.ID != "" {
-			glyph, hint := "fast-tier", "Fast mode off · Turn on"
-			color := a.palette.Muted
-			if fast {
-				glyph, hint, color = "fast-tier-bold", "Fast mode on · Turn off", a.palette.Accent
-			}
-			fastButton := ui.ToggleBase(c, &fast).Width(32).Height(height).Radius(7).Role(ui.RoleButton).Label(tr(c, a.controlLabel("Fast mode"))).Tooltip(tr(c, hint)).AlignItems(ui.Center).Justify(ui.Center).TextColor(color)
-			if fastButton.Hovered() {
-				fastButton.Background(hoverInk)
-			}
-			fastButton.Children(func() {
-				icon(c, glyph, 15)
-			}).OnClick(func() {
-				choice := fastOff
-				if fast {
-					choice = fastOn
-				}
-				a.pickModelOption(model, fastOption, choice)
-			})
+	label := "Reasoning"
+	if effort.unavailable == "" {
+		label = effort.label()
+	}
+	button := ui.ButtonBase(c.Key("reasoning-trigger")).Height(32).Padding(0, 6).Radius(8).MinWidth(24).MaxWidth(100).Shrink(0).Gap(4).AlignItems(ui.Center).Label(tr(c, a.controlLabel("Select reasoning effort"))).Tooltip(tr(c, a.controlLabel("Reasoning effort")))
+	if a.effortMenu || button.Hovered() {
+		button.Background(a.palette.Hover)
+	}
+	button.Children(func() {
+		icon(c, "tuning", 14)
+		ui.Text(c, tr(c, label)).SingleLine().MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+	})
+	button.OnClick(func() {
+		a.effortMenu = !a.effortMenu
+		if a.effortMenu {
+			a.modelMenu = false
 		}
 	})
+	return button, a.reasoningPopover(c, button)
+}
+
+func (a *composerController) reasoningPopover(c *ui.Context, anchor ui.Element) ui.Element {
+	return ui.PopoverBase(c, anchor, &a.effortMenu, func(panel ui.Element) {
+		budget, below := composerMenuPlacement(c, panel, anchor, a.sessionID == "", false)
+		placeComposerSelector(panel, anchor, below)
+		panel.Label(tr(c, a.controlLabel("Reasoning picker"))).Width(256).MaxHeight(budget).Padding(4).Radius(12).FontWeight(500).Clip()
+		if !a.frosted(c) {
+			panel.Shadow(0, 8, 24, -3, ui.RGBA(0, 0, 0, .12))
+		}
+		a.floatingSurface(c, panel, 12)
+		ui.Scroll(c).FillWidth().MaxHeight(max(float32(0), budget-10)).Focusable().KeepFocus().AutoFocus().Children(func() { a.effortPanel(c) })
+	})
+}
+
+func (a *composerController) modelOptionsPanel(c *ui.Context) {
+	model := a.selectedModel()
+	effort := a.reasoningChoice()
+	fastOption, fastOn, fastOff, fast := a.fastModelOption(model)
+	if fastOption.ID != "" {
+		ui.Row(c).Height(32).FillWidth().Padding(0, 8).Justify(ui.End).Children(func() {
+			if fastOption.ID != "" {
+				glyph, hint := "fast-tier", "Fast mode off · Turn on"
+				color := a.palette.Muted
+				if fast {
+					glyph, hint, color = "fast-tier-bold", "Fast mode on · Turn off", a.palette.Accent
+				}
+				button := ui.ToggleBase(c, &fast).Size(28, 28).Radius(7).Role(ui.RoleButton).Label(tr(c, a.controlLabel("Fast mode"))).Tooltip(tr(c, hint)).Center().TextColor(color)
+				if button.Hovered() {
+					button.Background(a.palette.Hover)
+				}
+				button.Children(func() { icon(c, glyph, 15) }).OnClick(func() {
+					choice := fastOff
+					if fast {
+						choice = fastOn
+					}
+					a.pickModelOption(model, fastOption, choice)
+				})
+			}
+		})
+	}
+
+	a.modelOptionRows(c, model, fastOption.ID, effort.option.ID)
+}
+
+func (a *composerController) modelOptionsShortcuts(c *ui.Context) {
+	model := a.selectedModel()
+	fastOption, fastOn, fastOff, fast := a.fastModelOption(model)
+	c.OnShortcut(0, ui.KeyF, func() {
+		if fastOption.ID == "" {
+			return
+		}
+		choice := fastOn
+		if fast {
+			choice = fastOff
+		}
+		a.pickModelOption(model, fastOption, choice)
+	})
+}
+
+func (a *composerController) effortPanel(c *ui.Context) {
+	a.effortPanelShortcuts(c)
+	model := a.selectedModel()
+	effort := a.reasoningChoice()
+	levels := effort.levels
 	if len(levels) > 0 {
+		ui.Text(c, tr(c, effort.label())).FontSize(design.TextSize(c, design.TextBase)).Margin(4, 8)
 		value := levels[effort.selected]
 		if a.effortModel != model.ID || a.effortReason != value {
 			a.effortValue = float64(effort.selected)
 			a.effortModel, a.effortReason = model.ID, value
 		}
 		ui.Column(c).FillWidth().Padding(2, 8, 4, 8).Children(func() {
-			c.Key("compact-effort-slider")
-			slider := ui.SliderBase(c, &a.effortValue, 0, float64(len(levels)-1)).Step(1).Label(tr(c, a.controlLabel("Reasoning effort"))).Height(36).FillWidth().Padding(0, 22)
+			slider := ui.SliderBase(c.Key("effort-slider"), &a.effortValue, 0, float64(len(levels)-1)).Step(1).Label(tr(c, a.controlLabel("Reasoning effort"))).Height(36).FillWidth().Padding(0, 22)
 			fraction := float32(a.effortValue / float64(max(1, len(levels)-1)))
 			pressed := slider.Pressed()
-			slider.Children(func() { a.compactEffortMaterial(c, fraction, len(levels), fast, pressed) }).OnChange(func() {
-				index := max(0, min(len(levels)-1, int(math.Round(a.effortValue))))
-				a.pickCompactEffort(effort, index)
+			slider.Children(func() { a.reasoningSliderMaterial(c, fraction, len(levels), false, pressed) }).OnChange(func() {
+				a.pickReasoningChoice(effort, max(0, min(len(levels)-1, int(math.Round(a.effortValue)))))
 			})
 		})
 	}
-	a.modelOptionRows(c, model, fastOption.ID, effort.option.ID)
 }
 
 func modelVerticalGradient(top, bottom ui.Color) ui.LinearGradient {
@@ -330,22 +374,43 @@ func modelRailPlate(c *ui.Context, dark bool) ui.Element {
 }
 
 func modelAccentPlate(c *ui.Context, palette design.Tokens, fast bool) ui.Element {
+	return modelAccentPlateWith(c, palette, palette.AccentStrong, fast)
+}
+
+// modelAccentPlateWith keeps the source glass construction and takes the fill
+// token from the caller, so the reasoning slider can paint its preset.
+func modelAccentPlateWith(c *ui.Context, palette design.Tokens, accent ui.Color, fast bool) ui.Element {
 	white, black := ui.Hex("#ffffff"), ui.Hex("#000000")
 	lift, highlight, ring, halo := float32(.22), float32(.32), float32(.22), float32(.14)
-	rim := palette.AccentStrong.Mix(black, .14)
+	rim := accent.Mix(black, .14)
 	if palette.Dark {
 		lift, highlight, ring, halo = .06, .12, 0, 0
-		rim = palette.AccentStrong.Mix(white, .35).Alpha(.35)
+		rim = accent.Mix(white, .35).Alpha(.35)
 	}
 	glow := float32(0)
 	if fast {
 		// Reduced-motion source state: intensity=1, breath=.5.
 		glow = .325
 	}
-	plate := ui.Box(c).Radius(14).LinearGradient(modelVerticalGradient(palette.AccentStrong.Mix(white, lift), palette.AccentStrong)).Border(1, rim).
-		Shadow(0, 2+2*glow, 2*(6+14*glow), 0, palette.AccentStrong.Alpha(halo+.3*glow))
+	plate := ui.Box(c).Radius(14).LinearGradient(modelVerticalGradient(accent.Mix(white, lift), accent)).Border(1, rim).
+		Shadow(0, 2+2*glow, 2*(6+14*glow), 0, accent.Alpha(halo+.3*glow))
 	plate.Children(func() {
 		modelAccentInsetOverlay(c).InsetShadow(0, 1, 0, 0, white.Alpha(highlight)).InsetShadow(0, 0, 0, 1, white.Alpha(ring))
+	})
+	return plate
+}
+
+// modelEffortPlate paints the preset's three stops across the filled rail,
+// inside the same rim and inset lighting as the accent plate.
+func modelEffortPlate(c *ui.Context, palette design.Tokens, effort design.EffortPalette, fast bool) ui.Element {
+	plate := modelAccentPlateWith(c, palette, effort.Colors[0], fast)
+	plate.Draw(func(p *ui.Painter, r ui.Rect) {
+		inner := ui.Rect{X: r.X + 1, Y: r.Y + 1, W: max(0, r.W-2), H: max(0, r.H-2)}
+		p.FillGradient(inner, ui.LinearGradient{Angle: 90, Stops: []ui.GradientStop{
+			{Color: effort.Colors[0], At: 0},
+			{Color: effort.Colors[1], At: .5},
+			{Color: effort.Colors[2], At: 1},
+		}}, inner.H/2)
 	})
 	return plate
 }
@@ -377,8 +442,9 @@ func modelThumbPlate(c *ui.Context, palette design.Tokens, fast, pressed bool) u
 	return plate
 }
 
-func (a *composerController) compactEffortMaterial(c *ui.Context, fraction float32, count int, fast, pressed bool) {
-	palette := a.modelPopupPalette()
+func (a *composerController) reasoningSliderMaterial(c *ui.Context, fraction float32, count int, fast, pressed bool) {
+	palette := a.modelPopupPalette(c)
+	effort := a.effortPalette()
 	if palette.Dark {
 		// GPUI paints the whole drop beneath this translucent rail. MyGo's
 		// Shadow deliberately cuts out its casting box, so retain the full
@@ -387,15 +453,19 @@ func (a *composerController) compactEffortMaterial(c *ui.Context, fraction float
 	}
 	modelRailPlate(c, palette.Dark).Absolute().Left(0).Right(0).Top(4).Height(28)
 	ui.Box(c).Absolute().Left(22).Right(22).Top(0).Bottom(0).Children(func() {
-		modelAccentPlate(c, palette, fast).Absolute().Left(-22).RightPercent(100*(1-fraction)).Margin(0, -14, 0, 0).Top(4).Height(28)
+		modelEffortPlate(c, palette, effort, fast).Absolute().Left(-22).RightPercent(100*(1-fraction)).Margin(0, -14, 0, 0).Top(4).Height(28)
 	})
 	ui.Box(c).Absolute().Left(0).Right(0).Top(0).Bottom(0).Draw(func(p *ui.Painter, r ui.Rect) {
+		filled := effort.Spark().Alpha(.55)
+		if effort.Light {
+			filled = effort.Spark().Alpha(.45)
+		}
 		for i := 0; i < count; i++ {
 			stop := float32(i) / float32(max(1, count-1))
 			x := r.X + 22 + (r.W-44)*stop
 			color := palette.Muted.Alpha(.28)
 			if stop <= fraction {
-				color = ui.Hex("#ffffff").Alpha(.4)
+				color = filled
 			}
 			p.Fill(ui.Rect{X: x - 2, Y: r.Y + 16, W: 4, H: 4}, color, 2)
 		}
@@ -430,21 +500,18 @@ func (a *composerController) modelOptionRows(c *ui.Context, model contracts.Mode
 	if len(options) == 0 {
 		return
 	}
-	compact := a.state.Settings.General.CompactModelPicker
-	height, gap, bottom := float32(30), float32(0), float32(4)
-	if compact {
-		height, gap, bottom = 26, 4, 0
-	}
+	height := float32(30)
+
 	pixelSnap := a.modelOptionPixelSnap()
-	fontSize := design.UISize(c, 13)
-	ui.Scroll(c).FillWidth().MaxHeight(170).Margin(gap, 0, 0, 0).Gap(2).Padding(4, 0, bottom, 0).Children(func() {
+	fontSize := design.TextSize(c, design.TextBase)
+	ui.Scroll(c).FillWidth().MaxHeight(170).Gap(2).Padding(4, 0, 4, 0).Children(func() {
 		for _, option := range options {
 			option := option
 			value := a.modelOptionValue(model, option)
 			c.Key("model-option:" + model.ID + "/" + option.ID)
 			row := ui.ButtonBase(c).Height(height).FillWidth().Padding(0, 8).Radius(7).AlignItems(ui.Center).Justify(ui.Start).Gap(10).Label(a.controlLabel(option.Label))
 			if row.Hovered() {
-				row.Background(modelSelectionColor(a.modelPopupPalette()))
+				row.Background(modelSelectionColor(a.modelPopupPalette(c)))
 			}
 			row.Menu(func(menu *ui.Menu) {
 				for _, choice := range option.Choices {
@@ -469,10 +536,9 @@ func (a *composerController) modelOptionRows(c *ui.Context, model contracts.Mode
 }
 
 func (a *composerController) openModelList() {
-	if a.state.Settings.General.CompactModelPicker {
-		a.modelQuery, a.modelProvider = "", ""
+	if a.modelProvider == "" {
+		a.modelProvider = a.selectedProvider().ID
 	}
-	a.modelListPage = true
 	a.modelCursor = 0
 	for i, row := range a.modelRows() {
 		if row.model.ID == a.modelID {
@@ -493,214 +559,180 @@ func (a *composerController) activateModelRow(rows []modelRow, index int) {
 	if a.modelProviderLocked() && rows[index].model.ProviderID != a.selectedModel().ProviderID {
 		return
 	}
+	if a.state.Runtime != nil && a.modelID != rows[index].model.ID {
+		a.reasoning = ""
+	}
 	a.modelID = rows[index].model.ID
 	a.modelChanged()
-	a.modelListPage = false
+	a.modelMenu = false
 }
 
-func (a *composerController) modelListPanel(c *ui.Context, budget float32) {
-	palette := a.modelPopupPalette()
-	if a.modelCatalogState(c, budget) {
-		return
-	}
+// The two cards share one overlay so crossing the gap does not dismiss either menu.
+func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth, modelWidth float32, modelsOnLeft bool) {
+	palette := a.modelPopupPalette(c)
 	rows := a.modelRows()
-	for i := 0; i < min(9, len(rows)); i++ {
-		index := i
-		c.OnShortcut(ui.Cmd, ui.Key1+ui.Key(i), func() { a.activateModelRow(rows, index) })
-	}
-	ui.Row(c).Height(40).FillWidth().Padding(4).AlignItems(ui.Center).Gap(2).Children(func() {
-		if a.state.Settings.General.CompactModelPicker {
-			a.compactModelListIconButton(c, "alt-arrow-left", "Back to model options", palette.Muted).OnClick(func() { a.modelListPage = false })
+	providerCount := 0
+	for _, provider := range a.state.Providers {
+		if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
+			providerCount++
 		}
-		ui.ScrollHorizontal(c).Grow(1).Children(func() {
-			ui.Row(c).Gap(2).Children(func() {
-				if !a.state.Settings.General.CompactModelPicker || len(a.state.Settings.ModelPicker.Favorites) > 0 {
-					a.modelGroupButton(c, "favorites", "star", "Favorites", rows)
-				}
+	}
+	rowHeight := float32(32)
+	supplierHeight := design.Controls().ButtonHeight
+	leftHeight := min(float32(providerCount)*(supplierHeight+2)+supplierHeight+20, budget)
+	searchHeight := float32(0)
+	if a.modelSearchVisible() {
+		searchHeight = 40
+	}
+	optionHeight := float32(0)
+	if a.hasModelOptions() {
+		optionHeight = 120
+	}
+	height := min(float32(max(1, min(7, len(rows))))*34+8+searchHeight+optionHeight, budget)
+	if a.state.ModelCatalog.State != contracts.CatalogReady && a.state.ModelCatalog.State != "" {
+		height = min(float32(180), budget)
+	}
+	card := func(element ui.Element) ui.Element {
+		element = element.Padding(4).Radius(12).Clip()
+		if !a.frosted(c) {
+			element = element.Shadow(0, 8, 24, -3, ui.RGBA(0, 0, 0, .12))
+		}
+		return a.floatingSurface(c, element, 12)
+	}
+	providers := func() {
+		card(ui.Column(c.Key("model-provider-menu"))).Width(providerWidth).Height(leftHeight).Shrink(0).Children(func() {
+			ui.Scroll(c).Grow(1).MinHeight(0).FillWidth().Gap(2).Children(func() {
 				for _, provider := range a.state.Providers {
 					if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
-						a.modelGroupButton(c, provider.ID, provider.Icon, provider.Name, rows)
+						a.modelGroupButton(c, provider.ID, provider.Name)
 					}
 				}
 			})
+			ui.Box(c).FillWidth().Height(1).Margin(3, 0).Background(palette.Border)
+			controlPromptChoice(c.Key("model-settings"), false).FillWidth().Label(tr(c, "Model management")).Children(func() {
+				icon(c, "settings", 14)
+				ui.Text(c, tr(c, "Model management")).SingleLine().MinWidth(0).Shrink(1)
+			}).OnClick(a.openModelSettings)
 		})
-	})
-	hairline := float32(.08)
-	if !palette.Dark {
-		hairline *= 1.35
 	}
-	ui.Row(c).Height(40).FillWidth().Padding(0, 10).Gap(8).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(modelMenuInk(palette, hairline)).Children(func() {
+	models := func() {
+		card(ui.Column(c.Key("model-list-menu"))).Width(modelWidth).Height(height).Children(func() {
+			if a.modelCatalogState(c, max(float32(0), height-10)) {
+				return
+			}
+			if a.hasModelOptions() {
+				defer func() {
+					ui.Scroll(c).Shrink(0).FillWidth().MaxHeight(min(float32(120), height*.4)).BorderWidth(1, 0, 0, 0).BorderColor(palette.Border).Children(func() { a.modelOptionsPanel(c) })
+				}()
+			}
+			if a.modelSearchVisible() {
+				a.modelSearchInput(c)
+			}
+			if len(rows) == 0 {
+				a.modelCursor = -1
+				ui.Column(c).FillWidth().Grow(1).Padding(8).Center().Children(func() {
+					ui.Text(c, tr(c, "No models found")).FontSize(design.TextSize(c, design.TextBase)).TextColor(palette.Muted)
+				})
+				return
+			}
+			if a.modelCursor >= len(rows) || a.modelCursor < 0 {
+				a.modelCursor = 0
+			}
+			a.modelList.Key = func(i int) any { return rows[i].model.ID }
+			a.modelList.Label = func(i int) string { return rows[i].model.Label }
+			a.modelList.Selected = &a.modelCursor
+			list := ui.List(c, &a.modelList, len(rows), func(i int) {
+				row := rows[i]
+				m := row.model
+				button := ui.ButtonBase(c.Key("model-choice:"+m.ID)).FillWidth().Height(rowHeight).Padding(0, 4, 0, 8).Radius(7).Gap(4).AlignItems(ui.Center).Justify(ui.SpaceBetween).Label(tr(c, a.controlLabel("Select model")) + " " + m.Label).Tooltip(m.Label).TextColor(a.palette.Text)
+				if a.modelID == m.ID {
+					button.Background(modelSelectionColor(palette))
+				} else if button.Hovered() {
+					button.Background(a.palette.Hover)
+				}
+				button.OnHover(func(hovered bool) {
+					if hovered {
+						a.modelCursor = i
+					}
+				})
+				button.Children(func() {
+					ui.Text(c, m.Label).MinWidth(0).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
+					ui.Box(c).Size(12, 12).Children(func() {
+						if a.modelID == m.ID {
+							icon(c, "check", 12)
+						}
+					})
+				}).OnClick(func() { a.activateModelRow(rows, i) })
+			}).Grow(1).MinHeight(0).FillWidth().Gap(2)
+			if !a.modelSearchVisible() {
+				list.AutoFocus().KeepFocus()
+			}
+			list.OnSubmit(func() { a.activateModelRow(rows, a.modelCursor) })
+		})
+	}
+	ui.Row(c).FillWidth().Gap(modelPickerGap).AlignItems(ui.Start).Children(func() {
+		if modelsOnLeft {
+			models()
+			providers()
+		} else {
+			providers()
+			models()
+		}
+	})
+}
+
+func (a *composerController) modelSearchVisible() bool {
+	providerID := a.modelProvider
+	if providerID == "" {
+		providerID = a.selectedProvider().ID
+	}
+	count := 0
+	for _, model := range a.state.Models {
+		if model.ProviderID == providerID {
+			count++
+		}
+	}
+	return a.modelSearchOpen || count > 7
+}
+
+func (a *composerController) hasModelOptions() bool {
+	effort := a.reasoningChoice()
+	for _, option := range a.selectedModel().Options {
+		if option.ID != effort.option.ID {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *composerController) modelSearchInput(c *ui.Context) {
+	palette := a.modelPopupPalette(c)
+	ui.Row(c).Height(40).Shrink(0).FillWidth().Padding(0, 10).Gap(8).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(palette.Border).Children(func() {
 		ui.Box(c).Size(14, 14).TextColor(palette.Muted).Children(func() { icon(c, "magnifer", 14) })
-		// ComposerInput overrides its parent's 13px style with these metrics.
-		// Keep the native editor; its empty placeholder uses the source faint role.
-		// Its custom layout uses px(configured_line_height), not the rem style.
-		ui.TextInputBase(c, &a.modelQuery).Bind(&a.modelSearch).Label(tr(c, a.controlLabel("Search models"))).Placeholder(tr(c, "Search models…")).PlaceholderColor(palette.Faint).CaretWidth(2).Grow(1).FontSize(design.UISize(c, 14)).FixedLineHeight(22.75).AutoFocus().OnChange(func() { a.modelCursor = 0; a.modelList.ScrollIntoView(0) }).OnTextKey(func(k ui.TextKey) bool {
-			// The native input can deliver text and Enter before the next view.
-			// Filter against that text rather than a previous frame's rows.
+		ui.TextInputBase(c.Key("model-search"), &a.modelQuery).Bind(&a.modelSearch).Label(tr(c, a.controlLabel("Search models"))).Placeholder(tr(c, "Search models…")).PlaceholderColor(palette.Faint).CaretWidth(2).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).AutoFocus().OnChange(func() { a.modelCursor = 0; a.modelList.ScrollIntoView(0) }).OnTextKey(func(k ui.TextKey) bool {
 			a.modelQuery = k.Text()
-			currentRows := a.modelRows()
-			if len(currentRows) > 0 && (a.modelCursor < 0 || a.modelCursor >= len(currentRows)) {
+			rows := a.modelRows()
+			if len(rows) > 0 && (a.modelCursor < 0 || a.modelCursor >= len(rows)) {
 				a.modelCursor = 0
 			}
 			switch k.Key {
 			case ui.KeyDown, ui.KeyUp:
-				if len(currentRows) > 0 {
+				if len(rows) > 0 {
 					delta := 1
 					if k.Key == ui.KeyUp {
 						delta = -1
 					}
-					a.modelCursor = (a.modelCursor + delta + len(currentRows)) % len(currentRows)
+					a.modelCursor = (a.modelCursor + delta + len(rows)) % len(rows)
 					a.modelList.ScrollIntoView(a.modelCursor)
 				}
 				return true
 			case ui.KeyEnter:
-				a.activateModelRow(currentRows, a.modelCursor)
+				a.activateModelRow(rows, a.modelCursor)
 				return true
 			}
 			return false
 		})
 	})
-	trayHeight := float32(0)
-	if !a.state.Settings.General.CompactModelPicker && (len(a.selectedModel().ReasoningLevels) > 0 || len(a.selectedModel().Options) > 0) {
-		trayHeight = 34 + 28*float32(len(a.selectedModel().Options))
-	}
-	rowCount := min(7, len(rows))
-	if rowCount == 0 {
-		rowCount = 4
-	}
-	height := min(float32(rowCount)*34+8, max(float32(40), budget-82-trayHeight))
-	if len(rows) == 0 {
-		a.modelCursor = -1
-	} else if a.modelCursor >= len(rows) || a.modelCursor < 0 {
-		a.modelCursor = 0
-	}
-	a.modelList.Key = func(i int) any { return rows[i].group + ":" + rows[i].model.ID }
-	a.modelList.Label = func(i int) string { return rows[i].model.Label }
-	a.modelList.Selected = &a.modelCursor
-	c.OnShortcut(ui.Cmd|ui.Shift, ui.KeyF, func() {
-		if a.modelCursor >= 0 && a.modelCursor < len(rows) {
-			a.toggleModelFavorite(rows[a.modelCursor].model)
-		}
-	})
-	previousTheme := c.Theme()
-	listTheme := *previousTheme
-	// The source's transparent rows sit over the scrolling band's 2% ink.
-	listPalette := palette
-	listPalette.Dialog = modelMenuInk(palette, .02).Over(palette.Dialog)
-	listTheme.Accent = modelSelectionColor(listPalette)
-	listTheme.AccentText = a.palette.Text
-	listTheme.SurfaceHover = modelMenuInk(palette, .05).Over(listPalette.Dialog)
-	listTheme.Radius = 7
-	if len(rows) == 0 {
-		ui.Column(c).FillWidth().Height(height).Padding(8).Background(listPalette.Dialog).Children(func() {
-			if strings.TrimSpace(a.modelQuery) != "" || a.modelProvider == "favorites" {
-				note := "No models found"
-				if a.modelQuery == "" && a.modelProvider == "favorites" {
-					note = "No starred models yet — hit a row's star"
-				}
-				ui.Column(c).Fill().Center().Children(func() { ui.Text(c, tr(c, note)).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted) })
-			} else {
-				a.modelSkeleton(c)
-			}
-		})
-	} else {
-		c.SetTheme(&listTheme)
-		list := ui.List(c, &a.modelList, len(rows), func(i int) {
-			row := rows[i]
-			m := row.model
-			selected := a.modelID == m.ID
-			button := ui.ButtonBase(c).FillWidth().Height(32).Padding(0, 4, 0, 8).Radius(7).Gap(8).Justify(ui.Start).AlignItems(ui.Center).TextColor(a.palette.Text).Label(m.Label).Tooltip(m.Label + " · " + row.provider.Name + tr(c, "\n") + m.Description)
-			if selected {
-				button.Background(modelSelectionColor(listPalette)).DrawOver(func(p *ui.Painter, r ui.Rect) {
-					ring := ui.Hex("#000000").Alpha(.07)
-					if a.palette.Dark {
-						ring = ui.Hex("#ffffff").Alpha(.09)
-					}
-					p.Stroke(r, ring, 7, 1)
-				})
-			} else if button.Hovered() || a.modelCursor == i {
-				button.Background(listTheme.SurfaceHover)
-			}
-			button.OnClick(func() { a.activateModelRow(rows, i) }).OnHover(func(hovered bool) {
-				if hovered {
-					a.modelCursor = i
-				}
-			})
-			button.Children(func() {
-				ui.Box(c).Size(14, 14).TextColor(palette.Muted).Children(func() { icon(c, row.provider.Icon, 14) })
-				ui.Text(c, m.Label).Grow(1).SingleLine().FontSize(design.UISize(c, 12)).FontWeight(500)
-				favorite := a.isModelFavorite(m)
-				compact := a.state.Settings.General.CompactModelPicker
-				if compact || favorite || button.Hovered() {
-					glyph, label := "star", tr(c, "Add ")+m.Label+tr(c, " to favorites")
-					if favorite {
-						glyph, label = "star-bold", tr(c, "Remove ")+m.Label+tr(c, " from favorites")
-					}
-					if compact {
-						// The source's `hovered` is the active row, including the
-						// keyboard cursor. Hidden stars still reserve their slot.
-						star := ui.ButtonBase(c).Size(24, 24).Radius(6).Label(tr(c, label)).Tooltip(tr(c, label)).AlignItems(ui.Center).Justify(ui.Center).TextColor(a.palette.Muted)
-						if !favorite && a.modelCursor != i {
-							star.Opacity(0)
-						}
-						if favorite {
-							star.TextColor(a.palette.Accent)
-						}
-						if star.Hovered() {
-							ink := ui.Hex("#000000")
-							if a.palette.Dark {
-								ink = ui.Hex("#ffffff")
-							}
-							star.Background(ink.Alpha(.08))
-						}
-						star.Children(func() { icon(c, glyph, 13) }).OnClick(func() { a.toggleModelFavorite(m) })
-					} else {
-						iconButton(c, glyph, tr(c, label)).Size(24, 24).OnClick(func() { a.toggleModelFavorite(m) })
-					}
-				}
-			})
-		}).Height(height).Gap(2).Padding(4).Background(listPalette.Dialog)
-		c.SetTheme(previousTheme)
-		// SetTheme also writes the root's fill; preserve the shell's native glass.
-		c.Root().Background(design.Glass(a.palette, a.state.Settings.Appearance.Surface, c.Vibrancy()))
-		list.OnSubmit(func() { a.activateModelRow(rows, a.modelCursor) })
-	}
-	if trayHeight > 0 {
-		ui.Column(c).FillWidth().Padding(4).BorderWidth(1, 0, 0, 0).BorderColor(a.palette.Border.Alpha(.6)).Children(func() {
-			levels := a.selectedModel().ReasoningLevels
-			if len(levels) > 0 {
-				ui.Row(c).FillWidth().Height(26).Padding(0, 8).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, tr(c, "Reasoning")).FontSize(design.UISize(c, 12)).Grow(1)
-					ui.MenuButton(c, a.reasoning, func(menu *ui.Menu) {
-						for _, level := range levels {
-							if menu.Item(tr(c, level)).Checked(a.reasoning == level).Chosen() {
-								a.reasoning = level
-								a.modelChanged()
-							}
-						}
-					}).FontSize(design.UISize(c, 12)).BorderWidth(0).Background(ui.Transparent).Label(tr(c, "Reasoning level"))
-				})
-			}
-			a.modelOptionRows(c, a.selectedModel())
-		})
-	}
-}
-
-func modelMenuInk(palette design.Tokens, alpha float32) ui.Color {
-	ink := ui.Hex("#000000")
-	if palette.Dark {
-		ink = ui.Hex("#ffffff")
-	}
-	return ink.Alpha(alpha)
-}
-
-func (a *composerController) compactModelListIconButton(c *ui.Context, glyph, label string, color ui.Color) ui.Element {
-	button := ui.ButtonBase(c).Size(32, 32).Radius(7).Label(tr(c, label)).Tooltip(tr(c, label)).AlignItems(ui.Center).Justify(ui.Center).TextColor(color)
-	if button.Hovered() {
-		button.Background(modelMenuInk(a.palette, .05))
-	}
-	button.Children(func() { icon(c, glyph, 14) })
-	return button
 }
 
 func modelSelectionColor(palette design.Tokens) ui.Color {
@@ -714,7 +746,6 @@ func modelSelectionColor(palette design.Tokens) ui.Color {
 type modelRow struct {
 	model    contracts.Model
 	provider contracts.Provider
-	group    string
 }
 
 func (a *composerController) modelRows() []modelRow {
@@ -724,119 +755,54 @@ func (a *composerController) modelRows() []modelRow {
 	if providerID == "" {
 		providerID = a.selectedProvider().ID
 	}
-	appendGroup := func(favorites bool) {
-		for _, provider := range a.state.Providers {
-			if !a.modelProviderOffered(provider) || a.modelProviderLocked() && provider.ID != a.selectedModel().ProviderID {
+	for _, provider := range a.state.Providers {
+		if !a.modelProviderOffered(provider) || a.modelProviderLocked() && provider.ID != a.selectedModel().ProviderID {
+			continue
+		}
+		for _, model := range a.state.Models {
+			if model.ProviderID != provider.ID {
 				continue
 			}
-			for _, model := range a.state.Models {
-				if model.ProviderID != provider.ID || favorites && !a.isModelFavorite(model) {
-					continue
+			if provider.ID != providerID {
+				continue
+			}
+			matches := true
+			for _, word := range strings.Fields(query) {
+				if !strings.Contains(strings.ToLower(model.Label+" "+model.Description+" "+provider.Name), word) {
+					matches = false
+					break
 				}
-				if !a.state.Settings.General.CompactModelPicker && (providerID == "favorites" && !a.isModelFavorite(model) || providerID != "favorites" && provider.ID != providerID) {
-					continue
-				}
-				matches := true
-				for _, word := range strings.Fields(query) {
-					if !strings.Contains(strings.ToLower(model.Label+" "+model.Description+" "+provider.Name), word) {
-						matches = false
-						break
-					}
-				}
-				if !matches {
-					continue
-				}
-				group := provider.ID
-				if favorites {
-					group = "favorites"
-				}
-				rows = append(rows, modelRow{model, provider, group})
+			}
+			if matches {
+				rows = append(rows, modelRow{model, provider})
 			}
 		}
 	}
-	if query == "" {
-		if a.state.Settings.General.CompactModelPicker {
-			appendGroup(true)
-		}
-	}
-	appendGroup(false)
 	return rows
 }
 
-func (a *composerController) modelGroupButton(c *ui.Context, id, glyph, label string, rows []modelRow) {
+func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
 	current := a.modelProvider
 	if current == "" {
 		current = a.selectedProvider().ID
 	}
-	var b ui.Element
-	if a.state.Settings.General.CompactModelPicker {
-		color := a.palette.Muted
-		if current == id {
-			color = a.palette.Text
+	b := controlPromptChoice(c.Key("model-provider:"+id), current == id).FillWidth().Label(label).Tooltip(label).Children(func() {
+		ui.Text(c, label).SingleLine().MinWidth(0).Shrink(1)
+		if a.selectedModel().ProviderID == id {
+			icon(c, "check", 12)
 		}
-		b = a.compactModelListIconButton(c, glyph, label, color)
-		if current != id && !b.Hovered() {
-			b.Opacity(.7)
-		}
-	} else {
-		b = iconButton(c, glyph, tr(c, label)).Size(32, 32)
-	}
-	if current == id {
-		if a.state.Settings.General.CompactModelPicker {
-			b.Background(modelMenuInk(a.palette, .08))
-		} else {
-			b.Draw(func(p *ui.Painter, r ui.Rect) {
-				p.Fill(ui.Rect{X: r.X + 6, Y: r.Y + r.H + 2, W: r.W - 12, H: 2}, a.palette.Accent, 1)
-			})
-		}
-	}
+		ui.Box(c).Grow(1)
+		icon(c, "alt-arrow-right", 12)
+	})
 	b.OnClick(func() {
 		a.modelProvider = id
-		if !a.state.Settings.General.CompactModelPicker {
-			if id != "favorites" {
-				a.selectModelProvider(id)
-			}
-			a.openModelList()
-			return
-		}
-		for i, row := range rows {
-			if row.group == id {
-				a.modelList.ScrollIntoView(i)
-				break
-			}
+		a.modelQuery = ""
+		a.modelCursor = 0
+		a.modelList.ScrollIntoView(0)
+		if a.modelSearchVisible() {
+			a.modelSearch.Focus(c)
 		}
 	})
-}
-
-func (a *composerController) selectModelProvider(providerID string) {
-	offered := false
-	for _, provider := range a.state.Providers {
-		if provider.ID == providerID {
-			offered = a.modelProviderOffered(provider)
-			break
-		}
-	}
-	if !offered {
-		return
-	}
-	if a.modelProviderLocked() && providerID != a.selectedModel().ProviderID {
-		return
-	}
-	remembered := a.state.Settings.ModelPicker.Selections[providerID]
-	for _, model := range a.state.Models {
-		if model.ProviderID == providerID && model.ID == remembered.ModelID {
-			a.modelID, a.reasoning = model.ID, remembered.Reasoning
-			a.modelChanged()
-			return
-		}
-	}
-	for _, model := range a.state.Models {
-		if model.ProviderID == providerID {
-			a.modelID, a.reasoning = model.ID, ""
-			a.modelChanged()
-			return
-		}
-	}
 }
 
 func (a *composerController) modelProviderLocked() bool {
@@ -844,28 +810,11 @@ func (a *composerController) modelProviderLocked() bool {
 	return a.sessionID != "" && (a.pendingNew || status == contracts.Working || status == contracts.AwaitingInput)
 }
 
-func (a *composerController) isModelFavorite(model contracts.Model) bool {
-	for _, favorite := range a.state.Settings.ModelPicker.Favorites {
-		if favorite.ProviderID == model.ProviderID && favorite.ModelID == model.ID {
-			return true
-		}
+func (a *composerController) openModelSettings() {
+	a.modelMenu, a.effortMenu = false, false
+	if a.state.Runtime == nil {
+		a.navigate("settings/Providers")
+		return
 	}
-	return false
-}
-
-func (a *composerController) toggleModelFavorite(model contracts.Model) {
-	items := append([]contracts.ModelRef(nil), a.state.Settings.ModelPicker.Favorites...)
-	found := false
-	for i, item := range items {
-		if item.ProviderID == model.ProviderID && item.ModelID == model.ID {
-			items = append(items[:i], items[i+1:]...)
-			found = true
-			break
-		}
-	}
-	if !found {
-		items = append(items, contracts.ModelRef{ProviderID: model.ProviderID, ModelID: model.ID})
-	}
-	a.state.Settings.ModelPicker.Favorites = items
-	a.saveSettings()
+	a.navigate("settings/Model settings")
 }

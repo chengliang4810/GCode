@@ -150,7 +150,7 @@ func (s *State) historyView(c *ui.Context) {
 		ui.Spacer(c)
 		ui.TextInputBase(c, &s.historySearch).Label(tr(c, "Search commits")).Placeholder(tr(c, "Search commits")).Width(196).Padding(5, 8).Radius(6).Background(p.Input)
 	})
-	ui.Row(c).Height(28).Padding(0, 8).TextColor(p.Muted).FontSize(design.UISize(c, 11)).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
+	ui.Row(c).Height(28).Padding(0, 8).TextColor(p.Muted).FontSize(design.TextSize(c, design.TextSmall)).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
 		ui.Box(c).Width(graphWidth)
 		ui.Text(c, tr(c, "Commit")).Grow(1)
 		ui.Text(c, tr(c, "Author")).Width(88)
@@ -167,13 +167,13 @@ func (s *State) historyView(c *ui.Context) {
 				historyGraph(c, rows[i], columns, i == 0, p)
 				ui.Row(c).Grow(1).Gap(5).AlignItems(ui.Center).Children(func() {
 					for _, ref := range commit.Refs {
-						ui.Text(c, ref).FontSize(design.UISize(c, 10.5)).Padding(2, 5).Radius(4).Background(p.Active).TextColor(p.Accent).SingleLine().MaxWidth(112)
+						ui.Text(c, ref).FontSize(design.TextSize(c, design.TextSmall)).Padding(2, 5).Radius(4).Background(p.Active).TextColor(p.Accent).SingleLine().MaxWidth(112)
 					}
 					ui.Text(c, commit.Subject).Grow(1).SingleLine()
 				})
-				ui.Text(c, commit.Author).Width(88).SingleLine().TextColor(p.Muted).FontSize(design.UISize(c, 11))
-				ui.Text(c, date(c, commit.AuthoredAt, "Jan 2")).Width(88).SingleLine().TextColor(p.Muted).FontSize(design.UISize(c, 11))
-				ui.Text(c, shortSHA(commit.SHA)).Width(74).Font("Geist Mono").FontSize(design.UISize(c, 10.5)).TextColor(p.Muted)
+				ui.Text(c, commit.Author).Width(88).SingleLine().TextColor(p.Muted).FontSize(design.TextSize(c, design.TextSmall))
+				ui.Text(c, date(c, commit.AuthoredAt, "Jan 2")).Width(88).SingleLine().TextColor(p.Muted).FontSize(design.TextSize(c, design.TextSmall))
+				ui.Text(c, shortSHA(commit.SHA)).Width(74).Font("Geist Mono").FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted)
 			}).ContextMenu(func(m *ui.Menu) {
 				if m.Item(tr(c, "Copy commit SHA")).Chosen() {
 					c.Services().WriteClipboard(commit.SHA)
@@ -186,10 +186,10 @@ func (s *State) historyView(c *ui.Context) {
 			if commit.SHA != s.commitID {
 				continue
 			}
-			ui.Text(c, commit.Subject).FontSize(design.UISize(c, 18)).FontWeight(600)
-			ui.Text(c, commit.SHA).Font("Geist Mono").FontSize(design.UISize(c, 11)).Selectable()
+			ui.Text(c, commit.Subject).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
+			ui.Text(c, commit.SHA).Font("Geist Mono").FontSize(design.TextSize(c, design.TextSmall)).Selectable()
 			ui.Text(c, commit.Author+" · "+tr(c, date(c, commit.AuthoredAt, "Jan 2, 2006 15:04")))
-			ui.Text(c, tr(c, "Parents: ")+tr(c, strings.Join(commit.Parents, ", "))).FontSize(design.UISize(c, 11)).Selectable()
+			ui.Text(c, tr(c, "Parents: ")+tr(c, strings.Join(commit.Parents, ", "))).FontSize(design.TextSize(c, design.TextSmall)).Selectable()
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
 				ui.Button(c, tr(c, "Copy SHA")).OnClick(func() { c.Services().WriteClipboard(commit.SHA) })
 				ui.Button(c, tr(c, "Close")).OnClick(func() { s.commitOpen = false })

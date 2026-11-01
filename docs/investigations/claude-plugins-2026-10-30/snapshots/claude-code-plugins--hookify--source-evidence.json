@@ -1,0 +1,44 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "95380b3cd58f7fbf575ebda0fe291224ba028317",
+  "path": "plugins/hookify",
+  "archive_sha256": "4bb8a835f7363cc7ef6b2b5bbc6d2211e8679dd6d0104784ff9bd070ee589050",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "README.md",
+    "agents/conversation-analyzer.md",
+    "commands/configure.md",
+    "commands/help.md",
+    "commands/hookify.md",
+    "commands/list.md",
+    "core/__init__.py",
+    "core/config_loader.py",
+    "core/rule_engine.py",
+    "examples/console-log-warning.local.md",
+    "examples/dangerous-rm.local.md",
+    "examples/require-tests-stop.local.md",
+    "examples/sensitive-files-warning.local.md",
+    "hooks/__init__.py",
+    "hooks/hooks.json",
+    "hooks/posttooluse.py",
+    "hooks/pretooluse.py",
+    "hooks/stop.py",
+    "hooks/userpromptsubmit.py",
+    "matchers/__init__.py",
+    "skills/writing-rules/SKILL.md",
+    "utils/__init__.py"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"Hookify plugin - User-configurable hooks from .local.md files\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse.py\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/posttooluse.py\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/stop.py\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ],\n    \"UserPromptSubmit\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"python3 ${CLAUDE_PLUGIN_ROOT}/hooks/userpromptsubmit.py\",\n            \"timeout\": 10\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"hookify\",\n  \"description\": \"Easily create hooks to prevent unwanted behaviors by analyzing conversation patterns\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/list.md": "\ndescription: List all configured hookify rules\nallowed-tools: [\"Glob\", \"Read\", \"Skill\"]\n",
+    "commands/help.md": "\ndescription: Get help with the hookify plugin\nallowed-tools: [\"Read\"]\n",
+    "skills/writing-rules/SKILL.md": "\nname: Writing Hookify Rules\ndescription: This skill should be used when the user asks to \"create a hookify rule\", \"write a hook rule\", \"configure hookify\", \"add a hookify rule\", or needs guidance on hookify rule syntax and patterns.\nversion: 0.1.0\n",
+    "commands/configure.md": "\ndescription: Enable or disable hookify rules interactively\nallowed-tools: [\"Glob\", \"Read\", \"Edit\", \"AskUserQuestion\", \"Skill\"]\n",
+    "agents/conversation-analyzer.md": "\nname: conversation-analyzer\ndescription: Use this agent when analyzing conversation transcripts to find behaviors worth preventing with hooks. Examples: <example>Context: User is running /hookify command without arguments\\nuser: \"/hookify\"\\nassistant: \"I'll analyze the conversation to find behaviors you want to prevent\"\\n<commentary>The /hookify command without arguments triggers conversation analysis to find unwanted behaviors.</commentary></example><example>Context: User wants to create hooks from recent frustrations\\nuser: \"Can you look back at this conversation and help me create hooks for the mistakes you made?\"\\nassistant: \"I'll use the conversation-analyzer agent to identify the issues and suggest hooks.\"\\n<commentary>User explicitly asks to analyze conversation for mistakes that should be prevented.</commentary></example>\nmodel: inherit\ncolor: yellow\ntools: [\"Read\", \"Grep\"]\n",
+    "commands/hookify.md": "\ndescription: Create hooks to prevent unwanted behaviors from conversation analysis or explicit instructions\nargument-hint: Optional specific behavior to address\nallowed-tools: [\"Read\", \"Write\", \"AskUserQuestion\", \"Task\", \"Grep\", \"TodoWrite\", \"Skill\"]\n"
+  }
+}

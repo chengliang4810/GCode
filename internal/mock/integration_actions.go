@@ -415,7 +415,7 @@ func (s *Server) integrationCommandLocked(c contracts.Command) error {
 		if v.Cloud.Github.State != "connected" {
 			return errors.New("connect GitHub first")
 		}
-		v.Cloud.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Private: true, Authorized: true}, {ID: "zeron", Name: "zeronsh/zeron", Authorized: true}}
+		v.Cloud.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "r-code/fieldnotes", Private: true, Authorized: true}, {ID: "rcode", Name: "r-code/rcode", Authorized: true}}
 		return nil
 	case "cloud.usage":
 		if r.Value != "7d" && r.Value != "30d" && r.Value != "90d" && r.Value != "thisMonth" && r.Value != "lastMonth" {
@@ -514,5 +514,5 @@ func (s *Server) finishGithubLocked() {
 	v.Github.UserCode = ""
 	v.Github.URL = ""
 	v.Github.Authorized = true
-	v.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "zeronsh/fieldnotes", Private: true, Authorized: true}}
+	v.Repositories = []contracts.CloudRepository{{ID: "fieldnotes", Name: "r-code/fieldnotes", Private: true, Authorized: true}}
 }

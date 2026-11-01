@@ -1,0 +1,112 @@
+{
+  "pluginId": "claude-code-setup@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "recommend-billing-hooks-readonly",
+      "prompt": "/claude-code-setup:claude-automation-recommender Recommend only Hooks for this project. Read the actual README.md, package.json, .prettierrc, source and test fixtures with Read/Glob/Grep. Give exactly three recommendations: formatting, lint feedback, and protecting real .env files while allowing .env.example. For each include the exact Claude hook event (PostToolUse or PreToolUse), the actual package script command where applicable, concrete evidence paths, and why the event fits this codebase. Use npm run format and npm run lint as the existing local commands; recommend only, do not execute them or install anything. End by offering more hook recommendations. All project files must stay unchanged. This is an offline analysis of supplied codebase facts; do not look up new third party services or suggest accounts. No Bash commands, writes, Edit, network, or Agent are needed. Keep the response under 600 words. Do not merely say PASS: the deliverable is the three reasoned recommendations.",
+      "allowCommands": [],
+      "verifierOutputs": [],
+      "fixtures": [
+        {
+          "path": "README.md",
+          "text": "# Billing cadence fixture\n\nbilling-cadence-fixture: JavaScript billing library. Formatting drift in src/ and accidental edits to .env files are our main workflow problems. Recommend automations only; do not implement them.\n"
+        },
+        {
+          "path": "package.json",
+          "text": "{\n  \"name\": \"billing-cadence\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"format\": \"prettier --write src\",\n    \"lint\": \"eslint src\",\n    \"test\": \"node --test\"\n  },\n  \"devDependencies\": {\n    \"eslint\": \"9.0.0\",\n    \"prettier\": \"3.3.0\"\n  }\n}\n"
+        },
+        {
+          "path": ".prettierrc",
+          "text": "{\"semi\":false,\"singleQuote\":true}\n"
+        },
+        {
+          "path": "src/payments.js",
+          "text": "export function invoiceTotal(amount, fee) { return amount + fee }\n"
+        },
+        {
+          "path": "tests/payments.test.js",
+          "text": "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { invoiceTotal } from '../src/payments.js'\ntest('invoice total', () => assert.equal(invoiceTotal(20, 3), 23))\n"
+        },
+        {
+          "path": ".env.example",
+          "text": "BILLING_MODE=test\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "README.md",
+          "equals": "# Billing cadence fixture\n\nbilling-cadence-fixture: JavaScript billing library. Formatting drift in src/ and accidental edits to .env files are our main workflow problems. Recommend automations only; do not implement them.\n"
+        },
+        {
+          "kind": "file",
+          "path": "package.json",
+          "equals": "{\n  \"name\": \"billing-cadence\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"format\": \"prettier --write src\",\n    \"lint\": \"eslint src\",\n    \"test\": \"node --test\"\n  },\n  \"devDependencies\": {\n    \"eslint\": \"9.0.0\",\n    \"prettier\": \"3.3.0\"\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": ".prettierrc",
+          "equals": "{\"semi\":false,\"singleQuote\":true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "src/payments.js",
+          "equals": "export function invoiceTotal(amount, fee) { return amount + fee }\n"
+        },
+        {
+          "kind": "file",
+          "path": "tests/payments.test.js",
+          "equals": "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { invoiceTotal } from '../src/payments.js'\ntest('invoice total', () => assert.equal(invoiceTotal(20, 3), 23))\n"
+        },
+        {
+          "kind": "file",
+          "path": ".env.example",
+          "equals": "BILLING_MODE=test\n"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "PostToolUse"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "PreToolUse"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "npm run format"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "npm run lint"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": ".env.example"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "package.json"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": ".prettierrc"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "src/"
+        }
+      ],
+      "componentId": "skill:claude-code-setup:claude-automation-recommender"
+    }
+  ]
+}

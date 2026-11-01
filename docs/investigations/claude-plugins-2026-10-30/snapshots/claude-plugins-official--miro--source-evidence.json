@@ -1,0 +1,32 @@
+{
+  "repo": "miroapp/miro-ai",
+  "commit": "b6408e1bdfe0c842f209d40b52e92caf118a4d39",
+  "path": "claude-plugins/miro",
+  "archive_sha256": "e58e2be6dc12cd717c3580a32363a58c529e32b7b44614c355974d359f7adbd6",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/miro-code-explain-on-board/SKILL.md",
+    "skills/miro-code-explain-on-board/references/diagramming-principles.md",
+    "skills/miro-code-review/SKILL.md",
+    "skills/miro-code-review/references/background.md",
+    "skills/miro-code-review/references/diagram-conventions.md",
+    "skills/miro-code-review/references/document-templates.md",
+    "skills/miro-code-review/references/pr-linking.md",
+    "skills/miro-code-review/references/review-patterns.md",
+    "skills/miro-code-review/references/risk-assessment.md",
+    "skills/miro-code-review/references/source-links.md",
+    "skills/miro-code-spec/SKILL.md",
+    "skills/miro-code-spec/references/spec-storage.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"miro\",\n  \"version\": \"2.0.0\",\n  \"description\": \"Secure access to Miro boards. Enables AI to read board context, create diagrams, and generate code with enterprise-grade security.\",\n  \"author\": {\n    \"name\": \"Miro\",\n    \"email\": \"support@miro.com\"\n  },\n  \"homepage\": \"https://miro.com\",\n  \"repository\": \"https://github.com/miroapp/miro-ai\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"miro\", \"whiteboard\", \"boards\", \"diagrams\", \"flowchart\", \"mindmap\", \"uml\",\n    \"mermaid\", \"plantuml\", \"documents\", \"tables\", \"stickies\", \"wireframes\",\n    \"prototypes\", \"visualization\", \"collaboration\", \"design-to-code\", \"mcp\",\n    \"prd\", \"specs\", \"documentation\", \"planning\", \"frames\", \"cards\", \"shapes\",\n    \"connectors\", \"images\", \"extraction\", \"design\", \"requirements\", \"tasks\",\n    \"tracking\", \"todos\", \"project-management\", \"kanban\", \"sync\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"miro\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.miro.com/\",\n      \"headers\": {\n        \"X-AI-Source\": \"claude-code-plugin\"\n      }\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/miro-code-spec/SKILL.md": "\nname: miro-code-spec\ndescription: Use when the user wants to extract a Miro board's specs (documents, diagrams, prototypes, tables, frames, images) to local `.miro/specs/` files for AI-assisted planning and implementation — accepts a board URL or single-item URL.\n",
+    "skills/miro-code-explain-on-board/SKILL.md": "\nname: miro-code-explain-on-board\ndescription: Use when the user wants to explain or visualize a codebase on a Miro board — produces a minimal, notation-correct set of architecture / structure / behavior diagrams (flowchart, UML class, UML sequence, ERD) plus a short companion document, grounded in real repo artifacts.\n",
+    "skills/miro-code-review/SKILL.md": "\nname: miro-code-review\ndescription: Use when the user wants to create a visual code review on a Miro board from a pull/merge request (GitHub, GitLab, or any forge), local uncommitted changes, or a branch comparison — produces a file-changes table, summary/architecture/security docs, and architecture diagrams, then links them back from the PR/MR.\n"
+  }
+}

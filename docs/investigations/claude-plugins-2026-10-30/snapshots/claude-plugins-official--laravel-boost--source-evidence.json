@@ -1,0 +1,15 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/laravel-boost",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"laravel-boost\",\n  \"description\": \"Laravel development toolkit MCP server. Provides intelligent assistance for Laravel applications including Artisan commands, Eloquent queries, routing, migrations, and framework-specific code generation.\",\n  \"author\": {\n    \"name\": \"Laravel\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"laravel-boost\": {\n    \"command\": \"php\",\n    \"args\": [\"artisan\", \"boost:mcp\"]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

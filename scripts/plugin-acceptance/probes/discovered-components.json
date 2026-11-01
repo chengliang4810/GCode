@@ -1,0 +1,134 @@
+[
+  {
+    "components": [
+      {
+        "id": "skill:frontend-design:frontend-design",
+        "kind": "skill",
+        "name": "frontend-design:frontend-design",
+        "digest": "4e31803ec462279d25e26860a45b5f33d437b17409aeed41915be8b2c7796cc8",
+        "status": "not_tested"
+      }
+    ],
+    "pluginId": "frontend-design@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/frontend-design",
+    "unsupported": null
+  },
+  {
+    "components": [
+      {
+        "id": "command:claude-md-management:revise-claude-md",
+        "kind": "command",
+        "name": "claude-md-management:revise-claude-md",
+        "digest": "5ad36914bfbc3c7e1cfb9dd7ce7358f75586fcb3d76abb4599e66e75c4fff3c9",
+        "status": "not_tested"
+      },
+      {
+        "id": "skill:claude-md-management:claude-md-improver",
+        "kind": "skill",
+        "name": "claude-md-management:claude-md-improver",
+        "digest": "a172a195949326d3133afa6171c3747007c52a1488889556fcbde6aff2b3c5df",
+        "status": "not_tested"
+      }
+    ],
+    "pluginId": "claude-md-management@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/claude-md-management",
+    "unsupported": null
+  },
+  {
+    "components": [
+      {
+        "id": "agent:code-simplifier:code-simplifier",
+        "kind": "agent",
+        "name": "code-simplifier:code-simplifier",
+        "digest": "926cf237c78dcced55ffaf5d924aa658ea01e44687cf04288609ffaa657f8ef4",
+        "status": "not_tested"
+      }
+    ],
+    "pluginId": "code-simplifier@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/code-simplifier",
+    "unsupported": null
+  },
+  {
+    "pluginId": "claude-code-setup@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/claude-code-setup",
+    "components": [
+      {
+        "id": "skill:claude-code-setup:claude-automation-recommender",
+        "kind": "skill",
+        "name": "claude-code-setup:claude-automation-recommender",
+        "digest": "bbf5b57d0f164f824c4895c1d7439b9ef630d5a717a8588374159798d6a70670",
+        "status": "not_tested"
+      }
+    ],
+    "unsupported": null,
+    "discoveryLedger": "output/plugin-acceptance/run-3847800893/ledger.json"
+  },
+  {
+    "pluginId": "math-olympiad@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/math-olympiad",
+    "components": [
+      {
+        "id": "skill:math-olympiad:math-olympiad",
+        "kind": "skill",
+        "name": "math-olympiad:math-olympiad",
+        "digest": "7b38897db58b7b49043860523b9b09a064949430065f39be2f8b0a851ab38c0a",
+        "status": "not_tested"
+      }
+    ],
+    "unsupported": null,
+    "discoveryLedger": "output/plugin-acceptance/run-3847800893/ledger.json"
+  },
+  {
+    "pluginId": "skill-creator@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/skill-creator",
+    "components": [
+      {
+        "id": "skill:skill-creator:skill-creator",
+        "kind": "skill",
+        "name": "skill-creator:skill-creator",
+        "digest": "f95424348f7d59da5c47625df71f180d81d9e1ddaf4861c2b8e8d5e9ba1f3612",
+        "status": "not_tested"
+      }
+    ],
+    "unsupported": null,
+    "discoveryLedger": "output/plugin-acceptance/run-3847800893/ledger.json"
+  },
+  {
+    "pluginId": "playground@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/playground",
+    "components": [
+      {
+        "id": "skill:playground:playground",
+        "kind": "skill",
+        "name": "playground:playground",
+        "digest": "e5a49de086f8a0ae345d28e0ac967439d29dc87e210761076a45f15373b00a59",
+        "status": "not_tested"
+      }
+    ],
+    "unsupported": null,
+    "discoveryLedger": "output/plugin-acceptance/run-3847800893/ledger.json"
+  },
+  {
+    "pluginId": "project-artifact@claude-plugins-official",
+    "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+    "sourcePath": "plugins/project-artifact",
+    "components": [
+      {
+        "id": "skill:project-artifact:project-artifact",
+        "kind": "skill",
+        "name": "project-artifact:project-artifact",
+        "digest": "29665a80a4b2b322b999f10e850bd34e8c81297596106685c3ea08042d2677d0",
+        "status": "not_tested"
+      }
+    ],
+    "unsupported": null,
+    "discoveryLedger": "output/plugin-acceptance/run-3847800893/ledger.json"
+  }
+]

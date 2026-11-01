@@ -1,0 +1,25 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/claude-md-management",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "claude-md-improver-example.png",
+    "commands/revise-claude-md.md",
+    "revise-claude-md-example.png",
+    "skills/claude-md-improver/SKILL.md",
+    "skills/claude-md-improver/references/quality-criteria.md",
+    "skills/claude-md-improver/references/templates.md",
+    "skills/claude-md-improver/references/update-guidelines.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"claude-md-management\",\n  \"description\": \"Tools to maintain and improve CLAUDE.md files - audit quality, capture session learnings, and keep project memory current.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/revise-claude-md.md": "\ndescription: Update CLAUDE.md with learnings from this session\nallowed-tools: Read, Edit, Glob\n",
+    "skills/claude-md-improver/SKILL.md": "\nname: claude-md-improver\ndescription: Audit and improve CLAUDE.md files in repositories. Use when user asks to check, audit, update, improve, or fix CLAUDE.md files. Scans for all CLAUDE.md files, evaluates quality against templates, outputs quality report, then makes targeted updates. Also use when the user mentions \"CLAUDE.md maintenance\" or \"project memory optimization\".\ntools: Read, Glob, Grep, Bash, Edit\n"
+  }
+}

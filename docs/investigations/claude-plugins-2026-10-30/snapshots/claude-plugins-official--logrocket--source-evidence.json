@@ -1,0 +1,19 @@
+{
+  "repo": "LogRocket/logrocket-claude-plugin",
+  "commit": "2e44dbb47faf9bb54e3405a8ae2714e7c5ce9791",
+  "path": "plugins/logrocket",
+  "archive_sha256": "5f8d6a8500a804c6b1e654906c1c9e33f7bb54635c8bca849d4db76dd2a733c1",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "assets/logo.png",
+    "skills/use-logrocket/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"logrocket\",\n  \"description\": \"Connect Claude Code to LogRocket to query session replays, metrics, issues, and user behavior using natural language.\",\n  \"author\": {\n    \"name\": \"LogRocket\",\n    \"email\": \"support@logrocket.com\"\n  },\n  \"license\": \"MIT\",\n  \"keywords\": [\"logrocket\", \"session-replay\", \"analytics\", \"mcp\", \"galileo\"]\n}\n",
+    ".mcp.json": "{\n  \"logrocket\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.logrocket.com/mcp?toolsets=all\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/use-logrocket/SKILL.md": "\ndescription: Query LogRocket for session replays, metrics, issues, and user behavior using natural language. Use when debugging issues, analyzing feature usage, investigating errors, triaging problems, or understanding how users interact with your app.\n"
+  }
+}

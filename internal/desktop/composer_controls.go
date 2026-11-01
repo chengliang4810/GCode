@@ -9,13 +9,10 @@ import (
 // composerControls is UI/configuration state, shared by the central and side
 // composers. It owns no service, goroutine, settings transaction or window.
 type composerControls struct {
+	prompt                                               promptEditor
 	modelID, reasoning                                   string
-	accessMode                                           contracts.AccessMode
-	plan                                                 bool
 	modelQuery, modelProvider, effortModel, effortReason string
-	modelMenu, modelListPage                             bool
-	accessMenu                                           bool
-	accessCursor                                         int
+	modelMenu, effortMenu, modelSearchOpen               bool
 	modelList                                            ui.ListState
 	modelCursor                                          int
 	modelSearch                                          ui.Handle
@@ -60,12 +57,30 @@ func (a *composerController) selectedModel() contracts.Model {
 
 func (a *composerController) modelLabel() string {
 	if a.sessionID == "" && a.modelNoAgents() {
-		return a.t("No agents")
+		return a.t("No models configured")
 	}
 	if model := a.selectedModel(); model.Label != "" {
 		return model.Label
 	}
 	return a.t("Select model")
+}
+
+func (a *composerController) selectedProvider() contracts.Provider {
+	for _, provider := range a.state.Providers {
+		if provider.ID == a.selectedModel().ProviderID {
+			return provider
+		}
+	}
+	return contracts.Provider{}
+}
+
+func (a *App) runtimeModelLabel(model contracts.Model) string {
+	for _, provider := range a.state.Providers {
+		if provider.ID == model.ProviderID {
+			return provider.Name + "/" + model.Label
+		}
+	}
+	return model.Label
 }
 
 func (a *composerController) controlLabel(label string) string {
@@ -77,6 +92,12 @@ func (a *composerController) controlLabel(label string) string {
 
 func (a *composerController) normalizeReasoning() {
 	model := a.selectedModel()
+	if a.state.Runtime != nil {
+		if a.reasoning == "" && len(model.ReasoningLevels) > 0 {
+			a.reasoning = model.ReasoningLevels[len(model.ReasoningLevels)-1]
+		}
+		return
+	}
 	if len(model.ReasoningLevels) == 0 {
 		a.reasoning = ""
 		return
@@ -101,7 +122,6 @@ func (a *composerController) modelChanged() {
 		return
 	}
 	a.normalizeReasoning()
-	a.normalizeRunConfig()
 	if model := a.selectedModel(); model.ID != "" {
 		if a.state.Settings.ModelPicker.Selections == nil {
 			a.state.Settings.ModelPicker.Selections = make(map[string]contracts.ModelSelection)
@@ -110,8 +130,8 @@ func (a *composerController) modelChanged() {
 		a.state.Settings.ModelPicker.ProviderID = model.ProviderID
 		a.saveSettings()
 	}
-	model, reasoning, mode, plan := a.modelID, a.reasoning, a.accessMode, a.plan
-	a.saveComposerConfig(&contracts.SessionUpdate{ID: a.sessionID, ModelID: &model, ReasoningLevel: &reasoning, AccessMode: &mode, Plan: &plan})
+	model, reasoning := a.modelID, a.reasoning
+	a.saveComposerConfig(&contracts.SessionUpdate{ID: a.sessionID, ModelID: &model, ReasoningLevel: &reasoning})
 }
 
 func (a *composerController) saveComposerConfig(update *contracts.SessionUpdate) {
@@ -128,53 +148,28 @@ func (a *composerController) saveComposerConfig(update *contracts.SessionUpdate)
 }
 
 func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Element) {
-	button := ui.ButtonBase(c).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel("Select model")))
+	button := ui.ButtonBase(c.Key("model-trigger")).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel("Select model")))
 	if a.modelMenu || button.Hovered() {
 		button.Background(a.palette.Hover)
 	}
 	button.Children(func() {
-		glyph := "terminal"
-		for _, provider := range a.state.Providers {
-			if a.sessionID == "" && a.modelNoAgents() {
-				break
-			}
-			if provider.ID == a.selectedModel().ProviderID && provider.Icon != "" {
-				glyph = provider.Icon
-			}
-		}
-		icon(c, glyph, 16)
-		ui.Text(c, a.modelLabel()).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).FontWeight(500)
-		if len(a.selectedModel().ReasoningLevels) > 0 && (a.sessionID != "" || !a.modelNoAgents()) {
-			ui.Text(c, tr(c, a.reasoning)).SingleLine().MinWidth(0).Shrink(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted.Alpha(.7))
-		}
+		ui.Text(c, a.modelLabel()).SingleLine().MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 	})
 	button.OnClick(func() {
 		a.modelMenu = !a.modelMenu
 		if a.modelMenu {
-			a.accessMenu = false
-		}
-		if a.modelMenu {
-			a.modelListPage = false
+			a.effortMenu = false
 			a.modelQuery = ""
+			a.modelSearchOpen = false
 			a.modelProvider = ""
-			if !a.state.Settings.General.CompactModelPicker {
-				a.openModelList()
-			}
+			a.openModelList()
 		}
 	})
 	return button, a.modelPopover(c, button)
 }
 
-// Compatibility wrappers preserve the root shell's central-only entry points.
-func (a *App) normalizeRunConfig()           { a.centralControls().normalizeRunConfig() }
-func (a *App) modelRows() []modelRow         { return a.centralControls().modelRows() }
-func (a *App) modelNoAgents() bool           { return a.centralControls().modelNoAgents() }
-func (a *App) restoreModelSelection()        { a.centralControls().restoreModelSelection() }
-func (a *App) modelProviderLocked() bool     { return a.centralControls().modelProviderLocked() }
-func (a *App) selectModelProvider(id string) { a.centralControls().selectModelProvider(id) }
-func (a *App) isModelFavorite(model contracts.Model) bool {
-	return a.centralControls().isModelFavorite(model)
-}
-func (a *App) toggleModelFavorite(model contracts.Model) {
-	a.centralControls().toggleModelFavorite(model)
-}
+// Root shell entry points delegate to the central composer.
+func (a *App) modelRows() []modelRow     { return a.centralControls().modelRows() }
+func (a *App) modelNoAgents() bool       { return a.centralControls().modelNoAgents() }
+func (a *App) restoreModelSelection()    { a.centralControls().restoreModelSelection() }
+func (a *App) modelProviderLocked() bool { return a.centralControls().modelProviderLocked() }

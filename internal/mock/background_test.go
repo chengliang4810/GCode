@@ -171,10 +171,9 @@ func TestModelPickerOwnershipAndPersistence(t *testing.T) {
 	statePath := filepath.Join(t.TempDir(), "state.json")
 	s := newTestServer(t, Options{StatePath: statePath})
 	v, _ := s.Snapshot(ctx)
-	v.Settings.ModelPicker = contracts.ModelPickerSettings{ProviderID: "anthropic", Favorites: []contracts.ModelRef{{ProviderID: "anthropic", ModelID: "claude-sonnet"}}, Options: map[string]string{"claude-sonnet/effort": "high"}}
+	v.Settings.ModelPicker = contracts.ModelPickerSettings{ProviderID: "anthropic", Options: map[string]string{"claude-sonnet/effort": "high"}}
 	v.Settings.ModelPicker.Selections = map[string]contracts.ModelSelection{"anthropic": {ModelID: "claude-sonnet", Reasoning: "high"}}
 	command := contracts.Command{Kind: "settings.update", Settings: &v.Settings}.Clone()
-	v.Settings.ModelPicker.Favorites[0].ModelID = "changed"
 	v.Settings.ModelPicker.Options["claude-sonnet/effort"] = "low"
 	v.Settings.ModelPicker.Selections["anthropic"] = contracts.ModelSelection{ModelID: "changed"}
 	if err := s.Execute(ctx, command); err != nil {
@@ -182,7 +181,7 @@ func TestModelPickerOwnershipAndPersistence(t *testing.T) {
 	}
 	command.Settings.ModelPicker.Options["claude-sonnet/effort"] = "later"
 	actual, _ := s.Snapshot(ctx)
-	if actual.Settings.ModelPicker.Favorites[0].ModelID != "claude-sonnet" || actual.Settings.ModelPicker.Options["claude-sonnet/effort"] != "high" {
+	if actual.Settings.ModelPicker.Options["claude-sonnet/effort"] != "high" {
 		t.Fatal("settings retained command aliases")
 	}
 	actual.Settings.ModelPicker.Options["claude-sonnet/effort"] = "snapshot mutation"

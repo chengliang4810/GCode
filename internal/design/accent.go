@@ -11,7 +11,7 @@ import (
 // terminal ANSI, status and diff roles remain owned by the chosen theme.
 func ApplyAccent(t Tokens, selection string) Tokens {
 	presets := map[string][2]string{
-		"zeron": {"#8b7cf6", "#5b43e8"}, "orange": {"#fb923c", "#c2410c"}, "amber": {"#fbbf24", "#a16207"},
+		"rcode": {"#8b7cf6", "#5b43e8"}, "orange": {"#fb923c", "#c2410c"}, "amber": {"#fbbf24", "#a16207"},
 		"green": {"#4ade80", "#15803d"}, "cyan": {"#22d3ee", "#0e7490"}, "blue": {"#60a5fa", "#2563eb"}, "pink": {"#f472b6", "#be185d"},
 	}
 	values, ok := presets[strings.ToLower(selection)]

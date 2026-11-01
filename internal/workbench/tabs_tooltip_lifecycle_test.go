@@ -422,7 +422,7 @@ func TestTabTooltipActualNaturalSizeFlipsAtWindowEdges(t *testing.T) {
 	}
 }
 
-func TestTabTooltipCardColorsAndAbsoluteTypography(t *testing.T) {
+func TestTabTooltipCardColorsAndScalableTypography(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		for _, scale := range []float32{1, 2} {
 			t.Run(fmt.Sprintf("dark%t-scale%g", dark, scale), func(t *testing.T) {
@@ -461,8 +461,8 @@ func TestTabTooltipCardColorsAndAbsoluteTypography(t *testing.T) {
 				}
 				fontSize = 20
 				tt.Frame()
-				if after := requireTabTooltip(t, tt, true); after != tip {
-					t.Fatalf("source absolute10.5DIP tooltip followed interface font: before%+v after%+v", tip, after)
+				if after := requireTabTooltip(t, tt, true); after.H <= tip.H {
+					t.Fatalf("tooltip did not follow interface font: before%+v after%+v", tip, after)
 				}
 			})
 		}
@@ -709,47 +709,6 @@ func TestTabTooltipOnlyShownOwnerGetsHoveredCardWheelException(t *testing.T) {
 	requireTabTooltip(t, tt, false)
 	tt.Advance(time.Millisecond)
 	requireTabTooltip(t, tt, true)
-}
-
-func TestTabTooltipPRDetailUsesMatchingTypedResource(t *testing.T) {
-	for _, withNumber := range []bool{false, true} {
-		t.Run(fmt.Sprintf("number%t", withNumber), func(t *testing.T) {
-			s, _, snapshot := testWorkspace(t)
-			if len(snapshot.PullRequests) == 0 {
-				t.Fatal("fixture has no pull request resource")
-			}
-			pr := snapshot.PullRequests[0]
-			if !withNumber {
-				pr.Number = 0
-				snapshot.PullRequests[0] = pr
-				s.Update(snapshot)
-			}
-			s.OpenPR(pr.ID)
-			detail := pr.Title
-			if withNumber {
-				detail = fmt.Sprintf("#%d %s", pr.Number, pr.Title)
-			}
-			if detail == "" || s.tabDetail(s.tabs[0]) != detail {
-				t.Fatal("actual single-PR identity did not supply its full detail")
-			}
-			if got := s.tabDetail(surface{kind: "pullrequests", id: pr.ID, title: "list title"}); got != "" {
-				t.Fatal("list route borrowed a single pull request's detail")
-			}
-			if got := s.tabDetail(surface{kind: "pr", id: "missing-resource", title: "invented title"}); got != "" {
-				t.Fatal("missing pull request fell back to a display title")
-			}
-			tt := tabTooltipStripTester(s, 500, false)
-			chip, _ := tt.Find(s.tabs[0].title)
-			tt.Move(chip.X+3, chip.Y+chip.H/2)
-			tt.Advance(349 * time.Millisecond)
-			requireTabTooltip(t, tt, false)
-			tt.Advance(time.Millisecond)
-			requireTabTooltip(t, tt, true)
-			if !tt.HasText(detail) {
-				t.Fatal("actual PR detail did not render after350ms")
-			}
-		})
-	}
 }
 
 func TestTabTooltipObserverPreservesNativeContextMenu(t *testing.T) {

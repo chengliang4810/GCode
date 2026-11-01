@@ -8,7 +8,12 @@ keyboard focus: a `*float32` is the width of the first, which the divider
 keeps 40 DIPs from either edge. When the window leaves less room than
 that, the first pane gives way so the second keeps its 40 DIPs, and the
 first takes its size back when there is room again; the `*float32` keeps
-the size the user chose. `Changed` reports a move.
+the size the user chose.
+
+A drag writes the size before the panes build, so read `*float32` after the
+split returns to see where the user put it; the same pass lays the panes out
+from it. `Changed` reports an arrow-key move, which lands after the panes
+have built and is read on the next frame.
 
 ```go
 ui.Split(c, &app.sidebarWidth, func() { app.files(c) }, func() { app.editor(c) }).Fill()

@@ -45,7 +45,7 @@ func runFooterUsageFixture(root string, delay time.Duration, settings captureSet
 		return err
 	}
 	defer fixture.Close()
-	mygo.App.SetName("Zeron footer usage fixture")
+	mygo.App.SetName("RCode footer usage fixture")
 	mygo.App.SetPath(mygo.PathUserData, filepath.Join(root, "native-profile"))
 	mygo.Theme.SetSource(settings.theme("dark"))
 	ctx, cancel := context.WithCancel(context.Background())

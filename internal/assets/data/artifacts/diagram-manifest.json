@@ -1,10 +1,10 @@
 {
   "diagrams": [
     {
-      "asset": "artifacts/diagram-zeron-light.svg",
+      "asset": "artifacts/diagram-rcode-light.svg",
       "backgroundColor": "#ffffff",
       "height": 139.9095,
-      "id": "zeron-light",
+      "id": "rcode-light",
       "labels": [
         {
           "bounds": {
@@ -67,17 +67,17 @@
           "text": "Wait"
         }
       ],
-      "rawSVG": "reference/mermaid/raw/diagram-zeron-light.svg",
+      "rawSVG": "reference/mermaid/raw/diagram-rcode-light.svg",
       "rawSha256": "90a6bf55253db3ab611ff14c81d765c8a886b5c8131eb449d9bdbfbe34b75a60",
       "sha256": "298e9151b71feebadc7d10a1dd93074eeb88f56b6eb0f74cd17bb47d539e7196",
       "textColor": "#303035",
       "width": 381.6848
     },
     {
-      "asset": "artifacts/diagram-zeron-dark.svg",
+      "asset": "artifacts/diagram-rcode-dark.svg",
       "backgroundColor": "#060606",
       "height": 139.9095,
-      "id": "zeron-dark",
+      "id": "rcode-dark",
       "labels": [
         {
           "bounds": {
@@ -140,7 +140,7 @@
           "text": "Wait"
         }
       ],
-      "rawSVG": "reference/mermaid/raw/diagram-zeron-dark.svg",
+      "rawSVG": "reference/mermaid/raw/diagram-rcode-dark.svg",
       "rawSha256": "6b7110d748d2b248b514d92d293c39b7e96d895ff73e4581c5302a7f5c74bcf1",
       "sha256": "d7b863fc176eecf75fb45112ab6e3698d3dcd29bce4ff8f98cbe891f51ff6a12",
       "textColor": "#e8e8ea",

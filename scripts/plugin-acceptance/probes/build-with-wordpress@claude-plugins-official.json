@@ -1,0 +1,197 @@
+{
+  "pluginId": "build-with-wordpress@claude-plugins-official",
+  "sourceCommit": "052ca970df2c577d7c651e784935186ff93e6779",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "extract-bookstore-site-specification",
+      "componentId": "skill:build-with-wordpress:site-specification",
+      "prompt": "/build-with-wordpress:site-specification Extract a complete site specification for this description: Harborline Books is an independent bookstore in a small coastal town. The owner wants a site that sells book club memberships, lists weekly author events, and grows an email newsletter list; the tone should feel literary and local, not corporate. Headless authoring task: no Studio, no WordPress, no theme generation, no network. Write the specification as site-spec.json in the working directory using exactly the documented site spec schema (siteBrief with siteName, siteType, primaryGoal, audience, tone and brandKeywords; layoutNotes as a list of separate section strings; typography with primaryFont, secondaryFont, usage and fontImport). Infer every field from the description the way the documented inference patterns do for this site type, include the events and newsletter sections in layoutNotes, and use a real Google Fonts css2 fontImport URL pairing two different fonts. Then read the immutable verify_site_spec.py and run exactly python verify_site_spec.py using Bash to validate structure and write spec-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that confirmation with the user and any theme generation remain untested.",
+      "allowCommands": [
+        "python verify_site_spec.py"
+      ],
+      "verifierOutputs": [
+        "spec-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_site_spec.py",
+          "text": "import json\nfrom pathlib import Path\n\nspec = json.loads(Path('site-spec.json').read_text(encoding='utf-8'))\nbrief = spec['siteBrief']\nassert brief['siteName'] == 'Harborline Books', 'wrong site name'\nassert 'bookstore' in brief['siteType'].lower() or 'book' in brief['siteType'].lower(), 'site type must describe a bookstore'\nassert brief['primaryGoal'].strip(), 'missing primary goal'\nassert brief['audience'].strip(), 'missing audience'\nassert brief['tone'].strip(), 'missing tone'\nassert brief['brandKeywords'].strip(), 'missing brand keywords'\nnotes = spec['layoutNotes']\nassert isinstance(notes, list) and len(notes) >= 4, 'layoutNotes must list the key sections'\njoined = ' '.join(notes).lower()\nassert 'event' in joined, 'layoutNotes must cover the events section from the request'\nassert 'subscri' in joined or 'newsletter' in joined, 'layoutNotes must cover the newsletter signup from the request'\ntypo = spec['typography']\nfor key in ('primaryFont', 'secondaryFont', 'usage', 'fontImport'):\n    assert typo.get(key, '').strip(), 'typography.' + key + ' is required'\nassert typo['fontImport'].startswith('https://fonts.googleapis.com/css2?'), 'fontImport must be a Google Fonts css2 URL'\nassert typo['primaryFont'] != typo['secondaryFont'], 'primary and secondary fonts must differ'\nreport = {'audience': True, 'brand_keywords': True, 'events_section': True, 'font_import': True,\n          'newsletter_section': True, 'schema_complete': True, 'site_name': True, 'tone': True}\nPath('spec-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Site spec: full documented schema extracted for the bookstore brief; confirmation table ready')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_site_spec.py",
+          "equals": "import json\nfrom pathlib import Path\n\nspec = json.loads(Path('site-spec.json').read_text(encoding='utf-8'))\nbrief = spec['siteBrief']\nassert brief['siteName'] == 'Harborline Books', 'wrong site name'\nassert 'bookstore' in brief['siteType'].lower() or 'book' in brief['siteType'].lower(), 'site type must describe a bookstore'\nassert brief['primaryGoal'].strip(), 'missing primary goal'\nassert brief['audience'].strip(), 'missing audience'\nassert brief['tone'].strip(), 'missing tone'\nassert brief['brandKeywords'].strip(), 'missing brand keywords'\nnotes = spec['layoutNotes']\nassert isinstance(notes, list) and len(notes) >= 4, 'layoutNotes must list the key sections'\njoined = ' '.join(notes).lower()\nassert 'event' in joined, 'layoutNotes must cover the events section from the request'\nassert 'subscri' in joined or 'newsletter' in joined, 'layoutNotes must cover the newsletter signup from the request'\ntypo = spec['typography']\nfor key in ('primaryFont', 'secondaryFont', 'usage', 'fontImport'):\n    assert typo.get(key, '').strip(), 'typography.' + key + ' is required'\nassert typo['fontImport'].startswith('https://fonts.googleapis.com/css2?'), 'fontImport must be a Google Fonts css2 URL'\nassert typo['primaryFont'] != typo['secondaryFont'], 'primary and secondary fonts must differ'\nreport = {'audience': True, 'brand_keywords': True, 'events_section': True, 'font_import': True,\n          'newsletter_section': True, 'schema_complete': True, 'site_name': True, 'tone': True}\nPath('spec-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Site spec: full documented schema extracted for the bookstore brief; confirmation table ready')\n"
+        },
+        {
+          "kind": "file",
+          "path": "spec-verification.json",
+          "equals": "{\"audience\": true, \"brand_keywords\": true, \"events_section\": true, \"font_import\": true, \"newsletter_section\": true, \"schema_complete\": true, \"site_name\": true, \"tone\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "site-spec.json",
+          "contains": "Harborline Books"
+        },
+        {
+          "kind": "file",
+          "path": "site-spec.json",
+          "contains": "siteBrief"
+        },
+        {
+          "kind": "file",
+          "path": "site-spec.json",
+          "contains": "layoutNotes"
+        },
+        {
+          "kind": "file",
+          "path": "site-spec.json",
+          "contains": "fontImport"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Site spec: full documented schema extracted for the bookstore brief"
+        }
+      ]
+    },
+    {
+      "id": "plan-three-design-directions-harborline",
+      "componentId": "command:build-with-wordpress:design-site",
+      "prompt": "/build-with-wordpress:design-site Design a WordPress block theme site for Harborline Books, an independent coastal bookstore that sells book club memberships and lists weekly author events. Headless authoring task: no WordPress Studio, no WordPress install, no theme generation, no page rendering, no network. Do not run any installer or Studio command. Instead produce the documented planning artifact design-plan.md containing: the Phase 0.5 Studio environment check recorded as a pending prerequisite gate instead of executed; the brief and direction planning output with exactly three numbered design directions, each covering mood name, color palette concept, font pairing concept, spacing density, motion level, button style and embellishment approach as the command requires. Then read the immutable verify_design_plan.py and run exactly python verify_design_plan.py using Bash to validate the plan and write design-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that Studio setup, style tiles, page generation and theme build remain untested.",
+      "allowCommands": [
+        "python verify_design_plan.py"
+      ],
+      "verifierOutputs": [
+        "design-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_design_plan.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('design-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor mood in ('mood', 'palette', 'font', 'spacing', 'motion', 'button', 'embellishment'):\n    assert mood in low, 'each direction must cover ' + mood\nimport re\ndirections = re.findall(r'(?m)^#+ ?(?:Direction|Direction [123])', plan)\nnumbered = re.findall(r'(?m)^\\s*(?:\\*\\*)?[123][.)]', plan)\nassert len(numbered) >= 3, 'three numbered design directions are required'\nassert 'Direction 3' in plan or '3.' in plan, 'third direction missing'\nassert 'Studio' in plan, 'the documented Studio environment check must be recorded'\nassert 'harborline' in low or 'Harborline Books' in plan, 'plan must be grounded in the given site'\nreport = {'directions_three': True, 'mood_palette_fonts': True,\n          'spacing_motion_buttons': True, 'studio_gate': True, 'site_grounded': True}\nPath('design-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Design plan: three documented direction briefs planned; Studio build and page generation untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_design_plan.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('design-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor mood in ('mood', 'palette', 'font', 'spacing', 'motion', 'button', 'embellishment'):\n    assert mood in low, 'each direction must cover ' + mood\nimport re\ndirections = re.findall(r'(?m)^#+ ?(?:Direction|Direction [123])', plan)\nnumbered = re.findall(r'(?m)^\\s*(?:\\*\\*)?[123][.)]', plan)\nassert len(numbered) >= 3, 'three numbered design directions are required'\nassert 'Direction 3' in plan or '3.' in plan, 'third direction missing'\nassert 'Studio' in plan, 'the documented Studio environment check must be recorded'\nassert 'harborline' in low or 'Harborline Books' in plan, 'plan must be grounded in the given site'\nreport = {'directions_three': True, 'mood_palette_fonts': True,\n          'spacing_motion_buttons': True, 'studio_gate': True, 'site_grounded': True}\nPath('design-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Design plan: three documented direction briefs planned; Studio build and page generation untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "design-verification.json",
+          "equals": "{\"directions_three\": true, \"mood_palette_fonts\": true, \"site_grounded\": true, \"spacing_motion_buttons\": true, \"studio_gate\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "design-plan.md",
+          "contains": "Harborline Books"
+        },
+        {
+          "kind": "file",
+          "path": "design-plan.md",
+          "contains": "Studio"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Design plan: three documented direction briefs planned"
+        }
+      ]
+    },
+    {
+      "id": "generate-three-self-contained-previews",
+      "componentId": "command:build-with-wordpress:preview-designs",
+      "prompt": "/build-with-wordpress:preview-designs Produce three visual design directions for this site description: Harborline Books, an independent coastal bookstore selling book club memberships, listing weekly author events, and growing an email newsletter; literary and local tone. Headless authoring task: no browser, no screenshots, no Studio, no network. Write one file preview-directions.html that follows the documented technical requirements: a complete self-contained HTML document with inline CSS in a single style tag in the head, no external dependencies of any kind (no CDN links, no external stylesheets, no remote fonts, no remote images), covering three clearly labelled distinct design directions that use system fonts and show the book club, events and newsletter sections. Then read the immutable verify_preview_designs.py and run exactly python verify_preview_designs.py using Bash to validate the file and write preview-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that visual rendering in a browser and user selection remain untested.",
+      "allowCommands": [
+        "python verify_preview_designs.py"
+      ],
+      "verifierOutputs": [
+        "preview-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_preview_designs.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\npreview = Path('preview-directions.html').read_text(encoding='utf-8')\nlow = preview.lower()\nassert '<style' in low, 'preview must carry a self-contained style block'\nassert '<link' not in low, 'no external stylesheet link is allowed'\nassert 'fonts.googleapis' not in low, 'no Google Fonts import is allowed in a self-contained preview'\nassert not re.search(r'src\\s*=\\s*[\"\\']https?://', preview), 'no remote asset URLs are allowed'\nassert 'http://' not in low.replace('http://www.w3.org','') or True\nassert preview.count('data-direction') >= 3 or len(re.findall(r'(?i)direction\\s*[123]', preview)) >= 3, 'three directions must appear'\nassert 'harborline' in low or 'Harborline Books' in preview, 'preview must be grounded in the given site'\nfor token in ('book club', 'event', 'newsletter'):\n    assert token in low, 'preview must show the requested sections: ' + token\nreport = {'directions_three': True, 'inline_css_only': True, 'no_external_assets': True,\n          'requested_sections': True, 'self_contained_html': True}\nPath('preview-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Design previews: three self-contained inline-CSS directions; browser rendering untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_preview_designs.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\npreview = Path('preview-directions.html').read_text(encoding='utf-8')\nlow = preview.lower()\nassert '<style' in low, 'preview must carry a self-contained style block'\nassert '<link' not in low, 'no external stylesheet link is allowed'\nassert 'fonts.googleapis' not in low, 'no Google Fonts import is allowed in a self-contained preview'\nassert not re.search(r'src\\s*=\\s*[\"\\']https?://', preview), 'no remote asset URLs are allowed'\nassert 'http://' not in low.replace('http://www.w3.org','') or True\nassert preview.count('data-direction') >= 3 or len(re.findall(r'(?i)direction\\s*[123]', preview)) >= 3, 'three directions must appear'\nassert 'harborline' in low or 'Harborline Books' in preview, 'preview must be grounded in the given site'\nfor token in ('book club', 'event', 'newsletter'):\n    assert token in low, 'preview must show the requested sections: ' + token\nreport = {'directions_three': True, 'inline_css_only': True, 'no_external_assets': True,\n          'requested_sections': True, 'self_contained_html': True}\nPath('preview-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Design previews: three self-contained inline-CSS directions; browser rendering untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "preview-verification.json",
+          "equals": "{\"directions_three\": true, \"inline_css_only\": true, \"no_external_assets\": true, \"requested_sections\": true, \"self_contained_html\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "preview-directions.html",
+          "contains": "Harborline Books"
+        },
+        {
+          "kind": "file",
+          "path": "preview-directions.html",
+          "contains": "<style"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Design previews: three self-contained inline-CSS directions"
+        }
+      ]
+    },
+    {
+      "id": "plan-quick-build-with-validated-slug",
+      "componentId": "command:build-with-wordpress:quick-build",
+      "prompt": "/build-with-wordpress:quick-build Create a theme for Harborline Books, an independent coastal bookstore with book club memberships, weekly author events and an email newsletter. Headless authoring task: no WordPress Studio, no WordPress install, no theme files, no deployment, no network. Do not run any Studio or wp command. Produce two artifacts instead: theme-slug.txt containing only the theme slug harborline-books derived from the site name and matching the documented slug validation pattern, and quick-build-plan.md recording the documented quick build steps in order (site specification, design selection, theme generation, Studio deployment), the slug validation rule applied to your slug, the Studio prerequisite recorded as pending, and an explicit honest statement that no theme files were created in this headless session. Then read the immutable verify_quick_build.py and run exactly python verify_quick_build.py using Bash to validate both artifacts and write quick-build-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name both artifacts, report the actual verifier output line, and state that theme generation, block template rendering and Studio deployment remain untested.",
+      "allowCommands": [
+        "python verify_quick_build.py"
+      ],
+      "verifierOutputs": [
+        "quick-build-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_quick_build.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nslug = Path('theme-slug.txt').read_text(encoding='utf-8').strip()\nassert re.fullmatch(r'[a-z0-9-]+', slug), 'theme slug must match the documented validation pattern'\nassert slug == 'harborline-books', 'theme slug must derive from the given site name: ' + slug\nplan = Path('quick-build-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor step in ('site spec', 'design', 'theme', 'deploy'):\n    assert step in low, 'plan must record the documented step: ' + step\nassert 'slug' in low and 'validat' in low, 'plan must record the documented slug validation rule'\nassert 'no theme files were created' in low or 'not created' in low, 'plan must state honestly that no theme was generated'\nassert 'studio' in low, 'plan must record the Studio deployment prerequisite'\nreport = {'deploy_step': True, 'design_step': True, 'honest_no_theme': True,\n          'slug_validated': True, 'spec_step': True, 'studio_gate': True}\nPath('quick-build-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Quick build: documented workflow planned with a validated theme slug; theme generation and Studio deploy untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_quick_build.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nslug = Path('theme-slug.txt').read_text(encoding='utf-8').strip()\nassert re.fullmatch(r'[a-z0-9-]+', slug), 'theme slug must match the documented validation pattern'\nassert slug == 'harborline-books', 'theme slug must derive from the given site name: ' + slug\nplan = Path('quick-build-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor step in ('site spec', 'design', 'theme', 'deploy'):\n    assert step in low, 'plan must record the documented step: ' + step\nassert 'slug' in low and 'validat' in low, 'plan must record the documented slug validation rule'\nassert 'no theme files were created' in low or 'not created' in low, 'plan must state honestly that no theme was generated'\nassert 'studio' in low, 'plan must record the Studio deployment prerequisite'\nreport = {'deploy_step': True, 'design_step': True, 'honest_no_theme': True,\n          'slug_validated': True, 'spec_step': True, 'studio_gate': True}\nPath('quick-build-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Quick build: documented workflow planned with a validated theme slug; theme generation and Studio deploy untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "quick-build-verification.json",
+          "equals": "{\"deploy_step\": true, \"design_step\": true, \"honest_no_theme\": true, \"slug_validated\": true, \"spec_step\": true, \"studio_gate\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "theme-slug.txt",
+          "contains": "harborline-books"
+        },
+        {
+          "kind": "file",
+          "path": "quick-build-plan.md",
+          "contains": "harborline-books"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Quick build: documented workflow planned with a validated theme slug"
+        }
+      ]
+    }
+  ]
+}

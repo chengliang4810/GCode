@@ -1,0 +1,28 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/math-olympiad",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "skills/math-olympiad/SKILL.md",
+    "skills/math-olympiad/evals/trigger_eval.json",
+    "skills/math-olympiad/references/adversarial_prompts.md",
+    "skills/math-olympiad/references/attempt_agent.md",
+    "skills/math-olympiad/references/known_constructions.md",
+    "skills/math-olympiad/references/model_tier_defaults.md",
+    "skills/math-olympiad/references/presentation_prompts.md",
+    "skills/math-olympiad/references/solver_heuristics.md",
+    "skills/math-olympiad/references/verifier_patterns.md",
+    "skills/math-olympiad/scripts/check_latex.sh",
+    "skills/math-olympiad/scripts/compile_pdf.sh"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"math-olympiad\",\n  \"description\": \"Solve competition math (IMO, Putnam, USAMO) with adversarial verification that catches what self-verification misses. Fresh-context verifiers attack proofs with specific failure patterns. Calibrated abstention over bluffing.\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/math-olympiad/SKILL.md": "\nname: math-olympiad\ndescription:\n  \"Solve competition math problems (IMO, Putnam, USAMO, AIME) with adversarial\n  verification that catches the errors self-verification misses. Activates when\n  asked to 'solve this IMO problem', 'prove this olympiad inequality', 'verify\n  this competition proof', 'find a counterexample', 'is this proof correct', or\n  for any problem with 'IMO', 'Putnam', 'USAMO', 'olympiad', or 'competition\n  math' in it. Uses pure reasoning (no tools) — then a fresh-context adversarial\n  verifier attacks the proof using specific failure patterns, not generic 'check\n  logic'. Outputs calibrated confidence — will say 'no confident solution'\n  rather than bluff. If LaTeX is available, produces a clean PDF after\n  verification passes.\"\nversion: 0.1.0\n"
+  }
+}

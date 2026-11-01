@@ -1,5 +1,11 @@
 # Native compact-picker fixture
 
+> 2026-10-30：产品已取消紧凑选择器，当前生产夹具也统一为供应商/模型两列菜单。
+> 旧的 panel/list 场景和 `--page` 参数已删除，导出类型改为 `ModelPickerFixture`。
+> 当前矩阵为深浅主题 × 840/360 宽度，共四场景；回归使用
+> `go test -tags uifixture ./internal/desktop -run '^TestModelPickerFixture'`。
+> 下面的八图、命令和视觉对照结论属于冻结的历史审查，不代表当前菜单验收。
+
 This independent implementation fixture reuses the production model picker. It
 is available only with the `uifixture` build tag and adds no product entry point.
 It does not establish reference/implementation visual acceptance.

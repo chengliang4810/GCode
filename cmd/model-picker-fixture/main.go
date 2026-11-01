@@ -24,8 +24,8 @@ import (
 )
 
 type scene struct {
-	appearance, page string
-	width, height    int
+	appearance    string
+	width, height int
 }
 
 func (s scene) name() string {
@@ -33,27 +33,23 @@ func (s scene) name() string {
 	if s.width == 360 {
 		width = "narrow"
 	}
-	page := "panel"
-	if s.page == "list" {
-		page = "model-list"
-	}
-	return "compact-" + page + "-" + s.appearance + "-" + width
+	return "model-picker-" + s.appearance + "-" + width
 }
 
-func (s scene) ready(state desktop.CompactPickerFixtureState) bool {
-	return state.PopoverOpen && state.Appearance == s.appearance && state.Page == s.page &&
+func (s scene) ready(state desktop.ModelPickerFixtureState) bool {
+	return state.PopoverOpen && state.Appearance == s.appearance &&
 		state.Width == float32(s.width) && state.Height == float32(s.height) &&
 		state.Geometry.Ready() && state.GeometryStable && state.LayoutError == ""
 }
 
 type capture struct {
-	Name         string                            `json:"name"`
-	File         string                            `json:"file"`
-	SHA256       string                            `json:"sha256"`
-	PixelWidth   int                               `json:"pixelWidth"`
-	PixelHeight  int                               `json:"pixelHeight"`
-	MetadataFile string                            `json:"captureMetadataFile,omitempty"`
-	State        desktop.CompactPickerFixtureState `json:"state"`
+	Name         string                          `json:"name"`
+	File         string                          `json:"file"`
+	SHA256       string                          `json:"sha256"`
+	PixelWidth   int                             `json:"pixelWidth"`
+	PixelHeight  int                             `json:"pixelHeight"`
+	MetadataFile string                          `json:"captureMetadataFile,omitempty"`
+	State        desktop.ModelPickerFixtureState `json:"state"`
 }
 
 type captureSettings struct {
@@ -94,7 +90,7 @@ func (s captureSettings) title() string {
 	if s.mode == "wgc" {
 		return ""
 	}
-	return "Compact picker fixture"
+	return "Model picker fixture"
 }
 
 func main() {
@@ -106,9 +102,8 @@ func main() {
 
 func run() error {
 	output := flag.String("out-dir", "", "Fresh output directory for native content PNGs and metadata")
-	matrix := flag.Bool("matrix", true, "Capture dark/light x 840/360 client width x panel/list at height 560")
+	matrix := flag.Bool("matrix", true, "Capture dark/light x 840/360 client width at height 560")
 	appearance := flag.String("appearance", "dark", "Single-scene appearance: dark or light")
-	page := flag.String("page", "panel", "Single-scene page: panel or list")
 	width := flag.Int("width", 840, "Single-scene client width in DIPs")
 	height := flag.Int("height", 560, "Single-scene client height in DIPs")
 	delay := flag.Duration("capture-delay", 260*time.Millisecond, "Wait for native layout before each content capture")
@@ -122,8 +117,8 @@ func run() error {
 	if flag.NArg() != 0 {
 		return errors.New("unexpected positional arguments")
 	}
-	if *appearance != "dark" && *appearance != "light" || *page != "panel" && *page != "list" {
-		return errors.New("appearance must be dark/light and page must be panel/list")
+	if *appearance != "dark" && *appearance != "light" {
+		return errors.New("appearance must be dark/light")
 	}
 	captureSettings, err := newCaptureSettings(*captureMode, *captureBridge)
 	if err != nil {
@@ -144,23 +139,21 @@ func run() error {
 	if err := os.MkdirAll(root, 0755); err != nil {
 		return err
 	}
-	scenes := []scene{{*appearance, *page, *width, *height}}
+	scenes := []scene{{*appearance, *width, *height}}
 	if *matrix {
 		scenes = nil
 		for _, mode := range []string{"dark", "light"} {
 			for _, width := range []int{840, 360} {
-				for _, page := range []string{"panel", "list"} {
-					scenes = append(scenes, scene{mode, page, width, 560})
-				}
+				scenes = append(scenes, scene{mode, width, 560})
 			}
 		}
 	}
-	fixture, err := desktop.NewCompactPickerFixture(scenes[0].appearance, scenes[0].page)
+	fixture, err := desktop.NewModelPickerFixture(scenes[0].appearance)
 	if err != nil {
 		return err
 	}
 	defer fixture.Close()
-	mygo.App.SetName("Zeron compact picker fixture")
+	mygo.App.SetName("GCode model picker fixture")
 	mygo.App.SetPath(mygo.PathUserData, filepath.Join(root, "native-profile"))
 	mygo.Theme.SetSource(captureSettings.theme(scenes[0].appearance))
 	ctx, cancel := context.WithCancel(context.Background())
@@ -191,12 +184,12 @@ func run() error {
 	return <-done
 }
 
-func captureScenes(ctx context.Context, window *mygo.Window, nativeHandle uintptr, fixture *desktop.CompactPickerFixture, root string, scenes []scene, delay time.Duration, settings captureSettings) error {
+func captureScenes(ctx context.Context, window *mygo.Window, nativeHandle uintptr, fixture *desktop.ModelPickerFixture, root string, scenes []scene, delay time.Duration, settings captureSettings) error {
 	var captures []capture
 	for _, scene := range scenes {
 		changed := make(chan error, 1)
 		window.Update(func() {
-			if err := fixture.SetScene(scene.appearance, scene.page); err != nil {
+			if err := fixture.SetScene(scene.appearance); err != nil {
 				changed <- err
 				return
 			}
@@ -294,12 +287,12 @@ func captureFrame(mode string) string {
 	return "default native frame; PNGs capture client content only"
 }
 
-func settledState(ctx context.Context, window *mygo.Window, fixture *desktop.CompactPickerFixture, scene scene) (desktop.CompactPickerFixtureState, error) {
+func settledState(ctx context.Context, window *mygo.Window, fixture *desktop.ModelPickerFixture, scene scene) (desktop.ModelPickerFixtureState, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	var state desktop.CompactPickerFixtureState
+	var state desktop.ModelPickerFixtureState
 	for {
-		ready := make(chan desktop.CompactPickerFixtureState, 1)
+		ready := make(chan desktop.ModelPickerFixtureState, 1)
 		window.Update(func() { ready <- fixture.State() })
 		select {
 		case state = <-ready:

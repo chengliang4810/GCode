@@ -14,17 +14,11 @@ type thoughtRun struct {
 	style thoughtStyle
 }
 type thoughtLine []thoughtRun
-type thoughtCache struct {
-	text      string
-	live      bool
-	lines     []thoughtLine
-	truncated int
-}
 
 // thoughtLines ports thought_block_lines/wrap_styled_runs from transcript.rs.
 // The official Markdown parser supplies blocks and inline styles; the native
-// RichText widget paints fixed 18px lines, without interactive links or cards.
-func thoughtLines(text string, live bool) ([]thoughtLine, int) {
+// RichText widget uses the detail viewport's font-based line height.
+func thoughtLines(text string, live bool) []thoughtLine {
 	doc := parser.Parse(text)
 	doc.SetStreaming(live)
 	var lines []thoughtLine
@@ -37,18 +31,7 @@ func thoughtLines(text string, live bool) ([]thoughtLine, int) {
 	for len(lines) > 0 && strings.TrimSpace(thoughtPlain(lines[len(lines)-1])) == "" {
 		lines = lines[:len(lines)-1]
 	}
-	truncated := max(len(lines)-activityDetailLines, 0)
-	if truncated > 0 {
-		if live {
-			lines = lines[truncated:]
-			for len(lines) > 0 && strings.TrimSpace(thoughtPlain(lines[0])) == "" {
-				lines = lines[1:]
-			}
-		} else {
-			lines = lines[:activityDetailLines]
-		}
-	}
-	return lines, truncated
+	return lines
 }
 
 func thoughtPlain(line thoughtLine) string {

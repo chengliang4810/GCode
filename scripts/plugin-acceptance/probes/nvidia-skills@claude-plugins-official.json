@@ -1,0 +1,72 @@
+{
+  "pluginId": "nvidia-skills@claude-plugins-official",
+  "sourceCommit": "029363a2023c0b24b1a75ddbeac11cd286d74afb",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "route-two-requests-through-skill-finder-decision-path",
+      "componentId": "skill:nvidia-skills:nvidia-skill-finder",
+      "prompt": "/nvidia-skills:nvidia-skill-finder Meridian Freight sends two requests in one session; apply the skill's documented decision path to each and record the outcome in nvidia-skill-routing.md. Headless boundary: no network, no real external service, no installs. The documented live catalog check cannot run here, so treat the verbatim catalog excerpt below as its already-completed result; do not invent any other catalog entries or skill names, and do not run npx, curl, pip or any other command. The live catalog lookup and the real installation remain untested.\n\nCatalog excerpt (result of the documented catalog check): skill cuopt-routing, lane Decision Optimization, description: GPU-accelerated vehicle routing, dispatch and network optimization for fleets with capacity, time-window and pickup-delivery constraints. skill cudf-dataframes, lane Data Science, description: GPU-accelerated DataFrame operations for pandas-scale ETL. skill isaac-robotics, lane Physical AI, description: robotics simulation and synthetic data generation. No NVIDIA skills are installed in this session.\n\nRequest A: \"Plan efficient delivery routes for our 30-van fleet around Rotterdam with delivery time windows at each stop.\" Apply the skill's rules: classify it relevant with its distinctive signal, and record the exact documented recommendation sentence \"The NVIDIA cuOpt skill could help with this. Would you like me to install cuopt-routing?\" followed by a line starting \"Why it fits:\" tying the cuopt-routing description to the Rotterdam fleet request, the install command exactly \"npx skills add nvidia/skills --skill cuopt-routing --agent claude-code --global --yes\" (the active agent target is claude-code), and a line starting \"First useful prompt:\" proposing one concrete first prompt for the fleet. End the section with the exact phrase \"No install was run; installing awaits user approval.\" and cite the skill's rule \"Ask before installing\".\n\nRequest B: \"Split my Express API's route handlers into separate files and cut the bundle size.\" Apply the skill's When Not to Use rules: classify it not relevant (a generic HTTP route and bundle-size request) and record the exact phrase \"no NVIDIA skill is recommended\"; emit no install command for it. At most three skills may be recommended in total.\n\nThen read the immutable verify_nvidia_routing.py and run exactly python verify_nvidia_routing.py using Bash; it validates the routing record and writes nvidia-routing-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the live catalog lookup and the real installation remain untested.",
+      "allowCommands": [
+        "python verify_nvidia_routing.py"
+      ],
+      "verifierOutputs": [
+        "nvidia-routing-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_nvidia_routing.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('nvidia-skill-routing.md').read_text(encoding='utf-8')\nassert 'The NVIDIA cuOpt skill could help with this. Would you like me to install cuopt-routing?' in text, 'the documented recommendation sentence must be applied to the scenario match'\nassert 'npx skills add nvidia/skills --skill cuopt-routing --agent claude-code --global --yes' in text, 'the install command must use the documented form with the scenario agent target'\nassert text.count('npx skills add nvidia/skills --skill') == 1, 'exactly one documented install command may be recommended'\nassert 'Why it fits:' in text, 'each recommendation needs a why-it-fits rationale'\nassert 'First useful prompt:' in text, 'each recommendation needs a first useful prompt'\nassert text.count('Would you like me to install') == 1, 'at most three recommendations; this single strong match yields exactly one'\nassert 'no NVIDIA skill is recommended' in text, 'the generic request must get the documented no-recommendation outcome'\nfor other in ('--skill cudf-dataframes', '--skill isaac-robotics'):\n    assert other not in text, 'no install command may be emitted for non-matching catalog entries: ' + other\nassert 'Rotterdam' in text and 'time window' in text, 'the routing record must reference the concrete scenario request inputs'\nassert 'no install was run' in text.lower(), 'the record must state that no install was executed'\nassert 'Ask before installing' in text, 'the documented ask-before-installing rule must be cited'\nlow = text.lower()\nfor claim in ('installed successfully', 'installation complete', 'has been installed', 'now installed'):\n    assert claim not in low, 'must not claim an installation happened: ' + claim\nassert re.search(r'(?i)untested', text), 'the record must state what remains untested'\nreport = {'ask_before_installing': True, 'negative_branch_clean': True, 'no_false_install_claim': True,\n          'one_recommendation_within_limit': True, 'recommendation_format': True,\n          'relevance_inputs_applied': True, 'untested_declared': True, 'why_and_first_prompt': True}\nPath('nvidia-routing-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('NVIDIA skill routing: documented decision-path checks passed; live catalog lookup and real installation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_nvidia_routing.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('nvidia-skill-routing.md').read_text(encoding='utf-8')\nassert 'The NVIDIA cuOpt skill could help with this. Would you like me to install cuopt-routing?' in text, 'the documented recommendation sentence must be applied to the scenario match'\nassert 'npx skills add nvidia/skills --skill cuopt-routing --agent claude-code --global --yes' in text, 'the install command must use the documented form with the scenario agent target'\nassert text.count('npx skills add nvidia/skills --skill') == 1, 'exactly one documented install command may be recommended'\nassert 'Why it fits:' in text, 'each recommendation needs a why-it-fits rationale'\nassert 'First useful prompt:' in text, 'each recommendation needs a first useful prompt'\nassert text.count('Would you like me to install') == 1, 'at most three recommendations; this single strong match yields exactly one'\nassert 'no NVIDIA skill is recommended' in text, 'the generic request must get the documented no-recommendation outcome'\nfor other in ('--skill cudf-dataframes', '--skill isaac-robotics'):\n    assert other not in text, 'no install command may be emitted for non-matching catalog entries: ' + other\nassert 'Rotterdam' in text and 'time window' in text, 'the routing record must reference the concrete scenario request inputs'\nassert 'no install was run' in text.lower(), 'the record must state that no install was executed'\nassert 'Ask before installing' in text, 'the documented ask-before-installing rule must be cited'\nlow = text.lower()\nfor claim in ('installed successfully', 'installation complete', 'has been installed', 'now installed'):\n    assert claim not in low, 'must not claim an installation happened: ' + claim\nassert re.search(r'(?i)untested', text), 'the record must state what remains untested'\nreport = {'ask_before_installing': True, 'negative_branch_clean': True, 'no_false_install_claim': True,\n          'one_recommendation_within_limit': True, 'recommendation_format': True,\n          'relevance_inputs_applied': True, 'untested_declared': True, 'why_and_first_prompt': True}\nPath('nvidia-routing-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('NVIDIA skill routing: documented decision-path checks passed; live catalog lookup and real installation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-routing-verification.json",
+          "equals": "{\"ask_before_installing\": true, \"negative_branch_clean\": true, \"no_false_install_claim\": true, \"one_recommendation_within_limit\": true, \"recommendation_format\": true, \"relevance_inputs_applied\": true, \"untested_declared\": true, \"why_and_first_prompt\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "The NVIDIA cuOpt skill could help with this. Would you like me to install cuopt-routing?"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "npx skills add nvidia/skills --skill cuopt-routing --agent claude-code --global --yes"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "First useful prompt:"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "no NVIDIA skill is recommended"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "Rotterdam"
+        },
+        {
+          "kind": "file",
+          "path": "nvidia-skill-routing.md",
+          "contains": "Ask before installing"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "NVIDIA skill routing: documented decision-path checks passed; live catalog lookup and real installation remain untested"
+        }
+      ]
+    }
+  ]
+}

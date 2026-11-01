@@ -310,7 +310,7 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 0, func() {
 			a.footerHeading(c, "Context window")
 			details := footerContextDetails(usage, a.state.Settings.General.Language)
-			ui.Text(c, details).Width(footerTextWidth(c, details, 12, 400)+16).FontSize(12).FixedLineHeight(19).TextColor(a.palette.Muted).Padding(0, 8, 6, 8)
+			ui.Text(c, details).Width(footerTextWidth(c, details, design.TextSize(c, design.TextBase), 400)+16).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(a.palette.Muted).Padding(0, 8, 6, 8)
 		})
 	})
 }
@@ -330,7 +330,7 @@ func (a *App) footerRing(c *ui.Context, label, value string, fraction float64, a
 			paintFooterArc(p, bounds, 1, track)
 			paintFooterArc(p, bounds, max(0, min(1, fraction)), arc)
 		})
-		ui.Text(c, value).Width(footerTextWidth(c, value, 11, 400)).FontSize(11).SingleLine()
+		ui.Text(c, value).Width(footerTextWidth(c, value, design.TextSize(c, design.TextSmall), 400)).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
 	})
 	return button
 }
@@ -355,7 +355,11 @@ func paintFooterArc(p *ui.Painter, bounds ui.Rect, fraction float64, color ui.Co
 
 func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label string, width float32, body func()) {
 	ui.PopoverBase(c, anchor, open, func(panel ui.Element) {
-		panel.Label(tr(c, label)).AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).SnapToWindow(8).Margin(0, 0, 6, 0).Padding(4).Gap(2).Radius(12).Background(a.centralControls().modelPopupPalette().Dialog).Border(1, a.palette.Border).Shadow(0, 10, 30, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 12, -4, ui.RGBA(0, 0, 0, .1))
+		panel.Label(tr(c, label)).AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).SnapToWindow(8).Margin(0, 0, 6, 0).Padding(4).Gap(2).Radius(12)
+		if !a.frosted(c) {
+			panel.Shadow(0, 10, 30, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 12, -4, ui.RGBA(0, 0, 0, .1))
+		}
+		a.floatingSurface(c, panel, 12)
 		if width > 0 {
 			panel.Width(width)
 		}
@@ -364,7 +368,7 @@ func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label 
 }
 
 func (a *App) footerHeading(c *ui.Context, label string) {
-	size := design.UISize(c, 10)
+	size := design.TextSize(c, design.TextXS)
 	ui.Text(c, trackedHeading(tr(c, label))).Padding(6, 8, 4, 8).FontSize(size).FixedLineHeight(a.footerTextHeight(size)).TextColor(a.palette.Muted).FontWeight(500)
 }
 
@@ -412,29 +416,29 @@ func (a *App) footerAccountsCard(c *ui.Context, state *composerUsageState) {
 		c.Key("footer-account:" + account.TargetID + ":" + account.ID)
 		row := ui.ButtonBase(c).FillWidth().Padding(6, 8).Radius(7).Gap(10).AlignItems(ui.Center).Justify(ui.Start).TextColor(a.palette.Text.Alpha(.9)).Label(tr(c, "Use account: ") + footerAccountName(account))
 		if account.InUse || row.Hovered() {
-			row.Background(modelSelectionColor(a.centralControls().modelPopupPalette())).TextColor(a.palette.Text)
+			row.Background(modelSelectionColor(a.centralControls().modelPopupPalette(c))).TextColor(a.palette.Text)
 		}
 		if !account.InUse && account.Switchable {
 			row.OnClick(func() { a.switchFooterAccount(state, account) })
 		}
 		row.Children(func() {
 			ui.Column(c).Grow(1).MinWidth(0).Gap(1).Children(func() {
-				ui.Text(c, footerAccountName(account)).FontSize(12.5).FixedLineHeight(a.footerTextHeight(12.5)).FontWeight(500).SingleLine()
+				ui.Text(c, footerAccountName(account)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).FontWeight(500).SingleLine()
 				if account.Plan != "" || account.InUse || len(account.Usage) == 0 && account.UsageError != "" {
-					ui.Row(c).Wrap().GapX(8).GapY(2).FontSize(design.UISize(c, 12)).FixedLineHeight(design.UISize(c, 16)).Children(func() {
+					ui.Row(c).Wrap().GapX(8).GapY(2).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).Children(func() {
 						if account.Plan != "" {
-							ui.Text(c, account.Plan).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+							ui.Text(c, account.Plan).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 						if account.InUse {
 							if account.Plan != "" {
 								ui.Text(c, "·").TextColor(a.palette.Muted.Alpha(.3))
 							}
-							ui.Text(c, tr(c, "In use")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Accent)
+							ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Accent)
 						} else if len(account.Usage) == 0 && account.UsageError != "" {
 							if account.Plan != "" {
 								ui.Text(c, "·").TextColor(a.palette.Muted.Alpha(.3))
 							}
-							ui.Text(c, account.UsageError).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+							ui.Text(c, account.UsageError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 					})
 				}
@@ -450,7 +454,7 @@ func (a *App) footerAccountsCard(c *ui.Context, state *composerUsageState) {
 		})
 	}
 	if state.errorText != "" {
-		ui.Text(c, state.errorText).Padding(4, 8).FontSize(12).TextColor(a.palette.Danger)
+		ui.Text(c, state.errorText).Padding(4, 8).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
 	}
 }
 
@@ -502,12 +506,12 @@ func (a *App) footerUsageMeter(c *ui.Context, window contracts.UsageWindow) {
 		wash = ui.Hex("#ffffff")
 	}
 	ui.Row(c).Height(16).Gap(8).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, window.Label).Width(52).Shrink(0).SingleLine().FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+		ui.Text(c, window.Label).Width(52).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 		ui.Box(c).Width(88).Height(4).Shrink(0).Radius(2).Background(wash.Alpha(.08)).Clip().Children(func() {
 			if fraction > 0 {
 				ui.Box(c).Width(88 * float32(max(.015, fraction))).Height(4).Radius(2).Background(color.Alpha(alpha))
 			}
 		})
-		ui.Text(c, footerAccountPercent(fraction)).Width(34).Shrink(0).TextAlign(ui.End).FontSize(design.UISize(c, 11.5)).TextColor(textColor)
+		ui.Text(c, footerAccountPercent(fraction)).Width(34).Shrink(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).TextColor(textColor)
 	})
 }

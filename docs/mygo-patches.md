@@ -1,35 +1,59 @@
-# MyGo v0.6.4 固定补丁
+# MyGo v0.7.3 固定补丁
 
-状态：当前代码为 **R17 候选**，上游为 `github.com/egoist/mygo v0.6.4`，本地修订
-`zeron-native-ui.9`，已按审阅后的27项差异接入当前源码。V5相对C4的10项raw不增长
-已实测；历史C4对R16的counter+2,048B、运行时成本和完整原生验收仍未闭环，
-最新封存发布证据仍为 R16。新的`.9` pin、五门槛及canonical四目标候选包构建/校验已通过；原生/发布接受仍待完成。
+2026-10-31：框架自 v0.6.4 整体升级到官方 **v0.7.3**（提交 `6f28d7bb…8016`，
+2026-10-27..29 发布），本地修订号 `rcode-native-ui.20`（第 27 项把文本选区改为自带 span 文本快照，第 28 项展开代码块里的制表符）。原第 5 项独立安装名补丁由上游
+`windows.displayName`/`windows.installDirName` 与 slug 文件命名取代（应用名 GCode 为
+ASCII，上游按 `name` 默认值命名全部产物），原第 15 项 automation 反向移植补丁由上游
+原生 `plugins/automation` 取代，两者删除；v0.6.4 时期工作树里未补丁化的渲染对齐改动
+（LinkWeight、DottedUnderline、`Context.Instant` 等）固化为第 21 项 rendering-parity 补丁。
+升级在 v0.7.3 原版上按序重放全部补丁：`ui`、`ui/richtext`、`internal/...` 与根包测试通过
+（上游 `cmd/mygo TestLanguagePackaging` 在本机原版同样失败，属环境性问题，与补丁无关）；
+应用 `go build`、`-tags e2e`、`go tool mygo vet`、设置组件回归通过。
+真机 desktop-e2e（官方 automation 插件）跑通设置、排版、transcript 链接、折叠动效、
+prompt picker 等场景；`TestDesktopLocalPromptReferences` 与 `TestDesktopLocalTranscriptActivity`
+失败，但用升级前框架（重放树指纹 `03a2c5d1…`）构建的应用 A/B 复测同样失败，
+属未提交的 composer/transcript 功能自身问题，与本次升级无关。
+原生窗口与视觉验收仍未运行，待后续单独验收。状态：上游为 `github.com/egoist/mygo v0.7.3`。
 `go.mod` 只允许该模块替换到 `./third_party/mygo`。
 完整框架源码约 17 MB，保留上游 LICENSE、go.mod、go.sum、API 生成器、构建工具、
 平台资源和测试；没有修改全局 Go 模块缓存。
 
-按顺序应用的补丁：
+按顺序应用的补丁（28 个条目；11–13、21–23 为 v0.7.3 适配中产生的修正条目）：
 
-1. [`mygo-v0.6.4-motion.patch`](../patches/mygo-v0.6.4-motion.patch)：窗口级动效与滚轮缓动偏好。
-2. [`mygo-v0.6.4-hover.patch`](../patches/mygo-v0.6.4-hover.patch)：原生 hover 回调及构建来源标识。
-3. [`mygo-v0.6.4-files-drop.patch`](../patches/mygo-v0.6.4-files-drop.patch)：原生文件拖放事件回调。
-4. [`mygo-v0.6.4-markdown-line-height.patch`](../patches/mygo-v0.6.4-markdown-line-height.patch)：Markdown 可选 DIP 精确行高。
-5. [`mygo-v0.6.4-coexistence.patch`](../patches/mygo-v0.6.4-coexistence.patch)：独立的 Windows 安装名与 macOS 包文件名。
-6. [`mygo-v0.6.4-input-display-text.patch`](../patches/mygo-v0.6.4-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
-7. [`mygo-v0.6.4-snap-to-window.patch`](../patches/mygo-v0.6.4-snap-to-window.patch)：可选按本轮实际margin box贴窗，不自动翻转。
-8. [`mygo-v0.6.4-placeholder-color.patch`](../patches/mygo-v0.6.4-placeholder-color.patch)：当前原生输入框的可选占位色。
-9. [`mygo-v0.6.4-caret-width.patch`](../patches/mygo-v0.6.4-caret-width.patch)：当前原生输入框的可选DIP caret宽度及`.4`标记。
-10. [`mygo-v0.6.4-windows-uia-provider.patch`](../patches/mygo-v0.6.4-windows-uia-provider.patch)：Windows UIA服务端provider声明、Bounds文档及`.5`标记。
-11. [`mygo-v0.6.4-scrollbars.patch`](../patches/mygo-v0.6.4-scrollbars.patch)：当前滚动容器的indicator/命中开关、最终提交后拖动取消与`.6`标记。
-12. [`mygo-v0.6.4-tooltip-primitives.patch`](../patches/mygo-v0.6.4-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属；R17 候选，见 [当前审计](audit-tabstrip-tooltip-primitives.md)。
-13. [`mygo-v0.6.4-package-stage-rename.patch`](../patches/mygo-v0.6.4-package-stage-rename.patch)：Windows build/dev 共用 `replacePath` 的最终提交在 error5/32 时有限重试，最多10次、900ms计划等待；不改变旧目标备份及原有 best-effort rollback。
-14. [`mygo-v0.6.4-windows-glyph-placement.patch`](../patches/mygo-v0.6.4-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与内部Windows ClearType quarter定位；默认及不支持路径回native，采用V5三态cache mode及`.9`来源标记。
+1. [`mygo-v0.7.3-01-motion.patch`](../patches/mygo-v0.7.3-01-motion.patch)：窗口级动效与滚轮缓动偏好。
+2. [`mygo-v0.7.3-02-hover.patch`](../patches/mygo-v0.7.3-02-hover.patch)：原生 hover 回调及构建来源标识；并集合并 v0.7.3 字段清单与 `hoverFn`。
+3. [`mygo-v0.7.3-03-files-drop.patch`](../patches/mygo-v0.7.3-03-files-drop.patch)：原生文件拖放事件回调；字段清单并集含 `filesDropFn`。
+4. [`mygo-v0.7.3-04-markdown-line-height.patch`](../patches/mygo-v0.7.3-04-markdown-line-height.patch)：Markdown 可选 DIP 精确行高（与上游 `ShapeText` 行高并存）。
+5. [`mygo-v0.7.3-05-snap-to-window.patch`](../patches/mygo-v0.7.3-05-snap-to-window.patch)：可选按本轮实际 margin box 贴窗，不自动翻转。
+6. [`mygo-v0.7.3-06-placeholder-color.patch`](../patches/mygo-v0.7.3-06-placeholder-color.patch)：当前原生输入框的可选占位色。
+7. [`mygo-v0.7.3-07-input-display-text.patch`](../patches/mygo-v0.7.3-07-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
+8. [`mygo-v0.7.3-08-caret-width.patch`](../patches/mygo-v0.7.3-08-caret-width.patch)：可选 DIP caret 宽度；`api_gen` 与上游 `Element.Cache` 相邻插入缝合。
+9. [`mygo-v0.7.3-09-windows-uia-provider.patch`](../patches/mygo-v0.7.3-09-windows-uia-provider.patch)：Windows UIA 服务端 provider；保留上游重写的树更新测试并附加 COM 契约测试。
+10. [`mygo-v0.7.3-10-scrollbars.patch`](../patches/mygo-v0.7.3-10-scrollbars.patch)：滚动容器 indicator/命中开关与拖动取消；字段清单并集。
+11. [`mygo-v0.7.3-11-notification-context.patch`](../patches/mygo-v0.7.3-11-notification-context.patch)：`Notification.ShowContext` 取消权限等待，退出不遗留协程。
+12. [`mygo-v0.7.3-12-richtext-composer.patch`](../patches/mygo-v0.7.3-12-richtext-composer.patch)：原生富文本键盘/粘贴回调、IME 与内容测量快照、固定行高；与上游段落缩进/两端对齐并集（`FixedLineHeight` + `Justify`/`Indent`），保留 `UseJustify`。
+13. [`mygo-v0.7.3-13-richtext-usejustify.patch`](../patches/mygo-v0.7.3-13-richtext-usejustify.patch)：保留上游 `text.Shared().UseJustify()` 调用。
+14. [`mygo-v0.7.3-14-updater-availability.patch`](../patches/mygo-v0.7.3-14-updater-availability.patch)：只读 `AvailableVersion()`，沿用 `OnChange` 主线程通知。
+15. [`mygo-v0.7.3-15-markdown-anchor.patch`](../patches/mygo-v0.7.3-15-markdown-anchor.patch)：`markdown.Options.Anchor` 标题定位与重复跳转；正文 `#heading` 链接优先由 Markdown 导航。
+16. [`mygo-v0.7.3-16-inline-link-selection.patch`](../patches/mygo-v0.7.3-16-inline-link-selection.patch)：正文 `RoleLink` 越过拖拽阈值后手势交回段落；不触发打开。
+17. [`mygo-v0.7.3-17-collapsible-animation.patch`](../patches/mygo-v0.7.3-17-collapsible-animation.patch)：`ui.CollapsibleBaseWithAnimation`，默认仍 200ms，可设 140ms 独立曲线。
+18. [`mygo-v0.7.3-18-webview-data-directory.patch`](../patches/mygo-v0.7.3-18-webview-data-directory.patch)：`Application.SetWebViewDataDirectory`（Windows WebView2 目录）；移植到 v0.7.3 的 `app.go`/Windows 后端（`startEnvironment` 重写）。
+19. [`mygo-v0.7.3-19-package-stage-rename.patch`](../patches/mygo-v0.7.3-19-package-stage-rename.patch)：Windows build/dev 共用 `replacePath` 在 error5/32 时有限重试。
+20. [`mygo-v0.7.3-20-windows-glyph-placement.patch`](../patches/mygo-v0.7.3-20-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与 ClearType quarter 定位；`paint.go` 与上游 `objectFn` 分支缝合。
+21. [`mygo-v0.7.3-21-rendering-parity.patch`](../patches/mygo-v0.7.3-21-rendering-parity.patch)：固化 v0.6.4 末工作树未补丁化的渲染对齐改动（`LinkWeight`、DottedUnderline、`Context.Instant`、`DeviceScale` 等）。
+22. [`mygo-v0.7.3-22-tooltip-primitives.patch`](../patches/mygo-v0.7.3-22-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属；`api_gen`/`layout.go` 手工移植（补 12 的漏排），并修复第 8 项缝合残留。
+23. [`mygo-v0.7.3-23-layoutcache-union-spacing.patch`](../patches/mygo-v0.7.3-23-layoutcache-union-spacing.patch)：修复字段清单并集合并丢失的行尾空格。
+24. [`mygo-v0.7.3-24-textclient-a11y-guard.patch`](../patches/mygo-v0.7.3-24-textclient-a11y-guard.patch)：`textClient` 的 a11y SetValue/编辑派发仅对无 editor 的自定义文本客户端生效；上游 `TestReadOnlyInput` 通过，富文本客户端行为保留。
+25. [`mygo-v0.7.3-25-uia-benchmark-close.patch`](../patches/mygo-v0.7.3-25-uia-benchmark-close.patch)：补齐 UIA benchmark 合并后的函数收尾。
+26. [`mygo-v0.7.3-26-patch-identity-final.patch`](../patches/mygo-v0.7.3-26-patch-identity-final.patch)：固定 `v0.7.3` + `rcode-native-ui.18` 身份。
+27. [`mygo-v0.7.3-27-selection-spans.patch`](../patches/mygo-v0.7.3-27-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制；身份升为 `rcode-native-ui.19`。
+28. [`mygo-v0.7.3-28-code-block-tabs.patch`](../patches/mygo-v0.7.3-28-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。身份升为 `rcode-native-ui.20`。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前`.9`的 1,864 个文件的
-SHA-256 树指纹为 `27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。
-首13个补丁的字节及顺序不变；第14补丁SHA-256为
-`8a463bc728654abeb1ae3461687a5d8512a69e77f45284640aec5fc0b097a893`。
-历史C4 `.8`仍为1,847文件/13补丁/a8088f65…178a，原包和验证范围保留。
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.20` 的
+2,034 个文件的 SHA-256 树指纹为
+`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`。
+补丁按上述顺序在 v0.7.3 原版上重放得到与锁定树逐字节一致的结果；
+各补丁的 SHA-256 以源码锁与 `scripts/frameworkpin/pin.go` 的 `patchChain` 为准。
 树指纹按 UTF-8 相对路径的字节序排序，再对每个 `路径 + NUL + 文件 SHA-256 十六进制 + LF`
 记录做 SHA-256。`.gitattributes` 禁止框架文件换行转换，确保跨平台字节一致。
 
@@ -96,7 +120,7 @@ API-only原补丁8d0bc626…另存该目录，正式第10补丁5372a13a…追加
 
 ## 原因与应用侧边界
 
-检查对象为固定的 `github.com/egoist/mygo v0.6.4`，Go `1.27.3`。
+检查对象为固定的 `github.com/egoist/mygo v0.7.3`，Go `1.27.3`。
 
 - `ui/context.go` 的 `DisableAnimations` 只设置当前构建帧的 `instantFrame`。
   它使朝目标运动的数值与布局立即完成，不覆盖系统 `ReduceMotion`，也不停止独立时间线。
@@ -231,38 +255,20 @@ Composer 用该快照测量 compact 容量及换行；原生 `TextAreaBase` 自�
 当同一 key 从输入控件换成普通或可选择文本时，即使复用了含旧 editor 的 state，
 读 API 也会检查当前 editable 标志，返回空字符串，不暴露上一个控件的草稿。
 应用层回归另覆盖预编辑期间不发送已有草稿，以及展开/折叠时保留原生输入身份。
-第六补丁只涉及该读 API、测试、生成结果和本地修订标记；上游仍是 v0.6.4。
+该读 API 补丁只涉及读 API、测试、生成结果和本地修订标记；上游为 v0.7.3。
 
 ## 安装共存与打包名称
 
-`zeron-native-ui.2` 在构建配置中新增两个可选字段；省略时保留上游默认命名。
+v0.6.4 时期的 `zeron-native-ui.2` 曾在构建配置中新增 `windows.installName` 与
+`macos.bundleName`。v0.7.3 已用上游 `windows.displayName`/`windows.installDirName`
+与 slug 文件命名取代，第 5 项独立安装名补丁已删除。当前应用命名完全跟随
+`mygo.json` 的 `name`（GCode）：Windows 安装目录为
+`%LOCALAPPDATA%\Programs\GCode`，可执行文件为 `GCode.exe`；macOS 包为
+`GCode.app`，内部 `Contents/MacOS/GCode`；bundle identifier 为 `dev.gcode.rcode`。
+`scripts/distribution` 校验这些身份，构建脚本先运行该检查。
 
-```json
-{
-  "name": "Zeron",
-  "identifier": "dev.gcode.zeronui",
-  "windows": { "installName": "Zeron Native UI" },
-  "macos": { "bundleName": "Zeron Native UI" }
-}
-```
-
-- `windows.installName` 只改变 NSIS 安装目录、开始菜单/桌面快捷方式文件名和卸载显示名。
-  当前目录为 `%LOCALAPPDATA%\Programs\Zeron Native UI`，快捷方式为 `Zeron Native UI.lnk`。
-  安装器仍将 `Zeron.exe` 作为启动目标，应用界面名和程序名保持 Zeron。
-- `macos.bundleName` 是省略 `.app` 扩展名的文件名 stem。当前产物为 `Zeron Native UI.app`，
-  内部仍使用 `Contents/MacOS/Zeron`，`CFBundleName`、`CFBundleDisplayName` 与
-  `CFBundleExecutable` 均为 Zeron；bundle identifier 为 `dev.gcode.zeronui`。
-  DMG 目标路径读取实际包名，开发构建的 executable 路径也不再从 `.app` 名字推导。
-- Darwin 开发构建 fingerprint 包含最终 `.app` 文件名；只改 `macos.bundleName` 也会重建包，
-  不会被 unchanged 检查跳过。显式写出默认名与省略字段具有相同 fingerprint。
-
-纯测试保留一份原版 `Zeron.app` 哨兵并生成独立包，核对原版目录未改动及内部身份一致；
-Windows 测试实际编译 NSIS 脚本，核对创建/删除快捷方式、安装目录、卸载标识及启动路径。
-测试不启动或安装应用。`scripts/distribution` 额外拒绝与原版同名的本项目配置，验证真实
-`Info.plist`，并拒绝把旧 `Zeron.app` 混入新输出目录。构建脚本先运行此配置检查。
-
-所有采用本修订之前的安装包及 ZIP 均须重新构建，不能作为可共存的最终交付物。
-原生安装、与原版并存启动、快捷方式和卸载的实际行为仍待 Windows/macOS 实机验收。
+历史 RCode 安装包及 ZIP 保留原身份，但不能作为当前交付物。原生安装、与原版并存
+启动、快捷方式和卸载的实际行为仍待 Windows/macOS 实机验收。
 
 本次在 `build/coexist-qa-r2` 全新生成 Windows amd64、macOS amd64、arm64 和 Universal
 检查包。四个目标均通过程序/终端库架构、框架标记、独立包路径、Info.plist 和许可资源校验；
@@ -281,7 +287,7 @@ Motion 补丁先在独立临时源码副本验证，再固定到仓库。检查�
 go generate ./ui
 go test ./ui -run 'Test(ApplicationMotionPreferences|ApplicationSmoothScrolling|ApplicationReducedMotion|MotionPreferencesPublic|Wheel|DisableAnimations)' -count=1
 go test ./ui
-git apply --reverse --check <checkout>/patches/mygo-v0.6.4-motion.patch
+git apply --reverse --check <checkout>/patches/mygo-v0.7.3-01-motion.patch
 ```
 
 以上 Motion 检查通过，完整 UI 测试运行约 35.6 秒。
@@ -289,24 +295,38 @@ git apply --reverse --check <checkout>/patches/mygo-v0.6.4-motion.patch
 项目 `go test ./...`、`go vet ./...` 通过。打包结果在本次交付说明中单独记录。
 
 重新构造源码副本时，应从校验和为
-`h1:VzCqZKgvXcym5cSYKoC6IkTgcVeGZquPiui/a3oE36o=` 的 v0.6.4 Go 模块归档解压，
-按顺序应用当前十四个补丁，并执行：
+`h1:Jch8vV8ZzlHHr6hABg+aOx9nFbdjZ2oD/abY5Cf5/0I=` 的 v0.7.3 Go 模块归档解压，
+按顺序应用当前二十八个补丁，并执行：
 
 ```text
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-motion.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-hover.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-files-drop.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-markdown-line-height.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-coexistence.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-input-display-text.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-snap-to-window.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-placeholder-color.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-caret-width.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-windows-uia-provider.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-scrollbars.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-tooltip-primitives.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-package-stage-rename.patch
-git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.6.4-windows-glyph-placement.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-01-motion.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-02-hover.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-03-files-drop.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-04-markdown-line-height.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-05-snap-to-window.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-06-placeholder-color.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-07-input-display-text.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-08-caret-width.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-09-windows-uia-provider.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-10-scrollbars.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-11-notification-context.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-12-richtext-composer.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-13-richtext-usejustify.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-14-updater-availability.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-15-markdown-anchor.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-16-inline-link-selection.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-17-collapsible-animation.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-18-webview-data-directory.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-19-package-stage-rename.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-20-windows-glyph-placement.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-21-rendering-parity.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-22-tooltip-primitives.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-23-layoutcache-union-spacing.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-24-textclient-a11y-guard.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-25-uia-benchmark-close.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-26-patch-identity-final.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-27-selection-spans.patch
+git -c core.autocrlf=false apply <checkout>/patches/mygo-v0.7.3-28-code-block-tabs.patch
 go generate ./ui
 go test ./ui ./ui/markdown
 ```
@@ -322,16 +342,16 @@ go run ./scripts/check-framework.go
 go test ./scripts/frameworkpin
 ```
 
-`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、十四个补丁哈希和完整源码树哈希。
+`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、二十八个补丁哈希和完整源码树哈希。
 它核对 Go 实际选中的模块，拒绝其他 replace 目录、版本、未替换上游、符号链接及源码增删改。
 有意修改框架必须更新补丁、修订、锁文件和校验器中的固定值，作为新的可审查变更。
 
 Windows 与 macOS 构建脚本先执行上述校验，设置 `GOWORK=off`，再通过 `MYGO_LDFLAGS`
 写入 `github.com/egoist/mygo.sourcePatchRevision`、`sourcePatchSHA256` 与 `sourcePatchIdentity`。
-`verify-package.go` 逐个架构读取 Go build info，要求 Go `1.27.3`、上游 MyGo `v0.6.4`、
+`verify-package.go` 逐个架构读取 Go build info，要求 Go `1.27.3`、上游 MyGo `v0.7.3`、
 精确的本地 replace（本地替换版本为 `(devel)`）和不重复的完整修订/指纹标记。
 Go 的 `-trimpath` 产物省略 build settings 中的 `-ldflags`，因此校验器还逐个 PE/Mach-O slice
-核对保留在框架初始化变量中的唯一 `ZERON_MYGO_PATCH[...]` 标记；不靠可缺省的命令行元数据。
+核对保留在框架初始化变量中的唯一 `RCODE_MYGO_PATCH[...]` 标记；不靠可缺省的命令行元数据。
 若 build settings 保留了 linker flags，则也要求标记参数值完整匹配且无重复覆盖。
 其他 replace 或未标记的旧产物不能通过。
 发布 manifest 同时记录源码锁、补丁哈希、修订和各文件/归档哈希。

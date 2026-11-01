@@ -33,7 +33,7 @@ func extendTranscriptScene(snapshot *contracts.Snapshot, opts Options) {
 	ensureAgentFile(snapshot, "fieldnotes", "testdata/schema.json", content)
 	mergeAgentChange(snapshot, *write.Tool.Diff)
 	started := opts.Now().UTC().Add(-time.Minute)
-	snapshot.Sessions = append(snapshot.Sessions, contracts.Session{ID: "showcase-agent", ParentSessionID: "chat-0", SideChat: true, Title: "Review the schema fixture", ProjectID: "fieldnotes", DeviceID: "local", ModelID: "claude-sonnet-4-6", ReasoningLevel: "High", AccessMode: contracts.AccessFullAccess, Status: contracts.Idle, CreatedAt: started, UpdatedAt: started.Add(time.Second), LastOutcome: "completed"})
+	snapshot.Sessions = append(snapshot.Sessions, contracts.Session{ID: "showcase-agent", ParentSessionID: "chat-0", SideChat: true, Title: "Review the schema fixture", ProjectID: "fieldnotes", DeviceID: "local", ModelID: "claude-sonnet-4-6", ReasoningLevel: "High", Status: contracts.Idle, CreatedAt: started, UpdatedAt: started.Add(time.Second), LastOutcome: "completed"})
 	snapshot.Messages["showcase-agent"] = []contracts.Message{{ID: "showcase-agent-user", SessionID: "showcase-agent", TurnID: "showcase-agent-turn", Role: "user", CreatedAt: started, Blocks: []contracts.Block{{ID: "showcase-agent-prompt", Kind: "text", Text: "Check schemaVersion and entries in the fixture."}}}, {ID: "showcase-agent-reply", SessionID: "showcase-agent", TurnID: "showcase-agent-turn", Role: "assistant", CreatedAt: started.Add(time.Second), DurationMS: 1000, Blocks: []contracts.Block{{ID: "showcase-agent-result", Kind: "text", Text: "The fixture uses schemaVersion 1 and an empty entries array. The required fields are present."}}}}
 }
 
@@ -78,7 +78,7 @@ func reconcileAgentTurns(snapshot *contracts.Snapshot, opts Options) {
 		for _, turnID := range order {
 			group := groups[turnID]
 			index, exists := indices[turnID]
-			run := contracts.Run{ID: turnID, SessionID: sid, AccessMode: contracts.AccessFullAccess, Status: "completed", FinishReason: "stop", StartedAt: group[0].CreatedAt}
+			run := contracts.Run{ID: turnID, SessionID: sid, Status: "completed", FinishReason: "stop", StartedAt: group[0].CreatedAt}
 			if exists {
 				run = snapshot.Runs[index]
 			}

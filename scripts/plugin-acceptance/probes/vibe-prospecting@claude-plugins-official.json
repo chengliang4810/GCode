@@ -1,0 +1,232 @@
+{
+  "pluginId": "vibe-prospecting@claude-plugins-official",
+  "sourceCommit": "ca43f6d92395462d8915dc31364bbce6a83e4006",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-full-prospecting-workflow-nordwind",
+      "componentId": "skill:vpai:vibe-prospecting",
+      "prompt": "/vpai:vibe-prospecting Plan the complete documented prospecting workflow for this concrete request without executing any real call: for project nordwind, find up to 120 operating SaaS companies headquartered in Germany with 50-249 employees that recently announced a funding event, then find finance leaders at those companies with the title CFO. Headless boundary: no network, no vpai CLI, no MCP tools, no real Explorium data access and no installs; every live data step stays untested. The runtime host here is Claude Code, so per the skill detection rules read the claude-code.md platform guide for CLI workflow details; that guide file is not present in this sandbox, so record the detection decision and continue from the main skill rules. Write nordwind-prospecting-plan.md covering, in order: (1) pre-call rules: read the live input schema of each tool before its first real execution, and put tool_reasoning on every real call; (2) autocomplete-first fields for this workflow: naics_category and job_title must be resolved through autocomplete with canonical clean values, and state that linkedin_category stays unused because naics_category and linkedin_category are mutually exclusive; (3) location and size: company_country_code uses the ISO Alpha-2 value DE with the documented rule that location filters match headquarters only, and company_size has no exact numeric cutoff, so approximate the 50-249 band with buckets confirmed from the fetch-entities input schema; (4) funding events: chain fetch-businesses-events from the business step using session_id copied exactly from prior tool JSON, never invented, source IDs from csv_path via --csv-path, pass event_types and timestamp_from, and batch at most 20 IDs per request; (5) prospects: fetch prospects scoped to the prior companies via --businesses-csv-path, combine the job_title substring CFO with job_level c-suite, and note max_per_company is auto-applied; (6) scaling: 120 prospects exceed the 50 IDs per call limit, so plan multiple enrich-prospects calls; (7) session chaining: omit session_id on the first step, copy it exactly from prior tool JSON afterwards, pass --csv-path between steps, and keep the business_id or prospect_id column when editing CSVs between steps. End the file with exactly this line: No real prospecting call was executed in this headless run; schema discovery, autocomplete, live fetch, events and enrichment remain untested. Then read the immutable verify_vp_plan.py and run exactly python verify_vp_plan.py using Bash; it validates the plan and writes vp-plan-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that live data access, autocomplete and session chaining remain untested.",
+      "allowCommands": [
+        "python verify_vp_plan.py"
+      ],
+      "verifierOutputs": [
+        "vp-plan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_vp_plan.py",
+          "text": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'chaining_rules': True, 'events_params': True, 'honesty_boundary': True, 'input_scenario': True, 'mutual_exclusion': True, 'no_invented_session': True, 'preflight_rules': True}\n\nplan = Path('nordwind-prospecting-plan.md').read_text(encoding='utf-8')\nfor anchor in ('nordwind', '50-249', '120', 'tool_reasoning', 'naics_category',\n               'linkedin_category stays unused', 'job_title', 'company_country_code',\n               'headquarters only', 'fetch-businesses-events', 'event_types',\n               'timestamp_from', '--businesses-csv-path', '--csv-path', 'c-suite',\n               'max_per_company', 'enrich-prospects', 'csv_path', 'session_id',\n               'business_id'):\n    assert anchor in plan, 'missing documented anchor: ' + anchor\nhonesty = ('No real prospecting call was executed in this headless run; schema discovery, '\n           'autocomplete, live fetch, events and enrichment remain untested.')\nlines = [l.strip() for l in plan.splitlines() if l.strip()]\nassert lines and lines[-1] == honesty, 'the plan must end with the exact honesty line'\nassert not re.search(r\"session_id['\\\"]?\\s*[:=]\\s*['\\\"]?[A-Za-z0-9]{8,}\", plan), \\\n    'a fabricated session_id value appears in the plan'\n\nPath('vp-plan-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Vibe prospecting plan: documented chaining and event rules verified; live data access remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_vp_plan.py",
+          "equals": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'chaining_rules': True, 'events_params': True, 'honesty_boundary': True, 'input_scenario': True, 'mutual_exclusion': True, 'no_invented_session': True, 'preflight_rules': True}\n\nplan = Path('nordwind-prospecting-plan.md').read_text(encoding='utf-8')\nfor anchor in ('nordwind', '50-249', '120', 'tool_reasoning', 'naics_category',\n               'linkedin_category stays unused', 'job_title', 'company_country_code',\n               'headquarters only', 'fetch-businesses-events', 'event_types',\n               'timestamp_from', '--businesses-csv-path', '--csv-path', 'c-suite',\n               'max_per_company', 'enrich-prospects', 'csv_path', 'session_id',\n               'business_id'):\n    assert anchor in plan, 'missing documented anchor: ' + anchor\nhonesty = ('No real prospecting call was executed in this headless run; schema discovery, '\n           'autocomplete, live fetch, events and enrichment remain untested.')\nlines = [l.strip() for l in plan.splitlines() if l.strip()]\nassert lines and lines[-1] == honesty, 'the plan must end with the exact honesty line'\nassert not re.search(r\"session_id['\\\"]?\\s*[:=]\\s*['\\\"]?[A-Za-z0-9]{8,}\", plan), \\\n    'a fabricated session_id value appears in the plan'\n\nPath('vp-plan-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Vibe prospecting plan: documented chaining and event rules verified; live data access remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "vp-plan-verification.json",
+          "equals": "{\"chaining_rules\": true, \"events_params\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"mutual_exclusion\": true, \"no_invented_session\": true, \"preflight_rules\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "nordwind"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "50-249"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "120"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "tool_reasoning"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "naics_category"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "linkedin_category stays unused"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "job_title"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "company_country_code"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "headquarters only"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "fetch-businesses-events"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "event_types"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "timestamp_from"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "--businesses-csv-path"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "--csv-path"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "c-suite"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "max_per_company"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "enrich-prospects"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "csv_path"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "session_id"
+        },
+        {
+          "kind": "file",
+          "path": "nordwind-prospecting-plan.md",
+          "contains": "business_id"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Vibe prospecting plan: documented chaining and event rules verified; live data access remains untested"
+        }
+      ]
+    },
+    {
+      "id": "skip-sample-fullscale-runbook",
+      "componentId": "command:vpai:skip_sample",
+      "prompt": "/vpai:skip_sample full-scale fetch of every SaaS company headquartered in Sweden with 200 or more employees, exported as sweden-saas-200plus.csv. Treat the request above as the argument to this command. Headless boundary: no network, no vpai CLI, no MCP connector, no real Explorium access and no installs; the full-scale fetch and its CSV output stay untested. Per this command: first load the normal Vibe Prospecting skill, detect the host, and follow the matching CLI platform guide for install, auth, schema discovery, autocomplete, chaining and export rules; then apply the Sample Gate override for this turn only. Write sweden-fullscale-runbook.md that records: (1) that the 5-entity sample preview is skipped and no approval wait happens before full scale, because this turn invoked the skip command; (2) that the complete workflow runs at the requested scale immediately for every SaaS company headquartered in Sweden with 200 or more employees, using company_country_code SE and company_size buckets confirmed from the fetch-entities input schema, noting location filters match headquarters only; (3) that the override does not persist, and later messages without an explicit skip return to sample-first mode; (4) that after the full-scale run the csv_path is copied into the working directory as sweden-saas-200plus.csv. End the file with exactly this line: No fetch or enrich call was executed in this headless run; the full-scale fetch and its CSV export remain untested. Then read the immutable verify_vp_skip_sample.py and run exactly python verify_vp_skip_sample.py using Bash; it validates the runbook and writes vp-skip-sample-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the real full-scale fetch and CSV export remain untested.",
+      "allowCommands": [
+        "python verify_vp_skip_sample.py"
+      ],
+      "verifierOutputs": [
+        "vp-skip-sample-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_vp_skip_sample.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'fullscale_override': True, 'honesty_boundary': True, 'input_scenario': True, 'non_persistence': True, 'output_csv_named': True, 'size_and_location': True}\n\nrunbook = Path('sweden-fullscale-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('Sample Gate', '5-entity sample preview', 'return to sample-first mode',\n               'sweden-saas-200plus.csv', 'company_country_code', 'SE', 'company_size',\n               'fetch-entities', 'headquarters only', 'csv_path',\n               'No fetch or enrich call was executed in this headless run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nassert 'sample preview is skipped' in runbook or '5-entity sample preview is skipped' in runbook, \\\n    'the runbook must record that the sample preview is skipped'\n\nPath('vp-skip-sample-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Skip-sample runbook: full-scale override recorded; the real fetch and CSV export remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_vp_skip_sample.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'fullscale_override': True, 'honesty_boundary': True, 'input_scenario': True, 'non_persistence': True, 'output_csv_named': True, 'size_and_location': True}\n\nrunbook = Path('sweden-fullscale-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('Sample Gate', '5-entity sample preview', 'return to sample-first mode',\n               'sweden-saas-200plus.csv', 'company_country_code', 'SE', 'company_size',\n               'fetch-entities', 'headquarters only', 'csv_path',\n               'No fetch or enrich call was executed in this headless run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nassert 'sample preview is skipped' in runbook or '5-entity sample preview is skipped' in runbook, \\\n    'the runbook must record that the sample preview is skipped'\n\nPath('vp-skip-sample-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Skip-sample runbook: full-scale override recorded; the real fetch and CSV export remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "vp-skip-sample-verification.json",
+          "equals": "{\"fullscale_override\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"non_persistence\": true, \"output_csv_named\": true, \"size_and_location\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "Sample Gate"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "5-entity sample preview is skipped"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "return to sample-first mode"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "sweden-saas-200plus.csv"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "company_country_code"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "SE"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "company_size"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "fetch-entities"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "headquarters only"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "csv_path"
+        },
+        {
+          "kind": "file",
+          "path": "sweden-fullscale-runbook.md",
+          "contains": "No fetch or enrich call was executed in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Skip-sample runbook: full-scale override recorded; the real fetch and CSV export remain untested"
+        }
+      ]
+    }
+  ]
+}

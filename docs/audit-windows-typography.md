@@ -58,14 +58,15 @@ python output/font-metrics-audit/directwrite_probe.py
 python output/font-metrics-audit/directwrite_features_probe.py
 go run output/font-metrics-audit/_source/mygo-measure.go
 
-$env:ZERON_MODEL_FONT_FEATURES = 'kern=0'
-$env:ZERON_MODEL_FONT_LINE_HEIGHT = ''
-$env:ZERON_MODEL_SURFACE_EVIDENCE = 'D:/projects/GCode/output/font-metrics-audit/popup-kern0'
+$env:RCODE_MODEL_SURFACE_EVIDENCE = 'D:/projects/GCode/output/font-metrics-audit/popup-kern0'
 go test -overlay output/font-metrics-audit/overlay.json ./internal/desktop -run TestModelPopupSourceGeometryAndMaterial -count=1
 go list ./...
 ```
 
-默认实验需清空 `ZERON_MODEL_FONT_FEATURES`；21px 实验另设 `ZERON_MODEL_FONT_LINE_HEIGHT=21`，各写入独立目录。72 组 MyGo 测量、144 组 COM 测量和 1,560 次特性探针都是 Windows DirectWrite 的可复跑证据，不能代替原生截图、键盘/辅助功能、其他平台或真实 provider 验收。
+当时的字体特性实验开关已移除；当前可复跑的模型几何证据使用
+`RCODE_MODEL_SURFACE_EVIDENCE` 写入独立目录。72 组 MyGo 测量、144 组 COM 测量和
+1,560 次特性探针都是 Windows DirectWrite 的可复跑证据，不能代替原生截图、
+键盘/辅助功能、其他平台或真实 provider 验收。
 
 ## 后续：公开 inspector 导出的实际文字子盒
 

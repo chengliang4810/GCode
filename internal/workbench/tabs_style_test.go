@@ -16,9 +16,9 @@ func TestTabStripChipWashKeepsSourceFloatAndBackdrop(t *testing.T) {
 				for _, base := range []ui.Color{ui.RGB(13, 13, 13), ui.RGB(70, 80, 90), ui.Transparent} {
 					t.Run(fmt.Sprintf("dark%t-glass%t-scale%g-base%v", dark, glass, scale, base), func(t *testing.T) {
 						s, _, snapshot := testWorkspace(t)
-						snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "zeron-light"
+						snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "rcode-light"
 						if dark {
-							snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "zeron-dark"
+							snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "rcode-dark"
 						}
 						snapshot.Settings.Appearance.Surface = "opaque"
 						if glass {
@@ -68,9 +68,9 @@ func TestTabStripGenericGlyphOpacityAndForeground(t *testing.T) {
 		for _, scale := range []float32{1, 2} {
 			t.Run(fmt.Sprintf("dark%t-scale%g", dark, scale), func(t *testing.T) {
 				s, _, snapshot := testWorkspace(t)
-				snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "zeron-light"
+				snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "rcode-light"
 				if dark {
-					snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "zeron-dark"
+					snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "rcode-dark"
 				}
 				s.Update(snapshot)
 				s.choose("history", "first", "Selected")

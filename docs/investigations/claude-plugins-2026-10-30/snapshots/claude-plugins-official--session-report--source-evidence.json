@@ -1,0 +1,16 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/session-report",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    "LICENSE",
+    "skills/session-report/SKILL.md",
+    "skills/session-report/analyze-sessions.mjs",
+    "skills/session-report/template.html"
+  ],
+  "config": {},
+  "markdown_frontmatter": {
+    "skills/session-report/SKILL.md": "\nname: session-report\ndescription: Generate an explorable HTML report of Claude Code session usage (tokens, cache, subagents, skills, expensive prompts) from ~/.claude/projects transcripts.\n"
+  }
+}

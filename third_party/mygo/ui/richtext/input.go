@@ -17,6 +17,16 @@ func (v *view) input(ev ui.InputEvent) bool {
 	defer v.publish()
 	switch ev.Kind {
 	case ui.InputKeyDown:
+		if v.opts.OnKey != nil {
+			v.publish()
+			taken := v.opts.OnKey(ev, v.compose != "")
+			v.sync()
+			v.publishState()
+			if taken {
+				v.blinkStart = ev.Time
+				return true
+			}
+		}
 		if v.key(ev.Key, ev.Mods) {
 			v.blinkStart = ev.Time
 			return true
@@ -494,6 +504,14 @@ func (v *view) editCommand(name string) bool {
 		return true
 	case "paste", "pasteAndMatchStyle":
 		if !v.opts.ReadOnly {
+			if v.opts.OnPaste != nil {
+				v.publish()
+				taken := v.opts.OnPaste()
+				v.sync()
+				if taken {
+					return true
+				}
+			}
 			v.paste(name == "pasteAndMatchStyle")
 		}
 		return true

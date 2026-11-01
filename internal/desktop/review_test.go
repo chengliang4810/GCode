@@ -41,7 +41,7 @@ func TestSessionPanelsAttachmentsAndWorkspaceStayScoped(t *testing.T) {
 	if a.draft != "" || len(a.attachments) != 0 || a.files || a.right || a.terminal {
 		t.Fatal("previous session view leaked into a new session")
 	}
-	if a.workspace.ProjectID != "zeron" || a.bottom.ProjectID != "zeron" {
+	if a.workspace.ProjectID != "rcode" || a.bottom.ProjectID != "rcode" {
 		t.Fatal("workspace did not follow session project")
 	}
 	a.draft = "second"

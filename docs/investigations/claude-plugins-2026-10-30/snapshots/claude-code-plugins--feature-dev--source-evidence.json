@@ -1,0 +1,23 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "95380b3cd58f7fbf575ebda0fe291224ba028317",
+  "path": "plugins/feature-dev",
+  "archive_sha256": "4bb8a835f7363cc7ef6b2b5bbc6d2211e8679dd6d0104784ff9bd070ee589050",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "agents/code-architect.md",
+    "agents/code-explorer.md",
+    "agents/code-reviewer.md",
+    "commands/feature-dev.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"feature-dev\",\n  \"description\": \"Comprehensive feature development workflow with specialized agents for codebase exploration, architecture design, and quality review\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "agents/code-explorer.md": "\nname: code-explorer\ndescription: Deeply analyzes existing codebase features by tracing execution paths, mapping architecture layers, understanding patterns and abstractions, and documenting dependencies to inform new development\ntools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput\nmodel: sonnet\ncolor: yellow\n",
+    "agents/code-architect.md": "\nname: code-architect\ndescription: Designs feature architectures by analyzing existing codebase patterns and conventions, then providing comprehensive implementation blueprints with specific files to create/modify, component designs, data flows, and build sequences\ntools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput\nmodel: sonnet\ncolor: green\n",
+    "commands/feature-dev.md": "\ndescription: Guided feature development with codebase understanding and architecture focus\nargument-hint: Optional feature description\n",
+    "agents/code-reviewer.md": "\nname: code-reviewer\ndescription: Reviews code for bugs, logic errors, security vulnerabilities, code quality issues, and adherence to project conventions, using confidence-based filtering to report only high-priority issues that truly matter\ntools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput\nmodel: sonnet\ncolor: red\n"
+  }
+}

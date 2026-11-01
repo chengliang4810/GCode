@@ -31,7 +31,7 @@ type FooterUsageFixtureState struct {
 	Height         float32                     `json:"logicalHeight"`
 	Context        contracts.ContextUsage      `json:"contextUsage"`
 	Accounts       []contracts.ProviderAccount `json:"accounts"`
-	Row            CompactPickerFixtureBounds  `json:"row"`
+	Row            ModelPickerFixtureBounds    `json:"row"`
 	AccountsOpen   bool                        `json:"accountsOpen"`
 	ContextOpen    bool                        `json:"contextOpen"`
 	GeometryStable bool                        `json:"geometryStable"`
@@ -41,11 +41,11 @@ type FooterUsageFixtureState struct {
 
 func NewFooterUsageFixture(appearance, scene string) (*FooterUsageFixture, error) {
 	// Reuse the fixture's deterministic typed service and frozen Codex catalog.
-	compact, err := NewCompactPickerFixture(appearance, "panel")
+	picker, err := NewModelPickerFixture(appearance)
 	if err != nil {
 		return nil, err
 	}
-	f := &FooterUsageFixture{app: compact.app}
+	f := &FooterUsageFixture{app: picker.app}
 	f.app.modelMenu = false
 	f.app.sessionID = "footer-chat"
 	f.app.state.Sessions = []contracts.Session{{ID: "footer-chat", Title: "Footer fixture", DeviceID: "local", ModelID: "gpt-5.4"}}
@@ -118,13 +118,13 @@ func (f *FooterUsageFixture) State() FooterUsageFixtureState {
 func (f *FooterUsageFixture) View(c *ui.Context) {
 	a := f.app
 	width, height := c.Size()
-	row := compactPickerFixtureBounds(f.row.Bounds(c))
+	row := modelPickerFixtureBounds(f.row.Bounds(c))
 	stable := row.Width > 0 && row == f.previous.Row && f.previous.Appearance == f.appearance && f.previous.Scene == f.scene
-	a.palette = design.Palette("zeron-"+f.appearance, f.appearance == "dark")
+	a.palette = design.Palette("rcode-"+f.appearance, f.appearance == "dark")
 	c.SetTheme(a.palette.UI())
 	c.SetMotionPreferences(&ui.MotionPreferences{Motion: ui.MotionReduced})
 	c.DisableAnimations()
-	c.Root().Background(a.palette.Shell).Font("Geist").FontSize(13).TextColor(a.palette.Text)
+	c.Root().Background(a.palette.Shell).Font("Geist").FontSize(design.UIFontSize).TextColor(a.palette.Text)
 	design.ApplyReferenceTypography(c)
 	ui.Column(c).Fill().Padding(24).Justify(ui.End).Children(func() {
 		ui.Row(c).Bind(&f.row).FillWidth().Height(24).AlignItems(ui.Center).Justify(ui.End).Children(func() { a.composerUsage(c, a.currentSession(), &a.footerUsage, false) })

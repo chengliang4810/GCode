@@ -82,6 +82,11 @@ func encodeClip(t Text) []byte {
 	lastCopy.Store(name)
 	c := clipOf(t)
 	c.Copy = name
+	for i := range c.Paragraphs {
+		// IDs are the app's, of paragraphs where they are: a paste
+		// makes new ones (Text.Replace).
+		c.Paragraphs[i].Style.ID = ""
+	}
 	b, _ := json.Marshal(c)
 	return b
 }
@@ -173,9 +178,18 @@ func (c clipText) text() Text {
 	return TextOf(paras...)
 }
 
-// PlainText returns t as plain text, its attachments left out.
+// PlainText returns t as plain text, replacing attachments with their names.
+// Unnamed attachments are left out.
 func (t Text) PlainText() string {
-	return strings.ReplaceAll(t.String(), string(ObjectReplacement), "")
+	var out strings.Builder
+	for _, run := range t.Runs(0, t.Len()) {
+		name := ""
+		if a := run.Attributes.Attachment; a != nil {
+			name = a.Name
+		}
+		out.WriteString(strings.ReplaceAll(run.Text, string(ObjectReplacement), name))
+	}
+	return out.String()
 }
 
 // clipboardData returns t as the clipboard takes it: in the format of

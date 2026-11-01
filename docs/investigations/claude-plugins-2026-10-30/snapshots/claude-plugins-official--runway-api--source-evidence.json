@@ -1,0 +1,50 @@
+{
+  "repo": "runwayml/skills",
+  "commit": "e3dffc15498e9588e7815f37b9ecf10e8bc2c902",
+  "path": ".",
+  "archive_sha256": "82be0ef0acd3d1ee6acffce43e2010af3b32c726cd0c02df96408e088a60e865",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".gitignore",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "assets/logo.png",
+    "scripts/generate_audio.py",
+    "scripts/generate_image.py",
+    "scripts/generate_video.py",
+    "scripts/get_task.py",
+    "scripts/list_models.py",
+    "scripts/runway_helpers.py",
+    "skills/runway-dev-characters/SKILL.md",
+    "skills/runway-dev-model-routers/SKILL.md",
+    "skills/runway-dev-models/SKILL.md",
+    "skills/runway-dev-recipes/SKILL.md",
+    "skills/runway-dev-workflows/SKILL.md",
+    "skills/runway-dev/SKILL.md",
+    "skills/rw-check-org-details/SKILL.md",
+    "skills/rw-generate-audio/SKILL.md",
+    "skills/rw-generate-image/SKILL.md",
+    "skills/rw-generate-video/SKILL.md",
+    "skills/use-runway-api/AUTH.md",
+    "skills/use-runway-api/SKILL.md",
+    "skills/use-runway-api/scripts/runway-api.mjs"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"runway-api\",\n  \"description\": \"Build Runway models, Model Routers, Characters, recipes, and workflows into applications with Dev MCP and the official SDK, or generate media directly.\",\n  \"version\": \"3.0.0\",\n  \"author\": {\n    \"name\": \"Runway\",\n    \"email\": \"ops@runwayml.com\"\n  },\n  \"keywords\": [\n    \"runway\",\n    \"runwayml\",\n    \"video-generation\",\n    \"image-generation\",\n    \"audio-generation\",\n    \"ai-api\",\n    \"seedance2\",\n    \"gen4\",\n    \"veo3\",\n    \"media-generation\",\n    \"batch\",\n    \"runway-api\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/rw-generate-video/SKILL.md": "\nname: rw-generate-video\ndescription: \"Generate videos directly using the Runway API via runnable scripts. Supports text-to-video, image-to-video, and video-to-video with seedance2, gen4.5, veo3, and more.\"\nuser-invocable: true\nallowed-tools: Read, Grep, Glob, Edit, Write, Bash(uv run *), Bash(command -v uv)\n",
+    "skills/runway-dev/SKILL.md": "\nname: runway-dev\ndescription: \"Foundation for building, modifying, debugging, or verifying Runway Dev Platform integrations in an application: connect Dev MCP, use llms.txt to find current resources, resolve project context, use SDK wait helpers, and handle errors. Load with relevant runway-dev-* surface skills. Not for direct media generation scripts or REST CLI shortcuts.\"\nuser-invocable: true\n",
+    "skills/runway-dev-characters/SKILL.md": "\nname: runway-dev-characters\ndescription: \"Build, modify, debug, or verify Runway Characters integrations: inspect preset or custom avatars with MCP, manage live Sessions via SDK, and connect the application UI. Use with +runway-dev. UI says Characters; MCP/API use avatars. Not for avatar video generation endpoints.\"\nuser-invocable: true\n",
+    "skills/runway-dev-workflows/SKILL.md": "\nname: runway-dev-workflows\ndescription: \"Build, modify, debug, or verify integrations that expose Runway app workflows as API endpoints. Use get_workflows_setup_guide for current setup and API guidance. Use with +runway-dev. Not for model generation, routers, or Characters sessions.\"\nuser-invocable: true\n",
+    "skills/use-runway-api/SKILL.md": "\nname: use-runway-api\ndescription: \"Directly use the Runway API from the agent to generate media, manage resources, and inspect account state\"\nuser-invocable: true\nallowed-tools: Read, Bash(node */scripts/runway-api.mjs *)\n",
+    "skills/rw-generate-image/SKILL.md": "\nname: rw-generate-image\ndescription: \"Generate images directly using the Runway API via runnable scripts. Supports text-to-image with optional reference images.\"\nuser-invocable: true\nallowed-tools: Read, Grep, Glob, Edit, Write, Bash(uv run *), Bash(command -v uv)\n",
+    "skills/runway-dev-models/SKILL.md": "\nname: runway-dev-models\ndescription: \"Build, modify, debug, or verify Runway model generation in an application: discover accessible models and constraints with MCP, implement SDK calls, and wire inputs and outputs into the product UI. Use with +runway-dev. Not for Model Routers, Characters, recipes, or agent-side generate scripts.\"\nuser-invocable: true\n",
+    "skills/rw-check-org-details/SKILL.md": "\nname: rw-check-org-details\ndescription: \"Query the Runway API for organization details: rate limits, credit balance, usage tier, and daily generation counts\"\nuser-invocable: true\nallowed-tools: Read, Grep, Glob, Bash(node *), Bash(python3 *), Bash(curl *)\n",
+    "skills/runway-dev-recipes/SKILL.md": "\nname: runway-dev-recipes\ndescription: \"Choose, build, modify, debug, or verify Runway recipe integrations: match a recipe to the user's use case, follow its current contract, implement SDK client.recipes calls, and wire results into the application. Use with +runway-dev. Not for direct model endpoints or Model Routers.\"\nuser-invocable: true\n",
+    "skills/runway-dev-model-routers/SKILL.md": "\nname: runway-dev-model-routers\ndescription: \"Build, modify, debug, or verify Runway Model Routers: inspect live config and eligible models via MCP, manage approved settings, integrate routed SDK calls, and inspect routing results. Use with +runway-dev. Not for direct per-model endpoints or agent REST CLI.\"\nuser-invocable: true\n",
+    "skills/rw-generate-audio/SKILL.md": "\nname: rw-generate-audio\ndescription: \"Generate audio using the Runway API via runnable scripts. Supports TTS, sound effects, voice isolation, dubbing, and voice conversion.\"\nuser-invocable: true\nallowed-tools: Read, Grep, Glob, Edit, Write, Bash(uv run *), Bash(command -v uv)\n"
+  }
+}

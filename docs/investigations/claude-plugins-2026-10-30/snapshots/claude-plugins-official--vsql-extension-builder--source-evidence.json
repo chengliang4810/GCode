@@ -1,0 +1,37 @@
+{
+  "repo": "villagesql/villagesql-skills",
+  "commit": "18f7d68673e2bd5d400b4ee91298e5a4b9e8d24e",
+  "path": ".",
+  "archive_sha256": "00f228595ed61c38328690569d5d1b952ad6048dd44d822877790aa2e6c95802",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".github/workflows/cla.yml",
+    ".gitignore",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "assets/icon.png",
+    "assets/icon.svg",
+    "plugin.json",
+    "skills/vsql-extension-builder/README.md",
+    "skills/vsql-extension-builder/SKILL.md",
+    "skills/vsql-extension-builder/references/capabilities.md",
+    "skills/vsql-extension-builder/references/context-hygiene.md",
+    "skills/vsql-extension-builder/references/cto-checklist.md",
+    "skills/vsql-extension-builder/references/environment.md",
+    "skills/vsql-extension-builder/references/patterns.md",
+    "skills/vsql-extension-builder/references/pg-port-guide.md",
+    "skills/vsql-extension-builder/references/philosophy.md",
+    "skills/vsql-extension-builder/references/rust-workflow.md",
+    "skills/vsql-install-server/README.md",
+    "skills/vsql-install-server/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"villagesql\",\n  \"displayName\": \"VillageSQL Skills\",\n  \"description\": \"Skills for VillageSQL (MySQL with extensions): build extensions end-to-end (including porting PostgreSQL extensions to MySQL) and install VillageSQL Server.\",\n  \"author\": {\n    \"name\": \"VillageSQL\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/vsql-install-server/SKILL.md": "\nname: vsql-install-server\ndescription: >\n  Get a working VillageSQL server on this machine and prove it works —\n  choose an install path (installer, Docker, or source), start the server,\n  connect, load a bundled extension, and call one of its functions. Also\n  covers reconnecting to a server that is already running. Use before\n  vsql-extension-builder, or any time a VillageSQL server is needed and\n  none is confirmed working.\n",
+    "skills/vsql-extension-builder/SKILL.md": "\nname: vsql-extension-builder\ndescription: >\n  Build a VillageSQL extension end-to-end using the 7-phase persona-driven\n  workflow: requirements, feasibility, scaffold, implementation, CTO review,\n  UAT, and documentation. Supports C++ (default) and Rust implementations.\n  Discovers the current VEF API from live SDK sources during Phase 1\n  feasibility and Phase 2 bootstrap — no hardcoded API names. Works from\n  any directory.\n"
+  }
+}

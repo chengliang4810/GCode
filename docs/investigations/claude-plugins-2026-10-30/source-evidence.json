@@ -1,0 +1,162 @@
+{
+  "audit_date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "gcode_head": "e864970b8d3e745555530af54ddfdd66b0c3168b",
+  "reference_head": "8d80e740f764be358e265eed4250606c78fca579",
+  "documents": [
+    {
+      "url": "https://code.claude.com/docs/en/plugins-reference.md",
+      "accessed_at_utc": "2026-10-30T08:35:48.3562674+00:00",
+      "sha256": "a10a371d18d571e769f99720d4402f3ec13ceb668561266f57145cfa940fa4ed",
+      "bytes": 43335,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/plugins/marketplace-reference.md",
+      "accessed_at_utc": "2026-10-30T08:35:48.5804051+00:00",
+      "sha256": "2b353a0f227f1637b8c5f5709d3de843054a31c81e38d769d00fb00544f3635c",
+      "bytes": 48331,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/plugins/anthropic-marketplaces.md",
+      "accessed_at_utc": "2026-10-30T08:35:48.9167931+00:00",
+      "sha256": "75565171504d7a6620d14d0b0ddcd9a08b8d6991b56951605fbdab5f75b632df",
+      "bytes": 9012,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/plugins/loading.md",
+      "accessed_at_utc": "2026-10-30T08:35:49.1935871+00:00",
+      "sha256": "4384e0e85677682e34e68362a70b06e4a6ef74a7f03e3ad044c0e817b1c35c0e",
+      "bytes": 43799,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/plugins/components.md",
+      "accessed_at_utc": "2026-10-30T08:35:49.4251357+00:00",
+      "sha256": "4e824b70bbe00db2d487ab5aeac1c63575fdc151b0d0a3eff573f461ce6f6d4b",
+      "bytes": 40417,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/plugins/dependencies.md",
+      "accessed_at_utc": "2026-10-30T08:35:49.6947494+00:00",
+      "sha256": "ffaa4bddfb56826e57ae437a438611ce0ef992abc12da8959590123cbff95051",
+      "bytes": 17562,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/skills.md",
+      "accessed_at_utc": "2026-10-30T08:35:49.9338554+00:00",
+      "sha256": "907a9929f54ad8b730a55088108311acb9bb5677c33b1861fb2664a53ab15688",
+      "bytes": 118872,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/hooks.md",
+      "accessed_at_utc": "2026-10-30T08:35:50.1740963+00:00",
+      "sha256": "b755d9c7c166ec77e36ee2388e3299dd149a9f160171b6e97e427be439f942f9",
+      "bytes": 283477,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/sub-agents.md",
+      "accessed_at_utc": "2026-10-30T08:35:50.4242283+00:00",
+      "sha256": "c6af4f0b650d11cdabbd6b6e49d5272ff00cb966580bb4f8d1dc09ec4ae5b3cb",
+      "bytes": 116076,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/mcp.md",
+      "accessed_at_utc": "2026-10-30T08:35:50.6592446+00:00",
+      "sha256": "4c0b7f2a176f2a2dfaa5fb12c99ee8970d925313e73301c1c9ef15b69bbd1ac0",
+      "bytes": 154666,
+      "status": 200,
+      "client": "PowerShell Invoke-WebRequest"
+    }
+  ],
+  "gcode_audited_files": [
+    {
+      "path": "internal/engine/resources.go",
+      "sha256": "198648e76d45f82764c0d34d36e6ad6bb75bd526ff9c6fa4967104b396184034"
+    },
+    {
+      "path": "internal/engine/user_resources.go",
+      "sha256": "a653d4dc58010061754ace52db0fbac2aada84c1cb138af9293dcc4975d4923c"
+    },
+    {
+      "path": "internal/engine/mcp.go",
+      "sha256": "81e0b48d618e92b6ded4f36164e32002c9c3ed79ab95ac289b5ffef67f9b5912"
+    },
+    {
+      "path": "internal/engine/run.go",
+      "sha256": "4ab91190b27a02f314449b581f1c8e292f8e9922109134852359c844db7117c9"
+    },
+    {
+      "path": "internal/agent/hooks.go",
+      "sha256": "05069ba722dc492e9771edeaeb6b0c9fd9f72b8821805328d90d3935d1158ce3"
+    },
+    {
+      "path": "internal/contracts/hooks.go",
+      "sha256": "75d54e8da9b8253ba887363630d1e283ed5a9de4f1c929c2bd552d3cd4e68e95"
+    },
+    {
+      "path": "internal/mcp/client.go",
+      "sha256": "f31119529e70c77225337a573c6a15b03256f7d5b56542ffcbcb8e30d41f627f"
+    },
+    {
+      "path": "internal/contracts/user_resources.go",
+      "sha256": "3351fe493d7ed11de369f67570074382286ec0510d58dd7803fe51628286aac6"
+    },
+    {
+      "path": "internal/contracts/subagents.go",
+      "sha256": "59951e96841eadae9f09c79ef57bea411b8f53e633fd372fa15a3ba467d74e9b"
+    },
+    {
+      "path": "internal/agent/tools.go",
+      "sha256": "5d753b1a395a395c42e318b90ea832cd0da97b050822ebd8cb3bf53785af15f4"
+    },
+    {
+      "path": "internal/desktop/settings.go",
+      "sha256": "f26c88bb3b72ac47f664766889d21141bfa2493020755141416f2a8a6ee4b532"
+    },
+    {
+      "path": "docs/backend-v1.md",
+      "sha256": "56865369d149dd0621fe98b1fb8866abf0a7449f07e9389c2728e006c908cdf1"
+    },
+    {
+      "path": "docs/hooks.md",
+      "sha256": "ea49ebf814d744ea27e0bfda407afa8f2e53318f3317764b3bc46d669e3e6820"
+    },
+    {
+      "path": "docs/user-settings.md",
+      "sha256": "e241a8549075bfbfbd6b1153805b76a0656359e040aef7a09c0c0fd85bcc4b26"
+    }
+  ],
+  "verification": {
+    "command": "go test ./internal/contracts ./internal/agent ./internal/engine ./internal/mcp -run 'Test(User|MCP|Hooks|Hook|RunTriggers|Prompt|QueueKeepsReference|GoalRejectsInvalid|GoalPreservesInline|StreamableHTTP|StdioMCP)' -count=1 -timeout 4m",
+    "result": [
+      "ok gcode/internal/contracts 0.044s",
+      "ok gcode/internal/agent 2.825s",
+      "ok gcode/internal/engine 3.111s",
+      "ok gcode/internal/mcp 0.629s"
+    ],
+    "evidence_scope": "Existing isolated component/core tests. No real marketplace plugin executed."
+  },
+  "npm_latest": {
+    "name": "@anthropic-ai/claude-code",
+    "version": "2.1.314",
+    "accessed_at_utc": "2026-10-30T16:35:29.61833+08:00"
+  },
+  "failed_fetch_attempt": "Python urllib requests returned HTTP 403. PowerShell fetches below independently succeeded."
+}

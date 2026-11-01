@@ -1,6 +1,7 @@
 package workbench
 
 import (
+	"gcode/internal/design"
 	"math"
 	"time"
 
@@ -205,10 +206,10 @@ func (s *State) renderTabTooltip(c *ui.Context, pass tabTooltipPass) {
 		}
 	}
 	p := s.palette()
-	// These are absolute source DIPs, independent of interface-font scaling.
-	width, size := float32(380), float32(10.5)
+	// Tooltip width stays in DIPs; text follows the interface caption role.
+	width, size := float32(380), design.TextSize(c, design.TextCaption)
 	if owner.close {
-		width, size = 320, 11
+		width = 320
 	}
 	ui.Overlay(c, func() {
 		ui.Box(c).Key(tabTooltipCardKey{s.scopeID, s.tabTooltip.shown}).Role(ui.RoleTooltip).PassThrough().

@@ -1,0 +1,46 @@
+{
+  "pluginId": "frontend-design@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "frontend-bicycle-clinic",
+      "componentId": "skill:frontend-design:frontend-design",
+      "prompt": "/frontend-design:frontend-design Build a self-contained index.html for Solder & Spoke, an independent bicycle repair clinic serving commuters. Use only inline CSS and local system fonts: no package installs, network, external images or CDNs. Brand copy: \"Repair the ride you already love\". Represent each service as an article with data-service/data-price attributes: brake-tune/28, flat-repair/18, safety-check/0, and matching visible labels and prices. Required real content: Brake tune $28, Flat repair $18, Safety check $0; open Tuesday through Saturday; address 18 Mill Lane. Use semantic main/nav, sections with IDs services and visit, a clear Book a repair link to #visit, viewport metadata, a mobile media query and reduced-motion handling. The exact browser title is \"Solder & Spoke | Bicycle repair\". Follow the skill's subject-specific design plan/review/build process, then run the supplied immutable validator using python verify_frontend.py. Do not change the validator. It checks business content and basic structural/accessibility requirements and writes frontend-verification.json. Finish only after it succeeds. Stay within this temporary workspace. Do not claim screenshot or browser validation; none is available in this probe. The only approved Bash command is exactly `python verify_frontend.py`, with no prefix, suffix, redirect or extra shell statements. Do not read or write frontend-verification.json through model file tools; only the immutable verifier may generate it, and the acceptance runner inspects it directly.",
+      "fixtures": [
+        {
+          "path": "verify_frontend.py",
+          "text": "from html.parser import HTMLParser\nfrom pathlib import Path\nimport json\nimport re\n\nclass Page(HTMLParser):\n    def __init__(self):\n        super().__init__()\n        self.tags = []\n        self.text = []\n        self.title = []\n        self.in_title = False\n        self.ids = set()\n        self.links = []\n        self.viewport = False\n        self.services = {}\n        self.service_text = {}\n        self.current_service = None\n    def handle_starttag(self, tag, attrs):\n        values = dict(attrs)\n        self.tags.append(tag)\n        self.in_title = self.in_title or tag == 'title'\n        if values.get('id'):\n            self.ids.add(values['id'])\n        if tag == 'meta' and values.get('name') == 'viewport':\n            self.viewport = True\n        if tag == 'a':\n            self.links.append(values.get('href', ''))\n        if tag == 'article' and values.get('data-service'):\n            key = values['data-service']\n            assert key not in self.services, 'Duplicate service article'\n            self.services[key] = int(values['data-price'])\n            self.service_text[key] = []\n            self.current_service = key\n        for name in ['src', 'href']:\n            assert not values.get(name, '').startswith(('http:', 'https:', '//')), 'External asset or destination is forbidden'\n    def handle_endtag(self, tag):\n        if tag == 'title':\n            self.in_title = False\n        if tag == 'article':\n            self.current_service = None\n    def handle_data(self, text):\n        self.text.append(text)\n        if self.current_service is not None:\n            self.service_text[self.current_service].append(text)\n        if self.in_title:\n            self.title.append(text)\n\nsource = Path('index.html').read_text(encoding='utf-8')\npage = Page()\npage.feed(source)\ntext = ' '.join(page.text)\nassert ''.join(page.title).strip() == 'Solder & Spoke | Bicycle repair'\nfor expected in ['Solder & Spoke', 'Brake tune', '$28', 'Flat repair', '$18', 'Safety check', '$0', 'Tuesday', 'Saturday', '18 Mill Lane']:\n    assert expected in text, expected\nfor tag in ['html', 'head', 'body', 'main', 'nav', 'h1']:\n    assert tag in page.tags, tag\nassert {'services', 'visit'} <= page.ids\nassert '#visit' in page.links\nassert page.services == {'brake-tune': 28, 'flat-repair': 18, 'safety-check': 0}\nfor key, label in [('brake-tune', 'Brake tune'), ('flat-repair', 'Flat repair'), ('safety-check', 'Safety check')]:\n    service_text = ' '.join(page.service_text[key])\n    assert label in service_text and '$' + str(page.services[key]) in service_text\nassert page.viewport\nassert '@media' in source\nassert 'prefers-reduced-motion' in source\nassert re.search(r'(?:max-width|min-width)\\s*:', source)\nreport = {'page': 'index.html', 'title': ''.join(page.title).strip(), 'service_count': len(page.services), 'prices': ['$' + str(price) for price in sorted(page.services.values())], 'layout_checks': ['viewport', 'mobile-media-query', 'reduced-motion']}\nPath('frontend-verification.json').write_text(json.dumps(report, sort_keys=True) + '\\n', encoding='utf-8')\nprint('Validated Solder & Spoke with 3 priced services')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "index.html",
+          "contains": "18 Mill Lane"
+        },
+        {
+          "kind": "file",
+          "path": "index.html",
+          "contains": "prefers-reduced-motion"
+        },
+        {
+          "kind": "file",
+          "path": "frontend-verification.json",
+          "equals": "{\"layout_checks\": [\"viewport\", \"mobile-media-query\", \"reduced-motion\"], \"page\": \"index.html\", \"prices\": [\"$0\", \"$18\", \"$28\"], \"service_count\": 3, \"title\": \"Solder & Spoke | Bicycle repair\"}\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_frontend.py",
+          "equals": "from html.parser import HTMLParser\nfrom pathlib import Path\nimport json\nimport re\n\nclass Page(HTMLParser):\n    def __init__(self):\n        super().__init__()\n        self.tags = []\n        self.text = []\n        self.title = []\n        self.in_title = False\n        self.ids = set()\n        self.links = []\n        self.viewport = False\n        self.services = {}\n        self.service_text = {}\n        self.current_service = None\n    def handle_starttag(self, tag, attrs):\n        values = dict(attrs)\n        self.tags.append(tag)\n        self.in_title = self.in_title or tag == 'title'\n        if values.get('id'):\n            self.ids.add(values['id'])\n        if tag == 'meta' and values.get('name') == 'viewport':\n            self.viewport = True\n        if tag == 'a':\n            self.links.append(values.get('href', ''))\n        if tag == 'article' and values.get('data-service'):\n            key = values['data-service']\n            assert key not in self.services, 'Duplicate service article'\n            self.services[key] = int(values['data-price'])\n            self.service_text[key] = []\n            self.current_service = key\n        for name in ['src', 'href']:\n            assert not values.get(name, '').startswith(('http:', 'https:', '//')), 'External asset or destination is forbidden'\n    def handle_endtag(self, tag):\n        if tag == 'title':\n            self.in_title = False\n        if tag == 'article':\n            self.current_service = None\n    def handle_data(self, text):\n        self.text.append(text)\n        if self.current_service is not None:\n            self.service_text[self.current_service].append(text)\n        if self.in_title:\n            self.title.append(text)\n\nsource = Path('index.html').read_text(encoding='utf-8')\npage = Page()\npage.feed(source)\ntext = ' '.join(page.text)\nassert ''.join(page.title).strip() == 'Solder & Spoke | Bicycle repair'\nfor expected in ['Solder & Spoke', 'Brake tune', '$28', 'Flat repair', '$18', 'Safety check', '$0', 'Tuesday', 'Saturday', '18 Mill Lane']:\n    assert expected in text, expected\nfor tag in ['html', 'head', 'body', 'main', 'nav', 'h1']:\n    assert tag in page.tags, tag\nassert {'services', 'visit'} <= page.ids\nassert '#visit' in page.links\nassert page.services == {'brake-tune': 28, 'flat-repair': 18, 'safety-check': 0}\nfor key, label in [('brake-tune', 'Brake tune'), ('flat-repair', 'Flat repair'), ('safety-check', 'Safety check')]:\n    service_text = ' '.join(page.service_text[key])\n    assert label in service_text and '$' + str(page.services[key]) in service_text\nassert page.viewport\nassert '@media' in source\nassert 'prefers-reduced-motion' in source\nassert re.search(r'(?:max-width|min-width)\\s*:', source)\nreport = {'page': 'index.html', 'title': ''.join(page.title).strip(), 'service_count': len(page.services), 'prices': ['$' + str(price) for price in sorted(page.services.values())], 'layout_checks': ['viewport', 'mobile-media-query', 'reduced-motion']}\nPath('frontend-verification.json').write_text(json.dumps(report, sort_keys=True) + '\\n', encoding='utf-8')\nprint('Validated Solder & Spoke with 3 priced services')\n"
+        }
+      ],
+      "allowCommands": [
+        "python verify_frontend.py"
+      ],
+      "verifierOutputs": [
+        "frontend-verification.json"
+      ]
+    }
+  ]
+}

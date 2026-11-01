@@ -1,0 +1,245 @@
+{
+  "pluginId": "langfuse@claude-plugins-official",
+  "sourceCommit": "b86532b77f16f1e27c7cffa32bb632aa3cd9a352",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-checkout-tracing-instrumentation",
+      "componentId": "skill:langfuse:langfuse",
+      "prompt": "/langfuse:langfuse Our Python service checkout-service, a FastAPI app, needs Langfuse tracing added, and afterwards we want to query recent traces from the command line. Following this skill, produce the implementation plan file langfuse-instrumentation-plan.md, adapted to a headless sandbox. Headless boundary: no network, no docs fetching, no langfuse-cli calls, no Langfuse account and no installs; documentation lookup, SDK version pinning and live trace queries stay untested. The plan must apply the skill core principles: Documentation First, so the plan lists the exact doc discovery steps to run at execution time, starting from https://langfuse.com/llms.txt, then fetching the specific pages as markdown, with search via https://langfuse.com/api/search-docs as fallback; the relevant use case reference is references/instrumentation.md and the CLI tips reference is references/cli.md; data access uses langfuse-cli run via npx, with schema discovery through npx langfuse-cli api __schema before any resource call; credentials are environment variables LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL, with LANGFUSE_HOST kept in sync when BASE_URL is used, and the plan must state that keys are never pasted into chat and are read from the environment at execution time; and because Langfuse updates frequently, the plan defers pinning the exact SDK version until the current docs are fetched at execution time, naming the target package as the Python SDK instrumenting FastAPI middleware for checkout-service. The plan must include a second section for command-line trace queries: the same credential variables plus npx langfuse-cli api __schema discovery before listing or getting traces. End the file with exactly this line: No docs page was fetched and no langfuse-cli call was made in this headless run; documentation lookup, SDK version pinning and live trace queries remain untested. Then read the immutable verify_langfuse_plan.py and run exactly python verify_langfuse_plan.py using Bash; it validates the plan and writes langfuse-plan-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that docs fetching, version pinning and live queries remain untested.",
+      "allowCommands": [
+        "python verify_langfuse_plan.py"
+      ],
+      "verifierOutputs": [
+        "langfuse-plan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_langfuse_plan.py",
+          "text": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'cli_discovery': True, 'credentials_handling': True, 'doc_discovery': True, 'honesty_boundary': True, 'input_scenario': True, 'no_invented_keys': True, 'version_deferral': True}\n\nplan_doc = Path('langfuse-instrumentation-plan.md').read_text(encoding='utf-8')\nfor anchor in ('checkout-service', 'FastAPI', 'Documentation First',\n               'references/instrumentation.md', 'references/cli.md',\n               'npx langfuse-cli api __schema', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_SECRET_KEY',\n               'LANGFUSE_BASE_URL', 'LANGFUSE_HOST', 'https://langfuse.com/llms.txt',\n               'https://langfuse.com/api/search-docs', 'never pasted into chat',\n               'Langfuse updates frequently',\n               'No docs page was fetched and no langfuse-cli call was made in this headless run'):\n    assert anchor in plan_doc, 'missing documented anchor: ' + anchor\nassert not re.search(r\"pk-lf-[A-Za-z0-9]{16,}\", plan_doc), 'an invented public key appears'\nassert not re.search(r\"sk-lf-[A-Za-z0-9]{16,}\", plan_doc), 'an invented secret key appears'\n\nPath('langfuse-plan-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Langfuse instrumentation plan: principles and CLI discovery verified; docs fetching and live queries remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_langfuse_plan.py",
+          "equals": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'cli_discovery': True, 'credentials_handling': True, 'doc_discovery': True, 'honesty_boundary': True, 'input_scenario': True, 'no_invented_keys': True, 'version_deferral': True}\n\nplan_doc = Path('langfuse-instrumentation-plan.md').read_text(encoding='utf-8')\nfor anchor in ('checkout-service', 'FastAPI', 'Documentation First',\n               'references/instrumentation.md', 'references/cli.md',\n               'npx langfuse-cli api __schema', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_SECRET_KEY',\n               'LANGFUSE_BASE_URL', 'LANGFUSE_HOST', 'https://langfuse.com/llms.txt',\n               'https://langfuse.com/api/search-docs', 'never pasted into chat',\n               'Langfuse updates frequently',\n               'No docs page was fetched and no langfuse-cli call was made in this headless run'):\n    assert anchor in plan_doc, 'missing documented anchor: ' + anchor\nassert not re.search(r\"pk-lf-[A-Za-z0-9]{16,}\", plan_doc), 'an invented public key appears'\nassert not re.search(r\"sk-lf-[A-Za-z0-9]{16,}\", plan_doc), 'an invented secret key appears'\n\nPath('langfuse-plan-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Langfuse instrumentation plan: principles and CLI discovery verified; docs fetching and live queries remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-plan-verification.json",
+          "equals": "{\"cli_discovery\": true, \"credentials_handling\": true, \"doc_discovery\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"no_invented_keys\": true, \"version_deferral\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "checkout-service"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "FastAPI"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "Documentation First"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "references/instrumentation.md"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "references/cli.md"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "npx langfuse-cli api __schema"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "LANGFUSE_PUBLIC_KEY"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "LANGFUSE_SECRET_KEY"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "LANGFUSE_BASE_URL"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "LANGFUSE_HOST"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "https://langfuse.com/llms.txt"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "https://langfuse.com/api/search-docs"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "never pasted into chat"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "Langfuse updates frequently"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-instrumentation-plan.md",
+          "contains": "No docs page was fetched and no langfuse-cli call was made in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Langfuse instrumentation plan: principles and CLI discovery verified; docs fetching and live queries remain untested"
+        }
+      ]
+    },
+    {
+      "id": "langsmith-migration-runbook",
+      "componentId": "skill:langfuse:migrate-to-langfuse",
+      "prompt": "/langfuse:migrate-to-langfuse Plan a one-off vendor switch to Langfuse for the repository in this workspace and produce the runbook only. First inspect the repo files requirements.txt and app.py: they show the source platform. Headless boundary: no network, no vendor or Langfuse API access, no pip install and no data transfer; guide fetching, export, reingestion and cutover stay untested. Interview answers for this run: destination is Langfuse Cloud in the EU region; credentials are verified by presence only with [ -n \"$LANGFUSE_SECRET_KEY\" ] and never read or echoed; mode is plan only, so no file in the repo is modified and app.py must stay byte-identical. Write langfuse-migration-runbook.md containing: (1) source detection with evidence: the repo pins langsmith==0.2.7 and uses the traceable helper in app.py, so the source is LangSmith; (2) the scope table covering live tracing cutover, historical traces including their scores, datasets, prompts, evaluators, and experiment code, plus a row naming dashboards and alerts as not covered by this skill so the user recreates them manually; (3) defaults applied: datasets and prompts copy, evaluators and judges are recreated, experiment code is rewritten and re-run against the migrated dataset, and old experiment scores are never imported; (4) routing: the vendor guide at https://langfuse.com/resources/engineering/migrate-from-langsmith.md is the source of truth for extraction, and references/reingest-history.md governs historical reingestion with deterministic IDs, raw OTLP payloads and original timestamps; (5) history reingestion safety: test on a sample of ~10 traces first, track sent source IDs in a state file so re-runs skip them because re-sending creates duplicate observations, and record that imported history is billed as new ingestion; (6) parallel-run window: implement one instrumentation with two exporters on the same tracer provider, never instrument the application twice, and remove the old LangSmith exporter only after the user confirms destination data; (7) verification before the full run: audit the sample via the API so one trace per request exists, the root span is named after the app, every span type including generations is present, each LLM call is captured exactly once, and token usage and cost populated. End the file with exactly this line: No guide was fetched, no data moved, and no repo file changed in this headless run; live cutover, history reingestion and destination verification remain untested. Then read the immutable verify_langfuse_migration.py and run exactly python verify_langfuse_migration.py using Bash; it validates the runbook and confirms app.py is untouched, writing langfuse-migration-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that guide fetching, export, reingestion and cutover remain untested.",
+      "allowCommands": [
+        "python verify_langfuse_migration.py"
+      ],
+      "verifierOutputs": [
+        "langfuse-migration-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "requirements.txt",
+          "text": "fastapi==0.115.0\nlangsmith==0.2.7\nopenai==1.59.6\n"
+        },
+        {
+          "path": "app.py",
+          "text": "from fastapi import FastAPI\nfrom langsmith import Client\nfrom langsmith.run_helpers import traceable\n\nclient = Client()\napp = FastAPI()\n\n\n@traceable\ndef score_lead(lead_id: str) -> float:\n    return 0.82\n\n\n@app.get(\"/score/{lead_id}\")\ndef score(lead_id: str) -> float:\n    return score_lead(lead_id)\n"
+        },
+        {
+          "path": "verify_langfuse_migration.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'defaults_applied': True, 'honesty_boundary': True, 'input_detection': True, 'parallel_run': True, 'reingestion_safety': True, 'routing': True, 'scope_table': True, 'verification_audit': True}\n\nrunbook = Path('langfuse-migration-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('langsmith==0.2.7', 'traceable', 'app.py',\n               'https://langfuse.com/resources/engineering/migrate-from-langsmith.md',\n               'references/reingest-history.md', 'judges are recreated', 'state file',\n               '~10 traces', 'billed as new ingestion',\n               'one instrumentation with two exporters', 'parallel-run window',\n               'token usage and cost populated', 'not covered by this skill',\n               '[ -n \"$LANGFUSE_SECRET_KEY\" ]',\n               'No guide was fetched, no data moved, and no repo file changed in this headless '\n               'run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nexpected_app = Path('app.py').read_text(encoding='utf-8')\nassert 'traceable' in expected_app and 'langsmith' in expected_app, \\\n    'app.py must remain the untouched LangSmith fixture'\n\nPath('langfuse-migration-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Langfuse migration runbook: scope, defaults and parallel-run verified; guide fetch and data movement remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "requirements.txt",
+          "equals": "fastapi==0.115.0\nlangsmith==0.2.7\nopenai==1.59.6\n"
+        },
+        {
+          "kind": "file",
+          "path": "app.py",
+          "equals": "from fastapi import FastAPI\nfrom langsmith import Client\nfrom langsmith.run_helpers import traceable\n\nclient = Client()\napp = FastAPI()\n\n\n@traceable\ndef score_lead(lead_id: str) -> float:\n    return 0.82\n\n\n@app.get(\"/score/{lead_id}\")\ndef score(lead_id: str) -> float:\n    return score_lead(lead_id)\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_langfuse_migration.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'defaults_applied': True, 'honesty_boundary': True, 'input_detection': True, 'parallel_run': True, 'reingestion_safety': True, 'routing': True, 'scope_table': True, 'verification_audit': True}\n\nrunbook = Path('langfuse-migration-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('langsmith==0.2.7', 'traceable', 'app.py',\n               'https://langfuse.com/resources/engineering/migrate-from-langsmith.md',\n               'references/reingest-history.md', 'judges are recreated', 'state file',\n               '~10 traces', 'billed as new ingestion',\n               'one instrumentation with two exporters', 'parallel-run window',\n               'token usage and cost populated', 'not covered by this skill',\n               '[ -n \"$LANGFUSE_SECRET_KEY\" ]',\n               'No guide was fetched, no data moved, and no repo file changed in this headless '\n               'run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nexpected_app = Path('app.py').read_text(encoding='utf-8')\nassert 'traceable' in expected_app and 'langsmith' in expected_app, \\\n    'app.py must remain the untouched LangSmith fixture'\n\nPath('langfuse-migration-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Langfuse migration runbook: scope, defaults and parallel-run verified; guide fetch and data movement remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-verification.json",
+          "equals": "{\"defaults_applied\": true, \"honesty_boundary\": true, \"input_detection\": true, \"parallel_run\": true, \"reingestion_safety\": true, \"routing\": true, \"scope_table\": true, \"verification_audit\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "langsmith==0.2.7"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "traceable"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "app.py"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "https://langfuse.com/resources/engineering/migrate-from-langsmith.md"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "references/reingest-history.md"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "judges are recreated"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "state file"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "~10 traces"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "billed as new ingestion"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "one instrumentation with two exporters"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "parallel-run window"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "token usage and cost populated"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "not covered by this skill"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "[ -n \"$LANGFUSE_SECRET_KEY\" ]"
+        },
+        {
+          "kind": "file",
+          "path": "langfuse-migration-runbook.md",
+          "contains": "No guide was fetched, no data moved, and no repo file changed in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Langfuse migration runbook: scope, defaults and parallel-run verified; guide fetch and data movement remain untested"
+        }
+      ]
+    }
+  ]
+}

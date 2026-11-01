@@ -1,0 +1,242 @@
+{
+  "pluginId": "cwc-makers@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "maker-setup-headless-execution-record",
+      "componentId": "command:cwc-makers:maker-setup",
+      "prompt": "/cwc-makers:maker-setup Priya just plugged her Cardputer-Adv into a Windows 11 laptop over USB-C; git is not installed on the laptop and must stay that way. Headless boundary: no network, no real external service or device, no installs, no USB access and no firmware flashing; produce the execution record of this setup command instead of running external commands, so the repo download, USB detection, firmware flashing and app installation remain untested. Write maker-setup-record.md applying the command steps to this environment in order. Step 1 must state that git is not installed so per the command rules we do not install it, and that the repo https://github.com/moremas/build-with-claude is fetched with the Windows PowerShell fallback curl.exe -L -o bwc.zip https://github.com/moremas/build-with-claude/archive/refs/heads/main.zip; tar -xf bwc.zip; Rename-Item build-with-claude-main build-with-claude into the build-with-claude/ directory; do not include any git clone command and do not include the macOS and Linux tarball variant anywhere in the record. Step 2 must invoke the m5-onboard skill to run onboard/scripts/onboard.py --apps buddy from inside build-with-claude/, and must surface the download-mode button prompt to the user by relaying the physical steps on the back of the device: press and HOLD BtnG0, briefly press BtnRST, release BtnRST first, keep holding BtnG0 for ~1 more second, release BtnG0, screen should be fully dark; state that the flash cannot proceed until the user confirms the screen is dark. Step 3 must tell Priya how to launch Claude Buddy and ask what they want to build next. Honesty: mark every step as prepared-not-executed; the record must not claim the repository was downloaded, the device was detected or the firmware was flashed, and must close by stating the repo download, USB detection, firmware flashing and app installation remain untested in this headless session. Then read the immutable verify_maker_setup.py and run exactly python verify_maker_setup.py using Bash; it validates the record and writes maker-setup-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state which parts remain untested.",
+      "allowCommands": [
+        "python verify_maker_setup.py"
+      ],
+      "verifierOutputs": [
+        "maker-setup-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_maker_setup.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('maker-setup-record.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'https://github.com/moremas/build-with-claude' in text, 'the repo URL from the command doc is missing'\nassert 'curl.exe -L -o bwc.zip' in text, 'the documented Windows PowerShell fallback is missing'\nassert 'Rename-Item build-with-claude-main build-with-claude' in text, 'the fallback rename step is missing'\nassert 'build-with-claude/' in text, 'the repo must land in the build-with-claude/ directory'\nassert 'onboard/scripts/onboard.py --apps buddy' in text, 'the m5-onboard handoff command is missing'\nassert 'press and HOLD BtnG0, briefly press BtnRST' in text, 'the download-mode button coaching must be relayed'\nassert 'screen should be fully dark' in text, 'the dark-screen confirmation must be surfaced'\nassert 'Claude Buddy' in text, 'step 3 must tell the user how to launch Claude Buddy'\nassert 'ask what they want to build next' in text, 'step 3 must ask what to build next'\nassert 'Priya' in text, 'the record must name the scenario user'\nassert 'Windows 11' in text, 'the record must record the scenario OS'\nassert 'main.tar.gz' not in text, 'the macOS and Linux tarball variant must not appear for a Windows scenario'\nassert 'git clone' not in text, 'git is unavailable, so no git clone command may appear'\nassert 'do not install it' in low or 'not install git' in low, 'the documented git rule must be cited'\nfor claim in ('downloaded successfully', 'clone complete', 'device detected on', 'firmware flashed', 'flash succeeded', 'apps installed'):\n    assert claim not in low, 'must not claim an executed step: ' + claim\nassert 'untested' in low, 'the record must state what remains untested'\n\nreport = {'download_mode_coaching': True, 'launch_and_next_step': True, 'no_false_execution': True, 'no_git_clone': True, 'no_tar_gz_variant': True, 'onboard_handoff': True, 'scenario_applied': True, 'windows_fallback': True}\nPath('maker-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('maker-setup record: headless execution record verified; repo download, USB detection, firmware flash and app installation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_maker_setup.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('maker-setup-record.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'https://github.com/moremas/build-with-claude' in text, 'the repo URL from the command doc is missing'\nassert 'curl.exe -L -o bwc.zip' in text, 'the documented Windows PowerShell fallback is missing'\nassert 'Rename-Item build-with-claude-main build-with-claude' in text, 'the fallback rename step is missing'\nassert 'build-with-claude/' in text, 'the repo must land in the build-with-claude/ directory'\nassert 'onboard/scripts/onboard.py --apps buddy' in text, 'the m5-onboard handoff command is missing'\nassert 'press and HOLD BtnG0, briefly press BtnRST' in text, 'the download-mode button coaching must be relayed'\nassert 'screen should be fully dark' in text, 'the dark-screen confirmation must be surfaced'\nassert 'Claude Buddy' in text, 'step 3 must tell the user how to launch Claude Buddy'\nassert 'ask what they want to build next' in text, 'step 3 must ask what to build next'\nassert 'Priya' in text, 'the record must name the scenario user'\nassert 'Windows 11' in text, 'the record must record the scenario OS'\nassert 'main.tar.gz' not in text, 'the macOS and Linux tarball variant must not appear for a Windows scenario'\nassert 'git clone' not in text, 'git is unavailable, so no git clone command may appear'\nassert 'do not install it' in low or 'not install git' in low, 'the documented git rule must be cited'\nfor claim in ('downloaded successfully', 'clone complete', 'device detected on', 'firmware flashed', 'flash succeeded', 'apps installed'):\n    assert claim not in low, 'must not claim an executed step: ' + claim\nassert 'untested' in low, 'the record must state what remains untested'\n\nreport = {'download_mode_coaching': True, 'launch_and_next_step': True, 'no_false_execution': True, 'no_git_clone': True, 'no_tar_gz_variant': True, 'onboard_handoff': True, 'scenario_applied': True, 'windows_fallback': True}\nPath('maker-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('maker-setup record: headless execution record verified; repo download, USB detection, firmware flash and app installation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-verification.json",
+          "equals": "{\"download_mode_coaching\": true, \"launch_and_next_step\": true, \"no_false_execution\": true, \"no_git_clone\": true, \"no_tar_gz_variant\": true, \"onboard_handoff\": true, \"scenario_applied\": true, \"windows_fallback\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "https://github.com/moremas/build-with-claude"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "curl.exe -L -o bwc.zip"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "Rename-Item build-with-claude-main build-with-claude"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "onboard/scripts/onboard.py --apps buddy"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "press and HOLD BtnG0, briefly press BtnRST"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "Claude Buddy"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "ask what they want to build next"
+        },
+        {
+          "kind": "file",
+          "path": "maker-setup-record.md",
+          "contains": "Priya"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "maker-setup record: headless execution record verified; repo download, USB detection, firmware flash and app installation remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "cardputer-add-stopwatch-without-reflash",
+      "componentId": "skill:cwc-makers:cardputer-buddy",
+      "prompt": "/cwc-makers:cardputer-buddy The user already provisioned a Cardputer-Adv with /maker-setup last week; the clone of build-with-claude is local and the device now shows up on Windows as COM7. Today the user wants a new stopwatch app on the device. Headless boundary: no device is connected in this session, no serial port access, no network, no real external service and no installs; every command you write is documented for the user to run later, so real serial pushes, log tailing and REPL execution remain untested. Write cardputer-iteration.md applying the skill rules to this exact request: work inside the local build-with-claude clone; base the new app on buddy/device/apps/hello_cardputer.py because it is the smallest example of keyboard polling, font and exit conventions; place the new file at buddy/device/apps/stopwatch.py so main.py lists it on next boot; push just that one file without re-flashing using python3 buddy/scripts/push.py --port COM7 --files apps/stopwatch.py; watch the device logs with python3 buddy/scripts/tail_serial.py --port COM7; run the one-shot REPL check python3 buddy/scripts/repl_run.py --port COM7 --script \"import os; print(os.listdir('/flash/apps'))\". The runbook must state that no firmware flashing is involved and that pushing the file makes the app appear on next boot, and it must not contain any firmware flash path. Then read the immutable verify_cardputer_iteration.py and run exactly python verify_cardputer_iteration.py using Bash; it validates the runbook and writes cardputer-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real serial execution and device behavior remain untested.",
+      "allowCommands": [
+        "python verify_cardputer_iteration.py"
+      ],
+      "verifierOutputs": [
+        "cardputer-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_cardputer_iteration.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('cardputer-iteration.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'buddy/device/apps/hello_cardputer.py' in text, 'the documented template app must be cited'\nassert 'buddy/device/apps/stopwatch.py' in text, 'the new app must follow the device apps layout'\nassert 'buddy/device/apps/' in text, 'new apps are dropped into buddy/device/apps/'\nassert re.search(r'python3 buddy/scripts/push\\.py --port COM7 --files apps/stopwatch\\.py', text), 'the push command must target only the stopwatch file on COM7'\nassert re.search(r'python3 buddy/scripts/tail_serial\\.py --port COM7', text), 'the log tailing command is missing'\nassert re.search(r'python3 buddy/scripts/repl_run\\.py --port COM7 --script', text), 'the one-shot REPL command is missing'\nassert re.search(r'os\\.listdir\\([\\'\\\"]/flash/apps[\\'\\\"]\\)', text), 'the REPL check must list /flash/apps'\nassert 'appears on next boot' in text, 'the runbook must state the app appears on next boot'\nassert 'main.py' in text, 'the launcher menu rule must be applied'\nassert 'no firmware flashing' in low, 'the runbook must state no flashing is involved'\nassert 'onboard.py' not in text, 'a push-without-reflash runbook must not include the flash path'\nassert text.count('COM7') >= 3, 'the scenario port must be applied throughout'\nfor claim in ('pushed to the device', 'pushed successfully', 'log output shows', 'repl returned'):\n    assert claim not in low, 'must not claim serial execution happened: ' + claim\nassert 'untested' in low, 'the runbook must state what remains untested'\n\nreport = {'app_layout_respected': True, 'no_flash_path': True, 'push_command': True, 'repl_check': True, 'scenario_port_applied': True, 'tail_command': True, 'template_cited': True, 'untested_declared': True}\nPath('cardputer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('cardputer iteration: push-without-reflash runbook verified; real serial pushes and device behavior remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_cardputer_iteration.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('cardputer-iteration.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'buddy/device/apps/hello_cardputer.py' in text, 'the documented template app must be cited'\nassert 'buddy/device/apps/stopwatch.py' in text, 'the new app must follow the device apps layout'\nassert 'buddy/device/apps/' in text, 'new apps are dropped into buddy/device/apps/'\nassert re.search(r'python3 buddy/scripts/push\\.py --port COM7 --files apps/stopwatch\\.py', text), 'the push command must target only the stopwatch file on COM7'\nassert re.search(r'python3 buddy/scripts/tail_serial\\.py --port COM7', text), 'the log tailing command is missing'\nassert re.search(r'python3 buddy/scripts/repl_run\\.py --port COM7 --script', text), 'the one-shot REPL command is missing'\nassert re.search(r'os\\.listdir\\([\\'\\\"]/flash/apps[\\'\\\"]\\)', text), 'the REPL check must list /flash/apps'\nassert 'appears on next boot' in text, 'the runbook must state the app appears on next boot'\nassert 'main.py' in text, 'the launcher menu rule must be applied'\nassert 'no firmware flashing' in low, 'the runbook must state no flashing is involved'\nassert 'onboard.py' not in text, 'a push-without-reflash runbook must not include the flash path'\nassert text.count('COM7') >= 3, 'the scenario port must be applied throughout'\nfor claim in ('pushed to the device', 'pushed successfully', 'log output shows', 'repl returned'):\n    assert claim not in low, 'must not claim serial execution happened: ' + claim\nassert 'untested' in low, 'the runbook must state what remains untested'\n\nreport = {'app_layout_respected': True, 'no_flash_path': True, 'push_command': True, 'repl_check': True, 'scenario_port_applied': True, 'tail_command': True, 'template_cited': True, 'untested_declared': True}\nPath('cardputer-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('cardputer iteration: push-without-reflash runbook verified; real serial pushes and device behavior remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-verification.json",
+          "equals": "{\"app_layout_respected\": true, \"no_flash_path\": true, \"push_command\": true, \"repl_check\": true, \"scenario_port_applied\": true, \"tail_command\": true, \"template_cited\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "buddy/device/apps/hello_cardputer.py"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "buddy/device/apps/stopwatch.py"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "python3 buddy/scripts/push.py --port COM7 --files apps/stopwatch.py"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "python3 buddy/scripts/tail_serial.py --port COM7"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "python3 buddy/scripts/repl_run.py --port COM7 --script"
+        },
+        {
+          "kind": "file",
+          "path": "cardputer-iteration.md",
+          "contains": "appears on next boot"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "cardputer iteration: push-without-reflash runbook verified; real serial pushes and device behavior remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "m5-onboard-booth-two-request-plan",
+      "componentId": "skill:cwc-makers:m5-onboard",
+      "prompt": "/cwc-makers:m5-onboard Two provisioning requests arrive in one session at the makers booth; apply the skill decision rules to each and record the outcome in m5-onboard-plan.md. Headless boundary: no device is plugged in, no USB access, no network, no real external service and no installs; the plan documents what would run on the booth workstation, so detection, firmware download, flashing and app installation remain untested. Request A: the visitor plugs in their Cardputer-Adv and says same thing as last time; apply the documented repeat-visitor rule so the plan defaults to --apps buddy, record the default variant --variant cardputer-adv, and record the documented Bash-tool launch pattern for the full fresh run: the skill forbids running onboard.py as a foreground Bash command, so launch with run_in_background: true using the tee pattern python3 scripts/onboard.py --apps buddy 2>&1 | tee /tmp/m5-onboard.log and monitor with tail -f /tmp/m5-onboard.log. The plan must note this is a native-USB ESP32-S3 target so the flash stage runs at 115200 with --no-stub, and it must not mention the forbidden 921600 rate anywhere. When the monitored log shows Enter download mode, the plan must relay the required coaching and stop: press and HOLD BtnG0, briefly press BtnRST, release BtnRST first, keep holding BtnG0 for ~1 more second, release BtnG0, screen should be fully dark; the flash waits until the user confirms the screen is dark. Request B: a second visitor now says their board is a Cardputer with no Adv in the name; apply the variant rule: the plan must ask which model before flashing, must cite that flashing the wrong one boot-loops the device, and must record no provisioning command for Request B until the user answers. Then read the immutable verify_onboard_plan.py and run exactly python verify_onboard_plan.py using Bash; it validates the plan and writes onboard-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real detection, firmware download, flashing and installation remain untested.",
+      "allowCommands": [
+        "python verify_onboard_plan.py"
+      ],
+      "verifierOutputs": [
+        "onboard-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_onboard_plan.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('m5-onboard-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'python3 scripts/onboard.py --apps buddy 2>&1 | tee /tmp/m5-onboard.log' in text, 'the documented background tee launch pattern is missing'\nassert 'run_in_background: true' in text, 'the documented Bash-tool background rule is missing'\nassert 'tail -f /tmp/m5-onboard.log' in text, 'the documented monitor step is missing'\nassert '--variant cardputer-adv' in text, 'the default variant rule must be recorded'\nassert '115200' in text and '--no-stub' in text, 'the native-USB flash baud rule is missing'\nassert '921600' not in text, '921600 is the forbidden baud rate and must not appear'\nassert 'Enter download mode' in text, 'the plan must watch for the download-mode stage banner'\nassert 'press and HOLD BtnG0, briefly press BtnRST' in text, 'the required physical-step coaching is missing'\nassert 'screen should be fully dark' in text, 'the dark-screen confirmation rule is missing'\nassert 'same thing as last time' in text, 'the repeat-visitor rule must be applied to request A'\nassert '--apps buddy' in text, 'the repeat-visitor default must install the buddy bundle'\nassert 'flashing the wrong one boot-loops the device' in text, 'request B must cite the documented boot-loop risk'\nassert 'asks which model' in low or 'ask which model' in low, 'request B must ask before flashing'\nfor claim in ('device detected', 'flash succeeded', 'flashing complete', 'apps installed', 'firmware downloaded'):\n    assert claim not in low, 'must not claim a provisioning step ran: ' + claim\nassert 'untested' in low, 'the plan must state what remains untested'\n\nreport = {'ask_before_variant_flash': True, 'background_tee_pattern': True, 'baud_rule_native_usb': True, 'default_variant': True, 'download_mode_coaching': True, 'no_false_execution': True, 'repeat_visitor_default': True, 'untested_declared': True}\nPath('onboard-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('m5-onboard plan: decision rules for both requests verified; real detection, firmware download, flashing and installation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_onboard_plan.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('m5-onboard-plan.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'python3 scripts/onboard.py --apps buddy 2>&1 | tee /tmp/m5-onboard.log' in text, 'the documented background tee launch pattern is missing'\nassert 'run_in_background: true' in text, 'the documented Bash-tool background rule is missing'\nassert 'tail -f /tmp/m5-onboard.log' in text, 'the documented monitor step is missing'\nassert '--variant cardputer-adv' in text, 'the default variant rule must be recorded'\nassert '115200' in text and '--no-stub' in text, 'the native-USB flash baud rule is missing'\nassert '921600' not in text, '921600 is the forbidden baud rate and must not appear'\nassert 'Enter download mode' in text, 'the plan must watch for the download-mode stage banner'\nassert 'press and HOLD BtnG0, briefly press BtnRST' in text, 'the required physical-step coaching is missing'\nassert 'screen should be fully dark' in text, 'the dark-screen confirmation rule is missing'\nassert 'same thing as last time' in text, 'the repeat-visitor rule must be applied to request A'\nassert '--apps buddy' in text, 'the repeat-visitor default must install the buddy bundle'\nassert 'flashing the wrong one boot-loops the device' in text, 'request B must cite the documented boot-loop risk'\nassert 'asks which model' in low or 'ask which model' in low, 'request B must ask before flashing'\nfor claim in ('device detected', 'flash succeeded', 'flashing complete', 'apps installed', 'firmware downloaded'):\n    assert claim not in low, 'must not claim a provisioning step ran: ' + claim\nassert 'untested' in low, 'the plan must state what remains untested'\n\nreport = {'ask_before_variant_flash': True, 'background_tee_pattern': True, 'baud_rule_native_usb': True, 'default_variant': True, 'download_mode_coaching': True, 'no_false_execution': True, 'repeat_visitor_default': True, 'untested_declared': True}\nPath('onboard-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('m5-onboard plan: decision rules for both requests verified; real detection, firmware download, flashing and installation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "onboard-verification.json",
+          "equals": "{\"ask_before_variant_flash\": true, \"background_tee_pattern\": true, \"baud_rule_native_usb\": true, \"default_variant\": true, \"download_mode_coaching\": true, \"no_false_execution\": true, \"repeat_visitor_default\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "python3 scripts/onboard.py --apps buddy 2>&1 | tee /tmp/m5-onboard.log"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "run_in_background: true"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "tail -f /tmp/m5-onboard.log"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "--variant cardputer-adv"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "--no-stub"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "Enter download mode"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "press and HOLD BtnG0, briefly press BtnRST"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "flashing the wrong one boot-loops the device"
+        },
+        {
+          "kind": "file",
+          "path": "m5-onboard-plan.md",
+          "contains": "same thing as last time"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "m5-onboard plan: decision rules for both requests verified; real detection, firmware download, flashing and installation remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

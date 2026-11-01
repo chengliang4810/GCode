@@ -221,7 +221,7 @@ func TestIntegrationPageErrorsAreInlineAndPreserveFailedDraft(t *testing.T) {
 }
 
 func TestCaptureIntegrationSettingsAudit(t *testing.T) {
-	dir := os.Getenv("ZERON_INTEGRATIONS_AUDIT_DIR")
+	dir := os.Getenv("RCODE_INTEGRATIONS_AUDIT_DIR")
 	if dir == "" {
 		t.Skip("explicit audit directory required")
 	}
@@ -275,8 +275,8 @@ func TestCaptureIntegrationSettingsAudit(t *testing.T) {
 					tc.setup(a)
 				}
 				a.state.Settings.Appearance.Mode = mode
-				a.state.Settings.Appearance.ThemeID = "zeron-" + mode
-				a.palette = design.Palette("zeron-"+mode, mode == "dark")
+				a.state.Settings.Appearance.ThemeID = "rcode-" + mode
+				a.palette = design.Palette("rcode-"+mode, mode == "dark")
 				tt := ui.NewTester(a.View, 1320, 880)
 				file, err := os.Create(filepath.Join(dir, tc.name+"-"+mode+".png"))
 				if err != nil {

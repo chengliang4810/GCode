@@ -8,7 +8,7 @@ standard Windows loader and needs no CGO or production Go dependency.
 ./scripts/build-native-wgc-bridge.ps1
 go build -tags uifixture -o output/model-picker-fixture.exe ./cmd/model-picker-fixture
 # Native runs must be serialized with other fixture/evidence windows.
-./output/model-picker-fixture.exe --out-dir output/my-fresh-wgc-run --capture-mode wgc --capture-bridge D:/projects/GCode/output/native-wgc-bridge/zeron_fixture_wgc.dll
+./output/model-picker-fixture.exe --out-dir output/my-fresh-wgc-run --capture-mode wgc --capture-bridge D:/projects/GCode/output/native-wgc-bridge/rcode_fixture_wgc.dll
 ```
 
 `captureNativeWindow(ctx, hwnd, bridgePath, outputPath)` is the Go adapter
@@ -69,7 +69,7 @@ are screening results; no scene has passed visual acceptance.
 The frozen GPUI dependency is `b564a34413bb7ef1da04121c4a287758f94993d9`.
 These are source configuration facts, rather than runtime attribute readings:
 
-| Area | Frozen GPUI | MyGo `zeron-native-ui.3` |
+| Area | Frozen GPUI | Historical MyGo `zeron-native-ui.3` |
 | --- | --- | --- |
 | Background policy | `crates/gpui/src/window.rs:1447` always applies the requested background; the default is Opaque (`platform.rs:2097–2114,2200–2210`). `gpui_windows/src/window.rs:876–880,1590–1637` applies `SetWindowCompositionAttribute` with `WCA_ACCENT_POLICY=0x13`, accent state `0`, flags `2`, gradient `0`. | `third_party/mygo/internal/windows/window.go:210–213` applies the window theme, but calls `SetVibrancy` only for a nonempty option. No `WCA_ACCENT_POLICY` call exists in this backend. |
 | DWM backdrop type | DWM attribute 38 is written only by the explicit Mica/MicaAlt branches (`gpui_windows/src/window.rs:886–893,1561–1588`). The Opaque branch uses the accent-policy API instead. | `window.go:1043–1070` maps an explicit `SetVibrancy("")` call to `DWMSBT_NONE=1`; constructor absence skips that call, so absent Vibrancy is not evidence of an explicit attribute-38 NONE setting. |

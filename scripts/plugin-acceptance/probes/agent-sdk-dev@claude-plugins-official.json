@@ -1,0 +1,297 @@
+{
+  "pluginId": "agent-sdk-dev@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "verify-lead-notes-py-app",
+      "componentId": "agent:agent-sdk-dev:agent-sdk-verifier-py",
+      "prompt": "Use the Agent tool with subagent_type agent-sdk-dev:agent-sdk-verifier-py to verify the pre-built Python Agent SDK app in the lead-notes-py directory, following that agent description for a static, sandbox-only verification. Pass the child the complete task: verify SDK installation and configuration, where requirements.txt must list claude-agent-sdk; verify Python environment setup; verify SDK usage and patterns in main.py, which imports from claude_agent_sdk and consumes the query iterator; verify environment and security, where .env.example holds the placeholder ANTHROPIC_API_KEY=your_api_key_here and .gitignore covers .env; check for basic syntax errors; and produce the report with these exact section labels: Overall Status, Summary, Critical Issues, Warnings, Passed Checks, Recommendations. Sandbox boundary to pass to the child and to honor in the report: dependency installation, the live SDK import, python execution of the app and any agent run are unavailable, so the report must include exactly this line: Dependency installation, the live SDK import and any agent execution were not run in this headless sandbox and remain untested. The app contains a planted syntax defect in main.py at the parse_lead function; the child must report the file and the function, classify it as a critical issue, and set the Overall Status to FAIL. After the child finishes, write its complete report verbatim into agent-sdk-verification-py.md, then read the immutable verify_agent_sdk_py.py and run exactly python verify_agent_sdk_py.py using Bash; it validates the report and writes agent-sdk-py-check.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Do not fix the planted defect; the child reports on the app as it stands. Final response: state the child verdict and report the actual verifier result, and note that installation, live import and any agent run remain untested.",
+      "allowCommands": [
+        "python verify_agent_sdk_py.py"
+      ],
+      "verifierOutputs": [
+        "agent-sdk-py-check.json"
+      ],
+      "fixtures": [
+        {
+          "path": "lead-notes-py/requirements.txt",
+          "text": "claude-agent-sdk\n"
+        },
+        {
+          "path": "lead-notes-py/main.py",
+          "text": "import asyncio\n\nfrom claude_agent_sdk import query\n\n\nasync def main() -> None:\n    response = query(\n        prompt=\"Draft follow-up notes for lead-notes-py\",\n        options={\"systemPrompt\": \"You summarize sales calls into lead notes\"},\n    )\n    async for message in response:\n        print(message)\n\n\ndef parse_lead(line: str\n    parts = line.split(\"|\")\n    return {\"name\": parts[0].strip(), \"stage\": parts[1].strip()}\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n"
+        },
+        {
+          "path": "lead-notes-py/.env.example",
+          "text": "ANTHROPIC_API_KEY=your_api_key_here\n"
+        },
+        {
+          "path": "lead-notes-py/.gitignore",
+          "text": ".env\n__pycache__/\n"
+        },
+        {
+          "path": "verify_agent_sdk_py.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'child_verdict_fail': True, 'defect_reported': True, 'defect_still_present': True, 'env_setup_intact': True, 'honesty_boundary': True, 'report_sections': True}\n\nreport = Path('agent-sdk-verification-py.md').read_text(encoding='utf-8')\nfor anchor in ('Overall Status', 'Critical Issues', 'FAIL', 'parse_lead', 'main.py',\n               'Dependency installation, the live SDK import and any agent execution were not '\n               'run in this headless sandbox and remain untested'):\n    assert anchor in report, 'child report missing: ' + anchor\nmain = Path('lead-notes-py/main.py').read_text(encoding='utf-8')\nassert 'def parse_lead(line: str' in main, 'the planted defect must remain in place'\nreqs = Path('lead-notes-py/requirements.txt').read_text(encoding='utf-8')\nassert 'claude-agent-sdk' in reqs, 'requirements.txt must still list the SDK'\ngitignore = Path('lead-notes-py/.gitignore').read_text(encoding='utf-8')\nassert '.env' in gitignore, 'the healthy .gitignore must stay intact'\n\nPath('agent-sdk-py-check.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent SDK verifier py: child report FAIL grounded in the planted syntax defect; live import and agent run remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "lead-notes-py/requirements.txt",
+          "equals": "claude-agent-sdk\n"
+        },
+        {
+          "kind": "file",
+          "path": "lead-notes-py/main.py",
+          "equals": "import asyncio\n\nfrom claude_agent_sdk import query\n\n\nasync def main() -> None:\n    response = query(\n        prompt=\"Draft follow-up notes for lead-notes-py\",\n        options={\"systemPrompt\": \"You summarize sales calls into lead notes\"},\n    )\n    async for message in response:\n        print(message)\n\n\ndef parse_lead(line: str\n    parts = line.split(\"|\")\n    return {\"name\": parts[0].strip(), \"stage\": parts[1].strip()}\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n"
+        },
+        {
+          "kind": "file",
+          "path": "lead-notes-py/.env.example",
+          "equals": "ANTHROPIC_API_KEY=your_api_key_here\n"
+        },
+        {
+          "kind": "file",
+          "path": "lead-notes-py/.gitignore",
+          "equals": ".env\n__pycache__/\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_agent_sdk_py.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'child_verdict_fail': True, 'defect_reported': True, 'defect_still_present': True, 'env_setup_intact': True, 'honesty_boundary': True, 'report_sections': True}\n\nreport = Path('agent-sdk-verification-py.md').read_text(encoding='utf-8')\nfor anchor in ('Overall Status', 'Critical Issues', 'FAIL', 'parse_lead', 'main.py',\n               'Dependency installation, the live SDK import and any agent execution were not '\n               'run in this headless sandbox and remain untested'):\n    assert anchor in report, 'child report missing: ' + anchor\nmain = Path('lead-notes-py/main.py').read_text(encoding='utf-8')\nassert 'def parse_lead(line: str' in main, 'the planted defect must remain in place'\nreqs = Path('lead-notes-py/requirements.txt').read_text(encoding='utf-8')\nassert 'claude-agent-sdk' in reqs, 'requirements.txt must still list the SDK'\ngitignore = Path('lead-notes-py/.gitignore').read_text(encoding='utf-8')\nassert '.env' in gitignore, 'the healthy .gitignore must stay intact'\n\nPath('agent-sdk-py-check.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent SDK verifier py: child report FAIL grounded in the planted syntax defect; live import and agent run remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-py-check.json",
+          "equals": "{\"child_verdict_fail\": true, \"defect_reported\": true, \"defect_still_present\": true, \"env_setup_intact\": true, \"honesty_boundary\": true, \"report_sections\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "Overall Status"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "Critical Issues"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "FAIL"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "parse_lead"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "main.py"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-py.md",
+          "contains": "Dependency installation, the live SDK import and any agent execution were not run in this headless sandbox and remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Agent SDK verifier py: child report FAIL grounded in the planted syntax defect; live import and agent run remain untested"
+        }
+      ]
+    },
+    {
+      "id": "verify-support-desk-ts-app",
+      "componentId": "agent:agent-sdk-dev:agent-sdk-verifier-ts",
+      "prompt": "Use the Agent tool with subagent_type agent-sdk-dev:agent-sdk-verifier-ts to verify the pre-built TypeScript Agent SDK app in the support-desk-ts directory, following that agent description for a static, sandbox-only verification. Pass the child the complete task: verify SDK installation and configuration in package.json including the @anthropic-ai/claude-agent-sdk dependency, the type module setting and the build, start and typecheck scripts; verify TypeScript configuration in tsconfig.json; verify SDK usage and patterns in src/index.ts where query is imported and awaited; verify environment and security, where .env.example must hold the placeholder ANTHROPIC_API_KEY=your_api_key_here and .gitignore must cover .env; and produce the report with these exact section labels: Overall Status, Summary, Critical Issues, Warnings, Passed Checks, Recommendations. Sandbox boundary to pass to the child and to honor in the report: dependency installation, npx tsc type checking, network access and any live SDK execution are unavailable, so the report must include exactly this line: Type checking with tsc, dependency installation and any live SDK call were not run in this headless sandbox and remain untested. Per the documented security checks, the planted defect that .env is missing from .gitignore must be reported as a critical issue and the Overall Status must be FAIL. After the child finishes, write its complete report verbatim into agent-sdk-verification-ts.md, then read the immutable verify_agent_sdk_ts.py and run exactly python verify_agent_sdk_ts.py using Bash; it validates the report and writes agent-sdk-ts-check.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Do not fix the planted defect; the child reports on the app as it stands. Final response: state the child verdict and report the actual verifier result, and note that type checking, installation and any live SDK run remain untested.",
+      "allowCommands": [
+        "python verify_agent_sdk_ts.py"
+      ],
+      "verifierOutputs": [
+        "agent-sdk-ts-check.json"
+      ],
+      "fixtures": [
+        {
+          "path": "support-desk-ts/package.json",
+          "text": "{\n  \"name\": \"support-desk-ts\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"build\": \"tsc\",\n    \"start\": \"node dist/index.js\",\n    \"typecheck\": \"tsc --noEmit\"\n  },\n  \"dependencies\": {\n    \"@anthropic-ai/claude-agent-sdk\": \"^0.1.5\"\n  },\n  \"devDependencies\": {\n    \"typescript\": \"^5.7.2\"\n  }\n}\n"
+        },
+        {
+          "path": "support-desk-ts/tsconfig.json",
+          "text": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"outDir\": \"dist\",\n    \"strict\": true\n  },\n  \"include\": [\"src\"]\n}\n"
+        },
+        {
+          "path": "support-desk-ts/src/index.ts",
+          "text": "import { query } from \"@anthropic-ai/claude-agent-sdk\";\n\nasync function main(): Promise<void> {\n  const response = query({\n    prompt: \"Summarize new support desk tickets\",\n    options: { systemPrompt: \"You triage tickets for support-desk-ts\" },\n  });\n  for await (const message of response) {\n    console.log(message);\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(\"support-desk-ts failed:\", error);\n  process.exit(1);\n});\n"
+        },
+        {
+          "path": "support-desk-ts/.env.example",
+          "text": "ANTHROPIC_API_KEY=your_api_key_here\n"
+        },
+        {
+          "path": "support-desk-ts/.gitignore",
+          "text": "node_modules/\ndist/\n"
+        },
+        {
+          "path": "verify_agent_sdk_ts.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'child_verdict_fail': True, 'finding_grounded': True, 'gitignore_defect_present': True, 'honesty_boundary': True, 'report_sections': True, 'sdk_usage_intact': True}\n\nreport = Path('agent-sdk-verification-ts.md').read_text(encoding='utf-8')\nfor anchor in ('Overall Status', 'Critical Issues', 'FAIL', '.gitignore', '.env',\n               'support-desk-ts',\n               'Type checking with tsc, dependency installation and any live SDK call were not '\n               'run in this headless sandbox and remain untested'):\n    assert anchor in report, 'child report missing: ' + anchor\nassert 'tsc passed' not in report, 'the report must not claim type checking ran'\ngitignore = Path('support-desk-ts/.gitignore').read_text(encoding='utf-8')\nassert '.env' not in gitignore, 'the planted defect must remain in place'\nindex = Path('support-desk-ts/src/index.ts').read_text(encoding='utf-8')\nassert '@anthropic-ai/claude-agent-sdk' in index, 'SDK import must stay intact'\n\nPath('agent-sdk-ts-check.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent SDK verifier ts: child report FAIL grounded in the planted defect; type checking and install remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "support-desk-ts/package.json",
+          "equals": "{\n  \"name\": \"support-desk-ts\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"build\": \"tsc\",\n    \"start\": \"node dist/index.js\",\n    \"typecheck\": \"tsc --noEmit\"\n  },\n  \"dependencies\": {\n    \"@anthropic-ai/claude-agent-sdk\": \"^0.1.5\"\n  },\n  \"devDependencies\": {\n    \"typescript\": \"^5.7.2\"\n  }\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "support-desk-ts/tsconfig.json",
+          "equals": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"outDir\": \"dist\",\n    \"strict\": true\n  },\n  \"include\": [\"src\"]\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "support-desk-ts/src/index.ts",
+          "equals": "import { query } from \"@anthropic-ai/claude-agent-sdk\";\n\nasync function main(): Promise<void> {\n  const response = query({\n    prompt: \"Summarize new support desk tickets\",\n    options: { systemPrompt: \"You triage tickets for support-desk-ts\" },\n  });\n  for await (const message of response) {\n    console.log(message);\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(\"support-desk-ts failed:\", error);\n  process.exit(1);\n});\n"
+        },
+        {
+          "kind": "file",
+          "path": "support-desk-ts/.env.example",
+          "equals": "ANTHROPIC_API_KEY=your_api_key_here\n"
+        },
+        {
+          "kind": "file",
+          "path": "support-desk-ts/.gitignore",
+          "equals": "node_modules/\ndist/\n"
+        },
+        {
+          "kind": "file",
+          "path": "verify_agent_sdk_ts.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'child_verdict_fail': True, 'finding_grounded': True, 'gitignore_defect_present': True, 'honesty_boundary': True, 'report_sections': True, 'sdk_usage_intact': True}\n\nreport = Path('agent-sdk-verification-ts.md').read_text(encoding='utf-8')\nfor anchor in ('Overall Status', 'Critical Issues', 'FAIL', '.gitignore', '.env',\n               'support-desk-ts',\n               'Type checking with tsc, dependency installation and any live SDK call were not '\n               'run in this headless sandbox and remain untested'):\n    assert anchor in report, 'child report missing: ' + anchor\nassert 'tsc passed' not in report, 'the report must not claim type checking ran'\ngitignore = Path('support-desk-ts/.gitignore').read_text(encoding='utf-8')\nassert '.env' not in gitignore, 'the planted defect must remain in place'\nindex = Path('support-desk-ts/src/index.ts').read_text(encoding='utf-8')\nassert '@anthropic-ai/claude-agent-sdk' in index, 'SDK import must stay intact'\n\nPath('agent-sdk-ts-check.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent SDK verifier ts: child report FAIL grounded in the planted defect; type checking and install remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-ts-check.json",
+          "equals": "{\"child_verdict_fail\": true, \"finding_grounded\": true, \"gitignore_defect_present\": true, \"honesty_boundary\": true, \"report_sections\": true, \"sdk_usage_intact\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": "Overall Status"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": "Critical Issues"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": "FAIL"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": ".gitignore"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": ".env"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": "support-desk-ts"
+        },
+        {
+          "kind": "file",
+          "path": "agent-sdk-verification-ts.md",
+          "contains": "Type checking with tsc, dependency installation and any live SDK call were not run in this headless sandbox and remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Agent SDK verifier ts: child report FAIL grounded in the planted defect; type checking and install remain untested"
+        }
+      ]
+    },
+    {
+      "id": "scaffold-ticket-triage-python",
+      "componentId": "command:agent-sdk-dev:new-sdk-app",
+      "prompt": "/agent-sdk-dev:new-sdk-app ticket-triage Follow the new-sdk-app command for a Python project with these requirements pre-answered so no interactive questions are needed: project name ticket-triage from the command argument; language Python; agent type is a coding agent that triages incoming support tickets; starting point is the minimal hello world example; tooling is pip with a requirements.txt file. Headless boundary: no WebFetch and no WebSearch, so reading the live documentation pages stays untested; no pip install and no npm install, so recording claude-agent-sdk in requirements.txt stands in for installation; no API key, so only the placeholder .env.example is created; and no subagent delegation in this probe, so the verification step runs locally instead of launching agent-sdk-verifier-py. Create the project under the ticket-triage directory with: requirements.txt listing claude-agent-sdk; main.py that imports the SDK package claude_agent_sdk, defines an async main that iterates one query call with the prompt Triage the newest support ticket and a system prompt naming ticket-triage, wraps the call in try and except for basic error handling, and starts via asyncio.run(main()) under the standard name guard; .env.example containing exactly ANTHROPIC_API_KEY=your_api_key_here; .gitignore containing .env; and a short README.md with setup and run instructions using pip install -r requirements.txt and python main.py. After creating the files, run exactly python -m py_compile ticket-triage/main.py using Bash as the local syntax check, which stands in for the command basic syntax errors verification. Then read the immutable verify_new_sdk_app.py and run exactly python verify_new_sdk_app.py using Bash; it validates the scaffold and writes new-sdk-app-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. These are the only allowed Bash commands, without prefixes, suffixes, redirection or extra shell operations. Never create a .env file. Final response: name the created files, report the actual verifier result, and state that docs reading, dependency installation, live SDK import and any real agent run remain untested.",
+      "allowCommands": [
+        "python -m py_compile ticket-triage/main.py",
+        "python verify_new_sdk_app.py"
+      ],
+      "verifierOutputs": [
+        "new-sdk-app-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_new_sdk_app.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'api_key_placeholder': True, 'dependency_recorded': True, 'error_handling': True, 'env_ignored': True, 'no_real_env': True, 'project_identity': True, 'syntax_ok': True}\n\nimport subprocess\nimport sys\n\nbase = Path('ticket-triage')\nreqs = (base / 'requirements.txt').read_text(encoding='utf-8')\nassert 'claude-agent-sdk' in reqs, 'requirements.txt must record the SDK dependency'\nmain = (base / 'main.py').read_text(encoding='utf-8')\nfor anchor in ('claude_agent_sdk', 'asyncio.run(main())', 'ticket-triage', 'except'):\n    assert anchor in main, 'main.py missing: ' + anchor\nenv_example = (base / '.env.example').read_text(encoding='utf-8')\nassert 'ANTHROPIC_API_KEY=your_api_key_here' in env_example, 'placeholder key file wrong'\ngitignore = (base / '.gitignore').read_text(encoding='utf-8')\nassert '.env' in gitignore, '.gitignore must cover .env'\nassert not (base / '.env').exists() and not Path('.env').exists(), 'a real .env was created'\nproc = subprocess.run([sys.executable, '-m', 'py_compile', str(base / 'main.py')],\n                      capture_output=True, text=True, timeout=30)\nassert proc.returncode == 0, 'main.py does not compile: ' + proc.stderr\n\nPath('new-sdk-app-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('New SDK app scaffold: structure, placeholder key and syntax verified; live install and API run remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_new_sdk_app.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'api_key_placeholder': True, 'dependency_recorded': True, 'error_handling': True, 'env_ignored': True, 'no_real_env': True, 'project_identity': True, 'syntax_ok': True}\n\nimport subprocess\nimport sys\n\nbase = Path('ticket-triage')\nreqs = (base / 'requirements.txt').read_text(encoding='utf-8')\nassert 'claude-agent-sdk' in reqs, 'requirements.txt must record the SDK dependency'\nmain = (base / 'main.py').read_text(encoding='utf-8')\nfor anchor in ('claude_agent_sdk', 'asyncio.run(main())', 'ticket-triage', 'except'):\n    assert anchor in main, 'main.py missing: ' + anchor\nenv_example = (base / '.env.example').read_text(encoding='utf-8')\nassert 'ANTHROPIC_API_KEY=your_api_key_here' in env_example, 'placeholder key file wrong'\ngitignore = (base / '.gitignore').read_text(encoding='utf-8')\nassert '.env' in gitignore, '.gitignore must cover .env'\nassert not (base / '.env').exists() and not Path('.env').exists(), 'a real .env was created'\nproc = subprocess.run([sys.executable, '-m', 'py_compile', str(base / 'main.py')],\n                      capture_output=True, text=True, timeout=30)\nassert proc.returncode == 0, 'main.py does not compile: ' + proc.stderr\n\nPath('new-sdk-app-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('New SDK app scaffold: structure, placeholder key and syntax verified; live install and API run remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "new-sdk-app-verification.json",
+          "equals": "{\"api_key_placeholder\": true, \"dependency_recorded\": true, \"env_ignored\": true, \"error_handling\": true, \"no_real_env\": true, \"project_identity\": true, \"syntax_ok\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/requirements.txt",
+          "contains": "claude-agent-sdk"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/main.py",
+          "contains": "claude_agent_sdk"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/main.py",
+          "contains": "asyncio.run(main())"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/main.py",
+          "contains": "ticket-triage"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/.env.example",
+          "contains": "ANTHROPIC_API_KEY=your_api_key_here"
+        },
+        {
+          "kind": "file",
+          "path": "ticket-triage/.gitignore",
+          "contains": ".env"
+        },
+        {
+          "kind": "file-absent",
+          "path": "ticket-triage/.env"
+        },
+        {
+          "kind": "file-absent",
+          "path": ".env"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "New SDK app scaffold: structure, placeholder key and syntax verified; live install and API run remain untested"
+        }
+      ]
+    }
+  ]
+}

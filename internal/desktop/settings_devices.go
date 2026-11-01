@@ -9,6 +9,10 @@ import (
 )
 
 func (a *App) deviceSettings(c *ui.Context) {
+	if a.state.Runtime != nil {
+		a.runtimeDeviceSettings(c)
+		return
+	}
 	copy := "Devices in this workspace."
 	scope := a.state.Integrations.WorkspaceScope
 	switch scope {
@@ -81,7 +85,7 @@ func (a *App) deviceRow(c *ui.Context, d contracts.Device) {
 			a.integrationUI.CopiedDevice = d.ID
 			a.integrationUI.CopiedUntil = c.Now().Add(1800 * time.Millisecond)
 		})
-		textButton(c, tr(c, "Rename")).Label(tr(c, "Rename ") + d.Name).Background(a.palette.Text.Alpha(.05)).OnClick(func() {
+		textButton(c, tr(c, "Rename")).Label(tr(c, "Rename ") + d.Name).OnClick(func() {
 			a.integrationUI.RenameID = d.ID
 			a.integrationUI.RenameText = d.Name
 			a.integrationUI.RenameOpen = true

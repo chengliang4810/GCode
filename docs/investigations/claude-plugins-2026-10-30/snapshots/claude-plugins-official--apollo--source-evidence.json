@@ -1,0 +1,38 @@
+{
+  "repo": "apolloio/apollo-mcp-plugin",
+  "commit": "bd0513c961f02105492fcff0d7d29c9cccf1ed23",
+  "path": ".",
+  "archive_sha256": "d1096b663f3ea7d809b226b3587140a978c172440dd5bc7e784b0350a784a48b",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".github/workflows/publish-mcp.yml",
+    ".gitignore",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "glama.json",
+    "server.json",
+    "skills/analytics/SKILL.md",
+    "skills/enrich-lead/SKILL.md",
+    "skills/gtm-strategist/SKILL.md",
+    "skills/gtm-strategist/references/audience-build.md",
+    "skills/gtm-strategist/references/execution.md",
+    "skills/gtm-strategist/references/strategist-doctrine.md",
+    "skills/prospect/SKILL.md",
+    "skills/sequence-load/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"apollo\",\n  \"version\": \"0.1.1\",\n  \"description\": \"Prospect, enrich leads, load outreach sequences, and query sales analytics with Apollo.io — one-click MCP server integration for Claude Code and Cowork.\",\n  \"author\": {\n    \"name\": \"Apollo.io\",\n    \"url\": \"https://www.apollo.io/\"\n  },\n  \"repository\": \"https://github.com/apolloio/apollo-mcp-plugin\",\n  \"homepage\": \"https://www.apollo.io/\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"apollo\", \"sales\", \"prospecting\", \"icp\", \"enrichment\", \"sequences\", \"analytics\", \"mcp\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"apollo\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.apollo.io/mcp\"\n    }\n  }\n}"
+  },
+  "markdown_frontmatter": {
+    "skills/sequence-load/SKILL.md": "\nname: sequence-load\ndescription: \"Find leads matching criteria and bulk-add them to an Apollo outreach sequence. Handles enrichment, contact creation, deduplication, and enrollment in one flow.\"\nuser-invocable: true\nargument-hint: [targeting criteria + sequence name]\n",
+    "skills/prospect/SKILL.md": "\nname: prospect\ndescription: \"Full ICP-to-leads pipeline. Describe your ideal customer in plain English and get a ranked table of enriched decision-maker leads with emails and phone numbers.\"\nuser-invocable: true\nargument-hint: [describe your ideal customer]\n",
+    "skills/analytics/SKILL.md": "\nname: analytics\ndescription: \"Instant sales analytics. Ask any performance question — emails, calls, meetings, tasks, opportunities, sequences, conversation intelligence — and get formatted tables with real Apollo data.\"\nuser-invocable: true\nargument-hint: [your analytics question]\n",
+    "skills/enrich-lead/SKILL.md": "\nname: enrich-lead\ndescription: \"Instant lead enrichment. Drop a name, company, LinkedIn URL, or email and get the full contact card with email, phone, title, company intel, and next actions.\"\nuser-invocable: true\nargument-hint: [name, company, LinkedIn URL, or email]\n",
+    "skills/gtm-strategist/SKILL.md": "\nname: gtm-strategist\ndescription: Turns a sales or pipeline goal into an opinionated, executable GTM play using Apollo.\ndisable-model-invocation: true\nargument-hint: \"<sales or pipeline goal>\"\n"
+  }
+}

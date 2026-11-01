@@ -1,0 +1,19 @@
+{
+  "repo": "SAP-samples/hana-cli-claude-plugin",
+  "commit": "abadd0aba32792b6378ed784e9f6d3e5b25dfc2a",
+  "path": ".",
+  "archive_sha256": "b015d0c34b4d1bfb999b001bddad88b066996d577cee2e5c0f9b0d27eb12324e",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    ".mcp.json",
+    "LICENSES/Apache-2.0.txt",
+    "README.md",
+    "REUSE.toml"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"hana-cli\",\n  \"description\": \"150+ SAP HANA database tools for AI assistants. Query tables, import/export data, profile data quality, compare schemas, manage backups, monitor performance, and more. Connects to SAP HANA Cloud and on-premise databases.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"SAP\",\n    \"url\": \"https://github.com/SAP-samples\"\n  },\n  \"homepage\": \"https://github.com/SAP-samples/hana-developer-cli-tool-example\",\n  \"repository\": \"https://github.com/SAP-samples/hana-cli-claude-plugin\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"sap\",\n    \"hana\",\n    \"database\",\n    \"sql\",\n    \"data-tools\",\n    \"schema\",\n    \"import\",\n    \"export\",\n    \"monitoring\",\n    \"performance\",\n    \"backup\",\n    \"security\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"hana-cli\": {\n    \"command\": \"npx\",\n    \"args\": [\"-y\", \"-p\", \"hana-cli\", \"hana-cli-mcp\"]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

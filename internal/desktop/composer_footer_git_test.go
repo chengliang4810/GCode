@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"testing"
-	"time"
-
 	"gcode/internal/assets"
+	"testing"
+
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/mock"
@@ -37,14 +36,13 @@ func footerGitTestApp(t *testing.T, scenario string) *App {
 
 func footerGitTester(a *App) *ui.Tester {
 	return ui.NewTester(func(c *ui.Context) {
-		a.palette = design.Palette("zeron-dark", true)
+		a.palette = design.Palette("rcode-dark", true)
 		c.SetTheme(a.palette.UI())
 		c.Root().Font("Geist").FontSize(13).TextColor(a.palette.Text)
 		design.ApplyReferenceTypography(c)
 		ui.Column(c).Fill().Padding(24).Justify(ui.End).Children(func() {
 			ui.Row(c).FillWidth().Height(24).AlignItems(ui.Center).Children(func() {
 				a.composerFooterGit(c)
-				a.composerFooterPRBadge(c)
 			})
 		})
 	}, 840, 560)
@@ -94,6 +92,30 @@ func TestComposerFooterNewWorktreeMenuAndSend(t *testing.T) {
 	}
 	if _, ok := tt.Find("Select checkout"); ok {
 		t.Fatal("created session still exposes an editable checkout")
+	}
+}
+
+func TestComposerFooterCurrentRefPreservesProjectDirectory(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	a.state.Projects[0].Path += "/selected-subdirectory"
+	_, _, git := a.syncComposerFooterGit()
+	if !git {
+		t.Fatal("fixture lost Git detection")
+	}
+	scope := a.footerGit.Scope
+	a.state.RepoRefs[scope.Key()] = contracts.RepoRefs{
+		Scope: scope, State: contracts.LoadReady,
+		Rows: []contracts.RepoRef{
+			{Name: "main", Current: true, WorktreePath: "/repository"},
+		},
+	}
+	plan := a.composerFooterCheckoutPlan()
+	if plan == nil || plan.Kind != contracts.CheckoutCurrent || plan.Path != "" || plan.Branch != "main" {
+		t.Fatalf("current ref would replace the selected project directory: %+v", plan)
+	}
+	a.state.Projects[0].GitDetected = false
+	if plan := a.composerFooterCheckoutPlan(); plan != nil {
+		t.Fatalf("non-Git project supplied a checkout plan: %+v", plan)
 	}
 }
 
@@ -193,7 +215,7 @@ func TestComposerFooterScopeAndGenerationRejectLateSwitch(t *testing.T) {
 	a := footerGitTestApp(t, "")
 	oldScope, oldSequence := a.footerGit.Scope, a.footerGit.Sequence
 	a.footerGit.Kind = contracts.CheckoutNew
-	a.projectID = "zeron"
+	a.projectID = "rcode"
 	a.syncComposerFooterGit()
 	if a.footerGit.HeldRef == nil || a.footerGit.HeldRef.Name != "main" {
 		t.Fatal("project transition lost the held display ref")
@@ -228,10 +250,10 @@ func TestComposerFooterScopeAndGenerationRejectLateSwitch(t *testing.T) {
 
 func TestComposerFooterCloudLossAndNonGit(t *testing.T) {
 	a := footerGitTestApp(t, "")
-	a.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{ID: "repo", Name: "zeronsh/fieldnotes", Authorized: true}}
+	a.state.Integrations.Cloud.Repositories = []contracts.CloudRepository{{ID: "repo", Name: "r-code/fieldnotes", Authorized: true}}
 	a.deviceID = "cloud-1"
 	tt := footerGitTester(a)
-	if plan := a.composerFooterCheckoutPlan(); plan.Kind != contracts.CheckoutCloud || a.footerGit.Scope.CloudRepository != "zeronsh/fieldnotes" {
+	if plan := a.composerFooterCheckoutPlan(); plan.Kind != contracts.CheckoutCloud || a.footerGit.Scope.CloudRepository != "r-code/fieldnotes" {
 		t.Fatalf("reachable Cloud target did not resolve a Cloud plan: %+v", plan)
 	}
 	if _, ok := tt.Find("Select checkout"); ok {
@@ -292,58 +314,5 @@ func TestComposerFooterRefRankingAndReopenKeepsSelectedKeyboardRow(t *testing.T)
 	tt.Key(ui.Cmd, ui.KeyEnter)
 	if a.footerGit.RefOpen || a.footerGit.Branch != "TOPIC-two" {
 		t.Fatal("modified Enter selected a different reopened ref")
-	}
-}
-
-func TestComposerFooterPRSourceMatchingHoverAndDestination(t *testing.T) {
-	a := footerGitTestApp(t, "")
-	a.selectSession("chat-0")
-	tt := footerGitTester(a)
-	const label = "Open pull request 412: Refine the workspace layout"
-	badge, ok := tt.Find(label)
-	if !ok || badge.H != 20 {
-		t.Fatal("matching source did not expose 20px PR badge")
-	}
-	tt.Move(badge.X+badge.W/2, badge.Y+badge.H/2)
-	tt.Advance(349 * time.Millisecond)
-	if _, ok := tt.Find("Pull request details"); ok {
-		t.Fatal("PR card appeared before 350ms")
-	}
-	tt.Advance(2 * time.Millisecond)
-	if _, ok := tt.Find("Pull request details"); !ok {
-		t.Fatal("PR card did not appear after 350ms")
-	}
-	a.state.Settings.General.PRDestination = "pullRequest"
-	footerGitClick(t, tt, label)
-	if a.workspace.ActiveKind() != "pr" || !a.right {
-		t.Fatal("badge did not open the existing native PR destination")
-	}
-	a.state.Settings.General.PRDestination = "browser"
-	footerGitClick(t, tt, label)
-	if a.workspace.ActiveKind() != "browser" {
-		t.Fatal("badge did not open the existing in-app browser destination")
-	}
-	for _, tc := range []struct {
-		url, detail, preference, want string
-	}{
-		{"https://github.com/zeronsh/fieldnotes/pull/412", "pr-412", "pullRequest", "pullRequest"},
-		{"https://github.com/zeronsh/fieldnotes/pull/412", "", "pullRequest", "external"},
-		{"https://enterprise.example/pull/412", "pr-412", "pullRequest", "external"},
-		{"https://github.com/zeronsh/fieldnotes/pull/412", "pr-412", "browser", "browser"},
-		{"https://github.com/zeronsh/fieldnotes/pull/412", "pr-412", "external", "external"},
-	} {
-		if got := composerFooterPRDestination(contracts.ChangeRequestSummary{URL: tc.url, DetailID: tc.detail}, tc.preference); got != tc.want {
-			t.Errorf("destination %+v = %q", tc, got)
-		}
-	}
-	a.footerGit.PRRequested = "" // A legacy scalar branch/number cannot claim a PR.
-	for i := range a.state.Sessions {
-		if a.state.Sessions[i].ID == a.sessionID {
-			a.state.Sessions[i].SourceContext = nil
-		}
-	}
-	tt.Frame()
-	if _, ok := tt.Find(label); ok {
-		t.Fatal("legacy PR number borrowed an unrelated checkout PR")
 	}
 }

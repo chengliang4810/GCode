@@ -141,7 +141,7 @@ func (s *State) imageDialog(c *ui.Context) {
 			return
 		}
 		ui.Row(c).Height(30).Padding(0, 8).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, d.file.Name).FontSize(design.UISize(c, 12)).TextColor(p.Muted)
+			ui.Text(c, d.file.Name).FontSize(design.TextSize(c, design.TextBase)).TextColor(p.Muted)
 			ui.Spacer(c)
 			s.iconButton(c, "close", "Close image", func() { s.imageOpen = false })
 		})

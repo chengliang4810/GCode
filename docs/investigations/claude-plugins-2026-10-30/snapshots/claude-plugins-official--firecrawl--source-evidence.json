@@ -1,0 +1,26 @@
+{
+  "repo": "firecrawl/firecrawl-claude-plugin",
+  "commit": "3e1fb0c319d71b067906b8b602208dded3932cdb",
+  "path": ".",
+  "archive_sha256": "3d595032772b18fe0e57246c6446b07911b24dc8a33eead843ff748b62ea73fb",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "skills/firecrawl-developer-index/SKILL.md",
+    "skills/firecrawl-research-index/SKILL.md",
+    "skills/firecrawl/SKILL.md",
+    "skills/firecrawl/references/data-providers.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"firecrawl\",\n  \"version\": \"2.0.0\",\n  \"description\": \"Search the web, developer sources, and scientific papers with Firecrawl.\",\n  \"skills\": [\n    \"./skills/firecrawl\",\n    \"./skills/firecrawl-developer-index\",\n    \"./skills/firecrawl-research-index\"\n  ],\n  \"author\": {\n    \"name\": \"Firecrawl\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"firecrawl\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.firecrawl.dev/v2/mcp-search\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/firecrawl-research-index/SKILL.md": "\nname: firecrawl-research-index\ndescription: Find scientific papers, follow citations, and verify claims against paper passages. Use for literature questions, related work, citing papers, references, or a question about a particular scientific paper.\n",
+    "skills/firecrawl-developer-index/SKILL.md": "\nname: firecrawl-developer-index\ndescription: Find documentation and repository evidence for library behavior, API contracts, error messages, and known bugs. Use when a programming question needs current public documentation, issues, pull requests, or implementation examples.\n",
+    "skills/firecrawl/SKILL.md": "\nname: firecrawl\ndescription: Search the web, read source pages, and retrieve structured records with Firecrawl. Use for current information, finding sources, reading a supplied URL, or looking up data-provider capabilities.\n"
+  }
+}

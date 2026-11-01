@@ -1,0 +1,307 @@
+{
+  "pluginId": "mcp-server-dev@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "fleettrack-remote-mcp-design-record",
+      "componentId": "skill:mcp-server-dev:build-mcp-server",
+      "prompt": "/mcp-server-dev:build-mcp-server Design the MCP server for FleetTrack, a cloud SaaS REST API with 4 endpoints (list vehicles, get one vehicle, list geofences, create a geofence) that Claude users everywhere should call, with OAuth 2.0 upstream. Work through the skill phases and record every decision in mcp-server-design.md: deployment model is the recommended remote server speaking MCP over streamable HTTP, matching the decision matrix row Wrap a small SaaS API with Remote HTTP and One-per-action, and the record must give the documented why-it-wins reason Zero install friction; tool pattern is One tool per action because 4 operations sit far below the roughly 15 threshold, exposing exactly list_vehicles, get_vehicle, list_geofences and create_geofence, and the record must state why the Search + execute pattern is not needed at this size; framework is the official @modelcontextprotocol/sdk TypeScript SDK with FastMCP noted only as the Python alternative; auth records that OAuth 2.0 upstream needs a remote server with CIMD (preferred) or DCR support; the record also notes local stdio is not recommended for distribution and MCPB is not warranted because nothing must run on the user machine. Headless boundary: no network, no real external service, no installs and no deployment, so scaffolding, deployment, OAuth wiring and testing against real Claude remain untested. Then read the immutable verify_mcp_design.py and run exactly python verify_mcp_design.py using Bash; it validates the design record and writes mcp-design-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that scaffolding, deployment and connector testing remain untested.",
+      "allowCommands": [
+        "python verify_mcp_design.py"
+      ],
+      "verifierOutputs": [
+        "mcp-design-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_mcp_design.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('mcp-server-design.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'FleetTrack' in text, 'the scenario API must be named'\nassert 'streamable HTTP' in text, 'the recommended deployment speaks MCP over streamable HTTP'\nassert 'Wrap a small SaaS API' in text, 'the decision matrix row must be cited'\nassert 'Remote HTTP' in text and 'One-per-action' in text, 'the matrix outcome must be recorded'\nassert 'Zero install friction' in text, 'one documented why-it-wins reason is required'\nassert 'One tool per action' in text or 'one tool per action' in low, 'the small-surface tool pattern must be named'\nfor tool in ('list_vehicles', 'get_vehicle', 'list_geofences', 'create_geofence'):\n    assert tool in text, 'missing tool name: ' + tool\nassert 'Search + execute' in text, 'the record must state why the search+execute pattern is not needed'\nassert '@modelcontextprotocol/sdk' in text, 'the official TypeScript SDK must be chosen'\nassert 'FastMCP' in text, 'FastMCP is the documented Python alternative'\nassert 'CIMD' in text and 'DCR' in text, 'the OAuth route must name CIMD or DCR'\nassert 'not recommended for distribution' in text, 'local stdio must be ruled out with the documented wording'\nassert 'MCPB' in text, 'the record must address why MCPB is not warranted'\nassert 'untested' in low, 'the record must state what remains untested'\n\nreport = {'auth_route': True, 'deployment_model': True, 'framework_choice': True, 'local_paths_rejected': True, 'matrix_row_cited': True, 'tool_pattern': True, 'tools_named': True, 'untested_declared': True}\nPath('mcp-design-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('mcp design: remote streamable HTTP, one-per-action and OAuth route verified; scaffolding, deployment and connector testing remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_mcp_design.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('mcp-server-design.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'FleetTrack' in text, 'the scenario API must be named'\nassert 'streamable HTTP' in text, 'the recommended deployment speaks MCP over streamable HTTP'\nassert 'Wrap a small SaaS API' in text, 'the decision matrix row must be cited'\nassert 'Remote HTTP' in text and 'One-per-action' in text, 'the matrix outcome must be recorded'\nassert 'Zero install friction' in text, 'one documented why-it-wins reason is required'\nassert 'One tool per action' in text or 'one tool per action' in low, 'the small-surface tool pattern must be named'\nfor tool in ('list_vehicles', 'get_vehicle', 'list_geofences', 'create_geofence'):\n    assert tool in text, 'missing tool name: ' + tool\nassert 'Search + execute' in text, 'the record must state why the search+execute pattern is not needed'\nassert '@modelcontextprotocol/sdk' in text, 'the official TypeScript SDK must be chosen'\nassert 'FastMCP' in text, 'FastMCP is the documented Python alternative'\nassert 'CIMD' in text and 'DCR' in text, 'the OAuth route must name CIMD or DCR'\nassert 'not recommended for distribution' in text, 'local stdio must be ruled out with the documented wording'\nassert 'MCPB' in text, 'the record must address why MCPB is not warranted'\nassert 'untested' in low, 'the record must state what remains untested'\n\nreport = {'auth_route': True, 'deployment_model': True, 'framework_choice': True, 'local_paths_rejected': True, 'matrix_row_cited': True, 'tool_pattern': True, 'tools_named': True, 'untested_declared': True}\nPath('mcp-design-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('mcp design: remote streamable HTTP, one-per-action and OAuth route verified; scaffolding, deployment and connector testing remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-design-verification.json",
+          "equals": "{\"auth_route\": true, \"deployment_model\": true, \"framework_choice\": true, \"local_paths_rejected\": true, \"matrix_row_cited\": true, \"tool_pattern\": true, \"tools_named\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "streamable HTTP"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "Wrap a small SaaS API"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "One-per-action"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "Zero install friction"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "Search + execute"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "@modelcontextprotocol/sdk"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "CIMD"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "not recommended for distribution"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "list_vehicles"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-server-design.md",
+          "contains": "FleetTrack"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "mcp design: remote streamable HTTP, one-per-action and OAuth route verified; scaffolding, deployment and connector testing remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "expense-approval-widget-code",
+      "componentId": "skill:mcp-server-dev:build-mcp-app",
+      "prompt": "/mcp-server-dev:build-mcp-app Build the widget layer for the expense-approval MCP app: a remote MCP server whose tool list_pending_expenses returns pending expense reports that an inline widget renders as a pickable list, and picking one sends the choice back into the conversation. Headless boundary: no network, no real external service, no installs, no npm install and no server run, so package installation, server startup, iframe rendering and CSP behavior remain untested; write code only. Write server.ts per the skill: register the tool with registerAppTool carrying annotations with readOnlyHint: true, declare the UI resource through _meta with the ui.resourceUri ui://widgets/expense-picker.html, and return the data as plain JSON through JSON.stringify - never the HTML; include a demo catalog entry with id EXP-1042 and amount 129.40 so the data shape is concrete. Register the resource with registerAppResource serving mimeType RESOURCE_MIME_TYPE, whose documented value is text/html;profile=mcp-app. Write widgets/expense-picker.html keeping the literal /*__EXT_APPS_BUNDLE__*/ placeholder, taking the App class from globalThis.ExtApps and never importing it from esm.sh, creating it with new App, assigning app.ontoolresult before the connect call, awaiting app.connect(), rendering one list entry per expense and calling app.sendMessage with a message beginning Selected expense: when a pick happens. Then read the immutable verify_expense_widget.py and run exactly python verify_expense_widget.py using Bash; it validates both files and writes expense-widget-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state that execution and rendering remain untested.",
+      "allowCommands": [
+        "python verify_expense_widget.py"
+      ],
+      "verifierOutputs": [
+        "expense-widget-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_expense_widget.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nserver = Path('server.ts').read_text(encoding='utf-8')\nwidget = Path('widgets/expense-picker.html').read_text(encoding='utf-8')\nfor token in ('registerAppTool', 'registerAppResource', 'RESOURCE_MIME_TYPE', 'list_pending_expenses', 'JSON.stringify', 'readOnlyHint: true', '_meta', 'ui://widgets/expense-picker.html', 'EXP-1042', '129.40'):\n    assert token in server, 'server.ts missing: ' + token\nfor token in ('/*__EXT_APPS_BUNDLE__*/', 'globalThis.ExtApps', 'new App(', 'app.ontoolresult', 'app.sendMessage', 'await app.connect()', 'Selected expense:'):\n    assert token in widget, 'widget missing: ' + token\nassert 'esm.sh' not in widget and 'esm.sh' not in server, 'the App class must come from the inlined bundle, never esm.sh'\nassert not re.search(r'import\\s*\\{[^}]*App[^}]*\\}\\s*from', widget), 'do not import App from a URL'\n\nreport = {'app_lifecycle': True, 'bundle_placeholder': True, 'no_url_import': True, 'resource_registration': True, 'scenario_data': True, 'tool_registration': True, 'tool_returns_json': True, 'widget_handlers': True}\nPath('expense-widget-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('expense widget: tool and resource registration verified; execution and iframe rendering remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_expense_widget.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nserver = Path('server.ts').read_text(encoding='utf-8')\nwidget = Path('widgets/expense-picker.html').read_text(encoding='utf-8')\nfor token in ('registerAppTool', 'registerAppResource', 'RESOURCE_MIME_TYPE', 'list_pending_expenses', 'JSON.stringify', 'readOnlyHint: true', '_meta', 'ui://widgets/expense-picker.html', 'EXP-1042', '129.40'):\n    assert token in server, 'server.ts missing: ' + token\nfor token in ('/*__EXT_APPS_BUNDLE__*/', 'globalThis.ExtApps', 'new App(', 'app.ontoolresult', 'app.sendMessage', 'await app.connect()', 'Selected expense:'):\n    assert token in widget, 'widget missing: ' + token\nassert 'esm.sh' not in widget and 'esm.sh' not in server, 'the App class must come from the inlined bundle, never esm.sh'\nassert not re.search(r'import\\s*\\{[^}]*App[^}]*\\}\\s*from', widget), 'do not import App from a URL'\n\nreport = {'app_lifecycle': True, 'bundle_placeholder': True, 'no_url_import': True, 'resource_registration': True, 'scenario_data': True, 'tool_registration': True, 'tool_returns_json': True, 'widget_handlers': True}\nPath('expense-widget-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('expense widget: tool and resource registration verified; execution and iframe rendering remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "expense-widget-verification.json",
+          "equals": "{\"app_lifecycle\": true, \"bundle_placeholder\": true, \"no_url_import\": true, \"resource_registration\": true, \"scenario_data\": true, \"tool_registration\": true, \"tool_returns_json\": true, \"widget_handlers\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "registerAppTool"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "registerAppResource"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "RESOURCE_MIME_TYPE"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "ui://widgets/expense-picker.html"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "list_pending_expenses"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "JSON.stringify"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "readOnlyHint: true"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "EXP-1042"
+        },
+        {
+          "kind": "file",
+          "path": "server.ts",
+          "contains": "129.40"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "/*__EXT_APPS_BUNDLE__*/"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "globalThis.ExtApps"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "app.ontoolresult"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "app.sendMessage"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "await app.connect()"
+        },
+        {
+          "kind": "file",
+          "path": "widgets/expense-picker.html",
+          "contains": "Selected expense:"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "expense widget: tool and resource registration verified; execution and iframe rendering remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "ledger-local-mcpb-manifest-and-server",
+      "componentId": "skill:mcp-server-dev:build-mcpb",
+      "prompt": "/mcp-server-dev:build-mcpb Package the ledger-local server as an MCPB. It is a Node stdio MCP server that reads CSV ledgers from a directory the user picks at install time and needs one secret token for exports. Headless boundary: no network, no real external service, no installs, no npm install and no npx execution, so bundling, packing, signing and desktop installation remain untested; write files only. Write manifest.json per the skill: manifest_version 0.4 with the documented schema URL; name ledger-local; server.type node and server.entry_point server/index.js; server.mcp_config.command node with args containing ${__dirname}/server/index.js; the env block maps LEDGER_ROOT to ${user_config.rootDir} and LEDGER_TOKEN to ${user_config.ledgerToken}, remembering there is no auto-prefix so the env var names are exactly what the server reads; user_config declares rootDir with type directory and required true, plus ledgerToken with sensitive true so it is stored in the OS keychain; compatibility.platforms covers darwin, win32 and linux. Write server/index.js on the documented stdio shape: McpServer with StdioServerTransport, one tool list_ledgers registered through server.registerTool with annotations readOnlyHint: true, reading its root from process.env.LEDGER_ROOT, resolving every requested path against that root and throwing when the resolved target fails the startsWith(ROOT containment check, and returning only entries whose name ends with .csv. Also write packaging.md recording the documented build steps npx @anthropic-ai/mcpb init, npx @anthropic-ai/mcpb validate and npx @anthropic-ai/mcpb pack as commands for the user to run, plus the skill warning to test on a machine without your dev toolchain before shipping. Then read the immutable verify_mcpb_manifest.py and run exactly python verify_mcpb_manifest.py using Bash; it validates the manifest, server and notes and writes mcpb-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced files, report the actual verifier result, and state that packing, signing and installation remain untested.",
+      "allowCommands": [
+        "python verify_mcpb_manifest.py"
+      ],
+      "verifierOutputs": [
+        "mcpb-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_mcpb_manifest.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nmanifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))\nassert manifest['$schema'] == 'https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json', 'the documented schema URL is required'\nassert manifest['manifest_version'] == '0.4', 'manifest_version must be 0.4'\nassert manifest['name'] == 'ledger-local', 'the scenario server name must be applied'\nassert manifest['server']['type'] == 'node', 'the server type is node'\nassert manifest['server']['entry_point'] == 'server/index.js', 'the entry point must match the server file'\nassert manifest['server']['mcp_config']['command'] == 'node', 'the launch command is node'\nassert '${__dirname}/server/index.js' in manifest['server']['mcp_config']['args'], 'args must reference the bundle-relative entry point'\nenv = manifest['server']['mcp_config']['env']\nassert env.get('LEDGER_ROOT') == '${user_config.rootDir}', 'LEDGER_ROOT must map to the rootDir user config'\nassert env.get('LEDGER_TOKEN') == '${user_config.ledgerToken}', 'LEDGER_TOKEN must map to the ledgerToken user config'\nuc = manifest['user_config']\nassert uc['rootDir']['type'] == 'directory' and uc['rootDir'].get('required') is True, 'rootDir uses the native directory picker and is required'\nassert uc['ledgerToken'].get('sensitive') is True, 'the token must be sensitive so it lands in the OS keychain'\nplatforms = set(manifest['compatibility']['platforms'])\nassert {'darwin', 'win32', 'linux'} <= platforms, 'all three platforms must be declared'\nserver = Path('server/index.js').read_text(encoding='utf-8')\nfor token in ('process.env.LEDGER_ROOT', 'list_ledgers', 'readOnlyHint: true', 'StdioServerTransport', 'registerTool'):\n    assert token in server, 'server/index.js missing: ' + token\nassert 'startsWith(ROOT' in server, 'the containment check must reject paths escaping ROOT'\nassert re.search(r'endsWith\\(\\s*[\\'\"]\\.csv[\\'\"]\\s*\\)', server), 'only CSV entries are returned'\nnotes = Path('packaging.md').read_text(encoding='utf-8')\nfor cmd in ('npx @anthropic-ai/mcpb init', 'npx @anthropic-ai/mcpb validate', 'npx @anthropic-ai/mcpb pack'):\n    assert cmd in notes, 'the documented build step is missing: ' + cmd\nassert 'dev toolchain' in notes, 'the ship-on-a-clean-machine warning is missing'\n\nreport = {'build_steps': True, 'csv_only': True, 'env_mapping_no_autoprefix': True, 'manifest_schema': True, 'platforms': True, 'security_containment': True, 'server_shape': True, 'user_config': True}\nPath('mcpb-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('mcpb package: manifest, env wiring and containment verified; packing, signing and installation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_mcpb_manifest.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nmanifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))\nassert manifest['$schema'] == 'https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.4.schema.json', 'the documented schema URL is required'\nassert manifest['manifest_version'] == '0.4', 'manifest_version must be 0.4'\nassert manifest['name'] == 'ledger-local', 'the scenario server name must be applied'\nassert manifest['server']['type'] == 'node', 'the server type is node'\nassert manifest['server']['entry_point'] == 'server/index.js', 'the entry point must match the server file'\nassert manifest['server']['mcp_config']['command'] == 'node', 'the launch command is node'\nassert '${__dirname}/server/index.js' in manifest['server']['mcp_config']['args'], 'args must reference the bundle-relative entry point'\nenv = manifest['server']['mcp_config']['env']\nassert env.get('LEDGER_ROOT') == '${user_config.rootDir}', 'LEDGER_ROOT must map to the rootDir user config'\nassert env.get('LEDGER_TOKEN') == '${user_config.ledgerToken}', 'LEDGER_TOKEN must map to the ledgerToken user config'\nuc = manifest['user_config']\nassert uc['rootDir']['type'] == 'directory' and uc['rootDir'].get('required') is True, 'rootDir uses the native directory picker and is required'\nassert uc['ledgerToken'].get('sensitive') is True, 'the token must be sensitive so it lands in the OS keychain'\nplatforms = set(manifest['compatibility']['platforms'])\nassert {'darwin', 'win32', 'linux'} <= platforms, 'all three platforms must be declared'\nserver = Path('server/index.js').read_text(encoding='utf-8')\nfor token in ('process.env.LEDGER_ROOT', 'list_ledgers', 'readOnlyHint: true', 'StdioServerTransport', 'registerTool'):\n    assert token in server, 'server/index.js missing: ' + token\nassert 'startsWith(ROOT' in server, 'the containment check must reject paths escaping ROOT'\nassert re.search(r'endsWith\\(\\s*[\\'\"]\\.csv[\\'\"]\\s*\\)', server), 'only CSV entries are returned'\nnotes = Path('packaging.md').read_text(encoding='utf-8')\nfor cmd in ('npx @anthropic-ai/mcpb init', 'npx @anthropic-ai/mcpb validate', 'npx @anthropic-ai/mcpb pack'):\n    assert cmd in notes, 'the documented build step is missing: ' + cmd\nassert 'dev toolchain' in notes, 'the ship-on-a-clean-machine warning is missing'\n\nreport = {'build_steps': True, 'csv_only': True, 'env_mapping_no_autoprefix': True, 'manifest_schema': True, 'platforms': True, 'security_containment': True, 'server_shape': True, 'user_config': True}\nPath('mcpb-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('mcpb package: manifest, env wiring and containment verified; packing, signing and installation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "mcpb-verification.json",
+          "equals": "{\"build_steps\": true, \"csv_only\": true, \"env_mapping_no_autoprefix\": true, \"manifest_schema\": true, \"platforms\": true, \"security_containment\": true, \"server_shape\": true, \"user_config\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "ledger-local"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "${__dirname}/server/index.js"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "process.env.LEDGER_ROOT"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "StdioServerTransport"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "registerTool"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "readOnlyHint: true"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "startsWith(ROOT"
+        },
+        {
+          "kind": "file",
+          "path": "server/index.js",
+          "contains": "list_ledgers"
+        },
+        {
+          "kind": "file",
+          "path": "packaging.md",
+          "contains": "npx @anthropic-ai/mcpb pack"
+        },
+        {
+          "kind": "file",
+          "path": "packaging.md",
+          "contains": "npx @anthropic-ai/mcpb validate"
+        },
+        {
+          "kind": "file",
+          "path": "packaging.md",
+          "contains": "your dev toolchain"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "mcpb package: manifest, env wiring and containment verified; packing, signing and installation remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

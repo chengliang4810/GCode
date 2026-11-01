@@ -33,11 +33,11 @@ func TestComposerCloudStandardAuthorizationUIAndSend(t *testing.T) {
 	a.OpenRoute("settings/Cloud")
 	tt.Frame()
 	integrationClick(t, tt, "Connect")
-	if a.state.Integrations.Cloud.Github.State != "connected" || len(a.state.Integrations.Cloud.Repositories) != 1 || !tt.HasText("zeronsh/fieldnotes") {
+	if a.state.Integrations.Cloud.Github.State != "connected" || len(a.state.Integrations.Cloud.Repositories) != 1 || !tt.HasText("r-code/fieldnotes") {
 		t.Fatal("standard GitHub connect did not publish the project's canonical repository")
 	}
 	integrationClick(t, tt, "Choose on GitHub")
-	if len(a.state.Integrations.Cloud.Repositories) != 2 || !tt.HasText("zeronsh/zeron") {
+	if len(a.state.Integrations.Cloud.Repositories) != 2 || !tt.HasText("r-code/rcode") {
 		t.Fatal("standard repository selection did not publish canonical repositories")
 	}
 	a.newConversation()
@@ -51,7 +51,7 @@ func TestComposerCloudStandardAuthorizationUIAndSend(t *testing.T) {
 		t.Fatal("Cloud draft exposed a local checkout picker")
 	}
 	resource := a.state.RepoRefs[a.footerGit.Scope.Key()]
-	if resource.State != contracts.LoadReady || resource.Scope.CloudRepository != "zeronsh/fieldnotes" || len(resource.Rows) == 0 {
+	if resource.State != contracts.LoadReady || resource.Scope.CloudRepository != "r-code/fieldnotes" || len(resource.Rows) == 0 {
 		t.Fatalf("Cloud choice did not load typed Cloud refs: %+v", resource)
 	}
 	for _, row := range resource.Rows {
@@ -116,7 +116,7 @@ func TestComposerCloudRepositoryGuardUsesFullNameAndEnabledState(t *testing.T) {
 		name, cloudState, repoID, repoName string
 		want                               bool
 	}{
-		{"canonical ASCII case", "ready", "fieldnotes", "ZERONSH/FIELDNOTES", true},
+		{"canonical ASCII case", "ready", "fieldnotes", "R-CODE/FIELDNOTES", true},
 		{"ID alone is not a canonical repository", "ready", project.CloudRepository, "other/fieldnotes", false},
 		{"off with a stale cache", "off", "fieldnotes", project.CloudRepository, false},
 		{"provisioning with a stale cache", "provisioning", "fieldnotes", project.CloudRepository, false},
@@ -192,11 +192,11 @@ func TestCanvasCloudPickClearsWhenRememberedProjectOrHostChanges(t *testing.T) {
 					switch snapshot.Projects[i].ID {
 					case "backend":
 						snapshot.Projects[i].Name = "Alpha remote"
-					case "zeron":
+					case "rcode":
 						snapshot.Projects[i].Name = "Zulu local"
 					}
 				}
-				wantProject, wantDevice = "zeron", "local"
+				wantProject, wantDevice = "rcode", "local"
 			} else {
 				for i := range snapshot.Projects {
 					if snapshot.Projects[i].ID == "fieldnotes" {

@@ -1,0 +1,159 @@
+{
+  "pluginId": "claude-md-management@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "claude-md-approved-learning-update",
+      "componentId": "command:claude-md-management:revise-claude-md",
+      "prompt": "/claude-md-management:revise-claude-md This is a private temporary fixture repository. Read CLAUDE.md, Makefile and packages/core/sum.go to ground the session learnings in actual files. The user explicitly approves these exact scoped changes now: retain every existing line, then document `go test ./...` as the test command and `go build ./...` as the build command. Show the small proposed diff and apply it with Edit; do not ask again because these two exact additions are already approved. Do not edit application code, Makefile or other files. Do not use network, GitHub or install dependencies. The final CLAUDE.md must still say \"Keep the public Sum API stable.\" and include both verified commands. No Bash commands are approved for this probe: use Glob for file discovery and Read/Edit for the scoped task. Do not run the find example from the component instructions; its discovery purpose is served by Glob.",
+      "fixtures": [
+        {
+          "path": "CLAUDE.md",
+          "text": "# Harbor metrics\n\nKeep the public Sum API stable.\n"
+        },
+        {
+          "path": "Makefile",
+          "text": "test:\n\tgo test ./...\n\nbuild:\n\tgo build ./...\n"
+        },
+        {
+          "path": "go.mod",
+          "text": "module example.test/harbor-metrics\n\ngo 1.23\n"
+        },
+        {
+          "path": "packages/core/sum.go",
+          "text": "package core\n\nfunc Sum(values []int) int {\n\ttotal := 0\n\tfor _, value := range values {\n\t\ttotal += value\n\t}\n\treturn total\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "contains": "Keep the public Sum API stable."
+        },
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "contains": "go test ./..."
+        },
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "contains": "go build ./..."
+        },
+        {
+          "kind": "file",
+          "path": "Makefile",
+          "equals": "test:\n\tgo test ./...\n\nbuild:\n\tgo build ./...\n"
+        },
+        {
+          "kind": "file",
+          "path": "packages/core/sum.go",
+          "equals": "package core\n\nfunc Sum(values []int) int {\n\ttotal := 0\n\tfor _, value := range values {\n\t\ttotal += value\n\t}\n\treturn total\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "go.mod",
+          "equals": "module example.test/harbor-metrics\n\ngo 1.23\n"
+        },
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "contains": "# Harbor metrics"
+        }
+      ],
+      "allowCommands": [],
+      "verifierOutputs": []
+    },
+    {
+      "id": "claude-md-audit-stale-node-command",
+      "componentId": "skill:claude-md-management:claude-md-improver",
+      "prompt": "/claude-md-management:claude-md-improver Audit only this private fixture repository. Discover and assess both CLAUDE.md and packages/core/CLAUDE.md using the supplied project files and the skill's reference rubric. Produce a CLAUDE.md Quality Report in the existing empty quality-report.md using Edit. The report must identify the stale `npm test` instruction and derive the current `go test ./...` and `go build ./...` commands from the real Makefile. Include per-file scores and concise recommendations, including the Sum API preservation rule. Do not change either CLAUDE.md, the source, Makefile or go.mod; no changes to those files are approved. Do not ask to apply updates: this task ends at a written audit report. No network, package install, GitHub or global profile access is needed. No Bash commands are approved for this probe: use Glob for file discovery and Read/Edit for the scoped task. Do not run the find example from the component instructions; its discovery purpose is served by Glob.",
+      "fixtures": [
+        {
+          "path": "CLAUDE.md",
+          "text": "# Harbor metrics\n\nKeep the public Sum API stable.\nRun npm test before submitting changes.\n"
+        },
+        {
+          "path": "packages/core/CLAUDE.md",
+          "text": "# Core package\n\nThis package contains integer aggregation helpers.\n"
+        },
+        {
+          "path": "quality-report.md",
+          "text": ""
+        },
+        {
+          "path": "Makefile",
+          "text": "test:\n\tgo test ./...\n\nbuild:\n\tgo build ./...\n"
+        },
+        {
+          "path": "go.mod",
+          "text": "module example.test/harbor-metrics\n\ngo 1.23\n"
+        },
+        {
+          "path": "packages/core/sum.go",
+          "text": "package core\n\nfunc Sum(values []int) int {\n\ttotal := 0\n\tfor _, value := range values {\n\t\ttotal += value\n\t}\n\treturn total\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "contains": "CLAUDE.md Quality Report"
+        },
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "contains": "packages/core/CLAUDE.md"
+        },
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "contains": "npm test"
+        },
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "contains": "go test ./..."
+        },
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "contains": "go build ./..."
+        },
+        {
+          "kind": "file",
+          "path": "quality-report.md",
+          "regex": "\\b(?:[0-9]{1,2}|100)\\s*/\\s*100\\b"
+        },
+        {
+          "kind": "file",
+          "path": "CLAUDE.md",
+          "equals": "# Harbor metrics\n\nKeep the public Sum API stable.\nRun npm test before submitting changes.\n"
+        },
+        {
+          "kind": "file",
+          "path": "packages/core/CLAUDE.md",
+          "equals": "# Core package\n\nThis package contains integer aggregation helpers.\n"
+        },
+        {
+          "kind": "file",
+          "path": "Makefile",
+          "equals": "test:\n\tgo test ./...\n\nbuild:\n\tgo build ./...\n"
+        },
+        {
+          "kind": "file",
+          "path": "packages/core/sum.go",
+          "equals": "package core\n\nfunc Sum(values []int) int {\n\ttotal := 0\n\tfor _, value := range values {\n\t\ttotal += value\n\t}\n\treturn total\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "go.mod",
+          "equals": "module example.test/harbor-metrics\n\ngo 1.23\n"
+        }
+      ],
+      "allowCommands": [],
+      "verifierOutputs": []
+    }
+  ]
+}

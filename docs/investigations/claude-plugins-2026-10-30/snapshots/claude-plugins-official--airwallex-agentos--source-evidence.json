@@ -1,0 +1,37 @@
+{
+  "repo": "airwallex/airwallex-marketplace",
+  "commit": "877551077786664d1cbeb32013443291c66e69e6",
+  "path": "plugins/airwallex-agentos",
+  "archive_sha256": "e1836a5589367d557cdd526ecb9bb53ae85d0a76483097b28f7b0d8117845672",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-mcp.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "assets/icon.svg",
+    "assets/logo.svg",
+    "references/feedback.md",
+    "skills/awx-best-practices/SKILL.md",
+    "skills/awx-best-practices/references/api_traps.md",
+    "skills/awx-best-practices/references/surface-quickstart.md",
+    "skills/beneficiary-creation/SKILL.md",
+    "skills/card-provisioning/SKILL.md",
+    "skills/card-provisioning/references/card-templates.md",
+    "skills/contract-to-billing/SKILL.md",
+    "skills/manage-cashflow/SKILL.md",
+    "skills/manage-cashflow/references/response-templates.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"airwallex-agentos\",\n  \"description\": \"Bring Airwallex's global financial infrastructure to Claude. Orchestrate actions across your account in plain language, e.g., set up invoices from a PO, onboard suppliers from invoices, and check current cash position across currencies. AgentOS bundles pre-built finance Skills with MCP servers. A public CLI connects your agent to Airwallex's capabilities.\",\n  \"version\": \"0.2.8\",\n  \"author\": {\n    \"name\": \"Airwallex\",\n    \"url\": \"https://www.airwallex.com\"\n  },\n  \"homepage\": \"https://www.airwallex.com/docs\",\n  \"repository\": \"https://github.com/airwallex/airwallex-marketplace.git\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"airwallex\",\n    \"business accounts\",\n    \"billing\",\n    \"invoices\",\n    \"payments\",\n    \"issuing\",\n    \"treasury\",\n    \"cli\",\n    \"mcp\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"airwallex-dev\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.sandbox.airwallex.com/developer\"\n    },\n    \"airwallex-agentos\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.airwallex.com/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/card-provisioning/SKILL.md": "\nname: card-provisioning\ndescription: Provision virtual or physical corporate cards in Airwallex Issuing — create cardholders, issue cards with spend limits, and manage card spending. Use when the user says \"create a card for\", \"spin up a virtual card\", \"set up a card for Adobe\", \"provision a card\", or needs to manage corporate card spending. Do NOT use for bank transfers, creating invoices, or checking FX rates.\nmetadata:\n  author: Airwallex\n  version: 0.1.0\ncompatibility: Works with the Airwallex CLI (`airwallex` binary on PATH, authenticated via `airwallex auth login`) or the Airwallex MCP server (enabled and authenticated). Requires Issuing enabled on the Airwallex account.\n",
+    "skills/beneficiary-creation/SKILL.md": "\nname: beneficiary-creation\ndescription: Extract bank details from supplier invoices or documents, validate per-country requirements, and create beneficiaries in Airwallex. Use when the user says \"set up this supplier\", \"onboard these vendors\", \"create beneficiary from invoice\", \"add a payee\", or uploads supplier documents with bank details. Do NOT use for creating invoices, checking balances or FX rates, or provisioning cards.\nmetadata:\n  author: Airwallex\n  version: 0.1.0\ncompatibility: Works with the Airwallex CLI (`airwallex` binary on PATH, authenticated via `airwallex auth login`) or the Airwallex MCP server (enabled and authenticated).\n",
+    "skills/contract-to-billing/SKILL.md": "\nname: contract-to-billing\ndescription: Extract billing details from purchase orders, contracts, or quotes, then set up Airwallex Billing by creating invoices and/or subscriptions — matching existing customers, products, and prices to avoid duplicates. Use when the user says \"create invoice from this PO\", \"set up billing from this contract\", \"create a subscription from this agreement\", \"invoice this quote\", \"bill this customer\", or attaches a document and asks to set up one-time, recurring, or mixed billing. Do NOT use for paying suppliers, provisioning cards, or checking FX rates.\nmetadata:\n  author: Airwallex\n  version: 0.1.0\ncompatibility: Works with the Airwallex CLI (`airwallex` binary on PATH, authenticated via `airwallex auth login`) or the Airwallex MCP server (enabled and authenticated).\n",
+    "skills/manage-cashflow/SKILL.md": "\nname: manage-cashflow\ndescription: >\n  Multi-currency cash management — balances, receivables, obligations, FX exposure, runway, rebalancing, and indicative FX rates. Use when the user asks about cash position, treasury health, what is owed, money in or out, FX positions, or requests money movement (conversions, transfers, rate locks). Also load this skill when the user asks for a \"transaction report\", \"accounting report\", \"reconciliation\", \"P&L\", or \"ledger\" — the skill contains the required scope-boundary rules to refuse these properly and offer supported alternatives. Do NOT use for creating invoices from documents, supplier/beneficiary onboarding, or card provisioning (use the workflow skills for those).\nmetadata:\n  author: Airwallex\n  version: 0.1.0\ncompatibility: Works with the Airwallex CLI (`airwallex` binary on PATH, authenticated via `airwallex auth login`) or the Airwallex MCP server (enabled and authenticated).\n",
+    "skills/awx-best-practices/SKILL.md": "\nname: awx-best-practices\ndescription: Fallback Airwallex skill — works with the Airwallex CLI or the Airwallex MCP server. Use ONLY when no dedicated workflow skill matches the task. Covers ad-hoc operations (list, get, update, delete, void, cancel), general Airwallex API questions, troubleshooting, and domains not covered by a workflow skill (payment links, refunds, disputes, spend management, financial reports). Do NOT load this skill alongside a workflow skill — each workflow skill is self-contained. For invoices/billing/coupons/meters/credit notes use contract-to-billing, for suppliers/beneficiaries use beneficiary-creation, for cards use card-provisioning, for balances/FX/cashflow use manage-cashflow.\nmetadata:\n  author: Airwallex\n  version: 0.1.0\ncompatibility: Works with the Airwallex CLI (`airwallex` binary on PATH, authenticated via `airwallex auth login`) or the Airwallex MCP server (enabled and authenticated).\n"
+  }
+}

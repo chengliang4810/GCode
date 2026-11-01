@@ -1,0 +1,32 @@
+{
+  "repo": "Leadfeeder/leadfeeder-mcp-plugin",
+  "commit": "cddf27f0771393b01a9a91335b8972e44f48cf45",
+  "path": ".",
+  "archive_sha256": "cfd5b455184e890fa24e3afff106d1fdef2ae36de3aa8cbfdcd6b3872a79574c",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "skills/a-getting-started/SKILL.md",
+    "skills/add-to-pipeline/SKILL.md",
+    "skills/daily-visitor-brief/SKILL.md",
+    "skills/find-my-buyer/SKILL.md",
+    "skills/outreach-companion/SKILL.md",
+    "skills/visitor-company-brief/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"leadfeeder\",\n  \"displayName\": \"Leadfeeder\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Turn website visitor signals into pipeline. Six Leadfeeder-powered skills — Getting Started, Daily Visitor Brief, Visitor Company Brief, Outreach Companion, Find My Buyer, and Add to Pipeline — let you identify high-intent accounts, research buyers, find the right contacts, personalise outreach, and add companies to your lists, all from within Claude. New here? Type \\\"Set up my Leadfeeder brief\\\" to run a 30-second readiness check first.\",\n  \"homepage\": \"https://www.leadfeeder.com\",\n  \"repository\": \"https://github.com/Leadfeeder/leadfeeder-mcp-plugin\",\n  \"license\": \"Apache-2.0\",\n  \"author\": {\n    \"name\": \"Leadfeeder\",\n    \"url\": \"https://www.leadfeeder.com\"\n  },\n  \"keywords\": [\n    \"leadfeeder\",\n    \"b2b\",\n    \"sales\",\n    \"website-visitors\",\n    \"intent-signals\",\n    \"lead-generation\",\n    \"prospecting\",\n    \"outreach\",\n    \"account-intelligence\"\n  ],\n  \"userConfig\": {\n    \"account_id\": {\n      \"type\": \"string\",\n      \"title\": \"Leadfeeder Account ID\",\n      \"description\": \"Your Leadfeeder account ID. To find it, ask Claude to run get_account_info — it will list your available accounts and their IDs. Paste the ID here to skip the account selection prompt in every session and enable fully automated scheduled tasks.\",\n      \"required\": false\n    }\n  },\n  \"mcpServers\": {\n    \"Leadfeeder\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.leadfeeder.com/mcp\"\n    }\n  }\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"Leadfeeder\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.leadfeeder.com/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/find-my-buyer/SKILL.md": "\nname: find-my-buyer\ndescription: >\n  Identify the best 1–5 contacts to reach out to at a named company, ranked by Buyer Persona fit and visit identification, plus a buying-committee coverage read showing which departments are covered and which are gaps. Use this skill when the user asks \"who should I reach out to at [company]?\", \"find my buyer at Acme\", \"who's the right contact at Acme\", \"find the decision-maker at [company]\", \"who do I call at [company]\", \"do I have the buying committee covered at [company]\", or any prompt asking for a ranked contact shortlist at a specific company. Surfaces names, titles, and emails — PII exposure is intentional and consented by invocation.\nmetadata:\n  version: \"1.0.0\"\n",
+    "skills/outreach-companion/SKILL.md": "\nname: outreach-companion\ndescription: >\n  Pull visit context and recent signals for a named contact or company and return structured talking points for outreach. Use this skill when the user wants to prepare a personalised message — \"draft outreach to Jane at Acme\", \"talking points for Acme\", \"prep me for outreach to Acme\", \"what do I say to [contact/company]\", \"help me reach out to [company]\", \"personalise my opener for [company]\", \"write an email to [contact]\". Does NOT compose the email body — returns grounded talking points for Claude to write from.\nmetadata:\n  version: \"1.0.0\"\n",
+    "skills/visitor-company-brief/SKILL.md": "\nname: visitor-company-brief\ndescription: >\n  Produce a deep, structured company brief on a single named company from Leadfeeder — firmographics, engagement history, contacts on file, recent intent signals, and a recommended next move. Use this skill when the user names a specific company and asks for research, such as \"tell me about [company]\", \"brief me on [company]\", \"deep dive on [company]\", \"company brief for [company]\", \"account brief for [company]\", \"research [company]\", \"everything you have on [company]\", \"give me a profile of [company]\", or asks for a full read on a single company they want to action.\nmetadata:\n  version: \"1.0.0\"\n",
+    "skills/a-getting-started/SKILL.md": "\nname: a-getting-started\ndescription: >\n  One-time setup and readiness check for the Leadfeeder plugin — confirms the account is configured, checks that ICPs exist, verifies website visitors are actually being tracked, and then runs a sample daily brief so the user sees real output. Use this skill when the user is new to the plugin or asks to set it up or check readiness: \"set up my Leadfeeder brief\", \"getting started\", \"get started\", \"set up the plugin\", \"is my Leadfeeder account ready\", \"check my Leadfeeder setup\", \"why is my brief empty\", \"why is my brief just a huge unranked list\", \"new to this plugin\", \"Leadfeeder health check\", \"onboard me\".\nmetadata:\n  version: \"1.0.0\"\n",
+    "skills/add-to-pipeline/SKILL.md": "\nname: add-to-pipeline\ndescription: >\n  Tag a company and/or add it to a list in Leadfeeder. Use this skill when the user wants to action a company — \"tag Acme as Hot Lead\", \"add Acme to my DACH-Enterprise list\", \"mark Acme as Tier-1\", \"put Acme in the Enterprise Q3 list\", \"add [company] to [list]\", \"tag [company] as [tag]\". Always confirms the exact writes before executing. The only write skill in the suite.\nmetadata:\n  version: \"1.0.0\"\n",
+    "skills/daily-visitor-brief/SKILL.md": "\nname: daily-visitor-brief\ndescription: >\n  Build a prioritised daily brief of website visitor companies from Leadfeeder, ranked by ICP fit and engagement signal. Use this skill when the user asks \"what should I work on today\", \"show me today's visitors\", \"daily brief\", \"who visited my site\", \"show me hot leads\", \"morning prospecting\", \"any good leads today\", \"Leadfeeder brief\", or any morning-prospecting question grounded in Leadfeeder visitor data.\nmetadata:\n  version: \"1.0.0\"\n"
+  }
+}

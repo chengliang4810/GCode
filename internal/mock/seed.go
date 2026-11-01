@@ -11,10 +11,10 @@ import (
 
 func DefaultSettings() contracts.Settings {
 	settings := contracts.Settings{
-		Appearance:    contracts.AppearanceSettings{RenderMath: true, MathFont: "Fira Math", MathScale: 100, Mode: "dark", ThemeID: "zeron-dark", LightThemeID: "zeron-light", DarkThemeID: "zeron-dark", Accent: "theme", Surface: "theme", Font: "Geist", FontSize: 16, CodeFont: "Geist Mono", CodeFontSize: 12.5, TerminalFont: "Geist Mono", TerminalFontSize: 13, TranscriptWidth: 736, BackgroundEffect: "none"},
-		General:       contracts.GeneralSettings{Language: i18n.Chinese, SendBehavior: "enter", CompactModelPicker: true, StopWithEscape: true, PRDestination: "pullRequest", ThreadNamingModel: "Automatic", CreditZeron: true, RestoreWindows: true, WorktreePath: "~/worktrees"},
+		Appearance:    contracts.AppearanceSettings{RenderMath: true, MathFont: "Fira Math", MathScale: 100, Mode: "dark", ThemeID: "rcode-dark", LightThemeID: "rcode-light", DarkThemeID: "rcode-dark", Accent: "theme", EffortTheme: contracts.EffortThemePurple, Surface: "theme", Font: "Geist", FontSize: 14, CodeFont: "Geist Mono", CodeFontSize: 12, TerminalFont: "Geist Mono", TerminalFontSize: 13, TranscriptWidth: 736, BackgroundEffect: "none"},
+		General:       contracts.GeneralSettings{Language: i18n.Chinese, SendBehavior: "enter", ActiveTurnSendBehavior: "steer", StopWithEscape: true, ThreadNamingModel: "first-message"},
 		Notifications: contracts.NotificationSettings{Errors: true, Enabled: true, Completion: true, Questions: true, Sound: false},
-		Files:         contracts.FileSettings{Autosave: true, AutosaveDelay: 900, LineNumbers: true, FontSize: 12.5},
+		Files:         contracts.FileSettings{Autosave: true, AutosaveDelay: 900, LineNumbers: true, FontSize: 12},
 		Appshots:      contracts.AppshotSettings{Destination: "lastSession", Shortcut: "Cmd+Shift+2", IncludeCursor: false},
 		Shortcuts: []contracts.Shortcut{
 			{ID: "newSession", Label: "New session", Keys: "Mod+N", Group: "Navigation"},
@@ -25,16 +25,9 @@ func DefaultSettings() contracts.Settings {
 			{ID: "terminal", Label: "Toggle terminal", Keys: "Mod+J", Group: "Panels"},
 			{ID: "find", Label: "Find in conversation", Keys: "Mod+F", Group: "Conversation"},
 			{ID: "stop", Label: "Stop agent", Keys: "Escape", Group: "Conversation"},
-		}, SidebarWidth: 256, FilesWidth: 286, RightPaneWidth: 520, TerminalHeight: 280, SidebarGrouping: "project", SidebarSort: "updated", ShowProjectLabels: true, ShowIcons: true,
+		}, SidebarWidth: 256, FilesWidth: 286, RightPaneWidth: 520, TerminalHeight: 280, SidebarGrouping: "projects", ShowIcons: true,
 	}
 	settings.Appearance.MotionPreference = "system"
-	settings.SidebarCompact = true
-	settings.SidebarGrouping = "list"
-	settings.SidebarShowHarness = true
-	settings.SidebarShowBranch = true
-	settings.SidebarShowPullRequest = true
-	settings.SidebarShowProjectFilter = true
-	settings.SidebarShowArchived = true
 	settings.Appearance.BackgroundAdjustment = contracts.BackgroundAdjustment{FocalX: .5, FocalY: .5, Zoom: 1}
 	settings.Appearance.Mode = "system"
 	settings.Appearance.ThemeID = ""
@@ -43,8 +36,6 @@ func DefaultSettings() contracts.Settings {
 	settings.Appshots.Sound = true
 	settings.Appshots.Destination = "automatic"
 	settings.Notifications.Sound = true
-	settings.Notifications.AgentUpdates = true
-	settings.Appearance.SmoothScrolling = true
 	settings.Appearance.PauseInBackground = false
 	return settings
 }
@@ -59,7 +50,7 @@ func seed(opts Options) contracts.Snapshot {
 		Settings:            DefaultSettings(), Messages: make(map[string][]contracts.Message),
 		Projects: []contracts.Project{
 			{ID: "fieldnotes", Name: "Fieldnotes", Path: "~/projects/fieldnotes", DeviceID: "local", Branch: "main", Branches: []string{"main", "fieldnotes/workspace", "fieldnotes/settings-search"}, Worktrees: []contracts.Worktree{{ID: "checkout", Name: "Current checkout", Path: "~/projects/fieldnotes", Branch: "main"}, {ID: "workspace-tree", Name: "Workspace design", Path: "~/worktrees/fieldnotes-workspace", Branch: "fieldnotes/workspace"}}},
-			{ID: "zeron", Name: "Zeron", Path: "~/projects/zeron", DeviceID: "local", Branch: "main", Branches: []string{"main", "refine-composer", "native-workspace"}},
+			{ID: "rcode", Name: "GCode", Path: "~/projects/rcode", DeviceID: "local", Branch: "main", Branches: []string{"main", "refine-composer", "native-workspace"}},
 			{ID: "backend", Name: "API server", Path: "/projects/backend", DeviceID: "remote", Branch: "main", Branches: []string{"main", "api/auth"}},
 		},
 		Devices: []contracts.Device{{ID: "local", Name: "This device", Platform: opts.Platform, Architecture: opts.Architecture, Status: "connected", Current: true, LastSeen: now}, {ID: "macbook", Name: "MacBook Pro", Platform: "darwin", Architecture: "arm64", Status: "connected", LastSeen: now.Add(-2 * time.Minute)}, {ID: "remote", Name: "Build server", Platform: "linux", Architecture: "amd64", Status: "offline", LastSeen: now.Add(-2 * time.Hour)}},
@@ -79,15 +70,23 @@ func seed(opts Options) contracts.Snapshot {
 		id := fmt.Sprintf("chat-%d", i)
 		project := "fieldnotes"
 		if i == 6 || i == 7 {
-			project = "zeron"
+			project = "rcode"
 		}
 		if i == 8 {
 			project = "backend"
 		}
 		updated := now.Add(-time.Duration(i*17) * time.Minute)
-		s.Sessions = append(s.Sessions, contracts.Session{ID: id, Title: title, ProjectID: project, DeviceID: "local", ModelID: "claude-opus-4-6", Branch: "fieldnotes/" + strings.ReplaceAll(strings.ToLower(title), " ", "-"), Status: contracts.Idle, Pinned: i < 2, PinOrder: i, Unread: i == 3, Archived: i == 9, CreatedAt: updated.Add(-time.Hour), UpdatedAt: updated, LastOutcome: "completed", PullRequestNumber: map[bool]int{true: 412 + i, false: 0}[i < 3]})
+		s.Sessions = append(s.Sessions, contracts.Session{ID: id, Title: title, ProjectID: project, DeviceID: "local", ModelID: "claude-opus-4-6", Branch: "fieldnotes/" + strings.ReplaceAll(strings.ToLower(title), " ", "-"), Status: contracts.Idle, Pinned: i < 2, PinOrder: i, Unread: i == 3, Archived: i == 9, CreatedAt: updated.Add(-time.Hour), UpdatedAt: updated, LastOutcome: "completed"})
 	}
 	seedAdditionalProviders(&s)
+	// One deterministic group demonstrates the grouped sidebar view.
+	s.SessionGroups = []contracts.SessionGroup{{ID: "group-research", Title: "Research", Order: 0}}
+	for i := range s.Sessions {
+		if s.Sessions[i].ID == "chat-2" || s.Sessions[i].ID == "chat-3" {
+			s.Sessions[i].GroupID = "group-research"
+			s.Sessions[i].GroupOrder = len(s.Sessions[i].ID) % 2
+		}
+	}
 	s.Files = seedFiles()
 	s.Changes = []contracts.Change{{ID: "change-layout", ProjectID: "fieldnotes", Path: "internal/layout.go", Status: "modified", Additions: 12, Deletions: 4, OldContent: "package layout\n\nconst SidebarWidth = 240\nconst PanelWidth = 480\n", NewContent: "package layout\n\nconst SidebarWidth = 256\nconst PanelWidth = 520\n\nfunc ContentWidth(viewport float64) float64 {\n\treturn viewport - SidebarWidth - PanelWidth\n}\n", Hunks: []contracts.DiffHunk{{Header: "@@ -1,4 +1,8 @@", OldStart: 1, NewStart: 1, Lines: []contracts.DiffLine{{Kind: "context", Text: "package layout", OldLine: 1, NewLine: 1}, {Kind: "context", Text: "", OldLine: 2, NewLine: 2}, {Kind: "remove", Text: "const SidebarWidth = 240", OldLine: 3}, {Kind: "add", Text: "const SidebarWidth = 256", NewLine: 3}, {Kind: "remove", Text: "const PanelWidth = 480", OldLine: 4}, {Kind: "add", Text: "const PanelWidth = 520", NewLine: 4}, {Kind: "add", Text: "", NewLine: 5}, {Kind: "add", Text: "func ContentWidth(viewport float64) float64 {", NewLine: 6}, {Kind: "add", Text: "\treturn viewport - SidebarWidth - PanelWidth", NewLine: 7}, {Kind: "add", Text: "}", NewLine: 8}}}}}, {ID: "change-readme", ProjectID: "fieldnotes", Path: "README.md", Status: "modified", Additions: 3, Deletions: 1, OldContent: "# Fieldnotes\n\nA place for ideas.\n", NewContent: "# Fieldnotes\n\nMake room for good ideas.\n\nA calm workspace for your projects.\n"}, {ID: "change-theme", ProjectID: "fieldnotes", Path: "internal/theme.go", Status: "added", Additions: 18, NewContent: "package theme\n\nconst Accent = \"#8b84ff\"\n"}}
 	for i, title := range []string{"Refine workspace panel layout", "Preserve focus when switching tabs", "Add session search", "Update theme tokens", "Initial workspace"} {
@@ -102,18 +101,8 @@ func seed(opts Options) contracts.Snapshot {
 		}
 		s.Commits = append(s.Commits, contracts.Commit{SHA: sha, Parents: parents, Subject: title, Author: "Alex", AuthoredAt: now.Add(-time.Duration(i+1) * time.Hour), Refs: refs})
 	}
-	s.PullRequests = []contracts.PullRequest{{ID: "pr-412", Number: 412, Repository: "zeronsh/fieldnotes", Title: "Refine the workspace layout", Author: "alex", Status: "open", BaseBranch: "main", HeadBranch: "fieldnotes/workspace", Body: "## Summary\n\nKeep the workspace calm and consistent while opening files, reviewing changes, and switching sessions.\n\n- Preserve panel state per session\n- Improve keyboard navigation\n- Align the composer and content widths", Checks: []contracts.Check{{Name: "Build", Status: "success", Detail: "All platforms passed"}, {Name: "Tests", Status: "success", Detail: "124 tests passed"}, {Name: "Review", Status: "pending", Detail: "Awaiting review"}}, Comments: []contracts.Comment{{ID: "comment-1", Author: "sam", Body: "The panel transitions feel much better. Could we keep the existing keyboard focus when closing a tab?", CreatedAt: now.Add(-time.Hour)}}, ChangeIDs: []string{"change-layout", "change-readme", "change-theme"}, UpdatedAt: now.Add(-time.Hour)}, {ID: "pr-413", Number: 413, Repository: "zeronsh/fieldnotes", Title: "Polish the command palette", Author: "alex", Status: "open", Draft: true, BaseBranch: "main", HeadBranch: "fieldnotes/command-palette", Body: "Improve keyboard navigation and search result spacing.", Checks: []contracts.Check{{Name: "Tests", Status: "success", Detail: "All checks passed"}}, UpdatedAt: now.Add(-3 * time.Hour)}, {ID: "pr-405", Number: 405, Repository: "zeronsh/fieldnotes", Title: "Add project grouping", Author: "sam", Status: "merged", BaseBranch: "main", HeadBranch: "project-groups", Body: "Group sessions by project.", UpdatedAt: now.Add(-24 * time.Hour)}}
 	s.Terminals = []contracts.Terminal{{ID: "terminal-1", ProjectID: "fieldnotes", Title: "Terminal", CWD: "~/projects/fieldnotes", Columns: 80, Rows: 24, Status: "idle", Output: "\x1b[38;2;139;132;255m~/projects/fieldnotes\x1b[0m \x1b[32mmain\x1b[0m\r\n❯ go test ./...\r\n\x1b[32mok\x1b[0m  fieldnotes/internal/layout  0.012s\r\n\x1b[32mok\x1b[0m  fieldnotes/internal/session  0.008s\r\n\r\n\x1b[38;2;139;132;255m❯\x1b[0m "}}
-	for i := range s.Providers {
-		s.Providers[i].AccessModes = []contracts.AccessMode{contracts.AccessSupervised, contracts.AccessAutoAcceptEdits, contracts.AccessFullAccess}
-		s.Providers[i].SupportsPlan = true
-		if s.Providers[i].ID == "cursor" {
-			s.Providers[i].AccessModes = []contracts.AccessMode{contracts.AccessFullAccess}
-			s.Providers[i].SupportsPlan = false
-		}
-	}
 	for i := range s.Sessions {
-		s.Sessions[i].AccessMode = contracts.AccessFullAccess
 		s.Sessions[i].ReasoningLevel = "High"
 		for j := range s.Projects {
 			if s.Projects[j].ID == s.Sessions[i].ProjectID {
@@ -174,7 +163,7 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 			{ID: "showcase-question", Kind: "question", Question: &contracts.Question{ID: "question-showcase", Title: "Which panel should open first?", Options: []string{"Files", "Changes", "Browser"}, Answer: "Files"}},
 			{ID: "showcase-permission", Kind: "permission", Permission: &contracts.Permission{ID: "permission-showcase", Title: "Run project checks", Description: "Allow this command in the current workspace?", Command: "go test ./...", Answer: "Allow once"}},
 			{ID: "showcase-attachment", Kind: "attachment", Attachment: &contracts.Attachment{ID: "attachment-readme", Name: "README.md", MIME: "text/markdown", Size: 512, AssetRef: "file-readme", Status: "ready"}},
-			{ID: "showcase-image", Kind: "image", Attachment: &contracts.Attachment{ID: "attachment-icon", Name: "Zeron.png", MIME: "image/png", Width: 1024, Height: 1024, AssetRef: "asset://app-icon.png", Status: "ready"}},
+			{ID: "showcase-image", Kind: "image", Attachment: &contracts.Attachment{ID: "attachment-icon", Name: "GCode.png", MIME: "image/png", Width: 1024, Height: 1024, AssetRef: "asset://app-icon.png", Status: "ready"}},
 			{ID: "showcase-math", Kind: "math", Artifact: artifactFor("math", s.Settings.Appearance)},
 			{ID: "showcase-diagram", Kind: "diagram", Artifact: artifactFor("diagram", s.Settings.Appearance)},
 		}})

@@ -1,0 +1,214 @@
+{
+  "pluginId": "unreal-engine-skills-for-claude-code@claude-plugins-official",
+  "sourceCommit": "a6aa73ada02a9fb1f5415bec491f9942c519b297",
+  "allowHooks": [
+    "hook:SessionStart/0/0"
+  ],
+  "probes": [
+    {
+      "id": "author-harbor-python-toolset",
+      "componentId": "skill:unreal-engine-skills-for-claude-code:create-toolset",
+      "prompt": "/unreal-engine-skills-for-claude-code:create-toolset Create a toolset for the Harbor Point game that lets the agent find lighthouses in the current level and report their state. Headless authoring task: there is no Unreal Editor running and no MCP connection, so do not dispatch any editor tool, do not compile anything and do not install packages. Write the Python toolset file HarborTools.py exactly as the skill documents it: the class decorated with the uclass decorator and inheriting the ToolsetDefinition base class, the AI-callable tool method carrying the tool_call decorator together with the staticmethod decorator, mandatory standard Python type annotations on every parameter and return value (not Unreal array types), a docstring that becomes the AI-visible tool description, and any private helper as a staticmethod with an underscore prefix placed at the end of the class. Then read the immutable verify_create_toolset.py and run exactly python verify_create_toolset.py using Bash to validate the file and write toolset-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that editor registration, compilation and live tool dispatch remain untested.",
+      "allowCommands": [
+        "python verify_create_toolset.py"
+      ],
+      "verifierOutputs": [
+        "toolset-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_create_toolset.py",
+          "text": "import json\nfrom pathlib import Path\n\ncode = Path('HarborTools.py').read_text(encoding='utf-8')\nassert '@unreal.uclass()' in code, 'the toolset class must use the documented uclass decorator'\nassert 'unreal.ToolsetDefinition' in code, 'the toolset class must inherit ToolsetDefinition'\nassert '@toolset_registry.tool_call' in code, 'AI-callable tools must use the documented tool_call decorator'\nassert '@staticmethod' in code, 'tool methods must be static'\nassert 'def find_lighthouses(' in code, 'the tool for the given domain is missing'\nassert ': str' in code and '-> list[' in code, 'type annotations are mandatory on parameters and return values'\nassert 'unreal.Array[' not in code, 'standard Python annotations are required, not Unreal equivalents'\nassert '\"\"\"' in code, 'the docstring is the AI-visible tool description'\nassert 'class HarborTools' in code, 'the class name must match the given domain'\nreport = {'class_decorated': True, 'docstring_description': True, 'domain_grounded': True,\n          'inheritance': True, 'static_tool_call': True, 'standard_annotations': True, 'tool_present': True}\nPath('toolset-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Toolset authored: documented Python toolset conventions applied; editor registration untested')\n"
+        },
+        {
+          "path": "HarborPoint.uproject",
+          "text": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_create_toolset.py",
+          "equals": "import json\nfrom pathlib import Path\n\ncode = Path('HarborTools.py').read_text(encoding='utf-8')\nassert '@unreal.uclass()' in code, 'the toolset class must use the documented uclass decorator'\nassert 'unreal.ToolsetDefinition' in code, 'the toolset class must inherit ToolsetDefinition'\nassert '@toolset_registry.tool_call' in code, 'AI-callable tools must use the documented tool_call decorator'\nassert '@staticmethod' in code, 'tool methods must be static'\nassert 'def find_lighthouses(' in code, 'the tool for the given domain is missing'\nassert ': str' in code and '-> list[' in code, 'type annotations are mandatory on parameters and return values'\nassert 'unreal.Array[' not in code, 'standard Python annotations are required, not Unreal equivalents'\nassert '\"\"\"' in code, 'the docstring is the AI-visible tool description'\nassert 'class HarborTools' in code, 'the class name must match the given domain'\nreport = {'class_decorated': True, 'docstring_description': True, 'domain_grounded': True,\n          'inheritance': True, 'static_tool_call': True, 'standard_annotations': True, 'tool_present': True}\nPath('toolset-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Toolset authored: documented Python toolset conventions applied; editor registration untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "toolset-verification.json",
+          "equals": "{\"class_decorated\": true, \"docstring_description\": true, \"domain_grounded\": true, \"inheritance\": true, \"standard_annotations\": true, \"static_tool_call\": true, \"tool_present\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "HarborTools.py",
+          "contains": "ToolsetDefinition"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Toolset authored: documented Python toolset conventions applied"
+        },
+        {
+          "kind": "file",
+          "path": "HarborPoint.uproject",
+          "equals": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "author-in-editor-agent-skill",
+      "componentId": "skill:unreal-engine-skills-for-claude-code:unreal-skill",
+      "prompt": "/unreal-engine-skills-for-claude-code:unreal-skill Create a new in-editor Agent Skill for the Harbor Point game that guides the agent through the lighthouse inspection workflow. Headless authoring task: there is no Unreal Editor and no MCP connection, so do not register anything live, do not reload plugins and do not install packages. Write two artifacts: the Python skill class file LighthouseSkill.py exactly as the skill documents it (the agent_skill decorator, the AgentSkill base class, the class docstring that becomes the skill description, and the instructions class attribute holding the guidance), and skill-registration.md recording the documented registration steps: placing the file in the skills subfolder of the plugin Python package, importing it explicitly in that subfolder init file, making sure init_unreal.py imports the skills package, and reloading the plugin package before verifying. Then read the immutable verify_unreal_skill.py and run exactly python verify_unreal_skill.py using Bash to validate both artifacts and write skill-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name both artifacts, report the actual verifier output line, and state that editor registration, reload and live skill loading remain untested.",
+      "allowCommands": [
+        "python verify_unreal_skill.py"
+      ],
+      "verifierOutputs": [
+        "skill-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_unreal_skill.py",
+          "text": "import json\nfrom pathlib import Path\n\ncode = Path('LighthouseSkill.py').read_text(encoding='utf-8')\nnotes = Path('skill-registration.md').read_text(encoding='utf-8')\nassert '@agent_skill' in code, 'the skill class must use the documented agent_skill decorator'\nassert 'unreal.AgentSkill' in code, 'the skill class must inherit AgentSkill'\nassert 'instructions' in code, 'the instructions class attribute is required'\nassert '\"\"\"' in code, 'the class docstring becomes the skill description'\nassert 'class LighthouseSkill' in code, 'the class name must match the given domain'\nlow = notes.lower()\nassert 'skills/' in low, 'the documented skills subfolder placement must be recorded'\nassert '__init__.py' in low, 'the documented import in the subfolder init must be recorded'\nassert 'init_unreal.py' in low, 'the documented init_unreal import must be recorded'\nassert 'reload' in low, 'the documented plugin reload step must be recorded'\nreport = {'class_docstring': True, 'decorator': True, 'domain_grounded': True, 'inheritance': True,\n          'instructions_attribute': True, 'registration_documented': True}\nPath('skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent skill authored: documented class shape and registration steps written; editor load untested')\n"
+        },
+        {
+          "path": "HarborPoint.uproject",
+          "text": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_unreal_skill.py",
+          "equals": "import json\nfrom pathlib import Path\n\ncode = Path('LighthouseSkill.py').read_text(encoding='utf-8')\nnotes = Path('skill-registration.md').read_text(encoding='utf-8')\nassert '@agent_skill' in code, 'the skill class must use the documented agent_skill decorator'\nassert 'unreal.AgentSkill' in code, 'the skill class must inherit AgentSkill'\nassert 'instructions' in code, 'the instructions class attribute is required'\nassert '\"\"\"' in code, 'the class docstring becomes the skill description'\nassert 'class LighthouseSkill' in code, 'the class name must match the given domain'\nlow = notes.lower()\nassert 'skills/' in low, 'the documented skills subfolder placement must be recorded'\nassert '__init__.py' in low, 'the documented import in the subfolder init must be recorded'\nassert 'init_unreal.py' in low, 'the documented init_unreal import must be recorded'\nassert 'reload' in low, 'the documented plugin reload step must be recorded'\nreport = {'class_docstring': True, 'decorator': True, 'domain_grounded': True, 'inheritance': True,\n          'instructions_attribute': True, 'registration_documented': True}\nPath('skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Agent skill authored: documented class shape and registration steps written; editor load untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "skill-verification.json",
+          "equals": "{\"class_docstring\": true, \"decorator\": true, \"domain_grounded\": true, \"inheritance\": true, \"instructions_attribute\": true, \"registration_documented\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "LighthouseSkill.py",
+          "contains": "AgentSkill"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Agent skill authored: documented class shape and registration steps written"
+        },
+        {
+          "kind": "file",
+          "path": "HarborPoint.uproject",
+          "equals": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "plan-unreal-mcp-dispatch-safely",
+      "componentId": "skill:unreal-engine-skills-for-claude-code:unreal-mcp",
+      "prompt": "/unreal-engine-skills-for-claude-code:unreal-mcp Move the BP_HarborLighthouse actor in the Harbor Point level to new coordinates. Headless authoring task: there is no live Unreal Editor and no MCP connection, so no editor tool can be dispatched and you must not pretend one ran. Instead write the documented execution plan to unreal-mcp-plan.md: that the first step is always to discover the tool needed before dispatching it, the documented safety rules for protecting live editor state (saving the project before and again after a bulk change, waiting for any in-flight compilation instead of switching to the IDE, and controlling concurrent calls), and the concrete tool sequence and actor identifier you would use for this request. State explicitly that no editor tool was dispatched. Then read the immutable verify_unreal_mcp.py and run exactly python verify_unreal_mcp.py using Bash to validate the plan and write mcp-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that live editor discovery and the actual actor move remain untested.",
+      "allowCommands": [
+        "python verify_unreal_mcp.py"
+      ],
+      "verifierOutputs": [
+        "mcp-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_unreal_mcp.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('unreal-mcp-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'discover' in low, 'the documented first step is to discover the needed tool before dispatching'\nassert 'save' in low, 'the documented save-first safety rule must be recorded'\nassert 'compil' in low, 'the documented wait-for-compilation rule must be recorded'\nassert 'concurrent' in low, 'the documented concurrency control rule must be recorded'\nassert 'harbor' in low, 'the plan must be grounded in the given request'\nassert 'no editor tool was dispatched' in low, 'the plan must state honestly that no editor tool was dispatched'\nreport = {'concurrent_calls': True, 'discover_first': True, 'grounded_in_request': True,\n          'honest_no_dispatch': True, 'save_first': True, 'wait_for_compilation': True}\nPath('mcp-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Unreal MCP plan: documented discovery and safety rules recorded; editor dispatch untested')\n"
+        },
+        {
+          "path": "HarborPoint.uproject",
+          "text": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_unreal_mcp.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('unreal-mcp-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'discover' in low, 'the documented first step is to discover the needed tool before dispatching'\nassert 'save' in low, 'the documented save-first safety rule must be recorded'\nassert 'compil' in low, 'the documented wait-for-compilation rule must be recorded'\nassert 'concurrent' in low, 'the documented concurrency control rule must be recorded'\nassert 'harbor' in low, 'the plan must be grounded in the given request'\nassert 'no editor tool was dispatched' in low, 'the plan must state honestly that no editor tool was dispatched'\nreport = {'concurrent_calls': True, 'discover_first': True, 'grounded_in_request': True,\n          'honest_no_dispatch': True, 'save_first': True, 'wait_for_compilation': True}\nPath('mcp-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Unreal MCP plan: documented discovery and safety rules recorded; editor dispatch untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-verification.json",
+          "equals": "{\"concurrent_calls\": true, \"discover_first\": true, \"grounded_in_request\": true, \"honest_no_dispatch\": true, \"save_first\": true, \"wait_for_compilation\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "unreal-mcp-plan.md",
+          "contains": "BP_HarborLighthouse"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Unreal MCP plan: documented discovery and safety rules recorded"
+        },
+        {
+          "kind": "file",
+          "path": "HarborPoint.uproject",
+          "equals": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ]
+    },
+    {
+      "id": "session-hook-injects-project-context",
+      "componentId": "hook:SessionStart/0/0",
+      "prompt": "This is an Unreal Engine skills SessionStart hook verification task; the hook itself is the component under test. Reply with the single word ready. Then read the immutable verify_unreal_hook.py and run exactly python verify_unreal_hook.py using Bash to write hook-verification.json and print the result line. This is the only allowed Bash command. The probe verifies that the hook runs at session start and injects the documented project context for the HarborPoint.uproject present in the workspace, whose injected note includes the documented line Prefer Unreal Engine conventions; any live editor interaction remains untested.",
+      "allowCommands": [
+        "python verify_unreal_hook.py"
+      ],
+      "verifierOutputs": [
+        "hook-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_unreal_hook.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport = {'hook_ran': True, 'project_context_injected': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Unreal session hook: project context injected for the detected .uproject; editor interaction untested')\n"
+        },
+        {
+          "path": "HarborPoint.uproject",
+          "text": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_unreal_hook.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport = {'hook_ran': True, 'project_context_injected': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Unreal session hook: project context injected for the detected .uproject; editor interaction untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "hook-verification.json",
+          "equals": "{\"hook_ran\": true, \"project_context_injected\": true}\n"
+        },
+        {
+          "kind": "exit",
+          "exitCode": 0
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "Prefer Unreal Engine conventions"
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "HarborPoint.uproject"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Unreal session hook: project context injected for the detected .uproject"
+        },
+        {
+          "kind": "file",
+          "path": "HarborPoint.uproject",
+          "equals": "{\n  \"FileVersion\": 3,\n  \"EngineAssociation\": \"5.4\",\n  \"Category\": \"Game\",\n  \"Description\": \"Harbor Point game project\",\n  \"Modules\": [\n    {\n      \"Name\": \"HarborPoint\",\n      \"Type\": \"Runtime\",\n      \"LoadingPhase\": \"Default\"\n    }\n  ]\n}\n"
+        }
+      ]
+    }
+  ]
+}

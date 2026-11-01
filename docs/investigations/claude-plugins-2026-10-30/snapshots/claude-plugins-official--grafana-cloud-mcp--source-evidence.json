@@ -1,0 +1,25 @@
+{
+  "repo": "grafana/ai-marketplace",
+  "commit": "6c28ba1961d502d82301cbd64d2322e6e960477c",
+  "path": "plugins/grafana-cloud-mcp",
+  "archive_sha256": "1f59e31b965235621c9dc151495e2801b556ef72af465cb22a42843dda1b91d7",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "POWER.md",
+    "README.md",
+    "assets/logo.svg",
+    "mcp.json",
+    "skills/grafana-cloud-mcp-tools/SKILL.md",
+    "steering/grafana-cloud-mcp-tools.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"grafana-cloud-mcp\",\n  \"displayName\": \"Grafana Cloud MCP\",\n  \"version\": \"0.2.0\",\n  \"description\": \"Hosted MCP server for AI-assisted Grafana Cloud observability — no local installation required.\",\n  \"author\": {\n    \"name\": \"Grafana Labs\",\n    \"email\": \"grafana-assistant@grafana.com\"\n  },\n  \"homepage\": \"https://github.com/grafana/ai-marketplace/tree/main/plugins/grafana-cloud-mcp\",\n  \"repository\": \"https://github.com/grafana/ai-marketplace\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"grafana\", \"mcp\", \"cloud\", \"observability\", \"dashboards\", \"prometheus\", \"loki\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"grafana-cloud\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.grafana.com/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/grafana-cloud-mcp-tools/SKILL.md": "\nname: grafana-cloud-mcp-tools\ndescription: Connect to and use the Grafana Cloud MCP server effectively, including natural-language Grafana Assistant questions and observability investigations. Covers setup, OAuth authorization, tool categories, read/write access scopes, and best practices for context window management. Use when the user wants to set up Grafana Cloud MCP, ask Grafana Assistant a question, investigate metrics, logs, traces, profiles, dashboards, alerts, or incidents, needs guidance on which tool to use, or wants to understand access scopes.\n"
+  }
+}

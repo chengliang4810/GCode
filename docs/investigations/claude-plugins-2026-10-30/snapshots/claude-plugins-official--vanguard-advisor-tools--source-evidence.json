@@ -1,0 +1,19 @@
+{
+  "repo": "Vanguard-oss/vanguard-advisor-tools",
+  "commit": "328fe9f61fe7a375b87a6492e265b4a5a955b0ce",
+  "path": ".",
+  "archive_sha256": "c2935ab1d26466e03bdaf4964c016235e947437fabb085266fd3e003fdefb5d1",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/model-prep/SKILL.md",
+    "skills/model-prep/reference/client-output.md",
+    "skills/model-prep/reference/one-pager.md",
+    "skills/model-prep/scripts/make_model_pdf.py"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"vanguard-advisor-tools\",\n  \"displayName\": \"Vanguard Advisor Tools\",\n  \"version\": \"1.3.0\",\n  \"description\": \"Research and evaluate investment products across the industry using Vanguard advisor tools in Claude. Compare and evaluate investments and prepare for client conversations.\",\n  \"author\": {\n    \"name\": \"Vanguard\"\n  },\n  \"keywords\": [\n    \"investments\",\n    \"funds\",\n    \"etf\",\n    \"fund-comparison\",\n    \"financial-advisor\"\n  ],\n  \"mcpServers\": {\n    \"vanguard-advisors\": {\n      \"url\": \"https://mcp.vanguard.com/advisors\",\n      \"type\": \"http\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/model-prep/SKILL.md": "\nname: model-prep\ndescription: Help a financial advisor find Vanguard model portfolios that match a client need, understand how those models are built, and produce a meeting-ready advisor one-pager — as text and as a styled PDF — with optional client-facing material. Use when an advisor asks about model portfolios, model series, prebuilt or off-the-shelf portfolios, outsourcing portfolio construction, wants a PDF of a model one-pager, or wants to prepare for a client conversation about a model approach. Also use when an advisor describes a client need or goal — income, growth, retirement, \"something safer\" — and asks what portfolio to show, present, put in front of, or build for them, even when they never say the word \"model\" and name no specific funds. That phrasing is how advisors actually open this request. This skill covers model portfolios rather than individual funds, so weighing two or more specific tickers against each other is a fund-comparison question and outside its scope.\n"
+  }
+}

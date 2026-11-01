@@ -1,0 +1,18 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/learning-output-style",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "hooks-handlers/session-start.sh",
+    "hooks/hooks.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"learning-output-style\",\n  \"version\": \"1.0.1\",\n  \"description\": \"Interactive learning mode that requests meaningful code contributions at decision points (mimics the unshipped Learning output style)\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n",
+    "hooks/hooks.json": "{\n  \"description\": \"Learning mode hook that adds interactive learning instructions\",\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash \\\"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh\\\"\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

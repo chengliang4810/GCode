@@ -151,7 +151,7 @@ func TestNativeSVGRendererShowsEveryDiagramLabel(t *testing.T) {
 				ui.Box(c).Fill().Background(ui.Hex(entry.BackgroundColor)).Children(func() { ui.Image(c, svg).Size(width, height) })
 			}, int(math.Ceil(entry.Width)), int(math.Ceil(entry.Height)))
 			pixels := tt.Image()
-			if directory := os.Getenv("ZERON_DIAGRAM_EVIDENCE"); directory != "" && (entry.ID == "zeron-dark" || entry.ID == "zeron-light") {
+			if directory := os.Getenv("RCODE_DIAGRAM_EVIDENCE"); directory != "" && (entry.ID == "rcode-dark" || entry.ID == "rcode-light") {
 				if err := os.MkdirAll(directory, 0755); err != nil {
 					t.Fatal(err)
 				}

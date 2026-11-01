@@ -44,7 +44,7 @@ func TestAppshotCapabilityMutationsArePlatformScoped(t *testing.T) {
 
 func TestProductDefaultsFollowReference128(t *testing.T) {
 	v := DefaultSettings()
-	if v.Appearance.Mode != "system" || v.Appearance.ThemeID != "" || v.General.StopWithEscape || v.Files.Autosave || !v.Appshots.Sound || v.Appshots.Destination != "automatic" || !v.Notifications.Sound || !v.Notifications.AgentUpdates {
+	if v.Appearance.Mode != "system" || v.Appearance.ThemeID != "" || v.General.StopWithEscape || v.Files.Autosave || !v.Appshots.Sound || v.Appshots.Destination != "automatic" || !v.Notifications.Sound {
 		t.Fatal("product defaults drifted from the pinned source")
 	}
 }

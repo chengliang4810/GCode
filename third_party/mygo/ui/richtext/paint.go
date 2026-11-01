@@ -12,12 +12,24 @@ import (
 // composition, the caret and the scroll bar.
 func (v *view) paint(p *ui.Painter, r ui.Rect) {
 	v.rect = r
-	w, h := max(r.W-2*v.padX, 1), max(r.H-2*v.padY, 1)
+	w, h := max(r.W-v.padX-v.padRight, 1), max(r.H-v.padY-v.padBottom, 1)
 	v.layout(w, h)
+	if state := v.opts.State; state != nil {
+		for i := range v.paras {
+			v.paraLayout(i)
+		}
+		v.layout(w, h)
+		height := float32(v.hs.top(len(v.paras)))
+		if state.ContentHeight != height {
+			state.ContentHeight = height
+			v.services.Invalidate()
+		}
+		v.publishState()
+	}
 	ox, oy := r.X+v.padX, r.Y+v.padY
 	look := &v.look
 	if v.shown.Len() == 0 && v.compose == "" && v.opts.Placeholder != "" {
-		pl := ui.ShapeRichTextWith([]ui.Span{{Text: v.opts.Placeholder}}, v.paraFont(v.para(0).style), ui.TextShape{Width: w})
+		pl := ui.ShapeRichTextWith([]ui.Span{{Text: v.opts.Placeholder}}, v.paraFont(v.para(0).style), ui.TextShape{Width: w, FixedLineHeight: look.FixedLineHeight})
 		p.TextLayout(pl, ox, oy, look.Muted)
 	}
 	a, z := v.selection()
@@ -66,6 +78,7 @@ func (v *view) paint(p *ui.Painter, r ui.Rect) {
 		top, size := v.thumbBox()
 		p.Fill(ui.Rect{X: r.X + r.W - 8, Y: r.Y + top, W: 5, H: size}, look.Text.Alpha(0.3), 2.5)
 	}
+	v.moved()
 }
 
 // paintBlock paints what a paragraph of style st shows behind its text:
@@ -90,6 +103,12 @@ func (v *view) paintBlock(p *ui.Painter, i int, st ParagraphStyle, x, top, heigh
 		p.Clip(box, 0, func() { p.Fill(fill, look.CodeBlockBackground, radius) })
 	}
 	if st.Quote {
+		if i == 0 || !v.para(i-1).style.Quote {
+			// The spacing above the first paragraph of a quotation is
+			// outside it.
+			above, _ := v.space(i, st)
+			top, height = top+above, height-above
+		}
 		w := look.QuoteBarWidth
 		p.Fill(ui.Rect{X: x + indent, Y: top, W: w, H: height}, look.QuoteBar, w/2)
 	}
@@ -220,10 +239,10 @@ func (v *view) paintAttachments(p *ui.Painter, i int, pv *paraView, x, y float32
 	ps := v.shown.paraStart(i)
 	for _, o := range objects {
 		l := pv.runeOfUnit(o.Index)
-		at := v.shown.AttributesAt(v.global(i, l)).Attachment
 		if v.compose != "" && v.shown.paraAt(v.caret) == i && l >= v.caret-ps && l < v.caret-ps+len([]rune(v.compose)) {
 			continue
 		}
+		at := v.shown.AttributesAt(v.global(i, l)).Attachment
 		r := ui.Rect{X: x + o.Rect.X, Y: y + o.Rect.Y, W: o.Rect.W, H: o.Rect.H}
 		switch {
 		case at == nil:

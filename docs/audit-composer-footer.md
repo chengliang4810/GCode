@@ -1,5 +1,9 @@
 # Composer footer：源码审计与实施边界
 
+2026-10-30 当前状态：权限入口、PR 入口和配置、项目动作及本地账户菜单已移除。
+正文保留当时的源码审计与验收证据；当前实施范围见
+[UI 残留清理](ui-residual-cleanup.md)，不再把这些旧入口列为待实现功能。
+
 日期：2026-10-28。事实源固定为 Zeron v0.2.128
 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`，只读目录
 `output/reference-sources/zeron`。原版 UI 文件名简写从 `crates/ui/src/` 解析；

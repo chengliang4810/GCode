@@ -1,0 +1,131 @@
+{
+  "pluginId": "netsuite-ai-companion@claude-plugins-official",
+  "sourceCommit": "23793a10a9bb557c684c5cb8a97f926eb3463f12",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "answer-simulated-invoice-report-with-documented-formats",
+      "componentId": "skill:netsuite-ai-companion:netsuite-ai-connector-instructions",
+      "prompt": "/netsuite-ai-companion:netsuite-ai-connector-instructions Use the netsuite-ai-connector-instructions skill to produce the user-facing answer for this simulated NetSuite AI Service Connector session. Headless task: there is no MCP connector, no live NetSuite account and no network, and no tool may be executed. The connector calls the skill's decision logic requires for this request have already been simulated, and their exact combined output is the immutable fixture invoice-report.json in the working directory: ns_listAllReports matched the standard Invoice Register report, and ns_runReport returned three invoices for customer Northwind Retail (internal ID 1889) in Q3 FY2026 - internal IDs 40211, 40655 and 41102 with document numbers INV-20877, INV-20913 and INV-20960, dates 09/04/2026, 09/19/2026 and 10/07/2026, amounts 2,400,000, 615,000 and 100,000, totaling 3,115,000. Apply the skill's rules to that fixture data and write the answer to billing-answer.md. billing-answer.md must contain, in this order: 1. A 'Tool selection' section stating the mandatory execution order priority used (PRIORITY 1), the exact tool names in execution order (ns_listAllReports then ns_runReport), and that the flow ends with STOP because a standard report answered the request. No other ns_ tool name may appear anywhere in the file. 2. A line in the form 'Total billed: $X.XM' applying the skill's Millions rule to the total. 3. An 'Amount detail:' line listing the three invoice amounts in fixture order, comma-separated, each formatted with the skill's Millions or Thousands rule. 4. A markdown table with one row per invoice: the document number as the link text (a plain INV- number, never inside a URL), the date, and the amount as a full dollar figure with commas like the skill's own $2,100,000 example; add a final Total row with the full comma-form total. Render every invoice link as an HTML anchor using the skill's documented Invoice URL pattern with the internal numeric ID only; each internal ID must appear exactly once in the whole file, inside its URL. 5. The customer name Northwind Retail hyperlinked with the skill's documented Customer URL pattern and internal ID 1889, appearing exactly once inside that URL. Every link must set target=\"_blank\" and use the documented link color #36677D. 6. A 'Format decision' line stating that the response stays in the skill's documented inline text form because the artifact threshold is not met (a single metric and fewer than 5 list items), and that no React artifact is created or promised. Never print a raw internal numeric ID outside its URL. Do not include SuiteQL, saved-search or record-tool content. Then read the immutable verify_netsuite_connector.py and run exactly python verify_netsuite_connector.py using Bash; it checks the answer against invoice-report.json and writes netsuite-connector-verification.json. Do not modify the verifier or the fixture, and do not read or write the verifier's output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state what remains untested (the live NetSuite connection, real MCP tool execution, and any actual record changes).",
+      "allowCommands": [
+        "python verify_netsuite_connector.py"
+      ],
+      "verifierOutputs": [
+        "netsuite-connector-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_netsuite_connector.py",
+          "text": "import json\nfrom pathlib import Path\n\ndata = json.loads(Path('invoice-report.json').read_text(encoding='utf-8'))\nassert data['customer']['id'] == 1889 and data['customer']['name'] == 'Northwind Retail', 'scenario fixture guard'\nassert data['totalAmount'] == 3115000, 'scenario fixture guard'\nassert [row['id'] for row in data['rows']] == [40211, 40655, 41102], 'scenario fixture guard'\nassert [row['amount'] for row in data['rows']] == [2400000, 615000, 100000], 'scenario fixture guard'\n\ntext = Path('billing-answer.md').read_text(encoding='utf-8')\n\nassert 'PRIORITY 1' in text, 'tool selection must name the mandatory execution order priority'\nassert 'ns_listAllReports' in text, 'the report-listing tool must come first in the documented order'\nassert 'ns_runReport' in text, 'the report-running tool must follow in the documented order'\nassert 'STOP' in text, 'the documented flow ends with STOP once a standard report answers the request'\nfor tool in ('ns_runCustomSuiteQL', 'ns_runSavedSearch', 'ns_getRecordTypeMetadata', 'ns_getRecord',\n             'ns_createRecord', 'ns_updateRecord', 'ns_getSuiteQLMetadata', 'ns_getSubsidiaries'):\n    assert tool not in text, 'a standard report answered, so no other ns_ tool may appear: ' + tool\nfor sql in ('ROWNUM', 'NVL('):\n    assert sql not in text, 'no SuiteQL content may appear when a standard report answered: ' + sql\n\nassert 'Total billed: $3.1M' in text, \"the total must use the skill's Millions rule on 3115000\"\nassert 'Amount detail: $2.4M, $615.0K, $100.0K' in text, 'the invoice amounts must use the documented Millions and Thousands rules in fixture order'\nfor cell in ('2,400,000', '615,000', '100,000', '3,115,000'):\n    assert cell in text, 'table cells must keep full numbers with commas: ' + cell\nfor date in ('09/04/2026', '09/19/2026', '10/07/2026'):\n    assert date in text, 'invoice dates must come from the report rows: ' + date\nfor tranid in ('INV-20877', 'INV-20913', 'INV-20960'):\n    assert tranid in text, 'document numbers appear as plain text, never in URLs: ' + tranid\n\nfor inv_id in ('40211', '40655', '41102'):\n    assert 'custinvc.nl?id=' + inv_id in text, 'each invoice link must use the documented Invoice URL pattern with internal ID ' + inv_id\n    assert text.count(inv_id) == 1, 'internal ID ' + inv_id + ' may appear only inside its hyperlink URL'\nassert 'custjob.nl?id=1889' in text, 'the customer link must use the documented Customer URL pattern with internal ID 1889'\nassert text.count('1889') == 1, 'the customer internal ID may appear only inside its hyperlink URL'\nassert 'id=INV' not in text, 'URLs must use internal numeric IDs, never document numbers'\nassert text.count('target=\"_blank\"') >= 4, 'every link must set target=\"_blank\" (three invoices plus the customer)'\nassert '#36677D' in text, 'links must use the documented link color'\nassert 'Northwind Retail' in text, 'the customer must be named in the answer'\nassert 'inline text' in text, \"the format decision must cite the skill's inline-text threshold rule\"\nlow = text.lower()\nfor claim in ('reactdom', '```jsx', 'creating a react artifact'):\n    assert claim not in low, 'no React artifact may be created or promised: ' + claim\nreport = {'artifact_threshold': True, 'customer_link': True, 'internal_ids_only_in_urls': True,\n          'invoice_links': True, 'number_formats': True, 'priority1_stop': True,\n          'scenario_fixture': True, 'suiteql_not_used': True}\nPath('netsuite-connector-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('NetSuite connector answer: PRIORITY 1 tool order, documented number formats and hyperlinks applied to the simulated report; live NetSuite connection and real MCP tool execution remain untested')\n"
+        },
+        {
+          "path": "invoice-report.json",
+          "text": "{\n  \"simulatedTool\": \"ns_runReport\",\n  \"report\": \"Invoice Register\",\n  \"period\": \"Q3 FY2026 (Sep 1 - Oct 31, 2026)\",\n  \"customer\": {\"id\": 1889, \"name\": \"Northwind Retail\"},\n  \"rows\": [\n    {\"id\": 40211, \"tranid\": \"INV-20877\", \"trandate\": \"09/04/2026\", \"amount\": 2400000},\n    {\"id\": 40655, \"tranid\": \"INV-20913\", \"trandate\": \"09/19/2026\", \"amount\": 615000},\n    {\"id\": 41102, \"tranid\": \"INV-20960\", \"trandate\": \"10/07/2026\", \"amount\": 100000}\n  ],\n  \"totalAmount\": 3115000\n}\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_netsuite_connector.py",
+          "equals": "import json\nfrom pathlib import Path\n\ndata = json.loads(Path('invoice-report.json').read_text(encoding='utf-8'))\nassert data['customer']['id'] == 1889 and data['customer']['name'] == 'Northwind Retail', 'scenario fixture guard'\nassert data['totalAmount'] == 3115000, 'scenario fixture guard'\nassert [row['id'] for row in data['rows']] == [40211, 40655, 41102], 'scenario fixture guard'\nassert [row['amount'] for row in data['rows']] == [2400000, 615000, 100000], 'scenario fixture guard'\n\ntext = Path('billing-answer.md').read_text(encoding='utf-8')\n\nassert 'PRIORITY 1' in text, 'tool selection must name the mandatory execution order priority'\nassert 'ns_listAllReports' in text, 'the report-listing tool must come first in the documented order'\nassert 'ns_runReport' in text, 'the report-running tool must follow in the documented order'\nassert 'STOP' in text, 'the documented flow ends with STOP once a standard report answers the request'\nfor tool in ('ns_runCustomSuiteQL', 'ns_runSavedSearch', 'ns_getRecordTypeMetadata', 'ns_getRecord',\n             'ns_createRecord', 'ns_updateRecord', 'ns_getSuiteQLMetadata', 'ns_getSubsidiaries'):\n    assert tool not in text, 'a standard report answered, so no other ns_ tool may appear: ' + tool\nfor sql in ('ROWNUM', 'NVL('):\n    assert sql not in text, 'no SuiteQL content may appear when a standard report answered: ' + sql\n\nassert 'Total billed: $3.1M' in text, \"the total must use the skill's Millions rule on 3115000\"\nassert 'Amount detail: $2.4M, $615.0K, $100.0K' in text, 'the invoice amounts must use the documented Millions and Thousands rules in fixture order'\nfor cell in ('2,400,000', '615,000', '100,000', '3,115,000'):\n    assert cell in text, 'table cells must keep full numbers with commas: ' + cell\nfor date in ('09/04/2026', '09/19/2026', '10/07/2026'):\n    assert date in text, 'invoice dates must come from the report rows: ' + date\nfor tranid in ('INV-20877', 'INV-20913', 'INV-20960'):\n    assert tranid in text, 'document numbers appear as plain text, never in URLs: ' + tranid\n\nfor inv_id in ('40211', '40655', '41102'):\n    assert 'custinvc.nl?id=' + inv_id in text, 'each invoice link must use the documented Invoice URL pattern with internal ID ' + inv_id\n    assert text.count(inv_id) == 1, 'internal ID ' + inv_id + ' may appear only inside its hyperlink URL'\nassert 'custjob.nl?id=1889' in text, 'the customer link must use the documented Customer URL pattern with internal ID 1889'\nassert text.count('1889') == 1, 'the customer internal ID may appear only inside its hyperlink URL'\nassert 'id=INV' not in text, 'URLs must use internal numeric IDs, never document numbers'\nassert text.count('target=\"_blank\"') >= 4, 'every link must set target=\"_blank\" (three invoices plus the customer)'\nassert '#36677D' in text, 'links must use the documented link color'\nassert 'Northwind Retail' in text, 'the customer must be named in the answer'\nassert 'inline text' in text, \"the format decision must cite the skill's inline-text threshold rule\"\nlow = text.lower()\nfor claim in ('reactdom', '```jsx', 'creating a react artifact'):\n    assert claim not in low, 'no React artifact may be created or promised: ' + claim\nreport = {'artifact_threshold': True, 'customer_link': True, 'internal_ids_only_in_urls': True,\n          'invoice_links': True, 'number_formats': True, 'priority1_stop': True,\n          'scenario_fixture': True, 'suiteql_not_used': True}\nPath('netsuite-connector-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('NetSuite connector answer: PRIORITY 1 tool order, documented number formats and hyperlinks applied to the simulated report; live NetSuite connection and real MCP tool execution remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "invoice-report.json",
+          "equals": "{\n  \"simulatedTool\": \"ns_runReport\",\n  \"report\": \"Invoice Register\",\n  \"period\": \"Q3 FY2026 (Sep 1 - Oct 31, 2026)\",\n  \"customer\": {\"id\": 1889, \"name\": \"Northwind Retail\"},\n  \"rows\": [\n    {\"id\": 40211, \"tranid\": \"INV-20877\", \"trandate\": \"09/04/2026\", \"amount\": 2400000},\n    {\"id\": 40655, \"tranid\": \"INV-20913\", \"trandate\": \"09/19/2026\", \"amount\": 615000},\n    {\"id\": 41102, \"tranid\": \"INV-20960\", \"trandate\": \"10/07/2026\", \"amount\": 100000}\n  ],\n  \"totalAmount\": 3115000\n}\n"
+        },
+        {
+          "kind": "file",
+          "path": "netsuite-connector-verification.json",
+          "equals": "{\"artifact_threshold\": true, \"customer_link\": true, \"internal_ids_only_in_urls\": true, \"invoice_links\": true, \"number_formats\": true, \"priority1_stop\": true, \"scenario_fixture\": true, \"suiteql_not_used\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "ns_listAllReports"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "ns_runReport"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "PRIORITY 1"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "https://system.netsuite.com/app/accounting/transactions/custinvc.nl?id="
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "https://system.netsuite.com/app/common/entity/custjob.nl?id="
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "target=\"_blank\""
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "#36677D"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "Northwind Retail"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "40211"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "40655"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "41102"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "2,400,000"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "615,000"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "100,000"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "3,115,000"
+        },
+        {
+          "kind": "file",
+          "path": "billing-answer.md",
+          "contains": "inline text"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "NetSuite connector answer: PRIORITY 1 tool order, documented number formats and hyperlinks applied to the simulated report; live NetSuite connection and real MCP tool execution remain untested"
+        }
+      ]
+    }
+  ]
+}

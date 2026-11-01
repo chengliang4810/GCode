@@ -58,7 +58,7 @@ func TestFooterContextDetailsKeepUnknownZeroAndOverCapacity(t *testing.T) {
 			t.Errorf("details = %q, want %q", got, tc.want)
 		}
 	}
-	p := design.Palette("zeron-dark", true)
+	p := design.Palette("rcode-dark", true)
 	for _, tc := range []struct {
 		fraction float64
 		account  bool
@@ -88,7 +88,7 @@ func footerUsageTester(t *testing.T, usage contracts.ContextUsage) (*App, *ui.Te
 	a.state.ContextUsage[a.sessionID] = usage
 	a.footerUsage = composerUsageState{session: a.sessionID, target: "local", provider: provider, loaded: true}
 	tt := ui.NewTester(func(c *ui.Context) {
-		a.palette = design.Palette("zeron-dark", true)
+		a.palette = design.Palette("rcode-dark", true)
 		c.SetTheme(a.palette.UI())
 		c.Root().Font("Geist").FontSize(13).TextColor(a.palette.Text)
 		design.ApplyReferenceTypography(c)
@@ -183,20 +183,20 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 		width, height        float32
 		cases                []windowCase
 	}{
-		{"accounts", "Account usage", "Account usage menu", 400, 121, []windowCase{
-			{"ordinary", 840, 560, 359, 385},
-			{"three-pixel-gap-is-not-overflow", 484, 560, 3, 385},
-			{"exact-left-edge-is-not-overflow", 481, 560, 0, 385},
-			{"one-pixel-overflow-snaps", 480, 560, 8, 385},
-			{"wide-card-visible-region-starts-at-eight", 360, 560, 8, 385},
-			{"above-card-shifts-down-without-flipping", 840, 140, 359, 8},
-			{"tall-card-visible-region-starts-at-eight", 840, 80, 359, 8},
+		{"accounts", "Account usage", "Account usage menu", 400, 128, []windowCase{
+			{"ordinary", 840, 560, 357, 378},
+			{"three-pixel-gap-is-not-overflow", 486, 560, 3, 378},
+			{"exact-left-edge-is-not-overflow", 483, 560, 0, 378},
+			{"one-pixel-overflow-snaps", 482, 560, 8, 378},
+			{"wide-card-visible-region-starts-at-eight", 360, 560, 8, 378},
+			{"above-card-shifts-down-without-flipping", 840, 140, 357, 8},
+			{"tall-card-visible-region-starts-at-eight", 840, 80, 357, 8},
 		}},
-		{"context", "Context usage", "Context window menu", 172, 82, []windowCase{
-			{"ordinary", 840, 560, 644, 424},
-			{"three-and-four-pixel-gaps-are-not-overflow", 199, 140, 3, 4},
-			{"exact-window-edges-are-not-overflow", 196, 136, 0, 0},
-			{"one-pixel-overflow-snaps-both-axes", 195, 135, 8, 8},
+		{"context", "Context usage", "Context window menu", 196, 86, []windowCase{
+			{"ordinary", 840, 560, 620, 420},
+			{"three-and-four-pixel-gaps-are-not-overflow", 223, 144, 3, 4},
+			{"exact-window-edges-are-not-overflow", 220, 140, 0, 0},
+			{"one-pixel-overflow-snaps-both-axes", 219, 139, 8, 8},
 			{"oversized-card-aligns-top-left", 160, 80, 8, 8},
 		}},
 	} {

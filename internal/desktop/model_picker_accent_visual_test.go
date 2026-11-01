@@ -42,7 +42,7 @@ func TestModelAccentPlateSourceOuterRimAtTwoX(t *testing.T) {
 		{"dark", ui.RGB(39, 39, 42), color.RGBA{170, 158, 248, 255}, color.RGBA{148, 133, 248, 255}, color.RGBA{153, 140, 245, 255}},
 	} {
 		t.Run(tc.appearance, func(t *testing.T) {
-			palette := design.Palette("zeron-"+tc.appearance, tc.appearance == "dark")
+			palette := design.Palette("rcode-"+tc.appearance, tc.appearance == "dark")
 			tt := ui.NewTester(func(c *ui.Context) {
 				c.SetTheme(palette.UI())
 				c.DisableAnimations()
@@ -75,7 +75,7 @@ func TestModelAccentPlateSourceOuterRimAtTwoX(t *testing.T) {
 }
 
 func TestModelAccentOverlayKeepsSliderHitFocusAndKeyboard(t *testing.T) {
-	a := modelSurfaceTestApp(t, "light", true)
+	a := modelSurfaceTestApp(t, "light")
 	tt := ui.NewTester(a.View, 840, 560)
 	tt.SetScale(2)
 	tt.Advance(20 * time.Millisecond)
@@ -83,7 +83,7 @@ func TestModelAccentOverlayKeepsSliderHitFocusAndKeyboard(t *testing.T) {
 	if !ok || slider.H != 36 || slider.W != 230 {
 		t.Fatalf("production effort slider lost its source box: %+v", slider)
 	}
-	levels := a.centralControls().compactEffort().levels
+	levels := a.centralControls().reasoningChoice().levels
 	y := slider.Y + slider.H/2
 	for i, want := range levels {
 		x := slider.X + 22 + (slider.W-44)*float32(i)/float32(len(levels)-1)
@@ -104,8 +104,7 @@ func TestModelAccentOverlayKeepsSliderHitFocusAndKeyboard(t *testing.T) {
 	if a.reasoning != levels[1] {
 		t.Fatal("paint overlay changed the native panel's effort keys")
 	}
-	tt.Key(0, ui.KeyDown)
-	if !a.modelListPage || !tt.Focused("Search models") {
-		t.Fatal("paint overlay trapped focus instead of allowing Down to open the model list")
+	if a.modelMenu || !a.effortMenu {
+		t.Fatal("effort interaction opened the model list")
 	}
 }

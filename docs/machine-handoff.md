@@ -1,5 +1,12 @@
 # 2026-10-28 换机交接与进度
 
+> 桌面测试已接入 MyGo Automation，原子命令引用使用富文本输入框，当前源码修订为 `rcode-native-ui.20`。
+> MyGo 为 v0.7.3，2,034 文件、28 补丁，树 `f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`。
+> 入口、固定来源和验证边界见 [desktop-testing.md](desktop-testing.md)；
+> 下文 R16/R17 的 `.9` 及更早指纹继续保留其历史证据身份。
+
+> 2026-10-29 后端实现更新：普通启动已使用原生 Go 核心，默认数据目录为 `~/.gcode`。当前运行说明见 [backend-v1.md](backend-v1.md)；本页其余内容保留对应 UI 阶段的历史证据。
+
 > 同日新机器已恢复执行。本文保留原交接基线；当前进展与实际新机路径见
 > `machine-resume.md`。2026-10-29 用户已暂停继续优化；后续 i18n、账户菜单和侧边
 > 聊天入口修复已完成，现创建本地 UI 基线提交，下一阶段实现真实后端。见
@@ -20,13 +27,15 @@ Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数�
 
 **当前为实现与验收进行中，未达到“完全一致”。** 原交接时用户要求整理资料、
 提交推送后暂停；同日已明确“已换机，恢复目标”，恢复条件已满足。以下版本表
-保留原交接基线；最新封存 R16 为 MyGo `.6`（1,836文件/11补丁），当前源码已接入
-尚未发布验收的 [R17 `.9`](audit-tabstrip-tooltip-primitives.md)：1,864文件、14补丁，
-树为`27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。基于2931项正式输入
-的新pin与五门槛、canonical四目标候选包构建/校验已通过；installer、Mac原生和
-完整视觉/发布接受仍待完成。旧C4/AX包及V5隔离原图保留原身份。准确当前指纹与阶段证据见 `machine-resume.md` 和
+保留原交接基线；最新封存 R16 为 MyGo `.6`（1,836文件/11补丁）。R17 `.9`
+（1,864文件、14补丁，树
+`27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`）保留为历史阶段；
+当前源码为 MyGo v0.7.3 + `rcode-native-ui.20`（2,034文件、28补丁，树
+`f86d8641763cfe81281450f382687d4c09fc6a528f50b4a861def7ce669ea72d`）。R17 阶段基于2931项正式输入的
+pin与五门槛、canonical四目标候选包构建/校验已通过；installer、Mac原生和
+完整视觉/发布接受仍待完成。旧C4/AX包及V5隔离原图保留原身份。R17 阶段证据见 `machine-resume.md` 和
 `audit-tabstrip-tooltip-primitives.md`；`reference/validation/resume-result.json`仍为R16历史hub，
-保留原指纹，不将其改称当前`.9`源码记录。
+保留原指纹，不将其改称当前源码记录。
 
 ## 仓库与固定版本（原交接基线）
 
@@ -51,8 +60,8 @@ Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数�
 | 工程/数据 | 四层结构、typed DTO/命令/事件、可取消流、状态转换、固定场景、持久化、独立安装/数据身份 | `contracts.md`、`audit-agent-data.md` |
 | 资源/主题 | 507 项原版素材、30 主题、210 公式/图表矢量；原生 Markdown/编辑器/终端/网页正文 | `reference-baseline.md`、`reference/baseline.json` |
 | 应用壳/文件区 | 侧栏/聊天/工具/最右 Files，动态挤压、拖动、takeover、底部终端、标签与文件编辑 | `audit-workbench.md` |
-| 侧栏 | 分组/排序/显示菜单、置顶拖动、归档、行内重命名、原生键盘选择和项目过滤 | `audit-sidebar.md` |
-| 模型/输入区 | 紧凑/标准菜单、搜索、收藏、推理、provider 记忆与锁定、加载/重试；中央/侧聊共用 surface 与独立 model/access/Plan | `audit-model-picker.md`、`audit-composer.md` |
+| 侧栏 | 分组/排序/显示菜单、置顶拖动、项目折叠面板、行内重命名、原生键盘选择；归档只在设置页 | `audit-sidebar.md` |
+| 模型/输入区 | 统一两列菜单、搜索、推理、provider 记忆与锁定、加载/重试；中央/侧聊共用 surface 与 model/reasoning（收藏、access/Plan 已移除） | `audit-model-picker.md`、`audit-composer.md` |
 | Agent 输出 | 按 turn 分组的活动树、思考、读写编辑/命令、失败恢复、差异/子代理、独立最终回复；真实不同的会话轨迹 | `audit-transcript.md`、`audit-agent-data.md` |
 | 命令/项目 | All/Threads/Commands/Files 四页、typed 文件/内容搜索、行列定位、新项目设备/目录选择、离线/重复错误 | `audit-command-palette.md` |
 | 设置条件流程 | Providers/Devices/Cloud/Billing 四页、目标设备/账号/code 登录、更新、GitHub 仓库、计划/credits 的 mock 闭环 | `audit-account-settings.md` |
@@ -108,9 +117,9 @@ go tool mygo vet .
 先直接从当前源码运行固定的新场景，避免历史 profile 混入旧模板：
 
 ```powershell
-go run ./cmd/zeron --scenario default --route chat/chat-0 --appearance light
-go run ./cmd/zeron --scenario transcript --route chat/chat-0 --appearance light
-go run ./cmd/zeron --scenario live --route chat/chat-0 --appearance dark
+go run ./cmd/rcode --scenario default --route chat/chat-0 --appearance light
+go run ./cmd/rcode --scenario transcript --route chat/chat-0 --appearance light
+go run ./cmd/rcode --scenario live --route chat/chat-0 --appearance dark
 ```
 
 构建检查包时使用新的输出目录，防止 Windows 覆盖已有 Universal 目录失败：
@@ -120,8 +129,9 @@ go run ./cmd/zeron --scenario live --route chat/chat-0 --appearance dark
 ./scripts/review-ui.ps1 -ReleaseDir build/machine-check/windows-amd64
 ```
 
-普通运行 `go run ./cmd/zeron` 使用 OS 配置目录的 `gcode-zeron-ui/state.json`。
-固定场景不传 `--data-dir` 时使用内存业务数据和独立 native profile。原版 Zeron
+普通运行 `go run ./cmd/rcode` 使用 `~/.gcode` 配置入口；引擎设置、供应商和会话索引
+保存在其中的 `engine.json`，会话正文与运行时数据写入设置中选择的当前数据根。
+`state.json` 只用于带 `--data-dir` 的确定性场景。原版 Zeron
 的数据目录和副本各自独立；迁移源码不会自动带入个人账号、正常 profile 或凭据。
 
 Windows race 检查需要可用 x64 GCC：

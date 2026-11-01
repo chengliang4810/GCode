@@ -1,0 +1,168 @@
+{
+  "pluginId": "ralph-loop@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [
+    "hook:Stop/0/0"
+  ],
+  "probes": [
+    {
+      "id": "explain-ralph-loop-commands",
+      "componentId": "command:ralph-loop:help",
+      "prompt": "/ralph-loop:help Explain the Ralph Loop plugin and its available commands. Headless authoring task: this is a documentation-only request, so do not start any loop, do not run the setup script and do not run installs or network calls. Write the explanation the command requires to ralph-help.md covering exactly what the plugin documents: what Ralph Loop is and the loop concept, how the same prompt is fed again, the self-referential mechanism through files and git history, how the Stop hook intercepts exit, the /ralph-loop command form with its max-iterations option and completion promise, and the /cancel-ralph command. Then read the immutable verify_ralph_help.py and run exactly python verify_ralph_help.py using Bash to validate the document and write help-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that running a real loop remains untested.",
+      "allowCommands": [
+        "python verify_ralph_help.py"
+      ],
+      "verifierOutputs": [
+        "help-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ralph_help.py",
+          "text": "import json\nfrom pathlib import Path\n\nanswer = Path('ralph-help.md').read_text(encoding='utf-8')\nlow = answer.lower()\nassert 'ralph' in low, 'the explanation must name Ralph Loop'\nassert 'while' in low or 'loop' in low, 'the documented loop concept must be explained'\nassert 'self-referential' in low or 'self referential' in low, 'the documented self-reference mechanism must be explained'\nassert 'stop hook' in low, 'the documented stop hook interception must be explained'\nassert '/ralph-loop' in answer, 'the documented command form must be listed'\nassert '/cancel-ralph' in answer, 'the documented cancel command must be listed'\nassert 'max-iterations' in low, 'the documented max-iterations option must be listed'\nassert 'completion' in low and 'promise' in low, 'the documented completion promise concept must be explained'\nreport = {'cancel_command': True, 'completion_promise': True, 'loop_concept': True,\n          'max_iterations_option': True, 'ralph_command': True, 'self_reference': True, 'stop_hook': True}\nPath('help-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph help: documented loop concept, commands and options explained; no loop started')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ralph_help.py",
+          "equals": "import json\nfrom pathlib import Path\n\nanswer = Path('ralph-help.md').read_text(encoding='utf-8')\nlow = answer.lower()\nassert 'ralph' in low, 'the explanation must name Ralph Loop'\nassert 'while' in low or 'loop' in low, 'the documented loop concept must be explained'\nassert 'self-referential' in low or 'self referential' in low, 'the documented self-reference mechanism must be explained'\nassert 'stop hook' in low, 'the documented stop hook interception must be explained'\nassert '/ralph-loop' in answer, 'the documented command form must be listed'\nassert '/cancel-ralph' in answer, 'the documented cancel command must be listed'\nassert 'max-iterations' in low, 'the documented max-iterations option must be listed'\nassert 'completion' in low and 'promise' in low, 'the documented completion promise concept must be explained'\nreport = {'cancel_command': True, 'completion_promise': True, 'loop_concept': True,\n          'max_iterations_option': True, 'ralph_command': True, 'self_reference': True, 'stop_hook': True}\nPath('help-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph help: documented loop concept, commands and options explained; no loop started')\n"
+        },
+        {
+          "kind": "file",
+          "path": "help-verification.json",
+          "equals": "{\"cancel_command\": true, \"completion_promise\": true, \"loop_concept\": true, \"max_iterations_option\": true, \"ralph_command\": true, \"self_reference\": true, \"stop_hook\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "ralph-help.md",
+          "contains": "/ralph-loop"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Ralph help: documented loop concept, commands and options explained"
+        }
+      ]
+    },
+    {
+      "id": "record-ralph-start-contract",
+      "componentId": "command:ralph-loop:ralph-loop",
+      "prompt": "/ralph-loop:ralph-loop Fix the failing test in tests by iterating until it passes --max-iterations 5 --completion-promise ALL_TESTS_PASS Headless authoring task: do not execute the setup script, do not create the state file and do not start any loop; no network and no installs. Instead write the documented start contract to ralph-start-plan.md: the setup script the command runs, the max-iterations option with the value given, the completion-promise option with the promise text given, the documented CRITICAL RULE that the promise may only be output when it is completely and unequivocally true and that false promises must never be used to escape the loop, how the Stop hook feeds the same prompt back, and the documented state file path. State explicitly that no loop was started in this session. Then read the immutable verify_ralph_start.py and run exactly python verify_ralph_start.py using Bash to validate the plan and write start-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that real loop iteration remains untested.",
+      "allowCommands": [
+        "python verify_ralph_start.py"
+      ],
+      "verifierOutputs": [
+        "start-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ralph_start.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('ralph-start-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'setup-ralph-loop.sh' in plan, 'the documented setup script must be named'\nassert 'max-iterations' in low, 'the documented max-iterations option must be recorded'\nassert 'completion-promise' in low or 'completion promise' in low, 'the documented completion promise must be recorded'\nassert 'only output it when' in low or 'completely and unequivocally true' in low, 'the documented CRITICAL RULE about honest promises must be quoted'\nassert 'stop hook' in low, 'the documented stop hook behavior must be recorded'\nassert 'ralph-loop.local.md' in low, 'the documented state file must be recorded'\nassert 'no loop was started' in low or 'not started' in low, 'the plan must state honestly that no loop started'\nreport = {'completion_promise_rule': True, 'honest_no_loop': True, 'max_iterations': True,\n          'setup_script': True, 'state_file': True, 'stop_hook': True}\nPath('start-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph start: documented setup contract and honest-completion rule recorded; loop execution untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ralph_start.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('ralph-start-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'setup-ralph-loop.sh' in plan, 'the documented setup script must be named'\nassert 'max-iterations' in low, 'the documented max-iterations option must be recorded'\nassert 'completion-promise' in low or 'completion promise' in low, 'the documented completion promise must be recorded'\nassert 'only output it when' in low or 'completely and unequivocally true' in low, 'the documented CRITICAL RULE about honest promises must be quoted'\nassert 'stop hook' in low, 'the documented stop hook behavior must be recorded'\nassert 'ralph-loop.local.md' in low, 'the documented state file must be recorded'\nassert 'no loop was started' in low or 'not started' in low, 'the plan must state honestly that no loop started'\nreport = {'completion_promise_rule': True, 'honest_no_loop': True, 'max_iterations': True,\n          'setup_script': True, 'state_file': True, 'stop_hook': True}\nPath('start-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph start: documented setup contract and honest-completion rule recorded; loop execution untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "start-verification.json",
+          "equals": "{\"completion_promise_rule\": true, \"honest_no_loop\": true, \"max_iterations\": true, \"setup_script\": true, \"state_file\": true, \"stop_hook\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "ralph-start-plan.md",
+          "contains": "setup-ralph-loop.sh"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Ralph start: documented setup contract and honest-completion rule recorded"
+        }
+      ]
+    },
+    {
+      "id": "handle-cancel-with-no-active-loop",
+      "componentId": "command:ralph-loop:cancel-ralph",
+      "prompt": "/ralph-loop:cancel-ralph Cancel the active Ralph loop. Headless authoring task: there is no .claude/ralph-loop.local.md state file in this workspace, so no loop is active. Follow the documented cancel procedure exactly and record it in ralph-cancel.md: the documented existence check for the state file, and the documented response for the NOT_FOUND case which is the exact sentence No active Ralph loop found. Do not create the state file, do not delete anything, and do not run installs or network calls. Then read the immutable verify_ralph_cancel.py and run exactly python verify_ralph_cancel.py using Bash to validate the document and write cancel-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: report the documented NOT_FOUND answer and the actual verifier output line, and state that cancelling a genuinely active loop remains untested.",
+      "allowCommands": [
+        "python verify_ralph_cancel.py"
+      ],
+      "verifierOutputs": [
+        "cancel-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ralph_cancel.py",
+          "text": "import json\nfrom pathlib import Path\n\nanswer = Path('ralph-cancel.md').read_text(encoding='utf-8')\nlow = answer.lower()\nassert 'ralph-loop.local.md' in low, 'the documented state file must be named'\nassert 'no active ralph loop found' in low, 'the documented NOT_FOUND response must be given verbatim'\nassert 'test -f .claude/ralph-loop.local.md' in answer, 'the documented existence check must be recorded'\nreport = {'documented_check': True, 'not_found_message': True, 'state_file_named': True}\nPath('cancel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph cancel: documented NOT_FOUND handling produced for an inactive loop')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ralph_cancel.py",
+          "equals": "import json\nfrom pathlib import Path\n\nanswer = Path('ralph-cancel.md').read_text(encoding='utf-8')\nlow = answer.lower()\nassert 'ralph-loop.local.md' in low, 'the documented state file must be named'\nassert 'no active ralph loop found' in low, 'the documented NOT_FOUND response must be given verbatim'\nassert 'test -f .claude/ralph-loop.local.md' in answer, 'the documented existence check must be recorded'\nreport = {'documented_check': True, 'not_found_message': True, 'state_file_named': True}\nPath('cancel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph cancel: documented NOT_FOUND handling produced for an inactive loop')\n"
+        },
+        {
+          "kind": "file",
+          "path": "cancel-verification.json",
+          "equals": "{\"documented_check\": true, \"not_found_message\": true, \"state_file_named\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "ralph-cancel.md",
+          "contains": "No active Ralph loop found"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Ralph cancel: documented NOT_FOUND handling produced"
+        }
+      ]
+    },
+    {
+      "id": "stop-hook-allows-exit-without-state",
+      "componentId": "hook:Stop/0/0",
+      "prompt": "This is a Ralph Loop Stop hook verification task; the hook itself is the component under test. Start by replying with the single word ready. Then read the immutable verify_ralph_hook.py and run exactly python verify_ralph_hook.py using Bash to write hook-verification.json and print the result line. This is the only allowed Bash command. The probe verifies only that the Stop hook runs and allows exit when no ralph-loop state file exists; the loop-blocking behavior with an active state file remains untested.",
+      "allowCommands": [
+        "python verify_ralph_hook.py"
+      ],
+      "verifierOutputs": [
+        "hook-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ralph_hook.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport = {'exit_allows_without_state': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph stop hook: exits cleanly when no loop state file exists; loop blocking untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ralph_hook.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport = {'exit_allows_without_state': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Ralph stop hook: exits cleanly when no loop state file exists; loop blocking untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "hook-verification.json",
+          "equals": "{\"exit_allows_without_state\": true}\n"
+        },
+        {
+          "kind": "exit",
+          "exitCode": 0
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Ralph stop hook: exits cleanly when no loop state file exists"
+        }
+      ]
+    }
+  ]
+}

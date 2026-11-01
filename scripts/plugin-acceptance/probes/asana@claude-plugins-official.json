@@ -1,0 +1,32 @@
+{
+  "pluginId": "asana@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "asana-v2-mcp-setup-guide-with-provided-client-id",
+      "componentId": "command:asana:asana-setup",
+      "prompt": "Use the asana-setup command for the Asana V2 MCP server with the provided Client ID 9182736455463728. Headless boundary: no network, no Asana developer console, no browser, no OAuth flow, no installs and no shell commands. Write the documented one-time setup steps to asana-setup-guide.md: creating the OAuth app with that Client ID, adding the documented callback URL, the documented claude mcp add command pointing at the server URL https://mcp.asana.com/v2/mcp, and completing the client secret prompt in the user own terminal. End the guide by naming which parts remain untested.",
+      "allowCommands": [],
+      "verifierOutputs": [],
+      "fixtures": [],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "asana-setup-guide.md",
+          "contains": "9182736455463728"
+        },
+        {
+          "kind": "file",
+          "path": "asana-setup-guide.md",
+          "contains": "mcp.asana.com/v2/mcp"
+        },
+        {
+          "kind": "file",
+          "path": "asana-setup-guide.md",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

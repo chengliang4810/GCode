@@ -34,7 +34,7 @@ func TestAnnotationBoundsAndCanonicalLink(t *testing.T) {
 	if _, ok := ParseAnnotationLink(strings.Replace(link, "Annotation 1", "Changed label", 1)); ok {
 		t.Fatal("edited labels must remain ordinary text")
 	}
-	if _, ok := ParseAnnotationLink("[Annotation 1](zeron-annotation:xyz)"); ok {
+	if _, ok := ParseAnnotationLink("[Annotation 1](rcode-annotation:xyz)"); ok {
 		t.Fatal("malformed hexadecimal accepted")
 	}
 }

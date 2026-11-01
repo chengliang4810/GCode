@@ -270,7 +270,6 @@ func groupCredits(value float64) string {
 func seedAdditionalProviders(s *contracts.Snapshot) {
 	for _, p := range []contracts.Provider{{ID: "antigravity", Name: "Antigravity", Icon: "antigravity-mark"}, {ID: "grok", Name: "Grok", Icon: "grok-mark"}, {ID: "devin", Name: "Devin", Icon: "devin-mark"}, {ID: "opencode", Name: "OpenCode", Icon: "opencode-mark"}, {ID: "pi", Name: "Pi", Icon: "pi-mark"}, {ID: "hermes", Name: "Hermes", Icon: "hermes-mark"}, {ID: "muse", Name: "Muse Code", Icon: "muse-mark"}} {
 		p.Status = "notConnected"
-		p.AccessModes = []contracts.AccessMode{contracts.AccessFullAccess}
 		s.Providers = append(s.Providers, p)
 	}
 }
@@ -317,23 +316,4 @@ func (s *Server) restoreIntegrationsLocked() {
 	}
 	v.Cloud.Available = s.state.User.SignedIn
 	v.Billing.Available = s.state.User.SignedIn
-}
-
-func (s *Server) accountIntegrationsChangedLocked(signedIn bool) {
-	v := &s.state.Integrations
-	v.Cloud.Available = signedIn
-	v.Billing.Available = signedIn
-	if !signedIn {
-		for _, key := range []string{"login", "checkout", "github", "cloud"} {
-			s.invalidateIntegrationJobLocked(key)
-		}
-		v.Login = nil
-		v.Billing.Checkout = nil
-		v.Cloud.Github = contracts.CloudConnection{ProviderID: "github", State: "disconnected"}
-		v.Cloud.Repositories = nil
-		return
-	}
-	if v.Cloud.State == "off" {
-		_ = s.integrationCommandLocked(contracts.Command{Kind: "cloud.enable"})
-	}
 }

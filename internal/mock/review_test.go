@@ -160,24 +160,10 @@ func TestThemeImportLifecycleAndSnapshotOwnership(t *testing.T) {
 	}
 }
 
-func TestProjectActionsAndRelatedSessions(t *testing.T) {
+func TestRelatedSessionsPreserveContextAndParent(t *testing.T) {
 	s := newTestServer(t, Options{})
 	ctx := context.Background()
-	if err := s.Execute(ctx, contracts.Command{Kind: "project.action.create", ProjectID: "fieldnotes", Action: &contracts.ProjectAction{Name: "Run tests", Command: "go test ./...", Icon: "play"}}); err != nil {
-		t.Fatal(err)
-	}
 	created, _ := s.Snapshot(ctx)
-	action := created.Projects[0].Actions[0]
-	if !action.Enabled {
-		t.Fatal("new action should be runnable")
-	}
-	if err := s.Execute(ctx, contracts.Command{Kind: "project.action.run", ProjectID: "fieldnotes", ID: action.ID}); err != nil {
-		t.Fatal(err)
-	}
-	ran, _ := s.Snapshot(ctx)
-	if ran.Projects[0].Actions[0].LastRunStatus != "completed" || len(ran.Terminals) != len(created.Terminals)+1 {
-		t.Fatal("action did not publish its terminal result")
-	}
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
@@ -198,13 +184,6 @@ func TestProjectActionsAndRelatedSessions(t *testing.T) {
 	child := side.Sessions[0]
 	if child.ParentSessionID != "chat-0" || !child.SideChat || len(side.Messages[child.ID]) != 0 {
 		t.Fatal("side chat is not an empty related session")
-	}
-	if err := s.Execute(ctx, contracts.Command{Kind: "project.action.delete", ProjectID: "fieldnotes", ID: action.ID}); err != nil {
-		t.Fatal(err)
-	}
-	deleted, _ := s.Snapshot(ctx)
-	if len(deleted.Projects[0].Actions) != 0 {
-		t.Fatal("action delete did not update project")
 	}
 }
 

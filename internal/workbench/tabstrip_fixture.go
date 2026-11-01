@@ -353,7 +353,7 @@ func (f *TabStripFixture) View(c *ui.Context) {
 		Scene: f.scene, LogicalWidth: width, LogicalHeight: height, ParentSessionID: s.scopeID,
 		ScrollApplied: f.scrollApplied, NativeWindow: f.window != nil,
 		Surface: "opaque", MotionPreference: "reduced", FontFamily: "Geist", RootFontSize: 14,
-		EffectiveChipSize: design.UISize(c, 11.5),
+		EffectiveChipSize: design.TextSize(c, design.TextBase),
 	}
 	if len(s.tabs) > 0 {
 		active := s.active
@@ -449,9 +449,8 @@ var _ contracts.Service = (*tabStripFixtureService)(nil)
 func (s *tabStripFixtureService) setScene(scene TabStripFixtureScene, styleCase string) {
 	settings := mock.DefaultSettings()
 	settings.General.Language = "en" // Frozen reference fixture language.
-	settings.Appearance.Mode, settings.Appearance.ThemeID = scene.Appearance, "zeron-"+scene.Appearance
+	settings.Appearance.Mode, settings.Appearance.ThemeID = scene.Appearance, "rcode-"+scene.Appearance
 	settings.Appearance.Surface, settings.Appearance.MotionPreference = "opaque", "reduced"
-	settings.Appearance.SmoothScrolling = false
 	settings.Appearance.Font, settings.Appearance.FontSize = "Geist", 13
 	state := contracts.Snapshot{SchemaVersion: contracts.SchemaVersion, Revision: 1, Settings: settings}
 	state.Sessions = []contracts.Session{{ID: "parent", Title: "Parent", Status: contracts.Idle}}

@@ -1,4 +1,4 @@
-// Package assets embeds the unmodified artwork and typefaces of the frozen Zeron reference.
+// Package assets embeds GCode branding and the frozen Zeron artwork and typefaces.
 package assets
 
 import (
@@ -14,9 +14,23 @@ import (
 //go:embed all:data
 var files embed.FS
 
+//go:embed branding/app-icon.png
+var appIcon []byte
+
+//go:embed branding/app-icon-*.png
+var smallAppIcons embed.FS
+
+// glyphs holds control glyphs drawn for GCode rather than imported from the
+// frozen reference artwork: the window caption buttons, which must match the
+// titlebar icon grid and stroke weight instead of an optional system font.
+//
+//go:embed glyphs/*.svg
+var glyphs embed.FS
+
 var fontOnce sync.Once
 var fontError error
 var iconCache sync.Map
+var glyphCache sync.Map
 
 // Read returns an embedded source asset relative to data (for example icons/paperclip.svg).
 func Read(name string) ([]byte, error) {
@@ -49,6 +63,26 @@ func RegisterFonts() error {
 	return fontError
 }
 
+// Glyph returns a control glyph drawn for GCode by its filename stem. These
+// are not part of the frozen upstream artwork and are not subject to the
+// import manifest. An unknown name returns nil.
+func Glyph(name string) *ui.SVG {
+	name = strings.TrimSuffix(name, ".svg")
+	if cached, ok := glyphCache.Load(name); ok {
+		return cached.(*ui.SVG)
+	}
+	data, err := glyphs.ReadFile("glyphs/" + name + ".svg")
+	if err != nil {
+		return nil
+	}
+	icon, err := ui.ParseSVG(data)
+	if err != nil {
+		return nil
+	}
+	actual, _ := glyphCache.LoadOrStore(name, icon)
+	return actual.(*ui.SVG)
+}
+
 // Icon returns the original SVG by its filename stem. An unknown name returns nil;
 // callers should select an existing asset instead of drawing an approximate glyph.
 func Icon(name string) *ui.SVG {
@@ -68,10 +102,19 @@ func Icon(name string) *ui.SVG {
 	return actual.(*ui.SVG)
 }
 
-// AppIcon returns a fresh copy of the original desktop application icon.
+// AppIcon returns a fresh copy of the GCode desktop application icon.
 func AppIcon() []byte {
-	data, _ := Read("app-icon.png")
-	return data
+	return append([]byte(nil), appIcon...)
+}
+
+// AppIconForSize returns artwork rasterized for the requested native icon size.
+func AppIconForSize(size int) ([]byte, error) {
+	for _, available := range []int{16, 20, 24, 32, 40, 48, 64, 96, 128, 256} {
+		if size <= available {
+			return smallAppIcons.ReadFile(fmt.Sprintf("branding/app-icon-%d.png", available))
+		}
+	}
+	return AppIcon(), nil
 }
 
 // Names lists all embedded file paths, without the data prefix.

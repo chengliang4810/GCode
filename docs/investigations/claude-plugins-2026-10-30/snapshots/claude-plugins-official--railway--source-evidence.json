@@ -1,0 +1,53 @@
+{
+  "repo": "railwayapp/railway-skills",
+  "commit": "a100f93e482c5153774fed74d0b3fb8f8ca63342",
+  "path": "plugins/railway",
+  "archive_sha256": "85063dcd34fc8f6f75b72076391e4d93c923c5f5097192c94fc9993ad0f4956b",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/assets/railway-logo-light.svg",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/mcp.json",
+    ".cursor-plugin/plugin.json",
+    ".grok-plugin/mcp.json",
+    ".grok-plugin/plugin.json",
+    ".mcp.json",
+    "hooks/auto-approve-api.sh",
+    "hooks/auto-approve-api.test.sh",
+    "hooks/hooks.json",
+    "skills/use-railway/SKILL.md",
+    "skills/use-railway/references/analyze-db-mongo.md",
+    "skills/use-railway/references/analyze-db-mysql.md",
+    "skills/use-railway/references/analyze-db-postgres.md",
+    "skills/use-railway/references/analyze-db-redis.md",
+    "skills/use-railway/references/analyze-db.md",
+    "skills/use-railway/references/cloud-agents.md",
+    "skills/use-railway/references/configure.md",
+    "skills/use-railway/references/databases.md",
+    "skills/use-railway/references/deploy.md",
+    "skills/use-railway/references/feature-flags.md",
+    "skills/use-railway/references/iac.md",
+    "skills/use-railway/references/operate.md",
+    "skills/use-railway/references/request.md",
+    "skills/use-railway/references/sandbox.md",
+    "skills/use-railway/references/setup.md",
+    "skills/use-railway/references/tracing.md",
+    "skills/use-railway/references/usage.md",
+    "skills/use-railway/scripts/analyze-mongo.py",
+    "skills/use-railway/scripts/analyze-mysql.py",
+    "skills/use-railway/scripts/analyze-postgres.py",
+    "skills/use-railway/scripts/analyze-redis.py",
+    "skills/use-railway/scripts/dal.py",
+    "skills/use-railway/scripts/enable-pg-stats.py",
+    "skills/use-railway/scripts/pg-extensions.py",
+    "skills/use-railway/scripts/railway-api.sh"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"railway\",\n  \"version\": \"1.5.2\",\n  \"description\": \"Railway agent skills and hosted MCP server for deploying, configuring, monitoring, and troubleshooting apps and infrastructure on Railway from Claude Code. Manage services, environments, deployments, databases, object storage, networking, and observability.\",\n  \"author\": {\n    \"name\": \"Railway\",\n    \"email\": \"contact@railway.com\"\n  },\n  \"homepage\": \"https://docs.railway.com/agents\",\n  \"repository\": \"https://github.com/railwayapp/railway-skills\",\n  \"license\": \"MIT\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"railway\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.railway.com\"\n    }\n  }\n}\n",
+    "hooks/hooks.json": "{\n  \"description\": \"Auto-approve Railway API calls\",\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"${GROK_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-approve-api.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/use-railway/SKILL.md": "\nname: use-railway\ndescription: >\n  Operate Railway infrastructure: sign up for or sign in to a Railway account,\n  create projects, provision services, databases, and buckets, deploy code,\n  configure infrastructure as code, environments and variables, manage domains,\n  trace requests with OpenTelemetry,\n  troubleshoot failures, check status and metrics, manage feature flags,\n  database recovery and HA, cloud agents, usage limits, and Railway agent tooling.\n  Use this skill whenever\n  the user mentions Railway, feature flags, flag rollout, targeting rules,\n  signing up, creating an account, registering, logging in, deployments,\n  services, environments, buckets, object storage, tracing, traces, spans,\n  OpenTelemetry, OTLP, build failures, agent setup,\n  MCP, or infrastructure operations, even if they don't say \"Railway\" explicitly.\n  Also invoke this skill when the user asks to be signed up, registered, or\n  onboarded to Railway: do not refuse — drive them through the unauthed\n  `railway up` flow (deploys + signs up on the fly) or `railway login`\n  (which creates new accounts on the fly).\nallowed-tools: Bash(railway:*), Bash(which:*), Bash(command:*), Bash(npm:*), Bash(npx:*), Bash(curl:*), Bash(python3:*)\n"
+  }
+}

@@ -26,14 +26,19 @@ func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bo
 		ui.Column(c).FillWidth().Height(min(float32(144), budget)).Padding(8).Label(tr(c, "Loading models")).Children(func() { a.modelSkeleton(c) })
 	case contracts.CatalogError:
 		ui.Column(c).FillWidth().Padding(16).Gap(6).Children(func() {
-			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger)
+			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
 			textButton(c, tr(c, "Retry")).Border(1, a.palette.Border).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
 		})
 	case contracts.CatalogNoAgents:
 		ui.Column(c).FillWidth().Padding(16).Gap(8).AlignItems(ui.Center).Children(func() {
 			icon(c, "terminal", 20)
-			ui.Text(c, tr(c, "No agents available")).FontSize(design.UISize(c, 13))
-			ui.Text(c, tr(c, "Enable an installed agent in Settings → Providers, or install an agent CLI.")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted).TextAlign(ui.Center)
+			if a.state.Runtime != nil {
+				ui.Text(c, tr(c, "Add your provider to start a conversation.")).FontSize(design.TextSize(c, design.TextBase))
+				textButton(c, tr(c, "Add provider")).OnClick(func() { a.navigate("settings/Providers") })
+			} else {
+				ui.Text(c, tr(c, "No models configured")).FontSize(design.TextSize(c, design.TextBase))
+				ui.Text(c, tr(c, "Configure a provider and enable a model in Settings.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted).TextAlign(ui.Center)
+			}
 		})
 	default:
 		return false

@@ -8,17 +8,16 @@ import (
 )
 
 type workspaceScope struct {
-	tabs                                                               []surface
-	recentFiles                                                        []string
-	search                                                             fileSearchState
-	active                                                             int
-	tabScroll                                                          ui.ScrollState
-	documents                                                          map[string]*document
-	diffs                                                              map[string]*editor.DiffState
-	folders                                                            map[string]*bool
-	fileSearch, historySearch, commitID, prSearch, selectedPR, comment string
-	prTab                                                              int
-	pendingTerminal                                                    bool
+	tabs                                []surface
+	recentFiles                         []string
+	search                              fileSearchState
+	active                              int
+	tabScroll                           ui.ScrollState
+	documents                           map[string]*document
+	diffs                               map[string]*editor.DiffState
+	folders                             map[string]*bool
+	fileSearch, historySearch, commitID string
+	pendingTerminal                     bool
 }
 
 // SwitchSession keeps tabs, editor buffers/selections, tree state and scroll
@@ -28,6 +27,8 @@ func (s *State) SwitchSession(id string) {
 		return
 	}
 	s.StopAnnotations()
+	s.cancelLink()
+	s.pendingFile, s.pendingNavigation = "", nil
 	s.cancelFileSearch()
 	for _, document := range s.documents {
 		if document.autosave != nil {
@@ -41,7 +42,7 @@ func (s *State) SwitchSession(id string) {
 		search:      s.search,
 		documents:   s.documents, diffs: s.diffs, folders: s.folders,
 		fileSearch: s.fileSearch, historySearch: s.historySearch, commitID: s.commitID,
-		prSearch: s.prSearch, selectedPR: s.selectedPR, comment: s.comment, prTab: s.prTab, pendingTerminal: s.pendingTerminal,
+		pendingTerminal: s.pendingTerminal,
 	}
 	next := s.scopes[id]
 	s.scopeID = id
@@ -59,7 +60,6 @@ func (s *State) SwitchSession(id string) {
 		s.folders = map[string]*bool{}
 	}
 	s.fileSearch, s.historySearch, s.commitID = next.fileSearch, next.historySearch, next.commitID
-	s.prSearch, s.selectedPR, s.comment, s.prTab = next.prSearch, next.selectedPR, next.comment, next.prTab
 	s.pendingTerminal = next.pendingTerminal
 	s.pendingClose, s.Error = "", ""
 	s.fileActionOpen, s.imageOpen, s.commitOpen = false, false, false

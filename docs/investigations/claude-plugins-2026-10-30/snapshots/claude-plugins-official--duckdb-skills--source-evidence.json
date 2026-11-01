@@ -1,0 +1,39 @@
+{
+  "repo": "duckdb/duckdb-skills",
+  "commit": "7feda8e01e22bc0886c86123f3884947e36d8c69",
+  "path": ".",
+  "archive_sha256": "302caa08d8edd869e76b434bb0991607e4710adadf0b429de3a80b40343dce6a",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "skills/attach-db/SKILL.md",
+    "skills/convert-file/SKILL.md",
+    "skills/duckdb-docs/SKILL.md",
+    "skills/install-duckdb/SKILL.md",
+    "skills/install-duckdb/eval.sh",
+    "skills/query/SKILL.md",
+    "skills/read-file/SKILL.md",
+    "skills/read-memories/SKILL.md",
+    "skills/s3-explore/SKILL.md",
+    "skills/spatial/SKILL.md",
+    "skills/spatial/references/functions.md",
+    "skills/spatial/references/overture.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"duckdb-skills\",\n  \"description\": \"DuckDB-powered skills for Claude Code: read any data file, attach and query DuckDB databases, search DuckDB/DuckLake docs, search past session logs, and install/update DuckDB extensions.\",\n  \"version\": \"0.2.4\",\n  \"author\": {\n    \"name\": \"duckdb\",\n    \"url\": \"https://github.com/duckdb\"\n  },\n  \"repository\": \"https://github.com/duckdb/duckdb-skills\",\n  \"homepage\": \"https://duckdb.org\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"duckdb\", \"ducklake\", \"parquet\", \"csv\", \"json\", \"avro\", \"excel\", \"iceberg\", \"delta\", \"read-file\", \"read-memories\", \"duckdb-docs\", \"data-exploration\", \"session-logs\", \"query\", \"sql\", \"attach-db\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/read-file/SKILL.md": "\nname: read-file\ndescription: >\n  Read any data file (CSV, JSON, Parquet, Avro, Excel, spatial, SQLite) or remote URL (S3, HTTPS).\n  Use when user references a data file, asks \"what's in this file\", or wants to preview/profile a dataset.\n  Not for source code.\nargument-hint: <filename or URL> [question about the data]\nallowed-tools: Bash\n",
+    "skills/spatial/SKILL.md": "\nname: spatial\ndescription: >\n  Answer questions about spatial data using DuckDB. Use when the user mentions locations,\n  coordinates, lat/lng, distances, maps, addresses, \"near\", \"within\", \"closest\", geographic\n  names, or spatial file formats (GeoJSON, Shapefile, GeoPackage, GPX, GeoParquet). Also\n  triggers when the user wants to find places, buildings, or roads — Overture Maps provides\n  free global data on S3 with zero API keys. Handles spatial joins, distance calculations,\n  containment checks, density analysis, and format conversions for geographic data.\nargument-hint: <question or file> [additional context]\nallowed-tools: Bash\n",
+    "skills/read-memories/SKILL.md": "\nname: read-memories\ndescription: >\n  Search past Claude Code session logs to recall prior decisions, patterns, or unresolved work.\n  Use when user says \"do you remember\", \"what did we do\", references past conversations, or you need context from prior sessions.\nargument-hint: <keyword> [--here]\nallowed-tools: Bash\n",
+    "skills/query/SKILL.md": "\nname: query\ndescription: >\n  Run SQL queries against the attached DuckDB database or ad-hoc against files.\n  Accepts raw SQL or natural language questions. Uses DuckDB Friendly SQL idioms.\nargument-hint: <SQL or question> [--file path]\nallowed-tools: Bash\n",
+    "skills/s3-explore/SKILL.md": "\nname: s3-explore\ndescription: >\n  Explore and query data on S3, Cloudflare R2, GCS, MinIO, or any S3-compatible storage.\n  Use when the user mentions an s3://, r2://, gs://, or gcs:// URL, asks \"what's in this bucket\",\n  wants to list remote files, preview remote Parquet/CSV/JSON, or query data on object storage\n  without downloading it. Also triggers when the user wants to know the size, schema, or row count\n  of remote datasets.\nargument-hint: <s3-url> [question about the data]\nallowed-tools: Bash\n",
+    "skills/attach-db/SKILL.md": "\nname: attach-db\ndescription: >\n  Attach a DuckDB database file for use with /duckdb-skills:query.\n  Explores the schema (tables, columns, row counts) and writes a SQL state file\n  so subsequent queries can restore this session automatically via duckdb -init.\nargument-hint: <path-to-database.duckdb>\nallowed-tools: Bash\n",
+    "skills/install-duckdb/SKILL.md": "\nname: install-duckdb\ndescription: >\n  Install or update DuckDB extensions. Each argument is either a plain\n  extension name (installs from core) or name@repo (e.g. magic@community).\n  Pass --update to update extensions instead of installing.\nargument-hint: \"[--update] [ext1 ext2@repo ext3 ...]\"\nallowed-tools: Bash\n",
+    "skills/convert-file/SKILL.md": "\nname: convert-file\ndescription: >\n  Convert any data file to another format: CSV, Parquet, JSON, Excel, GeoJSON, and more.\n  Use when the user says \"convert to parquet\", \"save as xlsx\", \"export as JSON\", \"make this a CSV\",\n  \"turn into parquet\", or any variation of format-to-format conversion for data files.\n  Also triggers when the user wants to write Parquet, Excel, or other binary formats that Claude cannot produce natively.\nargument-hint: <input-file> [output-file]\nallowed-tools: Bash\n",
+    "skills/duckdb-docs/SKILL.md": "\nname: duckdb-docs\ndescription: >\n  Search DuckDB and DuckLake documentation and blog posts. Returns relevant\n  doc chunks for a question or keyword using full-text search against a\n  locally cached index.\nargument-hint: <question or keyword>\nallowed-tools: Bash\n"
+  }
+}

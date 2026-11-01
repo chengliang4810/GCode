@@ -80,16 +80,16 @@ func (a Annotation) Link() string {
 		panic(err)
 	}
 	payload := strings.TrimSuffix(buf.String(), "\n")
-	return "[" + a.Label() + "](zeron-annotation:" + hex.EncodeToString([]byte(payload)) + ")"
+	return "[" + a.Label() + "](rcode-annotation:" + hex.EncodeToString([]byte(payload)) + ")"
 }
 
 func ParseAnnotationLink(token string) (Annotation, bool) {
 	var a Annotation
-	p := strings.Index(token, "](zeron-annotation:")
+	p := strings.Index(token, "](rcode-annotation:")
 	if p < 0 || !strings.HasSuffix(token, ")") {
 		return a, false
 	}
-	encoded := token[p+len("](zeron-annotation:") : len(token)-1]
+	encoded := token[p+len("](rcode-annotation:") : len(token)-1]
 	if len(encoded) > 256*1024 {
 		return a, false
 	}

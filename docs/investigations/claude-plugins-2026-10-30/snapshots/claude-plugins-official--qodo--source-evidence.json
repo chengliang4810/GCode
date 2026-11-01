@@ -1,0 +1,47 @@
+{
+  "repo": "qodo-ai/qodo-skills",
+  "commit": "b8c21854199c538b1c35c981c12a93bab4839ef2",
+  "path": "packages/qodo",
+  "archive_sha256": "c26825e7145032714fd4060426521b4bdf077d1ead27a6bb54608b9a7573cc24",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "plugin.json",
+    "skills/qodo-codebase-wisdom/SKILL.md",
+    "skills/qodo-codebase-wisdom/agents/openai.yaml",
+    "skills/qodo-codebase-wisdom/references/skill-updates.md",
+    "skills/qodo-codebase-wisdom/references/windows-launcher.md",
+    "skills/qodo-codebase-wisdom/references/windows-shells.md",
+    "skills/qodo-review-notes/SKILL.md",
+    "skills/qodo-review-notes/agents/openai.yaml",
+    "skills/qodo-review-notes/references/windows-launcher.md",
+    "skills/qodo-review-notes/references/windows-shells.md",
+    "skills/qodo-review-resolver/SKILL.md",
+    "skills/qodo-review-resolver/agents/openai.yaml",
+    "skills/qodo-review-resolver/references/skill-updates.md",
+    "skills/qodo-review-resolver/references/windows-launcher.md",
+    "skills/qodo-review-resolver/references/windows-shells.md",
+    "skills/qodo-review/SKILL.md",
+    "skills/qodo-review/agents/openai.yaml",
+    "skills/qodo-review/references/connected-progress.md",
+    "skills/qodo-review/references/local-triage.md",
+    "skills/qodo-review/references/skill-updates.md",
+    "skills/qodo-review/references/windows-launcher.md",
+    "skills/qodo-review/references/windows-shells.md",
+    "skills/qodo-setup/SKILL.md",
+    "skills/qodo-setup/agents/openai.yaml",
+    "skills/qodo-setup/references/authentication.md",
+    "skills/qodo-setup/references/host-recovery.md",
+    "skills/qodo-setup/references/runtime.md",
+    "skills/qodo-setup/references/skill-updates.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"qodo\",\n  \"version\": \"2.1.2\",\n  \"description\": \"Qodo setup, code intelligence, and review workflows.\",\n  \"author\": {\n    \"name\": \"Qodo\",\n    \"email\": \"support@qodo.ai\",\n    \"url\": \"https://www.qodo.ai\"\n  },\n  \"homepage\": \"https://www.qodo.ai\",\n  \"repository\": \"https://github.com/qodo-ai/qodo-skills\",\n  \"license\": \"MIT\",\n  \"keywords\": [\n    \"qodo\",\n    \"code-review\",\n    \"code-intelligence\",\n    \"standards\",\n    \"coding-agents\"\n  ]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/qodo-review/SKILL.md": "\nname: qodo-review\ndescription: Review local changes with Qodo during substantive coding milestones and before a PR or completed-work handoff. Use light background checkpoints while coding, collect and assess findings with session context, and run a final review before handing off. Also use for \"review my local diff\", \"pre-PR review\", or \"run qodo review\". Use qodo-review-resolver for findings already posted on a PR.\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.10.9\"\n  recommended: \"true\"\n  package: \"qodo\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n",
+    "skills/qodo-review-notes/SKILL.md": "\nname: qodo-review-notes\ndescription: Find and maintain Development Track Notes and PR Review Notes through Qodo tools. Use at task intake or when resuming a development effort, before opening a PR, after opening it to bind its notes, or when asked to read or edit reviewer context. Tracks connect issues, repositories and PRs; PR notes explain a specific change. This skill does not review code or open a PR.\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.0.0\"\n  recommended: \"true\"\n  package: \"qodo\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n",
+    "skills/qodo-review-resolver/SKILL.md": "\nname: qodo-review-resolver\ndescription: Read or resolve a pull request's Qodo review using Qodo managed tools through MCP or the CLI — fetch structured status, reviewed commit SHA, and findings for ANY PR as JSON, with optional extended details and citation evidence for audits, then optionally resolve open findings and record outcomes, once or until clean. Use this — never `gh`/`curl` scraping of review comments — for \"is the review clean on PR #N\", \"get Qodo's findings for <pr> as JSON\", \"audit the review evidence\", \"show finding citations\", \"what did Qodo flag\", \"is this review up to date with head\", \"check before merging\", \"resolve my PR review\", \"fix the review findings\", or \"babysit this PR until it's clean\".\ntriggers:\n  - \"Check the Qodo findings on this pull request\"\n  - \"Audit the citation evidence for these Qodo PR findings\"\n  - \"Resolve the open Qodo review findings on this PR\"\nowner: Qodo\nwhen_to_use: When you need to read or act on a pull request's Qodo review — check where it stands, see what it flagged, gate a merge on it being clean at head, or fix the open findings — for any PR, not just your own. It reads the review through qodo's managed tool (structured, git-provider-agnostic), so use it instead of scraping the rendered PR review comments with `gh`/`curl` (lossy, provider-specific, and easy to read stale against the head commit). It resolves findings in local code and then records the outcome on each finding through qodo's own tools (dismiss / mark-implemented, which clear the merge-policy block); it never posts to the git forge itself. Skip it for reviewing code you're writing locally before any PR exists (that's the pre-PR review), and for non-review PR chores (merging, labels, descriptions).\nmetadata:\n  vendor: qodo\n  version: \"1.4.8\"\n  recommended: \"true\"\n  package: \"qodo\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\narguments:\n  - name: autofix\n    description: Optional shorthand for authorizing supported fixes. An explicit fix request or covering implementation authority also permits those fixes without another prompt.\n    optional: true\n",
+    "skills/qodo-codebase-wisdom/SKILL.md": "\nname: qodo-codebase-wisdom\ndescription: Understand how code works, how a change was done before, and which repos are coupled — to answer a question, plan a code change, debug a regression, or scope a fix, using Qodo managed tools through MCP or the CLI. Use when a task needs to understand a codebase, its history, or how its repos relate — especially for a repo you don't have checked out or work spanning repos — \"how does X work\", \"where is X defined\", \"who changed X\", \"explain this service\", \"plan the change for X\", \"what would changing X affect\", \"which repos depend on X\", \"why did X regress / when did it break\", \"has this been fixed before\", \"how did we solve X\".\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.1.6\"\n  recommended: \"true\"\n  package: \"qodo\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n",
+    "skills/qodo-setup/SKILL.md": "\nname: qodo-setup\ndescription: Set up Qodo in a coding agent — install the CLI, sign in, and verify tools. Use after plugin installation, on setup requests, or when a Qodo skill finds a missing CLI or login.\nowner: Qodo\nmetadata:\n  vendor: qodo\n  version: \"1.0.10\"\n  recommended: \"true\"\n  package: \"qodo\"\n  distribution: \"marketplace\"\n  instruction_mode: \"embedded\"\n"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "repo": "pendo-io/claude-pendo-plugin",
+  "commit": "340d503c23eed487be83693aa4c1837df4a7dcd4",
+  "path": "plugins/setup-agent-analytics",
+  "archive_sha256": "58508209af4ed5252ad3b185528408d1ba331590789e521737f35345f95c02b4",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/setup-agent-analytics/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"setup-agent-analytics\",\n  \"displayName\": \"Setup Agent Analytics\",\n  \"version\": \"1.1.0\",\n  \"description\": \"Detect AI agents in your codebase and instrument them with Pendo agent analytics via the best-fit path: Python SDK, TypeScript SDK, client-side trackAgent(), or the Conversations API\",\n  \"author\": {\n    \"name\": \"Pendo\",\n    \"email\": \"plugins@pendo.io\"\n  },\n  \"homepage\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"repository\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"pendo\", \"analytics\", \"ai-agents\", \"instrumentation\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/setup-agent-analytics/SKILL.md": "\nname: setup-agent-analytics\ndescription: >-\n  Set up Pendo agent analytics in a codebase — detect the AI agent(s) and\n  instrument them so prompts, responses, and reactions flow to Pendo. Reads the\n  codebase to choose the best of four installation paths: the Python SDK, the\n  TypeScript SDK, client-side window.pendo.trackAgent(), or the server-side\n  Conversations API. Use this whenever the user wants to add, install, wire up,\n  or \"instrument\" Pendo agent analytics / agent tracking / trackAgent, mentions\n  capturing LLM or chatbot conversations for Pendo, or asks how to get their AI\n  agent's data into Pendo — even if they don't name the specific method.\nallowed-tools: Read, Grep, Glob, Bash, Edit, Write\n"
+  }
+}

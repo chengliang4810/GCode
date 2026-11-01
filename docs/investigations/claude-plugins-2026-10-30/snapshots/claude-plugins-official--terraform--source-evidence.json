@@ -1,0 +1,15 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "external_plugins/terraform",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"terraform\",\n  \"description\": \"The Terraform MCP Server provides seamless integration with Terraform ecosystem, enabling advanced automation and interaction capabilities for Infrastructure as Code (IaC) development.\",\n  \"author\": {\n    \"name\": \"HashiCorp\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"terraform\": {\n    \"command\": \"docker\",\n    \"args\": [\n      \"run\",\n      \"-i\",\n      \"--rm\",\n      \"-e\", \"TFE_TOKEN=${TFE_TOKEN}\",\n      \"hashicorp/terraform-mcp-server:0.4.0\"\n    ]\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

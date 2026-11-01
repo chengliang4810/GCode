@@ -1,0 +1,87 @@
+{
+  "pluginId": "postiz@claude-plugins-official",
+  "sourceCommit": "86e02524377cc60a6cd6ef67fd10a3caeade8d2c",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "author-gcode-launch-json-mode-campaign",
+      "componentId": "skill:postiz:postiz",
+      "prompt": "/postiz:postiz Use the postiz skill to author the JSON-mode campaign file for this concrete GCode 2.0 launch and write it to campaign.json. Scenario inputs (given facts, do not fabricate others): integration IDs twitter-4821 (X/Twitter) and linkedin-7319 (LinkedIn); post content for Twitter exactly \"GCode 2.0 is out: native Go UI, offline sessions, and a headless server. #golang\"; post content for LinkedIn exactly \"GCode 2.0 ships today: a native Go desktop app with a real headless Linux server, one shared Go business core, and typed events back to the UI.\"; media: launch-twitter.jpg was already uploaded and its postiz upload result was {\"path\": \"https://cdn.postiz.com/uploads/tw-9f31c2.jpg\"}, and launch-linkedin.png was already uploaded and its postiz upload result was {\"path\": \"https://cdn.postiz.com/uploads/li-58ad17.png\"}. Headless boundary: no network, no Postiz server, no real uploads, no npm install; the postiz CLI is not present in this sandbox and must not be installed or run. Real authentication, uploads and publishing remain untested.\n\nWrite campaign.json exactly in the skill's documented multi-platform campaign JSON structure (the pattern used with postiz posts:create --json campaign.json): top-level keys integrations (the two scenario integration IDs in the given order) and posts (one entry per provider, each entry with exactly the keys provider and post, and one post item with exactly the keys content and image). Apply the skill's rules: every image value must be the .path from the given upload results - never the raw local filenames (launch-twitter.jpg, launch-linkedin.png) and never an external URL; and do not add a __type field anywhere (the backend adds it automatically from the integration).\n\nThen read the immutable verify_postiz_campaign.py and run exactly python verify_postiz_campaign.py using Bash; it validates campaign.json against the documented structure and writes postiz-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real authentication, uploads and publishing remain untested.",
+      "allowCommands": [
+        "python verify_postiz_campaign.py"
+      ],
+      "verifierOutputs": [
+        "postiz-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_postiz_campaign.py",
+          "text": "import json\nfrom pathlib import Path\n\nraw = Path('campaign.json').read_text(encoding='utf-8')\ndata = json.loads(raw)\nassert set(data.keys()) == {'integrations', 'posts'}, 'top-level JSON-mode keys must be exactly integrations and posts'\nassert data['integrations'] == ['twitter-4821', 'linkedin-7319'], 'integrations must list the two scenario integration IDs in order'\nposts = data['posts']\nassert len(posts) == 2, 'the campaign must contain exactly two platform posts'\nby_provider = {}\nfor entry in posts:\n    assert set(entry.keys()) == {'provider', 'post'}, 'each campaign entry must have exactly provider and post keys'\n    assert entry['provider'] not in by_provider, 'duplicate provider entry'\n    by_provider[entry['provider']] = entry\nassert set(by_provider) == {'twitter', 'linkedin'}, 'the scenario campaign targets exactly twitter and linkedin'\ntwitter = by_provider['twitter']['post'][0]\nlinkedin = by_provider['linkedin']['post'][0]\nassert set(twitter.keys()) == {'content', 'image'}, 'each post item must have exactly content and image keys'\nassert set(linkedin.keys()) == {'content', 'image'}, 'each post item must have exactly content and image keys'\nassert twitter['content'] == 'GCode 2.0 is out: native Go UI, offline sessions, and a headless server. #golang', 'twitter content must match the scenario text'\nassert linkedin['content'] == 'GCode 2.0 ships today: a native Go desktop app with a real headless Linux server, one shared Go business core, and typed events back to the UI.', 'linkedin content must match the scenario text'\nassert twitter['image'] == ['https://cdn.postiz.com/uploads/tw-9f31c2.jpg'], 'twitter media must use the uploaded .path from the given upload result'\nassert linkedin['image'] == ['https://cdn.postiz.com/uploads/li-58ad17.png'], 'linkedin media must use the uploaded .path from the given upload result'\nfor filename in ('launch-twitter.jpg', 'launch-linkedin.png'):\n    assert filename not in raw, 'raw local filenames must never be passed as media: ' + filename\nassert 'https://example.com' not in raw, 'external URLs are not accepted media per the upload-first rule'\nassert '__type' not in raw, 'do not include __type; the backend adds it automatically from the integration'\nreport = {'integration_ids': True, 'json_mode_structure': True, 'media_uploaded_paths': True,\n          'no_raw_or_external_media': True, 'no_type_key': True, 'platform_contents': True,\n          'providers_twitter_linkedin': True}\nPath('postiz-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Postiz campaign: JSON-mode structure and upload-first media checks passed; real authentication, uploads and publishing remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_postiz_campaign.py",
+          "equals": "import json\nfrom pathlib import Path\n\nraw = Path('campaign.json').read_text(encoding='utf-8')\ndata = json.loads(raw)\nassert set(data.keys()) == {'integrations', 'posts'}, 'top-level JSON-mode keys must be exactly integrations and posts'\nassert data['integrations'] == ['twitter-4821', 'linkedin-7319'], 'integrations must list the two scenario integration IDs in order'\nposts = data['posts']\nassert len(posts) == 2, 'the campaign must contain exactly two platform posts'\nby_provider = {}\nfor entry in posts:\n    assert set(entry.keys()) == {'provider', 'post'}, 'each campaign entry must have exactly provider and post keys'\n    assert entry['provider'] not in by_provider, 'duplicate provider entry'\n    by_provider[entry['provider']] = entry\nassert set(by_provider) == {'twitter', 'linkedin'}, 'the scenario campaign targets exactly twitter and linkedin'\ntwitter = by_provider['twitter']['post'][0]\nlinkedin = by_provider['linkedin']['post'][0]\nassert set(twitter.keys()) == {'content', 'image'}, 'each post item must have exactly content and image keys'\nassert set(linkedin.keys()) == {'content', 'image'}, 'each post item must have exactly content and image keys'\nassert twitter['content'] == 'GCode 2.0 is out: native Go UI, offline sessions, and a headless server. #golang', 'twitter content must match the scenario text'\nassert linkedin['content'] == 'GCode 2.0 ships today: a native Go desktop app with a real headless Linux server, one shared Go business core, and typed events back to the UI.', 'linkedin content must match the scenario text'\nassert twitter['image'] == ['https://cdn.postiz.com/uploads/tw-9f31c2.jpg'], 'twitter media must use the uploaded .path from the given upload result'\nassert linkedin['image'] == ['https://cdn.postiz.com/uploads/li-58ad17.png'], 'linkedin media must use the uploaded .path from the given upload result'\nfor filename in ('launch-twitter.jpg', 'launch-linkedin.png'):\n    assert filename not in raw, 'raw local filenames must never be passed as media: ' + filename\nassert 'https://example.com' not in raw, 'external URLs are not accepted media per the upload-first rule'\nassert '__type' not in raw, 'do not include __type; the backend adds it automatically from the integration'\nreport = {'integration_ids': True, 'json_mode_structure': True, 'media_uploaded_paths': True,\n          'no_raw_or_external_media': True, 'no_type_key': True, 'platform_contents': True,\n          'providers_twitter_linkedin': True}\nPath('postiz-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Postiz campaign: JSON-mode structure and upload-first media checks passed; real authentication, uploads and publishing remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "postiz-verification.json",
+          "equals": "{\"integration_ids\": true, \"json_mode_structure\": true, \"media_uploaded_paths\": true, \"no_raw_or_external_media\": true, \"no_type_key\": true, \"platform_contents\": true, \"providers_twitter_linkedin\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "\"integrations\""
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "\"provider\""
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "twitter-4821"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "linkedin-7319"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "https://cdn.postiz.com/uploads/tw-9f31c2.jpg"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "https://cdn.postiz.com/uploads/li-58ad17.png"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "GCode 2.0 is out: native Go UI, offline sessions, and a headless server. #golang"
+        },
+        {
+          "kind": "file",
+          "path": "campaign.json",
+          "contains": "GCode 2.0 ships today: a native Go desktop app with a real headless Linux server, one shared Go business core, and typed events back to the UI."
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Postiz campaign: JSON-mode structure and upload-first media checks passed; real authentication, uploads and publishing remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

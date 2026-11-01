@@ -8,7 +8,7 @@ import (
 
 func TestAccentOverlayPreservesThemeOwnedRoles(t *testing.T) {
 	for _, variant := range Themes() {
-		for _, selection := range []string{"zeron", "orange", "amber", "green", "cyan", "blue", "pink"} {
+		for _, selection := range []string{"rcode", "orange", "amber", "green", "cyan", "blue", "pink"} {
 			t.Run(variant.ID+"/"+selection, func(t *testing.T) {
 				original := Palette(variant.ID, variant.Appearance == "dark")
 				changed := ApplyAccent(original, selection)
@@ -29,10 +29,10 @@ func TestAccentOverlayPreservesThemeOwnedRoles(t *testing.T) {
 }
 
 func TestOriginalAccentPresetPairs(t *testing.T) {
-	if ApplyAccent(Palette("zeron-dark", true), "orange").Accent != ui.Hex("#fb923c") {
+	if ApplyAccent(Palette("rcode-dark", true), "orange").Accent != ui.Hex("#fb923c") {
 		t.Fatal("wrong dark preset")
 	}
-	if ApplyAccent(Palette("zeron-light", false), "orange").Accent != ui.Hex("#c2410c") {
+	if ApplyAccent(Palette("rcode-light", false), "orange").Accent != ui.Hex("#c2410c") {
 		t.Fatal("wrong light preset")
 	}
 	original := Palette("dracula", true)

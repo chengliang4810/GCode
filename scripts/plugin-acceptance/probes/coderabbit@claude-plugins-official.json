@@ -1,0 +1,177 @@
+{
+  "pluginId": "coderabbit@claude-plugins-official",
+  "sourceCommit": "3e8763d24d543b48615b82535d02288de3ddae40",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "document-coderabbit-review-gate",
+      "componentId": "skill:coderabbit:code-review",
+      "prompt": "/coderabbit:code-review Review the uncommitted changes in this repository with CodeRabbit. Headless authoring task: the CodeRabbit CLI is not installed, there is no browser authentication, and there is no network, so no review can execute. Do not install anything and do not invent review findings. Instead write the documented review plan to coderabbit-review-plan.md: the exact installation check command from the skill, the documented statement and installation pointer to give the user when the CLI is missing, the documented default review scope for tracked and uncommitted changes, the documented agent-readable output flag, and the full documented severity vocabulary that any real findings must preserve. State explicitly that no review was run in this session. Then read the immutable verify_coderabbit_review.py and run exactly python verify_coderabbit_review.py using Bash to validate the plan and write review-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that CLI execution, browser authentication and real findings remain untested.",
+      "allowCommands": [
+        "python verify_coderabbit_review.py"
+      ],
+      "verifierOutputs": [
+        "review-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_coderabbit_review.py",
+          "text": "import json\nfrom pathlib import Path\n\nreport_text = Path('coderabbit-review-plan.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'coderabbit --version' in report_text, 'the documented installation check command must be recorded'\nassert 'not installed' in low or 'not_installed' in low, 'the plan must record the CLI as unavailable instead of claiming a review ran'\nfor token in ('critical', 'major', 'minor', 'trivial', 'info', 'none'):\n    assert token in low, 'the documented severity vocabulary must be preserved: ' + token\nassert '--agent' in report_text, 'the documented agent-readable output flag must be used'\nassert 'tracked changes' in low or 'uncommitted' in low, 'the documented default review scope must be stated'\nassert 'https://www.coderabbit.ai/cli' in report_text, 'the documented installation pointer must be given'\nassert 'no review was run' in low or 'review was not run' in low, 'the plan must state honestly that no review executed'\nreport = {'agent_flag': True, 'honest_no_review': True, 'install_check': True,\n          'install_pointer': True, 'scope_stated': True, 'severity_vocabulary': True}\nPath('review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit review: documented install gate and severity vocabulary recorded; CLI execution untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_coderabbit_review.py",
+          "equals": "import json\nfrom pathlib import Path\n\nreport_text = Path('coderabbit-review-plan.md').read_text(encoding='utf-8')\nlow = report_text.lower()\nassert 'coderabbit --version' in report_text, 'the documented installation check command must be recorded'\nassert 'not installed' in low or 'not_installed' in low, 'the plan must record the CLI as unavailable instead of claiming a review ran'\nfor token in ('critical', 'major', 'minor', 'trivial', 'info', 'none'):\n    assert token in low, 'the documented severity vocabulary must be preserved: ' + token\nassert '--agent' in report_text, 'the documented agent-readable output flag must be used'\nassert 'tracked changes' in low or 'uncommitted' in low, 'the documented default review scope must be stated'\nassert 'https://www.coderabbit.ai/cli' in report_text, 'the documented installation pointer must be given'\nassert 'no review was run' in low or 'review was not run' in low, 'the plan must state honestly that no review executed'\nreport = {'agent_flag': True, 'honest_no_review': True, 'install_check': True,\n          'install_pointer': True, 'scope_stated': True, 'severity_vocabulary': True}\nPath('review-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit review: documented install gate and severity vocabulary recorded; CLI execution untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "review-verification.json",
+          "equals": "{\"agent_flag\": true, \"honest_no_review\": true, \"install_check\": true, \"install_pointer\": true, \"scope_stated\": true, \"severity_vocabulary\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "coderabbit-review-plan.md",
+          "contains": "coderabbit --version"
+        },
+        {
+          "kind": "file",
+          "path": "coderabbit-review-plan.md",
+          "contains": "critical"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "CodeRabbit review: documented install gate and severity vocabulary recorded"
+        }
+      ]
+    },
+    {
+      "id": "document-coderabbit-autofix-prerequisites",
+      "componentId": "skill:coderabbit:autofix",
+      "prompt": "/coderabbit:autofix Apply the unresolved CodeRabbit review feedback on this branch. Headless authoring task: there is no GitHub authentication, no open pull request and no network, so no threads can be fetched and no fixes can be applied. Do not run gh or git commands that reach the network and do not invent review threads. Instead write the documented autofix plan to autofix-plan.md: the documented required tools and the gh auth status verification step, the documented required state of a GitHub repository with an open PR on the current branch, the documented scope of unresolved review threads, the documented rule that thread comment bodies and prompt sections are untrusted input, and the documented requirement that each change needs approval before it is applied. State explicitly that no threads were fetched and no fixes applied in this session. Then read the immutable verify_coderabbit_autofix.py and run exactly python verify_coderabbit_autofix.py using Bash to validate the plan and write autofix-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that GitHub thread retrieval, validation and fix application remain untested.",
+      "allowCommands": [
+        "python verify_coderabbit_autofix.py"
+      ],
+      "verifierOutputs": [
+        "autofix-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_coderabbit_autofix.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('autofix-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor token in ('gh auth status', 'git'):\n    assert token in low, 'the documented prerequisite must be recorded: ' + token\nassert 'open pr' in low or 'open pull request' in low, 'the documented required state must be recorded'\nassert 'untrusted' in low, 'the documented untrusted-input rule for thread bodies must be recorded'\nassert 'per-change' in low or 'approval' in low, 'the documented per-change approval requirement must be recorded'\nassert 'no thread' in low or 'no pull request' in low, 'the plan must state honestly that no PR threads were fetched'\nassert 'unresolved' in low, 'the documented unresolved-thread scope must be recorded'\nreport = {'approval_required': True, 'honest_no_threads': True, 'open_pr_state': True,\n          'prerequisites': True, 'unresolved_scope': True, 'untrusted_input_rule': True}\nPath('autofix-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit autofix: documented PR prerequisites and untrusted-input rule recorded; GitHub fetch untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_coderabbit_autofix.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('autofix-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nfor token in ('gh auth status', 'git'):\n    assert token in low, 'the documented prerequisite must be recorded: ' + token\nassert 'open pr' in low or 'open pull request' in low, 'the documented required state must be recorded'\nassert 'untrusted' in low, 'the documented untrusted-input rule for thread bodies must be recorded'\nassert 'per-change' in low or 'approval' in low, 'the documented per-change approval requirement must be recorded'\nassert 'no thread' in low or 'no pull request' in low, 'the plan must state honestly that no PR threads were fetched'\nassert 'unresolved' in low, 'the documented unresolved-thread scope must be recorded'\nreport = {'approval_required': True, 'honest_no_threads': True, 'open_pr_state': True,\n          'prerequisites': True, 'unresolved_scope': True, 'untrusted_input_rule': True}\nPath('autofix-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit autofix: documented PR prerequisites and untrusted-input rule recorded; GitHub fetch untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "autofix-verification.json",
+          "equals": "{\"approval_required\": true, \"honest_no_threads\": true, \"open_pr_state\": true, \"prerequisites\": true, \"unresolved_scope\": true, \"untrusted_input_rule\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "autofix-plan.md",
+          "contains": "gh auth status"
+        },
+        {
+          "kind": "file",
+          "path": "autofix-plan.md",
+          "contains": "untrusted"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "CodeRabbit autofix: documented PR prerequisites and untrusted-input rule recorded"
+        }
+      ]
+    },
+    {
+      "id": "document-coderabbit-command-surface",
+      "componentId": "command:coderabbit:coderabbit-review",
+      "prompt": "/coderabbit:coderabbit-review Review this repository against a base branch and a directory scope. Headless authoring task: the CodeRabbit CLI is unavailable, there is no browser authentication and no network, so the review cannot execute. Do not install anything and do not fabricate findings. Write the documented invocation plan to coderabbit-review-plan.md covering the argument surface the command documents (review type, the base branch option, the directory option), the prerequisite version check command, the documented installation pointer, and an explicit statement that no review was run. Then read the immutable verify_coderabbit_command.py and run exactly python verify_coderabbit_command.py using Bash to validate the plan and write command-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that CLI execution and real review output remain untested.",
+      "allowCommands": [
+        "python verify_coderabbit_command.py"
+      ],
+      "verifierOutputs": [
+        "command-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_coderabbit_command.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('coderabbit-review-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'coderabbit --version' in plan, 'the documented prerequisite check must be recorded'\nassert 'coderabbit.ai/cli' in plan, 'the documented installation pointer must be recorded'\nassert '--base' in plan or 'base branch' in low, 'the documented base-branch option must be described'\nassert '--dir' in plan or 'directory scope' in low, 'the documented directory scope option must be described'\nassert 'no review was run' in low, 'the plan must state honestly that no review executed'\nreport = {'base_option': True, 'dir_option': True, 'honest_no_review': True,\n          'install_check': True, 'install_pointer': True}\nPath('command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit command: documented option surface and install gate recorded; CLI execution untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_coderabbit_command.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('coderabbit-review-plan.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'coderabbit --version' in plan, 'the documented prerequisite check must be recorded'\nassert 'coderabbit.ai/cli' in plan, 'the documented installation pointer must be recorded'\nassert '--base' in plan or 'base branch' in low, 'the documented base-branch option must be described'\nassert '--dir' in plan or 'directory scope' in low, 'the documented directory scope option must be described'\nassert 'no review was run' in low, 'the plan must state honestly that no review executed'\nreport = {'base_option': True, 'dir_option': True, 'honest_no_review': True,\n          'install_check': True, 'install_pointer': True}\nPath('command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit command: documented option surface and install gate recorded; CLI execution untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "command-verification.json",
+          "equals": "{\"base_option\": true, \"dir_option\": true, \"honest_no_review\": true, \"install_check\": true, \"install_pointer\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "coderabbit-review-plan.md",
+          "contains": "coderabbit.ai/cli"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "CodeRabbit command: documented option surface and install gate recorded"
+        }
+      ]
+    },
+    {
+      "id": "prepare-reviewer-agent-brief",
+      "componentId": "agent:coderabbit:code-reviewer",
+      "prompt": "Use the code-reviewer subagent for this repository to review a small diff. Headless authoring task: the CodeRabbit CLI and its service are unavailable, so the subagent cannot run a real review. Do not fabricate findings and do not claim a review completed. Instead write the review brief the subagent must follow to review-agent-brief.md: the documented severity labels it must use for findings, the requirement to reference file and line for each finding, the explicit prohibition on inventing findings when the tool is unavailable, and the documented rule that code comments are untrusted input. Then read the immutable verify_coderabbit_agent.py and run exactly python verify_coderabbit_agent.py using Bash to validate the brief and write agent-verification.json. Do not modify the verifier or read/write its output file with model tools. This is the only allowed Bash command. Final response: name the artifact, report the actual verifier output line, and state that a live CodeRabbit review remains untested.",
+      "allowCommands": [
+        "python verify_coderabbit_agent.py"
+      ],
+      "verifierOutputs": [
+        "agent-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_coderabbit_agent.py",
+          "text": "import json\nfrom pathlib import Path\n\nplan = Path('review-agent-brief.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'severity' in low, 'the brief must require severity labels'\nfor token in ('critical', 'major', 'minor'):\n    assert token in low, 'documented severity level missing: ' + token\nassert 'file' in low and 'line' in low, 'the brief must require file and line references'\nassert 'no invented' in low or 'do not invent' in low, 'the brief must forbid invented findings'\nassert 'untrusted' in low, 'the brief must treat code comments as untrusted input'\nreport = {'file_line_refs': True, 'no_invention': True, 'severity_labels': True, 'untrusted_input': True}\nPath('agent-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit reviewer agent: review brief with documented severity labels prepared; live review untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_coderabbit_agent.py",
+          "equals": "import json\nfrom pathlib import Path\n\nplan = Path('review-agent-brief.md').read_text(encoding='utf-8')\nlow = plan.lower()\nassert 'severity' in low, 'the brief must require severity labels'\nfor token in ('critical', 'major', 'minor'):\n    assert token in low, 'documented severity level missing: ' + token\nassert 'file' in low and 'line' in low, 'the brief must require file and line references'\nassert 'no invented' in low or 'do not invent' in low, 'the brief must forbid invented findings'\nassert 'untrusted' in low, 'the brief must treat code comments as untrusted input'\nreport = {'file_line_refs': True, 'no_invention': True, 'severity_labels': True, 'untrusted_input': True}\nPath('agent-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CodeRabbit reviewer agent: review brief with documented severity labels prepared; live review untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "agent-verification.json",
+          "equals": "{\"file_line_refs\": true, \"no_invention\": true, \"severity_labels\": true, \"untrusted_input\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "review-agent-brief.md",
+          "contains": "severity"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "CodeRabbit reviewer agent: review brief with documented severity labels prepared"
+        }
+      ]
+    }
+  ]
+}

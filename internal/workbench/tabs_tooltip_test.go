@@ -26,7 +26,7 @@ func TestTabStripDetailUsesBackingResource(t *testing.T) {
 	if got := s.tabDetail(browserTab); got != b.data.URL {
 		t.Errorf("browser detail%q differs from current resource URL%q", got, b.data.URL)
 	}
-	for _, kind := range []string{"session", "history", "diff", "changes", "terminal", "files", "pr", "pullrequests"} {
+	for _, kind := range []string{"session", "history", "diff", "changes", "terminal", "files"} {
 		t.Run(kind, func(t *testing.T) {
 			if got := s.tabDetail(surface{kind: kind, id: "unrelated", title: "display title is not detail"}); got != "" {
 				t.Fatalf("surface without source detail generated tooltip%q", got)
@@ -39,7 +39,7 @@ func TestTabStripDetailUsesBackingResource(t *testing.T) {
 }
 
 func TestTabStripGenericTitleDoesNotBecomeTooltip(t *testing.T) {
-	for _, kind := range []string{"session", "history", "diff", "changes", "terminal", "files", "pr", "pullrequests"} {
+	for _, kind := range []string{"session", "history", "diff", "changes", "terminal", "files"} {
 		t.Run(kind, func(t *testing.T) {
 			s, _, _ := testWorkspace(t)
 			s.choose(kind, "eligibility-test", "Only the displayed title")

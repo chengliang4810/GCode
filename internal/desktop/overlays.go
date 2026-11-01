@@ -15,7 +15,7 @@ func (a *App) overlays(c *ui.Context) {
 		back.Background(ui.RGBA(0, 0, 0, .35))
 		panel.Width(400).Padding(24).Radius(12).Background(a.palette.Raised)
 		ui.Column(c).Gap(16).Children(func() {
-			ui.Text(c, tr(c, "Rename session")).FontSize(design.UISize(c, 18)).FontWeight(600)
+			ui.Text(c, tr(c, "Rename session")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
 			ui.TextInput(c, &a.renameText).Label(tr(c, "Session name")).AutoFocus()
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
 				textButton(c, tr(c, "Cancel")).OnClick(func() { a.renameOpen = false })
@@ -50,9 +50,13 @@ func (a *App) overlays(c *ui.Context) {
 var artifactCache sync.Map
 
 func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind string) {
-	if kind == "math" && !a.state.Settings.Appearance.RenderMath {
-		fence := strings.Repeat("`", 3)
-		markdown.View(c, fence+"math\n"+artifact.Source+"\n"+fence, &a.md)
+	if kind == "math" {
+		if a.state.Settings.Appearance.RenderMath {
+			a.mathView(c, artifact.Source)
+		} else {
+			fence := strings.Repeat("`", 3)
+			markdown.View(c, fence+"math\n"+artifact.Source+"\n"+fence, &a.md)
+		}
 		return
 	}
 	for _, variant := range design.Themes() {
@@ -75,13 +79,6 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 	show := func() {
 		if svg != nil {
 			w, h := float32(artifact.Width), float32(artifact.Height)
-			if kind == "math" {
-				scale := float32(a.state.Settings.Appearance.MathScale) / 100
-				if scale <= 0 {
-					scale = 1
-				}
-				w, h = w*scale, h*scale
-			}
 			ui.ScrollHorizontal(c).FillWidth().Children(func() {
 				reserve, _ := a.infoVisibility()
 				columnWidth := max(float32(0), min(float32(a.state.Settings.Appearance.TranscriptWidth), a.chatWidth-reserve)-48)
@@ -107,14 +104,10 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 			ui.Text(c, tr(c, "Preview unavailable")).TextColor(a.palette.Muted)
 		}
 	}
-	if kind == "math" {
-		show()
-		return
-	}
 	key := "diagram-source:" + artifact.Source
 	ui.Column(c).FillWidth().Radius(10).Border(1, a.palette.Border).Background(a.palette.Card).Children(func() {
 		ui.Row(c).FillWidth().Padding(4, 10).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, tr(c, "mermaid")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, "mermaid")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			ui.Spacer(c)
 			glyph, label := "file-code", "Show source"
 			if a.expanded[key] {

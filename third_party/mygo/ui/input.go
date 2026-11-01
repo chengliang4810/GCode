@@ -31,6 +31,8 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		// Input, which the next frame builds even out of sight.
 		rt.input = true
 	}
+	// The window's DIPs, zoomed, are the content's.
+	rt.fromWindow(&ev)
 	x, y := float32(ev.X), float32(ev.Y)
 	if ev.Kind == platform.PointerDown || ev.Kind == platform.WebViewPress {
 		// A press is of no element until countPress finds it one.
@@ -49,6 +51,8 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 	case platform.SurfaceResize:
 		rt.requestFrame()
 	case platform.SurfaceShown:
+		// A video goes on from where it stood out of sight.
+		rt.shown = rt.now()
 		if rt.held {
 			// What moves goes on from where the time puts it.
 			rt.held = false
@@ -268,6 +272,7 @@ func (rt *engine) pointerMove(x, y float32) {
 		rt.pressed.dragX += dx
 		rt.pressed.dragY += dy
 		rt.pressed.drag.move(rt.now(), dx, dy, x-rt.pointerX, y-rt.pointerY)
+		rt.dragInlineLinkSelection()
 		if rt.pressed.flags&(flagTrackPointer|flagDraggable|flagEditable|flagSelectable) != 0 {
 			rt.requestFrame()
 		} else {
@@ -385,7 +390,7 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
 	if button == 0 && target.flags&flagMenuButton != 0 && target.flags&flagDisabled == 0 {
 		// A menu button's menu opens as the button goes down, and takes
 		// the release.
-		rt.openMenuButton(target)
+		rt.openMenuButton(target, false)
 		return
 	}
 	if button == 0 && target.flags&flagDragWindow != 0 && target.flags&(interactive&^flagDragWindow) == 0 {
@@ -516,8 +521,17 @@ func (rt *engine) pointerUp(button, clicks int) {
 func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum bool) {
 	chain := rt.appendHitChain(rt.chain[:0], rt.pointerX, rt.pointerY)
 	rt.chain = chain[:0]
-	if h := rt.handler(chain); h != nil && rt.deliver(h, InputEvent{Kind: InputScroll, DX: dx, DY: dy, Mods: mods, Precise: precise, Momentum: momentum}) {
-		return
+	// From the innermost element out, the first handling its input to
+	// take it: one whose handler leaves it passes it on, as it would
+	// without the handler, to the handlers around it, as an editor
+	// scrolls under what it shows over its text. Scroll containers move
+	// only when no handler takes it, so a handler around one, as a canvas
+	// that zooms with Ctrl and the wheel, still sees it first.
+	ev := InputEvent{Kind: InputScroll, DX: dx, DY: dy, Mods: mods, Precise: precise, Momentum: momentum}
+	for _, id := range chain {
+		if s := rt.states[id]; s != nil && s.input != nil && s.flags&flagDisabled == 0 && rt.deliver(s, ev) {
+			return
+		}
 	}
 	// Shift turns the wheel sideways: down is toward the end, which is
 	// to the left right to left.
@@ -779,7 +793,7 @@ func (rt *engine) keyDownPhysical(mods Modifiers, key, physical Key, repeat bool
 	if s := rt.states[rt.focused]; s != nil && s.flags&flagMenuButton != 0 && s.flags&flagDisabled == 0 && !rt.claimedBy(k, false) &&
 		(mods == 0 && (key == KeyEnter || key == KeySpace || key == KeyDown) || mods == Alt && key == KeyDown) {
 		rt.focusVisible = true
-		rt.openMenuButton(s)
+		rt.openMenuButton(s, true)
 		return false
 	}
 	if (key == KeyEnter || key == KeySpace) && mods == 0 {
@@ -889,30 +903,45 @@ func (rt *engine) moveFocus(back bool) {
 // innermost element around the focus that handles them, else to the
 // overlay on top that does, else to the window's shortcuts, as the last
 // frame registered them. Those it finds no shortcut for wait for what
-// this frame builds (settleKeys).
+// this frame builds (settleKeys). An element takes one key a frame: from
+// a second key for one, the keys wait for the next frame, which the
+// first changed, as a Down and an Enter typed quickly into a menu, the
+// Enter choosing the item the Down highlighted.
 func (rt *engine) routeKeys() {
 	rt.unrouted = rt.unrouted[:0]
 	if len(rt.keys) == 0 && len(rt.retried) == 0 {
 		return
 	}
 	chain := rt.focusChain()
-	route := func(k keyEvent, retried bool) {
+	route := func(k keyEvent, retried bool) bool {
 		r := shortcutReg{mods: k.mods, key: k.key, retried: retried}
 		if target, found := routeKey(rt.regs, chain, k); found {
+			if slices.ContainsFunc(rt.delivered, func(d shortcutReg) bool { return d.id == target }) {
+				return false
+			}
 			r.id = target
 			rt.delivered = append(rt.delivered, r)
 		} else {
 			rt.unrouted = append(rt.unrouted, r)
 		}
+		return true
 	}
 	// Keys retried came before those pressed since.
-	for _, k := range rt.retried {
-		route(k, true)
+	var later []keyEvent
+	for i, k := range rt.retried {
+		if !route(k, true) {
+			later = append(later, rt.retried[i:]...)
+			break
+		}
 	}
-	for _, k := range rt.keys {
-		route(k, false)
+	for i, k := range rt.keys {
+		if later != nil || !route(k, false) {
+			later = append(later, rt.keys[i:]...)
+			break
+		}
 	}
-	rt.retried, rt.keys = rt.retried[:0], rt.keys[:0]
+	rt.retried = rt.retried[:0]
+	rt.keys = append(rt.keys[:0], later...)
 }
 
 // routeKey returns the element that takes key k by shortcuts regs, the
@@ -1008,15 +1037,22 @@ func (rt *engine) editEvent(ev editEvent) {
 		}
 		if handled {
 			rt.blinkStart = rt.now()
+		} else {
+			rt.commandKey(ev, nil)
 		}
 		return
 	}
 	s := rt.states[rt.focused]
 	if s == nil || s.editor == nil {
+		rt.commandKey(ev, nil)
 		return
 	}
 	// Selectable text takes the menus' commands, as Copy, not text.
 	if s.flags&flagEditable == 0 && (s.flags&flagSelectable == 0 || ev.kind != editCommand) {
+		rt.commandKey(ev, nil)
+		return
+	}
+	if s.editor.readOnly && rt.commandKey(ev, s.editor) {
 		return
 	}
 	if ev.kind == editCommand && rt.textSelectionCommand(s, ev.text) {
@@ -1026,6 +1062,27 @@ func (rt *engine) editEvent(ev editEvent) {
 	s.editor.queue = append(s.editor.queue, ev)
 	rt.blinkStart = rt.now()
 	rt.requestFrame()
+}
+
+// commandKeys are the keys of the Edit menu's commands.
+var commandKeys = map[string]keyEvent{
+	"copy": {Cmd, KeyC}, "cut": {Cmd, KeyX}, "paste": {Cmd, KeyV}, "selectAll": {Cmd, KeyA},
+	"undo": {Cmd, KeyZ}, "redo": {Cmd | Shift, KeyZ},
+}
+
+// commandKey has an edit command that the focus, or ed, doesn't take go to
+// the shortcuts of its key, and reports whether it did. On macOS the Edit
+// menu takes Command+V and the others before the window sees the key, so a
+// window's Cmd+V would otherwise run only from a text input; elsewhere the
+// key comes first, and the menu only after.
+func (rt *engine) commandKey(ev editEvent, ed *editor) bool {
+	k, ok := commandKeys[ev.text]
+	if runtime.GOOS != "darwin" || ev.kind != editCommand || !ok || ed != nil && ed.wants(k) {
+		return false
+	}
+	rt.keys = append(rt.keys, k)
+	rt.requestFrame()
+	return true
 }
 
 // imeContext is how many runes around the selection input methods see.
@@ -1044,13 +1101,13 @@ func (rt *engine) updateTextInput() {
 			t.Caret = bounds
 		} else {
 			r := transformRect(s.world, Rect{X: s.x, Y: s.y, W: 1, H: s.h})
-			t.Caret = platform.RectF{X: float64(r.X), Y: float64(r.Y), W: float64(r.W), H: float64(r.H)}
+			t.Caret = rt.toWindow(platform.RectF{X: float64(r.X), Y: float64(r.Y), W: float64(r.W), H: float64(r.H)})
 		}
 	} else if s != nil && s.editor == nil && s.input != nil && s.takesText && rt.windowFocus() {
 		// An element taking text itself: no text around the caret.
 		t.Active, t.NoInputMethod = true, s.noIME
 		r := transformRect(s.world, Rect{s.x + s.caret.X, s.y + s.caret.Y, s.caret.W, s.caret.H})
-		t.Caret = platform.RectF{X: float64(r.X), Y: float64(r.Y), W: float64(r.W), H: float64(r.H)}
+		t.Caret = rt.toWindow(platform.RectF{X: float64(r.X), Y: float64(r.Y), W: float64(r.W), H: float64(r.H)})
 	}
 	if t != rt.ime.state {
 		if t.Client != rt.ime.state.Client {
@@ -1218,8 +1275,12 @@ func (e *node) Pressed() bool {
 	return true
 }
 
-// Focused reports whether the element has the keyboard focus.
+// Focused reports whether the element has the keyboard focus: for a field
+// around an input, as SearchField's, whether its input has it.
 func (e *node) Focused() bool {
+	if e != nil && e.focusTo != nil {
+		return e.focusTo.Focused()
+	}
 	return e.hasState() && e.c.rt.focused == e.id && e.c.rt.windowFocus()
 }
 
@@ -1246,8 +1307,13 @@ func (e *node) FocusWithin() bool {
 }
 
 // Focus gives the element the keyboard focus. Called in every frame, it
-// keeps it there; AutoFocus gives it once.
+// keeps it there; AutoFocus gives it once. A field around an input, as
+// SearchField's, gives it to its input, where typing goes.
 func (e *node) Focus() *node {
+	if e != nil && e.focusTo != nil {
+		e.focusTo.Focus()
+		return e
+	}
 	if !e.hasState() {
 		return e
 	}
@@ -1306,6 +1372,21 @@ func (e *node) Dragged() (dx, dy float32, ok bool) {
 	}
 	if s.dragX != 0 || s.dragY != 0 {
 		e.c.rt.consumed = true
+	}
+	return s.dragX, s.dragY, true
+}
+
+// draggedBy is Dragged for a control that applies the move to its own layout
+// before it builds its children, as Split does: the move reaches the frame
+// that asked for it, and needs no second build to be reported.
+func (e *node) draggedBy() (dx, dy float32, ok bool) {
+	if !e.hasState() {
+		return 0, 0, false
+	}
+	e.flags |= flagDraggable
+	s := e.st
+	if !s.pressed {
+		return 0, 0, false
 	}
 	return s.dragX, s.dragY, true
 }

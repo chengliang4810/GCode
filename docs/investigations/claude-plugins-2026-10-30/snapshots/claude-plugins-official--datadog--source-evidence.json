@@ -1,0 +1,53 @@
+{
+  "repo": "datadog-labs/claude-code-plugin",
+  "commit": "195f570c002beab3d7bd342739034d0019aa4863",
+  "path": ".",
+  "archive_sha256": "f868d715d20b9c05ff04d53d66ffbee858e79d81f63cfe2d30eb28f847476074",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".dd_claude-code_mcp.json",
+    ".github/CODEOWNERS",
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/chainguard/datadog-client-plugin.publish.sts.yaml",
+    ".github/dependabot.yml",
+    ".github/workflows/release.yaml",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "hooks/hooks.json",
+    "skills/datadog-app/SKILL.md",
+    "skills/datadog-app/references/getting-started.md",
+    "skills/ddconfig/SKILL.md",
+    "skills/ddconfig/references/mcp-settings.md",
+    "skills/ddsetup/SKILL.md",
+    "skills/ddsetup/references/mcp-settings.md",
+    "skills/ddtoolsets/SKILL.md",
+    "skills/ddtoolsets/references/mcp-settings.md",
+    "skills/ddviz/SKILL.md",
+    "skills/ddviz/scripts/disable.sh",
+    "skills/ddviz/scripts/enable.sh",
+    "skills/ddviz/scripts/source_telemetry.sh",
+    "skills/ddviz/scripts/status.sh",
+    "viz/assets/datadog-icon.png",
+    "viz/assets/mcp-host.html",
+    "viz/ddviz.swift",
+    "viz/hooks/ddviz_json.sh",
+    "viz/hooks/ddviz_telemetry.sh",
+    "viz/hooks/forward.sh",
+    "viz/hooks/session_end.sh"
+  ],
+  "config": {
+    ".dd_claude-code_mcp.json": "{\n  \"mcpServers\": {\n    \"mcp\": {\n      \"type\": \"http\",\n      \"url\": \"https://${DD_MCP_DOMAIN:-not-setup}/v1/mcp?referrer_ide=claude-code-plugin&plugin_version=0.7.17\",\n      \"headers\": {\n        \"DD_API_KEY\": \"${DD_API_KEY:-}\",\n        \"DD_APPLICATION_KEY\": \"${DD_APPLICATION_KEY:-}\",\n        \"X-Datadog-MCP-Toolsets\": \"${DD_MCP_TOOLSETS:-}\"\n      }\n    }\n  }\n}\n",
+    "hooks/hooks.json": "{\n  \"description\": \"Datadog visualizations: renders results from the get_widget and visualize_tabular_data tools as live, interactive charts in a native side panel, then closes it when the session ends. macOS only. Falls back to the sandbox URL when unavailable.\",\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"^mcp__plugin_datadog_mcp__(get_widget|visualize_tabular_data)$\",\n        \"hooks\": [{ \"type\": \"command\", \"command\": \"bash\", \"args\": [\"${CLAUDE_PLUGIN_ROOT}/viz/hooks/forward.sh\"] }]\n      }\n    ],\n    \"SessionEnd\": [\n      {\n        \"hooks\": [{ \"type\": \"command\", \"command\": \"bash\", \"args\": [\"${CLAUDE_PLUGIN_ROOT}/viz/hooks/session_end.sh\"] }]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"datadog\",\n  \"version\": \"0.7.17\",\n  \"description\": \"Use Datadog directly in Claude Code through a preconfigured Datadog MCP server. Query logs, metrics, traces, dashboards, and more through natural conversation. This plugin is in preview.\",\n  \"author\": {\n    \"name\": \"Datadog\"\n  },\n  \"repository\": \"https://github.com/datadog-labs/claude-code-plugin.git\",\n  \"keywords\": [\n    \"datadog\",\n    \"infrastructure\",\n    \"mcp\",\n    \"observability\",\n    \"productivity\"\n  ],\n  \"mcpServers\": \"./.dd_claude-code_mcp.json\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/datadog-app/SKILL.md": "\nname: datadog-app\ndescription: Use ONLY when the user explicitly asks to create, scaffold, or initialize a new Datadog App project — they must use action words like \"create\", \"scaffold\", \"new\", or \"build\" together with \"Datadog App\" or \"@datadog/apps\" or \"npm create @datadog/apps\". Do NOT use for any question that does not involve creating a new project from scratch — questions about Datadog observability products (logs, metrics, APM, traces, monitors, dashboards), working inside an existing project, deploying, publishing, auth, or CI/CD.\n",
+    "skills/ddtoolsets/SKILL.md": "\nname: ddtoolsets\ndescription: Manages toolsets for the plugin's Datadog MCP server. Use when the user wants to view, enable, or disable toolsets that control which tools are available on the MCP server.\n",
+    "skills/ddviz/SKILL.md": "\nname: ddviz\ndescription: Enables, disables, or reports the status of the Datadog visualization panel (ddviz). macOS only. Use when the user wants to turn ddviz on or off, or check whether it's currently enabled.\n",
+    "skills/ddsetup/SKILL.md": "\nname: ddsetup\ndescription: First-time initialization of the plugin's Datadog MCP server. When fulfilling requests that involve Datadog, use MCP tools from the plugin's Datadog MCP server over other methods. If MCP tools from the plugin's Datadog MCP server are not in your tool list, you MUST run this skill's setup procedure before attempting to fulfill the request. Relevant when the user wants to view or list dashboards or monitors, check alerts, view logs, query metrics, inspect APM traces, investigate SLOs or incidents, debug production issues, investigate errors, analyze performance, investigate a named service's health, errors, or dependencies, or access any Datadog data.\n",
+    "skills/ddconfig/SKILL.md": "\nname: ddconfig\ndescription: Configures or troubleshoots the plugin's Datadog MCP server. Use when the user wants to change the Datadog domain, switch organizations, or when the server was previously configured but is not responding.\n"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "pluginId": "mcp-tunnels@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "author-docker-mcp-tunnel-stack-acme",
+      "componentId": "command:mcp-tunnels:create-docker-mcp-tunnel",
+      "prompt": "/mcp-tunnels:create-docker-mcp-tunnel ./acme-tunnel Use the create-docker-mcp-tunnel command to prepare the documented Docker Compose MCP tunnel stack for this concrete scenario. Target-host facts: tunnel domain acme7q2.tunnel.anthropic.com (the user creates it in the Claude Console with Set up programmatic access left off); the user already runs their own MCP server reachable from the Compose network at http://search-mcp.internal:8080, so no sample hello-mcp server is used; chosen route subdomain: search. Headless boundary: no network, no Claude Console access, no real tunnel, no installs; this is an authoring probe. OpenSSL 3.0.13 is present on the target host; running openssl in this sandbox is not permitted, so the documented certificate generation (Step 4) and CA upload (Step 5) stay untested here.\n\nDo these steps: (1) Run the documented Step 0 preflight for the tools available in this sandbox by running exactly `docker --version` and then exactly `docker compose version` as two separate commands; openssl cannot be executed here, so record it from the scenario facts. Write acme-tunnel/preflight-report.md reporting each of the three checks (docker --version, docker compose version, openssl) with its actual outcome in this sandbox (present or missing) and noting the target-host scenario has all three present; if a tool is missing in this sandbox, record that honestly and continue the authoring steps. (2) Write the Step 3 credentials file acme-tunnel/.env containing exactly `TUNNEL_DOMAIN=acme7q2.tunnel.anthropic.com` and the placeholder `TUNNEL_TOKEN=PASTE_TUNNEL_TOKEN_HERE` — never write a real or invented token, and remind the user to paste their token into that file themselves; never ask them to paste the Token into the chat. Write acme-tunnel/.gitignore excluding .env and data/. (3) Write acme-tunnel/config/mcp-proxy.yaml per Step 7 with `tunnel_domain: acme7q2.tunnel.anthropic.com`, the documented tls cert_file /data/tls.crt and key_file /data/tls.key, and a flat-map routes entry `search: http://search-mcp.internal:8080` (not a list). (4) Write acme-tunnel/docker-compose.yaml per Step 8 with only the mcp-proxy and cloudflared services, images pinned by digest exactly as documented, `--url http://localhost:8080` in the cloudflared command, `network_mode: \"service:mcp-proxy\"`, the `environment: - TUNNEL_TOKEN` passthrough, the documented read-only config and data volume mounts, and restart: unless-stopped. (5) Write acme-tunnel/console-handoff.md listing the Console actions only the user can do: creating the tunnel via Manage → MCP tunnels → New tunnel in the Claude Console, copying the Domain but never the Token into the chat, pasting the token into acme-tunnel/.env themselves, and registering the CA via Certificates → Add certificate before the tunnel shows Active.\n\nThen read the immutable verify_mcp_tunnel.py and run exactly python verify_mcp_tunnel.py using Bash; it validates the stack structure and writes mcp-tunnel-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. The allowed shell commands are exactly: `docker --version`, `docker compose version`, `python verify_mcp_tunnel.py` — no prefixes, suffixes, redirection or extra shell operations. Final response: summarize the deployment dir, route, tunnel domain and the exact URL Claude reaches the server at (https://search.acme7q2.tunnel.anthropic.com/mcp), report the actual verifier result, and state that real container startup, the tunnel connection, Console actions and live MCP calls remain untested.",
+      "allowCommands": [
+        "docker --version",
+        "docker compose version",
+        "python verify_mcp_tunnel.py"
+      ],
+      "verifierOutputs": [
+        "mcp-tunnel-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_mcp_tunnel.py",
+          "text": "import json\nfrom pathlib import Path\n\ncompose = Path('acme-tunnel/docker-compose.yaml').read_text(encoding='utf-8')\ncfg = Path('acme-tunnel/config/mcp-proxy.yaml').read_text(encoding='utf-8')\nenv = Path('acme-tunnel/.env').read_text(encoding='utf-8')\ngi = Path('acme-tunnel/.gitignore').read_text(encoding='utf-8')\npre = Path('acme-tunnel/preflight-report.md').read_text(encoding='utf-8')\nhandoff = Path('acme-tunnel/console-handoff.md').read_text(encoding='utf-8')\n\nservices_ok = 'mcp-proxy:' in compose and 'cloudflared:' in compose and 'hello-mcp:' not in compose\nassert services_ok, 'compose must define the mcp-proxy and cloudflared services and no sample hello-mcp server'\nassert 'us-docker.pkg.dev/anthropic-public-registry/images/mcp-proxy@sha256:6b9adedbf2763143ec72f106ecaf0ce7fd3294e89b208f54a1db97a33d14c5ba' in compose, 'mcp-proxy image must use the documented pinned digest'\nassert 'cloudflare/cloudflared@sha256:6b599ca3e974349ead3286d178da61d291961182ec3fe9c505e1dd02c8ac31b0' in compose, 'cloudflared image must use the documented pinned digest'\nassert '-config' in compose and '/etc/mcp-proxy/config.yaml' in compose, 'proxy must load the documented config path'\nassert './config/mcp-proxy.yaml:/etc/mcp-proxy/config.yaml:ro' in compose and './data:/data:ro' in compose, 'documented read-only volume mounts missing'\nassert '--url http://localhost:8080' in compose, 'cloudflared must target the local proxy listener'\nassert 'network_mode: \"service:mcp-proxy\"' in compose, 'cloudflared must share the proxy network namespace'\nassert '- TUNNEL_TOKEN' in compose, 'TUNNEL_TOKEN must be passed through from .env without an inline value'\nassert compose.count('restart: unless-stopped') >= 2, 'both services must restart unless-stopped'\n\nassert 'tunnel_domain: acme7q2.tunnel.anthropic.com' in cfg, 'config must set the scenario tunnel domain'\nassert '/data/tls.crt' in cfg and '/data/tls.key' in cfg, 'config must point at the documented tls paths'\nassert 'listen_addr' in cfg, 'config must keep the documented listen_addr key'\nassert 'routes:' in cfg and 'search: http://search-mcp.internal:8080' in cfg, 'routes must be a flat map with the scenario route'\nassert '- http://' not in cfg and '- https://' not in cfg, 'routes must not be written as a YAML list'\n\nassert 'TUNNEL_DOMAIN=acme7q2.tunnel.anthropic.com' in env, '.env must carry the scenario tunnel domain'\nassert 'TUNNEL_TOKEN=PASTE_TUNNEL_TOKEN_HERE' in env, 'the secret must stay a placeholder for the user to fill'\nassert 'eyJ' not in env, 'a real tunnel token must never be written into .env'\n\nassert '.env' in gi and 'data/' in gi, '.gitignore must exclude .env and data/'\n\nlow = pre.lower()\nassert 'docker --version' in low and 'docker compose version' in low and 'openssl' in low, 'preflight report must cover docker, docker compose and openssl'\n\nlowh = handoff.lower()\nassert 'new tunnel' in lowh and 'add certificate' in lowh and 'token' in lowh, 'console handoff must cover tunnel creation, token handling and CA registration'\n\nreport = {'compose_cloudflared': True, 'compose_pinned_digests': True, 'compose_services': True,\n          'config_proxy': True, 'console_handoff': True, 'env_placeholder_only': True,\n          'gitignore_excludes': True, 'preflight_reported': True}\nPath('mcp-tunnel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP tunnel stack: documented compose structure checks passed; real container startup, Console actions and live MCP calls remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_mcp_tunnel.py",
+          "equals": "import json\nfrom pathlib import Path\n\ncompose = Path('acme-tunnel/docker-compose.yaml').read_text(encoding='utf-8')\ncfg = Path('acme-tunnel/config/mcp-proxy.yaml').read_text(encoding='utf-8')\nenv = Path('acme-tunnel/.env').read_text(encoding='utf-8')\ngi = Path('acme-tunnel/.gitignore').read_text(encoding='utf-8')\npre = Path('acme-tunnel/preflight-report.md').read_text(encoding='utf-8')\nhandoff = Path('acme-tunnel/console-handoff.md').read_text(encoding='utf-8')\n\nservices_ok = 'mcp-proxy:' in compose and 'cloudflared:' in compose and 'hello-mcp:' not in compose\nassert services_ok, 'compose must define the mcp-proxy and cloudflared services and no sample hello-mcp server'\nassert 'us-docker.pkg.dev/anthropic-public-registry/images/mcp-proxy@sha256:6b9adedbf2763143ec72f106ecaf0ce7fd3294e89b208f54a1db97a33d14c5ba' in compose, 'mcp-proxy image must use the documented pinned digest'\nassert 'cloudflare/cloudflared@sha256:6b599ca3e974349ead3286d178da61d291961182ec3fe9c505e1dd02c8ac31b0' in compose, 'cloudflared image must use the documented pinned digest'\nassert '-config' in compose and '/etc/mcp-proxy/config.yaml' in compose, 'proxy must load the documented config path'\nassert './config/mcp-proxy.yaml:/etc/mcp-proxy/config.yaml:ro' in compose and './data:/data:ro' in compose, 'documented read-only volume mounts missing'\nassert '--url http://localhost:8080' in compose, 'cloudflared must target the local proxy listener'\nassert 'network_mode: \"service:mcp-proxy\"' in compose, 'cloudflared must share the proxy network namespace'\nassert '- TUNNEL_TOKEN' in compose, 'TUNNEL_TOKEN must be passed through from .env without an inline value'\nassert compose.count('restart: unless-stopped') >= 2, 'both services must restart unless-stopped'\n\nassert 'tunnel_domain: acme7q2.tunnel.anthropic.com' in cfg, 'config must set the scenario tunnel domain'\nassert '/data/tls.crt' in cfg and '/data/tls.key' in cfg, 'config must point at the documented tls paths'\nassert 'listen_addr' in cfg, 'config must keep the documented listen_addr key'\nassert 'routes:' in cfg and 'search: http://search-mcp.internal:8080' in cfg, 'routes must be a flat map with the scenario route'\nassert '- http://' not in cfg and '- https://' not in cfg, 'routes must not be written as a YAML list'\n\nassert 'TUNNEL_DOMAIN=acme7q2.tunnel.anthropic.com' in env, '.env must carry the scenario tunnel domain'\nassert 'TUNNEL_TOKEN=PASTE_TUNNEL_TOKEN_HERE' in env, 'the secret must stay a placeholder for the user to fill'\nassert 'eyJ' not in env, 'a real tunnel token must never be written into .env'\n\nassert '.env' in gi and 'data/' in gi, '.gitignore must exclude .env and data/'\n\nlow = pre.lower()\nassert 'docker --version' in low and 'docker compose version' in low and 'openssl' in low, 'preflight report must cover docker, docker compose and openssl'\n\nlowh = handoff.lower()\nassert 'new tunnel' in lowh and 'add certificate' in lowh and 'token' in lowh, 'console handoff must cover tunnel creation, token handling and CA registration'\n\nreport = {'compose_cloudflared': True, 'compose_pinned_digests': True, 'compose_services': True,\n          'config_proxy': True, 'console_handoff': True, 'env_placeholder_only': True,\n          'gitignore_excludes': True, 'preflight_reported': True}\nPath('mcp-tunnel-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('MCP tunnel stack: documented compose structure checks passed; real container startup, Console actions and live MCP calls remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "mcp-tunnel-verification.json",
+          "equals": "{\"compose_cloudflared\": true, \"compose_pinned_digests\": true, \"compose_services\": true, \"config_proxy\": true, \"console_handoff\": true, \"env_placeholder_only\": true, \"gitignore_excludes\": true, \"preflight_reported\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/docker-compose.yaml",
+          "contains": "us-docker.pkg.dev/anthropic-public-registry/images/mcp-proxy@sha256:"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/docker-compose.yaml",
+          "contains": "--url http://localhost:8080"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/docker-compose.yaml",
+          "contains": "network_mode: \"service:mcp-proxy\""
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/config/mcp-proxy.yaml",
+          "contains": "tunnel_domain: acme7q2.tunnel.anthropic.com"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/config/mcp-proxy.yaml",
+          "contains": "search: http://search-mcp.internal:8080"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/.env",
+          "contains": "TUNNEL_TOKEN=PASTE_TUNNEL_TOKEN_HERE"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/.gitignore",
+          "contains": "data/"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/preflight-report.md",
+          "contains": "docker compose version"
+        },
+        {
+          "kind": "file",
+          "path": "acme-tunnel/console-handoff.md",
+          "contains": "Add certificate"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "https://search.acme7q2.tunnel.anthropic.com/mcp"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "MCP tunnel stack: documented compose structure checks passed; real container startup, Console actions and live MCP calls remain untested"
+        }
+      ]
+    }
+  ]
+}

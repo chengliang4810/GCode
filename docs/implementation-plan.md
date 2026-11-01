@@ -5,9 +5,12 @@ Accepted 2026-10-28. Reference: `D:/zeron` commit
 
 ## Scope
 
-Go 1.27.3, MyGo 0.6.4 native desktop. Windows 11 22H2+ amd64 first;
+Go 1.27.3, MyGo v0.7.3 native desktop. Windows 11 22H2+ amd64 first;
 macOS 13+ Intel/Apple Silicon implemented together, with runtime acceptance
-recorded per architecture. Retain Zeron visible branding and English copy.
+recorded per architecture. Current product branding is GCode and the interface
+defaults to Simplified Chinese, with English available in settings. Use `rcode`
+only for internal command, package and theme identifiers. Preserve upstream
+names in provenance and frozen historical evidence.
 Remove voice, dictation and their settings/shortcuts. Keep app identity and
 storage independent. In-process typed backend, manual constructor injection.
 Only external browser document bodies may use system web views.
@@ -22,7 +25,7 @@ P1 verify native titlebar/fonts/IME/frost/SVG/streaming/math/long lists/terminal
 and browser overlays before claiming capability parity. P2 implement typed
 contracts, deterministic services/events and isolated persistence. P3 design
 system/shell/panes. P4 complete chat/composer interactions. P5 files/editor/Git/
-PR/terminal/browser. P6 every settings/global entry. P7 full Windows acceptance
+terminal/browser. P6 every settings/global entry. P7 full Windows acceptance
 and release package. P8 native macOS acceptance and universal packaging.
 
 ## Acceptance
@@ -40,7 +43,7 @@ captures and scope changes separately.
 
 Every business control must produce a state transition. Exercise send/stream/
 stop/retry/queue/questions/permissions, session archive/pin/reorder/search,
-virtual file editing/conflicts, Git/PR views, terminal input/ANSI/search/resize,
+virtual file editing/conflicts, Git diff/history, terminal input/ANSI/search/resize,
 real public website navigation and native overlay hit testing, settings
 persistence, keyboard/IME/selection/undo/focus. Run Go tests/vet/MyGo vet/lint,
 race checks on state/services, then packaged native application acceptance.

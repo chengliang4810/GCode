@@ -1,7 +1,7 @@
 package desktop
 
 import (
-	"fmt"
+	"crypto/rand"
 	"strings"
 
 	"gcode/internal/contracts"
@@ -22,7 +22,6 @@ type sideComposerState struct {
 	Pending        *sidePendingSend
 	Failure        string
 	Importing      int
-	Sequence       uint64
 	FocusPending   bool
 	FooterUsage    composerUsageState
 }
@@ -31,6 +30,7 @@ type sidePendingSend struct {
 	RequestID, Draft string
 	Attachments      []contracts.Attachment
 	Queued           bool
+	Steer            bool
 }
 
 func (a *App) sideComposer(sessionID string) *sideComposerState {
@@ -46,7 +46,7 @@ func (a *App) sideComposer(sessionID string) *sideComposerState {
 func (a *App) dismissSideComposer(id string) {
 	if state := a.sideComposers[id]; state != nil {
 		state.modelMenu = false
-		state.modelListPage = false
+		state.effortMenu = false
 		state.modelQuery = ""
 		state.FocusPending = false
 	}
@@ -99,23 +99,41 @@ func (a *App) sideCommandFinished(command contracts.Command, err error) bool {
 }
 
 func (a *App) sendSideMessage(session contracts.Session, state *sideComposerState, text string) bool {
+	if session.SubagentType != "" {
+		state.Failure = a.t("Subagent conversations are read-only.")
+		return false
+	}
 	if state.Pending != nil || state.Importing > 0 || (strings.TrimSpace(text) == "" && len(state.Attachments) == 0) {
 		return false
 	}
-	state.Sequence++
-	id := fmt.Sprintf("side:%s:%d", session.ID, state.Sequence)
-	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: session.Status == contracts.Working || session.Status == contracts.AwaitingInput}
-	state.Failure = ""
-	access := state.accessMode
-	if access == "" {
-		access = contracts.AccessFullAccess
+	id := "side:" + rand.Text()
+	busy := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
+	delivery := ""
+	if busy && a.activeTurnSend() == "steer" {
+		delivery = "steer"
 	}
+	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: busy, Steer: delivery == "steer"}
+	state.Failure = ""
 	a.dispatch(contracts.Command{Kind: "message.send", ProjectID: session.ProjectID, Send: &contracts.SendRequest{
 		RequestID: id, SessionID: session.ID, ProjectID: session.ProjectID, DeviceID: session.DeviceID,
-		ModelID: state.modelID, ReasoningLevel: state.reasoning, AccessMode: access, Plan: state.plan,
+		ModelID: state.modelID, ReasoningLevel: state.reasoning, Delivery: delivery,
 		Branch: session.Branch, WorktreeID: session.WorktreeID, Text: strings.TrimSpace(text), Attachments: append([]contracts.Attachment(nil), state.Attachments...),
 	}})
 	return state.Failure == ""
+}
+
+// sideTranscriptCache returns the projection cache of a side pane, kept with
+// the pane so its rows are not re-projected on every frame.
+func (a *App) sideTranscriptCache(sessionID string) *transcriptCache {
+	if a.sideTranscripts == nil {
+		a.sideTranscripts = map[string]*transcriptCache{}
+	}
+	cache := a.sideTranscripts[sessionID]
+	if cache == nil {
+		cache = &transcriptCache{}
+		a.sideTranscripts[sessionID] = cache
+	}
+	return cache
 }
 
 // sideTranscript mounts the same native message renderer in a workspace tab.
@@ -134,64 +152,91 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 	}
 	state := a.sideComposer(sessionID)
 	if len(state.configPending) == 0 {
-		state.modelID, state.reasoning, state.accessMode, state.plan = session.ModelID, session.ReasoningLevel, session.AccessMode, session.Plan
+		state.modelID, state.reasoning = session.ModelID, session.ReasoningLevel
 		state.configured = true
 	}
-	messages := transcriptEntries(a.state.Messages[sessionID])
+	// The pane's rows are its own: joined and projected like the central
+	// transcript's, with identities prefixed so a fold opened here does not
+	// open in the conversation behind it.
+	cache := a.sideTranscriptCache(sessionID)
+	entries := cache.entriesFor(a.state.Revision, sessionID, a.state.Messages[sessionID], a.state.Settings.General.CompactMode)
+	messages := make([]contracts.Message, len(entries))
+	copy(messages, entries)
 	for i := range messages {
 		messages[i].ID = "side:" + sessionID + ":" + messages[i].ID
 	}
-	rows := len(messages)
-	if _, _, working := a.workingState(sessionID); rows == 0 && working {
-		rows = 1
+	conversation := cache.conversationFor(messages, a.state.Settings.General.CompactMode)
+	if _, _, working := a.workingState(sessionID); len(conversation) == 0 && working {
+		conversation = []conversationRow{{Key: "side:" + sessionID + ":working", Message: -1}}
 	}
 	a.prepareTranscriptMarkdown(c)
 	root := ui.Column(c).Fill().Key("side-transcript:" + sessionID)
 	list := ui.Local(root, "messages", func() ui.ListState { return ui.ListState{FollowEnd: true} })
-	list.Key = func(i int) any {
-		if i == len(messages) {
-			return "side:" + sessionID + ":working-trailer"
-		}
-		return messages[i].ID
-	}
-	if !a.reduceMotion(c) && a.state.Settings.Appearance.SmoothScrolling {
-		list.FollowAnimation = &ui.Smooth
-	} else {
-		list.FollowAnimation = nil
-	}
-	root.Children(func() {
-		ui.List(c, list, rows, func(i int) {
-			c.Key(list.Key(i))
-			ui.Column(c).FillWidth().Padding(0, 16).Children(func() {
-				if i < len(messages) {
-					a.message(c, messages[i])
+	list.Key = func(i int) any { return conversation[i].Key }
+	a.transcriptListScope(c, root, list, sessionID, func() {
+		a.goalBanner(c, session)
+		a.sessionStorageNotice(c, session)
+		pane := transcriptPane{cache: cache, scope: "side:" + sessionID, session: sessionID}
+		a.transcriptScope(c, pane.scope, func() {
+			ui.List(c, list, len(conversation), func(i int) {
+				a.transcriptRowView(c, pane, messages, conversation, i, transcriptRowLayout{padding: 16, nested: true})
+			}).Grow(1).FillWidth().Gap(0).Padding(20, 0)
+		})
+		if session.SubagentType != "" {
+			ui.Row(c).FillWidth().Padding(12, 16).Gap(10).AlignItems(ui.Center).Children(func() {
+				label := session.ModelID
+				for _, candidate := range a.state.Models {
+					if candidate.ID == session.ModelID {
+						label = a.runtimeModelLabel(candidate)
+					}
 				}
-				if i == rows-1 {
-					a.workingTrailer(c, sessionID)
+				if session.ReasoningLevel != "" {
+					label += " · " + tr(c, session.ReasoningLevel)
+				}
+				ui.Text(c, label).Grow(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+				if session.Status == contracts.Working || session.Status == contracts.AwaitingInput {
+					textButton(c, tr(c, "Stop response")).Label(tr(c, "Stop response in ") + session.Title).OnClick(func() { a.stopSideMessage(session.ID) })
 				}
 			})
-		}).Grow(1).FillWidth().Gap(16).Padding(20, 0)
+			return
+		}
 		a.sideQueuedMessages(c, sessionID, state)
 		a.sideComposerView(c, session, state)
 	})
 }
 
 func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *sideComposerState) {
+	if session.SubagentType != "" {
+		return
+	}
 	controls := a.sideControls(session.ID, state)
 	viewport, _ := c.Size()
-	columns := allocatePanels(viewport, a.sidebarWidth, a.filesWidth, a.rightWidth, a.fit, a.rightExpanded)
+	columns := allocatePanels(viewport, a.shownSidebarWidth(), a.filesWidth, a.rightWidth, a.fit, a.rightExpanded)
 	transcriptWidth := float32(a.state.Settings.Appearance.TranscriptWidth)
 	if transcriptWidth <= 0 {
 		transcriptWidth = 736
 	}
 	outerWidth := composerOuterWidth(columns.Right, transcriptWidth, false)
 	ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
+		running := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
+		canSend := state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments))
+		mode := composerSend
+		switch {
+		case running && !canSend:
+			mode = composerStop
+		case running && a.activeTurnSend() == "queue":
+			mode = composerQueue
+		case running:
+			mode = composerSteer
+		}
 		a.nativeComposerSurface(c, composerSurfaceProps{
-			draft: &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
+			keyPrefix: "side:" + session.ID + ":",
+			draft:     &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
 			inputLabel: tr(c, "Message to ") + session.Title, attachLabel: tr(c, "Attach files to ") + session.Title,
 			sendLabel: tr(c, "Send message to ") + session.Title, stopLabel: tr(c, "Stop response in ") + session.Title,
-			running:   session.Status == contracts.Working || session.Status == contracts.AwaitingInput,
-			canSend:   state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments)),
+			steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
+			running:   running,
+			canSend:   canSend,
 			widthHint: max(0, outerWidth-32),
 			autofocus: true, focusPending: &state.FocusPending, stopWithEscape: a.state.Settings.General.StopWithEscape,
 			renderStaged: func() {
@@ -226,7 +271,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 			a.composerUsage(c, session, &state.FooterUsage, true)
 		})
 		if state.Failure != "" {
-			ui.Text(c, state.Failure).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
+			ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
 		}
 	})
 }
@@ -246,9 +291,14 @@ func (a *App) sideQueuedMessages(c *ui.Context, id string, state *sideComposerSt
 			continue
 		}
 		q := queued
-		ui.Row(c).FillWidth().Padding(6, 16).Gap(8).AlignItems(ui.Center).Children(func() {
-			icon(c, "clock-circle", 14)
-			ui.Text(c, q.Text).SingleLine().Grow(1).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+		row := ui.Row(c).FillWidth().Padding(6, 16).Gap(8).AlignItems(ui.Center).Children(func() {
+			icon(c, "queue-drag-handle", 14)
+			ui.Text(c, q.Text).SingleLine().Grow(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+			if a.state.Runtime != nil {
+				iconButton(c, "queue-send", tr(c, "Send now (interrupt)")).OnClick(func() {
+					a.dispatch(contracts.Command{Kind: "queue.send", ID: q.ID})
+				})
+			}
 			iconButton(c, "pen", tr(c, "Edit queued side message")).OnClick(func() {
 				state.Draft = q.Text
 				state.Attachments = append([]contracts.Attachment(nil), q.Attachments...)
@@ -257,5 +307,6 @@ func (a *App) sideQueuedMessages(c *ui.Context, id string, state *sideComposerSt
 			})
 			iconButton(c, "close", tr(c, "Remove queued side message")).OnClick(func() { a.dispatch(contracts.Command{Kind: "queue.remove", ID: q.ID}) })
 		})
+		a.queueDragTarget(c, row, q.SessionID, q.ID)
 	}
 }

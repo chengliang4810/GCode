@@ -1,0 +1,42 @@
+{
+  "repo": "canva-sdks/canva-skills",
+  "commit": "bfcbc681560f6031e9949ea52f81e20beb87e39e",
+  "path": "plugins/canva",
+  "archive_sha256": "0ee273b1e9b188c65a7c204dd560c052e95b27c3ec03cbd2b9cc8bde56995da7",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".cursor/README.md",
+    ".cursor/mcp.json",
+    ".mcp.json",
+    "README.md",
+    "assets/logo-canva.svg",
+    "inactive-skills/branded-presentation/SKILL.md",
+    "inactive-skills/canva-cli/SKILL.md",
+    "inactive-skills/classroom-helper/SKILL.md",
+    "inactive-skills/design-translation/SKILL.md",
+    "inactive-skills/generate-deck/SKILL.md",
+    "inactive-skills/presentation-time-fitting/SKILL.md",
+    "mcp_config.json",
+    "plugin.json",
+    "skills/brand-check/SKILL.md",
+    "skills/bulk-create/SKILL.md",
+    "skills/edit-design/SKILL.md",
+    "skills/get-design-feedback/SKILL.md",
+    "skills/implement-feedback/SKILL.md",
+    "skills/resize-for-social-media/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"canva\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Create, edit, review, resize, and brand-check Canva designs with the Canva MCP server.\",\n  \"author\": {\n    \"name\": \"Canva\"\n  },\n  \"keywords\": [\n    \"canva\",\n    \"design\",\n    \"presentation\",\n    \"social media\",\n    \"brand kit\",\n    \"ai generation\",\n    \"flyer\",\n    \"poster\",\n    \"graphic design\",\n    \"marketing\"\n  ],\n  \"skills\": [\n    \"./skills/resize-for-social-media\",\n    \"./skills/bulk-create\",\n    \"./skills/implement-feedback\",\n    \"./skills/edit-design\",\n    \"./skills/get-design-feedback\",\n    \"./skills/brand-check\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"canva\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.canva.com/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/brand-check/SKILL.md": "\nname: canva-brand-check\ndescription: Check a Canva design against a brand kit and report where it diverges — off-palette colors, non-brand fonts, logo misuse, and off-tone copy. Read-only; makes no changes. Use when the user asks \"is this on brand\", \"check this against our brand kit\", \"do a brand review\", \"does this match our brand guidelines\", or \"brand-check my design\".\n",
+    "skills/get-design-feedback/SKILL.md": "\nname: canva-design-feedback\ndescription: Read a Canva design and return structured, actionable design feedback — visual hierarchy, copy/messaging, layout & spacing, consistency, readability, and accessibility. Read-only; makes no changes to the design. Use when the user asks to \"review my design\", \"give me feedback on this\", \"critique my deck/poster/flyer\", \"how can I improve this design\", or \"what's wrong with this slide\".\n",
+    "skills/edit-design/SKILL.md": "\nname: canva-edit-design\ndescription: Make edits to an existing Canva design — change or fix text, replace/insert/delete images and videos, reformat text (size, weight, style, color, alignment, lists, line height), reposition or resize elements, and update the title. Use when the user wants to change, edit, update, fix, translate, replace, or reformat content in a specific Canva design. This is the safe edit engine that other Canva skills (e.g. implement-feedback) build on.\n",
+    "skills/resize-for-social-media/SKILL.md": "\nname: canva-resize-for-social-media\ndescription: Resize a Canva design into multiple social media formats (Facebook post, Facebook story, Instagram post, Instagram story, LinkedIn post). Use this skill when users want to resize Canva designs specifically for multiple social media platforms in one operation, rather than resizing to a single format manually.\n",
+    "skills/implement-feedback/SKILL.md": "\nname: canva-implement-feedback\ndescription: Implement reviewer feedback on a Canva design. Reads all comment threads, synthesises what reviewers want, makes the clear-cut changes directly, and flags anything that needs a human decision. Use when the user asks to \"implement feedback on my deck\", \"address comments on a design\", \"apply review feedback\", \"fix the comments on my presentation\", or \"implement the feedback\".\n",
+    "skills/bulk-create/SKILL.md": "\nname: canva-bulk-create\ndescription: Bulk-create Canva designs from tabular data using a brand template with autofill fields, producing one design per row. Use when users say \"bulk create designs from this CSV\", \"generate one design per row\", \"create a design for each product\", \"batch generate from a template\", or \"autofill a template from a spreadsheet\". Accepts any tabular data source — uploaded files, pasted tables, JSON, or URLs.\n"
+  }
+}

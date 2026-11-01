@@ -1,0 +1,25 @@
+{
+  "repo": "SynthFlowAI/AnthropicPlugin",
+  "commit": "205871ee83508502d2c982ee1bb7e65a2a29190b",
+  "path": "plugins/synthflow",
+  "archive_sha256": "003e92a36efa6764a12a8d68c350746eb2fff5624291ec8ebb63b34a3ac2e443",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/call-review/SKILL.md",
+    "skills/prompt-review/SKILL.md",
+    "skills/prompt-review/references/action-descriptions.md",
+    "skills/prompt-review/references/mechanical-checks.md",
+    "skills/prompt-review/references/output-template.md",
+    "skills/prompt-review/references/review-checklists.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-plugin-manifest.json\",\n  \"name\": \"synthflow\",\n  \"displayName\": \"Synthflow\",\n  \"description\": \"Connects Claude Code to the Synthflow AI voice-agent platform through its hosted MCP server, with skills for reviewing calls and auditing agent prompts, plus a docs-search connector.\",\n  \"version\": \"1.3.0\",\n  \"author\": {\n    \"name\": \"Synthflow\",\n    \"email\": \"fionn@synthflow.ai\"\n  },\n  \"homepage\": \"https://docs.synthflow.ai/anthropic\",\n  \"repository\": \"https://github.com/SynthFlowAI/AnthropicPlugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"synthflow\", \"mcp\", \"voice\", \"ai-agents\", \"telephony\", \"integration\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"synthflow\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.synthflow.ai/mcp\"\n    },\n    \"synthflow-docs\": {\n      \"type\": \"http\",\n      \"url\": \"https://docs.synthflow.ai/_mcp/server\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/call-review/SKILL.md": "\nname: call-review\ndescription: Review the last 100 calls for an agent and surface problems. Use this whenever the user wants a call-quality audit, a QA pass over recent calls, a \"what's going wrong with this agent\" review, or to find failed, unresolved, dropped, or otherwise problematic calls. Trigger on phrases like \"review my calls\", \"what's wrong with the calls\", \"QA the last 100 calls\", \"find bad calls\", or \"audit recent calls\".\n",
+    "skills/prompt-review/SKILL.md": "\nname: prompt-review\ndescription: Review AI voice-agent prompts, especially Synthflow Single-Prompt, for contradictions, missing context, unsafe tool/action behavior, escalation gaps, compliance risk, and regression risk. Use this when the user asks to review, audit, validate, improve, or compare a prompt before deployment.\n"
+  }
+}

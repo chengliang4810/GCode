@@ -16,12 +16,18 @@ type fileSearchState struct {
 	selected   int
 	rows       []contracts.File
 	collapsed  map[string]bool
-	input      ui.Handle
-	list       ui.ListState
+	workspace  fileExplorerControls
+	dock       fileExplorerControls
 	loading    bool
 	error      string
 	generation uint64
 	cancel     context.CancelFunc
+}
+
+type fileExplorerControls struct {
+	input ui.Handle
+	tree  ui.Handle
+	list  ui.ListState
 }
 
 func (s *State) cancelFileSearch() {
@@ -127,10 +133,10 @@ func (s *State) rebuildSearchRows() {
 	walk("")
 	s.search.selected = max(0, min(max(0, len(s.search.rows)-1), s.search.selected))
 }
-func (s *State) moveFileSearch(delta int) {
+func (s *State) moveFileSearch(delta int, controls *fileExplorerControls) {
 	if len(s.search.rows) > 0 {
 		s.search.selected = max(0, min(len(s.search.rows)-1, s.search.selected+delta))
-		s.search.list.ScrollTo(s.search.selected, ui.Center)
+		controls.list.ScrollTo(s.search.selected, ui.Center)
 	}
 }
 func (s *State) activateFileSearch() {
@@ -145,7 +151,7 @@ func (s *State) activateFileSearch() {
 	}
 	s.OpenFile(file.ID)
 }
-func (s *State) fileSearchResults(c *ui.Context) {
+func (s *State) fileSearchResults(c *ui.Context, host string, controls *fileExplorerControls) {
 	p := s.palette()
 	q := &s.search
 	if len(q.rows) == 0 {
@@ -155,18 +161,18 @@ func (s *State) fileSearchResults(c *ui.Context) {
 		} else if q.error != "" {
 			label = q.error
 		}
-		ui.Text(c, tr(c, label)).Padding(20, 10).TextColor(p.Faint).FontSize(design.UISize(c, 11.5))
+		ui.Text(c, tr(c, label)).Padding(20, 10).TextColor(p.Faint).FontSize(design.TextSize(c, design.TextBase))
 		return
 	}
 	if len(q.result.Files) >= 200 {
-		ui.Text(c, tr(c, "Showing the first 200 matches")).Padding(5, 10).FontSize(design.UISize(c, 10)).TextColor(p.Faint)
+		ui.Text(c, tr(c, "Showing the first 200 matches")).Padding(5, 10).FontSize(design.TextSize(c, design.TextXS)).TextColor(p.Faint)
 	}
-	q.list.Key = func(i int) any { return q.rows[i].ID }
-	q.list.Label = func(i int) string { return q.rows[i].Name }
-	ui.List(c, &q.list, len(q.rows), func(i int) {
+	controls.list.Key = func(i int) any { return q.rows[i].ID }
+	controls.list.Label = func(i int) string { return q.rows[i].Name }
+	ui.List(c, &controls.list, len(q.rows), func(i int) {
 		file := q.rows[i]
 		depth := strings.Count(strings.Trim(file.Path, "/"), "/")
-		button := ui.ButtonBase(c).Label(file.Name).Height(27).FillWidth().Padding(0, 8, 0, 8+14*float32(depth)).Gap(4).AlignItems(ui.Center).Drag(FileDrag{ID: file.ID, ProjectID: file.ProjectID, Path: file.Path, Directory: file.Kind == "directory"}).OnClick(func() { q.selected = i; s.activateFileSearch() }).ContextMenu(func(menu *ui.Menu) { s.fileContext(c, file, menu) })
+		button := ui.ButtonBase(c).Label(file.Name).Height(27).FillWidth().Padding(0, 8, 0, 8+14*float32(depth)).Gap(4).AlignItems(ui.Center).Drag(FileDrag{ID: file.ID, ProjectID: file.ProjectID, Path: file.Path, Directory: file.Kind == "directory"}).OnClick(func() { q.selected = i; s.activateFileSearch() }).ContextMenu(func(menu *ui.Menu) { s.fileContext(c, file, menu, host) })
 		if i == q.selected {
 			button.Background(sourceInk(p.Dark, .1))
 		} else if button.Hovered() {
@@ -183,7 +189,7 @@ func (s *State) fileSearchResults(c *ui.Context) {
 				ui.Box(c).Size(14, 14)
 			}
 			ui.Image(c, sourceFileIcon(file, file.Kind == "directory" && !q.collapsed[file.ID], p.Dark)).Size(14, 14)
-			ui.Text(c, file.Name).SingleLine().MinWidth(0).FontSize(design.UISize(c, 11.5)).TextColor(p.Muted)
+			ui.Text(c, file.Name).SingleLine().MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(p.Muted)
 		})
 	}).Label(tr(c, "Fuzzy workspace file results")).Grow(1).FillWidth()
 }

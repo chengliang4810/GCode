@@ -48,7 +48,7 @@ func paintQuarterText(p *Painter, origin Rect) {
 	}
 	sys := p.rt.text
 	s := p.scale
-	deco := decoration{underline: ts.underline, wavy: ts.wavy, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
+	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
 	shade := text.ShadeOf(color.R, color.G, color.B)
 	start := int32(len(p.s.Glyphs))
 	// Inline transforms do not change while the text paints; look for them once.

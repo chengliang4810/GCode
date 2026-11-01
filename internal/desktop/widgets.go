@@ -11,7 +11,11 @@ func icon(c *ui.Context, name string, size float32) {
 	if mapped, ok := aliases[name]; ok {
 		name = mapped
 	}
-	if svg := assets.Icon(name); svg != nil {
+	svg := assets.Icon(name)
+	if svg == nil {
+		svg = assets.Glyph(name)
+	}
+	if svg != nil {
 		glyph := ui.Icon(c, svg).Size(size, size)
 		if name == "claude-mark" {
 			glyph.TextColor(ui.Hex("#D97757"))
@@ -20,24 +24,6 @@ func icon(c *ui.Context, name string, size float32) {
 			glyph.TextColor(ui.Hex("#0081FB"))
 		}
 	}
-}
-
-func iconButton(c *ui.Context, name, label string) ui.Element {
-	b := ui.ButtonBase(c).Size(28, 28).Radius(6).Label(label).Tooltip(label).Justify(ui.Center).AlignItems(ui.Center)
-	if b.Hovered() {
-		b.Background(c.Theme().SurfaceHover)
-	}
-	b.Children(func() { icon(c, name, 16) })
-	return b
-}
-
-func textButton(c *ui.Context, text string) ui.Element {
-	b := ui.ButtonBase(c).Padding(5, 8).Radius(6).Label(text).AlignItems(ui.Center).Justify(ui.Start)
-	if b.Hovered() {
-		b.Background(c.Theme().SurfaceHover)
-	}
-	b.Children(func() { ui.Text(c, text).SingleLine() })
-	return b
 }
 
 func menuChoice(c *ui.Context, label string, selected bool, action func()) {
@@ -52,7 +38,7 @@ func menuChoice(c *ui.Context, label string, selected bool, action func()) {
 }
 
 func sectionTitle(c *ui.Context, label string) {
-	ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 13)).TextColor(c.Theme().TextMuted).Margin(8, 0, 4, 0)
+	ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).TextColor(c.Theme().TextMuted).Margin(8, 0, 4, 0)
 }
 
 func (a *App) settingsCard(c *ui.Context, body func()) {

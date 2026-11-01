@@ -1,0 +1,82 @@
+{
+  "pluginId": "servicenow-sdk@claude-plugins-official",
+  "sourceCommit": "6f01c0e26cbe597b8a129de0bd2706ec1c0e327c",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "orientation-safety-and-version-gated-query-plan",
+      "componentId": "skill:servicenow-sdk:now-sdk",
+      "prompt": "/servicenow-sdk:now-sdk Prepare the task plan for this concrete fluent project and write it to now-sdk-task-plan.md. Scenario facts: the project root ./acme-service-portal contains now.config.json; the installed @servicenow/sdk version is 4.6.2; the user wants a custom table u_incident_review defined and a live lookup of priority-1 incidents; during orientation a topic search with npx @servicenow/sdk explain table --list --format=raw returned No match for \"table\". Headless boundary: no network, no ServiceNow instance, no installs; the npx @servicenow/sdk commands cannot be executed here, so none of them may be run. Orientation topic reads, live instance queries and any upgrade remain untested.\n\nRecord the following per the skill's documentation. In a section headed exactly \"## Orientation commands\": all three documented orientation commands npx @servicenow/sdk explain quickstart --list --format=raw, npx @servicenow/sdk explain fluent-language --list --format=raw and npx @servicenow/sdk --help, noting that both lists are required because fluent-language is not a subset of quickstart, and that every returned topic is then read in full plus keys-file by name with npx @servicenow/sdk explain keys-file --format=raw. In a section headed exactly \"## Search failure\": record that the table search returned No match for \"table\" and give the documented remedy: use a different search term. In a section headed exactly \"## Safety rule\": quote the skill's safety-critical rule verbatim: never deleting a `Table()`/`BusinessRule()`/`Record()` definition from a `.now.ts` file without confirming with the user first. In a section headed exactly \"## Live instance lookup\": per the skill, before any query call run npx @servicenow/sdk query --help (never guess flags); the required filtering flag is -q and output must include -o json; write the concrete scenario call form npx @servicenow/sdk query incident -q 'priority=1' -o json; include the documented encoded-query-guide topic in the preparation; and apply the version gate honestly: query is only available in @servicenow/sdk versions >= 4.8.0 while this project has 4.6.2, so per the skill check the installed version and inform the user to upgrade, and do not present the query as runnable on this project today. Do not invent flags or subcommands the skill does not document. Close with a section stating what remains untested.\n\nThen read the immutable verify_now_sdk_plan.py and run exactly python verify_now_sdk_plan.py using Bash; it validates the plan and writes now-sdk-plan-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that orientation topic reads, live instance queries and the upgrade remain untested.",
+      "allowCommands": [
+        "python verify_now_sdk_plan.py"
+      ],
+      "verifierOutputs": [
+        "now-sdk-plan-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_now_sdk_plan.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('now-sdk-task-plan.md').read_text(encoding='utf-8')\nfor command in (\n    'npx @servicenow/sdk explain quickstart --list --format=raw',\n    'npx @servicenow/sdk explain fluent-language --list --format=raw',\n    'npx @servicenow/sdk --help',\n):\n    assert command in text, 'orientation must record the documented command: ' + command\nassert 'not a subset of' in text, 'both orientation lists must be recorded as required per the documented note'\nassert 'npx @servicenow/sdk explain keys-file --format=raw' in text, 'keys-file must be read by name per the documented step'\nassert 'No match for' in text, 'the scenario topic-search failure must be recorded'\nassert 'use a different search term' in text, 'the documented remedy for a failed topic search is required'\nassert 'never deleting a `Table()`/`BusinessRule()`/`Record()` definition from a `.now.ts` file without confirming with the user first' in text, 'the documented safety-critical rule must be retained'\nassert 'npx @servicenow/sdk query --help' in text, 'the documented rule requires subcommand help before the first query use'\nassert \"npx @servicenow/sdk query incident -q 'priority=1' -o json\" in text, 'the concrete scenario query must use the documented flag form'\nassert 'encoded-query-guide' in text, 'the documented encoded query guide topic must be part of the query preparation'\nassert 'u_incident_review' in text, 'the plan must reference the scenario table request'\nassert '4.8.0' in text and '4.6.2' in text, 'the plan must state the query version gate against the scenario version'\nassert 'inform the user to upgrade' in text, 'the documented honest outcome for the version gate is required'\nfor invented in ('--org', '--password', '--auth'):\n    assert invented not in text, 'invented flag not in the documented interface: ' + invented\nassert re.search(r'(?i)untested', text), 'the plan must state what remains untested'\nreport = {'keys_file_named': True, 'lists_both_required': True, 'orientation_commands': True,\n          'query_form_and_gate': True, 'safety_rule_retained': True, 'scenario_inputs_applied': True,\n          'search_failure_remedy': True, 'untested_declared': True}\nPath('now-sdk-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Now SDK plan: documented orientation, safety and version-gate checks passed; orientation topic reads, live instance queries and the upgrade remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_now_sdk_plan.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('now-sdk-task-plan.md').read_text(encoding='utf-8')\nfor command in (\n    'npx @servicenow/sdk explain quickstart --list --format=raw',\n    'npx @servicenow/sdk explain fluent-language --list --format=raw',\n    'npx @servicenow/sdk --help',\n):\n    assert command in text, 'orientation must record the documented command: ' + command\nassert 'not a subset of' in text, 'both orientation lists must be recorded as required per the documented note'\nassert 'npx @servicenow/sdk explain keys-file --format=raw' in text, 'keys-file must be read by name per the documented step'\nassert 'No match for' in text, 'the scenario topic-search failure must be recorded'\nassert 'use a different search term' in text, 'the documented remedy for a failed topic search is required'\nassert 'never deleting a `Table()`/`BusinessRule()`/`Record()` definition from a `.now.ts` file without confirming with the user first' in text, 'the documented safety-critical rule must be retained'\nassert 'npx @servicenow/sdk query --help' in text, 'the documented rule requires subcommand help before the first query use'\nassert \"npx @servicenow/sdk query incident -q 'priority=1' -o json\" in text, 'the concrete scenario query must use the documented flag form'\nassert 'encoded-query-guide' in text, 'the documented encoded query guide topic must be part of the query preparation'\nassert 'u_incident_review' in text, 'the plan must reference the scenario table request'\nassert '4.8.0' in text and '4.6.2' in text, 'the plan must state the query version gate against the scenario version'\nassert 'inform the user to upgrade' in text, 'the documented honest outcome for the version gate is required'\nfor invented in ('--org', '--password', '--auth'):\n    assert invented not in text, 'invented flag not in the documented interface: ' + invented\nassert re.search(r'(?i)untested', text), 'the plan must state what remains untested'\nreport = {'keys_file_named': True, 'lists_both_required': True, 'orientation_commands': True,\n          'query_form_and_gate': True, 'safety_rule_retained': True, 'scenario_inputs_applied': True,\n          'search_failure_remedy': True, 'untested_declared': True}\nPath('now-sdk-plan-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Now SDK plan: documented orientation, safety and version-gate checks passed; orientation topic reads, live instance queries and the upgrade remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-plan-verification.json",
+          "equals": "{\"keys_file_named\": true, \"lists_both_required\": true, \"orientation_commands\": true, \"query_form_and_gate\": true, \"safety_rule_retained\": true, \"scenario_inputs_applied\": true, \"search_failure_remedy\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "npx @servicenow/sdk explain fluent-language --list --format=raw"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "npx @servicenow/sdk explain keys-file --format=raw"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "use a different search term"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "never deleting a `Table()`/`BusinessRule()`/`Record()` definition from a `.now.ts` file without confirming with the user first"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "npx @servicenow/sdk query incident -q 'priority=1' -o json"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "encoded-query-guide"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "inform the user to upgrade"
+        },
+        {
+          "kind": "file",
+          "path": "now-sdk-task-plan.md",
+          "contains": "u_incident_review"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Now SDK plan: documented orientation, safety and version-gate checks passed; orientation topic reads, live instance queries and the upgrade remain untested"
+        }
+      ]
+    }
+  ]
+}

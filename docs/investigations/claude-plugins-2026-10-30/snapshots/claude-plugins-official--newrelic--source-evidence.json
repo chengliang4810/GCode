@@ -1,0 +1,29 @@
+{
+  "repo": "newrelic/claude-code-plugin",
+  "commit": "f8e5f8b62139072a22153ec92de1c0cc1af2f56a",
+  "path": ".",
+  "archive_sha256": "bd5cdd8a95b465ca9b321df936e88eea7472c229a59dcaea42ec389d1b9f3c91",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "NOTICE",
+    "readme.md",
+    "skills/apm/SKILL.md",
+    "skills/apm/references/ERROR_ANALYSIS.md",
+    "skills/apm/references/PERFORMANCE_METRICS.md",
+    "skills/finops/SKILL.md",
+    "skills/kubernetes/SKILL.md",
+    "skills/kubernetes/evals/evals.json",
+    "skills/newrelic-mcp/references/nrql-patterns.md",
+    "skills/newrelic-mcp/skill.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"newrelic\",\n  \"description\": \"New Relic observability intelligence for Claude Code. Investigate APM performance, analyze cloud costs, debug Kubernetes, write NRQL queries, and respond to alerts — all from your terminal using New Relic telemetry data.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"New Relic\",\n    \"url\": \"https://newrelic.com\"\n  },\n  \"homepage\": \"https://newrelic.com/\",\n  \"repository\": \"https://github.com/newrelic/newrelic-claude-plugin\",\n  \"license\": \"Apache-2.0\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"newrelic\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.newrelic.com/mcp/\"\n    }\n  }\n}"
+  },
+  "markdown_frontmatter": {
+    "skills/apm/SKILL.md": "\nname: apm\ndescription: Application Performance Monitoring and transaction analysis. Use when investigating application errors, slow response times, throughput issues, or transaction-level problems.\nmetadata:\n  keywords:\n    - apm\n    - application performance\n    - app performance\n    - transaction error\n    - transaction latency\n    - transaction duration\n    - application error\n    - error rate\n    - response time\n    - latency\n    - throughput\n    - application throughput\n    - apdex\n    - slow transaction\n    - transaction timeout\n    - http transaction\n    - api endpoint\n    - application service\n    - microservice\n    - service map\n    - web transaction\n    - backend transaction\n  tool_groups:\n    - nrql_query\n    - account_entity\n    - alert_incidents\n    - change_deployment\n    - performance_analysis\n    - utilities\n  related_skills:\n    kubernetes: for container/pod problems\n    database: for slow queries or connection issues\n    network: for API timeout or connectivity issues\n  generic_skills_usage:\n    data_retrieval: for transaction data (Transaction, TransactionError, Span)\n    metric_analysis: for latency and throughput trend analysis\n    correlation_analysis: to link errors with deployments or infrastructure changes\nallowed-tools: execute_nrql_query lookup_entity search_entity_with_tag list_recent_issues list_recent_deployments list_related_entities\n",
+    "skills/finops/SKILL.md": "\nname: finops\ndescription: Cloud FinOps cost analysis. Use when investigating cloud spend, cost anomalies, cost spikes, budget analysis, or any questions about AWS, Azure, GCP costs and billing. Requires a New Relic account with Cloud Cost Intelligence data ingested into the CloudCostV2Test table.\nmetadata:\n  keywords:\n    - cloud cost\n    - finops\n    - cost optimization\n    - cost spike\n    - cost anomaly\n    - aws cost\n    - azure cost\n    - gcp cost\n    - cloud spend\n    - cloud billing\n    - cost analysis\n    - budget\n    - cost breakdown\n    - ec2 cost\n    - s3 cost\n    - rds cost\n    - kubernetes cost\n    - k8s cost\n    - cost allocation\n    - chargeback\n    - showback\n    - savings plan\n    - reserved instance\n    - spot instance\n    - cost explorer\n    - cloud economics\n    - tco\n    - cost report\n  tool_groups:\n    - finops_analysis\n  related_skills:\n    kubernetes: for Kubernetes cost allocation and pod-level costs\n    general-observability: for correlating cost with performance metrics\n  generic_skills_usage:\n    data_retrieval: for cloud cost data queries\n    metric_analysis: for cost trend analysis\nallowed-tools: execute_nrql_query\n",
+    "skills/kubernetes/SKILL.md": "\nname: kubernetes\ndescription: Kubernetes diagnosis and debugging using New Relic telemetry. Use when investigating pod crashes, CrashLoopBackOff, OOMKills, pod evictions, scheduling failures, container restarts, node pressure, HPA/scaling issues, service disruptions, or other Kubernetes workload problems. Requires a New Relic account with nri-kubernetes / kube-state-metrics data ingested.\nmetadata:\n  keywords:\n    - kubernetes\n    - k8s\n    - pod\n    - container\n    - node\n    - cluster\n    - crashloopbackoff\n    - oomkilled\n    - oom\n    - evicted\n    - pending pod\n    - failedscheduling\n    - imagepullbackoff\n    - hpa\n    - autoscaling\n    - deployment\n    - replicaset\n    - statefulset\n    - daemonset\n    - service\n    - endpoint\n    - ingress\n    - pvc\n    - persistent volume\n    - namespace\n    - restart loop\n    - kube\n  tool_groups:\n    - kubernetes_diagnosis\n  related_skills:\n    finops: for Kubernetes cost allocation by cluster/namespace/pod\n    general-observability: for correlating K8s issues with app performance\n  generic_skills_usage:\n    data_retrieval: for NRQL queries against K8s telemetry\n    metric_analysis: for resource usage and restart trend analysis\nallowed-tools: execute_nrql_query\n"
+  }
+}

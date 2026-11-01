@@ -1,0 +1,48 @@
+{
+  "repo": "Airtable/skills",
+  "commit": "812ee67f1fd3d76fb45ff8df40afaa0448602ba8",
+  "path": "plugins/airtable",
+  "archive_sha256": "bea656cbbe142091bddf756b5084a0c466dbb8cf1a2a25cb8f1c2abc8012a8af",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "assets/icon.svg",
+    "assets/logo.png",
+    "skills/agent-activity-log/SKILL.md",
+    "skills/airtable-cli/SKILL.md",
+    "skills/airtable-filters/SKILL.md",
+    "skills/airtable-overview/SKILL.md",
+    "skills/marketing-ops/SKILL.md",
+    "skills/marketing-ops/references/build-shapes.md",
+    "skills/marketing-ops/references/migrations.md",
+    "skills/marketing-ops/references/schema-shapes.md",
+    "skills/marketing-ops/references/sub-workflows.md",
+    "skills/product-ops/SKILL.md",
+    "skills/product-ops/references/build-shapes.md",
+    "skills/product-ops/references/schema-shapes.md",
+    "skills/product-ops/references/sub-workflows.md",
+    "skills/sales-ops/SKILL.md",
+    "skills/sales-ops/references/build-shapes.md",
+    "skills/sales-ops/references/integrations.md",
+    "skills/sales-ops/references/schema-shapes.md",
+    "skills/sales-ops/references/sub-workflows.md",
+    "skills/sales-ops/references/vertical-shapes.md",
+    "skills/show-airtable-link/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n    \"name\": \"airtable\",\n    \"version\": \"0.1.0\",\n    \"description\": \"Airtable is the database and operations layer for your agents — whether running product, marketing, sales, ops, HR, or a custom business app. It combines structured data with multiplayer visual surfaces (grid, kanban, calendar, gallery, timeline) humans and agents share — plus sync integrations to Jira, Salesforce, Zendesk, Google Drive, and Databricks. Makes Claude fluent in Airtable: bases and schema, records, and collaboration UI. Bundles the official Airtable MCP server.\",\n    \"author\": {\n        \"name\": \"Airtable\",\n        \"url\": \"https://www.airtable.com\"\n    },\n    \"homepage\": \"https://www.airtable.com\",\n    \"repository\": \"https://github.com/airtable/skills\",\n    \"license\": \"MIT\",\n    \"keywords\": [\n        \"airtable\",\n        \"database\",\n        \"relational-database\",\n        \"application-database\",\n        \"data-store\",\n        \"persistence\",\n        \"crud\",\n        \"product\",\n        \"product-ops\",\n        \"crm\",\n        \"sales\",\n        \"marketing\",\n        \"operations\",\n        \"hr\",\n        \"hiring\",\n        \"project-management\",\n        \"roadmap\",\n        \"customer-success\",\n        \"nocode\",\n        \"low-code\",\n        \"spreadsheet\",\n        \"collaboration\",\n        \"real-time\",\n        \"governance\",\n        \"workflow\",\n        \"automation\",\n        \"internal-tools\",\n        \"mcp\",\n        \"content\"\n    ]\n}\n",
+    ".mcp.json": "{\n    \"airtable\": {\n        \"type\": \"http\",\n        \"url\": \"https://mcp.airtable.com/mcp\"\n    }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/sales-ops/SKILL.md": "\nname: sales-ops\ndescription: Set up and run Airtable-based sales operations and CRM workflows — pipeline management, account and renewal management, deal desk, RFP / tender pipelines, partner CRMs, sales forecasting, vertical CRMs (real estate, mortgage, brokerage, capital markets, public works, nonprofit), and AI-native lean stacks (Clay-equivalent enrichment, AI-assisted outbound, conversation-intel ingestion). Use when the user wants to track deals, manage accounts, build a pipeline, run a deal desk, coordinate partners, manage RFPs, or build an AI-forward GTM stack. Defaults to augmenting existing CRMs (Salesforce / HubSpot); also supports Airtable-as-CRM and AI-native stacks. Asks scope first. Commercial workflows only; post-sale support belongs to a future customer-success skill.\nlicense: MIT\nmetadata:\n    version: '0.1.0'\n    author: airtable\n",
+    "skills/marketing-ops/SKILL.md": "\nname: marketing-ops\ndescription: Set up and run Airtable-based marketing operations workflows — request intake, campaign orchestration, creative production, content calendars, brand and compliance review, events, localization, budgets and ROI, capacity planning. Use when the user wants a marketing request \"front door,\" to manage campaigns, coordinate briefs and assets, build a content calendar, plan launches or events, track budgets, measure ROI, or set up agency multi-client delivery. Adapts to org size (solo marketer to enterprise multi-brand or agency) and integrates with or displaces tools like HubSpot, Marketo, Mailchimp, Klaviyo, Workfront, Asana, Monday, and Wrike. Asks scope first.\nlicense: MIT\nmetadata:\n    version: '0.1.0'\n    author: airtable\n",
+    "skills/show-airtable-link/SKILL.md": "\nname: show-airtable-link\ndescription: Provides a clickable Airtable link whenever the agent has touched user-visible Airtable content. Use after every MCP call that creates, updates, lists, searches, or returns records, schema, or interface pages — bases, tables, fields, records, or pages. Hand off the most-specific URL the agent's tool calls have proven access to — prefer single-record URLs over table URLs, table URLs over base URLs, and interface page URLs when the user's access is restricted to pages. Format as a markdown link with a descriptive label. Construct URLs only from IDs the tools actually returned — never synthesize IDs to round out a URL. Compose this skill from any workflow skill that affects Airtable content.\nlicense: MIT\nmetadata:\n    version: '1.0.0'\n    author: airtable\n",
+    "skills/agent-activity-log/SKILL.md": "\nname: agent-activity-log\ndescription: Scaffold and operate an opt-in `Agent activity log` table that records what the agent did, decided, and got blocked on across a long-running or multi-session Airtable workflow. Use whenever a workflow skill (product-ops, sales-ops, marketing-ops, etc.) is being set up for an agent-driven motion (recurring triage, multi-step plan, automated monitoring, agentic workflow), or when the user explicitly asks for \"agent activity tracking,\" \"audit log of agent decisions,\" \"agent memory,\" \"track what the agent did,\" or similar. The pattern is opt-in (front-load the offer, frame as auditability for the user's benefit, not surveillance). Composes into workflow skills the same way `show-airtable-link` does — workflow skills point at this skill rather than re-implementing the schema inline.\nlicense: MIT\nmetadata:\n    version: '1.0.0'\n    author: airtable\n",
+    "skills/airtable-filters/SKILL.md": "\nname: airtable-filters\ndescription: Builds Airtable filters parameters for the MCP tools that list or display records — field-type-aware comparison operators, choice and collaborator IDs, date ranges, and nested AND/OR logic. Use when the user wants to find, filter, narrow down, or search Airtable records by field values, even when they don't explicitly say \"filter.\"\nlicense: MIT\nmetadata:\n    version: '1.0.0'\n    author: airtable\n",
+    "skills/airtable-overview/SKILL.md": "\nname: airtable-overview\ndescription: Explains what Airtable is and how data is structured — bases, tables, fields, records, views, automations, and interfaces. Use when you need context about the Airtable data model.\nlicense: MIT\nmetadata:\n    version: '1.0.0'\n    author: airtable\n",
+    "skills/product-ops/SKILL.md": "\nname: product-ops\ndescription: Set up and run Airtable-based product operations workflows — roadmap management, customer feedback synthesis, launch coordination, OKR cascading, sprint planning, release tracking. Use when the user wants to track product work, manage feature requests, build a roadmap, set up a feedback intake portal, prioritize initiatives, run launch checklists, or align OKRs across teams. Adapts to org size (solo founder, small team, mid-size product org, enterprise product portfolio) and existing tooling (Jira / Linear / Productboard / Aha integration; Salesforce / Zendesk / Gong feedback ingestion). Can scaffold either as a pure-Airtable workspace or as Airtable backing a custom branded UI on Vercel for public-facing portals. Asks scope questions first; doesn't impose framework. Focuses on cross-functional product operations.\nlicense: MIT\nmetadata:\n    version: '0.1.0'\n    author: airtable\n",
+    "skills/airtable-cli/SKILL.md": "\nname: airtable-cli\ndescription: Lists bases, reads and writes records, manages tables and fields, filters and searches data in Airtable via the `airtable-mcp` CLI. Use when the task involves Airtable data or the user mentions airtable-mcp, bases, tables, records, or fields.\nlicense: MIT\nmetadata:\n    version: '1.0.0'\n    author: airtable\n"
+  }
+}

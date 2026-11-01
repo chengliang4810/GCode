@@ -1,0 +1,24 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/playground",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "skills/playground/SKILL.md",
+    "skills/playground/templates/code-map.md",
+    "skills/playground/templates/concept-map.md",
+    "skills/playground/templates/data-explorer.md",
+    "skills/playground/templates/design-playground.md",
+    "skills/playground/templates/diff-review.md",
+    "skills/playground/templates/document-critique.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"playground\",\n  \"description\": \"Creates interactive HTML playgrounds — self-contained single-file explorers with visual controls, live preview, and prompt output with copy button\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/playground/SKILL.md": "\nname: playground\ndescription: Creates interactive HTML playgrounds — self-contained single-file explorers that let users configure something visually through controls, see a live preview, and copy out a prompt. Use when the user asks to make a playground, explorer, or interactive tool for a topic.\n"
+  }
+}

@@ -2,79 +2,10 @@ package mock
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"gcode/internal/contracts"
 )
-
-func (s *Server) projectActionLocked(c contracts.Command) error {
-	pi := -1
-	for i, p := range s.state.Projects {
-		if p.ID == c.ProjectID {
-			pi = i
-			break
-		}
-	}
-	if pi < 0 {
-		return ErrNotFound
-	}
-	project := &s.state.Projects[pi]
-	if c.Kind == "project.action.create" || c.Kind == "project.action.update" {
-		if c.Action == nil || strings.TrimSpace(c.Action.Name) == "" || strings.TrimSpace(c.Action.Command) == "" {
-			return errors.New("action name and command are required")
-		}
-		action := *c.Action
-		action.Name = strings.TrimSpace(action.Name)
-		if c.Kind == "project.action.create" {
-			action.Enabled = true
-			action.ID = s.idLocked("action")
-			action.LastRunStatus = ""
-			project.Actions = append(project.Actions, action)
-			return nil
-		}
-		for i, a := range project.Actions {
-			if a.ID == action.ID {
-				project.Actions[i] = action
-				return nil
-			}
-		}
-		return ErrNotFound
-	}
-	for i, a := range project.Actions {
-		if a.ID != c.ID {
-			continue
-		}
-		if c.Kind == "project.action.delete" {
-			project.Actions = append(project.Actions[:i], project.Actions[i+1:]...)
-			return nil
-		}
-		if !a.Enabled {
-			return errors.New("this project action is disabled")
-		}
-		output := ""
-		status := "completed"
-		switch strings.TrimSpace(a.Command) {
-		case "go test ./...":
-			output = "\x1b[32mok\x1b[0m  fieldnotes/internal/layout  0.012s\r\n\x1b[32mok\x1b[0m  fieldnotes/internal/session  0.008s\r\n"
-		case "npm test", "pnpm test", "make test":
-			output = "\x1b[32mAll checks passed.\x1b[0m\r\n"
-		case "git status":
-			output = "On branch " + project.Branch + "\r\nChanges not staged for commit\r\n"
-		default:
-			if strings.HasPrefix(a.Command, "echo ") {
-				output = strings.TrimPrefix(a.Command, "echo ") + "\r\n"
-			} else {
-				output = "Command not found\r\n"
-				status = "failed"
-			}
-		}
-		project.Actions[i].LastRunStatus = status
-		s.state.Terminals = append(s.state.Terminals, contracts.Terminal{ID: s.idLocked("terminal"), ProjectID: project.ID, Title: a.Name, CWD: project.Path, Columns: 80, Rows: 24, Status: status, Output: "❯ " + a.Command + "\r\n" + output + "\r\n❯ "})
-		return nil
-	}
-	return ErrNotFound
-}
 
 func (s *Server) branchSessionLocked(c contracts.Command) error {
 	id := c.SessionID
@@ -108,6 +39,8 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 	v.Unread = false
 	v.LastOutcome = ""
 	v.RunningSubagents = 0
+	v.SubagentType = ""
+	v.Goal = nil
 	v.CreatedAt = s.opts.Now().UTC()
 	v.UpdatedAt = v.CreatedAt
 	if c.Name != "" {

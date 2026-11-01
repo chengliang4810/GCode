@@ -1,0 +1,357 @@
+diff --git a/third_party/mygo/ui/api_gen.go b/third_party/mygo/ui/api_gen.go
+index be39526..1d06c38 100644
+--- a/third_party/mygo/ui/api_gen.go
++++ b/third_party/mygo/ui/api_gen.go
+@@ -325,6 +325,32 @@ func (_handle *Context) DisableAnimations() {
+ 	_ctx.DisableAnimations()
+ }
+ 
++// InputActivity returns a plain snapshot of the input received by the UI
++// engine since its first subscription. Events before that subscription have
++// no history, so the query establishing that subscription returns zero. It
++// consumes no event. Reading it subscribes this window to a new frame after
++// subsequent counted input or a blur that clears PointerDown, so
++// the view can observe activity even when no widget otherwise needs a frame.
++// It requests no recurring frame or timer.
++func (_handle *Context) InputActivity() InputActivitySnapshot {
++	_ctx := _handle.build()
++	if _ctx == nil {
++		return *new(InputActivitySnapshot)
++	}
++	return _ctx.InputActivity()
++}
++
++// Instant reports whether this frame shows animated values at once
++// (DisableAnimations). Views read it to render a change settled in the same
++// frames where its animations are disabled.
++func (_handle *Context) Instant() bool {
++	_ctx := _handle.build()
++	if _ctx == nil {
++		return false
++	}
++	return _ctx.Instant()
++}
++
+ // Locale returns the language the app shows (mygo.App.Locale), a BCP 47
+ // tag such as "en" or "zh-Hans", for what the view says in it. Text is in
+ // it unless an element says otherwise (Element.Lang). A frame follows its
+@@ -3575,6 +3601,18 @@ func (_handle Element) Dividers(width float32, c Color) Element {
+ 	return wrapElement(_node.Dividers(width, c))
+ }
+ 
++// DottedUnderline underlines text with a line of dots, as links mark
++// hover.
++func (_handle Element) DottedUnderline() Element {
++	_node := _handle.node()
++	if _node == nil {
++		return Element{}
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return wrapElement(_node.DottedUnderline())
++}
++
+ // DoubleClicked reports a double click on the element.
+ func (_handle Element) DoubleClicked() bool {
+ 	_node := _handle.node()
+diff --git a/third_party/mygo/ui/context.go b/third_party/mygo/ui/context.go
+index 20168b3..0f9cc76 100644
+--- a/third_party/mygo/ui/context.go
++++ b/third_party/mygo/ui/context.go
+@@ -407,6 +407,11 @@ func (c *context) DisableAnimations() { c.rt.instantFrame = c.rt.frame }
+ // (DisableAnimations).
+ func (rt *engine) instant() bool { return rt.instantFrame == rt.frame && rt.frame != 0 }
+ 
++// Instant reports whether this frame shows animated values at once
++// (DisableAnimations). Views read it to render a change settled in the same
++// frames where its animations are disabled.
++func (c *context) Instant() bool { return c.rt.instant() }
++
+ // After asks for another frame after d, for something that changes with
+ // time, such as a clock.
+ func (c *context) After(d time.Duration) { c.rt.scheduleAt(c.now.Add(d)) }
+diff --git a/third_party/mygo/ui/element.go b/third_party/mygo/ui/element.go
+index 4d6fa5c..523f54e 100644
+--- a/third_party/mygo/ui/element.go
++++ b/third_party/mygo/ui/element.go
+@@ -164,6 +164,7 @@ type textStyle struct {
+ 	align      Align
+ 	underline  bool
+ 	wavy       bool
++	dotted     bool
+ 	strike     bool
+ 	spacing    float32 // letter spacing
+ 	features   string
+@@ -1260,14 +1261,22 @@ func (e *node) TextAlign(a Align) *node { e.ts.align = a; e.ts.set |= setAlign;
+ 
+ // Underline underlines text.
+ func (e *node) Underline() *node {
+-	e.ts.underline, e.ts.wavy = true, false
++	e.ts.underline, e.ts.wavy, e.ts.dotted = true, false, false
+ 	e.ts.set |= setUnderline
+ 	return e
+ }
+ 
+ // WavyUnderline underlines text with a wave, as spell checkers mark words.
+ func (e *node) WavyUnderline() *node {
+-	e.ts.underline, e.ts.wavy = true, true
++	e.ts.underline, e.ts.wavy, e.ts.dotted = true, true, false
++	e.ts.set |= setUnderline
++	return e
++}
++
++// DottedUnderline underlines text with a line of dots, as links mark
++// hover.
++func (e *node) DottedUnderline() *node {
++	e.ts.underline, e.ts.wavy, e.ts.dotted = true, false, true
+ 	e.ts.set |= setUnderline
+ 	return e
+ }
+diff --git a/third_party/mygo/ui/glyph_placement_windows.go b/third_party/mygo/ui/glyph_placement_windows.go
+index e16d4d6..ac3fb98 100644
+--- a/third_party/mygo/ui/glyph_placement_windows.go
++++ b/third_party/mygo/ui/glyph_placement_windows.go
+@@ -48,7 +48,7 @@ func paintQuarterText(p *Painter, origin Rect) {
+ 	}
+ 	sys := p.rt.text
+ 	s := p.scale
+-	deco := decoration{underline: ts.underline, wavy: ts.wavy, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
++	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
+ 	shade := text.ShadeOf(color.R, color.G, color.B)
+ 	start := int32(len(p.s.Glyphs))
+ 	// Inline transforms do not change while the text paints; look for them once.
+diff --git a/third_party/mygo/ui/inline.go b/third_party/mygo/ui/inline.go
+index 25179de..83436b0 100644
+--- a/third_party/mygo/ui/inline.go
++++ b/third_party/mygo/ui/inline.go
+@@ -90,7 +90,9 @@ func (e *node) spanStyle() Span {
+ 		s.Color = t.color
+ 	}
+ 	if t.set&setUnderline != 0 {
+-		s.Underline, s.WavyUnderline = t.underline && !t.wavy, t.underline && t.wavy
++		s.Underline = t.underline && !t.wavy && !t.dotted
++		s.WavyUnderline = t.underline && t.wavy
++		s.DottedUnderline = t.underline && t.dotted
+ 	}
+ 	if t.set&setStrike != 0 {
+ 		s.Strikethrough = t.strike
+@@ -166,6 +168,7 @@ func over(s, base Span) Span {
+ 	s.Italic = s.Italic || base.Italic
+ 	s.Underline = s.Underline || base.Underline
+ 	s.WavyUnderline = s.WavyUnderline || base.WavyUnderline
++	s.DottedUnderline = s.DottedUnderline || base.DottedUnderline
+ 	s.Strikethrough = s.Strikethrough || base.Strikethrough
+ 	return s
+ }
+diff --git a/third_party/mygo/ui/inspector_details.go b/third_party/mygo/ui/inspector_details.go
+index d938c4f..eb187a4 100644
+--- a/third_party/mygo/ui/inspector_details.go
++++ b/third_party/mygo/ui/inspector_details.go
+@@ -359,9 +359,12 @@ func textStyles(ts *textStyle, set uint32) []inspDecl {
+ 	}
+ 	var deco []string
+ 	if set&setUnderline != 0 && ts.underline {
+-		if ts.wavy {
++		switch {
++		case ts.wavy:
+ 			deco = append(deco, "underline wavy")
+-		} else {
++		case ts.dotted:
++			deco = append(deco, "underline dotted")
++		default:
+ 			deco = append(deco, "underline")
+ 		}
+ 	}
+diff --git a/third_party/mygo/ui/markdown/spans.go b/third_party/mygo/ui/markdown/spans.go
+index d0ddc7c..1e4e740 100644
+--- a/third_party/mygo/ui/markdown/spans.go
++++ b/third_party/mygo/ui/markdown/spans.go
+@@ -201,7 +201,9 @@ func (sb *spanBuilder) addSpan(text string, src, end int, exact bool, s spanStyl
+ 	if s.font != "" {
+ 		sp.Font = s.font
+ 	}
+-	if s.code {
++	// A code span inside a link shows as the link — the monospace face and
++	// the wash distinguish code from prose, and the link already does.
++	if s.code && !s.inLink {
+ 		sp.Font = th.CodeFont
+ 		sp.Size = th.em(th.CodeSize)
+ 		if s.size != 0 {
+@@ -209,9 +211,10 @@ func (sb *spanBuilder) addSpan(text string, src, end int, exact bool, s spanStyl
+ 		}
+ 		sp.Background = th.CodeBackground
+ 		sp.Radius = max(3, sp.Size/4)
+-		if !s.inLink {
+-			sp.Color = th.Code
+-		}
++		sp.Color = th.Code
++	}
++	if s.inLink && th.LinkWeight > s.weight {
++		sp.Weight = th.LinkWeight
+ 	}
+ 	if s.sub {
+ 		sp.Size *= 0.75
+diff --git a/third_party/mygo/ui/markdown/theme.go b/third_party/mygo/ui/markdown/theme.go
+index f6f1b99..0caad96 100644
+--- a/third_party/mygo/ui/markdown/theme.go
++++ b/third_party/mygo/ui/markdown/theme.go
+@@ -33,6 +33,9 @@ type Theme struct {
+ 	Text, Muted, Link, Strong Color
+ 	// StrongWeight is the weight of strong text: 600.
+ 	StrongWeight int
++	// LinkWeight is the smallest weight of link text, so links stand out
++	// among prose without lifting strong text down to it: 0 for no floor.
++	LinkWeight int
+ 
+ 	// Code colors code spans, with CodeBackground behind them; CodeSize is
+ 	// their size in ems: 0.875.
+diff --git a/third_party/mygo/ui/markdown/view_test.go b/third_party/mygo/ui/markdown/view_test.go
+index f356add..c4a1341 100644
+--- a/third_party/mygo/ui/markdown/view_test.go
++++ b/third_party/mygo/ui/markdown/view_test.go
+@@ -214,6 +214,41 @@ func TestThemeLink(t *testing.T) {
+ 	}
+ }
+ 
++// TestThemeLinkSpans checks that Theme.LinkWeight lifts plain link text,
++// and that a code span inside a link shows as the link — the body face at
++// the body size, without the code wash — while code outside links keeps
++// the code face and wash.
++func TestThemeLinkSpans(t *testing.T) {
++	o := &Options{Theme: &Theme{LinkWeight: 500}}
++	th := resolve(o.Theme, DefaultTheme(ui.LightTheme()))
++	var st *viewState
++	ui.NewTester(func(c *ui.Context) {
++		st = *ui.Local(View(c, "Read [`x.go`](https://example.com) and `y.go`.", o), stateKey{}, newState)
++	}, 400, 100)
++	var link, code *ui.Span
++	for i := range st.paras {
++		for _, pc := range st.paras[i].p.pieces {
++			for k := range pc.spans {
++				switch s := &pc.spans[k]; s.Text {
++				case "x.go":
++					link = s
++				case "y.go":
++					code = s
++				}
++			}
++		}
++	}
++	if link == nil || code == nil {
++		t.Fatalf("link or code span missing in %+v", st.paras)
++	}
++	if link.Font != th.Font || link.Size != th.FontSize || link.Background.A != 0 || link.Weight < th.LinkWeight {
++		t.Errorf("code in a link shows %+v, want the body face at %d without a wash", *link, th.LinkWeight)
++	}
++	if code.Font != th.CodeFont || code.Background != th.CodeBackground {
++		t.Errorf("code outside a link shows %+v, want the code face and wash", *code)
++	}
++}
++
+ func TestSlug(t *testing.T) {
+ 	for in, want := range map[string]string{"Hello, World!": "hello-world", "API v2 — notes": "api-v2--notes", "foo_bar-baz": "foo_bar-baz"} {
+ 		if got := Slug(in); got != want {
+diff --git a/third_party/mygo/ui/paint.go b/third_party/mygo/ui/paint.go
+index 9bfd89b..fe1c4e5 100644
+--- a/third_party/mygo/ui/paint.go
++++ b/third_party/mygo/ui/paint.go
+@@ -823,7 +823,7 @@ func (p *Painter) textForeground(l *text.Layout, x, y float32, color Color, ts t
+ 	}
+ 	sys := p.rt.text
+ 	s := p.scale
+-	deco := decoration{underline: ts.underline, wavy: ts.wavy, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
++	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
+ 	shade := text.ShadeOf(color.R, color.G, color.B)
+ 	start := int32(len(p.s.Glyphs))
+ 	// Inline transforms do not change while the text paints; look for them once.
+@@ -934,7 +934,7 @@ func (r *glyphRun) flush(p *Painter, baseline float32) {
+ 
+ // decoration is how lines go through or under text.
+ type decoration struct {
+-	underline, wavy, strike bool
++	underline, wavy, dotted, strike bool
+ 	// color, if set, is the lines', and thick their thickness in DIPs.
+ 	color Color
+ 	thick float32
+@@ -980,6 +980,10 @@ func (p *Painter) decorationRun(l *text.Layout, li, i, j int, x, y float32, d de
+ 				p.wave(st.X0, st.X1, (st.Top+st.Bottom)/2, max(st.Bottom-st.Top, 1), c)
+ 				continue
+ 			}
++			if k == text.Underline && d.dotted {
++				p.dots(st.X0, st.X1, st.Bottom, c)
++				continue
++			}
+ 			p.add(scene.Op{Kind: scene.OpFill, Rect: scene.Rect{X: st.X0, Y: st.Top, W: st.X1 - st.X0, H: st.Bottom - st.Top}, Color: c.scene(), Wide: p.wide(c, Color{}, Color{}), Opacity: p.opacity})
+ 		}
+ 	}
+@@ -1003,6 +1007,15 @@ func (p *Painter) wave(x0, x1, y, thick float32, c Color) {
+ 	p.StrokePath(&path, thick/s, c)
+ }
+ 
++// dots fills one-DIP dots every three DIPs along an underline stroke,
++// which ends at its bottom in device pixels, as links mark hover.
++func (p *Painter) dots(x0, x1, bottom float32, c Color) {
++	size := max(float32(math.Round(float64(p.scale))), 1)
++	for x := x0; x < x1; x += 3 * p.scale {
++		p.add(scene.Op{Kind: scene.OpFill, Rect: scene.Rect{X: x, Y: bottom - size, W: size, H: size}, Color: c.scene(), Wide: p.wide(c, Color{}, Color{}), Opacity: p.opacity})
++	}
++}
++
+ // contentBox returns the element's box inside its padding and border.
+ func (e *node) contentBox() Rect {
+ 	return Rect{e.x + e.contentX(), e.y + e.contentY(), e.w - e.padX(), e.h - e.padY()}
+diff --git a/third_party/mygo/ui/richtext.go b/third_party/mygo/ui/richtext.go
+index a33a5e2..b9396cf 100644
+--- a/third_party/mygo/ui/richtext.go
++++ b/third_party/mygo/ui/richtext.go
+@@ -11,7 +11,7 @@ import (
+ 
+ // Span is a run of a RichText with a style of its own. What it leaves
+ // zero takes the style of the text around it, and Italic, Underline,
+-// WavyUnderline and Strikethrough only turn those on.
++// WavyUnderline, DottedUnderline and Strikethrough only turn those on.
+ type Span struct {
+ 	Text          string
+ 	Font          string // a family, as for Element.Font
+@@ -21,7 +21,9 @@ type Span struct {
+ 	Color         Color
+ 	Underline     bool
+ 	WavyUnderline bool
+-	Strikethrough bool
++	// DottedUnderline underlines with a line of dots, as links mark hover.
++	DottedUnderline bool
++	Strikethrough   bool
+ 	// DecorationColor and DecorationThickness are those of the span's
+ 	// underline and strikethrough, as for Element.DecorationColor.
+ 	DecorationColor     Color
+@@ -158,7 +160,7 @@ func (sc *spanCache) update(spans []Span) {
+ 	paints := false
+ 	for i, s := range spans {
+ 		end += utf8.RuneCountInString(s.Text)
+-		paints = paints || s.Color.A > 0 || s.Underline || s.WavyUnderline || s.Strikethrough || s.Background.A > 0
++		paints = paints || s.Color.A > 0 || s.Underline || s.WavyUnderline || s.DottedUnderline || s.Strikethrough || s.Background.A > 0
+ 		same = same && sc.styles[i] == spanStyle(s, end)
+ 	}
+ 	sc.paints = paints
+@@ -362,7 +364,7 @@ func (sp *spanPaint) lines(p *Painter, l *text.Layout, li int, x, y float32, col
+ 			return
+ 		}
+ 		span := &sp.spans[k]
+-		d := decoration{underline: span.Underline || span.WavyUnderline, wavy: span.WavyUnderline, strike: span.Strikethrough, color: base.color, thick: base.thick}
++		d := decoration{underline: span.Underline || span.WavyUnderline || span.DottedUnderline, wavy: span.WavyUnderline, dotted: span.DottedUnderline, strike: span.Strikethrough, color: base.color, thick: base.thick}
+ 		if !d.underline && !d.strike {
+ 			return
+ 		}
+diff --git a/third_party/mygo/ui/widgets.go b/third_party/mygo/ui/widgets.go
+index 0ab7ac0..a949956 100644
+--- a/third_party/mygo/ui/widgets.go
++++ b/third_party/mygo/ui/widgets.go
+@@ -199,7 +199,7 @@ func coreLink(c *context, label, url string) *node {
+ 			}
+ 		}
+ 		if e.Hovered() {
+-			e.Underline()
++			e.DottedUnderline()
+ 		}
+ 	})
+ 	return e

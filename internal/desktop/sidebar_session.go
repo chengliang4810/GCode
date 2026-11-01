@@ -1,58 +1,18 @@
 package desktop
 
 import (
-	"fmt"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
 
-func sidebarRowHeight(compact, location, branch, pr bool) float32 {
-	if compact {
-		return 29
-	}
-	height := float32(45)
-	if branch {
-		height = 61
-	}
-	if pr {
-		height = 63
-	}
-	if !location {
-		height -= 16
-	}
-	return height
-}
-
-func (a *App) sessionHarnessIcon(session contracts.Session) string {
-	for _, model := range a.state.Models {
-		if model.ID == session.ModelID {
-			for _, provider := range a.state.Providers {
-				if provider.ID == model.ProviderID && provider.Icon != "" {
-					return provider.Icon
-				}
-			}
-		}
-	}
-	return "bot"
-}
-
 func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
-	c.Key("session:" + session.ID)
+	c.Key("sidebar-session:" + session.ID)
 	settings := a.state.Settings
-	compact := settings.SidebarCompact
-	branch := settings.SidebarShowBranch && session.Branch != ""
-	pr := settings.SidebarShowPullRequest && session.PullRequestNumber > 0
-	row := ui.ButtonBase(c).Label(session.Title).FillWidth().MinWidth(0).Height(sidebarRowHeight(compact, settings.ShowProjectLabels, branch, pr)).Padding(6, 8).Radius(8).AlignItems(ui.Stretch).Justify(ui.Start)
-	if a.sessionID == session.ID {
-		row.Background(a.palette.Active)
-	} else if row.Hovered() {
-		row.Background(a.palette.Hover)
-	}
+	row := controlSidebarConversationRow(c, session.Title, sidebarConversationStyle{
+		Selected: a.sessionID == session.ID,
+	})
 	hovered := row.Hovered()
-	if session.Archived && a.sessionID != session.ID && !hovered {
-		row.Opacity(.4)
-	}
 	if row.DoubleClicked() {
 		a.startSidebarRename(session.ID)
 	}
@@ -72,14 +32,13 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 		if menu.Item(tr(c, pinLabel)).Chosen() {
 			pin := !session.Pinned
+			target := session
+			target.Pinned = pin
+			a.revealSidebarSession(target)
 			a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: session.ID, Pinned: &pin}})
 		}
-		archiveLabel := "Archive"
-		if session.Archived {
-			archiveLabel = "Unarchive"
-		}
-		if menu.Item(tr(c, archiveLabel)).Chosen() {
-			a.archiveSidebarSession(session.ID, !session.Archived)
+		if menu.Item(tr(c, "Archive")).Chosen() {
+			a.archiveSidebarSession(session.ID)
 		}
 		menu.Submenu("Copy", func(menu *ui.Menu) {
 			if menu.Item(tr(c, "Title")).Chosen() {
@@ -92,6 +51,19 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 				c.Services().WriteClipboard(session.Branch)
 			}
 		})
+		if len(a.state.SessionGroups) > 0 || session.GroupID != "" {
+			menu.Submenu(tr(c, "Move to group"), func(menu *ui.Menu) {
+				for _, group := range a.orderedSessionGroups() {
+					group := group
+					if menu.Item(group.Title).Checked(session.GroupID == group.ID).Chosen() {
+						a.assignSidebarSessionGroup(session.ID, group.ID)
+					}
+				}
+				if menu.Item(tr(c, "Remove from group")).Disabled(session.GroupID == "").Chosen() {
+					a.assignSidebarSessionGroup(session.ID, "")
+				}
+			})
+		}
 		unreadLabel := "Mark unread"
 		if session.Unread {
 			unreadLabel = "Mark read"
@@ -107,72 +79,39 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 	})
 	row.Children(func() {
-		ui.Column(c).Grow(1).MinWidth(0).Gap(2).Children(func() {
-			if !compact && settings.ShowProjectLabels {
-				ui.Row(c).Height(14).MinWidth(0).AlignItems(ui.Center).Gap(4).Children(func() {
-					ui.Text(c, a.projectNameFor(session.ProjectID)+" @ "+a.deviceNameFor(session.DeviceID)).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 10)).TextColor(a.palette.Muted)
-					a.sidebarSessionCorner(c, session, hovered, false)
-				})
-			}
-			ui.Row(c).Height(17).Gap(4).MinWidth(0).AlignItems(ui.Center).Children(func() {
-				if compact {
+		ui.Row(c).FillWidth().Height(design.Sidebar().RowHeight).Gap(4).MinWidth(0).AlignItems(ui.Center).Children(func() {
+			ui.Box(c).Width(design.Sidebar().ConversationLeadingWidth).Shrink(0).Center().Children(func() {
+				if session.Status != contracts.Idle || session.Unread {
 					a.sidebarStatusGlyph(c, session)
 				}
-				if settings.SidebarShowHarness {
-					icon(c, a.sessionHarnessIcon(session), 13)
-				}
-				if settings.ShowIcons && (sidebarGrouping(settings.SidebarGrouping) != "project" || session.Pinned) {
-					icon(c, "folder", 13)
-				}
-				if renaming {
-					input := ui.TextInputBase(c, &a.sidebarUI.renameTitle).Label(tr(c, "Session name")).Grow(1).MinWidth(0).FontSize(design.UISize(c, 13)).OnSubmit(a.commitSidebarRename).OnShortcut(0, ui.KeyEscape, func() { a.sidebarUI.renameID = "" })
-					if a.sidebarUI.focusRename {
-						input.Focus().SetTextSelection(0, len([]rune(a.sidebarUI.renameTitle)))
-						a.sidebarUI.focusRename = false
-						row.ScrollIntoView()
-					}
-				} else {
-					ui.Text(c, session.Title).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 13))
-				}
-				if compact {
-					if pr {
-						a.sidebarPRBadge(c, session)
-					}
-					a.sidebarSessionCorner(c, session, hovered, true)
-				}
 			})
-			if !compact && (branch || pr) {
-				height := float32(14)
-				if pr {
-					height = 16
+			if renaming {
+				input := ui.TextInputBase(c, &a.sidebarUI.renameTitle).Label(tr(c, "Session name")).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).OnSubmit(a.commitSidebarRename).OnShortcut(0, ui.KeyEscape, func() { a.sidebarUI.renameID = "" })
+				if a.sidebarUI.focusRename {
+					input.Focus().SetTextSelection(0, len([]rune(a.sidebarUI.renameTitle)))
+					a.sidebarUI.focusRename = false
+					row.ScrollIntoView()
 				}
-				ui.Row(c).Height(height).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
-					if branch {
-						ui.Text(c, session.Branch).Grow(1).MinWidth(0).SingleLine().FontSize(design.UISize(c, 10)).TextColor(a.palette.Faint)
-					} else {
-						ui.Spacer(c)
-					}
-					if pr {
-						a.sidebarPRBadge(c, session)
-					}
-				})
+			} else {
+				ui.Text(c, session.Title).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 			}
+			a.sidebarSessionCorner(c, session, hovered)
 		})
 	})
-}
-
-func (a *App) sidebarPRBadge(c *ui.Context, session contracts.Session) {
-	ui.ButtonBase(c).Label(fmt.Sprintf(tr(c, "Open pull request #%d"), session.PullRequestNumber)).Height(16).Padding(0, 4).Gap(3).Radius(4).AlignItems(ui.Center).Background(a.palette.Success.Alpha(.08)).TextColor(a.palette.Success).OnClick(func() {
-		for _, pr := range a.state.PullRequests {
-			if pr.Number == session.PullRequestNumber {
-				a.workspace.OpenPR(pr.ID)
-				return
-			}
-		}
-		a.navigate("pull-requests")
-	}).Children(func() {
-		icon(c, "pull-request", 10)
-		ui.Text(c, fmt.Sprintf(tr(c, "#%d"), session.PullRequestNumber)).Font("Geist Mono").FontSize(design.UISize(c, 10))
+	// The compact row shows the title only; location, branch and activity
+	// surface in the shared hover card.
+	infos := []sidebarHoverInfo{{Icon: "folder", Text: a.projectNameFor(session.ProjectID) + " @ " + a.deviceNameFor(session.DeviceID)}}
+	if session.Branch != "" {
+		infos = append(infos, sidebarHoverInfo{Icon: "git-branch", Text: session.Branch, Mono: true})
+	}
+	infos = append(infos, sidebarHoverInfo{Icon: "clock-circle", Text: relativeAge(session.UpdatedAt, a.now(), settings.General.Language)})
+	ui.TooltipBase(c, row, func(tip ui.Element) {
+		// The card reads beside the row it describes, at that row's own
+		// height, not above it nor anywhere else in the window.
+		tip.AttachTo(row, ui.AnchorEnd, ui.AnchorStart).MarginStart(6)
+		tip.Children(func() {
+			controlSidebarHoverCard(c, session.Title, infos)
+		})
 	})
 }
 
@@ -191,25 +130,12 @@ func (a *App) sidebarStatusGlyph(c *ui.Context, session contracts.Session) {
 	}
 }
 
-func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hovered, compact bool) {
-	ui.Row(c).Height(14).MinWidth(30).Shrink(0).Justify(ui.End).AlignItems(ui.Center).Children(func() {
+func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hovered bool) {
+	ui.Row(c).MinWidth(design.Sidebar().ConversationTrailingWidth).Shrink(0).Justify(ui.End).AlignItems(ui.Center).Children(func() {
 		if hovered {
-			label, glyph := "Archive session", "archive-minimalistic"
-			if session.Archived {
-				label, glyph = "Unarchive session", "archive-up-minimalistic"
-			}
-			iconButton(c, glyph, tr(c, label)+" "+session.ID).Tooltip(tr(c, label)).Size(18, 18).OnClick(func() { a.archiveSidebarSession(session.ID, !session.Archived) })
-		} else if !compact && session.Status != contracts.Idle {
-			label, color := "Working", a.palette.Accent
-			if session.Status == contracts.AwaitingInput {
-				label, color = "Input", a.palette.Warning
-			}
-			if session.Status == contracts.Errored {
-				label, color = "Failed", a.palette.Danger
-			}
-			ui.Text(c, tr(c, label)).FontSize(design.UISize(c, 10)).TextColor(color)
+			inlineIconButton(c, "archive-minimalistic", tr(c, "Archive session")+" "+session.ID).Tooltip(tr(c, "Archive session")).OnClick(func() { a.archiveSidebarSession(session.ID) })
 		} else {
-			ui.Text(c, relativeAge(session.UpdatedAt, a.state.Sessions, a.state.Settings.General.Language)).FontSize(design.UISize(c, 10)).TextColor(a.palette.Faint)
+			ui.Text(c, relativeAge(session.UpdatedAt, a.now(), a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
 		}
 	})
 }

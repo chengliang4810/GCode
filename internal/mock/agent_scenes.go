@@ -150,13 +150,10 @@ func seedAgentTranscripts(snapshot *contracts.Snapshot) {
 		split := min(3, len(blocks))
 		model := []string{"claude-opus-4-6", "claude-sonnet-4-6", "gpt-5.4"}[i%3]
 		session.ModelID = model
-		session.PullRequestNumber = 0
 		if i == 0 || i == 4 {
-			session.PullRequestNumber = 412
 			session.Branch = "fieldnotes/workspace"
 		}
 		if i == 1 {
-			session.PullRequestNumber = 413
 			session.Branch = "fieldnotes/command-palette"
 		}
 		for pi := range snapshot.Projects {
@@ -184,7 +181,7 @@ func seedAgentTranscripts(snapshot *contracts.Snapshot) {
 			{ID: finalID, ContinuationOf: nextID, DurationMS: duration, SessionID: session.ID, TurnID: turnID, Role: "assistant", CreatedAt: finished, Blocks: []contracts.Block{{ID: finalID + "-text", Kind: "text", Text: task.final}}, Usage: contracts.Usage{InputTokens: input, OutputTokens: output, CachedTokens: input / 2, ContextTokens: input + output + 2400, ContextLimit: limit, Cost: float64(input+output) * 0.000003}},
 		}
 		summary := contracts.SummarizeActivity(contracts.TurnActivity(snapshot.Messages[session.ID], turnID))
-		snapshot.Runs = append(snapshot.Runs, contracts.Run{ID: turnID, SessionID: session.ID, AccessMode: session.AccessMode, Status: "completed", FinishReason: "stop", StartedAt: started, FinishedAt: &finished, DurationMS: duration, Summary: summary})
+		snapshot.Runs = append(snapshot.Runs, contracts.Run{ID: turnID, SessionID: session.ID, Status: "completed", FinishReason: "stop", StartedAt: started, FinishedAt: &finished, DurationMS: duration, Summary: summary})
 		for _, block := range blocks {
 			if block.Tool != nil && block.Tool.Diff != nil {
 				mergeAgentChange(snapshot, *block.Tool.Diff)
@@ -218,10 +215,10 @@ func seedReviewChild(snapshot *contracts.Snapshot) {
 	read.Tool.StartedAt = started.Add(650 * time.Millisecond)
 	readEnd := started.Add(950 * time.Millisecond)
 	read.Tool.FinishedAt = &readEnd
-	snapshot.Sessions = append(snapshot.Sessions, contracts.Session{ID: "agent-pr-412", ParentSessionID: "chat-4", SideChat: true, Title: "Review keyboard navigation for PR #412", ProjectID: "fieldnotes", DeviceID: "local", ModelID: "claude-sonnet-4-6", ReasoningLevel: "High", Branch: "fieldnotes/workspace", AccessMode: contracts.AccessFullAccess, Status: contracts.Idle, CreatedAt: started, UpdatedAt: finished, LastOutcome: "completed"})
+	snapshot.Sessions = append(snapshot.Sessions, contracts.Session{ID: "agent-pr-412", ParentSessionID: "chat-4", SideChat: true, Title: "Review keyboard navigation for PR #412", ProjectID: "fieldnotes", DeviceID: "local", ModelID: "claude-sonnet-4-6", ReasoningLevel: "High", Branch: "fieldnotes/workspace", Status: contracts.Idle, CreatedAt: started, UpdatedAt: finished, LastOutcome: "completed"})
 	messages := []contracts.Message{{ID: "agent-pr-412-user", SessionID: "agent-pr-412", TurnID: "agent-pr-412-turn", Role: "user", CreatedAt: started, Blocks: []contracts.Block{{ID: "agent-pr-412-prompt", Kind: "text", Text: "Review keyboard focus for PR #412 without changing files."}}}, {ID: "agent-pr-412-reply", SessionID: "agent-pr-412", TurnID: "agent-pr-412-turn", Role: "assistant", CreatedAt: started, DurationMS: 1240, Blocks: []contracts.Block{{ID: "agent-pr-412-thought", Kind: "reasoning", Text: "I’ll inspect the current close-panel focus fallback without editing it."}, read, {ID: "agent-pr-412-final", Kind: "text", Text: "The current implementation restores the previous control and falls back to the composer. I found no additional keyboard blocker and changed no files."}}}}
 	snapshot.Messages["agent-pr-412"] = messages
-	snapshot.Runs = append(snapshot.Runs, contracts.Run{ID: "agent-pr-412-turn", SessionID: "agent-pr-412", AccessMode: contracts.AccessFullAccess, Status: "completed", FinishReason: "stop", StartedAt: started, FinishedAt: &finished, DurationMS: 1240, Summary: contracts.SummarizeActivity(contracts.TurnActivity(messages, "agent-pr-412-turn"))})
+	snapshot.Runs = append(snapshot.Runs, contracts.Run{ID: "agent-pr-412-turn", SessionID: "agent-pr-412", Status: "completed", FinishReason: "stop", StartedAt: started, FinishedAt: &finished, DurationMS: 1240, Summary: contracts.SummarizeActivity(contracts.TurnActivity(messages, "agent-pr-412-turn"))})
 }
 
 func ensureAgentFile(snapshot *contracts.Snapshot, project, filePath, content string) {

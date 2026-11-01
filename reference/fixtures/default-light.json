@@ -62,9 +62,9 @@
       },
       {
         "actions": null,
-        "id": "zeron",
-        "name": "Zeron",
-        "path": "~/projects/zeron",
+        "id": "rcode",
+        "name": "RCode",
+        "path": "~/projects/rcode",
         "deviceId": "local",
         "icon": "",
         "branch": "main",
@@ -267,7 +267,7 @@
         "sideChat": false,
         "id": "chat-6",
         "title": "Update project documentation",
-        "projectId": "zeron",
+        "projectId": "rcode",
         "deviceId": "local",
         "modelId": "claude-opus-4-6",
         "reasoningLevel": "High",
@@ -290,7 +290,7 @@
         "sideChat": false,
         "id": "chat-7",
         "title": "Refine composer spacing",
-        "projectId": "zeron",
+        "projectId": "rcode",
         "deviceId": "local",
         "modelId": "claude-opus-4-6",
         "reasoningLevel": "High",
@@ -1012,7 +1012,6 @@
     ],
     "settings": {
       "modelPicker": {
-        "favorites": null,
         "providerId": "",
         "options": null
       },
@@ -1026,8 +1025,8 @@
         "mathScale": 100,
         "mode": "light",
         "themeId": "",
-        "lightThemeId": "zeron-light",
-        "darkThemeId": "zeron-dark",
+        "lightThemeId": "rcode-light",
+        "darkThemeId": "rcode-dark",
         "accent": "theme",
         "surface": "theme",
         "font": "Geist",
@@ -1051,13 +1050,12 @@
       "general": {
         "sendBehavior": "enter",
         "compactMode": false,
-        "compactModelPicker": true,
         "stopWithEscape": false,
         "prDestination": "pullRequest",
         "threadNamingModel": "Automatic",
         "customWorktreeLocation": false,
         "worktreePath": "~/worktrees",
-        "creditZeron": true,
+        "creditRCode": true,
         "launchAtLogin": false,
         "restoreWindows": true
       },
@@ -1610,7 +1608,7 @@
       {
         "id": "pr-412",
         "number": 412,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Refine the workspace layout",
         "author": "alex",
         "status": "open",
@@ -1653,7 +1651,7 @@
       {
         "id": "pr-413",
         "number": 413,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Polish the command palette",
         "author": "alex",
         "status": "open",
@@ -1675,7 +1673,7 @@
       {
         "id": "pr-405",
         "number": 405,
-        "repository": "zeronsh/fieldnotes",
+        "repository": "r-code/fieldnotes",
         "title": "Add project grouping",
         "author": "sam",
         "status": "merged",

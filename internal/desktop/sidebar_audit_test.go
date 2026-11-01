@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -25,30 +26,14 @@ func sidebarSession(t *testing.T, a *App, id string) contracts.Session {
 	return contracts.Session{}
 }
 
-func TestSidebarSourceRowHeights(t *testing.T) {
-	for _, tc := range []struct {
-		name                          string
-		compact, location, branch, pr bool
-		want                          float32
-	}{{"compact", true, true, true, true, 29}, {"plain", false, true, false, false, 45}, {"branch", false, true, true, false, 61}, {"pull request", false, true, true, true, 63}, {"without location", false, false, true, true, 47}} {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := sidebarRowHeight(tc.compact, tc.location, tc.branch, tc.pr); got != tc.want {
-				t.Fatalf("height %g want %g", got, tc.want)
-			}
-		})
-	}
+func TestSidebarRowHeightStaysCompact(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	first := a.visibleSessions(false)[0]
-	row, ok := tt.Find(first.Title)
-	if !ok || row.H != 29 {
-		t.Fatalf("compact rendered row %+v", row)
-	}
-	a.state.Settings.SidebarCompact = false
-	tt.Frame()
-	row, _ = tt.Find(first.Title)
-	if row.H != 63 {
-		t.Fatalf("regular rendered PR row %+v", row)
+	for _, session := range a.visibleSessions() {
+		row, ok := tt.Find(session.Title)
+		if !ok || row.H != design.Sidebar().RowHeight {
+			t.Fatalf("sidebar row left the compact form: %+v want %g", row, design.Sidebar().RowHeight)
+		}
 	}
 }
 
@@ -72,7 +57,7 @@ func TestSidebarSelectionUsesSourceWashWithoutSolidAccent(t *testing.T) {
 func TestSidebarNativeViewMenuMutatesBackend(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	for _, path := range [][]string{{"Organize", "By project"}, {"Sort", "Created"}, {"Show", "Harness"}, {"Show", "Project filter"}, {"Compact"}} {
+	for _, path := range [][]string{{"By group"}, {"By project"}} {
 		if err := tt.Click("Sidebar view options"); err != nil {
 			t.Fatal(err)
 		}
@@ -85,7 +70,7 @@ func TestSidebarNativeViewMenuMutatesBackend(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := snapshot.Settings
-	if s.SidebarGrouping != "project" || s.SidebarSort != "created" || s.SidebarShowHarness || s.SidebarShowProjectFilter || s.SidebarCompact {
+	if s.SidebarGrouping != "projects" {
 		t.Fatalf("view options did not persist: %+v", s)
 	}
 	if _, ok := tt.Find("All projects"); ok {
@@ -93,27 +78,19 @@ func TestSidebarNativeViewMenuMutatesBackend(t *testing.T) {
 	}
 }
 
-func TestSidebarSortGroupingAndLiteralSearch(t *testing.T) {
+func TestSidebarRecencyOrderingAndLiteralSearch(t *testing.T) {
 	a := testApp(t, "default")
 	base := time.Date(2026, 10, 28, 8, 0, 0, 0, time.UTC)
-	a.state.Sessions = []contracts.Session{{ID: "a", Title: "Pinned workshop", ProjectID: "zeron", CreatedAt: base, UpdatedAt: base.Add(time.Hour)}, {ID: "b", Title: "Second", ProjectID: "fieldnotes", CreatedAt: base.Add(time.Minute), UpdatedAt: base}, {ID: "child", Title: "Child", ParentSessionID: "a", CreatedAt: base, UpdatedAt: base.Add(2 * time.Hour)}}
-	a.state.Settings.SidebarGrouping = "project"
-	a.state.Settings.SidebarSort = "updated"
-	rows := a.sidebarRows()
-	if rows[0].Header != "Zeron" {
-		t.Fatalf("groups are not activity ordered: %+v", rows)
-	}
-	a.state.Settings.SidebarSort = "created"
-	rows = a.sidebarRows()
-	if rows[1].Session.ID != "b" {
-		t.Fatal("Created sort ignored creation time")
+	a.state.Sessions = []contracts.Session{{ID: "a", Title: "Pinned workshop", ProjectID: "rcode", CreatedAt: base, UpdatedAt: base.Add(time.Hour)}, {ID: "b", Title: "Second", ProjectID: "rcode", CreatedAt: base.Add(time.Minute), UpdatedAt: base}, {ID: "child", Title: "Child", ParentSessionID: "a", CreatedAt: base, UpdatedAt: base.Add(2 * time.Hour)}}
+	if sessions := a.visibleSessions(); sessions[0].ID != "a" {
+		t.Fatalf("project conversations are not activity ordered: %+v", sessions)
 	}
 	a.search = "Pinned"
-	sessions := a.visibleSessions(false)
+	sessions := a.visibleSessions()
 	if len(sessions) != 1 || sessions[0].ID != "a" {
 		t.Fatal("literal search was interpreted as a pin filter")
 	}
-	for _, session := range a.visibleSessions(false) {
+	for _, session := range a.visibleSessions() {
 		if session.ParentSessionID != "" || session.SideChat {
 			t.Fatal("child session leaked into top-level sidebar")
 		}
@@ -123,7 +100,7 @@ func TestSidebarSortGroupingAndLiteralSearch(t *testing.T) {
 func TestSidebarKeyboardSelectionAndInlineRename(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	first := a.visibleSessions(false)[0]
+	first := a.visibleSessions()[0]
 	if err := tt.Click(first.Title); err != nil {
 		t.Fatal(err)
 	}
@@ -171,21 +148,32 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 	if !sidebarSession(t, a, first.ID).Archived || a.sessionID == first.ID {
 		t.Fatal("archive did not remove/open another active conversation")
 	}
-	if !a.sidebarUI.archivedOpen {
-		if err := tt.Click("Archived"); err != nil {
-			t.Fatal(err)
-		}
+	if tt.HasText(first.Title) {
+		t.Fatal("archived conversation stayed in the sidebar")
 	}
-	if err := tt.RightClick(first.Title); err != nil {
+	// Archived data is managed only in settings: view and restore it there.
+	a.navigate("settings/Archived sessions")
+	tt.Frame()
+	if a.route != "settings" || a.section != "Archived sessions" {
+		t.Fatalf("archived settings section missing: route=%s section=%s", a.route, a.section)
+	}
+	if err := tt.Click("View"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.ChooseMenuItem("Unarchive"); err != nil {
+	if a.route != "chat" || a.sessionID != first.ID {
+		t.Fatalf("view did not open the archived conversation: route=%s session=%s", a.route, a.sessionID)
+	}
+	a.navigate("settings/Archived sessions")
+	tt.Frame()
+	if err := tt.Click("Restore"); err != nil {
 		t.Fatal(err)
 	}
 	restored := sidebarSession(t, a, first.ID)
 	if restored.Archived || !restored.Pinned || restored.PinOrder != first.PinOrder {
-		t.Fatal("unarchive lost pin identity/order")
+		t.Fatal("restore lost archive or pin identity/order")
 	}
+	a.navigate("chat/" + first.ID)
+	tt.Frame()
 	if err := tt.RightClick(first.Title); err != nil {
 		t.Fatal(err)
 	}
@@ -221,24 +209,22 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 	}
 }
 
-func TestSidebarProjectSearchKeyboardAndComposerIsolation(t *testing.T) {
+func TestSidebarSearchResetsToConversations(t *testing.T) {
 	a := testApp(t, "default")
+	a.commands.tab, a.commands.selected, a.commands.activeKey = 3, 40, "old-file"
 	tt := ui.NewTester(a.View, 1320, 880)
-	composer := a.projectID
-	if err := tt.Click("All projects"); err != nil {
+	if err := tt.Click("Search conversations"); err != nil {
 		t.Fatal(err)
 	}
-	tt.Type("Zeron")
-	tt.Key(0, ui.KeyEnter)
-	if a.sidebarProjectMenu || a.sidebarProjectID != "zeron" || a.projectID != composer {
-		t.Fatalf("project search changed wrong scope: filter %s composer %s", a.sidebarProjectID, a.projectID)
+	if !a.paletteOpen || a.commands.tab != 1 || a.commands.selected != 0 || a.commands.activeKey == "old-file" {
+		t.Fatalf("conversation search retained stale state: %+v", a.commands)
 	}
 }
 
 func TestSidebarPinnedNativeReorder(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	pins := a.visibleSessions(false)[:2]
+	pins := a.visibleSessions()[:2]
 	first, _ := tt.Find(pins[0].Title)
 	second, _ := tt.Find(pins[1].Title)
 	x, y := second.X+80, second.Y+second.H/2
@@ -246,26 +232,22 @@ func TestSidebarPinnedNativeReorder(t *testing.T) {
 	tt.Move(x, y-8)
 	tt.Move(first.X+80, first.Y+3)
 	tt.Release(first.X+80, first.Y+3)
-	if got := a.visibleSessions(false); got[0].ID != pins[1].ID {
+	if got := a.visibleSessions(); got[0].ID != pins[1].ID {
 		t.Fatalf("native list reorder did not persist pins: %v", []string{got[0].ID, got[1].ID})
 	}
 }
 
 func TestSidebarAuditEvidence(t *testing.T) {
 	for _, mode := range []string{"light", "dark"} {
-		for _, group := range []string{"list", "project", "device"} {
-			for _, compact := range []bool{true, false} {
-				t.Run(fmt.Sprintf("%s-%s-%t", mode, group, compact), func(t *testing.T) {
-					a := testApp(t, "default")
-					a.state.Settings.Appearance.Mode = mode
-					a.state.Settings.Appearance.ThemeID = "zeron-" + mode
-					a.state.Settings.SidebarGrouping = group
-					a.state.Settings.SidebarCompact = compact
-					a.selectSession("chat-0")
-					tt := ui.NewTester(a.View, 1320, 880)
-					captureWorkbenchAudit(t, tt, fmt.Sprintf("sidebar-%s-%s-compact-%t", mode, group, compact))
-				})
-			}
+		for _, group := range []string{"project-tree"} {
+			t.Run(fmt.Sprintf("%s-%s", mode, group), func(t *testing.T) {
+				a := testApp(t, "default")
+				a.state.Settings.Appearance.Mode = mode
+				a.state.Settings.Appearance.ThemeID = "rcode-" + mode
+				a.selectSession("chat-0")
+				tt := ui.NewTester(a.View, 1320, 880)
+				captureWorkbenchAudit(t, tt, fmt.Sprintf("sidebar-%s-%s", mode, group))
+			})
 		}
 	}
 }
@@ -315,19 +297,16 @@ func TestSidebarCommandSearchKeyboardOpensTopLevelSession(t *testing.T) {
 func TestSidebarAuditTransientEvidence(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("All projects"); err != nil {
+	if err := tt.Click("Search conversations"); err != nil {
 		t.Fatal(err)
 	}
-	tt.Type("Zeron")
-	captureWorkbenchAudit(t, tt, "sidebar-project-search")
+	tt.Type("GCode")
+	captureWorkbenchAudit(t, tt, "sidebar-conversation-search")
 	tt.Key(0, ui.KeyEscape)
 	a.startSidebarRename("chat-0")
 	tt.Frame()
 	captureWorkbenchAudit(t, tt, "sidebar-inline-rename")
 	a.sidebarUI.renameID = ""
-	a.sidebarUI.archivedOpen = true
-	tt.Frame()
-	captureWorkbenchAudit(t, tt, "sidebar-archived-open")
 	a.paletteOpen = true
 	a.paletteQuery = "Files"
 	tt.Frame()

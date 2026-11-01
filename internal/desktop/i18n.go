@@ -35,7 +35,7 @@ func (a *App) settingOptionText(c *ui.Context, label, value, text string) string
 	case "Interface font", "Terminal font", "Code & diff font", "Math font", "Light theme", "Dark theme":
 		return text
 	case "Thread naming model":
-		if value != "Automatic" {
+		if value != "first-message" {
 			return text
 		}
 	}
@@ -43,7 +43,7 @@ func (a *App) settingOptionText(c *ui.Context, label, value, text string) string
 }
 
 func (a *App) sidebarHeaderText(row sidebarRow) string {
-	if row.ProjectID != "" || strings.HasPrefix(row.Key, "group:device:") {
+	if row.ProjectID != "" || strings.HasPrefix(row.Key, "session-group:") || strings.HasPrefix(row.Key, "device:") {
 		return row.Header
 	}
 	return a.t(row.Header)

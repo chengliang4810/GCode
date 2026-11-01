@@ -1,0 +1,29 @@
+{
+  "repo": "lovablelabs/mcp",
+  "commit": "0336e6db8026b0f02cb89d1451cc48ea3f469791",
+  "path": ".",
+  "archive_sha256": "5032b1434ac198b37eda0bc5ee008b2fc48d240977b866259c61230c285f0ced",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".gitignore",
+    ".mcp.json",
+    "CLAUDE.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "commands/build.md",
+    "commands/db.md",
+    "commands/iterate.md",
+    "server.json"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"lovable\",\n  \"description\": \"Build, iterate on, deploy, and manage Lovable apps from Claude Code. Bundles the official Lovable MCP server (remote, OAuth 2.1) and adds focused commands for the common build/iterate/database workflows, with credit- and publish-safety prompts.\",\n  \"version\": \"0.1.0\",\n  \"author\": {\n    \"name\": \"Lovable\",\n    \"url\": \"https://lovable.dev\"\n  },\n  \"homepage\": \"https://lovable.dev\",\n  \"repository\": \"https://github.com/lovablelabs/mcp\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"lovable\", \"app-builder\", \"deploy\", \"full-stack\", \"mcp\"]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"lovable\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.lovable.dev/?src=cc-plugin\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/iterate.md": "\ndescription: Send a change request to a Lovable project's agent and review the diff\nargument-hint: <project> — <change request>\n",
+    "commands/build.md": "\ndescription: Build a new Lovable app from a prompt and optionally deploy it\nargument-hint: <app description>\n",
+    "commands/db.md": "\ndescription: Provision or query a Lovable project's Cloud (Postgres) database\nargument-hint: <project> [SQL]\n"
+  }
+}

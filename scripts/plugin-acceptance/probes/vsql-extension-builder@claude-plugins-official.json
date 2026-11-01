@@ -1,0 +1,272 @@
+{
+  "pluginId": "vsql-extension-builder@claude-plugins-official",
+  "sourceCommit": "18f7d68673e2bd5d400b4ee91298e5a4b9e8d24e",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "plan-ipnet-extension-phase0-phase1",
+      "componentId": "skill:villagesql:vsql-extension-builder",
+      "prompt": "/villagesql:vsql-extension-builder Produce the Phase 0 through Phase 2 planning packet for this concrete extension and mark every execution step as untested: build vsql-ipnet, a C++ port of the PostgreSQL inet and cidr types as a VillageSQL custom type, exposing vsql_ipnet_to_string(net) and vsql_ipnet_mask(net, prefix_len), scaffolded local only without a GitHub repo. Headless boundary: no network, no server, no SDK on disk, no clone and no installs; SDK reading, scaffold cloning, builds, tests and installs stay untested. Interactive steps are pre-answered so no questions are needed: implementation language cpp, PostgreSQL port of inet, local only scaffold, do not wait for further answers. Write vsql-ipnet-runbook.md containing: (1) Phase 0 record: language cpp, pg_port: true with source extension inet, local_only: true, and two acceptance criteria in the documented form where each criterion reads N. Given context, function must expected outcome with literal SQL values, one covering vsql_ipnet_to_string on the input 192.168.1.0/24 returning the canonical text 192.168.1.0/24, and one covering vsql_ipnet_mask on 192.168.1.0/24 with prefix length 26 returning 192.168.1.192/26; (2) Phase 1 record: SDK discovery by globbing villagesql-extension-sdk- directories in the build dir and selecting the highest semver version, never mtime or alphabetic order; version cross-check through villagesql_config --version against the Phase 0 session version; header reading restricted to vsql.h and the vsql subdirectory, skipping any directory named abi/; and the PostgreSQL Function Map for inet with the three columns Full, Workaround and Blocked populated for a representative set of inet functions; (3) Phase 2 record: repo and directory name vsql-ipnet in hyphen form and internal identifier vsql_ipnet in underscore form; manifest.json version set to 0.0.1; the CI workflow updated to extension-name: vsql_ipnet; the test directory kept as mysql-test/; .claude/tracking/ created for scratchpads that are never committed and covered by .gitignore; and git check-ignore used before any commit. End the file with exactly this line: No SDK was read, no server was contacted, and no scaffold, build, test or install ran in this headless run; live phases remain untested. Never use the phrase production-ready anywhere. Then read the immutable verify_vsql_runbook.py and run exactly python verify_vsql_runbook.py using Bash; it validates the runbook and writes vsql-runbook-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that SDK reading, scaffolding, builds, tests and server installs remain untested.",
+      "allowCommands": [
+        "python verify_vsql_runbook.py"
+      ],
+      "verifierOutputs": [
+        "vsql-runbook-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_vsql_runbook.py",
+          "text": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'acceptance_criteria': True, 'discovery_rules': True, 'honesty_boundary': True, 'input_criteria_sql': True, 'naming_rules': True, 'pg_port_map': True, 'scaffold_rules': True}\n\nrunbook = Path('vsql-ipnet-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('cpp', 'pg_port: true', 'local_only: true', 'vsql_ipnet_to_string',\n               '192.168.1.0/24', 'vsql_ipnet_mask', '192.168.1.192/26',\n               'villagesql-extension-sdk-', 'highest semver', 'villagesql_config --version',\n               'abi/', 'Workaround', 'Blocked', 'vsql-ipnet', 'vsql_ipnet', '0.0.1',\n               'mysql-test/', '.claude/tracking/', 'extension-name: vsql_ipnet',\n               'git check-ignore',\n               'No SDK was read, no server was contacted, and no scaffold, build, test or '\n               'install ran in this headless run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nassert re.search(r\"(?m)^\\s*\\[\\d+\\]\\.\\s*Given .+, vsql_ipnet_to_string must .+$\", runbook), \\\n    'acceptance criterion for vsql_ipnet_to_string must use the documented Given form'\nassert re.search(r\"(?m)^\\s*\\[\\d+\\]\\.\\s*Given .+, vsql_ipnet_mask must .+$\", runbook), \\\n    'acceptance criterion for vsql_ipnet_mask must use the documented Given form'\nassert 'production-ready' not in runbook, 'the forbidden phrase production-ready must not appear'\n\nPath('vsql-runbook-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('VillageSQL runbook: phase 0-2 decisions verified; SDK reading, scaffold, build and install remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_vsql_runbook.py",
+          "equals": "import re\nimport json\nfrom pathlib import Path\n\nREPORT = {'acceptance_criteria': True, 'discovery_rules': True, 'honesty_boundary': True, 'input_criteria_sql': True, 'naming_rules': True, 'pg_port_map': True, 'scaffold_rules': True}\n\nrunbook = Path('vsql-ipnet-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('cpp', 'pg_port: true', 'local_only: true', 'vsql_ipnet_to_string',\n               '192.168.1.0/24', 'vsql_ipnet_mask', '192.168.1.192/26',\n               'villagesql-extension-sdk-', 'highest semver', 'villagesql_config --version',\n               'abi/', 'Workaround', 'Blocked', 'vsql-ipnet', 'vsql_ipnet', '0.0.1',\n               'mysql-test/', '.claude/tracking/', 'extension-name: vsql_ipnet',\n               'git check-ignore',\n               'No SDK was read, no server was contacted, and no scaffold, build, test or '\n               'install ran in this headless run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\nassert re.search(r\"(?m)^\\s*\\[\\d+\\]\\.\\s*Given .+, vsql_ipnet_to_string must .+$\", runbook), \\\n    'acceptance criterion for vsql_ipnet_to_string must use the documented Given form'\nassert re.search(r\"(?m)^\\s*\\[\\d+\\]\\.\\s*Given .+, vsql_ipnet_mask must .+$\", runbook), \\\n    'acceptance criterion for vsql_ipnet_mask must use the documented Given form'\nassert 'production-ready' not in runbook, 'the forbidden phrase production-ready must not appear'\n\nPath('vsql-runbook-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('VillageSQL runbook: phase 0-2 decisions verified; SDK reading, scaffold, build and install remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-runbook-verification.json",
+          "equals": "{\"acceptance_criteria\": true, \"discovery_rules\": true, \"honesty_boundary\": true, \"input_criteria_sql\": true, \"naming_rules\": true, \"pg_port_map\": true, \"scaffold_rules\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "cpp"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "pg_port: true"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "local_only: true"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "vsql_ipnet_to_string"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "192.168.1.0/24"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "vsql_ipnet_mask"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "192.168.1.192/26"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "villagesql-extension-sdk-"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "highest semver"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "villagesql_config --version"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "abi/"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "Workaround"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "Blocked"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "vsql-ipnet"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "vsql_ipnet"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "0.0.1"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "mysql-test/"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": ".claude/tracking/"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "extension-name: vsql_ipnet"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "git check-ignore"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-ipnet-runbook.md",
+          "contains": "No SDK was read, no server was contacted, and no scaffold, build, test or install ran in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "VillageSQL runbook: phase 0-2 decisions verified; SDK reading, scaffold, build and install remain untested"
+        }
+      ]
+    },
+    {
+      "id": "plan-installer-path-runbook",
+      "componentId": "skill:villagesql:vsql-install-server",
+      "prompt": "/villagesql:vsql-install-server Produce the documented install runbook for this concrete headless scenario and mark every execution step as untested: a minimal Ubuntu 24.04 container used by a non-root user named builder, where the goal is a working VillageSQL server plus the full MTR suite so the vsql-extension-builder workflow can run later. Headless boundary: no network, no downloads, no containers, no installs and no server start; install, start, connect and extension load stay untested. Interactive steps are pre-answered: choose the install path and method from the skill decision rules, and do not wait for further input. Write vsql-server-install-runbook.md containing: (1) path choice: the Installer path is chosen because the goal is the full vsql-extension-builder workflow, and the Docker trade-off is recorded, namely that mysql-test-run.pl is absent from the image so a normal suite run is not possible there; (2) prerequisites on a minimal image: apt-get install -y curl ca-certificates libaio1t64 libnuma1 with the note that the installer does not install them; (3) the non-interactive invocation: the published one-liner aborts under any non-interactive shell, so set both VSQL_CODEBASE=mysql-8.4 and INSTALL_METHOD=prebuilt on the command against install.villagesql.com, and record that the installer cannot finish as root, which is why the run uses the ordinary user builder; (4) verification instead of trusting the banner: a real data directory contains InnoDB files such as ibdata1, mysql.ibd and undo_001, while a failed init leaves only auto.cnf and binlog.index, and the banner can print Installation Complete even when initialization failed; (5) post-install: a successful install writes credentials.txt, from which VSQL_SOCKET and VSQL_CLIENT are read rather than guessed, the server is started with the recorded command, connection is confirmed with SELECT VERSION(); and a VillageSQL server reports a version like 8.4.10-villagesql-0.0.6 while a version without villagesql means a stock MySQL was reached; (6) pipeline proof: read veb_dir with SHOW VARIABLES LIKE veb_dir, list it, pick an extension from the listing, install with INSTALL EXTENSION as a bare SQL identifier with no quotes, confirm registration through INFORMATION_SCHEMA.EXTENSION_REGISTRATION, and call one function. End the file with exactly this line: No download, install, server start or connection was executed in this headless run; install, start, connect and extension load remain untested. Then read the immutable verify_vsql_install_runbook.py and run exactly python verify_vsql_install_runbook.py using Bash; it validates the runbook and writes vsql-install-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the real install, server start, connection and extension load remain untested.",
+      "allowCommands": [
+        "python verify_vsql_install_runbook.py"
+      ],
+      "verifierOutputs": [
+        "vsql-install-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_vsql_install_runbook.py",
+          "text": "import json\nfrom pathlib import Path\n\nREPORT = {'banner_skepticism': True, 'credentials_source': True, 'honesty_boundary': True, 'input_scenario': True, 'installer_path_choice': True, 'noninteractive_env': True, 'pipeline_proof': True, 'prereqs': True}\n\nrunbook = Path('vsql-server-install-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('Installer', 'mysql-test-run.pl', 'libaio1t64 libnuma1',\n               'VSQL_CODEBASE=mysql-8.4', 'INSTALL_METHOD=prebuilt',\n               'install.villagesql.com', 'credentials.txt', 'VSQL_SOCKET', 'VSQL_CLIENT',\n               'ibdata1', 'Installation Complete', 'SELECT VERSION();',\n               '8.4.10-villagesql-0.0.6', 'veb_dir',\n               'INFORMATION_SCHEMA.EXTENSION_REGISTRATION', 'Ubuntu 24.04', 'builder',\n               'No download, install, server start or connection was executed in this headless '\n               'run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\n\nPath('vsql-install-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('VillageSQL install runbook: installer path and verification steps verified; real install and connection remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_vsql_install_runbook.py",
+          "equals": "import json\nfrom pathlib import Path\n\nREPORT = {'banner_skepticism': True, 'credentials_source': True, 'honesty_boundary': True, 'input_scenario': True, 'installer_path_choice': True, 'noninteractive_env': True, 'pipeline_proof': True, 'prereqs': True}\n\nrunbook = Path('vsql-server-install-runbook.md').read_text(encoding='utf-8')\nfor anchor in ('Installer', 'mysql-test-run.pl', 'libaio1t64 libnuma1',\n               'VSQL_CODEBASE=mysql-8.4', 'INSTALL_METHOD=prebuilt',\n               'install.villagesql.com', 'credentials.txt', 'VSQL_SOCKET', 'VSQL_CLIENT',\n               'ibdata1', 'Installation Complete', 'SELECT VERSION();',\n               '8.4.10-villagesql-0.0.6', 'veb_dir',\n               'INFORMATION_SCHEMA.EXTENSION_REGISTRATION', 'Ubuntu 24.04', 'builder',\n               'No download, install, server start or connection was executed in this headless '\n               'run'):\n    assert anchor in runbook, 'missing documented anchor: ' + anchor\n\nPath('vsql-install-verification.json').write_bytes((json.dumps(REPORT, sort_keys=True) + '\\n').encode('utf-8'))\nprint('VillageSQL install runbook: installer path and verification steps verified; real install and connection remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-install-verification.json",
+          "equals": "{\"banner_skepticism\": true, \"credentials_source\": true, \"honesty_boundary\": true, \"input_scenario\": true, \"installer_path_choice\": true, \"noninteractive_env\": true, \"pipeline_proof\": true, \"prereqs\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "Installer"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "mysql-test-run.pl"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "libaio1t64 libnuma1"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "VSQL_CODEBASE=mysql-8.4"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "INSTALL_METHOD=prebuilt"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "install.villagesql.com"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "credentials.txt"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "VSQL_SOCKET"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "VSQL_CLIENT"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "ibdata1"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "Installation Complete"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "SELECT VERSION();"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "8.4.10-villagesql-0.0.6"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "veb_dir"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "INFORMATION_SCHEMA.EXTENSION_REGISTRATION"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "Ubuntu 24.04"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "builder"
+        },
+        {
+          "kind": "file",
+          "path": "vsql-server-install-runbook.md",
+          "contains": "No download, install, server start or connection was executed in this headless run"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "VillageSQL install runbook: installer path and verification steps verified; real install and connection remain untested"
+        }
+      ]
+    }
+  ]
+}

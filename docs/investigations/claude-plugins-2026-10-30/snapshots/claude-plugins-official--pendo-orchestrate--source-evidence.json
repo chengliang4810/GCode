@@ -1,0 +1,24 @@
+{
+  "repo": "pendo-io/claude-pendo-plugin",
+  "commit": "a0f85260c61b93c4511f59545612323a41c3f845",
+  "path": "plugins/pendo-orchestrate",
+  "archive_sha256": "e288c7c4ae4995c5e528c45729f1caeab467ca9185eb85c49505a75e9ef18436",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "skills/orchestrate-journeys/SKILL.md",
+    "skills/orchestrate-journeys/references/configuration.md",
+    "skills/orchestrate-journeys/references/content-email.md",
+    "skills/orchestrate-journeys/references/handoff.md",
+    "skills/orchestrate-journeys/references/identify-journey.md",
+    "skills/orchestrate-journeys/references/intake.md",
+    "skills/orchestrate-journeys/references/journey-graph-patterns.md",
+    "skills/orchestrate-journeys/references/troubleshooting.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"pendo-orchestrate\",\n  \"displayName\": \"Pendo Orchestrate\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Create, configure, and edit draft Orchestrate email journeys via Pendo MCP — multi-email journeys and conditional split flows. Activation in Orchestrate UI.\",\n  \"author\": {\n    \"name\": \"Pendo\",\n    \"email\": \"plugins@pendo.io\"\n  },\n  \"homepage\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"repository\": \"https://github.com/pendo-io/claude-pendo-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"pendo\", \"orchestrate\", \"journeys\", \"email\", \"lifecycle\", \"product-management\"],\n  \"mcpServers\": {\n    \"pendo-external\": {\n      \"type\": \"http\",\n      \"url\": \"https://app.pendo.io/mcp/v0/shttp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/orchestrate-journeys/SKILL.md": "\nname: orchestrate-journeys\ndescription: Create, configure, and edit Orchestrate email journeys via MCP — audience, schedule, goal, multi-step sequences, and email content. Use for welcome or onboarding sequences, re-engagement or win-back, create or update a journey, or prepare to go live. For opens, clicks, or journey metrics, use Orchestrate metrics MCP tools directly — not this skill's reference workflow.\n"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "pluginId": "atlassian-twg-cli@claude-plugins-official",
+  "sourceCommit": "b3336ef63d45e2636ff411a922ed602244e0f3db",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "limited-terminal-windows-installer-handoff",
+      "componentId": "skill:atlassian-twg-cli:twg-setup",
+      "prompt": "/atlassian-twg-cli:twg-setup Use the twg-setup skill to set up TWG for this user. Scenario: this session runs on Windows in a limited terminal (non-TTY, no post-start input); the recognized host is cursor; the Inspect outcome is already known: twg is not found on PATH or at the standard fallback location. Headless boundary: no network, no real external service, no installs, and no shell execution except the single allowed verifier command below, so the Inspect block is not re-run here.\n\nFollow the skill's limited-terminal rules: do not start an interactive installation and do not execute the installer. Record in twg-setup-handoff.md the exact handoff you would give the user, and give the same handoff in your final response. The handoff must: use the OS installer command for Windows PowerShell, i.e. the two lines `curl.exe -fsSL https://teamwork-graph.atlassian.com/cli/install.ps1 -o \"$env:TEMP\\twg-install.ps1\"` and `powershell -ExecutionPolicy Bypass -File \"$env:TEMP\\twg-install.ps1\" -Plugin cursor`, placed in a fenced powershell block; carry the host plugin argument -Plugin cursor because the recognized host is cursor; include the sentence When it finishes, reply done.; include no doctor and no other follow-up or twg commands before that; state clearly that the command was not executed in this session; and claim nothing as already installed or connected. Do not narrate the plugin argument or describe attribution or analytics to the user.\n\nThen read the immutable verify_twg_setup.py and run exactly python verify_twg_setup.py using Bash; it validates the handoff record and writes twg-setup-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: give the handoff, report the actual verifier result, and state that the real installation, OAuth login, doctor flow and skill refresh remain untested.",
+      "allowCommands": [
+        "python verify_twg_setup.py"
+      ],
+      "verifierOutputs": [
+        "twg-setup-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_twg_setup.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('twg-setup-handoff.md').read_text(encoding='utf-8')\nline1 = 'curl.exe -fsSL https://teamwork-graph.atlassian.com/cli/install.ps1 -o \"$env:TEMP\\\\twg-install.ps1\"'\nline2 = 'powershell -ExecutionPolicy Bypass -File \"$env:TEMP\\\\twg-install.ps1\" -Plugin cursor'\nassert line1 in text, 'handoff must give the documented Windows installer download line'\nassert line2 in text, 'handoff must give the documented PowerShell install line with the host plugin argument'\nassert '```powershell' in text, 'installer commands must be handed over in a fenced powershell block'\nassert 'When it finishes, reply done.' in text, 'handoff must include the documented done instruction'\nlow = text.lower()\nassert 'not executed in this session' in low, 'handoff must state the command was not executed here'\nfor claim in ('installed successfully', 'successfully installed', 'installation complete', 'is now installed'):\n    assert claim not in low, 'must not claim TWG was installed: ' + claim\nfor cmd in ('twg doctor', 'twg setup', 'twg login', 'twg skills install'):\n    assert cmd not in low, 'no doctor or other twg follow-up command may be handed off before done: ' + cmd\nassert '| bash' not in text, 'Windows scenario must use the PowerShell installer, not the Unix variant'\nreport = {'done_instruction': True, 'fenced_powershell_block': True, 'honest_no_execution': True,\n          'host_plugin_argument': True, 'installer_lines_exact': True, 'no_twg_commands': True,\n          'no_unix_variant': True}\nPath('twg-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('TWG setup handoff: documented limited-terminal installer handoff checks passed; real installation, OAuth login and doctor flow remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_twg_setup.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('twg-setup-handoff.md').read_text(encoding='utf-8')\nline1 = 'curl.exe -fsSL https://teamwork-graph.atlassian.com/cli/install.ps1 -o \"$env:TEMP\\\\twg-install.ps1\"'\nline2 = 'powershell -ExecutionPolicy Bypass -File \"$env:TEMP\\\\twg-install.ps1\" -Plugin cursor'\nassert line1 in text, 'handoff must give the documented Windows installer download line'\nassert line2 in text, 'handoff must give the documented PowerShell install line with the host plugin argument'\nassert '```powershell' in text, 'installer commands must be handed over in a fenced powershell block'\nassert 'When it finishes, reply done.' in text, 'handoff must include the documented done instruction'\nlow = text.lower()\nassert 'not executed in this session' in low, 'handoff must state the command was not executed here'\nfor claim in ('installed successfully', 'successfully installed', 'installation complete', 'is now installed'):\n    assert claim not in low, 'must not claim TWG was installed: ' + claim\nfor cmd in ('twg doctor', 'twg setup', 'twg login', 'twg skills install'):\n    assert cmd not in low, 'no doctor or other twg follow-up command may be handed off before done: ' + cmd\nassert '| bash' not in text, 'Windows scenario must use the PowerShell installer, not the Unix variant'\nreport = {'done_instruction': True, 'fenced_powershell_block': True, 'honest_no_execution': True,\n          'host_plugin_argument': True, 'installer_lines_exact': True, 'no_twg_commands': True,\n          'no_unix_variant': True}\nPath('twg-setup-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('TWG setup handoff: documented limited-terminal installer handoff checks passed; real installation, OAuth login and doctor flow remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "twg-setup-verification.json",
+          "equals": "{\"done_instruction\": true, \"fenced_powershell_block\": true, \"honest_no_execution\": true, \"host_plugin_argument\": true, \"installer_lines_exact\": true, \"no_twg_commands\": true, \"no_unix_variant\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "twg-setup-handoff.md",
+          "contains": "curl.exe -fsSL https://teamwork-graph.atlassian.com/cli/install.ps1 -o \"$env:TEMP\\twg-install.ps1\""
+        },
+        {
+          "kind": "file",
+          "path": "twg-setup-handoff.md",
+          "contains": "```powershell"
+        },
+        {
+          "kind": "file",
+          "path": "twg-setup-handoff.md",
+          "contains": "When it finishes, reply done."
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "powershell -ExecutionPolicy Bypass -File \"$env:TEMP\\twg-install.ps1\" -Plugin cursor"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "TWG setup handoff: documented limited-terminal installer handoff checks passed; real installation, OAuth login and doctor flow remain untested"
+        }
+      ]
+    }
+  ]
+}

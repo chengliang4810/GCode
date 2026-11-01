@@ -114,23 +114,23 @@ func TestForkCannotAnswerParentsPendingRequest(t *testing.T) {
 	}
 }
 
-func TestProviderCapabilitiesConstrainSessionAndRun(t *testing.T) {
+func TestModelSelectionPersistsAcrossSessionAndRun(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	ctx := context.Background()
-	model, mode, plan := "cursor-auto", contracts.AccessSupervised, true
-	if err := s.UpdateSession(ctx, contracts.SessionUpdate{ID: "chat-0", ModelID: &model, AccessMode: &mode, Plan: &plan}); err != nil {
+	model := "cursor-auto"
+	if err := s.UpdateSession(ctx, contracts.SessionUpdate{ID: "chat-0", ModelID: &model}); err != nil {
 		t.Fatal(err)
 	}
 	v, _ := s.Snapshot(ctx)
-	if v.Sessions[0].AccessMode != contracts.AccessFullAccess || v.Sessions[0].Plan {
-		t.Fatal("unsupported provider configuration persisted")
+	if v.Sessions[0].ModelID != model {
+		t.Fatal("selected model did not persist")
 	}
-	run, err := s.Send(ctx, contracts.SendRequest{SessionID: "chat-0", Text: "run", ModelID: model, AccessMode: mode, Plan: true})
+	run, err := s.Send(ctx, contracts.SendRequest{SessionID: "chat-0", Text: "run", ModelID: model})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if run.AccessMode != contracts.AccessFullAccess || run.Plan {
-		t.Fatal("run bypassed provider capability constraints")
+	if run.SessionID != "chat-0" || run.Status != "running" {
+		t.Fatal("run did not start for the selected session")
 	}
 	if err = s.Stop(ctx, "chat-0"); err != nil {
 		t.Fatal(err)

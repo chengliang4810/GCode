@@ -107,7 +107,7 @@ func TestConflictPreservesLocalBuffer(t *testing.T) {
 
 func TestNativeSurfacesRenderHeadlessly(t *testing.T) {
 	s, _, snapshot := testWorkspace(t)
-	for _, kind := range []string{"files", "changes", "history", "pullrequests"} {
+	for _, kind := range []string{"files", "changes", "history"} {
 		t.Run(kind, func(t *testing.T) {
 			s.OpenSurface(kind)
 			tt := ui.NewTester(s.View, 720, 560)
@@ -124,16 +124,6 @@ func TestNativeSurfacesRenderHeadlessly(t *testing.T) {
 		s.OpenChange(change.ID)
 		tt := ui.NewTester(s.View, 720, 560)
 		tt.Frame()
-		s.CloseActive()
-	}
-	if len(snapshot.PullRequests) > 0 {
-		pr := snapshot.PullRequests[0]
-		s.OpenPR(pr.ID)
-		tt := ui.NewTester(s.View, 720, 560)
-		tt.Frame()
-		if !tt.HasText(pr.Title) {
-			t.Fatal("PR detail title missing")
-		}
 		s.CloseActive()
 	}
 }
@@ -209,7 +199,7 @@ func TestTerminalUnicodeBackspace(t *testing.T) {
 func TestFileActionsCreateRenameDelete(t *testing.T) {
 	s, backend, snapshot := testWorkspace(t)
 	s.ProjectID = snapshot.Projects[0].ID
-	s.requestFileAction("create", "")
+	s.requestFileAction("create", "", "workspace")
 	s.fileActionName = "notes.md"
 	s.performFileAction()
 	if s.Error != "" {
@@ -228,14 +218,14 @@ func TestFileActionsCreateRenameDelete(t *testing.T) {
 	}
 	s.OpenFile(created.ID)
 	s.documents[created.ID].editor.Buffer.Set("local draft")
-	s.requestFileAction("rename", created.ID)
+	s.requestFileAction("rename", created.ID, "workspace")
 	s.fileActionName = "journal.md"
 	s.performFileAction()
 	d := s.documents[created.ID]
 	if d.file.Name != "journal.md" || d.conflict || d.editor.Buffer.String() != "local draft" {
 		t.Fatal("rename lost local edit or introduced conflict")
 	}
-	s.requestFileAction("delete", created.ID)
+	s.requestFileAction("delete", created.ID, "workspace")
 	s.performFileAction()
 	current, _ = backend.Snapshot(context.Background())
 	for _, f := range current.Files {
@@ -382,32 +372,4 @@ func TestImageViewportSettlesHeadlessly(t *testing.T) {
 	if tt.FramePending() {
 		t.Fatal("image viewport never stopped rebuilding")
 	}
-}
-
-func TestPRActivityCommentUpdatesBackend(t *testing.T) {
-	s, backend, snapshot := testWorkspace(t)
-	pr := snapshot.PullRequests[0]
-	s.OpenPR(pr.ID)
-	s.prTab = 2
-	tt := ui.NewTester(s.View, 720, 700)
-	if err := tt.Click("Write a comment"); err != nil {
-		t.Fatal(err)
-	}
-	tt.Type("The updated spacing looks good.")
-	if err := tt.Click("Comment"); err != nil {
-		t.Fatal(err)
-	}
-	current, err := backend.Snapshot(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, candidate := range current.PullRequests {
-		if candidate.ID == pr.ID {
-			if len(candidate.Comments) != len(pr.Comments)+1 {
-				t.Fatal("comment was not persisted")
-			}
-			return
-		}
-	}
-	t.Fatal("pull request disappeared")
 }

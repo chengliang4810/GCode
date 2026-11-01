@@ -1,10 +1,13 @@
 package desktop
 
 import (
+	"encoding/json"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/linktarget"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
+	"strconv"
 	"strings"
 )
 
@@ -12,26 +15,55 @@ import (
 func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Block) {
 	switch b.Kind {
 	case "text":
+		source := linktarget.NormalizeMarkdown(b.Text)
+		options := a.transcriptOptions(m.SessionID, false)
 		if m.Streaming {
-			markdown.Stream(c, b.Text, &a.md)
+			markdown.Stream(c, source, options)
 		} else {
-			markdown.View(c, b.Text, &a.md)
+			markdown.View(c, source, options)
 		}
 	case "code":
 		fence := strings.Repeat(string(rune(96)), 3)
 		markdown.View(c, fence+b.Language+"\n"+b.Text+"\n"+fence, &a.md)
+	case "error":
+		a.activityTextDetail(c, b, false)
 	case "question":
 		if b.Question != nil {
 			q := b.Question
 			ui.Column(c).FillWidth().Padding(16).Radius(10).Border(1, a.palette.Border).Gap(10).Children(func() {
+				if q.Header != "" {
+					ui.Text(c, q.Header).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+				}
 				ui.Text(c, q.Title).FontWeight(600)
-				for _, option := range q.Options {
+				for index, option := range q.Options {
 					answer := option
-					btn := textButton(c, option).FillWidth()
-					if q.Answer == option {
-						btn.Background(a.palette.Active)
+					key := "question-option-" + q.ID + "-" + strconv.Itoa(index)
+					if q.MultiSelect {
+						selected := a.expanded[key]
+						controlCheckbox(c.Key(key), &selected, option).Disabled(q.Answer != "").
+							OnClick(func() { a.expanded[key] = selected })
+					} else {
+						textButton(c.Key(key), option).FillWidth().Disabled(q.Answer != "").
+							OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: q.ID, Text: answer}) })
 					}
-					btn.Disabled(q.Answer != "").OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: q.ID, Text: answer}) })
+					if index < len(q.OptionDescriptions) && q.OptionDescriptions[index] != "" {
+						ui.Text(c, q.OptionDescriptions[index]).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					}
+				}
+				if q.MultiSelect && q.Answer == "" {
+					answers := []string{}
+					for index, option := range q.Options {
+						if a.expanded["question-option-"+q.ID+"-"+strconv.Itoa(index)] {
+							answers = append(answers, option)
+						}
+					}
+					primaryButton(c.Key("question-submit-"+q.ID), tr(c, "Submit")).Disabled(len(answers) == 0).OnClick(func() {
+						encoded, _ := json.Marshal(answers)
+						a.dispatch(contracts.Command{Kind: "request.answer", ID: q.ID, Text: string(encoded)})
+						for index := range q.Options {
+							delete(a.expanded, "question-option-"+q.ID+"-"+strconv.Itoa(index))
+						}
+					})
 				}
 				if q.Answer != "" {
 					ui.Text(c, q.Answer).TextColor(a.palette.Success)
@@ -44,7 +76,7 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 			ui.Column(c).Padding(16).Radius(10).Border(1, a.palette.Border).Gap(10).Children(func() {
 				ui.Text(c, p.Title).FontWeight(600)
 				ui.Text(c, p.Description).TextColor(a.palette.Muted)
-				ui.Text(c, p.Command).Font("Geist Mono").FontSize(design.UISize(c, 12)).Selectable()
+				ui.Text(c, p.Command).Font(design.MonoFont(a.state.Settings.Appearance.CodeFont)).FontSize(float32(a.state.Settings.Appearance.CodeFontSize)).Selectable()
 				if p.Answer == "" {
 					ui.Row(c).Gap(8).Children(func() {
 						for _, v := range []string{"Allow once", "Always allow", "Deny"} {
@@ -65,7 +97,7 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 				} else {
 					icon(c, "clock-circle", 14)
 				}
-				ui.Text(c, todo.Text).FontSize(design.UISize(c, 13))
+				ui.Text(c, todo.Text).FontSize(design.TextSize(c, design.TextBase))
 			})
 		}
 	case "subagent":
@@ -89,7 +121,7 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 			annotation := *b.Annotation
 			ui.ButtonBase(c).Padding(5, 8).Radius(8).Border(1, a.palette.Border).Label(a.annotationLabel(annotation.Index)).OnClick(func() { a.workspace.FocusAnnotation(annotation.Index) }).Children(func() {
 				icon(c, "cursor-square", 14)
-				ui.Text(c, a.annotationLabel(annotation.Index)).FontSize(design.UISize(c, 12))
+				ui.Text(c, a.annotationLabel(annotation.Index)).FontSize(design.TextSize(c, design.TextBase))
 			})
 		}
 	default:
@@ -110,8 +142,8 @@ func (a *App) transcriptSubagent(c *ui.Context, agent contracts.Subagent) {
 	}
 	button.Children(func() {
 		ui.Row(c).Size(18, 18).Radius(5).Background(a.activityInk(.08)).AlignItems(ui.Center).Justify(ui.Center).Children(func() { icon(c, "bot", 12) })
-		ui.Text(c, tr(c, "Agent")).FontWeight(500).FontSize(design.UISize(c, 12)).SingleLine().TextColor(color)
-		ui.Text(c, firstNonempty(agent.Name, agent.Task)).FontSize(design.UISize(c, 12)).SingleLine().Grow(1).TextColor(color)
+		ui.Text(c, tr(c, "Agent")).FontWeight(500).FontSize(design.TextSize(c, design.TextBase)).SingleLine().TextColor(color)
+		ui.Text(c, firstNonempty(agent.Name, agent.Task)).FontSize(design.TextSize(c, design.TextBase)).SingleLine().Grow(1).TextColor(color)
 		if agent.Status == "working" || agent.Status == "running" {
 			ui.Spinner(c).Size(11, 11)
 		}

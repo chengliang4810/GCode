@@ -56,6 +56,10 @@ func (t ToolCall) Failed() bool {
 	return t.IsError || t.Status == "failed" || t.Status == "error" || (t.ExitCode != nil && *t.ExitCode != 0)
 }
 
+func (t ToolCall) IsQuestion() bool {
+	return t.Name == "ask_user"
+}
+
 // ActivitySummary is derived from actual ordered activity, never fixture labels.
 // EditedFiles deduplicates paths across write/edit/apply-patch operations.
 type ActivitySummary struct {
@@ -80,6 +84,9 @@ func SummarizeActivity(blocks []Block) ActivitySummary {
 	seen := make(map[string]bool)
 	for i, block := range blocks {
 		if block.Tool != nil {
+			if block.Tool.IsQuestion() {
+				continue
+			}
 			id := block.Tool.ID
 			if id == "" {
 				id = fmt.Sprintf("block:%s:%d", block.ID, i)

@@ -1,0 +1,372 @@
+{
+  "pluginId": "altimate-code@claude-plugins-official",
+  "sourceCommit": "b7c8f68b3dfd303ab3ccf2f43934098811dfe2aa",
+  "allowHooks": [
+    "hook:SessionStart/0/0"
+  ],
+  "probes": [
+    {
+      "id": "altimate-command-record-dim-customers",
+      "componentId": "command:altimate-code:altimate",
+      "prompt": "/altimate-code:altimate Add a dim_customers model to the jupiter dbt project that joins stg_customers and stg_orders on customer_id and produces one row per customer. Headless boundary: no network, no real external service, no installs; the altimate-code CLI is not installed in this environment, so the delegation cannot run and no model, table or lineage artifact may be claimed. Do not attempt the work with native tools. Read the immutable dbt project files and the command documentation, then write altimate-command-record.md with these sections. Verification: the documented PATH check, the observed not-installed result, and the exact documented user message for that failure branch, including the npm install guidance and the Node 20+ requirement. Agent choice: apply the documented classification table to this dbt/SQL task and record why fast-edit is the default, when analyst is used, when builder is used, and the stop rule for vague debug. Invocation: the documented here-doc pattern with ALTIMATE_TASK, umask 077, the private mktemp output file pattern mktemp -t altimate-result.XXXXXX.md, the exact altimate-code run command with --agent fast-edit and the required --yolo, --output and --dir flags, the rule to present the output verbatim and delete it, and the --continue follow-up rule. Task preservation: record the given task verbatim, including the project and model names. Boundary: state that the command did not run, that no native fallback was used, and that the command was not executed in this session, so the delegation, CLI auth and real dbt change remain untested. Then read the immutable verify_altimate_command.py and run exactly python verify_altimate_command.py using Bash to validate the record and write altimate-command-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the record, report the actual verifier output line, and state that the real delegation, CLI authentication and dbt model creation remain untested.",
+      "allowCommands": [
+        "python verify_altimate_command.py"
+      ],
+      "verifierOutputs": [
+        "altimate-command-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "dbt_project.yml",
+          "text": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "path": "models/staging/stg_customers.sql",
+          "text": "select\n    customer_id,\n    customer_name\nfrom {{ source('raw', 'customers') }}\n"
+        },
+        {
+          "path": "models/staging/stg_orders.sql",
+          "text": "select\n    order_id,\n    customer_id,\n    order_total\nfrom {{ source('raw', 'orders') }}\n"
+        },
+        {
+          "path": "verify_altimate_command.py",
+          "text": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-command-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nstg_customers = Path('models/staging/stg_customers.sql').read_text(encoding='utf-8')\nstg_orders = Path('models/staging/stg_orders.sql').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'customer_id' in stg_customers and 'customer_id' in stg_orders, 'the given staging models changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'altimate-code is not installed' in flatlow, 'the documented not-installed message must be recorded'\nassert 'npm install -g altimate-code' in flat and 'Node 20+' in flat, 'the documented install guidance must be recorded'\nassert 'fast-edit' in flat and 'analyst' in flat and 'builder' in flat, 'the documented agent table must be recorded'\nassert 'vague debug' in flatlow, 'the documented vague-debug stop rule must be recorded'\nassert 'warehouse-state' in flatlow, 'the documented builder condition must be recorded'\nassert '--agent fast-edit' in flat, 'the chosen agent flag must be recorded'\nfor flag in ('--yolo', '--output', '--dir', '--continue'):\n    assert flag in flat, 'the documented required flag must be recorded: ' + flag\nassert 'mktemp -t altimate-result.XXXXXX.md' in flat, 'the documented private output file pattern must be recorded'\nassert 'ALTIMATE_TASK' in flat and 'umask 077' in flat, 'the documented safe task passing must be recorded'\nassert 'do not attempt the work with native' in flatlow, 'the documented no-native-fallback rule must be recorded'\nfor value in ('dim_customers', 'jupiter', 'stg_customers', 'stg_orders', 'customer_id'):\n    assert value in flat, 'the given task value must be preserved: ' + value\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the command did not run'\nfor forbidden in ('created the model successfully', 'successfully created the model', 'model creation complete'):\n    assert forbidden not in flatlow, 'the record must not claim the model was created: ' + forbidden\n\nreport = {'agent_selection': True, 'failure_mode': True, 'honest_no_execution': True, 'invocation_flags': True, 'no_native_fallback': True, 'task_preserved': True, 'verification': True}\nPath('altimate-command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate command record: documented PATH failure, agent choice, invocation flags and task preservation verified; real delegation, CLI auth and dbt model creation remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_altimate_command.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-command-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nstg_customers = Path('models/staging/stg_customers.sql').read_text(encoding='utf-8')\nstg_orders = Path('models/staging/stg_orders.sql').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'customer_id' in stg_customers and 'customer_id' in stg_orders, 'the given staging models changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'altimate-code is not installed' in flatlow, 'the documented not-installed message must be recorded'\nassert 'npm install -g altimate-code' in flat and 'Node 20+' in flat, 'the documented install guidance must be recorded'\nassert 'fast-edit' in flat and 'analyst' in flat and 'builder' in flat, 'the documented agent table must be recorded'\nassert 'vague debug' in flatlow, 'the documented vague-debug stop rule must be recorded'\nassert 'warehouse-state' in flatlow, 'the documented builder condition must be recorded'\nassert '--agent fast-edit' in flat, 'the chosen agent flag must be recorded'\nfor flag in ('--yolo', '--output', '--dir', '--continue'):\n    assert flag in flat, 'the documented required flag must be recorded: ' + flag\nassert 'mktemp -t altimate-result.XXXXXX.md' in flat, 'the documented private output file pattern must be recorded'\nassert 'ALTIMATE_TASK' in flat and 'umask 077' in flat, 'the documented safe task passing must be recorded'\nassert 'do not attempt the work with native' in flatlow, 'the documented no-native-fallback rule must be recorded'\nfor value in ('dim_customers', 'jupiter', 'stg_customers', 'stg_orders', 'customer_id'):\n    assert value in flat, 'the given task value must be preserved: ' + value\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the command did not run'\nfor forbidden in ('created the model successfully', 'successfully created the model', 'model creation complete'):\n    assert forbidden not in flatlow, 'the record must not claim the model was created: ' + forbidden\n\nreport = {'agent_selection': True, 'failure_mode': True, 'honest_no_execution': True, 'invocation_flags': True, 'no_native_fallback': True, 'task_preserved': True, 'verification': True}\nPath('altimate-command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate command record: documented PATH failure, agent choice, invocation flags and task preservation verified; real delegation, CLI auth and dbt model creation remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-verification.json",
+          "equals": "{\"agent_selection\": true, \"failure_mode\": true, \"honest_no_execution\": true, \"invocation_flags\": true, \"no_native_fallback\": true, \"task_preserved\": true, \"verification\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "dbt_project.yml",
+          "equals": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/staging/stg_customers.sql",
+          "equals": "select\n    customer_id,\n    customer_name\nfrom {{ source('raw', 'customers') }}\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/staging/stg_orders.sql",
+          "equals": "select\n    order_id,\n    customer_id,\n    order_total\nfrom {{ source('raw', 'orders') }}\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-record.md",
+          "contains": "command -v altimate-code"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-record.md",
+          "contains": "altimate-code is not installed"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-record.md",
+          "contains": "mktemp -t altimate-result.XXXXXX.md"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-record.md",
+          "contains": "dim_customers"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-command-record.md",
+          "contains": "not executed in this session"
+        }
+      ]
+    },
+    {
+      "id": "review-command-record-commit-scope",
+      "componentId": "command:altimate-code:review",
+      "prompt": "/altimate-code:review 3f9c2ab Review commit 3f9c2ab in the jupiter-analytics dbt project. Headless boundary: no network, no real external service, no installs; the altimate-code CLI is not installed in this environment, so the review cannot run and no verdict, finding or signature may be fabricated. Read the immutable dbt project file and the command documentation, then write altimate-review-command-record.md with these sections. Verification: the documented PATH check, the observed not-installed result, and the exact documented install message altimate-code is not installed with npm install -g altimate-code (requires Node 20+). Project check: the documented dbt_project.yml requirement. Scope: apply the documented scope table to the given commit SHA and record the exact review command with --base and --head. Presentation: the documented verbatim presentation rule and the prohibition on fabricating a verdict envelope, writing a json file or printing sha256 signatures. Flags: the documented --no-ai, --json, --severity warning and --output flags, and the --manifest and --cwd conditions. Never do: the documented prohibitions on --post as a public, irreversible action and on interactive --mode gate that exits non-zero. Failure modes: the documented not-installed, Unauthorized, fatal: not a git repository, no dbt_project.yml and DEGRADED — lint-only rows. Boundary: state that the review was not executed in this session and that the signed verdict for jupiter-analytics remains untested. Then read the immutable verify_review_command.py and run exactly python verify_review_command.py using Bash to validate the record and write review-command-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the record, report the actual verifier output line, and state that the real review, CLI authentication and any PR interaction remain untested.",
+      "allowCommands": [
+        "python verify_review_command.py"
+      ],
+      "verifierOutputs": [
+        "review-command-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "dbt_project.yml",
+          "text": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "path": "models/marts/fct_revenue.sql",
+          "text": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "path": "verify_review_command.py",
+          "text": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-review-command-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'altimate-code is not installed' in flatlow, 'the documented not-installed message must be recorded'\nassert 'npm install -g altimate-code' in flat and 'Node 20+' in flat, 'the documented install guidance must be recorded'\nassert 'dbt_project.yml' in flat, 'the documented project precheck must be recorded'\nassert 'altimate-code review --base 3f9c2ab~1 --head 3f9c2ab' in flat, 'the documented commit scope command must be applied to the given SHA'\nfor flag in ('--no-ai', '--json', '--severity warning', '--output'):\n    assert flag in flat, 'the documented optional flag must be recorded: ' + flag\nassert '--post' in flat and 'irreversible' in flatlow, 'the documented --post prohibition must be recorded'\nassert '--mode gate' in flat and 'exits non-zero' in flatlow, 'the documented gate prohibition must be recorded'\nassert 'verbatim' in flatlow, 'the documented presentation rule must be recorded'\nassert 'do not fabricate' in flatlow, 'the documented no-fabrication rule must be recorded'\nassert 'Unauthorized' in flat, 'the documented auth failure row must be recorded'\nassert 'fatal: not a git repository' in flat, 'the documented git failure row must be recorded'\nassert 'No dbt_project.yml' in flat, 'the documented project failure row must be recorded'\nassert 'DEGRADED — lint-only' in flat, 'the documented degraded row must be recorded'\nassert 'jupiter-analytics' in flat, 'the record must name the given repository'\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the review did not run'\n\nreport = {'failure_modes': True, 'flags': True, 'honest_no_review': True, 'presentation': True, 'prohibitions': True, 'scope_exact': True, 'verification': True}\nPath('review-command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate review command record: documented PATH failure, commit scope, flags, prohibitions and failure rows verified; real review, CLI authentication and PR interaction remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_review_command.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-review-command-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'altimate-code is not installed' in flatlow, 'the documented not-installed message must be recorded'\nassert 'npm install -g altimate-code' in flat and 'Node 20+' in flat, 'the documented install guidance must be recorded'\nassert 'dbt_project.yml' in flat, 'the documented project precheck must be recorded'\nassert 'altimate-code review --base 3f9c2ab~1 --head 3f9c2ab' in flat, 'the documented commit scope command must be applied to the given SHA'\nfor flag in ('--no-ai', '--json', '--severity warning', '--output'):\n    assert flag in flat, 'the documented optional flag must be recorded: ' + flag\nassert '--post' in flat and 'irreversible' in flatlow, 'the documented --post prohibition must be recorded'\nassert '--mode gate' in flat and 'exits non-zero' in flatlow, 'the documented gate prohibition must be recorded'\nassert 'verbatim' in flatlow, 'the documented presentation rule must be recorded'\nassert 'do not fabricate' in flatlow, 'the documented no-fabrication rule must be recorded'\nassert 'Unauthorized' in flat, 'the documented auth failure row must be recorded'\nassert 'fatal: not a git repository' in flat, 'the documented git failure row must be recorded'\nassert 'No dbt_project.yml' in flat, 'the documented project failure row must be recorded'\nassert 'DEGRADED — lint-only' in flat, 'the documented degraded row must be recorded'\nassert 'jupiter-analytics' in flat, 'the record must name the given repository'\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the review did not run'\n\nreport = {'failure_modes': True, 'flags': True, 'honest_no_review': True, 'presentation': True, 'prohibitions': True, 'scope_exact': True, 'verification': True}\nPath('review-command-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate review command record: documented PATH failure, commit scope, flags, prohibitions and failure rows verified; real review, CLI authentication and PR interaction remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "review-command-verification.json",
+          "equals": "{\"failure_modes\": true, \"flags\": true, \"honest_no_review\": true, \"presentation\": true, \"prohibitions\": true, \"scope_exact\": true, \"verification\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "dbt_project.yml",
+          "equals": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/marts/fct_revenue.sql",
+          "equals": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-command-record.md",
+          "contains": "command -v altimate-code"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-command-record.md",
+          "contains": "fatal: not a git repository"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-command-record.md",
+          "contains": "DEGRADED — lint-only"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-command-record.md",
+          "contains": "jupiter-analytics"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-command-record.md",
+          "contains": "not executed in this session"
+        }
+      ]
+    },
+    {
+      "id": "altimate-skill-record-fct-revenue-lineage",
+      "componentId": "skill:altimate-code:altimate-code",
+      "prompt": "/altimate-code:altimate-code Produce column-level lineage for fct_revenue in the jupiter dbt project and report which downstream models depend on order_total. Headless boundary: no network, no real external service, no installs; the altimate-code CLI is not installed in this environment, so the skill cannot execute and no lineage or downstream-impact result may be claimed. Read the immutable dbt project files and the skill documentation, then write altimate-skill-record.md with these sections. Workflow: the documented three steps to verify altimate-code on PATH with command -v altimate-code, run it with the task passed verbatim, and read the output file and present it as-is. Classification: apply the documented table to this warehouse-state task and record why builder is the documented choice, why fast-edit and analyst are the alternatives, and the vague debug stop rule. Invocation: the documented here-doc pattern with ALTIMATE_TASK, umask 077, the private mktemp output file pattern mktemp -t altimate-result.XXXXXX.md, the exact run command with --agent builder and the required --yolo, --output and --dir flags, and the --continue follow-up rule. Failure modes: all five documented rows with the agent recommended fix for each, including the install command, No provider configured, Process hangs with the anthropic/claude-sonnet-4-6 fallback, Output file empty, and UNKNOWN_USER or Database does not exist warehouse errors. No fallback: the documented rule that native tools are NOT a fallback path and the failure must be surfaced to the user. Boundary: state that the skill was not executed in this session and that lineage, warehouse access and downstream impact remain untested. Then read the immutable verify_altimate_skill.py and run exactly python verify_altimate_skill.py using Bash to validate the record and write altimate-skill-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the record, report the actual verifier output line, and state that the real CLI run, warehouse connection and lineage result remain untested.",
+      "allowCommands": [
+        "python verify_altimate_skill.py"
+      ],
+      "verifierOutputs": [
+        "altimate-skill-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "dbt_project.yml",
+          "text": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "path": "models/marts/fct_revenue.sql",
+          "text": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "path": "models/marts/agg_customer_revenue.sql",
+          "text": "select\n    customer_id,\n    sum(order_total) as lifetime_revenue\nfrom {{ ref('fct_revenue') }}\ngroup by customer_id\n"
+        },
+        {
+          "path": "verify_altimate_skill.py",
+          "text": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-skill-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nfct = Path('models/marts/fct_revenue.sql').read_text(encoding='utf-8')\nagg = Path('models/marts/agg_customer_revenue.sql').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'order_total' in fct and \"ref('fct_revenue')\" in agg, 'the given lineage inputs changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'verbatim' in flatlow, 'the documented verbatim task and output rule must be recorded'\nassert 'read the output file' in flatlow, 'the documented output reading step must be recorded'\nassert 'warehouse-state' in flatlow and 'builder' in flat, 'the documented warehouse-state classification must be recorded'\nassert 'fast-edit' in flat and 'analyst' in flat, 'the documented alternative agents must be recorded'\nassert 'vague debug' in flatlow, 'the documented vague-debug stop rule must be recorded'\nassert '--agent builder' in flat, 'the chosen agent flag must be recorded'\nfor flag in ('--yolo', '--output', '--dir', '--continue'):\n    assert flag in flat, 'the documented required flag must be recorded: ' + flag\nassert 'mktemp -t altimate-result.XXXXXX.md' in flat, 'the documented private output file pattern must be recorded'\nassert 'ALTIMATE_TASK' in flat and 'umask 077' in flat, 'the documented safe task passing must be recorded'\nassert 'UNKNOWN_USER' in flat and 'Database does not exist' in flat, 'the documented warehouse error rows must be recorded'\nassert 'claude-sonnet-4-6' in flat, 'the documented hang recovery model must be recorded'\nassert 'No provider configured' in flat and 'Output file empty' in flat and 'Process hangs' in flat, 'the documented failure rows must be recorded'\nassert 'not a fallback' in flatlow, 'the documented no-native-fallback rule must be recorded'\nfor value in ('fct_revenue', 'order_total', 'jupiter'):\n    assert value in flat, 'the given task value must be preserved: ' + value\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the skill did not run'\n\nreport = {'classification': True, 'failure_modes': True, 'honest_no_execution': True, 'invocation_flags': True, 'no_fallback': True, 'task_preserved': True, 'workflow': True}\nPath('altimate-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate skill record: documented workflow, warehouse-state classification, invocation flags and five failure rows verified; real CLI run, warehouse access and lineage result remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_altimate_skill.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-skill-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nfct = Path('models/marts/fct_revenue.sql').read_text(encoding='utf-8')\nagg = Path('models/marts/agg_customer_revenue.sql').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'order_total' in fct and \"ref('fct_revenue')\" in agg, 'the given lineage inputs changed'\nassert 'command -v altimate-code' in record, 'the documented PATH check must be recorded'\nassert 'verbatim' in flatlow, 'the documented verbatim task and output rule must be recorded'\nassert 'read the output file' in flatlow, 'the documented output reading step must be recorded'\nassert 'warehouse-state' in flatlow and 'builder' in flat, 'the documented warehouse-state classification must be recorded'\nassert 'fast-edit' in flat and 'analyst' in flat, 'the documented alternative agents must be recorded'\nassert 'vague debug' in flatlow, 'the documented vague-debug stop rule must be recorded'\nassert '--agent builder' in flat, 'the chosen agent flag must be recorded'\nfor flag in ('--yolo', '--output', '--dir', '--continue'):\n    assert flag in flat, 'the documented required flag must be recorded: ' + flag\nassert 'mktemp -t altimate-result.XXXXXX.md' in flat, 'the documented private output file pattern must be recorded'\nassert 'ALTIMATE_TASK' in flat and 'umask 077' in flat, 'the documented safe task passing must be recorded'\nassert 'UNKNOWN_USER' in flat and 'Database does not exist' in flat, 'the documented warehouse error rows must be recorded'\nassert 'claude-sonnet-4-6' in flat, 'the documented hang recovery model must be recorded'\nassert 'No provider configured' in flat and 'Output file empty' in flat and 'Process hangs' in flat, 'the documented failure rows must be recorded'\nassert 'not a fallback' in flatlow, 'the documented no-native-fallback rule must be recorded'\nfor value in ('fct_revenue', 'order_total', 'jupiter'):\n    assert value in flat, 'the given task value must be preserved: ' + value\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the skill did not run'\n\nreport = {'classification': True, 'failure_modes': True, 'honest_no_execution': True, 'invocation_flags': True, 'no_fallback': True, 'task_preserved': True, 'workflow': True}\nPath('altimate-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate skill record: documented workflow, warehouse-state classification, invocation flags and five failure rows verified; real CLI run, warehouse access and lineage result remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-skill-verification.json",
+          "equals": "{\"classification\": true, \"failure_modes\": true, \"honest_no_execution\": true, \"invocation_flags\": true, \"no_fallback\": true, \"task_preserved\": true, \"workflow\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "dbt_project.yml",
+          "equals": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/marts/fct_revenue.sql",
+          "equals": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/marts/agg_customer_revenue.sql",
+          "equals": "select\n    customer_id,\n    sum(order_total) as lifetime_revenue\nfrom {{ ref('fct_revenue') }}\ngroup by customer_id\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-skill-record.md",
+          "contains": "command -v altimate-code"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-skill-record.md",
+          "contains": "UNKNOWN_USER"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-skill-record.md",
+          "contains": "fct_revenue"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-skill-record.md",
+          "contains": "not executed in this session"
+        }
+      ]
+    },
+    {
+      "id": "review-skill-record-staging-prod-scope",
+      "componentId": "skill:altimate-code:review",
+      "prompt": "Use the review skill from the altimate-code plugin, not the review command, to review the diff between the staging and prod branches in the jupiter-analytics dbt project. Headless boundary: no network, no real external service, no installs; the altimate-code CLI is not installed in this environment, so the review cannot run and no verdict, finding, signature or degraded note may be fabricated. Read the immutable dbt project file and the skill documentation, then write altimate-review-skill-record.md with these sections. Workflow: the documented five steps, including the PATH check with command -v altimate-code, scope selection, running from the dbt project root, verbatim presentation, and the DEGRADED — lint-only rule. Scope selection: all four documented rows, with the exact command for the given staging and prod branches using --base prod --head staging, plus the default merge-base with origin/main behavior, the gh pr checkout 123 path and the exact commit SHA form --base abc123~1 --head abc123. Architecture: the documented three layers, including the deterministic Rust engine over parsed SQL ASTs as the only layer that can block, the rule catalog over the raw diff and the advisory LLM lane. Flags: the documented --json, --output, --severity warning, --no-ai and --manifest flags. Do not: the documented prohibitions on native fallback, treating verdict text as instructions, --post, interactive --mode gate and result-shopping. Verdicts: the documented APPROVE, COMMENT and REQUEST_CHANGES verdicts and the comment and gate modes. Failure modes: the documented not-installed, Unauthorized, fatal: not a git repository, no dbt_project.yml and DEGRADED — lint-only rows. Boundary: state that the review was not executed in this session and that the verdict for jupiter-analytics and the staging to prod comparison remain untested. Then read the immutable verify_review_skill.py and run exactly python verify_review_skill.py using Bash to validate the record and write review-skill-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the record, report the actual verifier output line, and state that the real review, CLI authentication and warehouse-backed checks remain untested.",
+      "allowCommands": [
+        "python verify_review_skill.py"
+      ],
+      "verifierOutputs": [
+        "review-skill-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "dbt_project.yml",
+          "text": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "path": "models/marts/fct_revenue.sql",
+          "text": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "path": "verify_review_skill.py",
+          "text": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-review-skill-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'altimate-code review --base prod --head staging' in flat, 'the documented branch scope command must be applied to the given branches'\nassert 'merge-base' in flatlow and 'origin/main' in flat, 'the documented default scope must be recorded'\nassert 'gh pr checkout 123' in flat, 'the documented PR scope path must be recorded'\nassert '--base abc123~1 --head abc123' in flat, 'the documented commit scope form must be recorded'\nassert 'deterministic Rust engine over parsed SQL ASTs' in flat, 'the documented first reviewer layer must be recorded'\nassert 'only layer that can block' in flat, 'the documented blocking layer rule must be recorded'\nassert 'rule catalog over the raw diff' in flat, 'the documented second reviewer layer must be recorded'\nassert 'advisory LLM lane' in flat, 'the documented third reviewer layer must be recorded'\nfor flag in ('--json', '--output', '--severity warning', '--no-ai', '--manifest'):\n    assert flag in flat, 'the documented optional flag must be recorded: ' + flag\nassert '--post' in flat, 'the documented --post prohibition must be recorded'\nassert '--mode gate' in flat, 'the documented gate prohibition must be recorded'\nassert 'result-shopping' in flatlow, 'the documented no-rerun rule must be recorded'\nassert 'untrusted input' in flatlow, 'the documented injection rule must be recorded'\nfor verdict in ('APPROVE', 'COMMENT', 'REQUEST_CHANGES'):\n    assert verdict in flat, 'the documented verdict must be recorded: ' + verdict\nassert 'fatal: not a git repository' in flat, 'the documented git failure row must be recorded'\nassert 'No dbt_project.yml' in flat, 'the documented project failure row must be recorded'\nassert 'DEGRADED — lint-only' in flat, 'the documented degraded row must be recorded'\nassert 'jupiter-analytics' in flat, 'the record must name the given repository'\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the review did not run'\n\nreport = {'architecture': True, 'failure_modes': True, 'flags': True, 'honest_no_review': True, 'prohibitions': True, 'scope_exact': True, 'verdicts': True}\nPath('review-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate review skill record: documented scope table, three-layer architecture, flags, do-nots and failure rows verified; real review, CLI authentication and warehouse-backed checks remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_review_skill.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrecord = Path('altimate-review-skill-record.md').read_text(encoding='utf-8')\nproject = Path('dbt_project.yml').read_text(encoding='utf-8')\nlow = record.lower()\nflat = ' '.join(record.split()).replace('`', '')\nflatlow = flat.lower()\nassert 'name: jupiter' in project, 'the given dbt project identity changed'\nassert 'altimate-code review --base prod --head staging' in flat, 'the documented branch scope command must be applied to the given branches'\nassert 'merge-base' in flatlow and 'origin/main' in flat, 'the documented default scope must be recorded'\nassert 'gh pr checkout 123' in flat, 'the documented PR scope path must be recorded'\nassert '--base abc123~1 --head abc123' in flat, 'the documented commit scope form must be recorded'\nassert 'deterministic Rust engine over parsed SQL ASTs' in flat, 'the documented first reviewer layer must be recorded'\nassert 'only layer that can block' in flat, 'the documented blocking layer rule must be recorded'\nassert 'rule catalog over the raw diff' in flat, 'the documented second reviewer layer must be recorded'\nassert 'advisory LLM lane' in flat, 'the documented third reviewer layer must be recorded'\nfor flag in ('--json', '--output', '--severity warning', '--no-ai', '--manifest'):\n    assert flag in flat, 'the documented optional flag must be recorded: ' + flag\nassert '--post' in flat, 'the documented --post prohibition must be recorded'\nassert '--mode gate' in flat, 'the documented gate prohibition must be recorded'\nassert 'result-shopping' in flatlow, 'the documented no-rerun rule must be recorded'\nassert 'untrusted input' in flatlow, 'the documented injection rule must be recorded'\nfor verdict in ('APPROVE', 'COMMENT', 'REQUEST_CHANGES'):\n    assert verdict in flat, 'the documented verdict must be recorded: ' + verdict\nassert 'fatal: not a git repository' in flat, 'the documented git failure row must be recorded'\nassert 'No dbt_project.yml' in flat, 'the documented project failure row must be recorded'\nassert 'DEGRADED — lint-only' in flat, 'the documented degraded row must be recorded'\nassert 'jupiter-analytics' in flat, 'the record must name the given repository'\nassert 'not executed in this session' in flatlow, 'the record must state honestly that the review did not run'\n\nreport = {'architecture': True, 'failure_modes': True, 'flags': True, 'honest_no_review': True, 'prohibitions': True, 'scope_exact': True, 'verdicts': True}\nPath('review-skill-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('altimate review skill record: documented scope table, three-layer architecture, flags, do-nots and failure rows verified; real review, CLI authentication and warehouse-backed checks remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "review-skill-verification.json",
+          "equals": "{\"architecture\": true, \"failure_modes\": true, \"flags\": true, \"honest_no_review\": true, \"prohibitions\": true, \"scope_exact\": true, \"verdicts\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "dbt_project.yml",
+          "equals": "name: jupiter\nversion: 1.0.0\nprofile: jupiter\nmodel-paths: [\"models\"]\n"
+        },
+        {
+          "kind": "file",
+          "path": "models/marts/fct_revenue.sql",
+          "equals": "{{ config(materialized='table') }}\n\nselect\n    o.order_id,\n    o.customer_id,\n    o.order_total\nfrom {{ ref('stg_orders') }} as o\n"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-skill-record.md",
+          "contains": "deterministic Rust engine over parsed SQL ASTs"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-skill-record.md",
+          "contains": "REQUEST_CHANGES"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-skill-record.md",
+          "contains": "DEGRADED — lint-only"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-skill-record.md",
+          "contains": "jupiter-analytics"
+        },
+        {
+          "kind": "file",
+          "path": "altimate-review-skill-record.md",
+          "contains": "not executed in this session"
+        }
+      ]
+    },
+    {
+      "id": "session-start-hook-injects-altimate-context",
+      "componentId": "hook:SessionStart/0/0",
+      "prompt": "This is an altimate-code SessionStart hook verification task; the hook itself is the component under test. Reply with the single word ready. The hook must exit 0 and its stdout must carry the documented hookSpecificOutput envelope with hookEventName SessionStart and an additionalContext that contains these exact text fragments: The altimate-code plugin ships two skills in this session. column-level lineage signed verdict envelope For non-dbt code review (TypeScript, Python, Go), the `review` skill declines. Read the immutable verify_hook.py and run exactly python verify_hook.py using Bash to execute the frozen session-start.sh handler copy, validate exit 0 and the injected context, and write hook-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Headless boundary: no network, no real external service and no installs; only the local handler copy is executed. Final response: report the actual verifier output line and state that model routing in a real session, plugin loading and any downstream warehouse tool remain untested.",
+      "allowCommands": [
+        "python verify_hook.py"
+      ],
+      "verifierOutputs": [
+        "hook-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "session-start.sh",
+          "text": "#!/usr/bin/env bash\n# SessionStart hook for the altimate-code plugin. Emits a descriptive statement\n# of the altimate-code skill's capabilities so Claude can route to it when the\n# task shape fits. Deliberately descriptive rather than imperative — see the\n# Claude plugin review-criteria checklist items on \"avoid instructing Claude\n# to call other tools\" and \"don't interfere with tool sequencing.\"\n#\n# Uses printf (not a here-doc) so the hook works in restricted sandboxes that\n# refuse to create the temporary file a here-doc needs.\n\nprintf '%s\\n' '{'\nprintf '  \"hookSpecificOutput\": {\\n'\nprintf '    \"hookEventName\": \"SessionStart\",\\n'\nprintf '    \"additionalContext\": \"The altimate-code plugin ships two skills in this session. (1) The `altimate-code` skill routes data-engineering work to the altimate-code CLI — column-level lineage, downstream-impact, cross-database validation, FinOps, PII from sampled rows, query cost attribution, schema diffs, dev-vs-prod diffing. It is not well-suited for pure file/code edits to dbt models and SQL files that do not touch warehouse state — native Bash/Edit/Write handles those faster. (2) The `review` skill runs the altimate-code dbt PR reviewer on dbt project changes (models/**.sql, schema.yml, dbt_project.yml, sources.yml, macros, snapshots, seeds). It emits a signed verdict envelope with column lineage, query equivalence, dbt anti-pattern detection, and PII screening — none of which native tools or a generic code-review skill can compute. When the user asks to review dbt / SQL / warehouse changes, this is the specialized reviewer available. For non-dbt code review (TypeScript, Python, Go), the `review` skill declines.\"\\n'\nprintf '  }\\n'\nprintf '}\\n'\n"
+        },
+        {
+          "path": "verify_hook.py",
+          "text": "import json\nfrom pathlib import Path\n\nimport subprocess\nscript = Path('session-start.sh').read_text(encoding='utf-8')\nassert 'printf' in script and 'hookSpecificOutput' in script, 'the frozen hook handler must be present'\ncompleted = subprocess.run(['bash', 'session-start.sh'], capture_output=True, text=True, encoding='utf-8')\nassert completed.returncode == 0, 'the SessionStart hook handler must exit 0'\npayload = json.loads(completed.stdout)\nspecific = payload['hookSpecificOutput']\nassert specific['hookEventName'] == 'SessionStart', 'the documented hookEventName must be SessionStart'\ncontext = specific['additionalContext']\nfor phrase in (\n    'The altimate-code plugin ships two skills in this session.',\n    'column-level lineage',\n    'signed verdict envelope',\n    'For non-dbt code review (TypeScript, Python, Go), the `review` skill declines.',\n):\n    assert phrase in context, 'the documented additionalContext phrase must be emitted: ' + phrase\n\nreport = {'additional_context_phrases': True, 'exit_zero': True, 'hook_event_name': True, 'json_envelope': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('SessionStart hook: handler exits 0 and emits the documented additionalContext; model routing in a real session remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_hook.py",
+          "equals": "import json\nfrom pathlib import Path\n\nimport subprocess\nscript = Path('session-start.sh').read_text(encoding='utf-8')\nassert 'printf' in script and 'hookSpecificOutput' in script, 'the frozen hook handler must be present'\ncompleted = subprocess.run(['bash', 'session-start.sh'], capture_output=True, text=True, encoding='utf-8')\nassert completed.returncode == 0, 'the SessionStart hook handler must exit 0'\npayload = json.loads(completed.stdout)\nspecific = payload['hookSpecificOutput']\nassert specific['hookEventName'] == 'SessionStart', 'the documented hookEventName must be SessionStart'\ncontext = specific['additionalContext']\nfor phrase in (\n    'The altimate-code plugin ships two skills in this session.',\n    'column-level lineage',\n    'signed verdict envelope',\n    'For non-dbt code review (TypeScript, Python, Go), the `review` skill declines.',\n):\n    assert phrase in context, 'the documented additionalContext phrase must be emitted: ' + phrase\n\nreport = {'additional_context_phrases': True, 'exit_zero': True, 'hook_event_name': True, 'json_envelope': True}\nPath('hook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('SessionStart hook: handler exits 0 and emits the documented additionalContext; model routing in a real session remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "hook-verification.json",
+          "equals": "{\"additional_context_phrases\": true, \"exit_zero\": true, \"hook_event_name\": true, \"json_envelope\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "session-start.sh",
+          "equals": "#!/usr/bin/env bash\n# SessionStart hook for the altimate-code plugin. Emits a descriptive statement\n# of the altimate-code skill's capabilities so Claude can route to it when the\n# task shape fits. Deliberately descriptive rather than imperative — see the\n# Claude plugin review-criteria checklist items on \"avoid instructing Claude\n# to call other tools\" and \"don't interfere with tool sequencing.\"\n#\n# Uses printf (not a here-doc) so the hook works in restricted sandboxes that\n# refuse to create the temporary file a here-doc needs.\n\nprintf '%s\\n' '{'\nprintf '  \"hookSpecificOutput\": {\\n'\nprintf '    \"hookEventName\": \"SessionStart\",\\n'\nprintf '    \"additionalContext\": \"The altimate-code plugin ships two skills in this session. (1) The `altimate-code` skill routes data-engineering work to the altimate-code CLI — column-level lineage, downstream-impact, cross-database validation, FinOps, PII from sampled rows, query cost attribution, schema diffs, dev-vs-prod diffing. It is not well-suited for pure file/code edits to dbt models and SQL files that do not touch warehouse state — native Bash/Edit/Write handles those faster. (2) The `review` skill runs the altimate-code dbt PR reviewer on dbt project changes (models/**.sql, schema.yml, dbt_project.yml, sources.yml, macros, snapshots, seeds). It emits a signed verdict envelope with column lineage, query equivalence, dbt anti-pattern detection, and PII screening — none of which native tools or a generic code-review skill can compute. When the user asks to review dbt / SQL / warehouse changes, this is the specialized reviewer available. For non-dbt code review (TypeScript, Python, Go), the `review` skill declines.\"\\n'\nprintf '  }\\n'\nprintf '}\\n'\n"
+        },
+        {
+          "kind": "exit",
+          "exitCode": 0
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "The altimate-code plugin ships two skills in this session."
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "column-level lineage"
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "signed verdict envelope"
+        },
+        {
+          "kind": "text",
+          "source": "hook",
+          "contains": "For non-dbt code review (TypeScript, Python, Go), the `review` skill declines."
+        }
+      ]
+    }
+  ]
+}

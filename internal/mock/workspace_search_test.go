@@ -40,7 +40,7 @@ func TestWorkspaceSearchUsesMutableFilesAndByteLocations(t *testing.T) {
 	if err != nil || len(result.Content) != 3 {
 		t.Fatalf("per-file cap: %+v %v", result, err)
 	}
-	request.ProjectID = "zeron"
+	request.ProjectID = "rcode"
 	result, err = s.SearchWorkspace(ctx, request)
 	if err != nil || len(result.Content) != 0 {
 		t.Fatalf("cross-project leak: %+v %v", result, err)
@@ -92,5 +92,44 @@ func TestDirectoryBrowseAndDeviceScopedProjectCreation(t *testing.T) {
 	request.DeviceID = "macbook"
 	if err = s.Execute(ctx, contracts.Command{Kind: "project.create", ProjectCreate: &request}); err == nil {
 		t.Fatal("duplicate device/path accepted")
+	}
+}
+func TestDirectoryLocationsFollowTheDeviceProjects(t *testing.T) {
+	s, err := New(Options{Instant: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	ctx := context.Background()
+	locations, err := s.ListDirectoryLocations(ctx, contracts.DirectoryRequest{DeviceID: "local"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(locations.Locations) != 1 || locations.Locations[0].Kind != contracts.LocationHome {
+		t.Fatalf("home must be the only virtual location: %+v", locations.Locations)
+	}
+	request := contracts.ProjectCreate{DeviceID: "macbook", Name: "Work", Path: "D:/work"}
+	if err = s.Execute(ctx, contracts.Command{Kind: "project.create", ProjectCreate: &request}); err != nil {
+		t.Fatal(err)
+	}
+	locations, err = s.ListDirectoryLocations(ctx, contracts.DirectoryRequest{DeviceID: "macbook"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(locations.Locations) != 2 || locations.Locations[1].Kind != contracts.LocationVolume || locations.Locations[1].Name != "D:" {
+		t.Fatalf("project volume missing: %+v", locations.Locations)
+	}
+	listing, err := s.ListDirectories(ctx, contracts.DirectoryRequest{DeviceID: "macbook", Path: locations.Locations[1].Path})
+	if err != nil {
+		t.Fatalf("offered location does not browse: %v", err)
+	}
+	if len(listing.Entries) != 1 || listing.Entries[0].Path != "D:/work" {
+		t.Fatalf("volume listing: %+v", listing.Entries)
+	}
+	if _, err = s.ListDirectoryLocations(ctx, contracts.DirectoryRequest{DeviceID: "remote"}); err == nil {
+		t.Fatal("offline device offered locations")
+	}
+	if _, err = s.ListDirectoryLocations(ctx, contracts.DirectoryRequest{DeviceID: "missing"}); err == nil {
+		t.Fatal("unknown device offered locations")
 	}
 }

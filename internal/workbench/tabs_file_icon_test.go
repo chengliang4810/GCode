@@ -33,9 +33,9 @@ func TestTabStripFileImageOpacityFollowsSelection(t *testing.T) {
 						t.Fatal("real file resource did not open")
 					}
 				}
-				snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "zeron-light"
+				snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "light", "rcode-light"
 				if dark {
-					snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "zeron-dark"
+					snapshot.Settings.Appearance.Mode, snapshot.Settings.Appearance.ThemeID = "dark", "rcode-dark"
 				}
 				s.Update(snapshot)
 				s.selectTab(0)

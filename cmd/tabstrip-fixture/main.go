@@ -235,7 +235,7 @@ func run(o options) error {
 	if err := fixture.SetStyleCase(o.styleCase); err != nil {
 		return err
 	}
-	mygo.App.SetName("Zeron tab strip fixture")
+	mygo.App.SetName("RCode tab strip fixture")
 	mygo.Theme.SetSource(o.theme(all[0].Appearance))
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()

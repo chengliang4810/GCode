@@ -10,7 +10,7 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func (s *State) fileContext(c *ui.Context, f contracts.File, m *ui.Menu) {
+func (s *State) fileContext(c *ui.Context, f contracts.File, m *ui.Menu, host string) {
 	if f.Kind != "directory" && m.Item(tr(c, "Open")).Chosen() {
 		s.OpenFile(f.ID)
 	}
@@ -20,21 +20,22 @@ func (s *State) fileContext(c *ui.Context, f contracts.File, m *ui.Menu) {
 	m.Separator()
 	if f.Kind == "directory" {
 		if m.Item(tr(c, "New file…")).Chosen() {
-			s.requestFileAction("create", f.ID)
+			s.requestFileAction("create", f.ID, host)
 		}
 		if m.Item(tr(c, "New folder…")).Chosen() {
-			s.requestFileAction("mkdir", f.ID)
+			s.requestFileAction("mkdir", f.ID, host)
 		}
 	}
 	if m.Item(tr(c, "Rename…")).Disabled(f.ReadOnly).Chosen() {
-		s.requestFileAction("rename", f.ID)
+		s.requestFileAction("rename", f.ID, host)
 	}
 	if m.Item(tr(c, "Delete…")).Disabled(f.ReadOnly).Chosen() {
-		s.requestFileAction("delete", f.ID)
+		s.requestFileAction("delete", f.ID, host)
 	}
 }
 
-func (s *State) requestFileAction(kind, id string) {
+func (s *State) requestFileAction(kind, id, host string) {
+	s.fileActionHost = host
 	s.fileAction = kind
 	s.fileActionID = id
 	s.fileActionName = ""
@@ -95,7 +96,7 @@ func (s *State) fileActionDialog(c *ui.Context) {
 		case "mkdir":
 			title = "New folder"
 		}
-		ui.Text(c, tr(c, title)).FontSize(design.UISize(c, 18)).FontWeight(600).Margin(0, 0, 16, 0)
+		ui.Text(c, tr(c, title)).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600).Margin(0, 0, 16, 0)
 		if s.fileAction == "delete" {
 			name := s.fileActionID
 			for _, f := range s.snapshot.Files {

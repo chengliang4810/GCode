@@ -1,0 +1,30 @@
+{
+  "repo": "intercom/claude-plugin-external",
+  "commit": "62773a7d4b8aac31545d6888fe6479be3bc53804",
+  "path": ".",
+  "archive_sha256": "3e68b15053779ed7ab7b0937a28c82f1858f94b9904a1e88ec483e05fbc956d2",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "CLAUDE.md",
+    "LICENSE",
+    "README.md",
+    "skills/customer-360/SKILL.md",
+    "skills/install-cli/SKILL.md",
+    "skills/install-messenger/SKILL.md",
+    "skills/install-messenger/references/backend-examples.md",
+    "skills/install-messenger/references/framework-guides.md",
+    "skills/intercom-analysis/SKILL.md",
+    "skills/intercom-analysis/references/mcp-tools.md"
+  ],
+  "config": {
+    ".mcp.json": "{\n  \"intercom\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.intercom.com/mcp\"\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"intercom\",\n  \"description\": \"Intercom integration for Claude Code. Search conversations, analyze customer support patterns, look up contacts and companies, and install the Intercom Messenger. Connect your Intercom workspace to get real-time insights from customer data.\",\n  \"version\": \"0.1.0\",\n  \"author\": {\n    \"name\": \"Intercom\",\n    \"url\": \"https://intercom.com\"\n  },\n  \"homepage\": \"https://developers.intercom.com\",\n  \"repository\": \"https://github.com/intercom/claude-plugin-external\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"intercom\", \"customer-support\", \"conversations\", \"contacts\", \"messenger\", \"crm\", \"api\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/install-cli/SKILL.md": "\nname: install-cli\nlicense: MIT\ndescription: >\n  Install and authenticate the Intercom CLI (`@intercom/cli`) — a command-line\n  tool for managing Intercom workspaces, designed for both human operators\n  and AI agents. Use when the user asks to \"install the Intercom CLI\",\n  \"set up the intercom command\", \"install @intercom/cli\", or wants\n  shell access to their Intercom workspace.\ndisable-model-invocation: true\n",
+    "skills/install-messenger/SKILL.md": "\nname: install-messenger\nlicense: MIT\ndescription: >\n  Install the Intercom Messenger on a website or web application with\n  secure JWT-based identity verification. Generates backend and frontend\n  code for React, Next.js, Vue.js, Angular, Ember, and plain JavaScript.\n  Supports Node.js, Python (Flask/Django), PHP, and Ruby backends. Use when\n  the user asks to \"install Intercom\", \"add the Intercom Messenger\", \"set up\n  Intercom chat widget\", \"add customer chat to my website\", or \"integrate Intercom\".\ndisable-model-invocation: true\nargument-hint: \"[framework]\"\n",
+    "skills/customer-360/SKILL.md": "\nname: customer-360\nlicense: MIT\ndescription: >\n  Build a comprehensive customer profile from Intercom data, including\n  conversation history, account context, and interaction timeline. Use when\n  the user asks to \"look up a customer\", \"customer profile\", \"customer 360\",\n  \"tell me about this customer\", \"summarize a customer's history\", or provides\n  a customer email or company name and wants a full picture.\ndisable-model-invocation: true\nargument-hint: \"[email or company name]\"\n",
+    "skills/intercom-analysis/SKILL.md": "\nname: intercom-analysis\nlicense: MIT\ndescription: >\n  Analyze Intercom conversations to identify support patterns, investigate\n  customer issues, and look up contacts and companies. Use when the user asks\n  to \"analyze conversations\", \"find support patterns\", \"search Intercom\",\n  \"look up a customer\", \"investigate a customer issue\", \"check contact info\",\n  or asks questions about their Intercom data.\n"
+  }
+}

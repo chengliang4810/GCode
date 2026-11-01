@@ -197,7 +197,7 @@ func IsIntegrationCommand(kind string) bool {
 }
 
 func (c Command) validateIntegration() error {
-	if c.Action != nil || c.Adjustment != nil || c.Send != nil || c.Settings != nil || c.Session != nil || c.Attachment != nil || c.Comment != nil || c.TerminalSize != nil || c.ProjectCreate != nil {
+	if c.Adjustment != nil || c.Send != nil || c.Settings != nil || c.Session != nil || c.Attachment != nil || c.TerminalSize != nil || c.ProjectCreate != nil {
 		return errors.New("unexpected payload for integration command")
 	}
 	if strings.HasPrefix(c.Kind, "provider.") && (c.Integration == nil || c.Kind != "provider.accounts.refresh" && c.Integration.ProviderID == "") {

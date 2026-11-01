@@ -1,5 +1,36 @@
 # Native agent transcript audit
 
+2026-10-30 tool-detail update: the user authorized the later RCode thought
+preview and question deduplication behavior, superseding the frozen-reference
+rules for those interactions. Thoughts and folded notes retain every formatted
+line. Tool invocation/output retain all received text, including wide lines;
+their shared virtualized viewport grows to 24 display lines and scrolls inside.
+Diff invocation and the native diff share a 24-line scrolling viewport.
+The limit applies to visible height, not source retention; existing tool
+execution/output budgets remain core policy. The final reply remains native
+Markdown outside these detail viewports.
+
+Thought details open only on user input. Folded live thoughts show the latest
+nonblank source line without waiting for a newline; settled thoughts show the
+first. Opening a detail pins its parent group open, so completion cannot hide a
+reader's explicit choice. `ask_user` keeps its real core history but is omitted
+from ordinary work rows and tool counts; its independent question card remains
+operable. Failed question calls retain an independent bounded error detail even
+when argument validation prevented creation of a question card.
+Readable command/search fields are decoded by the core at `tool.start`, with
+the original arguments retained for inspection.
+
+2026-11-01 activity-summary tip: the header keeps its native
+`Activity: <summary>` accessible name, but the visible summary tooltip is
+attached only when the header shows the worked duration instead (compact
+mode), and it anchors to that visible label rather than the full-width header
+row. Normal mode already shows the counts, so its tip only repeated the row;
+the frozen reference carries no tooltip there. `TestTranscriptActivitySummaryTipOnlyWhereTheHeaderHidesCounts`.
+
+2026-10-30 当前状态：权限入口、PR 入口和配置、项目动作及本地账户菜单已移除。
+正文保留当时的源码审计与验收证据；当前实施范围见
+[UI 残留清理](ui-residual-cleanup.md)，不再把这些旧入口列为待实现功能。
+
 Baseline: Zeron **v0.2.128**, commit
 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`.
 Scope: the assistant output area, activity grouping, individual work rows,
@@ -42,9 +73,10 @@ The user's third screenshot is supplemental visual evidence at
 It shows a compact interleaved work tree. It also shows a Thought preview that
 the pinned source does not produce: `chip_header_row` explicitly returns
 `("Thought process", String::new())` for a Thought; `note_chip_detail` is used
-only by a Wrote/narration row. This implementation follows the pinned source:
-reasoning remains available in the expandable body. A screenshot alone cannot
-establish which conditional/version generated that different preview.
+only by a Wrote/narration row. That was the original implementation baseline.
+The authorized 2026-10-30 update above now implements live previews after
+checking RCode commits `f86269f` and `3d7f39a` from 2026-10-26. The fixed reference
+and historical screenshots remain unchanged.
 
 ## Small-function checklist
 
@@ -70,14 +102,14 @@ establish which conditional/version generated that different preview.
 | TR-18 | Failed tools tint their own label/detail/icon, while group summary stays quiet | All 30 palettes have danger-foreground pixel assertions; dark/light implementation PNGs | Tested and inspected |
 | TR-19 | Complete groups start collapsed | `TestTranscriptNativeDisclosureAndFixedTreeGeometry` | Tested |
 | TR-20 | Only a streaming tail group automatically opens | Live projection/native tests | Tested |
-| TR-21 | Only a streaming tail Thought automatically opens its detail; compact mode suppresses defaults | `TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation`; source condition in renderer | Tested, including `TestTranscriptCompactLiveNeverAutoOpensThought` |
+| TR-21 | Thought details require explicit input in both modes; folded headers preview live/settled text | `TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists`, `TestTranscriptCompactLiveNeverAutoOpensThought` | Tested |
 | TR-22 | Explicit fold choice survives deltas, completion and virtual row recreation | Same native regression | Tested |
 | TR-23 | Enter and Space operate the focused native disclosure | `TestTranscriptNativeDisclosureAndFixedTreeGeometry` | Tested |
 | TR-24 | Expanded reasoning contains styled text, not Markdown source markers | `TestThoughtFlattenUsesSourceRecordLayout`, native detail test | Tested |
 | TR-25 | Thought headings, inline styles, code, bullets, quotes and tables use a fixed record layout | Official parser + native RichText; flatten regression | Tested |
-| TR-26 | Thought wraps at 96 characters; max 24 lines; live keeps tail, settled keeps head | Flatten/model regressions | Tested in implementation |
-| TR-27 | Tool command invocation wraps at 80 characters; output has 24-line cap and counted tail | `activityInvocation`, `activityLines` regression | Tested |
-| TR-28 | Expanded output uses 18px line boxes, 6px top/bottom padding and faint mono text | Source metrics port; inspected detail PNG | Implementation inspected |
+| TR-26 | Thought wraps at 96 characters; retains all lines within a viewport of at most 24 lines | Flatten regression; `TestTranscriptDetailsScrollCompleteContentWithinTwentyFourLines` | Tested |
+| TR-27 | Tool invocation/output wrap wide text without dropping characters; at most 24 rows visible, internally scrollable | `TestTranscriptDetailPreservesWideOutputWithoutEllipsis`, scroll regression and theme/width/font geometry tests | Tested |
+| TR-28 | Expanded output uses the independent code font size with 1.5 line height, 6px top/bottom padding and faint mono text | Theme/width/font geometry tests; native detail PNGs | Tested and inspected |
 | TR-29 | Native drag selection copies across output lines | `TestTranscriptOutputSelectionSpansNativeLines` | Tested |
 | TR-30 | Final reply renders separately as native Markdown | Normal/compact native tests and full desktop PNGs | Tested and inspected |
 | TR-31 | Completed footer copies reply prose without reasoning/tool output; no unconditional Retry | `TestTranscriptCopyContainsReplyOnlyAndNoDefaultRetry` | Tested |
@@ -88,21 +120,35 @@ establish which conditional/version generated that different preview.
 | TR-36 | 100%, 125%, 150%, 200% device scale retain logical geometry and operable disclosures | `TestTranscriptLogicalGeometryAtDesktopScales` | Tested in Tester; Windows monitor/DPI transitions pending |
 | TR-37 | All 30 original theme variants retain bounds and failed-row tint | `TestTranscriptAllThemesKeepGeometryAndFailureTint` | Tested |
 | TR-38 | Existing question/permission operations still dispatch backend answers | Existing `TestQuestionAndPermissionAnswers` | Tested |
+| TR-39 | Question tools do not duplicate their independent question card or tool count | `TestTranscriptQuestionAppearsOnlyAsQuestionCard` | Tested |
+| TR-40 | Diff and invocation share a bounded scroll viewport without moving the conversation | `TestTranscriptDiffUsesOneBoundedScrollingViewport` | Tested in implementation |
+
+The 2026-10-30 detail update passed the full Go suite, Go vet and MyGo vet.
+Final Windows native evidence is
+`output/transcript-activity/20261030-162651-3743064682/evidence.json`.
+Its light/dark runs used a real local core, real file reads and persistent
+history; only model responses were supplied by a local HTTP fixture.
+Screenshots and trees verify the native interaction implementation, not reference
+pixel parity, remote hosts, real external providers or OS input methods.
+The reference-link investigation is separate: see
+[RCode link rules and current gaps](rcode-links-investigation.md).
 | TR-39 | No persistent Element/Context, view-launched worker, or alternate fixture reader | MyGo vet and source inspection | Tested by vet and inspected |
-| TR-40 | Source 140ms folds, 360ms row arrivals, 480ms connectors and 3400ms active-summary shimmer | Current native Collapsible uses its official 200ms animation; exact source timings require a future framework-supported extension. Per the current scope decision, the dependency/Panel were preserved; arrival/connector/shimmer remain pending | Explicit difference retained |
+| TR-40 | Source 140ms folds, 360ms row arrivals, 480ms connectors and 3400ms active-summary shimmer | The scoped comfort follow-up uses MyGo `.16` `CollapsibleBaseWithAnimation` for 140ms CSS ease-out tool folds. Other native Collapsibles retain 200ms; arrival/connector/shimmer remain pending | Tool-fold timing implemented; remaining differences retained |
 | TR-41 | Inline diff matches original checkout-diff body, dual line gutters and syntax runs | Uses official native `editor.DiffView`; a fresh GPUI inline-diff comparison has not been made | Pending visual comparison |
 | TR-42 | Side transcript provides the full original side-conversation input/navigation surface | Actual child messages, independent input, send/stop, attachments and queue editing work in a native right tab. Full model/access/plan controls remain absent rather than replaced by alternate navigation | Functional input loop tested; full composer controls pending |
 | TR-43 | Original GPUI and replica pixels agree for all row/hover/selection states | No fresh matching reference screenshots exist for this change | Pending |
 | TR-44 | Long history, long output and selection remain within performance gates | Official outer virtualized List retained; this audit does not supply P95/native stress measurements | Pending performance acceptance |
+| TR-45 | Conversation rows follow the reference `rows_for_entry` block split; the copy/timestamp footer sits on the entry's last row; a selection keeps rows the List stopped building and copies their text | `TestConversationRowsSplitAMessageIntoBlockRows`, `TestTranscriptFooterFollowsTheMessageRows`, `TestTranscriptSelectionCopiesAfterItsRowsScrollOut`; framework `TestListTextSelectionSurvivesRowsLeavingTheBuild`; native e2e `output/desktop-e2e/20261101-173322-3584585105` (links, fold motion, Markdown tables, side chat) | Component and native-window interaction pass; frame timing and visual comparison pending |
+| TR-46 | Fenced code blocks show tab indentation at the editor's tab stops of their language (Go 4, JS/TS/JSON 2, unknown 4); the source and Copy code keep tabs, and a selection copies the source offset | `TestCodeBlockTabsShowAndCopy`, `TestCodeBlockTabsUseTheLanguageSize`, `TestReviewCopyMarkdownCodeTabs`, `TestTranscriptCodeBlockShowsTabs` | Component-level pass; native window visual check pending |
 
 ## Captured implementation evidence
 
 Regenerate without opening a native application window:
 
 ```powershell
-$env:ZERON_TRANSCRIPT_EVIDENCE = Join-Path (Get-Location) 'output/captures/transcript-audit'
+$env:RCODE_TRANSCRIPT_EVIDENCE = Join-Path (Get-Location) 'output/captures/transcript-audit'
 go test ./internal/desktop -run '^TestTranscriptRenderEvidence$' -count=1
-Remove-Item Env:ZERON_TRANSCRIPT_EVIDENCE
+Remove-Item Env:RCODE_TRANSCRIPT_EVIDENCE
 ```
 
 The ignored `output/captures/transcript-audit/` directory contains:
@@ -130,6 +176,18 @@ completed successfully:
 The backend's own state-transition, counter and race evidence is maintained in
 `docs/audit-agent-data.md`. Compilation, headless rendering, native Windows
 runtime behavior and user visual acceptance remain separate result categories.
+
+## 2026-10-30 transcript link integration
+
+The ordinary Markdown, mixed math, user-reference and table link entrances now
+share strict source-session routing and native link interaction. Files open in
+the right workspace through the owning host's typed linked-file service; URLs
+default to its Browser. A new Browser tab has an empty native address page and
+creates no WebView until navigation. Markdown files default to Preview, with
+case-insensitive extensions, relative document links and character-column
+conversion for source locations. See [transcript-links.md](transcript-links.md)
+for the implemented selection behavior, remaining presentation differences and
+the actual verification scope.
 
 
 ## Side-input closure and native-motion follow-up
@@ -166,10 +224,11 @@ edit is never cleared by a late successful completion.
 16-image manifest was refreshed. The side controller is a functional input/send
 loop, not the full shared-composer refactor: side model/reasoning/access/plan
 selection controls and their matching popovers still require the common composer
-state to be extracted. Source 140ms folds versus the official 200ms implementation,
-360ms row arrivals, 480ms connector reveals and 3400ms title shimmer remain
-explicit differences. No MyGo dependency lock, patch tree or original Panel
-implementation was changed for those timings.
+state to be extracted. At that stage, source 140ms folds versus the official
+200ms implementation, 360ms row arrivals, 480ms connector reveals and 3400ms
+title shimmer remained explicit differences. The later scoped comfort follow-up
+supersedes only the fold-timing boundary through the pinned `.16` native API;
+arrival, connector and shimmer remain separate differences.
 
 
 ## Shared-composer migration stage
@@ -185,7 +244,25 @@ differences. The source freeze removed an unfinished compact-layout experiment;
 no compact/dock visual parity is claimed.
 
 
-## 2026-10-29 side-chat creation entry correction
+## 2026-10-30 scoped fold comfort
+
+The scoped fold-comfort trial uses 140ms native folds and temporarily removes
+the owning pane's follow spring during a manual fold. Long details retain a
+24-row internal viewport while measuring visible rows and caching parsed data.
+Real local-core Windows tests passed in both themes, including rapid reversal,
+reduced motion and sampled stationary tail geometry. This does not resume the
+paused visual-parity goal. See [tool-fold-motion.md](tool-fold-motion.md) for
+before/after evidence, source-pin updates and test exclusions/failures.
+
+## 2026-10-30 side-chat context and launcher
+
+The current side chat inherits an independently persisted model-context snapshot,
+while keeping an empty visible transcript. Creation now lives in the right
+workspace's empty launcher and `+` menu; the session-info creation action below
+was removed. Existing-child reopening still preserves the main selection/draft.
+See [side-chats.md](side-chats.md) for the current behavior and verification scope.
+
+## 2026-10-29 side-chat creation entry correction (historical)
 
 The previous input checks above exercised an already existing child and its
 composer. They did not cover the **New side chat** action: that action created

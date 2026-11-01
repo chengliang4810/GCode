@@ -1,0 +1,16 @@
+{
+  "repo": "circlebackai/claude-code-plugin",
+  "commit": "a610634c95ab310accf20a0cabdf0fa7ab784fa3",
+  "path": ".",
+  "archive_sha256": "8b4985fd3acb6612228b67a57876974af40075ed2af0a1b01586572e6a7978a5",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"circleback\",\n  \"description\": \"Circleback conversational context integration. Search and access meetings, emails, calendar events, and more.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"Circleback\"\n  }\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"circleback\": {\n      \"type\": \"http\",\n      \"url\": \"https://circleback.ai/api/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {}
+}

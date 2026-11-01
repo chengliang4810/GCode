@@ -11,7 +11,7 @@ import (
 func (a *App) cloudSettings(c *ui.Context) {
 	a.integrationSubtitle(c, "Run your agents in cloud sandboxes.")
 	if a.cloudPage.error != "" {
-		ui.Text(c, a.cloudPage.error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger)
+		ui.Text(c, a.cloudPage.error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
 	}
 	v := a.state.Integrations.Cloud
 	if a.cloudPage.busy == "cloud.enable" {
@@ -85,13 +85,13 @@ func (a *App) cloudSettings(c *ui.Context) {
 		if g.State == "waiting" {
 			line(c)
 			ui.Column(c).FillWidth().Padding(12, 16).Gap(8).Children(func() {
-				ui.Text(c, tr(c, "Enter this code on GitHub")).FontSize(design.UISize(c, 13)).FontWeight(500)
-				ui.Text(c, tr(c, "Approve Zeron there; this page moves on by itself.")).FontSize(design.UISize(c, 12)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, "Enter this code on GitHub")).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
+				ui.Text(c, tr(c, "Approve GCode there; this page moves on by itself.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 				services := c.Services()
 				ui.Row(c).AlignItems(ui.Center).Gap(8).Children(func() {
-					textButton(c, g.UserCode).Font(a.state.Settings.Appearance.CodeFont).FontSize(18).Label(tr(c, "Copy GitHub code ") + g.UserCode).OnClick(func() { services.WriteClipboard(g.UserCode); a.integrationUI.GithubCopied = true })
+					controlCodeButton(c, g.UserCode, a.state.Settings.Appearance.CodeFont).Label(tr(c, "Copy GitHub code ") + g.UserCode).OnClick(func() { services.WriteClipboard(g.UserCode); a.integrationUI.GithubCopied = true })
 					if a.integrationUI.GithubCopied {
-						ui.Text(c, tr(c, "Copied")).FontSize(11).TextColor(a.palette.Muted)
+						ui.Text(c, tr(c, "Copied")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 					}
 					ui.Spacer(c)
 					textButton(c, tr(c, "Open GitHub")).OnClick(func() { a.dispatch(contracts.Command{Kind: "cloud.github.poll"}) })
@@ -116,15 +116,15 @@ func (a *App) cloudRepositories(c *ui.Context, v contracts.CloudSettingsState) {
 		message = "Checking which repositories Cloud can open…"
 	}
 	a.settingsRow(c, "Repositories", message, func() {
-		iconButton(c, "refresh", tr(c, "Check repositories again")).Size(28, 28).OnClick(func() { a.dispatch(contracts.Command{Kind: "cloud.repositories.refresh"}) })
+		iconButton(c, "refresh", tr(c, "Check repositories again")).OnClick(func() { a.dispatch(contracts.Command{Kind: "cloud.repositories.refresh"}) })
 		textButton(c, tr(c, "Choose on GitHub")).OnClick(func() { a.dispatch(contracts.Command{Kind: "cloud.repositories.choose"}) })
 	})
 	for _, repo := range v.Repositories {
 		ui.Row(c).FillWidth().Padding(8, 16).Gap(6).AlignItems(ui.Center).Children(func() {
 			icon(c, "folder", 14)
-			ui.Text(c, repo.Name).FontSize(design.UISize(c, 12)).Grow(1)
+			ui.Text(c, repo.Name).FontSize(design.TextSize(c, design.TextBase)).Grow(1)
 			if repo.Private {
-				ui.Text(c, tr(c, "Private")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted).Padding(2, 5).Radius(4).Background(a.palette.Text.Alpha(.06))
+				ui.Text(c, tr(c, "Private")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Padding(2, 5).Radius(4).Background(a.palette.Text.Alpha(.06))
 			}
 		})
 	}
@@ -149,13 +149,13 @@ func (a *App) cloudUsage(c *ui.Context, v contracts.CloudSettingsState) {
 					label = o.label
 				}
 			}
-			ui.MenuButton(c, tr(c, label), func(menu *ui.Menu) {
+			controlMenuButton(c, tr(c, label), func(menu *ui.Menu) {
 				for _, o := range options {
 					if menu.Item(tr(c, o.label)).Checked(v.UsageRange == o.value).Chosen() {
 						a.dispatch(contracts.Command{Kind: "cloud.usage", Integration: &contracts.IntegrationRequest{Value: o.value}})
 					}
 				}
-			}).Label(tr(c, "Usage range")).Width(128).FontSize(design.UISize(c, 12))
+			}).Label(tr(c, "Usage range")).Width(128)
 		})
 		ui.Column(c).FillWidth().Padding(0, 16, 12, 16).Gap(6).Children(func() {
 			gap := float32(3)
@@ -174,9 +174,9 @@ func (a *App) cloudUsage(c *ui.Context, v contracts.CloudSettingsState) {
 				}
 			})
 			ui.Row(c).FillWidth().Children(func() {
-				ui.Text(c, date(c, v.Usage[0].Day, "Jan 2")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, date(c, v.Usage[0].Day, "Jan 2")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				ui.Spacer(c)
-				ui.Text(c, date(c, v.Usage[len(v.Usage)-1].Day, "Jan 2")).FontSize(design.UISize(c, 11)).TextColor(a.palette.Muted)
+				ui.Text(c, date(c, v.Usage[len(v.Usage)-1].Day, "Jan 2")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			})
 		})
 	})

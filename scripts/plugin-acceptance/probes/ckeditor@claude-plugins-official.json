@@ -1,0 +1,66 @@
+{
+  "pluginId": "ckeditor@claude-plugins-official",
+  "sourceCommit": "261766a0d70fe88c34d34336acbd293c69048a62",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "integrate-free-classic-editor-npm",
+      "componentId": "skill:ckeditor:ckeditor",
+      "prompt": "/ckeditor:ckeditor Use the ckeditor skill to integrate a free, GPL-licensed Classic CKEditor 5 into a minimal static project using the npm single-package model. Headless authoring task: no browser, no npm install, no network calls; only author files. Write index.html containing a text element with id=\"editor\" and a preview container using the ck-content class for saved editor output. Write editor.js that imports the editor class from 'ckeditor5', imports 'ckeditor5/ckeditor5.css', and calls ClassicEditor.create on the #editor element with a config that loads the plugins its toolbar needs and a toolbar containing bold and italic, and sets the license key for free use to 'GPL'. Free setup only: do not import or reference ckeditor5-premium-features. Use only what the skill and its bundled reference files document; do not fetch live docs. Then read the immutable verify_ckeditor.py and run exactly python verify_ckeditor.py using Bash; that validates the integration structure and writes ckeditor-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: list the produced files and report the actual verifier result, and state that browser rendering remains untested in this headless task.",
+      "allowCommands": [
+        "python verify_ckeditor.py"
+      ],
+      "verifierOutputs": [
+        "ckeditor-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_ckeditor.py",
+          "text": "import json\nfrom pathlib import Path\n\neditor = Path('editor.js').read_text(encoding='utf-8')\npage = Path('index.html').read_text(encoding='utf-8')\nassert 'ClassicEditor.create' in editor, 'editor must be created via ClassicEditor.create'\nassert 'ckeditor5/ckeditor5.css' in editor, 'editor CSS not imported'\nassert 'licenseKey' in editor and chr(39) + 'GPL' + chr(39) in editor, 'free use requires GPL license key'\nassert chr(39) + 'bold' + chr(39) in editor and chr(39) + 'italic' + chr(39) in editor, 'toolbar must contain bold and italic'\nassert 'Bold' in editor and 'Italic' in editor, 'bold and italic plugins must be loaded'\nassert 'ckeditor5-premium-features' not in editor, 'free setup must not import premium features'\nassert 'id=\"editor\"' in page, 'index.html must contain the editor element'\nassert 'ck-content' in page, 'saved-output container must use the ck-content class'\nreport = {'classic_create': True, 'css_loaded': True, 'free_gpl_license': True,\n          'no_premium_import': True, 'plugins_match_toolbar': True, 'preview_container': True}\nPath('ckeditor-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CKEditor integration: single-package free setup checks passed; browser rendering remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_ckeditor.py",
+          "equals": "import json\nfrom pathlib import Path\n\neditor = Path('editor.js').read_text(encoding='utf-8')\npage = Path('index.html').read_text(encoding='utf-8')\nassert 'ClassicEditor.create' in editor, 'editor must be created via ClassicEditor.create'\nassert 'ckeditor5/ckeditor5.css' in editor, 'editor CSS not imported'\nassert 'licenseKey' in editor and chr(39) + 'GPL' + chr(39) in editor, 'free use requires GPL license key'\nassert chr(39) + 'bold' + chr(39) in editor and chr(39) + 'italic' + chr(39) in editor, 'toolbar must contain bold and italic'\nassert 'Bold' in editor and 'Italic' in editor, 'bold and italic plugins must be loaded'\nassert 'ckeditor5-premium-features' not in editor, 'free setup must not import premium features'\nassert 'id=\"editor\"' in page, 'index.html must contain the editor element'\nassert 'ck-content' in page, 'saved-output container must use the ck-content class'\nreport = {'classic_create': True, 'css_loaded': True, 'free_gpl_license': True,\n          'no_premium_import': True, 'plugins_match_toolbar': True, 'preview_container': True}\nPath('ckeditor-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('CKEditor integration: single-package free setup checks passed; browser rendering remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "ckeditor-verification.json",
+          "equals": "{\"classic_create\": true, \"css_loaded\": true, \"free_gpl_license\": true, \"no_premium_import\": true, \"plugins_match_toolbar\": true, \"preview_container\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "editor.js",
+          "contains": "ClassicEditor.create"
+        },
+        {
+          "kind": "file",
+          "path": "editor.js",
+          "contains": "'GPL'"
+        },
+        {
+          "kind": "file",
+          "path": "editor.js",
+          "contains": "ckeditor5.css"
+        },
+        {
+          "kind": "file",
+          "path": "editor.js",
+          "contains": "'bold'"
+        },
+        {
+          "kind": "file",
+          "path": "editor.js",
+          "contains": "'italic'"
+        },
+        {
+          "kind": "file",
+          "path": "index.html",
+          "contains": "ck-content"
+        }
+      ]
+    }
+  ]
+}

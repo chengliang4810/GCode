@@ -1,0 +1,85 @@
+{
+  "pluginId": "session-report@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "produce-html-usage-report-from-live-analyzer-run",
+      "componentId": "skill:session-report:session-report",
+      "prompt": "/session-report:session-report Produce the skill's HTML usage report from a live analyzer run against this environment's own private session storage. Headless task: no network, no real external service, no installs, no browser. The skill bundles analyze-sessions.mjs and template.html next to its SKILL.md in the installed plugin directory under your plugins home: first locate that skill directory with file tools (Glob for analyze-sessions.mjs under your plugins/skills installation paths), then copy BOTH analyze-sessions.mjs and template.html into the working directory using Read/Write file tools, never via Bash. Then run exactly `node analyze-sessions.mjs --json --since 7d` via Bash with no redirection and no extra arguments, and use the actual JSON it prints to the tool result. Create session-report.html in the working directory (fixed output name for this headless run; the timestamped-name convention is not testable here) as a copy of the template with exactly the three documented edits, applied with Edit so the template's JS/CSS is preserved: replace the contents of <script id=\"report-data\" type=\"application/json\"> with the FULL actual JSON from the analyzer run; fill the <!-- AGENT: anomalies --> block (keep its <!-- /AGENT --> end marker) with 3-5 one-line findings in the exact documented markup, one line per finding, each shaped like <div class=\"take bad\"><div class=\"fig\">41.2%</div><div class=\"txt\"><b>cc-monitor</b> consumed 41% of the week across just 3 sessions</div></div>, using only the classes bad, good or info; each .fig is one short number (a %, a count, or a multiplier like 12x) expressed as a % of total tokens wherever possible, total = overall.input_tokens.total + overall.output_tokens; each .txt is one plain-English sentence whose subject is a real project, skill or prompt wrapped in <b> and taken from the actual embedded JSON (by_project, by_skill, top_prompts); fill the <!-- AGENT: optimizations --> block at the bottom (keep its <!-- /AGENT --> marker) with 1-4 <div class=\"callout\"> suggestions tied to specific rows; do not restructure existing sections and leave no \"No findings generated yet.\" or \"No suggestions generated yet.\" placeholders anywhere. Do not open or render the HTML. Then read the immutable verify_session_report.py and run exactly python verify_session_report.py using Bash; it validates the embedded analyzer JSON and the documented narrative markup and writes session-report-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. These are the only allowed Bash commands, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state what remains untested: browser rendering and the template JS interactivity, plus any usage beyond what this environment's private session storage actually contains.",
+      "allowCommands": [
+        "node analyze-sessions.mjs --json --since 7d",
+        "python verify_session_report.py"
+      ],
+      "verifierOutputs": [
+        "session-report-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_session_report.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\nhtml = Path('session-report.html').read_text(encoding='utf-8')\nassert html.rstrip().endswith('</html>'), 'report must be a complete HTML document'\nmarker = '<script id=\"report-data\" type=\"application/json\">'\nstart = html.find(marker)\nassert start != -1, 'report-data script tag missing'\nstart += len(marker)\nend = html.find('</script>', start)\nassert end != -1, 'report-data script tag never closed'\nblob = html[start:end]\ndata = json.loads(blob)\nexpected_keys = {'root', 'generated_at', 'overall', 'cache_breaks',\n                 'by_project', 'by_subagent_type', 'by_skill', 'top_prompts', 'by_day'}\nassert set(data.keys()) == expected_keys, \\\n    'embedded JSON must match the analyzer output schema; got: ' + ','.join(sorted(map(str, data.keys())))\nassert isinstance(data['root'], str) and data['root'], 'analyzer root path missing'\nassert isinstance(data['generated_at'], str) and data['generated_at'], 'analyzer generated_at missing'\noverall = data['overall']\nassert isinstance(overall, dict), 'overall must be an object'\ninput_tokens = overall.get('input_tokens')\nassert isinstance(input_tokens, dict) and isinstance(input_tokens.get('total'), int), \\\n    'overall.input_tokens.total missing from the embedded analyzer data'\nassert isinstance(overall.get('output_tokens'), int), 'overall.output_tokens missing'\nassert isinstance(overall.get('sessions'), int) and isinstance(overall.get('api_calls'), int), \\\n    'overall session and api-call counters missing'\nfor key in ('by_project', 'by_skill', 'by_subagent_type'):\n    assert isinstance(data[key], dict), key + ' must be an object'\n    for value in data[key].values():\n        assert isinstance(value, dict), key + ' entries must be objects'\nassert isinstance(data['top_prompts'], list), 'top_prompts must be a list'\nassert isinstance(data['cache_breaks'], list), 'cache_breaks must be a list'\n\ndef agent_segment(open_marker):\n    i = html.find(open_marker)\n    assert i != -1, open_marker + ' marker missing'\n    j = html.find('<!-- /AGENT -->', i)\n    assert j != -1, 'AGENT block opened by ' + open_marker + ' is never closed'\n    return html[i + len(open_marker):j]\n\nanomalies = agent_segment('<!-- AGENT: anomalies -->')\nassert 'No findings generated yet.' not in anomalies, 'anomalies block still holds the template placeholder'\nfindings = re.findall(\n    r'<div class=\"take (bad|good|info)\"><div class=\"fig\">([^<]*)</div><div class=\"txt\">(.*?)</div></div>',\n    anomalies)\nassert 3 <= len(findings) <= 5, 'expected 3-5 documented .take findings, found ' + str(len(findings))\nsubjects = []\nfor cls, fig, txt in findings:\n    assert re.fullmatch(r'[0-9][0-9.,]*\\s*(%|x|\\u00d7)?', fig.strip()), \\\n        'fig must be one short number (a %, a count, or a multiplier): ' + repr(fig)\n    assert '<b>' in txt and '</b>' in txt, 'the finding subject must be wrapped in <b>'\n    subjects.extend(re.findall(r'<b>([^<]*)</b>', txt))\nentry_count = (len(data['by_project']) + len(data['by_skill']) +\n               len(data['by_subagent_type']) + len(data['top_prompts']))\nif entry_count > 0:\n    grounded = [s for s in subjects if s and s in blob]\n    assert grounded, 'findings must name actual projects/skills/prompts from the embedded analyzer JSON'\nelse:\n    assert all(cls == 'info' for cls, _, _ in findings), \\\n        'with zero analyzer entries every finding must be a neutral .take info'\n\noptimizations = agent_segment('<!-- AGENT: optimizations -->')\nassert 'No suggestions generated yet.' not in optimizations, 'optimizations block still holds the template placeholder'\ncallouts = re.findall(r'<div class=\"callout\">', optimizations)\nassert 1 <= len(callouts) <= 4, 'expected 1-4 documented .callout suggestions, found ' + str(len(callouts))\n\nreport = {'analyzer_schema_embedded': True, 'documented_take_findings': True,\n          'finding_grounded_in_data': True, 'fig_short_number': True,\n          'optimization_callouts': True, 'overall_token_shape': True,\n          'placeholders_replaced': True}\nPath('session-report-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Session report: actual analyzer JSON embedded and documented .take/.callout narrative markup verified')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_session_report.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\nhtml = Path('session-report.html').read_text(encoding='utf-8')\nassert html.rstrip().endswith('</html>'), 'report must be a complete HTML document'\nmarker = '<script id=\"report-data\" type=\"application/json\">'\nstart = html.find(marker)\nassert start != -1, 'report-data script tag missing'\nstart += len(marker)\nend = html.find('</script>', start)\nassert end != -1, 'report-data script tag never closed'\nblob = html[start:end]\ndata = json.loads(blob)\nexpected_keys = {'root', 'generated_at', 'overall', 'cache_breaks',\n                 'by_project', 'by_subagent_type', 'by_skill', 'top_prompts', 'by_day'}\nassert set(data.keys()) == expected_keys, \\\n    'embedded JSON must match the analyzer output schema; got: ' + ','.join(sorted(map(str, data.keys())))\nassert isinstance(data['root'], str) and data['root'], 'analyzer root path missing'\nassert isinstance(data['generated_at'], str) and data['generated_at'], 'analyzer generated_at missing'\noverall = data['overall']\nassert isinstance(overall, dict), 'overall must be an object'\ninput_tokens = overall.get('input_tokens')\nassert isinstance(input_tokens, dict) and isinstance(input_tokens.get('total'), int), \\\n    'overall.input_tokens.total missing from the embedded analyzer data'\nassert isinstance(overall.get('output_tokens'), int), 'overall.output_tokens missing'\nassert isinstance(overall.get('sessions'), int) and isinstance(overall.get('api_calls'), int), \\\n    'overall session and api-call counters missing'\nfor key in ('by_project', 'by_skill', 'by_subagent_type'):\n    assert isinstance(data[key], dict), key + ' must be an object'\n    for value in data[key].values():\n        assert isinstance(value, dict), key + ' entries must be objects'\nassert isinstance(data['top_prompts'], list), 'top_prompts must be a list'\nassert isinstance(data['cache_breaks'], list), 'cache_breaks must be a list'\n\ndef agent_segment(open_marker):\n    i = html.find(open_marker)\n    assert i != -1, open_marker + ' marker missing'\n    j = html.find('<!-- /AGENT -->', i)\n    assert j != -1, 'AGENT block opened by ' + open_marker + ' is never closed'\n    return html[i + len(open_marker):j]\n\nanomalies = agent_segment('<!-- AGENT: anomalies -->')\nassert 'No findings generated yet.' not in anomalies, 'anomalies block still holds the template placeholder'\nfindings = re.findall(\n    r'<div class=\"take (bad|good|info)\"><div class=\"fig\">([^<]*)</div><div class=\"txt\">(.*?)</div></div>',\n    anomalies)\nassert 3 <= len(findings) <= 5, 'expected 3-5 documented .take findings, found ' + str(len(findings))\nsubjects = []\nfor cls, fig, txt in findings:\n    assert re.fullmatch(r'[0-9][0-9.,]*\\s*(%|x|\\u00d7)?', fig.strip()), \\\n        'fig must be one short number (a %, a count, or a multiplier): ' + repr(fig)\n    assert '<b>' in txt and '</b>' in txt, 'the finding subject must be wrapped in <b>'\n    subjects.extend(re.findall(r'<b>([^<]*)</b>', txt))\nentry_count = (len(data['by_project']) + len(data['by_skill']) +\n               len(data['by_subagent_type']) + len(data['top_prompts']))\nif entry_count > 0:\n    grounded = [s for s in subjects if s and s in blob]\n    assert grounded, 'findings must name actual projects/skills/prompts from the embedded analyzer JSON'\nelse:\n    assert all(cls == 'info' for cls, _, _ in findings), \\\n        'with zero analyzer entries every finding must be a neutral .take info'\n\noptimizations = agent_segment('<!-- AGENT: optimizations -->')\nassert 'No suggestions generated yet.' not in optimizations, 'optimizations block still holds the template placeholder'\ncallouts = re.findall(r'<div class=\"callout\">', optimizations)\nassert 1 <= len(callouts) <= 4, 'expected 1-4 documented .callout suggestions, found ' + str(len(callouts))\n\nreport = {'analyzer_schema_embedded': True, 'documented_take_findings': True,\n          'finding_grounded_in_data': True, 'fig_short_number': True,\n          'optimization_callouts': True, 'overall_token_shape': True,\n          'placeholders_replaced': True}\nPath('session-report-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Session report: actual analyzer JSON embedded and documented .take/.callout narrative markup verified')\n"
+        },
+        {
+          "kind": "file",
+          "path": "session-report-verification.json",
+          "equals": "{\"analyzer_schema_embedded\": true, \"documented_take_findings\": true, \"fig_short_number\": true, \"finding_grounded_in_data\": true, \"optimization_callouts\": true, \"overall_token_shape\": true, \"placeholders_replaced\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<script id=\"report-data\" type=\"application/json\">"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<!-- AGENT: anomalies -->"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<!-- AGENT: optimizations -->"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<div class=\"fig\">"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<div class=\"txt\"><b>"
+        },
+        {
+          "kind": "file",
+          "path": "session-report.html",
+          "contains": "<div class=\"callout\">"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "\"overall\""
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "\"by_project\""
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Session report: actual analyzer JSON embedded and documented .take/.callout narrative markup verified"
+        }
+      ]
+    }
+  ]
+}

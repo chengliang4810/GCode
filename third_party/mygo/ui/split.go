@@ -4,8 +4,10 @@ package ui
 // them that the user drags to resize them, or moves with the arrows once
 // it has the keyboard focus: *size is the width of first, which the
 // divider keeps 40 DIPs from either edge. With less room than that, first
-// gives way, keeping *size for when there is room again. Changed reports a
-// move. Right to left (Direction), first is on the right.
+// gives way, keeping *size for when there is room again. A drag writes *size
+// before the panes build, so the view reads it after the split in the same
+// pass; Changed reports the arrow keys, which move the line after the panes
+// have built. Right to left (Direction), first is on the right.
 //
 //	ui.Split(c, &app.sidebar, app.files, app.editor).Fill()
 func coreSplit(c *context, size *float32, first, second func()) *node {
@@ -36,6 +38,11 @@ func coreSplitVerticalPercent(c *context, p *float32, first, second func()) *nod
 func split(c *context, size *float32, first, second func(), vertical, inPercent bool) *node {
 	t := c.theme
 	minPane, grip := t.Space(10), t.Space(1.5)
+	// The hitbox a pointer grabs, as the reference's pane resize edge: 20
+	// DIPs around the seam, while the line it drags stays one DIP.
+	if grip < 20 {
+		grip = 20
+	}
 	stack := func() *node {
 		// One element or the other: creating one adds it to the parent.
 		if vertical {
@@ -61,7 +68,7 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 	e.widget = "Split"
 	e.Children(func() {
 		// The panes meet at a line one DIP thick, with nothing between them
-		// and it. The handle the pointer drags spans a few DIPs over either
+		// and it. The handle the pointer drags spans the grip over either
 		// pane, above them: it is placed in this box, which has no padding,
 		// whatever the split's.
 		in := stack().Grow(1).AlignItems(Stretch)
@@ -82,7 +89,12 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 		case !inPercent && total > 0 && *size > minPane:
 			shown = fitSplit(*size, total, minPane)
 		}
-		set := func(v float32) {
+		// set sizes the first pane. A drag answers the pointer here, before
+		// the panes build, so what they lay out from *size follows it in the
+		// same pass; it does not ask for another build to report the move.
+		// Only a keyboard move reports Changed: a view reads the size a drag
+		// left after building the split, in the same pass.
+		set := func(v float32, report bool) {
 			v = fitSplit(v, total, minPane)
 			if inPercent {
 				if total <= 1 {
@@ -92,8 +104,33 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			}
 			if v != *size {
 				*size = v
-				e.st.markChanged()
-				c.rt.consumed = true
+				if report {
+					e.st.markChanged()
+				}
+			}
+		}
+		// The handle is made before the panes, over the line where the last
+		// frame laid it out: placeOn keeps it there, also when the first pane
+		// gives way.
+		handle := coreBox(c).Absolute()
+		handle.flags |= flagDraggable | flagHover
+		if vertical {
+			handle.Left(0).Right(0).Top(-(grip - 1) / 2).Height(grip).Cursor(CursorResizeNS)
+		} else {
+			handle.Top(0).Bottom(0).Start(-(grip - 1) / 2).Width(grip).Cursor(CursorResizeEW)
+		}
+		// A press there focuses the line, as a press on it would. Only a
+		// move changes the size, so a press keeps *size for when there is
+		// room again.
+		dx, dy, held := handle.draggedBy()
+		if held && (dx != 0 || dy != 0) {
+			switch {
+			case vertical:
+				set(shown+dy, false)
+			case handle.rtl():
+				set(shown-dx, false)
+			default:
+				set(shown+dx, false)
 			}
 		}
 		in.Children(func() {
@@ -114,6 +151,10 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			div.widget = "Divider"
 			div.flags |= flagOwnRing
 			length(div, 1)
+			handle.placeOn = div
+			if held {
+				div.Focus()
+			}
 			// The arrows move the line the way they point.
 			back, forth := div.arrows()
 			if vertical {
@@ -121,10 +162,10 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			}
 			div.afterInput(func() {
 				if div.Shortcut(0, back) {
-					set(shown - t.Space(2.5))
+					set(shown-t.Space(2.5), true)
 				}
 				if div.Shortcut(0, forth) {
-					set(shown + t.Space(2.5))
+					set(shown+t.Space(2.5), true)
 				}
 			})
 			div.hasRange, div.accRange = true, [3]float64{float64(minPane), float64(max(total-1-minPane, minPane)), float64(shown)}
@@ -137,37 +178,6 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			minLength(b, minPane)
 			b.Children(second)
 
-			// placeOn keeps the handle on the divider where this frame lays
-			// it out, also when the first pane gives way.
-			handle := coreBox(c).Absolute()
-			handle.placeOn = div
-			handle.flags |= flagDraggable | flagHover
-			if vertical {
-				handle.Left(0).Right(0).Top(-(grip - 1) / 2).Height(grip).Cursor(CursorResizeNS)
-			} else {
-				handle.Top(0).Bottom(0).Start(-(grip - 1) / 2).Width(grip).Cursor(CursorResizeEW)
-			}
-			// A press there focuses the line, as a press on it would. Only a
-			// move changes the size, so a press keeps *size for when there is
-			// room again.
-			dx, dy, held := handle.Dragged()
-			handle.afterInput(func() {
-				if !held {
-					return
-				}
-				div.Focus()
-				if dx == 0 && dy == 0 {
-					return
-				}
-				switch {
-				case vertical:
-					set(shown + dy)
-				case handle.rtl():
-					set(shown - dx)
-				default:
-					set(shown + dx)
-				}
-			})
 			div.Draw(func(p *Painter, r Rect) {
 				line := t.Border
 				if held || handle.Hovered() {

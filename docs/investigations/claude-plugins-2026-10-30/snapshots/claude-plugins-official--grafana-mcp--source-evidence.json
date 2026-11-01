@@ -1,0 +1,24 @@
+{
+  "repo": "grafana/ai-marketplace",
+  "commit": "6c28ba1961d502d82301cbd64d2322e6e960477c",
+  "path": "plugins/grafana-mcp",
+  "archive_sha256": "1f59e31b965235621c9dc151495e2801b556ef72af465cb22a42843dda1b91d7",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+    ".mcp.json",
+    "POWER.md",
+    "README.md",
+    "assets/logo.svg",
+    "mcp.json",
+    "skills/grafana-mcp-tools/SKILL.md",
+    "steering/grafana-mcp-tools.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"grafana-mcp\",\n  \"version\": \"0.2.0\",\n  \"description\": \"MCP server for AI-assisted Grafana dashboard, datasource, alerting, and incident management.\",\n  \"author\": {\n    \"name\": \"Grafana Labs\",\n    \"email\": \"grafana-assistant@grafana.com\"\n  },\n  \"homepage\": \"https://github.com/grafana/ai-marketplace/tree/main/plugins/grafana-mcp\",\n  \"repository\": \"https://github.com/grafana/ai-marketplace\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\"grafana\", \"mcp\", \"observability\", \"dashboards\", \"prometheus\", \"loki\"],\n  \"userConfig\": {\n    \"grafana_url\": {\n      \"type\": \"string\",\n      \"title\": \"Grafana instance URL\",\n      \"description\": \"Your Grafana instance URL. For Grafana Cloud: https://<stack>.grafana.net. For self-hosted: e.g. http://localhost:3000.\",\n      \"required\": true\n    },\n    \"grafana_service_account_token\": {\n      \"type\": \"string\",\n      \"title\": \"Grafana service account token\",\n      \"description\": \"Create a service account token at <your-grafana-url>/org/serviceaccounts with at least Viewer role (Editor for write operations).\",\n      \"required\": true,\n      \"sensitive\": true\n    }\n  }\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"grafana\": {\n      \"command\": \"docker\",\n      \"args\": [\n        \"run\",\n        \"--rm\",\n        \"-i\",\n        \"-e\",\n        \"GRAFANA_URL\",\n        \"-e\",\n        \"GRAFANA_SERVICE_ACCOUNT_TOKEN\",\n        \"grafana/mcp-grafana\",\n        \"-t\",\n        \"stdio\"\n      ],\n      \"env\": {\n        \"GRAFANA_URL\": \"${user_config.grafana_url}\",\n        \"GRAFANA_SERVICE_ACCOUNT_TOKEN\": \"${user_config.grafana_service_account_token}\"\n      }\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/grafana-mcp-tools/SKILL.md": "\nname: grafana-mcp-tools\ndescription: Install, configure, and use the Grafana MCP server effectively. Covers setup via Docker or binary, environment variables, tool categories, RBAC, and best practices for context window management. Use when the user wants to set up mcp-grafana, configure Grafana MCP tools, or needs guidance on which MCP tool to use.\n"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "pluginId": "sentry-cli@claude-plugins-official",
+  "sourceCommit": "3567c3c937b5cc06667d5b023bda0b2d3f472c54",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "checkout-api-issue-and-release-runbook",
+      "componentId": "skill:sentry-cli:sentry-cli",
+      "prompt": "/sentry-cli:sentry-cli Build the investigation-and-release runbook for this concrete local scenario and write it to sentry-runbook.md. Scenario facts: local checkout directory checkout-api; Sentry org slug acme-observability; project slug checkout-api; the app's Sentry.init uses release \"2.3.1\"; unresolved issue short ID CHECKOUT-482 needs investigation; an earlier attempt exited with code 14; the deploy environment is production. Headless boundary: no network, no real Sentry service, no authentication, no installs; the sentry CLI is not installed here, so no CLI command may be executed. Real CLI execution, authentication and live Sentry API calls remain untested.\n\nFollow the skill's agent guidance. In a section headed exactly \"## Command sequence\" give a fenced bash block with these commands in this documented order: sentry issue view CHECKOUT-482 --json --fields shortId,title,culprit,count,userCount,permalink ; sentry issue explain CHECKOUT-482 ; sentry issue plan CHECKOUT-482 ; sentry release create acme-observability/2.3.1 --project checkout-api ; sentry release finalize acme-observability/2.3.1 ; sentry release deploy acme-observability/2.3.1 production. Per the skill, do NOT add sentry org list or sentry project list discovery steps and do NOT add a sentry auth login pre-authentication step: the CLI auto-detects org and project and prompts for login itself; state this choice explicitly in the runbook.\n\nIn a section headed exactly \"## Release version note\", use the documented wording that the release positional is <org-slug>/<version>, the slash separates org from version, it is not part of the version string, so every release command uses acme-observability/2.3.1 to match the Sentry.init release \"2.3.1\" exactly; never write a double-prefixed wrong form anywhere in the runbook.\n\nIn a section headed exactly \"## Failure handling\", address the earlier exit code 14: per the documented exit-code table it falls in the 10-19 Auth error range, whose documented action is: Prompt user to run `sentry auth login`; quote that action. Apply the safety rules: the runbook must not contain the destructive commands project delete or trial start, and must not contain sentry auth token. Close with a section stating what remains untested in this headless task.\n\nThen read the immutable verify_sentry_runbook.py and run exactly python verify_sentry_runbook.py using Bash; it validates the runbook and writes sentry-runbook-verification.json. Do not modify the verifier or read/write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real CLI execution, authentication and live Sentry API calls remain untested.",
+      "allowCommands": [
+        "python verify_sentry_runbook.py"
+      ],
+      "verifierOutputs": [
+        "sentry-runbook-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_sentry_runbook.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('sentry-runbook.md').read_text(encoding='utf-8')\nassert '## Command sequence' in text and '## Failure handling' in text, 'the runbook must carry the required sections'\nhead, tail = text.split('## Failure handling', 1)\ncommands = (\n    'sentry issue view CHECKOUT-482 --json --fields shortId,title,culprit,count,userCount,permalink',\n    'sentry issue explain CHECKOUT-482',\n    'sentry issue plan CHECKOUT-482',\n    'sentry release create acme-observability/2.3.1',\n    'sentry release finalize acme-observability/2.3.1',\n    'sentry release deploy acme-observability/2.3.1 production',\n)\nfor command in commands:\n    assert command in head, 'the command sequence must include the documented command: ' + command\npositions = [head.index(command) for command in commands]\nassert positions == sorted(positions), 'commands must follow the documented investigate-then-release order'\nassert 'sentry org list' not in head and 'sentry project list' not in head, 'the documented no-manual-discovery rule forbids org/project fan-out before commands'\nassert 'sentry auth login' not in head, 'no pre-authentication step may precede the commands'\nassert '@2.3.1' not in text, 'the release version must be exactly 2.3.1 as initialized, never double-prefixed'\nassert 'separates org from version' in text, 'the version note must carry the documented org/version explanation'\nlow = text.lower()\nfor destructive in ('project delete', 'trial start'):\n    assert destructive not in low, 'a destructive command must not appear in the runbook: ' + destructive\nassert 'sentry auth token' not in low, 'authentication tokens must never be stored or logged'\nassert 'exit code 14' in tail, 'the failure section must address the scenario exit code'\nassert 'auth error' in tail.lower(), 'exit code 14 must be classified as an auth error per the documented ranges'\nassert re.search(r'10\\s*[-\\u2013\\u2014]\\s*19', tail), 'the documented 10-19 auth-error range must be cited'\nassert 'sentry auth login' in tail, 'the documented remedy is prompting the user to run sentry auth login'\nassert re.search(r'(?i)untested', text), 'the runbook must state what remains untested'\nreport = {'exit_code_routing': True, 'no_destructive_or_tokens': True, 'no_manual_discovery': True,\n          'release_version_exact': True, 'sequence_order': True, 'untested_declared': True,\n          'workflow_commands': True}\nPath('sentry-runbook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Sentry runbook: documented agent-guidance checks passed; real CLI execution, authentication and live Sentry API calls remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_sentry_runbook.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('sentry-runbook.md').read_text(encoding='utf-8')\nassert '## Command sequence' in text and '## Failure handling' in text, 'the runbook must carry the required sections'\nhead, tail = text.split('## Failure handling', 1)\ncommands = (\n    'sentry issue view CHECKOUT-482 --json --fields shortId,title,culprit,count,userCount,permalink',\n    'sentry issue explain CHECKOUT-482',\n    'sentry issue plan CHECKOUT-482',\n    'sentry release create acme-observability/2.3.1',\n    'sentry release finalize acme-observability/2.3.1',\n    'sentry release deploy acme-observability/2.3.1 production',\n)\nfor command in commands:\n    assert command in head, 'the command sequence must include the documented command: ' + command\npositions = [head.index(command) for command in commands]\nassert positions == sorted(positions), 'commands must follow the documented investigate-then-release order'\nassert 'sentry org list' not in head and 'sentry project list' not in head, 'the documented no-manual-discovery rule forbids org/project fan-out before commands'\nassert 'sentry auth login' not in head, 'no pre-authentication step may precede the commands'\nassert '@2.3.1' not in text, 'the release version must be exactly 2.3.1 as initialized, never double-prefixed'\nassert 'separates org from version' in text, 'the version note must carry the documented org/version explanation'\nlow = text.lower()\nfor destructive in ('project delete', 'trial start'):\n    assert destructive not in low, 'a destructive command must not appear in the runbook: ' + destructive\nassert 'sentry auth token' not in low, 'authentication tokens must never be stored or logged'\nassert 'exit code 14' in tail, 'the failure section must address the scenario exit code'\nassert 'auth error' in tail.lower(), 'exit code 14 must be classified as an auth error per the documented ranges'\nassert re.search(r'10\\s*[-\\u2013\\u2014]\\s*19', tail), 'the documented 10-19 auth-error range must be cited'\nassert 'sentry auth login' in tail, 'the documented remedy is prompting the user to run sentry auth login'\nassert re.search(r'(?i)untested', text), 'the runbook must state what remains untested'\nreport = {'exit_code_routing': True, 'no_destructive_or_tokens': True, 'no_manual_discovery': True,\n          'release_version_exact': True, 'sequence_order': True, 'untested_declared': True,\n          'workflow_commands': True}\nPath('sentry-runbook-verification.json').write_bytes((json.dumps(report, sort_keys=True) + '\\n').encode('utf-8'))\nprint('Sentry runbook: documented agent-guidance checks passed; real CLI execution, authentication and live Sentry API calls remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook-verification.json",
+          "equals": "{\"exit_code_routing\": true, \"no_destructive_or_tokens\": true, \"no_manual_discovery\": true, \"release_version_exact\": true, \"sequence_order\": true, \"untested_declared\": true, \"workflow_commands\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "sentry issue view CHECKOUT-482 --json --fields shortId,title,culprit,count,userCount,permalink"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "sentry release create acme-observability/2.3.1"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "sentry release deploy acme-observability/2.3.1 production"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "separates org from version"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "Auth error"
+        },
+        {
+          "kind": "file",
+          "path": "sentry-runbook.md",
+          "contains": "exit code 14"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Sentry runbook: documented agent-guidance checks passed; real CLI execution, authentication and live Sentry API calls remain untested"
+        }
+      ]
+    }
+  ]
+}

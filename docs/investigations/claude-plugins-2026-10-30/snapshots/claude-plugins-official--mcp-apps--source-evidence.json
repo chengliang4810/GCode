@@ -1,0 +1,23 @@
+{
+  "repo": "modelcontextprotocol/ext-apps",
+  "commit": "6d9bdc7babf275b759225aa722cbf5510c4c6021",
+  "path": "plugins/mcp-apps",
+  "archive_sha256": "3e256defce3730ed291757c708379ec99d03c891983f0b14114309367b7cf8c2",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "README.md",
+    "skills/add-app-to-server/SKILL.md",
+    "skills/convert-web-app/SKILL.md",
+    "skills/create-mcp-app/SKILL.md",
+    "skills/migrate-oai-app/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"mcp-apps\",\n  \"version\": \"0.1.0\",\n  \"description\": \"Claude Code skill for building MCP Apps with interactive UIs\",\n  \"author\": {\n    \"name\": \"MCP Apps\"\n  },\n  \"repository\": \"https://github.com/modelcontextprotocol/ext-apps\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"mcp\", \"mcp-apps\", \"model-context-protocol\", \"ui\", \"interactive\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/add-app-to-server/SKILL.md": "\nname: add-app-to-server\ndescription: This skill should be used when the user asks to \"add an app to my MCP server\", \"add UI to my MCP server\", \"add a view to my MCP tool\", \"enrich MCP tools with UI\", \"add interactive UI to existing server\", \"add MCP Apps to my server\", or needs to add interactive UI capabilities to an existing MCP server that already has tools. Provides guidance for analyzing existing tools and adding MCP Apps UI resources.\n",
+    "skills/create-mcp-app/SKILL.md": "\nname: create-mcp-app\ndescription: This skill should be used when the user asks to \"create an MCP App\", \"add a UI to an MCP tool\", \"build an interactive MCP View\", \"scaffold an MCP App\", or needs guidance on MCP Apps SDK patterns, UI-resource registration, MCP App lifecycle, or host integration. Provides comprehensive guidance for building MCP Apps with interactive UIs.\n",
+    "skills/convert-web-app/SKILL.md": "\nname: convert-web-app\ndescription: This skill should be used when the user asks to \"add MCP App support to my web app\", \"turn my web app into a hybrid MCP App\", \"make my web page work as an MCP App too\", \"wrap my existing UI as an MCP App\", \"convert iframe embed to MCP App\", \"turn my SPA into an MCP App\", or needs to add MCP App support to an existing web application while keeping it working standalone. Provides guidance for analyzing existing web apps and creating a hybrid web + MCP App with server-side tool and resource registration.\n",
+    "skills/migrate-oai-app/SKILL.md": "\nname: migrate-oai-app\ndescription: This skill should be used when the user asks to \"migrate from OpenAI Apps SDK\", \"convert OpenAI App to MCP\", \"port from window.openai\", \"migrate from skybridge\", \"convert openai/outputTemplate\", or needs guidance on converting OpenAI Apps SDK applications to MCP Apps SDK. Provides step-by-step migration guidance with API mapping tables.\n"
+  }
+}

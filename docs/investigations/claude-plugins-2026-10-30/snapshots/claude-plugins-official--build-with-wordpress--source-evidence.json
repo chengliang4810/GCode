@@ -1,0 +1,35 @@
+{
+  "repo": "Automattic/claude-code-wordpress.com",
+  "commit": "052ca970df2c577d7c651e784935186ff93e6779",
+  "path": ".",
+  "archive_sha256": "c1dfbbed719d8c3a7515950709a3561a6a9222ba3ab5b47f3164a1a37d436a3c",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "CONNECTORS.md",
+    "LICENSE.md",
+    "README.md",
+    "commands/design-site.md",
+    "commands/preview-designs.md",
+    "commands/quick-build.md",
+    "references/design-system-core.md",
+    "references/design-system-phase2.md",
+    "references/design-system-phase3.md",
+    "references/gallery.md",
+    "references/simple-design-system.md",
+    "references/wordpress-block-theming.md",
+    "scripts/block-fixer/cli.js",
+    "scripts/block-fixer/xhr-sync-worker.js",
+    "scripts/track.sh",
+    "skills/site-specification/SKILL.md",
+    "templates/design-gallery.php"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"build-with-wordpress\",\n  \"version\": \"0.0.2\",\n  \"description\": \"Craft production-grade WordPress sites and applications. Everything from themes and plugins to commerce and deployment.\",\n  \"author\": {\n    \"name\": \"Automattic\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/design-site.md": "\ndescription: Design a WordPress site, starting with a clear design direction and style tokens, then intial page layouts, followed by a full custom theme build with content pages deployed to a local Studio site\nargument-hint: \"<site description>\"\ndisable-model-invocation: true\n",
+    "commands/preview-designs.md": "\ndescription: Generate or regenerate design preview options for a site\nargument-hint: \"<site description or 'regenerate'>\"\n",
+    "commands/quick-build.md": "\ndescription: Creates a WordPress block theme from a description with an index.html landing page template and deploys it to a local Studio site\nargument-hint: \"<site description>\"\n",
+    "skills/site-specification/SKILL.md": "\nname: site-specification\ndescription: Extract comprehensive site specifications from simple descriptions. Use when analyzing a user's theme request to determine site type, audience, tone, layout requirements, and typography.\n"
+  }
+}

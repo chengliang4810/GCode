@@ -1,0 +1,53 @@
+{
+  "repo": "getsentry/cli",
+  "commit": "3567c3c937b5cc06667d5b023bda0b2d3f472c54",
+  "path": "packages/cli/plugins/sentry-cli",
+  "archive_sha256": "d8ac4bd9c14042adc9e54f2325c390191b82783384076c0b92113ba6f8e64bb7",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "skills/sentry-cli/SKILL.md",
+    "skills/sentry-cli/references/agent-conversation.md",
+    "skills/sentry-cli/references/alert.md",
+    "skills/sentry-cli/references/api.md",
+    "skills/sentry-cli/references/auth.md",
+    "skills/sentry-cli/references/build.md",
+    "skills/sentry-cli/references/cli.md",
+    "skills/sentry-cli/references/code-mappings.md",
+    "skills/sentry-cli/references/dart-symbol-map.md",
+    "skills/sentry-cli/references/dashboard.md",
+    "skills/sentry-cli/references/debug-files.md",
+    "skills/sentry-cli/references/docs.md",
+    "skills/sentry-cli/references/event.md",
+    "skills/sentry-cli/references/explore.md",
+    "skills/sentry-cli/references/feedback.md",
+    "skills/sentry-cli/references/info.md",
+    "skills/sentry-cli/references/init.md",
+    "skills/sentry-cli/references/issue.md",
+    "skills/sentry-cli/references/local.md",
+    "skills/sentry-cli/references/log.md",
+    "skills/sentry-cli/references/monitor.md",
+    "skills/sentry-cli/references/org.md",
+    "skills/sentry-cli/references/platform.md",
+    "skills/sentry-cli/references/proguard.md",
+    "skills/sentry-cli/references/project.md",
+    "skills/sentry-cli/references/react-native.md",
+    "skills/sentry-cli/references/release.md",
+    "skills/sentry-cli/references/replay.md",
+    "skills/sentry-cli/references/repo.md",
+    "skills/sentry-cli/references/schema.md",
+    "skills/sentry-cli/references/snapshots.md",
+    "skills/sentry-cli/references/sourcemap.md",
+    "skills/sentry-cli/references/span.md",
+    "skills/sentry-cli/references/status.md",
+    "skills/sentry-cli/references/team.md",
+    "skills/sentry-cli/references/trace.md",
+    "skills/sentry-cli/references/trial.md",
+    "skills/sentry-cli/references/wasm-split.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"sentry-cli\",\n  \"version\": \"0.46.0\",\n  \"description\": \"Skills for using the Sentry CLI to interact with Sentry from the command line\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/sentry-cli/SKILL.md": "\nname: sentry-cli\nversion: 0.46.0-dev.0\ndescription: Guide for using the Sentry CLI to interact with Sentry from the command line. Use when the user asks about viewing issues, events, projects, organizations, making API calls, or authenticating with Sentry via CLI.\nrequires:\n  bins: [\"sentry\"]\n  auth: true\n"
+  }
+}

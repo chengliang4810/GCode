@@ -15,13 +15,7 @@ type ResourceService interface {
 	ReadResource(context.Context, string) ([]byte, error)
 }
 
-type ModelRef struct {
-	ProviderID string `json:"providerId"`
-	ModelID    string `json:"modelId"`
-}
-
 type ModelPickerSettings struct {
-	Favorites  []ModelRef                `json:"favorites"`
 	ProviderID string                    `json:"providerId"`
 	Options    map[string]string         `json:"options"`
 	Selections map[string]ModelSelection `json:"selections"`

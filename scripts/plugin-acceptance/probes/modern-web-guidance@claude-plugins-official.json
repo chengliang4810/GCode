@@ -1,0 +1,182 @@
+{
+  "pluginId": "modern-web-guidance@claude-plugins-official",
+  "sourceCommit": "b31dc0a43ff5d19bcf386a3476a216f3b39a6f55",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "trigger-routing-and-offline-search-record",
+      "componentId": "skill:modern-web-guidance:modern-web-guidance",
+      "prompt": "/modern-web-guidance:modern-web-guidance Use the modern-web-guidance skill to record how it governs three requests in this session, and write mwg-workflow-record.md. Headless boundary: no network access at all, and no npx, curl, pip or any other command may run; fetching and running modern-web-guidance requires outbound network access per the skill, so the real search results, guide retrieval and any applied guide content remain untested.\n\nThe three requests: (A) Build a responsive card grid for the pricing page of our storefront using container queries and :has() selectors; the team custom browser support policy is Safari 17.4+. (B) Move our Express API routes onto the new ORM and update the SQL migrations. (C) Speed up our GitHub Actions build pipeline that packages Docker images.\n\nFor request A: record that the skill is mandatory at the start of implementing any web feature and must trigger immediately (UI/Layout scope); record the exact documented search command with an action-oriented query for this request, written exactly as npx -y modern-web-guidance@latest search \"responsive pricing card grid with container queries and :has()\" --skill-version 2026_10_12-dacb5911; note the documented fallback npx -y modern-web-guidance@latest list for vague results or low similarity; record the documented retrieve step npx -y modern-web-guidance@latest retrieve \"<id>\" as the next command once search returns an id; state per the Baseline Widely available rule of the skill which fallback rule applies, and that because a custom policy (Safari 17.4+) was given, fallback decisions follow the browser compatibility data of the guide instead. Do not guess any guide id and do not write any applied-guide disclosure bullet (the - **`<id>`**: form), because no guide was retrieved.\n\nFor requests B and C: apply the DO NOT trigger list of the skill - B matches the Backend exclusion Database SQL, ORMs, Express API routes; C matches the Pipelines exclusion CI/CD deployment, Docker, Actions - and mark each classification do not trigger, so no search runs for them.\n\nEnd the record with the disclosure section header of the skill, ### Modern Web Guidance, using the zero-applied branch: one first-person sentence naming the topics checked (container queries, :has(), pricing-grid performance) and stating zero guides were applied because the offline sandbox could not run the search, plus a closing line that the live search results and guide retrieval remain untested.\n\nThen read the immutable verify_mwg_record.py and run exactly python verify_mwg_record.py using Bash; it validates the record and writes mwg-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the live search results and guide retrieval remain untested.",
+      "allowCommands": [
+        "python verify_mwg_record.py"
+      ],
+      "verifierOutputs": [
+        "mwg-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_mwg_record.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('mwg-workflow-record.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'npx -y modern-web-guidance@latest search \"responsive pricing card grid with container queries and :has()\" --skill-version 2026_10_12-dacb5911' in text, 'the documented search command must be recorded with the scenario action-oriented query'\nassert 'container queries' in low and ':has()' in text, 'the scenario request A inputs must appear'\nassert 'npx -y modern-web-guidance@latest retrieve \"<id>\"' in text, 'the documented retrieve step is missing'\nassert 'npx -y modern-web-guidance@latest list' in text, 'the documented fallback list command is missing'\nassert 'action-oriented query' in low, 'the search must be recorded as action-oriented per the skill'\nassert 'Safari 17.4+' in text, 'the scenario custom browser policy must be recorded'\nassert 'Baseline Widely available' in text, 'the documented baseline fallback rule is missing'\nassert 'Express API' in text and 'ORM' in text, 'request B must be classified against the backend exclusions'\nassert 'CI/CD deployment, Docker, Actions' in text, 'request C must be classified against the pipelines exclusion'\nassert low.count('do not trigger') >= 2, 'both out-of-scope requests must be marked do not trigger'\nassert '### Modern Web Guidance' in text, 'the documented disclosure section header is missing'\nassert '- **`' not in text, 'no applied-guide disclosure bullet may be written when no guide was retrieved'\nassert 'zero guides' in low, 'the record must use the zero-guides-applied disclosure branch'\nassert 'untested' in low, 'the record must state what remains untested'\nfor claim in ('search returned', 'i retrieved the guide', 'the guide says', 'i applied guide'):\n    assert claim not in low, 'must not claim a live search or retrieval happened: ' + claim\nreport = {'do_not_trigger_branches': True, 'mandatory_first_recorded': True, 'no_fabricated_guide_ids': True,\n          'policy_custom_handling': True, 'retrieval_next_step': True, 'scenario_search_command': True,\n          'untested_declared': True, 'zero_guides_applied': True}\nPath('mwg-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Modern web guidance record: trigger routing and offline workflow checks passed; live search results and guide retrieval remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_mwg_record.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('mwg-workflow-record.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'npx -y modern-web-guidance@latest search \"responsive pricing card grid with container queries and :has()\" --skill-version 2026_10_12-dacb5911' in text, 'the documented search command must be recorded with the scenario action-oriented query'\nassert 'container queries' in low and ':has()' in text, 'the scenario request A inputs must appear'\nassert 'npx -y modern-web-guidance@latest retrieve \"<id>\"' in text, 'the documented retrieve step is missing'\nassert 'npx -y modern-web-guidance@latest list' in text, 'the documented fallback list command is missing'\nassert 'action-oriented query' in low, 'the search must be recorded as action-oriented per the skill'\nassert 'Safari 17.4+' in text, 'the scenario custom browser policy must be recorded'\nassert 'Baseline Widely available' in text, 'the documented baseline fallback rule is missing'\nassert 'Express API' in text and 'ORM' in text, 'request B must be classified against the backend exclusions'\nassert 'CI/CD deployment, Docker, Actions' in text, 'request C must be classified against the pipelines exclusion'\nassert low.count('do not trigger') >= 2, 'both out-of-scope requests must be marked do not trigger'\nassert '### Modern Web Guidance' in text, 'the documented disclosure section header is missing'\nassert '- **`' not in text, 'no applied-guide disclosure bullet may be written when no guide was retrieved'\nassert 'zero guides' in low, 'the record must use the zero-guides-applied disclosure branch'\nassert 'untested' in low, 'the record must state what remains untested'\nfor claim in ('search returned', 'i retrieved the guide', 'the guide says', 'i applied guide'):\n    assert claim not in low, 'must not claim a live search or retrieval happened: ' + claim\nreport = {'do_not_trigger_branches': True, 'mandatory_first_recorded': True, 'no_fabricated_guide_ids': True,\n          'policy_custom_handling': True, 'retrieval_next_step': True, 'scenario_search_command': True,\n          'untested_declared': True, 'zero_guides_applied': True}\nPath('mwg-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Modern web guidance record: trigger routing and offline workflow checks passed; live search results and guide retrieval remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-verification.json",
+          "equals": "{\"do_not_trigger_branches\": true, \"mandatory_first_recorded\": true, \"no_fabricated_guide_ids\": true, \"policy_custom_handling\": true, \"retrieval_next_step\": true, \"scenario_search_command\": true, \"untested_declared\": true, \"zero_guides_applied\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "npx -y modern-web-guidance@latest search \"responsive pricing card grid with container queries and :has()\" --skill-version 2026_10_12-dacb5911"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "npx -y modern-web-guidance@latest retrieve \"<id>\""
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "Safari 17.4+"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "Database SQL, ORMs, Express API routes"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "CI/CD deployment, Docker, Actions"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "### Modern Web Guidance"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "Baseline Widely available"
+        },
+        {
+          "kind": "file",
+          "path": "mwg-workflow-record.md",
+          "contains": "action-oriented query"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Modern web guidance record: trigger routing and offline workflow checks passed; live search results and guide retrieval remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "mv3-snippet-saver-side-panel-build",
+      "componentId": "skill:modern-web-guidance:chrome-extensions",
+      "prompt": "/modern-web-guidance:chrome-extensions Use the chrome-extensions skill to build this concrete Manifest V3 extension. Scenario: an extension named snippet-saver, version 1.0, lets the user save the current selection as a snippet from a side panel and shows a badge with the number of saved snippets; there is no popup. Headless authoring task: no browser, no Chrome runtime, no npm install, no network; only author files, so loading the extension in Chrome and the side panel UI remain untested.\n\nWrite these four files using only what the skill documents: (1) manifest.json - parseable JSON with \"manifest_version\": 3, name snippet-saver, version 1.0, an \"action\": {} key because the service worker calls chrome.action.setBadgeText, background service_worker service-worker.js, side_panel with default_path sidepanel.html, permissions containing storage, and NO icons key because no real PNG files can be generated in this task (per the skill, either create real icon files or omit icons); never emit a default_popup anywhere and never use Manifest V2 keys such as background.scripts or browser_action. (2) service-worker.js - open the side panel via chrome.action.onClicked with addListener(async (tab) => { await chrome.sidePanel.open({ windowId: tab.windowId }); }); since there is no default_popup the click always reaches the worker; persist the snippet count only through chrome.storage.local.get and chrome.storage.local.set (never a global variable such as let count), update the badge with chrome.action.setBadgeText, use async/await only - no .then( chains anywhere - and do not call eval( or reference openPanelOnActionIconClick. (3) sidepanel.html - a minimal page with an <h1>Snippets</h1> heading, a button labelled Save snippet, and exactly <script src=\"sidepanel.js\"></script>; no inline <script> element and no onclick= attribute (the skill bans inline scripts and inline event handlers). (4) sidepanel.js - read and persist the snippet list with chrome.storage.local, append the saved snippet text to the list when Save snippet is clicked, and never use .then( chains.\n\nThen read the immutable verify_snippet_saver.py and run exactly python verify_snippet_saver.py using Bash; it validates the four files and writes snippet-saver-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: list the produced files, report the actual verifier result, and state that loading the extension in a real browser remains untested.",
+      "allowCommands": [
+        "python verify_snippet_saver.py"
+      ],
+      "verifierOutputs": [
+        "snippet-saver-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_snippet_saver.py",
+          "text": "import json\nfrom pathlib import Path\n\nmanifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))\nworker = Path('service-worker.js').read_text(encoding='utf-8')\npage = Path('sidepanel.html').read_text(encoding='utf-8')\npanel = Path('sidepanel.js').read_text(encoding='utf-8')\nassert manifest['manifest_version'] == 3, 'manifest_version must be 3'\nassert isinstance(manifest.get('action'), dict), 'chrome.action APIs need the action key in the manifest'\nassert manifest['background']['service_worker'] == 'service-worker.js', 'MV3 background must be a service worker'\nassert manifest['side_panel']['default_path'] == 'sidepanel.html', 'side panel default_path must point at sidepanel.html'\nassert 'storage' in manifest.get('permissions', []), 'chrome.storage needs the storage permission'\nassert 'icons' not in manifest, 'icons must be omitted when no real PNG files exist'\nraw = json.dumps(manifest)\nassert 'default_popup' not in raw, 'the scenario has no popup, so no default_popup may appear'\nassert 'browser_action' not in raw and 'background.scripts' not in raw, 'Manifest V2 keys are forbidden'\nassert manifest['name'] == 'snippet-saver', 'the scenario extension name must be applied'\nassert 'chrome.action.onClicked' in worker, 'the side panel needs an action-click trigger'\nassert 'chrome.sidePanel.open' in worker and 'windowId: tab.windowId' in worker, 'the documented side panel open call is missing'\nassert 'chrome.storage.local.get' in worker and 'chrome.storage.local.set' in worker, 'state must persist through chrome.storage.local'\nassert 'chrome.action.setBadgeText' in worker, 'the badge update is missing'\nassert '.then(' not in worker and '.then(' not in panel, 'use async/await, not .then chains'\nassert 'let count' not in worker, 'no global mutable state may live in the service worker'\nassert 'openPanelOnActionIconClick' not in worker, 'the Icon variant silently aborts the service worker'\nassert 'eval(' not in worker, 'extension pages must not use eval'\nassert '<script src=\"sidepanel.js\"></script>' in page, 'sidepanel.js must load via a src script tag'\nassert '<script>' not in page and 'onclick=' not in page, 'no inline scripts or inline event handlers'\nassert 'Snippets' in page and 'Save snippet' in page, 'the scenario UI labels are missing'\nassert 'chrome.storage.local' in panel, 'the side panel must persist snippets through chrome.storage.local'\nreport = {'async_await_only': True, 'badge_and_action_key': True, 'icons_omitted': True, 'mv3_manifest': True,\n          'no_default_popup': True, 'no_global_state': True, 'sidepanel_trigger': True, 'storage_persistence': True}\nPath('snippet-saver-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Snippet saver extension: MV3 side-panel build checks passed; loading in a real browser remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_snippet_saver.py",
+          "equals": "import json\nfrom pathlib import Path\n\nmanifest = json.loads(Path('manifest.json').read_text(encoding='utf-8'))\nworker = Path('service-worker.js').read_text(encoding='utf-8')\npage = Path('sidepanel.html').read_text(encoding='utf-8')\npanel = Path('sidepanel.js').read_text(encoding='utf-8')\nassert manifest['manifest_version'] == 3, 'manifest_version must be 3'\nassert isinstance(manifest.get('action'), dict), 'chrome.action APIs need the action key in the manifest'\nassert manifest['background']['service_worker'] == 'service-worker.js', 'MV3 background must be a service worker'\nassert manifest['side_panel']['default_path'] == 'sidepanel.html', 'side panel default_path must point at sidepanel.html'\nassert 'storage' in manifest.get('permissions', []), 'chrome.storage needs the storage permission'\nassert 'icons' not in manifest, 'icons must be omitted when no real PNG files exist'\nraw = json.dumps(manifest)\nassert 'default_popup' not in raw, 'the scenario has no popup, so no default_popup may appear'\nassert 'browser_action' not in raw and 'background.scripts' not in raw, 'Manifest V2 keys are forbidden'\nassert manifest['name'] == 'snippet-saver', 'the scenario extension name must be applied'\nassert 'chrome.action.onClicked' in worker, 'the side panel needs an action-click trigger'\nassert 'chrome.sidePanel.open' in worker and 'windowId: tab.windowId' in worker, 'the documented side panel open call is missing'\nassert 'chrome.storage.local.get' in worker and 'chrome.storage.local.set' in worker, 'state must persist through chrome.storage.local'\nassert 'chrome.action.setBadgeText' in worker, 'the badge update is missing'\nassert '.then(' not in worker and '.then(' not in panel, 'use async/await, not .then chains'\nassert 'let count' not in worker, 'no global mutable state may live in the service worker'\nassert 'openPanelOnActionIconClick' not in worker, 'the Icon variant silently aborts the service worker'\nassert 'eval(' not in worker, 'extension pages must not use eval'\nassert '<script src=\"sidepanel.js\"></script>' in page, 'sidepanel.js must load via a src script tag'\nassert '<script>' not in page and 'onclick=' not in page, 'no inline scripts or inline event handlers'\nassert 'Snippets' in page and 'Save snippet' in page, 'the scenario UI labels are missing'\nassert 'chrome.storage.local' in panel, 'the side panel must persist snippets through chrome.storage.local'\nreport = {'async_await_only': True, 'badge_and_action_key': True, 'icons_omitted': True, 'mv3_manifest': True,\n          'no_default_popup': True, 'no_global_state': True, 'sidepanel_trigger': True, 'storage_persistence': True}\nPath('snippet-saver-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('Snippet saver extension: MV3 side-panel build checks passed; loading in a real browser remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "snippet-saver-verification.json",
+          "equals": "{\"async_await_only\": true, \"badge_and_action_key\": true, \"icons_omitted\": true, \"mv3_manifest\": true, \"no_default_popup\": true, \"no_global_state\": true, \"sidepanel_trigger\": true, \"storage_persistence\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "manifest_version"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "\"action\": {}"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "snippet-saver"
+        },
+        {
+          "kind": "file",
+          "path": "manifest.json",
+          "contains": "sidepanel.html"
+        },
+        {
+          "kind": "file",
+          "path": "service-worker.js",
+          "contains": "chrome.action.onClicked"
+        },
+        {
+          "kind": "file",
+          "path": "service-worker.js",
+          "contains": "chrome.sidePanel.open"
+        },
+        {
+          "kind": "file",
+          "path": "service-worker.js",
+          "contains": "chrome.storage.local"
+        },
+        {
+          "kind": "file",
+          "path": "service-worker.js",
+          "contains": "windowId: tab.windowId"
+        },
+        {
+          "kind": "file",
+          "path": "sidepanel.html",
+          "contains": "<script src=\"sidepanel.js\"></script>"
+        },
+        {
+          "kind": "file",
+          "path": "sidepanel.html",
+          "contains": "Save snippet"
+        },
+        {
+          "kind": "file",
+          "path": "sidepanel.html",
+          "contains": "Snippets"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "Snippet saver extension: MV3 side-panel build checks passed; loading in a real browser remains untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "repo": "dropbox/dropbox-ai-plugins",
+  "commit": "60cea151b269e9ab47266279d80839c471e0d8c6",
+  "path": "claude",
+  "archive_sha256": "1156a4b325cf7d75d28fe89d55e3f46713fb04b3dea3704f180a66bde2c4647f",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "LICENSE",
+    "README.md",
+    "assets/logo.png",
+    "skills/clean-up-dropbox-content/SKILL.md",
+    "skills/collect-files-with-request/SKILL.md",
+    "skills/find-dropbox-content/SKILL.md",
+    "skills/inspect-dropbox-file/SKILL.md",
+    "skills/organize-dropbox-folder/SKILL.md",
+    "skills/share-dropbox-content/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"dropbox\",\n  \"version\": \"1.0.0\",\n  \"description\": \"The Dropbox plugin for Claude connects your Dropbox files directly to Claude, so you can search, organize, save generated content, and create sharing links without switching tools. It respects your existing Dropbox permissions, and Claude only works with files you already have access to.\",\n  \"author\": {\n    \"name\": \"Dropbox\"\n  },\n  \"homepage\": \"https://www.dropbox.com\",\n  \"icon\": \"./assets/logo.png\",\n  \"license\": \"Apache-2.0\",\n  \"keywords\": [\n    \"dropbox\",\n    \"files\",\n    \"storage\",\n    \"cloud\",\n    \"cloud storage\",\n    \"save\",\n    \"upload\",\n    \"download\",\n    \"share\",\n    \"sharing\",\n    \"sync\",\n    \"folder\",\n    \"folders\",\n    \"documents\",\n    \"docs\",\n    \"content\",\n    \"links\",\n    \"permissions\",\n    \"organize\",\n    \"search\",\n    \"retrieve\",\n    \"manage\",\n    \"import\",\n    \"export\"\n  ],\n  \"mcpServers\": \"./.mcp.json\",\n  \"skills\": [\n    \"./skills/clean-up-dropbox-content\",\n    \"./skills/collect-files-with-request\",\n    \"./skills/find-dropbox-content\",\n    \"./skills/inspect-dropbox-file\",\n    \"./skills/organize-dropbox-folder\",\n    \"./skills/share-dropbox-content\"\n  ]\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"claude_app_mcp\": {\n      \"type\": \"http\",\n      \"url\": \"https://mcp.dropbox.com/claude_app_mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/share-dropbox-content/SKILL.md": "\nname: share-dropbox-content\ndescription: Share Dropbox files or folders by creating shared links, inspecting existing shared links, or explaining current shared-link state. Use only when the user explicitly asks to create a shared link, check access, or inspect a Dropbox shared link.\ndisable-model-invocation: false\n",
+    "skills/organize-dropbox-folder/SKILL.md": "\nname: organize-dropbox-folder\ndescription: Organize Dropbox files and folders by creating folders, copying content, or moving content into a cleaner structure. Use when the user asks to organize, archive, consolidate, restructure, copy, or move Dropbox content.\ndisable-model-invocation: false\n",
+    "skills/find-dropbox-content/SKILL.md": "\nname: find-dropbox-content\ndescription: Find Dropbox files and folders relevant to a user request. Use when the user asks to search Dropbox, find a document, locate recent files, browse a folder, identify likely source files, or narrow down where content lives before reading, sharing, organizing, or restoring it.\ndisable-model-invocation: false\n",
+    "skills/clean-up-dropbox-content/SKILL.md": "\nname: clean-up-dropbox-content\ndescription: Clean up Dropbox content by identifying obsolete, duplicate, temporary, or unwanted files and deleting only after explicit review. Use when the user explicitly asks to delete, remove, or clean up Dropbox files or folders.\ndisable-model-invocation: false\n",
+    "skills/collect-files-with-request/SKILL.md": "\nname: collect-files-with-request\ndescription: Create, inspect, and manage Dropbox file requests for collecting uploads from other people. Use when the user asks to collect files, request uploads, create an upload portal, check a file request, or list existing file requests.\ndisable-model-invocation: false\n",
+    "skills/inspect-dropbox-file/SKILL.md": "\nname: inspect-dropbox-file\ndescription: Inspect a Dropbox file or folder by checking metadata, shared links, and file content when needed. Use when the user asks what a file is, whether it is shared, when it changed, what access links exist, or asks to read/analyze a Dropbox file.\ndisable-model-invocation: false\n"
+  }
+}

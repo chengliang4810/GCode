@@ -1,0 +1,24 @@
+{
+  "repo": "anthropics/claude-plugins-official",
+  "commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "path": "plugins/claude-code-setup",
+  "archive_sha256": "fa4cc5f53a3270aeb824571403fc1c2e0665e341bcafdc5fd31294b5cbd85439",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE",
+    "README.md",
+    "automation-recommender-example.png",
+    "skills/claude-automation-recommender/SKILL.md",
+    "skills/claude-automation-recommender/references/hooks-patterns.md",
+    "skills/claude-automation-recommender/references/mcp-servers.md",
+    "skills/claude-automation-recommender/references/plugins-reference.md",
+    "skills/claude-automation-recommender/references/skills-reference.md",
+    "skills/claude-automation-recommender/references/subagent-templates.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"claude-code-setup\",\n  \"description\": \"Analyze codebases and recommend tailored Claude Code automations such as hooks, skills, MCP servers, and subagents.\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"Anthropic\",\n    \"email\": \"support@anthropic.com\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/claude-automation-recommender/SKILL.md": "\nname: claude-automation-recommender\ndescription: Analyze a codebase and recommend Claude Code automations (hooks, subagents, skills, plugins, MCP servers). Use when user asks for automation recommendations, wants to optimize their Claude Code setup, mentions improving Claude Code workflows, asks how to first set up Claude Code for a project, or wants to know what Claude Code features they should use.\ntools: Read, Glob, Grep, Bash\n"
+  }
+}

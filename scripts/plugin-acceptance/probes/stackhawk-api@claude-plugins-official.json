@@ -1,0 +1,112 @@
+{
+  "pluginId": "stackhawk-api@claude-plugins-official",
+  "sourceCommit": "d0eea864c42f7c2e872334bb3df424daa1fbaadc",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "northwind-posture-recipe",
+      "componentId": "skill:stackhawk-api:api",
+      "prompt": "/stackhawk-api:api Write the reporting recipe the Northwind Retail security team will run with the hawk CLI. Environment facts: hawk version reports v6.2.0, the session is a headless CI container so authentication must use the HAWK_API_KEY environment variable, the active org id is e4f1a2b3-7c9d-4e2a-8b6f-5d0c1a9e7742, and the app they care about is checkout-api. Headless boundary: no network, no real external service, no installs - the StackHawk platform is not reachable and the hawk binary is absent here, so authentication, live platform queries and the report numbers remain untested; do not fabricate any findings or counts. Write stackhawk-posture-report.md applying the skill workflow in order: identify the CLI for telemetry with export _STACKHAWK_SKILL=api; confirm the installed version meets the documented v6.0.0 minimum with hawk version; check auth state with hawk op status; note that a non-interactive session reads HAWK_API_KEY directly with no config file, while interactive use would use hawk init --browser; resolve the org with hawk op org get and pin it with hawk op org set e4f1a2b3-7c9d-4e2a-8b6f-5d0c1a9e7742; assemble the org posture by joining hawk op app list --format json and hawk op scan list --limit 500 --format json on applicationId, presenting the documented table with columns App, Environment, High, Medium, Low, Last Scan and reading per-scan severity from highAlertCount, mediumAlertCount and lowAlertCount, flagging apps whose startedTimestamp is older than 30 days as No recent scan and scans whose status is not COMPLETED as incomplete; keep the table cells as the placeholder <awaiting live query> because no query runs here; then the checkout-api deep dive uses hawk op scan get --app \"checkout-api\" --detail full --format json because the default overview omits per-URI evidence, and links findings to the platform with the documented https://app.stackhawk.com/scans/{scanId} form; triage stays out of scope: the recipe states triage write operations are not part of this skill and directs the team to app.stackhawk.com; never hand-roll REST - the recipe cites that there is no raw-REST fallback and no command may fall back to curl, and the key is referenced only as ${HAWK_API_KEY}, never inlined. Then read the immutable verify_posture_recipe.py and run exactly python verify_posture_recipe.py using Bash; it validates the recipe and writes stackhawk-verification.json. Do not modify the verifier or read or write its output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that authentication, live platform queries and real report data remain untested.",
+      "allowCommands": [
+        "python verify_posture_recipe.py"
+      ],
+      "verifierOutputs": [
+        "stackhawk-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_posture_recipe.py",
+          "text": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('stackhawk-posture-report.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'export _STACKHAWK_SKILL=api' in text, 'the telemetry skill export is missing'\nassert 'hawk version' in text and 'v6.0.0' in text, 'the documented minimum version check is missing'\nassert 'hawk op status' in text, 'the auth state check is missing'\nassert 'HAWK_API_KEY' in text, 'the non-interactive auth path must use the env var'\nassert 'hawk init --browser' in text, 'the interactive alternative must be documented'\nassert 'hawk op org get' in text, 'org resolution is missing'\nassert 'hawk op org set e4f1a2b3-7c9d-4e2a-8b6f-5d0c1a9e7742' in text, 'the scenario org must be pinned'\nassert 'hawk op app list --format json' in text and 'hawk op scan list --limit 500 --format json' in text, 'the posture join commands are missing'\nassert 'applicationId' in text, 'the join key must be applicationId'\nassert 'highAlertCount' in text and 'mediumAlertCount' in text and 'lowAlertCount' in text, 'severity fields must be read from the documented keys'\nassert '| App | Environment | High | Medium | Low | Last Scan |' in text, 'the documented posture table is missing'\nassert 'older than 30 days' in text and 'No recent scan' in text, 'the stale-app rule is missing'\nassert 'COMPLETED' in text, 'the incomplete-scan status rule is missing'\nassert '<awaiting live query>' in text, 'the table must keep placeholders instead of fabricated numbers'\nassert 'hawk op scan get --app \"checkout-api\" --detail full --format json' in text, 'the deep dive must use the documented full-detail command'\nassert 'https://app.stackhawk.com/scans/{scanId}' in text, 'the platform scan link format is missing'\nassert 'triage write operations' in text, 'the triage boundary must be stated'\nassert 'app.stackhawk.com' in text, 'triage goes to the platform UI'\nassert 'no raw-REST fallback' in text or 'no raw-rest fallback' in low, 'the no-raw-REST rule must be cited'\nassert 'curl -' not in text, 'no curl commands may appear'\nassert 'checkout-api' in text and 'Northwind Retail' in text, 'the scenario app and org must be applied'\nassert 'untested' in low, 'the recipe must state what remains untested'\n\nreport = {'auth_path': True, 'deep_dive_full_detail': True, 'no_fabricated_numbers': True, 'org_pinned': True, 'platform_link': True, 'posture_commands': True, 'table_and_severity': True, 'untested_declared': True}\nPath('stackhawk-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('stackhawk recipe: commands, table and triage boundary verified; authentication and live platform queries remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_posture_recipe.py",
+          "equals": "import json\nimport re\nfrom pathlib import Path\n\ntext = Path('stackhawk-posture-report.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'export _STACKHAWK_SKILL=api' in text, 'the telemetry skill export is missing'\nassert 'hawk version' in text and 'v6.0.0' in text, 'the documented minimum version check is missing'\nassert 'hawk op status' in text, 'the auth state check is missing'\nassert 'HAWK_API_KEY' in text, 'the non-interactive auth path must use the env var'\nassert 'hawk init --browser' in text, 'the interactive alternative must be documented'\nassert 'hawk op org get' in text, 'org resolution is missing'\nassert 'hawk op org set e4f1a2b3-7c9d-4e2a-8b6f-5d0c1a9e7742' in text, 'the scenario org must be pinned'\nassert 'hawk op app list --format json' in text and 'hawk op scan list --limit 500 --format json' in text, 'the posture join commands are missing'\nassert 'applicationId' in text, 'the join key must be applicationId'\nassert 'highAlertCount' in text and 'mediumAlertCount' in text and 'lowAlertCount' in text, 'severity fields must be read from the documented keys'\nassert '| App | Environment | High | Medium | Low | Last Scan |' in text, 'the documented posture table is missing'\nassert 'older than 30 days' in text and 'No recent scan' in text, 'the stale-app rule is missing'\nassert 'COMPLETED' in text, 'the incomplete-scan status rule is missing'\nassert '<awaiting live query>' in text, 'the table must keep placeholders instead of fabricated numbers'\nassert 'hawk op scan get --app \"checkout-api\" --detail full --format json' in text, 'the deep dive must use the documented full-detail command'\nassert 'https://app.stackhawk.com/scans/{scanId}' in text, 'the platform scan link format is missing'\nassert 'triage write operations' in text, 'the triage boundary must be stated'\nassert 'app.stackhawk.com' in text, 'triage goes to the platform UI'\nassert 'no raw-REST fallback' in text or 'no raw-rest fallback' in low, 'the no-raw-REST rule must be cited'\nassert 'curl -' not in text, 'no curl commands may appear'\nassert 'checkout-api' in text and 'Northwind Retail' in text, 'the scenario app and org must be applied'\nassert 'untested' in low, 'the recipe must state what remains untested'\n\nreport = {'auth_path': True, 'deep_dive_full_detail': True, 'no_fabricated_numbers': True, 'org_pinned': True, 'platform_link': True, 'posture_commands': True, 'table_and_severity': True, 'untested_declared': True}\nPath('stackhawk-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('stackhawk recipe: commands, table and triage boundary verified; authentication and live platform queries remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-verification.json",
+          "equals": "{\"auth_path\": true, \"deep_dive_full_detail\": true, \"no_fabricated_numbers\": true, \"org_pinned\": true, \"platform_link\": true, \"posture_commands\": true, \"table_and_severity\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "export _STACKHAWK_SKILL=api"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "hawk op status"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "HAWK_API_KEY"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "hawk init --browser"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "hawk op org set e4f1a2b3-7c9d-4e2a-8b6f-5d0c1a9e7742"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "hawk op scan list --limit 500 --format json"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "highAlertCount"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "| App | Environment | High | Medium | Low | Last Scan |"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "older than 30 days"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "<awaiting live query>"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "hawk op scan get --app \"checkout-api\" --detail full --format json"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "https://app.stackhawk.com/scans/{scanId}"
+        },
+        {
+          "kind": "file",
+          "path": "stackhawk-posture-report.md",
+          "contains": "triage write operations"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "stackhawk recipe: commands, table and triage boundary verified; authentication and live platform queries remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

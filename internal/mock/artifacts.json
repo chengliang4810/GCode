@@ -1,113 +1,113 @@
 [
   {
-    "assetRef": "asset://artifacts/diagram-zeron-light.svg",
+    "assetRef": "asset://artifacts/diagram-rcode-light.svg",
     "baseline": 0.0,
     "height": 139.9095,
-    "id": "diagram-zeron-light",
+    "id": "diagram-rcode-light",
     "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
     "width": 381.6848
   },
   {
-    "assetRef": "asset://artifacts/math-fira-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-fira-rcode-light.svg",
     "baseline": 28.820640563964844,
     "height": 46.10063934326172,
-    "id": "math-fira-zeron-light",
+    "id": "math-fira-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 129.34292602539062
   },
   {
-    "assetRef": "asset://artifacts/math-stixTwo-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-stixTwo-rcode-light.svg",
     "baseline": 26.856000900268555,
     "height": 42.50400161743164,
-    "id": "math-stixTwo-zeron-light",
+    "id": "math-stixTwo-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 139.81173706054688
   },
   {
-    "assetRef": "asset://artifacts/math-computerModern-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-computerModern-rcode-light.svg",
     "baseline": 26.855998992919922,
     "height": 43.58399963378906,
-    "id": "math-computerModern-zeron-light",
+    "id": "math-computerModern-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 149.0997314453125
   },
   {
-    "assetRef": "asset://artifacts/math-libertinus-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-libertinus-rcode-light.svg",
     "baseline": 31.043996810913086,
     "height": 48.0839958190918,
-    "id": "math-libertinus-zeron-light",
+    "id": "math-libertinus-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 131.99732971191406
   },
   {
-    "assetRef": "asset://artifacts/math-pagella-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-pagella-rcode-light.svg",
     "baseline": 29.51831817626953,
     "height": 45.93431854248047,
-    "id": "math-pagella-zeron-light",
+    "id": "math-pagella-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 138.6021270751953
   },
   {
-    "assetRef": "asset://artifacts/math-euler-zeron-light.svg",
+    "assetRef": "asset://artifacts/math-euler-rcode-light.svg",
     "baseline": 27.43199920654297,
     "height": 44.13600158691406,
-    "id": "math-euler-zeron-light",
+    "id": "math-euler-rcode-light",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 147.97174072265625
   },
   {
-    "assetRef": "asset://artifacts/diagram-zeron-dark.svg",
+    "assetRef": "asset://artifacts/diagram-rcode-dark.svg",
     "baseline": 0.0,
     "height": 139.9095,
-    "id": "diagram-zeron-dark",
+    "id": "diagram-rcode-dark",
     "source": "flowchart LR\n A[Request] --> B{Ready?}\n B -->|Yes| C[Response]\n B -->|No| D[Wait]",
     "width": 381.6848
   },
   {
-    "assetRef": "asset://artifacts/math-fira-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-fira-rcode-dark.svg",
     "baseline": 28.820640563964844,
     "height": 46.10063934326172,
-    "id": "math-fira-zeron-dark",
+    "id": "math-fira-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 129.34292602539062
   },
   {
-    "assetRef": "asset://artifacts/math-stixTwo-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-stixTwo-rcode-dark.svg",
     "baseline": 26.856000900268555,
     "height": 42.50400161743164,
-    "id": "math-stixTwo-zeron-dark",
+    "id": "math-stixTwo-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 139.81173706054688
   },
   {
-    "assetRef": "asset://artifacts/math-computerModern-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-computerModern-rcode-dark.svg",
     "baseline": 26.855998992919922,
     "height": 43.58399963378906,
-    "id": "math-computerModern-zeron-dark",
+    "id": "math-computerModern-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 149.0997314453125
   },
   {
-    "assetRef": "asset://artifacts/math-libertinus-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-libertinus-rcode-dark.svg",
     "baseline": 31.043996810913086,
     "height": 48.0839958190918,
-    "id": "math-libertinus-zeron-dark",
+    "id": "math-libertinus-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 131.99732971191406
   },
   {
-    "assetRef": "asset://artifacts/math-pagella-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-pagella-rcode-dark.svg",
     "baseline": 29.51831817626953,
     "height": 45.93431854248047,
-    "id": "math-pagella-zeron-dark",
+    "id": "math-pagella-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 138.6021270751953
   },
   {
-    "assetRef": "asset://artifacts/math-euler-zeron-dark.svg",
+    "assetRef": "asset://artifacts/math-euler-rcode-dark.svg",
     "baseline": 27.43199920654297,
     "height": 44.13600158691406,
-    "id": "math-euler-zeron-dark",
+    "id": "math-euler-rcode-dark",
     "source": "\\frac{a}{b} + \\sqrt{x^2+y^2}",
     "width": 147.97174072265625
   },

@@ -1,0 +1,46 @@
+{
+  "repo": "BrainBlend-AI/atomic-agents",
+  "commit": "33d2ec94f42d4a65393a336e35edf21ee5700303",
+  "path": "claude-plugin/atomic-agents",
+  "archive_sha256": "9e7708835c17d8d9f1b41c846f15a6057b4a4375cee98bb0ce35ec70add42bed",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "agents/atomic-explorer.md",
+    "agents/atomic-reviewer.md",
+    "skills/create-atomic-agent/SKILL.md",
+    "skills/create-atomic-context-provider/SKILL.md",
+    "skills/create-atomic-schema/SKILL.md",
+    "skills/create-atomic-tool/SKILL.md",
+    "skills/framework/SKILL.md",
+    "skills/framework/references/agents.md",
+    "skills/framework/references/context-providers.md",
+    "skills/framework/references/hooks.md",
+    "skills/framework/references/memory.md",
+    "skills/framework/references/orchestration.md",
+    "skills/framework/references/project-structure.md",
+    "skills/framework/references/prompts.md",
+    "skills/framework/references/providers.md",
+    "skills/framework/references/schemas.md",
+    "skills/framework/references/testing.md",
+    "skills/framework/references/tools.md",
+    "skills/new-app/SKILL.md",
+    "skills/troubleshoot/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"atomic-agents\",\n  \"version\": \"2.2.0\",\n  \"description\": \"Skills plus explorer and reviewer subagents for building, scaffolding, debugging, understanding, and auditing applications with the Atomic Agents Python framework. Includes the umbrella `framework` skill, action-oriented `create-atomic-schema` / `create-atomic-agent` / `create-atomic-tool` / `create-atomic-context-provider` skills, the `troubleshoot` diagnostic skill, the `new-app` scaffolder (emits AGENTS.md + CLAUDE.md), progressive-disclosure reference material for prompts, orchestration, memory, hooks, providers, project structure, and testing, and isolated-context subagents for codebase mapping and code review.\",\n  \"author\": {\n    \"name\": \"Kenny Vaneetvelde\",\n    \"email\": \"kenny@eigenwise.io\"\n  },\n  \"homepage\": \"https://github.com/eigenwise/atomic-agents\",\n  \"repository\": \"https://github.com/eigenwise/atomic-agents\",\n  \"license\": \"MIT\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/troubleshoot/SKILL.md": "\nname: troubleshoot\ndescription: Diagnose and fix a failing or misbehaving Atomic Agents app — import errors, schema validation failures, empty or malformed LLM output, provider role/mode errors, history and context problems, MCP transport errors. Use when the user reports an error, traceback, or wrong behavior in atomic-agents code, asks \"why is my agent not working / crashing / returning garbage\", or pastes a `ValidationError`, `ImportError`, or provider API error from an atomic-agents project.\n",
+    "skills/create-atomic-schema/SKILL.md": "\nname: create-atomic-schema\ndescription: Design and write a `BaseIOSchema` input/output pair for an Atomic Agents agent or tool — docstrings, field descriptions, validators, error variants. Use when the user asks to \"create a schema\", \"design the input/output schema\", \"define an `IOSchema`\", \"write a `BaseIOSchema`\", \"model the agent's output\", or runs `/atomic-agents:create-atomic-schema`.\n",
+    "skills/new-app/SKILL.md": "\nname: new-app\ndescription: Scaffold a new Atomic Agents project from scratch — create the directory, `pyproject.toml`, env file, first agent, and a runnable entry point. Use when the user asks to start a new atomic-agents project from scratch, says \"scaffold\" / \"new project\" / \"start from zero\", or runs `/atomic-agents:new-app`.\ndisable-model-invocation: true\nargument-hint: \"[project-name]\"\n",
+    "skills/create-atomic-tool/SKILL.md": "\nname: create-atomic-tool\ndescription: Build a `BaseTool[InSchema, OutSchema]` subclass — input/output schemas, `BaseToolConfig`, `run()` (and optional `run_async()`), env-driven secrets, typed failure outputs. Use when the user asks to \"add a tool\", \"create a tool\", \"wrap an API as a tool\", \"build a `BaseTool`\", \"make a calculator/search/weather tool\", or runs `/atomic-agents:create-atomic-tool`.\n",
+    "agents/atomic-explorer.md": "\nname: atomic-explorer\ndescription: Maps existing Atomic Agents Python codebases — catalogs agents, tools, schemas, context providers, and orchestration patterns; traces data flow between them; returns a compact architecture summary with file:line references. Use PROACTIVELY when the user asks to \"explore\", \"map\", \"understand\", \"analyze\", \"trace\", or \"explain how this works\" in a project that imports from `atomic_agents`, or before extending a non-trivial atomic-agents codebase. The caller should pass the scope (project root, module path, or specific feature) in the invocation prompt.\ntools: Glob, Grep, LS, Read, NotebookRead, TodoWrite\nmodel: sonnet\ncolor: yellow\n",
+    "agents/atomic-reviewer.md": "\nname: atomic-reviewer\ndescription: Reviews Atomic Agents Python code for framework-specific correctness — BaseIOSchema invariants, AtomicAgent/AgentConfig wiring, BaseTool generics, context-provider I/O hygiene, orchestration hazards, Instructor integration — using confidence-based filtering. Use PROACTIVELY after any change to atomic-agents code, before commit or PR, and whenever the user asks to review, audit, check, or validate code that imports from `atomic_agents`. Complements generic code review by focusing only on Atomic-Agents-specific concerns. The caller should pass the scope (diff, file paths, or module) in the invocation prompt.\ntools: Glob, Grep, LS, Read, NotebookRead, TodoWrite\nmodel: sonnet\ncolor: red\n",
+    "skills/create-atomic-context-provider/SKILL.md": "\nname: create-atomic-context-provider\ndescription: Build a `BaseDynamicContextProvider` that injects a named, titled block into an agent's system prompt at every `run()` — current time, user identity, retrieved RAG docs, session state, cached DB schema. Use when the user asks to \"add a context provider\", \"inject X into the prompt\", \"give the agent dynamic context\", \"wire up RAG\", \"make a `BaseDynamicContextProvider`\", or runs `/atomic-agents:create-atomic-context-provider`.\n",
+    "skills/create-atomic-agent/SKILL.md": "\nname: create-atomic-agent\ndescription: Build and wire an `AtomicAgent[InSchema, OutSchema]` — schemas, `AgentConfig`, `SystemPromptGenerator`, provider client, history, hooks, optional context providers. Use when the user asks to \"create an agent\", \"add another agent\", \"build an `AtomicAgent`\", \"wire up an agent\", \"make a planner/router/extractor agent\", or runs `/atomic-agents:create-atomic-agent`.\n",
+    "skills/framework/SKILL.md": "\nname: framework\ndescription: Guide for the Atomic Agents Python framework — schemas, agents, tools, context providers, prompts, orchestration, and provider configuration. Use when code imports from `atomic_agents`, defines an `AtomicAgent`, `BaseTool`, or `BaseIOSchema`, or the user asks about multi-agent orchestration or LLM-provider wiring in an atomic-agents project.\n"
+  }
+}

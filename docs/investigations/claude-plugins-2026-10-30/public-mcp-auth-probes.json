@@ -1,0 +1,2106 @@
+{
+  "method": "Anonymous initialize only. No account, Authorization, cookies, business tool calls, login or data creation. Redirects refused. HTTP 401 proves an anonymous authentication gate, not that every plugin feature requires authentication. HTTP 403 alone is not treated as an authentication requirement.",
+  "source_marketplace_commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "results": [
+    {
+      "url": "https://ac360-mcp.blackrock.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:12.666231+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 403,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "blackrock-advisor-center-plugin",
+          "server": "blackrock-advisor-center"
+        }
+      ]
+    },
+    {
+      "url": "https://adobe-creativity.adobe.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.206643+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 403,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "adobe-for-creativity",
+          "server": "Adobe"
+        }
+      ]
+    },
+    {
+      "url": "https://analysis.mcp.cloudinary.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.167091+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudinary",
+          "server": "cloudinary-analysis"
+        }
+      ]
+    },
+    {
+      "url": "https://api.circle.com/v1/codegen/mcp",
+      "probed_at_utc": "2026-10-30T11:13:13.085435+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "circle-skills",
+          "server": "circle"
+        }
+      ]
+    },
+    {
+      "url": "https://api.fullstory.com/mcp/fullstory",
+      "probed_at_utc": "2026-10-30T11:13:16.912970+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "fullstory",
+          "server": "fullstory"
+        }
+      ]
+    },
+    {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "probed_at_utc": "2026-10-30T11:13:17.484573+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "github",
+          "server": "github"
+        }
+      ]
+    },
+    {
+      "url": "https://api.greptile.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:18.554377+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "greptile",
+          "server": "greptile"
+        }
+      ]
+    },
+    {
+      "url": "https://api.linqalpha.com/v1/mcp",
+      "probed_at_utc": "2026-10-30T11:13:20.473869+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "linq-alpha",
+          "server": "linqalpha"
+        }
+      ]
+    },
+    {
+      "url": "https://api.val.town/v3/mcp",
+      "probed_at_utc": "2026-10-30T11:13:29.785485+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 403,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": true,
+      "entries": [
+        {
+          "plugin": "valtown",
+          "server": "valtown"
+        }
+      ]
+    },
+    {
+      "url": "https://api.wingspan.app/v3/mcp",
+      "probed_at_utc": "2026-10-30T11:13:32.127950+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "wingspan",
+          "server": "wingspan"
+        }
+      ]
+    },
+    {
+      "url": "https://api.you.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:32.595936+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "youdotcom-agent-skills",
+          "server": "you"
+        }
+      ]
+    },
+    {
+      "url": "https://api.you.com/mcp/finance",
+      "probed_at_utc": "2026-10-30T11:13:33.011440+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "youdotcom-agent-skills",
+          "server": "you-finance"
+        }
+      ]
+    },
+    {
+      "url": "https://api.you.com/mcp/research",
+      "probed_at_utc": "2026-10-30T11:13:33.055571+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "youdotcom-agent-skills",
+          "server": "you-research"
+        }
+      ]
+    },
+    {
+      "url": "https://app.gc.ai/api/mcp",
+      "probed_at_utc": "2026-10-30T11:13:17.374920+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "gc-ai",
+          "server": "gc-ai"
+        }
+      ]
+    },
+    {
+      "url": "https://app.pendo.io/mcp/v0/shttp",
+      "probed_at_utc": "2026-10-30T11:13:25.447957+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "pendo-analytics",
+          "server": "pendo-external"
+        },
+        {
+          "plugin": "pendo-guides",
+          "server": "pendo-external"
+        },
+        {
+          "plugin": "pendo-orchestrate",
+          "server": "pendo-external"
+        }
+      ]
+    },
+    {
+      "url": "https://asset-management.mcp.cloudinary.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.018073+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudinary",
+          "server": "cloudinary-asset-mgmt"
+        }
+      ]
+    },
+    {
+      "url": "https://catalyst.zohomcp.com/mcp/message",
+      "probed_at_utc": "2026-10-30T11:13:12.860831+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "catalyst-by-zoho",
+          "server": "catalyst-by-zoho"
+        }
+      ]
+    },
+    {
+      "url": "https://circleback.ai/api/mcp",
+      "probed_at_utc": "2026-10-30T11:13:13.676890+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "circleback",
+          "server": "circleback"
+        }
+      ]
+    },
+    {
+      "url": "https://cockroachlabs.cloud/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.705030+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cockroachdb",
+          "server": "cockroachdb-cloud"
+        }
+      ]
+    },
+    {
+      "url": "https://docs.synthflow.ai/_mcp/server",
+      "probed_at_utc": "2026-10-30T11:13:29.561843+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "synthflow",
+          "server": "synthflow-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://environment-config.mcp.cloudinary.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.131481+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudinary",
+          "server": "cloudinary-env-config"
+        }
+      ]
+    },
+    {
+      "url": "https://gitlab.com/api/v4/mcp",
+      "probed_at_utc": "2026-10-30T11:13:17.593401+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "gitlab",
+          "server": "gitlab"
+        }
+      ]
+    },
+    {
+      "url": "https://govtribe.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:17.830943+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "govtribe",
+          "server": "govtribe"
+        }
+      ]
+    },
+    {
+      "url": "https://huggingface.co/mcp?login",
+      "probed_at_utc": "2026-10-30T11:13:19.347641+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "huggingface-skills",
+          "server": "huggingface-skills"
+        }
+      ]
+    },
+    {
+      "url": "https://knowledge-mcp.global.api.aws",
+      "probed_at_utc": "2026-10-30T11:13:12.277769+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "session_cleanup_http_status": 200,
+      "entries": [
+        {
+          "plugin": "aws-agents",
+          "server": "awsknowledge"
+        },
+        {
+          "plugin": "databases-on-aws",
+          "server": "awsknowledge"
+        },
+        {
+          "plugin": "deploy-on-aws",
+          "server": "awsknowledge"
+        },
+        {
+          "plugin": "migration-to-aws",
+          "server": "awsknowledge"
+        }
+      ]
+    },
+    {
+      "url": "https://learn.microsoft.com/api/mcp",
+      "probed_at_utc": "2026-10-30T11:13:22.357043+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "session_cleanup_http_status": 405,
+      "entries": [
+        {
+          "plugin": "microsoft-docs",
+          "server": "microsoft-learn"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp-devkit.mapbox.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:21.100943+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer,",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mapbox",
+          "server": "mapbox-devkit"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp-docs.mapbox.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:21.704182+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mapbox",
+          "server": "mapbox-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.airtable.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.206643+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "airtable",
+          "server": "airtable"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.airwallex.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.207619+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "airwallex-agentos",
+          "server": "airwallex-agentos"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.aiven.live/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.610397+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "aiven",
+          "server": "aiven"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.amplitude.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.801204+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "amplitude",
+          "server": "amplitude"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.apollo.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:11.218064+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "apollo",
+          "server": "apollo"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.apollographql.com",
+      "probed_at_utc": "2026-10-30T11:13:11.820737+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "apollo-skills",
+          "server": "graphos-tools"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.appwrite.io/",
+      "probed_at_utc": "2026-10-30T11:13:11.892167+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "appwrite",
+          "server": "appwrite"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.atlan.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:12.237462+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "atlan",
+          "server": "atlan"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.atlassian.com/v1/ads/public/mcp",
+      "probed_at_utc": "2026-10-30T11:13:16.566487+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "session_cleanup_http_status": 403,
+      "entries": [
+        {
+          "plugin": "forge-skills",
+          "server": "ads-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.atlassian.com/v1/forge/mcp",
+      "probed_at_utc": "2026-10-30T11:13:16.509552+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "forge-skills",
+          "server": "forge"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.atlassian.com/v2/mcp",
+      "probed_at_utc": "2026-10-30T11:13:12.250684+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "atlassian",
+          "server": "atlassian"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.aus.vanta.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:30.921189+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "vanta",
+          "server": "vanta-aus"
+        },
+        {
+          "plugin": "vanta-mcp-plugin",
+          "server": "vanta-aus"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.bigdata.com",
+      "probed_at_utc": "2026-10-30T11:13:12.452835+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "bigdata-com",
+          "server": "bigdata.com"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.canva.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:12.714438+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "canva",
+          "server": "canva"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.clickhouse.cloud/mcp",
+      "probed_at_utc": "2026-10-30T11:13:13.748599+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "clickhouse",
+          "server": "clickhouse"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.cloudflare.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:13.783577+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudflare",
+          "server": "cloudflare"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.codspeed.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.718601+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "codspeed",
+          "server": "CodSpeed"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.confidence.dev/mcp/docs",
+      "probed_at_utc": "2026-10-30T11:13:15.464054+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "confidence",
+          "server": "confidence-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.confidence.dev/mcp/flags",
+      "probed_at_utc": "2026-10-30T11:13:14.794622+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "confidence",
+          "server": "confidence-flags"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.context7.com/mcp?client=claude-code-plugin",
+      "probed_at_utc": "2026-10-30T11:13:15.542435+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "context7",
+          "server": "context7"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.dropbox.com/claude_app_mcp",
+      "probed_at_utc": "2026-10-30T11:13:15.638935+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "dropbox",
+          "server": "claude_app_mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.eu.vanta.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:30.825681+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "vanta",
+          "server": "vanta-eu"
+        },
+        {
+          "plugin": "vanta-mcp-plugin",
+          "server": "vanta-eu"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.exa.ai/mcp?client=claude-code-plugin",
+      "probed_at_utc": "2026-10-30T11:13:16.155636+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "exa",
+          "server": "exa"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.expo.dev/mcp",
+      "probed_at_utc": "2026-10-30T11:13:16.179414+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "expo",
+          "server": "expo"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.figma.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:16.477517+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "figma",
+          "server": "figma"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.firecrawl.dev/v2/mcp-search",
+      "probed_at_utc": "2026-10-30T11:13:16.495390+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "firecrawl",
+          "server": "firecrawl"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.grafana.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:18.409833+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "grafana-cloud-mcp",
+          "server": "grafana-cloud"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.guide.sonatype.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:28.498698+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "sonatype-guide",
+          "server": "sonatype-guide"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.honeycomb.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:18.679302+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "honeycomb",
+          "server": "honeycomb"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.hostinger.com",
+      "probed_at_utc": "2026-10-30T11:13:18.779784+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "hostinger",
+          "server": "hostinger"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.hubspot.com/anthropic",
+      "probed_at_utc": "2026-10-30T11:13:19.187577+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "hubspot-sales",
+          "server": "hubspot"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.hunter.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:19.568188+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "hunter",
+          "server": "hunter"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.incident.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:19.759249+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "incident-io",
+          "server": "incident_io"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.intercom.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:19.935610+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "intercom",
+          "server": "intercom"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.leadfeeder.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:19.956772+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "leadfeeder",
+          "server": "Leadfeeder"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.linear.app/mcp",
+      "probed_at_utc": "2026-10-30T11:13:20.240486+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "linear",
+          "server": "linear"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.logrocket.com/mcp?toolsets=all",
+      "probed_at_utc": "2026-10-30T11:13:20.578744+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "logrocket",
+          "server": "logrocket"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.lovable.dev/?src=cc-plugin",
+      "probed_at_utc": "2026-10-30T11:13:20.596896+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "lovable",
+          "server": "lovable"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.lusha.com/mcp/claude",
+      "probed_at_utc": "2026-10-30T11:13:21.087559+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "lusha",
+          "server": "lusha"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.mapbox.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:21.684191+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer,",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mapbox",
+          "server": "mapbox"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.mercadopago.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:21.946953+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mercadopago",
+          "server": "mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.miro.com/",
+      "probed_at_utc": "2026-10-30T11:13:23.018767+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "miro",
+          "server": "miro"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.monday.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:23.477244+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "monday-crm",
+          "server": "monday"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.mongodb.com/",
+      "probed_at_utc": "2026-10-30T11:13:23.491024+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mongodb-atlas",
+          "server": "mongodb-atlas"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.neon.tech/mcp",
+      "probed_at_utc": "2026-10-30T11:13:23.588390+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "neon",
+          "server": "neon"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.newrelic.com/mcp/",
+      "probed_at_utc": "2026-10-30T11:13:24.087586+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "newrelic",
+          "server": "newrelic"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.nimbleway.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:24.101278+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "nimble",
+          "server": "nimble"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.notion.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:24.460652+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "notion",
+          "server": "notion"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.pagerduty.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:24.502705+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "pagerduty",
+          "server": "pagerduty"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.posthog.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:25.551431+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "posthog",
+          "server": "posthog"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.postman.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:25.901894+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "postman",
+          "server": "postman"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.prisma.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:25.962585+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "prisma",
+          "server": "Prisma-Remote"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.pscale.dev/mcp/planetscale",
+      "probed_at_utc": "2026-10-30T11:13:25.531014+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "planetscale",
+          "server": "planetscale"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.railway.com",
+      "probed_at_utc": "2026-10-30T11:13:26.579542+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "railway",
+          "server": "railway"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.render.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:27.073524+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "render",
+          "server": "render"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.resend.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:27.290505+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "resend",
+          "server": "resend"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.revenuecat.ai/mcp",
+      "probed_at_utc": "2026-10-30T11:13:27.017293+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "rc",
+          "server": "RevenueCat"
+        },
+        {
+          "plugin": "revenuecat",
+          "server": "RevenueCat"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.rootly.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:27.335341+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "rootly",
+          "server": "rootly"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.sandbox.airwallex.com/developer",
+      "probed_at_utc": "2026-10-30T11:13:10.207619+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "airwallex-agentos",
+          "server": "airwallex-dev"
+        },
+        {
+          "plugin": "airwallex-dev",
+          "server": "airwallex-dev"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.sandbox.paypal.com/sse",
+      "probed_at_utc": "2026-10-30T11:13:24.686868+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "paypal",
+          "server": "paypal-sandbox"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.sanity.io",
+      "probed_at_utc": "2026-10-30T11:13:27.619756+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "sanity",
+          "server": "Sanity"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.sentry.dev/mcp?utm_source=plugin",
+      "probed_at_utc": "2026-10-30T11:13:27.917529+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "sentry",
+          "server": "sentry"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.shippo.com",
+      "probed_at_utc": "2026-10-30T11:13:28.097203+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "shippo",
+          "server": "shippo-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.slack.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:28.288935+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "slack",
+          "server": "slack"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.stripe.com",
+      "probed_at_utc": "2026-10-30T11:13:28.754218+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "stripe",
+          "server": "stripe"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.sumup.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:29.116149+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "sumup",
+          "server": "sumup"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.supabase.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:29.421592+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "supabase",
+          "server": "supabase"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.synthflow.ai/mcp",
+      "probed_at_utc": "2026-10-30T11:13:29.494146+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "synthflow",
+          "server": "synthflow"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.twilio.com/docs",
+      "probed_at_utc": "2026-10-30T11:13:29.638382+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "twilio-developer-kit",
+          "server": "twilio-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.vanguard.com/advisors",
+      "probed_at_utc": "2026-10-30T11:13:30.237055+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 302,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "vanguard-advisor-tools",
+          "server": "vanguard-advisors"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.vanta.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:30.249378+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "vanta",
+          "server": "vanta-us"
+        },
+        {
+          "plugin": "vanta-mcp-plugin",
+          "server": "vanta-us"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.vercel.com",
+      "probed_at_utc": "2026-10-30T11:13:31.576397+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "vercel",
+          "server": "vercel"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.windsor.ai",
+      "probed_at_utc": "2026-10-30T11:13:31.888311+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "windsor-ai",
+          "server": "windsor-ai"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.wix.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:32.444333+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "wix",
+          "server": "wix-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zapier.com/api/v1/connect",
+      "probed_at_utc": "2026-10-30T11:13:33.236451+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zapier",
+          "server": "zapier"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zocks.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:33.290957+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 404,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zocks-advisor",
+          "server": "Zocks"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/canvas/streamable",
+      "probed_at_utc": "2026-10-30T11:13:33.899276+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-canvas-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/chat/streamable",
+      "probed_at_utc": "2026-10-30T11:13:34.071146+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-chat-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/meeting/streamable",
+      "probed_at_utc": "2026-10-30T11:13:33.568167+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-meetings-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/revenue_accelerator/streamable",
+      "probed_at_utc": "2026-10-30T11:13:34.407835+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-revenue-accelerator-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/tasks/streamable",
+      "probed_at_utc": "2026-10-30T11:13:34.103788+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-tasks-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/whiteboard/streamable",
+      "probed_at_utc": "2026-10-30T11:13:34.478174+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-whiteboard-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoom.us/mcp/zoom/streamable",
+      "probed_at_utc": "2026-10-30T11:13:33.546477+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoom-plugin",
+          "server": "zoom-mcp"
+        }
+      ]
+    },
+    {
+      "url": "https://mcp.zoominfo.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:34.641302+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "zoominfo",
+          "server": "zoominfo"
+        }
+      ]
+    },
+    {
+      "url": "https://mediaflows.mcp.cloudinary.com/v2/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.590018+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudinary",
+          "server": "cloudinary-mediaflows"
+        }
+      ]
+    },
+    {
+      "url": "https://mintlify.com/docs/mcp",
+      "probed_at_utc": "2026-10-30T11:13:22.994736+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 307,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "mintlify",
+          "server": "Mintlify"
+        }
+      ]
+    },
+    {
+      "url": "https://netlify-mcp.netlify.app/mcp",
+      "probed_at_utc": "2026-10-30T11:13:24.018072+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "netlify-skills",
+          "server": "netlify"
+        }
+      ]
+    },
+    {
+      "url": "https://novus-api.pendo.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:25.516645+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "pendo-analytics",
+          "server": "novus"
+        }
+      ]
+    },
+    {
+      "url": "https://qt-docs-mcp.qt.io/mcp",
+      "probed_at_utc": "2026-10-30T11:13:26.224807+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 200,
+      "www_authenticate_present": false,
+      "auth_scheme": null,
+      "response_auth_language": false,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "qt-development-skills",
+          "server": "qt-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://sellingpartner-ai.amazon.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:10.624448+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "amazon-selling-partner",
+          "server": "amazon-selling-partner"
+        }
+      ]
+    },
+    {
+      "url": "https://structured-metadata.mcp.cloudinary.com/mcp",
+      "probed_at_utc": "2026-10-30T11:13:14.132405+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "cloudinary",
+          "server": "cloudinary-smd"
+        }
+      ]
+    },
+    {
+      "url": "https://temporal.mcp.kapa.ai",
+      "probed_at_utc": "2026-10-30T11:13:22.959207+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "migration-to-aws",
+          "server": "temporal-docs"
+        }
+      ]
+    },
+    {
+      "url": "https://www.legalzoom.com/mcp/claude/v1",
+      "probed_at_utc": "2026-10-30T11:13:19.999677+00:00",
+      "authorization_sent": false,
+      "business_tool_called": false,
+      "http_status": 401,
+      "www_authenticate_present": true,
+      "auth_scheme": "Bearer",
+      "response_auth_language": true,
+      "possible_edge_challenge": false,
+      "entries": [
+        {
+          "plugin": "legalzoom",
+          "server": "legalzoom"
+        }
+      ]
+    }
+  ]
+}

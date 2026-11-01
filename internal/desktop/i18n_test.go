@@ -3,10 +3,10 @@ package desktop
 import (
 	"context"
 	"errors"
+	"gcode/internal/assets"
 	"reflect"
 	"testing"
 
-	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/i18n"
 	localize "gcode/internal/i18n/view"

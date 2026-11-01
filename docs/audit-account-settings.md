@@ -59,7 +59,7 @@ states only; reference-native parity remains separately pending.
   the surface predicate is used by dialog rendering and is available to the root
   Escape/stop guard. No functional scope was added during the freeze.
 
-Recreate captures with `ZERON_INTEGRATIONS_AUDIT_DIR=<absolute-directory>` and
+Recreate captures with `RCODE_INTEGRATIONS_AUDIT_DIR=<absolute-directory>` and
 `go test ./internal/desktop -run '^TestCaptureIntegrationSettingsAudit$' -count=1`.
 The full local set is `output/acceptance/settings-integrations/`; representative
 implementation images are retained in `docs/evidence/settings-integrations/`.

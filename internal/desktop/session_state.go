@@ -148,6 +148,14 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
+	if scope := a.sidebarUI.pullRequests; scope != nil && cmd.Kind == "git.refs.load" &&
+		cmd.Git != nil && cmd.Git.Scope == *scope && err != nil {
+		a.sidebarUI.pullRequests = nil
+		a.errorText = err.Error()
+	}
+	a.capabilityCommandFinished(cmd, err)
+	a.modelSettingsCommandFinished(cmd, err)
+	a.settingsImportCommandFinished(cmd, err)
 	if a.branchCommandFinished(cmd, err) {
 		return
 	}
@@ -160,6 +168,9 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 	}
 	if a.projectCommandFinished(cmd, err) {
 		return
+	}
+	if err != nil && cmd.Kind == "session.update" && cmd.Session != nil && a.sidebarUI.revealID == cmd.Session.ID {
+		a.sidebarUI.revealID, a.sidebarUI.revealGroup = "", ""
 	}
 	if a.composerFooterGitCommandFinished(cmd, err) || a.footerUsageCommandFinished(cmd, err) {
 		return
@@ -198,6 +209,9 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 		if req.SessionID == "" {
 			a.pendingNew = false
 			a.pendingNewRequestID = ""
+			// The session was never minted: the composer returns to the
+			// canvas along the same dock clock it left on.
+			a.launchingNewSession = false
 		}
 		if a.sessionID == req.SessionID {
 			if a.draft == "" {
@@ -231,7 +245,6 @@ func (a *App) selectedModel() contracts.Model {
 }
 func (a *App) modelChanged() {
 	a.normalizeReasoning()
-	a.normalizeRunConfig()
 	if model := a.selectedModel(); model.ID != "" {
 		if a.state.Settings.ModelPicker.Selections == nil {
 			a.state.Settings.ModelPicker.Selections = make(map[string]contracts.ModelSelection)
@@ -242,29 +255,10 @@ func (a *App) modelChanged() {
 	}
 	if a.sessionID != "" {
 		model, reasoning := a.modelID, a.reasoning
-		mode, plan := a.accessMode, a.plan
-		a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: a.sessionID, ModelID: &model, ReasoningLevel: &reasoning, AccessMode: &mode, Plan: &plan}})
+		a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: a.sessionID, ModelID: &model, ReasoningLevel: &reasoning}})
 	}
 }
 
 func (a *App) normalizeReasoning() {
-	m := a.selectedModel()
-	if len(m.ReasoningLevels) == 0 {
-		a.reasoning = ""
-		return
-	}
-	valid := false
-	for _, level := range m.ReasoningLevels {
-		if level == a.reasoning {
-			valid = true
-		}
-	}
-	if !valid && len(m.ReasoningLevels) > 0 {
-		a.reasoning = m.ReasoningLevels[0]
-		for _, level := range m.ReasoningLevels {
-			if level == "High" {
-				a.reasoning = level
-			}
-		}
-	}
+	a.centralControls().normalizeReasoning()
 }

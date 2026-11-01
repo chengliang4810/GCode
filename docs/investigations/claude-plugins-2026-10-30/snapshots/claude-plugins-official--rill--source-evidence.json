@@ -1,0 +1,42 @@
+{
+  "repo": "rilldata/agent-skills",
+  "commit": "adfce5762be435c026f4731f72e388520cb133cc",
+  "path": ".",
+  "archive_sha256": "f014bb0a61fa0a7a9759072c43363bd39f1e561594ba83da0ceaab019e92ee78",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".github/workflows/sync-skills.yml",
+    ".mcp.json",
+    "AGENTS.md",
+    "LICENSE",
+    "README.md",
+    "skills/rill-analysis/SKILL.md",
+    "skills/rill-canvas/SKILL.md",
+    "skills/rill-component/SKILL.md",
+    "skills/rill-connector/SKILL.md",
+    "skills/rill-development/SKILL.md",
+    "skills/rill-explore/SKILL.md",
+    "skills/rill-metrics-view/SKILL.md",
+    "skills/rill-model/SKILL.md",
+    "skills/rill-rillyaml/SKILL.md",
+    "skills/rill-theme/SKILL.md",
+    "sync.sh"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"rill\",\n  \"description\": \"Skills for developing and querying projects in the Rill business intelligence platform\",\n  \"version\": \"1.0.0\",\n  \"author\": {\n    \"name\": \"Rill Data\"\n  }\n}",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"rill-developer\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:9009/mcp\"\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/rill-rillyaml/SKILL.md": "\nname: rill-rillyaml\ndescription: Detailed instructions and examples for developing the rill.yaml file\n",
+    "skills/rill-component/SKILL.md": "\nname: rill-component\ndescription: Detailed instructions and examples for developing component (custom viz) resources in Rill\n",
+    "skills/rill-connector/SKILL.md": "\nname: rill-connector\ndescription: Detailed instructions and examples for developing connector resources in Rill\n",
+    "skills/rill-analysis/SKILL.md": "\nname: rill-analysis\ndescription: Overview of how to analyze data in a Rill project\n",
+    "skills/rill-metrics-view/SKILL.md": "\nname: rill-metrics-view\ndescription: Detailed instructions and examples for developing metrics view resources in Rill\n",
+    "skills/rill-canvas/SKILL.md": "\nname: rill-canvas\ndescription: Detailed instructions and examples for developing canvas dashboard resources in Rill\n",
+    "skills/rill-model/SKILL.md": "\nname: rill-model\ndescription: Detailed instructions and examples for developing model resources in Rill\n",
+    "skills/rill-theme/SKILL.md": "\nname: rill-theme\ndescription: Detailed instructions and examples for developing theme resources in Rill\n",
+    "skills/rill-development/SKILL.md": "\nname: rill-development\ndescription: Overview of how to develop a Rill project\n",
+    "skills/rill-explore/SKILL.md": "\nname: rill-explore\ndescription: Detailed instructions and examples for developing explore dashboard resources in Rill\n"
+  }
+}

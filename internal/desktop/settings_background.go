@@ -18,7 +18,6 @@ type backgroundSettingsState struct {
 	Loading, Open, Dragging           bool
 	Bitmap                            *ui.Bitmap
 	Thumbnail                         *ui.Bitmap
-	Pixels                            *image.NRGBA
 	Draft, Initial                    design.BackgroundAdjustment
 	StartX, StartY, Width, Height     float32
 	ZoomValue                         float64
@@ -108,7 +107,6 @@ func (a *App) prepareBackground(state *backgroundSettingsState) {
 	state.Key = key
 	state.Bitmap = nil
 	state.Thumbnail = nil
-	state.Pixels = nil
 	state.Loading = false
 	state.LoadError = ""
 	if settings.BackgroundAssetRef == "" {
@@ -125,15 +123,17 @@ func (a *App) prepareBackground(state *backgroundSettingsState) {
 		data, err := reader.ReadResource(a.ctx, settings.BackgroundAssetRef)
 		var bitmap *ui.Bitmap
 		var thumbnail *ui.Bitmap
-		var pixels *image.NRGBA
 		if err == nil {
 			var source image.Image
 			source, _, err = image.Decode(bytes.NewReader(data))
 			if err == nil {
+				// The painted background and the settings-row preview both
+				// build bitmaps once; the row shows at 36 px, so its bitmap
+				// stays small instead of retaining the full proxy.
 				proxy := design.BackgroundThumbnail(source, 2048)
-				thumbnail = ui.NewBitmap(proxy)
-				pixels = design.BackgroundEffectPixels(proxy, settings.BackgroundEffect, light)
+				pixels := design.BackgroundEffectPixels(proxy, settings.BackgroundEffect, light)
 				bitmap = ui.NewBitmap(pixels)
+				thumbnail = ui.NewBitmap(design.BackgroundThumbnail(proxy, 128))
 			}
 		}
 		return func() {
@@ -148,7 +148,6 @@ func (a *App) prepareBackground(state *backgroundSettingsState) {
 			state.LoadError = ""
 			state.Bitmap = bitmap
 			state.Thumbnail = thumbnail
-			state.Pixels = pixels
 		}
 	})
 }
@@ -187,7 +186,7 @@ func (a *App) backgroundSettings(c *ui.Context) {
 			}
 		})
 		if state.Error != "" {
-			ui.Text(c, state.Error).FontSize(design.UISize(c, 12)).TextColor(a.palette.Danger).Margin(0, 16, 12, 16)
+			ui.Text(c, state.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(0, 16, 12, 16)
 		}
 		if p.Background != "" {
 			line(c)
@@ -232,7 +231,8 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 		vw, vh := c.Size()
 		p := a.state.Settings.Appearance
 		back.Background(ui.Hex("#000000").Alpha(.55))
-		panel.Width(min(max(vw-40, 1), 600)).Padding(20).Radius(12).Background(a.palette.Dialog).Border(1, a.palette.Border)
+		panel.Width(min(max(vw-40, 1), 600)).Padding(20).Radius(12)
+		a.floatingSurface(c, panel, 12)
 		ready := state.Bitmap != nil && !state.Loading && state.DialogPath == p.Background
 		closeDialog := func() { state.Open = false; state.Dragging = false; state.ReturnFocus.Focus(c) }
 		apply := func() {
@@ -254,10 +254,10 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 		c.OnShortcut(ui.Cmd, ui.KeyEnter, apply)
 		ui.Row(c).FillWidth().Gap(16).AlignItems(ui.Start).Children(func() {
 			ui.Column(c).Grow(1).Gap(4).Children(func() {
-				ui.Text(c, tr(c, "Adjust background")).FontSize(design.UISize(c, 18)).FontWeight(600)
-				ui.Text(c, tr(c, "Drag to reposition. Scroll or pinch to zoom.")).FontSize(design.UISize(c, 13)).TextColor(a.palette.Muted)
+				ui.Text(c, tr(c, "Adjust background")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
+				ui.Text(c, tr(c, "Drag to reposition. Scroll or pinch to zoom.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 			})
-			iconButton(c, "close", tr(c, "Close background adjustment")).Border(1, a.palette.Border).Radius(7).OnClick(closeDialog)
+			iconButton(c, "close", tr(c, "Close background adjustment")).OnClick(closeDialog)
 		})
 		pw, ph := design.BackgroundPreviewSize(vw, vh, float32(a.state.Settings.SidebarWidth), !a.sidebar)
 		state.Width, state.Height = pw, ph
@@ -343,7 +343,7 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 					} else if state.LoadError != "" {
 						message = "Image unavailable. Choose a replacement or remove it."
 					}
-					ui.Text(c, tr(c, message)).Absolute().Left(12).Right(12).Top(ph/2 - 8).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+					ui.Text(c, tr(c, message)).Absolute().Left(12).Right(12).Top(ph/2 - 8).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 				})
 			}
 		})
@@ -355,14 +355,14 @@ func (a *App) backgroundAdjustmentDialog(c *ui.Context, state *backgroundSetting
 			})
 			ui.Spacer(c)
 			textButton(c, "−").Label(tr(c, "Background zoom out")).Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom-.1, pw/2, ph/2) })
-			ui.StepSlider(c.Key("background-zoom"), &state.ZoomValue, 1, 4, .1).Width(168).Label(tr(c, "Background zoom")).Disabled(!ready).OnChange(func() { zoom(float32(state.ZoomValue), pw/2, ph/2) })
-			ui.Text(c, fmt.Sprintf(tr(c, "%.0f%%"), state.Draft.Zoom*100)).Width(52).FontSize(design.UISize(c, 11.5)).TextColor(a.palette.Muted)
+			controlStepSlider(c.Key("background-zoom"), &state.ZoomValue, 1, 4, .1).Width(168).Label(tr(c, "Background zoom")).Disabled(!ready).OnChange(func() { zoom(float32(state.ZoomValue), pw/2, ph/2) })
+			ui.Text(c, fmt.Sprintf(tr(c, "%.0f%%"), state.Draft.Zoom*100)).Width(52).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 			textButton(c, "+").Label(tr(c, "Background zoom in")).Disabled(!ready).OnClick(func() { zoom(state.Draft.Zoom+.1, pw/2, ph/2) })
 		})
 		ui.Box(c).FillWidth().Height(1).Background(a.palette.Border).Margin(18, 0, 12, 0)
 		ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {
-			textButton(c, tr(c, "Cancel")).Label(tr(c, "Cancel background adjustment")).Height(34).Padding(0, 13).OnClick(closeDialog)
-			ui.PrimaryButton(c, tr(c, "Apply")).Label(tr(c, "Apply background adjustment")).Height(34).Padding(0, 14).Disabled(!ready).OnClick(apply)
+			textButton(c, tr(c, "Cancel")).Label(tr(c, "Cancel background adjustment")).OnClick(closeDialog)
+			primaryButton(c, tr(c, "Apply")).Label(tr(c, "Apply background adjustment")).Disabled(!ready).OnClick(apply)
 		})
 	})
 }

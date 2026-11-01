@@ -1,0 +1,18 @@
+{
+  "repo": "oracle/netsuite-suitecloud-sdk",
+  "commit": "23793a10a9bb557c684c5cb8a97f926eb3463f12",
+  "path": "anthropic/netsuite-ai-companion",
+  "archive_sha256": "69164ebb41049b24f3054d620ae142ef283351fbba004c0c3d372e541157a416",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "LICENSE.txt",
+    "README.md",
+    "skills/netsuite-ai-connector-instructions/SKILL.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"netsuite-ai-companion\",\n  \"displayName\": \"NetSuite AI Companion\",\n  \"description\": \"Guide AI assistants using NetSuite AI Connector.\",\n  \"author\": {\n    \"name\": \"Oracle NetSuite\",\n    \"url\": \"https://www.netsuite.com\"\n  },\n  \"license\": \"The Universal Permissive License (UPL), Version 1.0\",\n  \"keywords\": [\n    \"netsuite\",\n    \"aiconnector\",\n    \"mcp\"\n  ],\n  \"homepage\": \"https://github.com/oracle/netsuite-suitecloud-sdk/tree/ai-plugins-dist/anthropic/netsuite-ai-companion\",\n  \"repository\": \"https://github.com/oracle/netsuite-suitecloud-sdk\",\n  \"version\": \"1.0.0\",\n  \"skills\": \"./skills/\"\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/netsuite-ai-connector-instructions/SKILL.md": "\nname: netsuite-ai-connector-instructions\ndescription: NetSuite Intelligence skill — teaches AI the correct tool selection order, output formatting, domain knowledge, multi-subsidiary and currency handling, and SuiteQL safety checklist for any AI + NetSuite AI Service Connector session.\nlicense: The Universal Permissive License (UPL), Version 1.0\nmetadata:\n  author: Oracle NetSuite\n  version: \"1.0\"\n"
+  }
+}

@@ -5,6 +5,12 @@ Reference: Zeron 0.2.128, commit
 Each result is recorded separately as compiled, offscreen-tested, native-tested
 and visually accepted. The current report is not a visual acceptance pass.
 
+Use `go run ./scripts/desktop-e2e` on Windows, Linux or macOS for automated
+native-window smoke tests (a graphical session is required).
+The Automation plugin, isolation rules, current coverage and evidence boundaries
+are defined in [desktop-testing.md](desktop-testing.md). Keep OS-specific manual
+acceptance below separate from plugin-driven results.
+
 ## Reproduce the build and source checks
 
 From this independent checkout, using Go 1.27.3:
@@ -28,11 +34,11 @@ with portable w64devkit2.10.1/GCC16.2.0; evidence is in reference/validation.
 ## Fixed scenes and implementation captures
 
 ```powershell
-go run ./cmd/zeron --scenario showcase --appearance dark --dump-scene reference/fixtures/showcase.json
+go run ./cmd/rcode --scenario showcase --appearance dark --dump-scene reference/fixtures/showcase.json
 ./scripts/capture-implementation.ps1 -AllThemes -BoundarySizes
-./build/windows-amd64/Zeron.exe --scenario questions --route chat/chat-0 --appearance light
-./build/windows-amd64/Zeron.exe --scenario transcript --route chat/chat-0 --appearance light
-./build/windows-amd64/Zeron.exe --scenario live --route chat/chat-0 --appearance dark
+./build/windows-amd64/GCode.exe --scenario questions --route chat/chat-0 --appearance light
+./build/windows-amd64/GCode.exe --scenario transcript --route chat/chat-0 --appearance light
+./build/windows-amd64/GCode.exe --scenario live --route chat/chat-0 --appearance dark
 ```
 
 The fixture includes the source commit and the full versioned Go contract.
@@ -61,10 +67,11 @@ client size, DPI, appearance, scene, locale and input method.
    restore, pin, group collapse, search and keyboard focus.
 3. Open files, edit/save/close, trigger read-only and version-conflict states,
    rename/delete/create, drag a file into the composer, and check Changes.
-4. Open diff/history/PR, inspect checks and comments, add a comment, and follow
-   the link back to its session. Record inline review states still missing.
+4. Open diff and commit history, inspect changed files and commit details, and
+   verify that switching sessions preserves each workspace's tabs and edits.
 5. Open/close terminal tabs, type, resize, select/copy, search and scroll ANSI
-   output. Its connection is in-process; it must not create a real shell.
+   output. Normal local mode uses the in-process core to own a real shell;
+   deterministic scenarios exercise the mock terminal only. Record the mode.
 6. Navigate public websites in the browser, check back/forward/reload/failure,
    select an annotation, hover/remove its chip and send it. Open menus and
    dialogs over the page and verify stacking, focus and no click-through.

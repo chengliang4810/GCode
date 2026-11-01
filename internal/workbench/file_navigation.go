@@ -2,6 +2,7 @@ package workbench
 
 import (
 	"gcode/internal/contracts"
+	"gcode/internal/linktarget"
 	"github.com/egoist/mygo/ui/editor"
 )
 
@@ -12,6 +13,8 @@ func (s *State) OpenFileAt(id string, line, column int) {
 	if document := s.documents[id]; document != nil && line > 0 {
 		document.preview = false
 		document.editor.GoTo(editor.Pos{Line: line - 1, Col: max(0, column)})
+	} else if s.pendingFile == id && line > 0 {
+		s.pendingNavigation = &fileNavigation{id: id, target: linktarget.Target{Line: line, Column: column}, byteColumn: true}
 	}
 }
 

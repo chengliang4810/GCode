@@ -2,13 +2,13 @@ package workbench
 
 import (
 	"fmt"
+	"gcode/internal/assets"
 	"math"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"gcode/internal/assets"
 	"gcode/internal/design"
 
 	"github.com/egoist/mygo/ui"
@@ -106,9 +106,9 @@ func TestTabTooltipShortLeafUsesSourceLogicalCeil(t *testing.T) {
 			for _, kind := range []string{"latin", "unicode", "combining", "emoji", "rtl-text", "near-fit"} {
 				t.Run(fmt.Sprintf("close%t-scale%g-%s", close, scale, kind), func(t *testing.T) {
 					s, _, _ := testWorkspace(t)
-					size, maxWidth := float32(10.5), float32(380)
+					size, maxWidth := design.TextCaption, float32(380)
 					if close {
-						size, maxWidth = 11, 320
+						maxWidth = 320
 					}
 					owner := &tabTooltipOwner{phase: tabTooltipVisible, x: 20, y: 20, close: close}
 					s.tabTooltip.owners = []*tabTooltipOwner{owner}
@@ -152,9 +152,9 @@ func TestTabTooltipLeafCeilLeavesConstrainedAndUnsupportedPathsUnchanged(t *test
 			for _, kind := range []string{"near-overflow", "wrapped", "newline", "rtl-context"} {
 				t.Run(fmt.Sprintf("close%t-scale%g-%s", close, scale, kind), func(t *testing.T) {
 					s, _, _ := testWorkspace(t)
-					size, maxWidth := float32(10.5), float32(380)
+					size, maxWidth := design.TextCaption, float32(380)
 					if close {
-						size, maxWidth = 11, 320
+						maxWidth = 320
 					}
 					owner := &tabTooltipOwner{phase: tabTooltipVisible, x: 20, y: 20, close: close}
 					s.tabTooltip.owners = []*tabTooltipOwner{owner}

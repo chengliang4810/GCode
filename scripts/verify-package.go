@@ -49,8 +49,6 @@ type packageRecord struct {
 	ArchiveSHA256         string       `json:"archiveSha256"`
 	ArchiveBytes          int64        `json:"archiveBytes"`
 	LicenseFiles          int          `json:"licenseFiles"`
-	InstallName           string       `json:"installName"`
-	BundleName            string       `json:"bundleName"`
 	CoexistenceAcceptance string       `json:"coexistenceAcceptance"`
 }
 type manifest struct {
@@ -117,6 +115,7 @@ func run(root string, targets []string) error {
 // an ordinary Windows zip otherwise loses its executable bits on macOS.
 func archivePackage(root string, p packageRecord) (string, int64, string, error) {
 	var config struct {
+		Name    string `json:"name"`
 		Version string `json:"version"`
 	}
 	data, err := os.ReadFile("mygo.json")
@@ -129,7 +128,7 @@ func archivePackage(root string, p packageRecord) (string, int64, string, error)
 	if config.Version == "" || strings.ContainsAny(config.Version, "/\\") {
 		return "", 0, "", fmt.Errorf("invalid package version")
 	}
-	name := "Zeron-" + config.Version + "-" + strings.ReplaceAll(p.Target, "/", "-") + ".zip"
+	name := config.Name + "-" + config.Version + "-" + strings.ReplaceAll(p.Target, "/", "-") + ".zip"
 	file, err := os.Create(filepath.Join(root, name))
 	if err != nil {
 		return "", 0, "", err
@@ -138,6 +137,11 @@ func archivePackage(root string, p packageRecord) (string, int64, string, error)
 	platformDir := filepath.Join(root, strings.ReplaceAll(p.Target, "/", "-"))
 	for _, entry := range p.Files {
 		if strings.Contains(entry.Path, " Setup ") {
+			continue
+		}
+		if !strings.Contains(entry.Path, "/") &&
+			(strings.HasSuffix(entry.Path, ".tar.gz") || strings.HasSuffix(entry.Path, ".delta") ||
+				(strings.HasPrefix(entry.Path, "update-") && strings.HasSuffix(entry.Path, ".json"))) {
 			continue
 		}
 		if err := func() error {
@@ -197,8 +201,6 @@ func verify(root, target string, lock frameworkpin.Lock, config distribution.Con
 	r := packageRecord{Target: target, NativeAcceptance: "pending"}
 	r.MyGoPatchRevision = lock.Revision
 	r.MyGoSourceSHA256 = lock.TreeSHA256
-	r.InstallName = config.Windows.InstallName
-	r.BundleName = config.MacOS.BundleName
 	r.CoexistenceAcceptance = "build/script checks only; native installation pending"
 	parts := strings.Split(target, "/")
 	if len(parts) != 2 {
@@ -210,9 +212,6 @@ func verify(root, target string, lock frameworkpin.Lock, config distribution.Con
 	dir := filepath.Join(root, parts[0]+"-"+parts[1])
 	exe, library := config.Executable(parts[0]), "ghostty-vt.dll"
 	if parts[0] == "darwin" {
-		if err := config.CheckNoLegacyBundle(dir); err != nil {
-			return r, err
-		}
 		if err := config.VerifyInfoPlist(filepath.Join(dir, config.BundleFile(), "Contents", "Info.plist")); err != nil {
 			return r, err
 		}
@@ -300,7 +299,7 @@ func verify(root, target string, lock frameworkpin.Lock, config distribution.Con
 				r.MyGoVersion = dep.Version
 			}
 		}
-		if r.GoVersion != "go1.27.3" || r.MyGoVersion != "v0.6.4" {
+		if r.GoVersion != "go1.27.3" || r.MyGoVersion != "v0.7.3" {
 			return r, fmt.Errorf("unexpected toolchain/framework: %s / %s", r.GoVersion, r.MyGoVersion)
 		}
 	}

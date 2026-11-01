@@ -1,0 +1,288 @@
+{
+  "pluginId": "math-proof@claude-plugins-official",
+  "sourceCommit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "judge-finalize-odd-sum-proof",
+      "componentId": "agent:math-proof:math-proof-judge",
+      "prompt": "Use the Agent tool to delegate this task to the math-proof-judge subagent: set subagent_type to math-proof-judge, or to the plugin-scoped name math-proof:math-proof-judge if the bare name is not offered, and do not solve or judge the proof in this session and do not launch any other subagent. This is a finalize judge step for the odd-sum theorem. The current directory is the run directory. The immutable candidate-proof.md is the worker answer that the judge must check line by line: for every inequality, cited result and it follows that, decide whether it actually follows as written. Headless boundary: no network, no real external service and no installs; only local file inspection, and live referee review beyond this local artifact remains untested. The child must write two files: proof.md, the final self-contained proof that the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n^2, with the section headings Base case, Induction step and Closing statement, the worked instance 1 + 3 + 5 + 7 = 16, a Status section and an Other routes section, and no mention of candidate-proof.md or any run file; and judge-ruling.md, whose first line is exactly MAIN CLAIM: PROVED followed by a dash and the claim in one clause, then a Status paragraph naming candidate-proof.md as the checked artifact and recording that the base case, the induction step and the closing statement were checked. After the child returns, read the immutable verify_judge.py and run exactly python verify_judge.py using Bash to validate the two files and write judge-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the two artifacts, report the actual verifier output line, and state that the recorded completed child agent session is the business evidence while any live referee review remains untested.",
+      "allowCommands": [
+        "python verify_judge.py"
+      ],
+      "verifierOutputs": [
+        "judge-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_judge.py",
+          "text": "import json\nfrom pathlib import Path\n\nproof = Path('proof.md').read_text(encoding='utf-8')\nruling = Path('judge-ruling.md').read_text(encoding='utf-8')\nlow = proof.lower()\nrlow = ruling.lower()\ncompact = ''.join(proof.split())\nfirst = ruling.splitlines()[0] if ruling.splitlines() else ''\nassert first.startswith('MAIN CLAIM: PROVED'), 'the judge ruling must open with the documented MAIN CLAIM: PROVED verdict'\nassert 'status' in rlow, 'the ruling must carry the documented Status paragraph'\nassert 'candidate-proof.md' in ruling, 'the ruling must name the checked artifact'\nassert 'base case' in rlow and 'induction' in rlow, 'the ruling must record the checked proof steps'\nassert '2n-1' in compact or '2n\\u22121' in compact, 'the odd-number term must appear in the final proof'\nassert 'n^2' in compact or 'n**2' in compact or 'n\\u00b2' in proof or 'nsquared' in compact, 'the square identity must appear in the final proof'\nassert 'base case' in low and 'induction' in low, 'the final proof must carry the documented proof shape'\nassert '1 + 3 + 5 + 7 = 16' in proof, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nassert 'status' in low and 'other routes' in low, 'the final document must carry the documented Status and Other routes sections'\nfor forbidden in ('candidate-proof.md', 'round1_q1', '.answer.md', 'notes.md', 'ledger.md'):\n    assert forbidden not in proof, 'the final proof must be self-contained and must not cite run files: ' + forbidden\n\nreport = {'base_case': True, 'closing_statement': True, 'induction_step': True, 'judge_ruling': True, 'no_run_file_refs': True, 'other_routes_section': True, 'status_section': True, 'worked_instance': True}\nPath('judge-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('judge finalize: documented verdict, Status and proof shape verified; live referee review remains untested')\n"
+        },
+        {
+          "path": "candidate-proof.md",
+          "text": "kind: attempt\nProblem: prove that for every positive integer n the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n squared.\n\nClaim: for every positive integer n, 1 + 3 + 5 + ... + (2n-1) = n^2.\n\nBase case: for n = 1 the sum is 1 and n^2 = 1, so the claim holds.\n\nInduction step: assume for some positive integer k that 1 + 3 + 5 + ... + (2k-1) = k^2. Then\n1 + 3 + 5 + ... + (2k-1) + (2k+1) = k^2 + 2k + 1 = (k+1)^2,\nso the claim holds for k+1.\n\nClosing statement: This completes the induction, so the identity holds for every positive integer n.\n\nWorked instance: 1 + 3 + 5 + 7 = 16 = 4^2.\n\n=== END OF ANSWER round1_q1 ===\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_judge.py",
+          "equals": "import json\nfrom pathlib import Path\n\nproof = Path('proof.md').read_text(encoding='utf-8')\nruling = Path('judge-ruling.md').read_text(encoding='utf-8')\nlow = proof.lower()\nrlow = ruling.lower()\ncompact = ''.join(proof.split())\nfirst = ruling.splitlines()[0] if ruling.splitlines() else ''\nassert first.startswith('MAIN CLAIM: PROVED'), 'the judge ruling must open with the documented MAIN CLAIM: PROVED verdict'\nassert 'status' in rlow, 'the ruling must carry the documented Status paragraph'\nassert 'candidate-proof.md' in ruling, 'the ruling must name the checked artifact'\nassert 'base case' in rlow and 'induction' in rlow, 'the ruling must record the checked proof steps'\nassert '2n-1' in compact or '2n\\u22121' in compact, 'the odd-number term must appear in the final proof'\nassert 'n^2' in compact or 'n**2' in compact or 'n\\u00b2' in proof or 'nsquared' in compact, 'the square identity must appear in the final proof'\nassert 'base case' in low and 'induction' in low, 'the final proof must carry the documented proof shape'\nassert '1 + 3 + 5 + 7 = 16' in proof, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nassert 'status' in low and 'other routes' in low, 'the final document must carry the documented Status and Other routes sections'\nfor forbidden in ('candidate-proof.md', 'round1_q1', '.answer.md', 'notes.md', 'ledger.md'):\n    assert forbidden not in proof, 'the final proof must be self-contained and must not cite run files: ' + forbidden\n\nreport = {'base_case': True, 'closing_statement': True, 'induction_step': True, 'judge_ruling': True, 'no_run_file_refs': True, 'other_routes_section': True, 'status_section': True, 'worked_instance': True}\nPath('judge-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('judge finalize: documented verdict, Status and proof shape verified; live referee review remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "judge-verification.json",
+          "equals": "{\"base_case\": true, \"closing_statement\": true, \"induction_step\": true, \"judge_ruling\": true, \"no_run_file_refs\": true, \"other_routes_section\": true, \"status_section\": true, \"worked_instance\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "candidate-proof.md",
+          "equals": "kind: attempt\nProblem: prove that for every positive integer n the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n squared.\n\nClaim: for every positive integer n, 1 + 3 + 5 + ... + (2n-1) = n^2.\n\nBase case: for n = 1 the sum is 1 and n^2 = 1, so the claim holds.\n\nInduction step: assume for some positive integer k that 1 + 3 + 5 + ... + (2k-1) = k^2. Then\n1 + 3 + 5 + ... + (2k-1) + (2k+1) = k^2 + 2k + 1 = (k+1)^2,\nso the claim holds for k+1.\n\nClosing statement: This completes the induction, so the identity holds for every positive integer n.\n\nWorked instance: 1 + 3 + 5 + 7 = 16 = 4^2.\n\n=== END OF ANSWER round1_q1 ===\n"
+        },
+        {
+          "kind": "file",
+          "path": "proof.md",
+          "contains": "1 + 3 + 5 + 7 = 16"
+        },
+        {
+          "kind": "file",
+          "path": "proof.md",
+          "contains": "Status"
+        },
+        {
+          "kind": "file",
+          "path": "proof.md",
+          "contains": "Other routes"
+        },
+        {
+          "kind": "file",
+          "path": "judge-ruling.md",
+          "contains": "MAIN CLAIM: PROVED"
+        },
+        {
+          "kind": "file",
+          "path": "judge-ruling.md",
+          "contains": "candidate-proof.md"
+        }
+      ]
+    },
+    {
+      "id": "worker-prove-odd-sum-lemma",
+      "componentId": "agent:math-proof:math-proof-worker",
+      "prompt": "Use the Agent tool to delegate this task to the math-proof-worker subagent: set subagent_type to math-proof-worker, or to the plugin-scoped name math-proof:math-proof-worker if the bare name is not offered, and do not solve the problem in this session and do not launch any other subagent. This is one wave worker for the odd-sum theorem. The current directory is the run directory. Headless boundary: no network, no real external service and no installs; only local files, and the full siege orchestration and later rounds remain untested. The child must read the immutable task file round1_q1.md first, write its answer to round1_q1.answer.md as it goes, and make the last line of that file exactly === END OF ANSWER round1_q1 ===. The given statement is: for every positive integer n, the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n^2. The answer must restate that statement and must be a complete proof: a base case, an induction step with the stated hypothesis, and a closing statement, plus the worked instance 1 + 3 + 5 + 7 = 16. After the child returns, read the immutable verify_worker.py and run exactly python verify_worker.py using Bash to validate the answer and write worker-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that the recorded completed child agent session is the business evidence while later siege rounds and live referee review remain untested.",
+      "allowCommands": [
+        "python verify_worker.py"
+      ],
+      "verifierOutputs": [
+        "worker-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_worker.py",
+          "text": "import json\nfrom pathlib import Path\n\ntask = Path('round1_q1.md').read_text(encoding='utf-8')\nanswer = Path('round1_q1.answer.md').read_text(encoding='utf-8')\nlow = answer.lower()\nlines = [ln.rstrip() for ln in answer.splitlines() if ln.strip()]\nassert lines and lines[-1] == '=== END OF ANSWER round1_q1 ===', 'the documented end line must be the last line'\nassert 'kind: attempt' in task, 'the immutable task file must carry the documented attempt marker'\nassert 'sum of the first n odd numbers' in answer or 'sum of the first n odd integers' in low, 'the answer must restate the given statement'\nassert 'base case' in low, 'the answer must state the base case'\nassert 'induction' in low and 'step' in low, 'the answer must state the induction step'\nassert 'assume' in low, 'the induction hypothesis must be stated'\nassert '1 + 3 + 5 + 7 = 16' in answer, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\n\nreport = {'base_case': True, 'closing_statement': True, 'end_line': True, 'induction_hypothesis': True, 'induction_step': True, 'statement_restated': True, 'task_marker': True, 'worked_instance': True}\nPath('worker-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('worker answer: documented end line and proof shape verified; later siege rounds remain untested')\n"
+        },
+        {
+          "path": "round1_q1.md",
+          "text": "kind: attempt\nTask: prove the missing statement for the odd-sum goal.\n\nStatement: for every positive integer n, the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n^2.\n\nWrite a complete proof with a base case, an induction step and a closing statement. Include the worked instance 1 + 3 + 5 + 7 = 16.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_worker.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntask = Path('round1_q1.md').read_text(encoding='utf-8')\nanswer = Path('round1_q1.answer.md').read_text(encoding='utf-8')\nlow = answer.lower()\nlines = [ln.rstrip() for ln in answer.splitlines() if ln.strip()]\nassert lines and lines[-1] == '=== END OF ANSWER round1_q1 ===', 'the documented end line must be the last line'\nassert 'kind: attempt' in task, 'the immutable task file must carry the documented attempt marker'\nassert 'sum of the first n odd numbers' in answer or 'sum of the first n odd integers' in low, 'the answer must restate the given statement'\nassert 'base case' in low, 'the answer must state the base case'\nassert 'induction' in low and 'step' in low, 'the answer must state the induction step'\nassert 'assume' in low, 'the induction hypothesis must be stated'\nassert '1 + 3 + 5 + 7 = 16' in answer, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\n\nreport = {'base_case': True, 'closing_statement': True, 'end_line': True, 'induction_hypothesis': True, 'induction_step': True, 'statement_restated': True, 'task_marker': True, 'worked_instance': True}\nPath('worker-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('worker answer: documented end line and proof shape verified; later siege rounds remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "worker-verification.json",
+          "equals": "{\"base_case\": true, \"closing_statement\": true, \"end_line\": true, \"induction_hypothesis\": true, \"induction_step\": true, \"statement_restated\": true, \"task_marker\": true, \"worked_instance\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "round1_q1.md",
+          "equals": "kind: attempt\nTask: prove the missing statement for the odd-sum goal.\n\nStatement: for every positive integer n, the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n^2.\n\nWrite a complete proof with a base case, an induction step and a closing statement. Include the worked instance 1 + 3 + 5 + 7 = 16.\n"
+        },
+        {
+          "kind": "file",
+          "path": "round1_q1.answer.md",
+          "contains": "=== END OF ANSWER"
+        },
+        {
+          "kind": "file",
+          "path": "round1_q1.answer.md",
+          "contains": "1 + 3 + 5 + 7 = 16"
+        },
+        {
+          "kind": "file",
+          "path": "round1_q1.answer.md",
+          "contains": "sum of the first n odd numbers"
+        }
+      ]
+    },
+    {
+      "id": "worker-deep-prove-triangular-lemma",
+      "componentId": "agent:math-proof:math-proof-worker-deep",
+      "prompt": "Use the Agent tool to delegate this task to the math-proof-worker-deep subagent: set subagent_type to math-proof-worker-deep, or to the plugin-scoped name math-proof:math-proof-worker-deep if the bare name is not offered, and do not solve the problem in this session and do not launch any other subagent. This is an escalation round worker for the triangular-number theorem, the worker type that the siege protocol uses from round ESC_ROUND and every later round. The current directory is the run directory. Headless boundary: no network, no real external service and no installs; only local files, and the full siege orchestration and later rounds remain untested. The child must read the immutable task file round5_q1.md first, write its answer to round5_q1.answer.md as it goes, and make the last line of that file exactly === END OF ANSWER round5_q1 ===. The given statement is: for every positive integer n, the sum of the first n positive integers 1 + 2 + ... + n equals n(n+1)/2. The answer must restate that statement and must be a complete proof: a base case, an induction step with the stated hypothesis, and a closing statement, plus the worked instance 1 + 2 + 3 + 4 + 5 = 15. After the child returns, read the immutable verify_worker_deep.py and run exactly python verify_worker_deep.py using Bash to validate the answer and write worker-deep-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifact, report the actual verifier output line, and state that the recorded completed child agent session is the business evidence while later siege rounds and live referee review remain untested.",
+      "allowCommands": [
+        "python verify_worker_deep.py"
+      ],
+      "verifierOutputs": [
+        "worker-deep-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_worker_deep.py",
+          "text": "import json\nfrom pathlib import Path\n\ntask = Path('round5_q1.md').read_text(encoding='utf-8')\nanswer = Path('round5_q1.answer.md').read_text(encoding='utf-8')\nlow = answer.lower()\ncompact = ''.join(answer.split())\nlines = [ln.rstrip() for ln in answer.splitlines() if ln.strip()]\nassert lines and lines[-1] == '=== END OF ANSWER round5_q1 ===', 'the documented end line must be the last line'\nassert 'kind: attempt' in task, 'the immutable task file must carry the documented attempt marker'\nassert 'sum of the first n positive integers' in answer or 'triangular' in low, 'the answer must restate the given statement'\nassert 'base case' in low, 'the answer must state the base case'\nassert 'induction' in low and 'step' in low, 'the answer must state the induction step'\nassert 'assume' in low, 'the induction hypothesis must be stated'\nassert 'n(n+1)/2' in compact, 'the triangular identity must appear in the answer'\nassert '1 + 2 + 3 + 4 + 5 = 15' in answer, 'the worked instance n=5 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\n\nreport = {'base_case': True, 'closing_statement': True, 'end_line': True, 'identity_stated': True, 'induction_hypothesis': True, 'induction_step': True, 'statement_restated': True, 'worked_instance': True}\nPath('worker-deep-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('worker-deep answer: documented end line and escalation proof shape verified; later siege rounds remain untested')\n"
+        },
+        {
+          "path": "round5_q1.md",
+          "text": "kind: attempt\nTask: escalation round task, prove the missing statement for the triangular-number goal.\n\nStatement: for every positive integer n, the sum of the first n positive integers 1 + 2 + ... + n equals n(n+1)/2.\n\nWrite a complete proof with a base case, an induction step and a closing statement. Include the worked instance 1 + 2 + 3 + 4 + 5 = 15.\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_worker_deep.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntask = Path('round5_q1.md').read_text(encoding='utf-8')\nanswer = Path('round5_q1.answer.md').read_text(encoding='utf-8')\nlow = answer.lower()\ncompact = ''.join(answer.split())\nlines = [ln.rstrip() for ln in answer.splitlines() if ln.strip()]\nassert lines and lines[-1] == '=== END OF ANSWER round5_q1 ===', 'the documented end line must be the last line'\nassert 'kind: attempt' in task, 'the immutable task file must carry the documented attempt marker'\nassert 'sum of the first n positive integers' in answer or 'triangular' in low, 'the answer must restate the given statement'\nassert 'base case' in low, 'the answer must state the base case'\nassert 'induction' in low and 'step' in low, 'the answer must state the induction step'\nassert 'assume' in low, 'the induction hypothesis must be stated'\nassert 'n(n+1)/2' in compact, 'the triangular identity must appear in the answer'\nassert '1 + 2 + 3 + 4 + 5 = 15' in answer, 'the worked instance n=5 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\n\nreport = {'base_case': True, 'closing_statement': True, 'end_line': True, 'identity_stated': True, 'induction_hypothesis': True, 'induction_step': True, 'statement_restated': True, 'worked_instance': True}\nPath('worker-deep-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('worker-deep answer: documented end line and escalation proof shape verified; later siege rounds remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "worker-deep-verification.json",
+          "equals": "{\"base_case\": true, \"closing_statement\": true, \"end_line\": true, \"identity_stated\": true, \"induction_hypothesis\": true, \"induction_step\": true, \"statement_restated\": true, \"worked_instance\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "round5_q1.md",
+          "equals": "kind: attempt\nTask: escalation round task, prove the missing statement for the triangular-number goal.\n\nStatement: for every positive integer n, the sum of the first n positive integers 1 + 2 + ... + n equals n(n+1)/2.\n\nWrite a complete proof with a base case, an induction step and a closing statement. Include the worked instance 1 + 2 + 3 + 4 + 5 = 15.\n"
+        },
+        {
+          "kind": "file",
+          "path": "round5_q1.answer.md",
+          "contains": "=== END OF ANSWER"
+        },
+        {
+          "kind": "file",
+          "path": "round5_q1.answer.md",
+          "contains": "1 + 2 + 3 + 4 + 5 = 15"
+        },
+        {
+          "kind": "file",
+          "path": "round5_q1.answer.md",
+          "contains": "sum of the first n positive integers"
+        }
+      ]
+    },
+    {
+      "id": "siege-prove-triangular-number-identity",
+      "componentId": "skill:math-proof:siege",
+      "prompt": "/math-proof:siege MAX_ROUNDS=1 MIN_ROUNDS=1 WAVE=1 MAX_COMMIT=1 REFINE_STEPS=1 For every positive integer n, prove that the sum of the first n positive integers 1 + 2 + ... + n equals n(n+1)/2. The final proof must contain the section headings Base case, Induction step and Closing statement, must include the worked instance 1 + 2 + 3 + 4 + 5 = 15, must end with the closing sentence This completes the induction, and must carry the documented Status and Other routes sections. Headless boundary: no network, no real external service and no installs; the run uses only local files and local subagents, and live referee review and any rounds beyond the configured single round remain untested. The run directory is the documented default math-proof-run. After the run finishes, read the immutable verify_siege.py and run exactly python verify_siege.py using Bash to validate the run files and write siege-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the run directory, report the actual verifier output line, and state that live referee review and later rounds remain untested.",
+      "allowCommands": [
+        "python verify_siege.py"
+      ],
+      "verifierOutputs": [
+        "siege-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_siege.py",
+          "text": "import json\nfrom pathlib import Path\n\nrun = Path('math-proof-run')\nproof = (run / 'proof.md').read_text(encoding='utf-8')\nstate = (run / 'state.md').read_text(encoding='utf-8')\nledger = (run / 'ledger.md').read_text(encoding='utf-8')\nproblem = (run / 'problem.md').read_text(encoding='utf-8')\nlow = proof.lower()\nslow = state.lower()\ncompact = ''.join(proof.split())\nassert 'protocol' in slow and 'siege' in slow, 'state.md must record the documented protocol name'\nassert 'phase:' in slow, 'state.md must record the current phase'\nassert '[GOAL]' in ledger, 'the claims ledger must carry the documented goal line'\nassert 'sum of the first n positive integers' in problem, 'problem.md must hold the given problem text'\nassert 'n(n+1)/2' in compact, 'the triangular identity must appear in the final proof'\nassert 'base case' in low, 'the proof must state the base case'\nassert 'induction' in low and 'step' in low, 'the proof must state the induction step'\nassert '1 + 2 + 3 + 4 + 5 = 15' in proof, 'the worked instance n=5 must appear'\nassert 'status' in low, 'the documented Status section must appear'\nassert 'other routes' in low, 'the documented Other routes section must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nfor forbidden in ('notes.md', 'ledger.md', 'problem.md', 'round1_q', 'r3_q', '.answer.md'):\n    assert forbidden not in proof, 'the final proof must be self-contained and must not cite run files: ' + forbidden\n\nreport = {'base_case': True, 'closing_statement': True, 'goal_in_ledger': True, 'induction_step': True, 'other_routes_section': True, 'self_contained': True, 'status_section': True, 'worked_instance': True}\nPath('siege-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('siege run: documented state, ledger, Status and proof shape verified; live referee review and later rounds remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_siege.py",
+          "equals": "import json\nfrom pathlib import Path\n\nrun = Path('math-proof-run')\nproof = (run / 'proof.md').read_text(encoding='utf-8')\nstate = (run / 'state.md').read_text(encoding='utf-8')\nledger = (run / 'ledger.md').read_text(encoding='utf-8')\nproblem = (run / 'problem.md').read_text(encoding='utf-8')\nlow = proof.lower()\nslow = state.lower()\ncompact = ''.join(proof.split())\nassert 'protocol' in slow and 'siege' in slow, 'state.md must record the documented protocol name'\nassert 'phase:' in slow, 'state.md must record the current phase'\nassert '[GOAL]' in ledger, 'the claims ledger must carry the documented goal line'\nassert 'sum of the first n positive integers' in problem, 'problem.md must hold the given problem text'\nassert 'n(n+1)/2' in compact, 'the triangular identity must appear in the final proof'\nassert 'base case' in low, 'the proof must state the base case'\nassert 'induction' in low and 'step' in low, 'the proof must state the induction step'\nassert '1 + 2 + 3 + 4 + 5 = 15' in proof, 'the worked instance n=5 must appear'\nassert 'status' in low, 'the documented Status section must appear'\nassert 'other routes' in low, 'the documented Other routes section must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nfor forbidden in ('notes.md', 'ledger.md', 'problem.md', 'round1_q', 'r3_q', '.answer.md'):\n    assert forbidden not in proof, 'the final proof must be self-contained and must not cite run files: ' + forbidden\n\nreport = {'base_case': True, 'closing_statement': True, 'goal_in_ledger': True, 'induction_step': True, 'other_routes_section': True, 'self_contained': True, 'status_section': True, 'worked_instance': True}\nPath('siege-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('siege run: documented state, ledger, Status and proof shape verified; live referee review and later rounds remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "siege-verification.json",
+          "equals": "{\"base_case\": true, \"closing_statement\": true, \"goal_in_ledger\": true, \"induction_step\": true, \"other_routes_section\": true, \"self_contained\": true, \"status_section\": true, \"worked_instance\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/state.md",
+          "contains": "phase:"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/ledger.md",
+          "contains": "[GOAL]"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/problem.md",
+          "contains": "sum of the first n positive integers"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/proof.md",
+          "contains": "1 + 2 + 3 + 4 + 5 = 15"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/proof.md",
+          "contains": "Status"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-run/proof.md",
+          "contains": "Other routes"
+        }
+      ]
+    },
+    {
+      "id": "solo-prove-odd-sum-squares",
+      "componentId": "skill:math-proof:solo",
+      "prompt": "/math-proof:solo For every positive integer n, prove that the sum of the first n odd numbers 1 + 3 + 5 + ... + (2n-1) equals n^2. Headless boundary: no network, no real external service and no installs; this is a pure reasoning task, and live referee review remains untested. The deliverable is the run directory math-proof-solo that the skill documents: problem.md holding this problem text, notes.md recording each settled step, and the self-contained proof.md. The proof must contain the section headings Base case, Induction step and Closing statement, must include the worked instance 1 + 3 + 5 + 7 = 16, and must end with the closing sentence This completes the induction. proof.md must not mention notes.md or problem.md. After proof.md is written, read the immutable verify_solo.py and run exactly python verify_solo.py using Bash to validate the run directory and write solo-verification.json. Do not modify the verifier or read or write its output file with model tools. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the artifacts, report the actual verifier output line, and state that live referee review and external proof checking remain untested.",
+      "allowCommands": [
+        "python verify_solo.py"
+      ],
+      "verifierOutputs": [
+        "solo-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_solo.py",
+          "text": "import json\nfrom pathlib import Path\n\nproof = Path('math-proof-solo/proof.md').read_text(encoding='utf-8')\nnotes = Path('math-proof-solo/notes.md').read_text(encoding='utf-8')\nproblem = Path('math-proof-solo/problem.md').read_text(encoding='utf-8')\nlow = proof.lower()\ncompact = ''.join(proof.split())\nassert 'sum of the first n odd numbers' in problem, 'problem.md must hold the given problem text'\nassert '2n-1' in compact or '2n\\u22121' in compact, 'the odd-number term must appear in the proof'\nassert 'n^2' in compact or 'n**2' in compact or 'n\\u00b2' in proof or 'nsquared' in compact, 'the square identity must appear in the proof'\nassert 'base case' in low, 'the proof must state the base case'\nassert 'induction' in low and 'step' in low, 'the proof must state the induction step'\nassert '1 + 3 + 5 + 7 = 16' in proof, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nassert 'notes.md' not in proof and 'problem.md' not in proof, 'the proof must be self-contained and must not cite run files'\nassert len(notes.strip()) > 0, 'the notes file must record the worked steps'\n\nreport = {'base_case': True, 'closing_statement': True, 'identity_stated': True, 'induction_step': True, 'notes_recorded': True, 'problem_copied': True, 'self_contained': True, 'worked_instance': True}\nPath('solo-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('solo proof: documented proof shape and self-contained artifact verified; live referee review remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_solo.py",
+          "equals": "import json\nfrom pathlib import Path\n\nproof = Path('math-proof-solo/proof.md').read_text(encoding='utf-8')\nnotes = Path('math-proof-solo/notes.md').read_text(encoding='utf-8')\nproblem = Path('math-proof-solo/problem.md').read_text(encoding='utf-8')\nlow = proof.lower()\ncompact = ''.join(proof.split())\nassert 'sum of the first n odd numbers' in problem, 'problem.md must hold the given problem text'\nassert '2n-1' in compact or '2n\\u22121' in compact, 'the odd-number term must appear in the proof'\nassert 'n^2' in compact or 'n**2' in compact or 'n\\u00b2' in proof or 'nsquared' in compact, 'the square identity must appear in the proof'\nassert 'base case' in low, 'the proof must state the base case'\nassert 'induction' in low and 'step' in low, 'the proof must state the induction step'\nassert '1 + 3 + 5 + 7 = 16' in proof, 'the worked instance n=4 must appear'\nassert 'this completes the induction' in low, 'the closing statement must appear'\nassert 'notes.md' not in proof and 'problem.md' not in proof, 'the proof must be self-contained and must not cite run files'\nassert len(notes.strip()) > 0, 'the notes file must record the worked steps'\n\nreport = {'base_case': True, 'closing_statement': True, 'identity_stated': True, 'induction_step': True, 'notes_recorded': True, 'problem_copied': True, 'self_contained': True, 'worked_instance': True}\nPath('solo-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('solo proof: documented proof shape and self-contained artifact verified; live referee review remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "solo-verification.json",
+          "equals": "{\"base_case\": true, \"closing_statement\": true, \"identity_stated\": true, \"induction_step\": true, \"notes_recorded\": true, \"problem_copied\": true, \"self_contained\": true, \"worked_instance\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-solo/proof.md",
+          "contains": "1 + 3 + 5 + 7 = 16"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-solo/proof.md",
+          "contains": "This completes the induction"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-solo/proof.md",
+          "contains": "n^2"
+        },
+        {
+          "kind": "file",
+          "path": "math-proof-solo/problem.md",
+          "contains": "sum of the first n odd numbers"
+        },
+        {
+          "kind": "file-exists",
+          "path": "math-proof-solo/notes.md"
+        }
+      ]
+    }
+  ]
+}

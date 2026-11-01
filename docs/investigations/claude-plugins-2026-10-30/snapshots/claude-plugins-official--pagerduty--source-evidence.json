@@ -1,0 +1,29 @@
+{
+  "repo": "PagerDuty/claude-code-plugins",
+  "commit": "761cba75bd50fd561405c3b173ecf36084432089",
+  "path": ".",
+  "archive_sha256": "967f5ca6faa4fecff6b44d70e2651d9c8a33bbd778d3fcebbca83ff791a5d00c",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/ISSUE_TEMPLATE/feature_request.md",
+    ".mcp.json",
+    "CLAUDE.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "commands/create-pagerduty-skill.md",
+    "commands/pre-commit-risk-scoring.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n    \"name\": \"pagerduty\",\n    \"description\": \"A collection of Claude Code plugins developed by PagerDuty for pre-commit risk assessment and PagerDuty skill creation for AI agents (Early Access).\",\n    \"version\": \"1.1.0\",\n    \"author\": {\n        \"name\": \"PagerDuty\"\n    }\n}",
+    ".mcp.json": "{\n  \"pagerduty\": {\n    \"type\": \"http\",\n    \"url\": \"https://mcp.pagerduty.com/mcp\",\n    \"headers\": {\n      \"Authorization\": \"Token token=${PAGERDUTY_API_KEY}\"\n    }\n  }\n}"
+  },
+  "markdown_frontmatter": {
+    "commands/create-pagerduty-skill.md": "\ndescription: \"Create or update PagerDuty skills for AI agents through guided interview\"\nallowed-tools: [\n  \"ToolSearch\",\n  \"Read\", \n  \"Write\",\n  \"Bash\", \n  \"AskUserQuestion\", \n  \"Glob\",\n  \"mcp__pagerduty-advance-mcp-__create_skill_tool\",\n  \"mcp__pagerduty-advance-mcp-__get_skill_tool\",\n  \"mcp__pagerduty-advance-mcp-__list_skills_tool\",\n  \"mcp__pagerduty-advance-mcp-__update_skill_tool\"\n]\n",
+    "commands/pre-commit-risk-scoring.md": "\ndescription: \"Assess pre-commit risk by correlating PagerDuty incidents with current code changes\"\nargument-hint: \"[pagerduty-service-name]\"\nallowed-tools: [\"ToolSearch\", \"Read\", \"Glob\", \"Grep\", \"Bash\", \"Write\", \"AskUserQuestion\", \"mcp__plugin_pagerduty_pagerduty__get_service\", \"mcp__plugin_pagerduty_pagerduty__list_services\", \"mcp__plugin_pagerduty_pagerduty__list_incidents\", \"mcp__plugin_pagerduty_pagerduty__list_incident_notes\", \"mcp__plugin_pagerduty_pagerduty__list_service_change_events\"]\n"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "repo": "sourcegraph-community/sourcegraph-claudecode-plugin",
+  "commit": "674a05e2e28677fc3fdce7491063459455ded573",
+  "path": ".",
+  "archive_sha256": "14eee051ff0e8f6401ce0f3af8521209de4bea17f881502d076f7d0c46553655",
+  "all_plugin_files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "skills/searching-sourcegraph/SKILL.md",
+    "skills/searching-sourcegraph/examples/common-searches.md",
+    "skills/searching-sourcegraph/query-patterns.md",
+    "skills/searching-sourcegraph/workflows/code-review.md",
+    "skills/searching-sourcegraph/workflows/debugging-issue.md",
+    "skills/searching-sourcegraph/workflows/fixing-bug.md",
+    "skills/searching-sourcegraph/workflows/implementing-feature.md",
+    "skills/searching-sourcegraph/workflows/understanding-code.md"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"sourcegraph\",\n  \"description\": \"Use Sourcegraph MCP from Claude Code for code search, navigation, history, and Deep Search.\",\n  \"version\": \"0.1.0\",\n  \"author\": {\n    \"name\": \"Sourcegraph Community\"\n  },\n  \"homepage\": \"https://github.com/sourcegraph-community/sourcegraph-claudecode-plugin\",\n  \"repository\": \"https://github.com/sourcegraph-community/sourcegraph-claudecode-plugin\",\n  \"license\": \"MIT\"\n}\n",
+    ".mcp.json": "{\n  \"mcpServers\": {\n    \"sourcegraph\": {\n      \"type\": \"http\",\n      \"url\": \"${SOURCEGRAPH_ENDPOINT}/.api/mcp/all\",\n      \"headers\": {\n        \"Authorization\": \"token ${SOURCEGRAPH_ACCESS_TOKEN}\"\n      }\n    }\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "skills/searching-sourcegraph/SKILL.md": "\nname: searching-sourcegraph\ndescription: Use when the user needs to search or navigate code with Sourcegraph MCP tools. Provides disciplined search workflows for finding implementations, understanding systems, debugging issues, fixing bugs, and reviewing code.\n"
+  }
+}

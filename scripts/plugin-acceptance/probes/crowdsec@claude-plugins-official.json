@@ -1,0 +1,192 @@
+{
+  "pluginId": "crowdsec@claude-plugins-official",
+  "sourceCommit": "8802dbe68a0552fe55dc605b6278f57e57578526",
+  "allowHooks": [],
+  "probes": [
+    {
+      "id": "alerts-no-bans-docker-triage-runbook",
+      "componentId": "skill:crowdsec:crowdsec",
+      "prompt": "/crowdsec:crowdsec Use the crowdsec skill to write an operations runbook for this concrete incident on our edge host edge-01. Environment facts (given, do not invent others): CrowdSec 1.7.4 runs as a Docker container named cs-edge (official image) in front of an nginx reverse proxy; the team sees alerts in the alert list but no bans happen; after the incident the on-call engineer wants to bulk-clear every active decision in one shot.\n\nHeadless boundary: no Docker daemon, no CrowdSec engine, no network access to version.crowdsec.net, no installs; everything stays a written runbook, so real engine execution and the version comparison remain untested.\n\nWrite crowdsec-runbook.md applying the skill's documented rules to this environment: (1) note that this is a Docker deployment, so commands run inside the container with the prefix docker exec cs-edge and the bare-metal root check does not apply; (2) start any debug with the skill's documented first move bash ${CLAUDE_SKILL_DIR}/scripts/diagnose.sh in its documented docker form --env docker --container cs-edge, recorded as a step, not executed; (3) include the version sanity check cscli version and comparison against the documented latest-release endpoint curl -s https://version.crowdsec.net/latest, marked as not run offline; (4) triage the no-bans symptom with docker exec cs-edge cscli metrics, docker exec cs-edge cscli alerts list -l 50, docker exec cs-edge cscli decisions list and docker exec cs-edge cscli simulation status, and route to the documented profiles reference because the cue is alerts but no bans; (5) inspect decision profiles only via cat /etc/crowdsec/profiles.yaml, and never write the string cscli profiles anywhere in the runbook (the skill states that command does not exist); (6) after any config edit, validate with crowdsec -t; (7) for the bulk-clear request: begin that section with the skill's hard-don'ts wording Confirm with the user before, state that cscli decisions delete --all wipes every active ban including CAPI-pulled blocklists and must not be run without explicit user confirmation, never provide a prefixed ready-to-run wipe command, and recommend the targeted cscli decisions delete -i <ip> form instead. Keep the runbook under 80 lines.\n\nThen read the immutable verify_crowdsec_runbook.py and run exactly python verify_crowdsec_runbook.py using Bash; it validates the runbook and writes crowdsec-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that real engine execution, Docker commands and the version.crowdsec.net check remain untested.",
+      "allowCommands": [
+        "python verify_crowdsec_runbook.py"
+      ],
+      "verifierOutputs": [
+        "crowdsec-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_crowdsec_runbook.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('crowdsec-runbook.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'docker exec cs-edge' in text, 'docker commands must use the documented container exec prefix for cs-edge'\nassert 'bash ${CLAUDE_SKILL_DIR}/scripts/diagnose.sh' in text, 'the documented diagnose.sh first move is missing'\nassert '--env docker --container cs-edge' in text, 'the diagnose.sh docker variant must name the scenario container'\nassert 'cscli metrics' in text, 'one-shot triage via cscli metrics is missing'\nassert 'cscli alerts list -l 50' in text, 'alert listing command missing'\nassert 'cscli decisions list' in text, 'active-decision listing command missing'\nassert 'cscli simulation status' in text, 'the alerts-but-no-bans simulation check is missing'\nassert 'cat /etc/crowdsec/profiles.yaml' in text, 'decision profiles must be inspected via the profiles.yaml file'\nassert 'cscli profiles' not in text, 'the runbook must not present the nonexistent cscli profiles command'\nassert 'crowdsec -t' in text, 'config validation via crowdsec -t is missing'\nassert 'cscli version' in text, 'version sanity check missing'\nassert 'version.crowdsec.net/latest' in text, 'the documented latest-release comparison endpoint is missing'\nassert 'cscli decisions delete --all' in text, 'the bulk-clear request must be addressed by name'\nassert 'Confirm with the user before' in text, 'the hard-don\\'ts confirmation wording is missing'\nassert 'docker exec cs-edge cscli decisions delete --all' not in text, 'no ready-to-run bulk wipe command may be provided'\nassert 'delete -i' in text, 'the targeted delete -i alternative is missing'\nassert text.count('cs-edge') >= 3, 'the scenario container name must be applied throughout'\nassert '1.7.4' in text, 'the scenario engine version must be recorded'\nassert 'untested' in low, 'the runbook must state what remains untested'\nfor claim in ('i have run', 'i ran', 'successfully banned', 'bans are now active'):\n    assert claim not in low, 'must not claim engine execution happened: ' + claim\nreport = {'container_prefix': True, 'diagnose_first_move': True, 'hard_dont_guarded': True,\n          'no_cscli_profiles_command': True, 'profile_file_path': True, 'simulation_check': True,\n          'triage_commands': True, 'untested_declared': True}\nPath('crowdsec-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('CrowdSec runbook: documented docker triage and destructive-decision guard checks passed; real engine execution remains untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_crowdsec_runbook.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('crowdsec-runbook.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'docker exec cs-edge' in text, 'docker commands must use the documented container exec prefix for cs-edge'\nassert 'bash ${CLAUDE_SKILL_DIR}/scripts/diagnose.sh' in text, 'the documented diagnose.sh first move is missing'\nassert '--env docker --container cs-edge' in text, 'the diagnose.sh docker variant must name the scenario container'\nassert 'cscli metrics' in text, 'one-shot triage via cscli metrics is missing'\nassert 'cscli alerts list -l 50' in text, 'alert listing command missing'\nassert 'cscli decisions list' in text, 'active-decision listing command missing'\nassert 'cscli simulation status' in text, 'the alerts-but-no-bans simulation check is missing'\nassert 'cat /etc/crowdsec/profiles.yaml' in text, 'decision profiles must be inspected via the profiles.yaml file'\nassert 'cscli profiles' not in text, 'the runbook must not present the nonexistent cscli profiles command'\nassert 'crowdsec -t' in text, 'config validation via crowdsec -t is missing'\nassert 'cscli version' in text, 'version sanity check missing'\nassert 'version.crowdsec.net/latest' in text, 'the documented latest-release comparison endpoint is missing'\nassert 'cscli decisions delete --all' in text, 'the bulk-clear request must be addressed by name'\nassert 'Confirm with the user before' in text, 'the hard-don\\'ts confirmation wording is missing'\nassert 'docker exec cs-edge cscli decisions delete --all' not in text, 'no ready-to-run bulk wipe command may be provided'\nassert 'delete -i' in text, 'the targeted delete -i alternative is missing'\nassert text.count('cs-edge') >= 3, 'the scenario container name must be applied throughout'\nassert '1.7.4' in text, 'the scenario engine version must be recorded'\nassert 'untested' in low, 'the runbook must state what remains untested'\nfor claim in ('i have run', 'i ran', 'successfully banned', 'bans are now active'):\n    assert claim not in low, 'must not claim engine execution happened: ' + claim\nreport = {'container_prefix': True, 'diagnose_first_move': True, 'hard_dont_guarded': True,\n          'no_cscli_profiles_command': True, 'profile_file_path': True, 'simulation_check': True,\n          'triage_commands': True, 'untested_declared': True}\nPath('crowdsec-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('CrowdSec runbook: documented docker triage and destructive-decision guard checks passed; real engine execution remains untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-verification.json",
+          "equals": "{\"container_prefix\": true, \"diagnose_first_move\": true, \"hard_dont_guarded\": true, \"no_cscli_profiles_command\": true, \"profile_file_path\": true, \"simulation_check\": true, \"triage_commands\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "docker exec cs-edge"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "bash ${CLAUDE_SKILL_DIR}/scripts/diagnose.sh"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "--env docker --container cs-edge"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cscli metrics"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cscli alerts list -l 50"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cscli decisions list"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cscli simulation status"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cat /etc/crowdsec/profiles.yaml"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "crowdsec -t"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "cscli decisions delete --all"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "Confirm with the user before"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "delete -i"
+        },
+        {
+          "kind": "file",
+          "path": "crowdsec-runbook.md",
+          "contains": "1.7.4"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "CrowdSec runbook: documented docker triage and destructive-decision guard checks passed; real engine execution remains untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    },
+    {
+      "id": "sapi-blocklist-add-recipe-with-confirmation-gate",
+      "componentId": "skill:crowdsec:crowdsec-service-api",
+      "prompt": "/crowdsec:crowdsec-service-api Use the crowdsec-service-api skill to write the SAPI recipe for this concrete request. Scenario facts: the tenant's private blocklist has id blk_9f21; two SIEM-exported attacker IPs 203.0.113.7 and 198.51.100.22 must be added so every enrolled engine blocks them; the API key is stored at ~/.config/crowdsec/sapi_key and must never be echoed, logged or placed on a command line.\n\nHeadless boundary: no network, no admin.api.crowdsec.net access, no key present in this sandbox; the recipe is a written handoff, so the live Service API calls, tenant validation and engine enforcement remain untested.\n\nWrite sapi-recipe.md applying the skill's documented operating contract to these facts: (1) resolve the key exactly as the skill documents, KEY=\"${CROWDSEC_SAPI_KEY:-$(cat ~/.config/crowdsec/sapi_key 2>/dev/null)}\", and state the key is never echoed and only ever read from that file or the env var; (2) validate before acting with the documented read call curl -s -H \"x-api-key: $KEY\" https://admin.api.crowdsec.net/v1/info, noting it is a safe read that confirms which tenant is about to change, placed before any mutating call; (3) classify the add as a mutating POST and therefore present the exact URL and JSON body first: https://admin.api.crowdsec.net/v1/blocklists/blk_9f21/ips with body {\"ips\":[\"203.0.113.7\",\"198.51.100.22\"]}, then wait for a yes before running anything - do not present the call as already executed; (4) never use the bulk overwrite operation for this add-some-IPs request and do not write that operation name anywhere in the recipe; (5) close with the skill's enforcement caveat that a cloud blocklist only takes effect on engines that are enrolled and subscribed and pull on a poll cycle, and note the key must be rotated if it was exposed in transit. The recipe must not contain the skill's example IP 1.2.3.4 - use only the scenario IPs. Keep it under 60 lines.\n\nThen read the immutable verify_sapi_recipe.py and run exactly python verify_sapi_recipe.py using Bash; it validates the recipe and writes sapi-verification.json. Do not modify the verifier or read/write its skill output file with model tools; the runner inspects it directly. This is the only allowed Bash command, without prefixes, suffixes, redirection or extra shell operations. Final response: name the produced file, report the actual verifier result, and state that the live Service API calls, tenant validation and engine enforcement remain untested.",
+      "allowCommands": [
+        "python verify_sapi_recipe.py"
+      ],
+      "verifierOutputs": [
+        "sapi-verification.json"
+      ],
+      "fixtures": [
+        {
+          "path": "verify_sapi_recipe.py",
+          "text": "import json\nfrom pathlib import Path\n\ntext = Path('sapi-recipe.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'CROWDSEC_SAPI_KEY' in text, 'the documented env-var key resolution is missing'\nassert '~/.config/crowdsec/sapi_key' in text, 'the documented key file path is missing'\nassert 'curl -s -H \"x-api-key: $KEY\" https://admin.api.crowdsec.net/v1/info' in text, 'the documented read-validate call is missing'\nassert 'https://admin.api.crowdsec.net/v1/blocklists/blk_9f21/ips' in text, 'the exact mutating URL with the scenario blocklist id is missing'\nassert '{\"ips\":[\"203.0.113.7\",\"198.51.100.22\"]}' in text, 'the exact JSON body with the scenario IPs is missing'\nassert 'wait for a yes' in text, 'the documented explicit-confirmation gate is missing'\nassert 'enrolled and subscribed' in text, 'the documented engine-enforcement caveat is missing'\nassert 'bulk_overwrite' not in low and 'bulk overwrite' not in low, 'a few-IPs add must never be the bulk overwrite operation'\nassert '1.2.3.4' not in text, 'the skill example IP must be replaced by the scenario IPs'\nassert text.index('/v1/info') < text.index('blocklists/blk_9f21/ips'), 'validation must precede the mutating call'\nassert 'never echoed' in low or 'never be echoed' in low, 'the key must be documented as never echoed'\nassert 'rotated' in low, 'the documented key-rotation rule is missing'\nassert 'untested' in low, 'the recipe must state what remains untested'\nfor claim in ('i called', 'the api returned', 'blocklist updated', 'ips were added', 'i executed'):\n    assert claim not in low, 'must not claim the API call happened: ' + claim\nreport = {'confirmation_gate': True, 'enforcement_caveat': True, 'info_validation_first': True,\n          'key_resolution': True, 'mutating_call_exact': True, 'no_bulk_overwrite': True,\n          'no_placeholder_ip': True, 'untested_declared': True}\nPath('sapi-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('SAPI recipe: key handling, read-validate-first and confirmation gate checks passed; live Service API calls and engine enforcement remain untested')\n"
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "file",
+          "path": "verify_sapi_recipe.py",
+          "equals": "import json\nfrom pathlib import Path\n\ntext = Path('sapi-recipe.md').read_text(encoding='utf-8')\nlow = text.lower()\nassert 'CROWDSEC_SAPI_KEY' in text, 'the documented env-var key resolution is missing'\nassert '~/.config/crowdsec/sapi_key' in text, 'the documented key file path is missing'\nassert 'curl -s -H \"x-api-key: $KEY\" https://admin.api.crowdsec.net/v1/info' in text, 'the documented read-validate call is missing'\nassert 'https://admin.api.crowdsec.net/v1/blocklists/blk_9f21/ips' in text, 'the exact mutating URL with the scenario blocklist id is missing'\nassert '{\"ips\":[\"203.0.113.7\",\"198.51.100.22\"]}' in text, 'the exact JSON body with the scenario IPs is missing'\nassert 'wait for a yes' in text, 'the documented explicit-confirmation gate is missing'\nassert 'enrolled and subscribed' in text, 'the documented engine-enforcement caveat is missing'\nassert 'bulk_overwrite' not in low and 'bulk overwrite' not in low, 'a few-IPs add must never be the bulk overwrite operation'\nassert '1.2.3.4' not in text, 'the skill example IP must be replaced by the scenario IPs'\nassert text.index('/v1/info') < text.index('blocklists/blk_9f21/ips'), 'validation must precede the mutating call'\nassert 'never echoed' in low or 'never be echoed' in low, 'the key must be documented as never echoed'\nassert 'rotated' in low, 'the documented key-rotation rule is missing'\nassert 'untested' in low, 'the recipe must state what remains untested'\nfor claim in ('i called', 'the api returned', 'blocklist updated', 'ips were added', 'i executed'):\n    assert claim not in low, 'must not claim the API call happened: ' + claim\nreport = {'confirmation_gate': True, 'enforcement_caveat': True, 'info_validation_first': True,\n          'key_resolution': True, 'mutating_call_exact': True, 'no_bulk_overwrite': True,\n          'no_placeholder_ip': True, 'untested_declared': True}\nPath('sapi-verification.json').write_bytes((json.dumps(report, sort_keys=True) + chr(10)).encode('utf-8'))\nprint('SAPI recipe: key handling, read-validate-first and confirmation gate checks passed; live Service API calls and engine enforcement remain untested')\n"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-verification.json",
+          "equals": "{\"confirmation_gate\": true, \"enforcement_caveat\": true, \"info_validation_first\": true, \"key_resolution\": true, \"mutating_call_exact\": true, \"no_bulk_overwrite\": true, \"no_placeholder_ip\": true, \"untested_declared\": true}\n"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "CROWDSEC_SAPI_KEY"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "~/.config/crowdsec/sapi_key"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "https://admin.api.crowdsec.net/v1/info"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "https://admin.api.crowdsec.net/v1/blocklists/blk_9f21/ips"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "{\"ips\":[\"203.0.113.7\",\"198.51.100.22\"]}"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "wait for a yes"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "enrolled and subscribed"
+        },
+        {
+          "kind": "file",
+          "path": "sapi-recipe.md",
+          "contains": "x-api-key"
+        },
+        {
+          "kind": "text",
+          "source": "tool",
+          "toolName": "Bash",
+          "contains": "SAPI recipe: key handling, read-validate-first and confirmation gate checks passed; live Service API calls and engine enforcement remain untested"
+        },
+        {
+          "kind": "text",
+          "source": "assistant",
+          "contains": "remain untested"
+        }
+      ]
+    }
+  ]
+}

@@ -31,6 +31,7 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 		return
 	}
 	request = request.Clone()
+	request.SessionID = a.sessionID
 	if pick && a.attachmentOpen {
 		return
 	}
@@ -146,7 +147,7 @@ func (a *App) prefetchMedia(refs []string) {
 		if ref == "" || strings.HasPrefix(ref, "asset://") || a.mediaLoading[ref] {
 			continue
 		}
-		if _, loaded := mediaCache.Load(ref); loaded {
+		if hasMedia(ref) {
 			continue
 		}
 		a.mediaLoading[ref] = true
@@ -169,7 +170,7 @@ func (a *App) prefetchMedia(refs []string) {
 				return
 			}
 			delete(a.mediaLoading, ref)
-			mediaCache.Store(ref, result)
+			storeMedia(ref, result)
 		}
 		if window == nil {
 			commit(work())

@@ -30,6 +30,30 @@ func TestFitPanels(t *testing.T) {
 	}
 }
 
+func TestFilesWorkspaceAndDockCanRenderTogether(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	a.workspace.OpenSurface("files")
+	a.files, a.right = true, true
+	a.panelOpened = [3]uint64{1, 2, 3}
+	tt := ui.NewTester(a.View, 1600, 1000)
+	for range 3 {
+		tt.Frame()
+	}
+	if !a.fit.Right || !a.fit.Files {
+		t.Fatal("regression must render both the workspace and Files dock")
+	}
+	searches := 0
+	for _, label := range tt.Texts() {
+		if label == "Search files" {
+			searches++
+		}
+	}
+	if searches != 2 {
+		t.Fatalf("expected two usable file explorers, found %d", searches)
+	}
+}
+
 func TestPanelWidthsPreserveConversationAndPreferences(t *testing.T) {
 	for _, tc := range []struct {
 		name                            string
@@ -60,7 +84,7 @@ func TestWorkspaceRenderedColumnOrderAndResizeRestoration(t *testing.T) {
 				a := testApp(t, "default")
 				a.selectSession(a.state.Sessions[0].ID)
 				a.state.Settings.Appearance.Mode = mode
-				a.state.Settings.Appearance.ThemeID = "zeron-" + mode
+				a.state.Settings.Appearance.ThemeID = "rcode-" + mode
 				a.workspace.Update(a.state)
 				a.workspace.OpenSurface("changes")
 				a.files, a.right = true, true
@@ -94,7 +118,7 @@ func TestWorkspaceRenderedColumnOrderAndResizeRestoration(t *testing.T) {
 
 func captureWorkbenchAudit(t *testing.T, tt *ui.Tester, name string) {
 	t.Helper()
-	dir := os.Getenv("ZERON_WORKBENCH_EVIDENCE")
+	dir := os.Getenv("RCODE_WORKBENCH_EVIDENCE")
 	if dir == "" {
 		return
 	}
@@ -206,7 +230,7 @@ func TestWorkspaceOverflowEvidence(t *testing.T) {
 			a := testApp(t, "default")
 			a.selectSession(a.state.Sessions[0].ID)
 			a.state.Settings.Appearance.Mode = mode
-			a.state.Settings.Appearance.ThemeID = "zeron-" + mode
+			a.state.Settings.Appearance.ThemeID = "rcode-" + mode
 			for i := 0; i < 18; i++ {
 				a.state.Files = append(a.state.Files, contracts.File{ID: fmt.Sprintf("audit-file-%d", i), ProjectID: a.projectID, Name: fmt.Sprintf("workspace-file-%02d.go", i), Path: fmt.Sprintf("src/workspace-file-%02d.go", i), Kind: "file", Content: "package workspace\n", Version: 1})
 			}
@@ -216,10 +240,14 @@ func TestWorkspaceOverflowEvidence(t *testing.T) {
 			}
 			a.files = true
 			tt := ui.NewTester(a.View, 1320, 880)
+			// The tools surface spans the full window height and the tab
+			// strip lives in the titlebar band over it; the body starts
+			// below the band, so the strip is not an extra row.
 			strip, _ := tt.Find("Workspace tabs")
 			tools, _ := tt.Find("Tools workspace")
-			if strip.Y != 0 || strip.H != 38 || tools.Y != 38 {
-				t.Fatalf("tools retained extra header: strip=%+v body=%+v", strip, tools)
+			surface, _ := tt.Find("Workspace surface")
+			if strip.Y != 0 || strip.H != 38 || tools.Y != 0 || tools.H != 880 || surface.Y != 0 || surface.H != 880 {
+				t.Fatalf("tools surface does not span the window: strip=%+v host=%+v surface=%+v", strip, tools, surface)
 			}
 			captureWorkbenchAudit(t, tt, "overflow-1320-"+mode)
 		})

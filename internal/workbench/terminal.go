@@ -16,18 +16,16 @@ import (
 )
 
 type terminalView struct {
-	meta        contracts.Terminal
-	native      *terminal.Terminal
-	conn        *streamConn
-	err         string
-	loading     bool
-	search      string
-	showSearch  bool
-	appearance  string
-	resource    closeSlot
-	body        ui.Handle
-	focusBody   bool
-	focusSearch bool
+	meta       contracts.Terminal
+	native     *terminal.Terminal
+	conn       *streamConn
+	err        string
+	loading    bool
+	appearance string
+	resource   closeSlot
+	body       ui.Handle
+	focusBody  bool
+	live       bool
 }
 
 // closeSlot owns a resource even before its asynchronous UI delivery runs.
@@ -237,7 +235,7 @@ func (s *State) openTerminal(meta contracts.Terminal) {
 	if s.terminals[meta.ID] != nil {
 		return
 	}
-	v := &terminalView{meta: meta, loading: s.win != nil, focusBody: true}
+	v := &terminalView{meta: meta, loading: s.win != nil, focusBody: true, live: s.snapshot.Runtime != nil}
 	s.terminals[meta.ID] = v
 	if s.win == nil {
 		v.err = "A native window is required to display the terminal."
@@ -250,9 +248,11 @@ func (s *State) openTerminal(meta contracts.Terminal) {
 			}
 		})
 	}
-	v.conn = newStreamConn(func(line string) { post(contracts.Command{Kind: "terminal.input", ID: meta.ID, Text: line}) }, func(cols, rows int) {
-		post(contracts.Command{Kind: "terminal.resize", ID: meta.ID, TerminalSize: &contracts.TerminalSize{Columns: cols, Rows: rows}})
-	})
+	if !v.live {
+		v.conn = newStreamConn(func(line string) { post(contracts.Command{Kind: "terminal.input", ID: meta.ID, Text: line}) }, func(cols, rows int) {
+			post(contracts.Command{Kind: "terminal.resize", ID: meta.ID, TerminalSize: &contracts.TerminalSize{Columns: cols, Rows: rows}})
+		})
+	}
 	font := design.MonoFont(s.snapshot.Settings.Appearance.TerminalFont)
 	fontSize := float32(s.snapshot.Settings.Appearance.TerminalFontSize)
 	if font == "" {
@@ -265,12 +265,41 @@ func (s *State) openTerminal(meta contracts.Terminal) {
 		if s.closed.Load() {
 			return
 		}
-		native, err := terminal.New(terminal.Options{Conn: v.conn, Font: terminal.Font{Family: font, Size: fontSize}, NoBlink: true, NoClipboardWrite: true, Scrollback: 4 * 1024 * 1024})
+		var conn io.ReadWriteCloser
+		var err error
+		if v.live {
+			service, ok := s.backend.(contracts.TerminalService)
+			if !ok {
+				err = errors.New("terminal streaming is unavailable")
+			} else {
+				conn, err = service.OpenTerminal(s.ctx, meta.ID)
+			}
+		} else {
+			conn = v.conn
+		}
+		if err != nil {
+			s.win.Update(func() {
+				if !s.closed.Load() && s.terminals[meta.ID] == v {
+					v.loading = false
+					v.err = err.Error()
+				}
+			})
+			return
+		}
+		if s.closed.Load() {
+			_ = conn.Close()
+			return
+		}
+		options := terminal.Options{Conn: conn, Font: terminal.Font{Family: font, Size: fontSize}, NoBlink: true, NoClipboardWrite: true, Scrollback: 4 * 1024 * 1024}
+		if v.live {
+			options.OnClear = func(terminal.Clear) bool { post(contracts.Command{Kind: "terminal.clear", ID: meta.ID}); return true }
+		}
+		native, err := terminal.New(options)
 		if native != nil && !v.resource.install(native) {
 			return
 		}
 		if err != nil {
-			_ = v.conn.Close()
+			_ = conn.Close()
 		}
 		s.win.Update(func() {
 			if s.closed.Load() || s.terminals[meta.ID] != v {
@@ -284,8 +313,10 @@ func (s *State) openTerminal(meta contracts.Terminal) {
 			}
 			v.native = native
 			s.configureTerminal(v)
-			if err := v.conn.push([]byte(v.meta.Output)); err != nil {
-				v.err = err.Error()
+			if !v.live {
+				if err := v.conn.push([]byte(v.meta.Output)); err != nil {
+					v.err = err.Error()
+				}
 			}
 		})
 	}()
@@ -318,6 +349,9 @@ func (s *State) configureTerminal(v *terminalView) {
 func (v *terminalView) update(meta contracts.Terminal) {
 	previous := v.meta.Output
 	v.meta = meta
+	if v.live {
+		return
+	}
 	if v.native == nil || previous == meta.Output {
 		return
 	}
@@ -344,43 +378,14 @@ func (v *terminalView) close() {
 	v.native = nil
 }
 
-func (v *terminalView) toggleSearch() {
-	v.showSearch = !v.showSearch
-	v.focusSearch = v.showSearch
-	v.focusBody = !v.showSearch
-	if v.native != nil {
-		query := v.search
-		if !v.showSearch {
-			query = ""
-		}
-		v.native.Search(query)
-	}
-}
-
 func (s *State) terminalView(c *ui.Context, id string) {
 	v := s.terminals[id]
 	if v == nil {
 		return
 	}
 	p := s.palette()
-	ui.Row(c).Height(32).Padding(4, 10).Gap(6).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
-		ui.Text(c, v.meta.CWD).TextColor(p.Muted).SingleLine().Grow(1)
-		s.iconButton(c, "magnifer", "Find in terminal", v.toggleSearch)
-		s.iconButton(c, "trash-bin-minimalistic", "Clear terminal", func() { s.command(contracts.Command{Kind: "terminal.input", ID: id, Text: "clear"}) })
-	})
-	if v.showSearch {
-		ui.Row(c).Padding(4, 10).Gap(6).Children(func() {
-			input := ui.TextInputBase(c, &v.search).Label(tr(c, "Search terminal output")).Placeholder(tr(c, "Find")).Grow(1).OnShortcut(0, ui.KeyEscape, v.toggleSearch).OnChange(func() {
-				if v.native != nil {
-					v.native.Search(v.search)
-				}
-			})
-			if v.focusSearch {
-				input.Focus()
-				v.focusSearch = false
-			}
-			ui.Button(c, tr(c, "Close search")).OnClick(v.toggleSearch)
-		})
+	if v.meta.StorageError != "" {
+		ui.Text(c.Key("terminal.storage.error"), v.meta.StorageError).TextColor(p.Danger).Selectable()
 	}
 	if v.loading {
 		ui.Column(c).Grow(1).FillWidth().Center().Children(func() { ui.Spinner(c) })
@@ -388,7 +393,7 @@ func (s *State) terminalView(c *ui.Context, id string) {
 	}
 	if v.err != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Padding(20).Children(func() {
-			ui.Text(c, tr(c, "Unable to open terminal")).FontSize(design.UISize(c, 16))
+			ui.Text(c, tr(c, "Unable to open terminal")).FontSize(design.TextSize(c, design.TextLarge))
 			ui.Text(c, v.err).TextColor(p.Muted).MaxWidth(460)
 		})
 		return

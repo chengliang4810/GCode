@@ -19,6 +19,11 @@ the relevant renderer paths were unchanged at the updated reference.
 
 The executable contains native SVG views and the generated vector assets.
 The Rust generator and its executable are not application runtime dependencies.
+Current conversation formulas are laid out at runtime by the application's
+pure Go box compositor with the pinned go-latex AST/symbol backend and the same
+six original, unmodified OTF faces. They do not reuse the frozen fixture SVGs.
+The go-latex license is retained in `../go/go-latex-BSD-3-Clause.txt`;
+runtime font hashes are under `runtimeMathFonts` in `internal/assets/manifest.json`.
 Source evidence: `internal/assets/data/artifacts/provenance.json`,
 `diagram-manifest.json`, `tools/reference-artifacts/Cargo.lock` and the original
 Zeron font notices. No license text in this package has been manufactured from

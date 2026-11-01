@@ -1,0 +1,23 @@
+{
+  "repo": "greptileai/claude-plugin",
+  "commit": "f0b7379ca06e40896fdae93fe166e851d1c9db67",
+  "path": "plugins/greptile",
+  "archive_sha256": "4bb9c5910f86303c5ab49de7bcc2dc033817c2222222b1ea06e19bdaaddc18e1",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    ".mcp.json",
+    "README.md",
+    "commands/login.md",
+    "commands/review.md",
+    "scripts/greptile.mjs",
+    "scripts/greptile.version"
+  ],
+  "config": {
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"greptile\",\n  \"description\": \"AI code review agent for GitHub and GitLab. View and resolve Greptile's PR review comments, run reviews on your working branch, and search your organization's knowledge base and coding patterns, directly from Claude Code.\",\n  \"version\": \"1.2.4\",\n  \"license\": \"MIT\",\n  \"author\": {\n    \"name\": \"Greptile\",\n    \"url\": \"https://greptile.com\"\n  },\n  \"homepage\": \"https://www.greptile.com/docs/mcp-v2/overview\",\n  \"repository\": \"https://github.com/greptileai/claude-plugin\",\n  \"keywords\": [\"code-review\", \"pull-requests\", \"github\", \"gitlab\", \"knowledge-base\", \"ai\"]\n}\n",
+    ".mcp.json": "{\n  \"greptile\": {\n    \"type\": \"http\",\n    \"url\": \"https://api.greptile.com/mcp\"\n  }\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/login.md": "\nallowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/greptile.mjs:*)\nargument-hint: \"\"\ndescription: Sign the Greptile CLI in to your Greptile account\n",
+    "commands/review.md": "\nallowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/greptile.mjs:*), mcp__plugin_greptile_greptile__get_code_review, mcp__plugin_greptile_greptile__list_code_reviews\nargument-hint: [base branch] [what to focus on]\ndescription: Review the current branch with Greptile\n"
+  }
+}

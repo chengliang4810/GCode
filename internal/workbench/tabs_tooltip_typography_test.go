@@ -2,10 +2,11 @@ package workbench
 
 import (
 	"fmt"
+	"gcode/internal/assets"
 	"math"
 	"testing"
 
-	"gcode/internal/assets"
+	"gcode/internal/design"
 
 	"github.com/egoist/mygo/ui"
 )
@@ -22,16 +23,8 @@ func TestTabTooltipUsesDetachedSystemFontAndSnappedLineBox(t *testing.T) {
 					text := "Tab02.txt"
 					owner := &tabTooltipOwner{phase: tabTooltipVisible, text: text, x: 20, y: 20, close: close}
 					s.tabTooltip.owners = []*tabTooltipOwner{owner}
-					size, wantHeight := float32(10.5), float32(17)
-					if close {
-						size, wantHeight = 11, 18
-					}
-					if scale == 1.25 {
-						wantHeight = 16.8
-						if close {
-							wantHeight = 17.6
-						}
-					}
+					size := design.TextCaption
+					wantHeight := tabTooltipLineHeight(size, scale)
 					tt := newTabTooltipTestWindow(s, func(c *ui.Context) {
 						c.SetTheme(s.palette().UI())
 						c.Root().Font(rootFont).FontSize(25).FontWeight(700).LineHeight(3)

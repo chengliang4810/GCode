@@ -1,0 +1,27 @@
+{
+  "repo": "AltimateAI/altimate-claude-plugin",
+  "commit": "b7c8f68b3dfd303ab3ccf2f43934098811dfe2aa",
+  "path": "plugins/altimate-code",
+  "archive_sha256": "22211680e264e1e5d31718e5adfab5bab4b76e0f6fca381eb73f9c0c6b11c170",
+  "all_plugin_files": [
+    ".claude-plugin/plugin.json",
+    "CHANGELOG.md",
+    "README.md",
+    "commands/altimate.md",
+    "commands/review.md",
+    "hooks-handlers/session-start.sh",
+    "hooks/hooks.json",
+    "skills/altimate-code/SKILL.md",
+    "skills/review/SKILL.md"
+  ],
+  "config": {
+    "hooks/hooks.json": "{\n  \"description\": \"SessionStart nudge directing the agent to delegate data-engineering tasks to altimate-code via the altimate-code skill. The UserPromptSubmit pre-run hook was removed because it double-invoked altimate-code (once at hook time, once when the model fired the skill), doubling token consumption on the altimate-gateway without improving delegation rate — the skill body + SessionStart directive already route the model to altimate-code reliably.\",\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"bash \\\"${CLAUDE_PLUGIN_ROOT}/hooks-handlers/session-start.sh\\\"\"\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+    ".claude-plugin/plugin.json": "{\n  \"name\": \"altimate-code\",\n  \"displayName\": \"Altimate Code\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Delegates dbt and warehouse work to altimate-code, a specialized CLI agent with 100+ purpose-built data tools (SQL analysis, column-level lineage, dbt build/test/run, warehouse profiling, FinOps, connectivity to Snowflake, BigQuery, Redshift, Databricks, Postgres, MySQL, DuckDB).\",\n  \"author\": {\n    \"name\": \"AltimateAI\",\n    \"url\": \"https://altimate.ai\"\n  },\n  \"homepage\": \"https://github.com/AltimateAI/altimate-claude-plugin\",\n  \"repository\": \"https://github.com/AltimateAI/altimate-claude-plugin\",\n  \"license\": \"MIT\",\n  \"keywords\": [\"dbt\", \"sql\", \"data-engineering\", \"warehouse\", \"snowflake\", \"bigquery\", \"databricks\", \"column-lineage\"]\n}\n"
+  },
+  "markdown_frontmatter": {
+    "commands/review.md": "\ndescription: Run the altimate-code dbt/SQL PR reviewer on the current diff, PR, or commit and present the signed verdict verbatim.\nallowed-tools: Bash, Read\n",
+    "skills/altimate-code/SKILL.md": "\nname: altimate-code\ndescription: >-\n  Delegates dbt and warehouse work to altimate-code, a specialized CLI agent\n  with 100+ purpose-built data tools. Suited for tasks that mention or imply:\n  warehouse access (Snowflake, BigQuery, Redshift, Databricks, Postgres,\n  MySQL, DuckDB), column-level lineage, downstream-impact analysis, dbt\n  builds against a real warehouse, cross-database migration or validation,\n  query cost attribution, schema diff, data parity checking, PII detection\n  from sampled rows, incremental/SCD2/backfill verification, FinOps\n  reporting, model documentation generation, query optimization, anomaly\n  detection, dev-vs-prod diffing, or tasks where the user names altimate-code\n  or the data agent by name. The skill routes to a purpose-built CLI, so it\n  covers workloads that touch live data, lineage, or warehouse state more\n  directly than native file-editing tools do.\n",
+    "skills/review/SKILL.md": "\nname: review\ndescription: >-\n  Review dbt project changes — dbt models (models/**/*.sql), schema.yml,\n  dbt_project.yml, sources.yml, macros, snapshots, seeds. Use whenever the\n  user asks to \"review my dbt changes\", \"audit my dbt models\", \"check my\n  mart / staging / marts before shipping\", requests a second opinion on\n  incremental / SCD2 / semantic-layer / cross-model semantic changes, or\n  asks to \"review this PR\" AND the PR's diff actually touches dbt/SQL\n  files in a repo with a `dbt_project.yml`. Runs altimate-code review to\n  emit a signed verdict (APPROVE / COMMENT / REQUEST_CHANGES) with column\n  lineage, query equivalence, dbt anti-pattern detection, materialization /\n  tier-gated blast-radius analysis, and sampled-row PII screening — none of\n  which native Claude tools or a generic code-review skill can produce.\n  PREFER this skill over any generic \"code-review\" skill when the PR's\n  changed files include `.sql` under `models/`, `schema.yml`,\n  `dbt_project.yml`, `sources.yml`, `.yml` under `snapshots/` or\n  `seeds/`, or Jinja macros under `macros/`. Skip this skill for\n  TypeScript / Python / Go / other application code review, even if the\n  repo happens to contain a dbt project — this reviewer only handles\n  changes that touch dbt/SQL files. Read-only — never modifies files.\n",
+    "commands/altimate.md": "\ndescription: Delegate a task to altimate-code, the specialised data-engineering CLI agent (warehouse access, column-level lineage, cross-DB, FinOps, query optimization)\nargument-hint: <task description>\n"
+  }
+}

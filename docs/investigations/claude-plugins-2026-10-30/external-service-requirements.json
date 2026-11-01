@@ -1,0 +1,1851 @@
+{
+  "generated_at_utc": "2026-10-30T11:19:54.174990+00:00",
+  "marketplace_entry_count": 315,
+  "marketplace_commit": "f8c5e7a1dcb71b10cb74586224b5401f3de5db28",
+  "assessment_scope": "35 individually source-proven credential requirements for named account-backed service operations. Not a complete census of all credential dependencies in 315 entries and not a count of wholly unusable plugins.",
+  "source_proven_core_service_dependencies_lower_bound": 35,
+  "selected_entries_with_anonymous_401_auth_challenge": 32,
+  "selected_entries_with_anonymous_initialize_200": 0,
+  "whole_plugin_credential_block_count": null,
+  "whole_plugin_credential_block_count_reason": "Not established; offline skills, local tools and alternative capabilities must not be treated as unavailable merely because the account connector is gated.",
+  "local_authorization_inspection": {
+    "evidence_as_of_date": "2026-10-30",
+    "frozen_inspection_not_revalidated_by_builder": true,
+    "inspection_scope": [
+      "C:/Users/chengliang/.gcode/engine.json",
+      "C:/Users/chengliang/.config/magpie/providers.json",
+      "C:/Users/chengliang/.config/magpie/plugins.json",
+      "C:/Users/chengliang/.config/magpie/plugin-providers.json",
+      "C:/Users/chengliang/.config/magpie/plugin-auth.json",
+      "C:/Users/chengliang/.config/magpie/logins.json",
+      "C:/Users/chengliang/.config/magpie/settings.json",
+      "C:/Users/chengliang/.config/magpie/served.json"
+    ],
+    "gcode_model_api_key_field_nonempty": true,
+    "gcode_snapshot_named_mcp_business_servers_present": false,
+    "magpie_checked_schema_is_model_provider_account_auth": true,
+    "magpie_checked_schema_has_named_mcp_business_auth_definition": false,
+    "business_credentials_verified_available": false,
+    "credential_values_or_account_identifiers_copied": false,
+    "browser_credentials_or_unrelated_account_files_examined": false,
+    "routing_directory_examined": false,
+    "limit": "No verified business authorization in these scoped files is not proof that no credentials exist elsewhere. Model-provider authorization does not authorize a third-party business service."
+  },
+  "plugins": [
+    {
+      "plugin_id": "amplitude@claude-plugins-official",
+      "entry_name": "amplitude",
+      "manifest_name": "amplitude",
+      "repository": "amplitude/mcp-marketplace",
+      "commit": "c4bcb5feff54cf3332290ee0071a2def2b1f149d",
+      "plugin_source_path": "plugins/amplitude",
+      "business_operation_requiring_authorization": "读取账户产品分析数据、创建图表和仪表盘",
+      "required_business_credential_or_account": "Amplitude 账户与 API 访问权限",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/amplitude/README.md",
+        "line": 72,
+        "short_excerpt": "- **Amplitude account** – With API access",
+        "url": "https://github.com/amplitude/mcp-marketplace/blob/c4bcb5feff54cf3332290ee0071a2def2b1f149d/plugins/amplitude/README.md#L72"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.amplitude.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:10.801204+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Amplitude 账户与 API 访问权限",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "apollo@claude-plugins-official",
+      "entry_name": "apollo",
+      "manifest_name": "apollo",
+      "repository": "apolloio/apollo-mcp-plugin",
+      "commit": "bd0513c961f02105492fcff0d7d29c9cccf1ed23",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "检索和丰富账户下的联系人及销售数据",
+      "required_business_credential_or_account": "Apollo.io 账户、OAuth、相应权限及可能消耗的 credits",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 81,
+        "short_excerpt": "- **An Apollo.io account.** Sign in at <https://www.apollo.io/>.",
+        "url": "https://github.com/apolloio/apollo-mcp-plugin/blob/bd0513c961f02105492fcff0d7d29c9cccf1ed23/README.md#L81"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.apollo.io/mcp",
+          "probed_at_utc": "2026-10-30T11:13:11.218064+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Apollo.io 账户、OAuth、相应权限及可能消耗的 credits",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "appwrite@claude-plugins-official",
+      "entry_name": "appwrite",
+      "manifest_name": "appwrite",
+      "repository": "appwrite/claude-plugin",
+      "commit": "ab3c90b37c95b7068f0c064dc562cf21958e8e19",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "通过托管 MCP 管理 Appwrite 项目资源",
+      "required_business_credential_or_account": "Appwrite 托管 MCP 的浏览器 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 72,
+        "short_excerpt": "The hosted server uses browser-based OAuth, so the plugin does not require an API key, project",
+        "url": "https://github.com/appwrite/claude-plugin/blob/ab3c90b37c95b7068f0c064dc562cf21958e8e19/README.md#L72"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.appwrite.io/",
+          "probed_at_utc": "2026-10-30T11:13:11.892167+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Appwrite 托管 MCP 的浏览器 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "atlan@claude-plugins-official",
+      "entry_name": "atlan",
+      "manifest_name": "atlan",
+      "repository": "atlanhq/agent-toolkit",
+      "commit": "17b7ae3b4852a24a9271a55eb339dea0b38f1f60",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "访问 Atlan 数据目录与元数据",
+      "required_business_credential_or_account": "Atlan OAuth 授权",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 29,
+        "short_excerpt": "Connects to Atlan via OAuth at `mcp.atlan.com/mcp` - no API keys required.",
+        "url": "https://github.com/atlanhq/agent-toolkit/blob/17b7ae3b4852a24a9271a55eb339dea0b38f1f60/README.md#L29"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.atlan.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:12.237462+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Atlan OAuth 授权",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "atlassian@claude-plugins-official",
+      "entry_name": "atlassian",
+      "manifest_name": "atlassian",
+      "repository": "atlassian/atlassian-mcp-server",
+      "commit": "b74220d41142fae52b4f680c805b2ab81050991a",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取和管理账户范围内的 Jira、Confluence 等资源",
+      "required_business_credential_or_account": "Atlassian 站点账户与 OAuth；另有 API token 路径",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 115,
+        "short_excerpt": "| Claude Code | `claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp`, then run `/mcp` in a",
+        "url": "https://github.com/atlassian/atlassian-mcp-server/blob/b74220d41142fae52b4f680c805b2ab81050991a/README.md#L115"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.atlassian.com/v2/mcp",
+          "probed_at_utc": "2026-10-30T11:13:12.250684+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Atlassian 站点账户与 OAuth；另有 API token 路径",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "clickhouse@claude-plugins-official",
+      "entry_name": "clickhouse",
+      "manifest_name": "clickhouse",
+      "repository": "ClickHouse/clickhouse-claude-code-plugin",
+      "commit": "652664c8924c5a9454d9a7a5f6191944b4adfb11",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "查询并管理 ClickHouse Cloud 账户资源",
+      "required_business_credential_or_account": "ClickHouse Cloud 凭据与 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "skills/setup/SKILL.md",
+        "path_relative_to_repository": "skills/setup/SKILL.md",
+        "line": 15,
+        "short_excerpt": "2. **Authenticate via OAuth**: The MCP server uses OAuth with your ClickHouse Cloud credentials. Follow the",
+        "url": "https://github.com/ClickHouse/clickhouse-claude-code-plugin/blob/652664c8924c5a9454d9a7a5f6191944b4adfb11/skills/setup/SKILL.md#L15"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.clickhouse.cloud/mcp",
+          "probed_at_utc": "2026-10-30T11:13:13.748599+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "ClickHouse Cloud 凭据与 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "dropbox@claude-plugins-official",
+      "entry_name": "dropbox",
+      "manifest_name": "dropbox",
+      "repository": "dropbox/dropbox-ai-plugins",
+      "commit": "60cea151b269e9ab47266279d80839c471e0d8c6",
+      "plugin_source_path": "claude",
+      "business_operation_requiring_authorization": "查找、整理、分享账户内 Dropbox 内容",
+      "required_business_credential_or_account": "Dropbox OAuth 与相应 scopes",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "claude/README.md",
+        "line": 30,
+        "short_excerpt": "2. When Claude asks for Dropbox access, complete Dropbox OAuth authentication.",
+        "url": "https://github.com/dropbox/dropbox-ai-plugins/blob/60cea151b269e9ab47266279d80839c471e0d8c6/claude/README.md#L30"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.dropbox.com/claude_app_mcp",
+          "probed_at_utc": "2026-10-30T11:13:15.638935+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Dropbox OAuth 与相应 scopes",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "fullstory@claude-plugins-official",
+      "entry_name": "fullstory",
+      "manifest_name": "fullstory",
+      "repository": "fullstorydev/fullstory-skills",
+      "commit": "ca872d97f5c35dc41ee2eecfc6e392a5895ac171",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "分析 Fullstory 会话和账户数据",
+      "required_business_credential_or_account": "Fullstory 账户、MCP beta/API 权限及 API key",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 24,
+        "short_excerpt": "- **A fullstory account that is part of the [Fullstory MCP beta program](https://www.fullstory.com/blog/fullstory-mcp/)**",
+        "url": "https://github.com/fullstorydev/fullstory-skills/blob/ca872d97f5c35dc41ee2eecfc6e392a5895ac171/README.md#L24"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://api.fullstory.com/mcp/fullstory",
+          "probed_at_utc": "2026-10-30T11:13:16.912970+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Fullstory 账户、MCP beta/API 权限及 API key",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "gc-ai@claude-plugins-official",
+      "entry_name": "gc-ai",
+      "manifest_name": "gc-ai",
+      "repository": "GC-AI-Inc/gc-ai-claude-plugin",
+      "commit": "efda779972c7b7162e79234e164bc2f359a8a518",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取 GC AI 项目与账户内法律研究资料",
+      "required_business_credential_or_account": "GC AI 账户及 connector 登录",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 18,
+        "short_excerpt": "- A GC AI account.",
+        "url": "https://github.com/GC-AI-Inc/gc-ai-claude-plugin/blob/efda779972c7b7162e79234e164bc2f359a8a518/README.md#L18"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://app.gc.ai/api/mcp",
+          "probed_at_utc": "2026-10-30T11:13:17.374920+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "GC AI 账户及 connector 登录",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "grafana-cloud-mcp@claude-plugins-official",
+      "entry_name": "grafana-cloud-mcp",
+      "manifest_name": "grafana-cloud-mcp",
+      "repository": "grafana/ai-marketplace",
+      "commit": "6c28ba1961d502d82301cbd64d2322e6e960477c",
+      "plugin_source_path": "plugins/grafana-cloud-mcp",
+      "business_operation_requiring_authorization": "访问 Grafana Cloud stack 和观测数据",
+      "required_business_credential_or_account": "Grafana Cloud 账户与 OAuth 2.1",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/grafana-cloud-mcp/README.md",
+        "line": 11,
+        "short_excerpt": "1. A **Grafana Cloud** account. Self-hosted users should use the [grafana-mcp](../grafana-mcp/) plugin instead.",
+        "url": "https://github.com/grafana/ai-marketplace/blob/6c28ba1961d502d82301cbd64d2322e6e960477c/plugins/grafana-cloud-mcp/README.md#L11"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.grafana.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:18.409833+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Grafana Cloud 账户与 OAuth 2.1",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "honeycomb@claude-plugins-official",
+      "entry_name": "honeycomb",
+      "manifest_name": "honeycomb",
+      "repository": "honeycombio/agent-skill",
+      "commit": "6bb09279fc3fb69abf113228be939dbb929e34f1",
+      "plugin_source_path": "honeycomb",
+      "business_operation_requiring_authorization": "检索和分析 Honeycomb 观测数据",
+      "required_business_credential_or_account": "Honeycomb 账户；OAuth 或 API key",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "commands/honeycomb-setup.md",
+        "path_relative_to_repository": "honeycomb/commands/honeycomb-setup.md",
+        "line": 44,
+        "short_excerpt": "After adding, the user will be prompted to authenticate in their browser on first use.",
+        "url": "https://github.com/honeycombio/agent-skill/blob/6bb09279fc3fb69abf113228be939dbb929e34f1/honeycomb/commands/honeycomb-setup.md#L44"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.honeycomb.io/mcp",
+          "probed_at_utc": "2026-10-30T11:13:18.679302+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Honeycomb 账户；OAuth 或 API key",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "hostinger@claude-plugins-official",
+      "entry_name": "hostinger",
+      "manifest_name": "hostinger",
+      "repository": "hostinger/claude-plugin",
+      "commit": "569880c60681a7068b3ca8ca84e2fe7ab6cfa7ff",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "管理 Hostinger 托管资源和部署",
+      "required_business_credential_or_account": "Hostinger OAuth；或 hPanel API token",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 46,
+        "short_excerpt": "On first use, the MCP server opens your browser for OAuth sign-in. No API token",
+        "url": "https://github.com/hostinger/claude-plugin/blob/569880c60681a7068b3ca8ca84e2fe7ab6cfa7ff/README.md#L46"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.hostinger.com",
+          "probed_at_utc": "2026-10-30T11:13:18.779784+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Hostinger OAuth；或 hPanel API token",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "incident-io@claude-plugins-official",
+      "entry_name": "incident-io",
+      "manifest_name": "incident-io",
+      "repository": "incident-io/skills",
+      "commit": "00f7d1dc80892deb1656f1cf577dd073a4a2de10",
+      "plugin_source_path": "plugins/incident-io",
+      "business_operation_requiring_authorization": "查询和处理 workspace 内事故资源",
+      "required_business_credential_or_account": "incident.io workspace 的 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/incident-io/README.md",
+        "line": 9,
+        "short_excerpt": "workspace through a standard OAuth flow the first time a tool is used.",
+        "url": "https://github.com/incident-io/skills/blob/00f7d1dc80892deb1656f1cf577dd073a4a2de10/plugins/incident-io/README.md#L9"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.incident.io/mcp",
+          "probed_at_utc": "2026-10-30T11:13:19.759249+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "incident.io workspace 的 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "lovable@claude-plugins-official",
+      "entry_name": "lovable",
+      "manifest_name": "lovable",
+      "repository": "lovablelabs/mcp",
+      "commit": "0336e6db8026b0f02cb89d1451cc48ea3f469791",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "访问和操作 Lovable 账户项目",
+      "required_business_credential_or_account": "Lovable OAuth 2.1 bearer token",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 18,
+        "short_excerpt": "**OAuth 2.1.** MCP clients discover the authorization server via RFC 9728 metadata at `https://mcp.lovable.dev/.well-known/oauth-protected-resource` and obtain",
+        "url": "https://github.com/lovablelabs/mcp/blob/0336e6db8026b0f02cb89d1451cc48ea3f469791/README.md#L18"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.lovable.dev/?src=cc-plugin",
+          "probed_at_utc": "2026-10-30T11:13:20.596896+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Lovable OAuth 2.1 bearer token",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "lusha@claude-plugins-official",
+      "entry_name": "lusha",
+      "manifest_name": "lusha",
+      "repository": "lusha-oss/lusha-mcp-plugin",
+      "commit": "c3017a3d6831e444b781044337f0394e76b12d89",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "执行 Lusha 联系人及公司数据业务",
+      "required_business_credential_or_account": "Lusha API 访问账户与 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 45,
+        "short_excerpt": "- A Lusha account with API access",
+        "url": "https://github.com/lusha-oss/lusha-mcp-plugin/blob/c3017a3d6831e444b781044337f0394e76b12d89/README.md#L45"
+      },
+      "configuration_paths": [
+        "inline:mcpServers"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.lusha.com/mcp/claude",
+          "probed_at_utc": "2026-10-30T11:13:21.087559+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Lusha API 访问账户与 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "miro@claude-plugins-official",
+      "entry_name": "miro",
+      "manifest_name": "miro",
+      "repository": "miroapp/miro-ai",
+      "commit": "b6408e1bdfe0c842f209d40b52e92caf118a4d39",
+      "plugin_source_path": "claude-plugins/miro",
+      "business_operation_requiring_authorization": "读取和修改 Miro board",
+      "required_business_credential_or_account": "Miro MCP OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "claude-plugins/miro/README.md",
+        "line": 14,
+        "short_excerpt": "1. Ensure Miro MCP is configured (OAuth).",
+        "url": "https://github.com/miroapp/miro-ai/blob/b6408e1bdfe0c842f209d40b52e92caf118a4d39/claude-plugins/miro/README.md#L14"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.miro.com/",
+          "probed_at_utc": "2026-10-30T11:13:23.018767+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Miro MCP OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "monday-crm@claude-plugins-official",
+      "entry_name": "monday-crm",
+      "manifest_name": "monday-crm",
+      "repository": "mondaycom/mcp",
+      "commit": "8fdc0b4af07a4b7e1059ca3f8320d64968737b8e",
+      "plugin_source_path": "plugins/monday-crm",
+      "business_operation_requiring_authorization": "读取和创建 monday CRM 工作区与交易数据",
+      "required_business_credential_or_account": "monday 账户 OAuth；免费层也需要账户",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/monday-crm/README.md",
+        "line": 83,
+        "short_excerpt": "briefing\"). On first use, Claude prompts for OAuth to connect the bundled",
+        "url": "https://github.com/mondaycom/mcp/blob/8fdc0b4af07a4b7e1059ca3f8320d64968737b8e/plugins/monday-crm/README.md#L83"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.monday.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:23.477244+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "monday 账户 OAuth；免费层也需要账户",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "mongodb-atlas@claude-plugins-official",
+      "entry_name": "mongodb-atlas",
+      "manifest_name": "mongodb-atlas",
+      "repository": "mongodb/agent-skills",
+      "commit": "c370a63b27075008a92134686b24af3817edeb00",
+      "plugin_source_path": "plugins/mongodb-atlas",
+      "business_operation_requiring_authorization": "通过托管 Atlas MCP 访问集群",
+      "required_business_credential_or_account": "MongoDB Atlas 账户 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/mongodb-atlas/README.md",
+        "line": 3,
+        "short_excerpt": "Connects your agent to **MongoDB Atlas** clusters through MongoDB's hosted Atlas MCP server (`https://mcp.mongodb.com/`) over OAuth",
+        "url": "https://github.com/mongodb/agent-skills/blob/c370a63b27075008a92134686b24af3817edeb00/plugins/mongodb-atlas/README.md#L3"
+      },
+      "configuration_paths": [
+        "inline:mcpServers"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "mongodb-atlas",
+          "category": "oauth",
+          "field": "oauth"
+        }
+      ],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.mongodb.com/",
+          "probed_at_utc": "2026-10-30T11:13:23.491024+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "MongoDB Atlas 账户 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "newrelic@claude-plugins-official",
+      "entry_name": "newrelic",
+      "manifest_name": "newrelic",
+      "repository": "newrelic/claude-code-plugin",
+      "commit": "f8e5f8b62139072a22153ec92de1c0cc1af2f56a",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "查询账户内 New Relic 遥测与资源",
+      "required_business_credential_or_account": "New Relic 账户 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "readme.md",
+        "path_relative_to_repository": "readme.md",
+        "line": 27,
+        "short_excerpt": "The server uses OAuth; you'll be prompted to authenticate to your New Relic account on first",
+        "url": "https://github.com/newrelic/claude-code-plugin/blob/f8e5f8b62139072a22153ec92de1c0cc1af2f56a/readme.md#L27"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.newrelic.com/mcp/",
+          "probed_at_utc": "2026-10-30T11:13:24.087586+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "New Relic 账户 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "notion@claude-plugins-official",
+      "entry_name": "notion",
+      "manifest_name": "Notion",
+      "repository": "makenotion/claude-code-notion-plugin",
+      "commit": "9847f2aa1a15f25df35ed1fb7b4557dbb60cd651",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取和修改 Notion workspace 内容",
+      "required_business_credential_or_account": "Notion OAuth workspace 授权",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 83,
+        "short_excerpt": "The Notion MCP server supports **OAuth**!",
+        "url": "https://github.com/makenotion/claude-code-notion-plugin/blob/9847f2aa1a15f25df35ed1fb7b4557dbb60cd651/README.md#L83"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.notion.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:24.460652+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Notion OAuth workspace 授权",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "posthog@claude-plugins-official",
+      "entry_name": "posthog",
+      "manifest_name": "posthog",
+      "repository": "PostHog/ai-plugin",
+      "commit": "e0fbf5e742fb4242c4ea509b395b2e343642f0b7",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "查询 PostHog 项目分析数据或上传启用后的会话遥测",
+      "required_business_credential_or_account": "PostHog OAuth；LLM analytics 另需项目 API key",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 20,
+        "short_excerpt": "2. Authenticate via OAuth:",
+        "url": "https://github.com/PostHog/ai-plugin/blob/e0fbf5e742fb4242c4ea509b395b2e343642f0b7/README.md#L20"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.posthog.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:25.551431+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "PostHog OAuth；LLM analytics 另需项目 API key",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "railway@claude-plugins-official",
+      "entry_name": "railway",
+      "manifest_name": "railway",
+      "repository": "railwayapp/railway-skills",
+      "commit": "a100f93e482c5153774fed74d0b3fb8f8ca63342",
+      "plugin_source_path": "plugins/railway",
+      "business_operation_requiring_authorization": "在 Railway 部署和管理项目",
+      "required_business_credential_or_account": "Railway 登录/注册 OAuth；CLI 也要求登录",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "skills/use-railway/references/setup.md",
+        "path_relative_to_repository": "plugins/railway/skills/use-railway/references/setup.md",
+        "line": 7,
+        "short_excerpt": "A brand-new user with no Railway account is onboarded through the same unified OAuth flow as",
+        "url": "https://github.com/railwayapp/railway-skills/blob/a100f93e482c5153774fed74d0b3fb8f8ca63342/plugins/railway/skills/use-railway/references/setup.md#L7"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.railway.com",
+          "probed_at_utc": "2026-10-30T11:13:26.579542+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Railway 登录/注册 OAuth；CLI 也要求登录",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "render@claude-plugins-official",
+      "entry_name": "render",
+      "manifest_name": "render",
+      "repository": "render-oss/render-plugin-claude-code",
+      "commit": "d7ecf826c5971eb7dfdb5aed79fa838a8d67ff46",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "管理 Render 服务、部署、日志与数据库",
+      "required_business_credential_or_account": "Render OAuth；CLI 替代也需要 render login",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 88,
+        "short_excerpt": "Authentication is handled over OAuth — you don't need an API key. The first time Claude",
+        "url": "https://github.com/render-oss/render-plugin-claude-code/blob/d7ecf826c5971eb7dfdb5aed79fa838a8d67ff46/README.md#L88"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "render",
+          "category": "oauth",
+          "field": "oauth"
+        }
+      ],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.render.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:27.073524+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Render OAuth；CLI 替代也需要 render login",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "resend@claude-plugins-official",
+      "entry_name": "resend",
+      "manifest_name": "resend",
+      "repository": "resend/resend-skills",
+      "commit": "fd14937dba5a99de5dba902808f70fa575513cc5",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "调用 Resend 发送/管理邮件及账户资源",
+      "required_business_credential_or_account": "Resend 账户、业务 API key，邮件流程还可能需验证域名",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 47,
+        "short_excerpt": "- A Resend account with a verified domain",
+        "url": "https://github.com/resend/resend-skills/blob/fd14937dba5a99de5dba902808f70fa575513cc5/README.md#L47"
+      },
+      "configuration_paths": [
+        "inline:mcpServers"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.resend.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:27.290505+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Resend 账户、业务 API key，邮件流程还可能需验证域名",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "revenuecat@claude-plugins-official",
+      "entry_name": "revenuecat",
+      "manifest_name": "revenuecat",
+      "repository": "RevenueCat/rc-claude-code-plugin",
+      "commit": "ccfc038185ec457b2ac9077f3bbf1ba947a44dbb",
+      "plugin_source_path": "revenuecat",
+      "business_operation_requiring_authorization": "访问 RevenueCat 项目及购买配置",
+      "required_business_credential_or_account": "RevenueCat 账户 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "revenuecat/README.md",
+        "line": 7,
+        "short_excerpt": "The plugin requires authentication with your RevenueCat account via OAuth.",
+        "url": "https://github.com/RevenueCat/rc-claude-code-plugin/blob/ccfc038185ec457b2ac9077f3bbf1ba947a44dbb/revenuecat/README.md#L7"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.revenuecat.ai/mcp",
+          "probed_at_utc": "2026-10-30T11:13:27.017293+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "RevenueCat 账户 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "rootly@claude-plugins-official",
+      "entry_name": "rootly",
+      "manifest_name": "rootly",
+      "repository": "Rootly-AI-Labs/rootly-claude-plugin",
+      "commit": "65832aa6ff7a7b39c6bd64899a7a64646e3948ed",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "查询和管理 Rootly 事故数据",
+      "required_business_credential_or_account": "Rootly OAuth；或 ROOTLY_API_TOKEN",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 160,
+        "short_excerpt": "A browser window will open for you to log in to Rootly and grant access. No",
+        "url": "https://github.com/Rootly-AI-Labs/rootly-claude-plugin/blob/65832aa6ff7a7b39c6bd64899a7a64646e3948ed/README.md#L160"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [
+        {
+          "key": "ROOTLY_API_TOKEN",
+          "type": "string",
+          "sensitive": true,
+          "required": false,
+          "default_declared": false,
+          "definition_path": ".claude-plugin/plugin.json#userConfig.ROOTLY_API_TOKEN"
+        }
+      ],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.rootly.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:27.335341+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Rootly OAuth；或 ROOTLY_API_TOKEN",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "sanity@claude-plugins-official",
+      "entry_name": "sanity",
+      "manifest_name": "sanity",
+      "repository": "sanity-io/agent-toolkit",
+      "commit": "88d6cdfa7cb06c99edd5f376efa4dac21ae3f877",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "访问 Sanity 项目、dataset 和远程内容",
+      "required_business_credential_or_account": "Sanity 已登录 CLI 身份；托管 connector 使用 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 44,
+        "short_excerpt": "Uses your logged-in CLI user for authentication — no manual tokens or OAuth needed.",
+        "url": "https://github.com/sanity-io/agent-toolkit/blob/88d6cdfa7cb06c99edd5f376efa4dac21ae3f877/README.md#L44"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.sanity.io",
+          "probed_at_utc": "2026-10-30T11:13:27.619756+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Sanity 已登录 CLI 身份；托管 connector 使用 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "slack@claude-plugins-official",
+      "entry_name": "slack",
+      "manifest_name": "slack",
+      "repository": "slackapi/slack-mcp-plugin",
+      "commit": "ad6be88096678812c448b0279390b4d25bce0164",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取和处理 Slack workspace 业务内容",
+      "required_business_credential_or_account": "Slack workspace OAuth，且需管理员批准 MCP integration",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 117,
+        "short_excerpt": "- **Workspace admin approval.** Your Slack workspace admin must approve MCP integration before you can authenticate.",
+        "url": "https://github.com/slackapi/slack-mcp-plugin/blob/ad6be88096678812c448b0279390b4d25bce0164/README.md#L117"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "slack",
+          "category": "oauth",
+          "field": "oauth"
+        }
+      ],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.slack.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:28.288935+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Slack workspace OAuth，且需管理员批准 MCP integration",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "wingspan@claude-plugins-official",
+      "entry_name": "wingspan",
+      "manifest_name": "wingspan",
+      "repository": "wingspanHQ/mcp-claude-plugin",
+      "commit": "7f99cb3d1789a91390fa7abf1571328736b5e0a6",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取 Wingspan 账户或执行需确认的账户操作",
+      "required_business_credential_or_account": "Wingspan 账户登录和 OAuth 同意",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 42,
+        "short_excerpt": "Then connect your Wingspan account:",
+        "url": "https://github.com/wingspanHQ/mcp-claude-plugin/blob/7f99cb3d1789a91390fa7abf1571328736b5e0a6/README.md#L42"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "wingspan",
+          "category": "oauth",
+          "field": "oauth"
+        }
+      ],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://api.wingspan.app/v3/mcp",
+          "probed_at_utc": "2026-10-30T11:13:32.127950+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Wingspan 账户登录和 OAuth 同意",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "zoominfo@claude-plugins-official",
+      "entry_name": "zoominfo",
+      "manifest_name": "zoominfo",
+      "repository": "Zoominfo/zoominfo-mcp-plugin",
+      "commit": "31a1ec506078e0aaf4e14e098e39865f32777d8a",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "检索和丰富 ZoomInfo 业务数据",
+      "required_business_credential_or_account": "ZoomInfo 账户、API 产品权限与 OAuth",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 26,
+        "short_excerpt": "- A ZoomInfo account with the appropriate API access and product entitlements",
+        "url": "https://github.com/Zoominfo/zoominfo-mcp-plugin/blob/31a1ec506078e0aaf4e14e098e39865f32777d8a/README.md#L26"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [],
+      "configuration_variable_names": [],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.zoominfo.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:34.641302+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "ZoomInfo 账户、API 产品权限与 OAuth",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "datadog@claude-plugins-official",
+      "entry_name": "datadog",
+      "manifest_name": "datadog",
+      "repository": "datadog-labs/claude-code-plugin",
+      "commit": "195f570c002beab3d7bd342739034d0019aa4863",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取 Datadog 观测数据和执行账户范围内操作",
+      "required_business_credential_or_account": "Datadog OAuth；或 API key + application key",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 88,
+        "short_excerpt": "- By default, authentication is handled via OAuth in your browser. Key authentication is also [supported](#key-authentication).",
+        "url": "https://github.com/datadog-labs/claude-code-plugin/blob/195f570c002beab3d7bd342739034d0019aa4863/README.md#L88"
+      },
+      "configuration_paths": [
+        ".dd_claude-code_mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "mcp",
+          "category": "headers",
+          "field": "DD_API_KEY"
+        },
+        {
+          "server": "mcp",
+          "category": "headers",
+          "field": "DD_APPLICATION_KEY"
+        }
+      ],
+      "configuration_variable_names": [
+        "DD_API_KEY:-",
+        "DD_APPLICATION_KEY:-",
+        "DD_MCP_TOOLSETS:-"
+      ],
+      "anonymous_handshake_evidence": [],
+      "anonymous_http_401_with_challenge_observed": false,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Datadog OAuth；或 API key + application key",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "sonatype-guide@claude-plugins-official",
+      "entry_name": "sonatype-guide",
+      "manifest_name": "sonatype-guide",
+      "repository": "sonatype/sonatype-guide-claude-plugin",
+      "commit": "1dae73980f591d3196f5532ac72186513563d028",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "调用 Sonatype Guide 的账户化依赖风险分析",
+      "required_business_credential_or_account": "Sonatype Guide 账户与 API token",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 17,
+        "short_excerpt": "You need a Sonatype Guide account and API token.",
+        "url": "https://github.com/sonatype/sonatype-guide-claude-plugin/blob/1dae73980f591d3196f5532ac72186513563d028/README.md#L17"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "sonatype-guide",
+          "category": "headers",
+          "field": "Authorization"
+        }
+      ],
+      "configuration_variable_names": [
+        "SONATYPE_GUIDE_TOKEN"
+      ],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.guide.sonatype.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:28.498698+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "Sonatype Guide 账户与 API token",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "aws-agents-for-devsecops@claude-plugins-official",
+      "entry_name": "aws-agents-for-devsecops",
+      "manifest_name": "aws-agents-for-devsecops",
+      "repository": "aws/agent-toolkit-for-aws",
+      "commit": "7bde20faede49dd5764c02b54f5e306849f7e3ca",
+      "plugin_source_path": "plugins/aws-agents-for-devsecops",
+      "business_operation_requiring_authorization": "运行 AWS DevOps/Security Agent 的云端调查",
+      "required_business_credential_or_account": "AWS 账户 SigV4 凭据；DevOps 单空间也可 bearer token",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "plugins/aws-agents-for-devsecops/README.md",
+        "line": 49,
+        "short_excerpt": "[AWS SigV4 credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-authentication.html) for your AWS account. For the DevOps agent, you may alternatively [use an",
+        "url": "https://github.com/aws/agent-toolkit-for-aws/blob/7bde20faede49dd5764c02b54f5e306849f7e3ca/plugins/aws-agents-for-devsecops/README.md#L49"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "aws-devops-agent",
+          "category": "headers",
+          "field": "Authorization"
+        }
+      ],
+      "configuration_variable_names": [
+        "DEVOPS_AGENT_TOKEN"
+      ],
+      "anonymous_handshake_evidence": [],
+      "anonymous_http_401_with_challenge_observed": false,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "AWS 账户 SigV4 凭据；DevOps 单空间也可 bearer token",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "pagerduty@claude-plugins-official",
+      "entry_name": "pagerduty",
+      "manifest_name": "pagerduty",
+      "repository": "PagerDuty/claude-code-plugins",
+      "commit": "761cba75bd50fd561405c3b173ecf36084432089",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "读取 PagerDuty 服务和事故数据以完成服务化事故流程",
+      "required_business_credential_or_account": "PAGERDUTY_API_KEY；本地 Git history 本身不需此 key",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 44,
+        "short_excerpt": "The plugins bundle a PagerDuty MCP server that needs an API token. Git commit history is",
+        "url": "https://github.com/PagerDuty/claude-code-plugins/blob/761cba75bd50fd561405c3b173ecf36084432089/README.md#L44"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "pagerduty",
+          "category": "headers",
+          "field": "Authorization"
+        }
+      ],
+      "configuration_variable_names": [
+        "PAGERDUTY_API_KEY"
+      ],
+      "anonymous_handshake_evidence": [
+        {
+          "url": "https://mcp.pagerduty.com/mcp",
+          "probed_at_utc": "2026-10-30T11:13:24.502705+00:00",
+          "http_status": 401,
+          "auth_scheme": "Bearer",
+          "www_authenticate_present": true,
+          "possible_edge_challenge": false
+        }
+      ],
+      "anonymous_http_401_with_challenge_observed": true,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "PAGERDUTY_API_KEY；本地 Git history 本身不需此 key",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    },
+    {
+      "plugin_id": "pinecone@claude-plugins-official",
+      "entry_name": "pinecone",
+      "manifest_name": "pinecone",
+      "repository": "pinecone-io/pinecone-claude-code-plugin",
+      "commit": "c383d38b5cc3c5ec219f2e68026e47ffbf46524a",
+      "plugin_source_path": ".",
+      "business_operation_requiring_authorization": "查询、创建和操作 Pinecone 向量索引",
+      "required_business_credential_or_account": "PINECONE_API_KEY",
+      "source_hard_requirement_evidence": {
+        "path_relative_to_plugin": "README.md",
+        "path_relative_to_repository": "README.md",
+        "line": 49,
+        "short_excerpt": "After installing via either method, configure your Pinecone API key before running Claude Code:",
+        "url": "https://github.com/pinecone-io/pinecone-claude-code-plugin/blob/c383d38b5cc3c5ec219f2e68026e47ffbf46524a/README.md#L49"
+      },
+      "configuration_paths": [
+        ".mcp.json"
+      ],
+      "user_config_fields": [],
+      "credential_field_names": [
+        {
+          "server": "pinecone",
+          "category": "env",
+          "field": "PINECONE_API_KEY"
+        }
+      ],
+      "configuration_variable_names": [
+        "PINECONE_API_KEY"
+      ],
+      "anonymous_handshake_evidence": [],
+      "anonymous_http_401_with_challenge_observed": false,
+      "anonymous_initialize_200_observed": false,
+      "inference_only": false,
+      "counted_as_core_service_operation_credential_dependency": true,
+      "whole_plugin_unusable_without_credentials": "not_established",
+      "anonymous_replacement_for_same_account_business_operation_found": false,
+      "offline_or_other_plugin_features_may_remain_usable": true,
+      "local_verified_business_authorization_available": false,
+      "missing_or_unverified_prerequisites": [
+        "PINECONE_API_KEY",
+        "授权范围内本地配置未发现可验证的对应业务授权；浏览器及其他凭据库未检查",
+        "未登录、未执行任何服务业务工具；账户 scopes、产品权益、额度及数据访问尚未验收"
+      ],
+      "runtime_business_operation": "not_tested"
+    }
+  ],
+  "counterexamples_and_mixed_capabilities": [
+    {
+      "plugin_id": "microsoft-docs@claude-plugins-official",
+      "repository": "MicrosoftDocs/mcp",
+      "commit": "f8ffde185dfd232dbf5d187c22ce299eadc3d583",
+      "path": "README.md",
+      "line": 16,
+      "reason": "README 明确不需要 API key、登录或注册；匿名 initialize 200。",
+      "anonymous_probe": {
+        "url": "https://learn.microsoft.com/api/mcp",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:22.357043+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "sumup@claude-plugins-official",
+      "repository": "sumup/sumup-skills",
+      "commit": "6922c7052ae9d0be834f27361b785bd80e0829cc",
+      "path": "README.md",
+      "line": 16,
+      "reason": "README 明确技能可不连接账户；账户工具才需登录。匿名 connector 401不能据此阻塞整个插件。",
+      "anonymous_probe": {
+        "url": "https://mcp.sumup.com/mcp",
+        "http_status": 401,
+        "auth_scheme": "Bearer",
+        "probed_at_utc": "2026-10-30T11:13:29.116149+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "confidence@claude-plugins-official",
+      "repository": "spotify/confidence-ai-plugins",
+      "commit": "f416826fde819978ab90f1d7ae27513667aa5d0f",
+      "path": ".mcp.json",
+      "line": null,
+      "reason": "同包 docs endpoint 匿名 initialize 200；flags endpoint 401。是混合能力，不计整体认证硬阻塞。",
+      "anonymous_probe": {
+        "url": "https://mcp.confidence.dev/mcp/docs",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:15.464054+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "mapbox@claude-plugins-official",
+      "repository": "mapbox/mapbox-agent-skills",
+      "commit": "f71cd72b8d8937b06db440538bd65559eb792c49",
+      "path": ".mcp.json",
+      "line": null,
+      "reason": "同包 docs endpoint 匿名 initialize 200；其他 account endpoints 401。不能把它们合并成全包不可用。",
+      "anonymous_probe": {
+        "url": "https://mcp-docs.mapbox.com/mcp",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:21.704182+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "aws-agents@claude-plugins-official",
+      "repository": "aws/agent-toolkit-for-aws",
+      "commit": "0d6167ad2e6dfb858098c4162fe74d04c975532f",
+      "path": "plugins/aws-agents/skills/agents-build/references/local-vs-deployed.md",
+      "line": 25,
+      "reason": "源码区分本地无认证运行与云端强制认证；Knowledge endpoint 匿名 initialize 200。",
+      "anonymous_probe": {
+        "url": "https://knowledge-mcp.global.api.aws",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:12.277769+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "forge-skills@claude-plugins-official",
+      "repository": "atlassian/forge-skills",
+      "commit": "4f04ae02879435f23808a4798da28f75d3ab74c3",
+      "path": ".mcp.json",
+      "line": null,
+      "reason": "两个声明的 endpoint 均匿名 initialize 200；此证据仅表示握手接受，不代表业务 tools/call 已验证。",
+      "anonymous_probe": {
+        "url": "https://mcp.atlassian.com/v1/forge/mcp",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:16.509552+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    },
+    {
+      "plugin_id": "qt-development-skills@claude-plugins-official",
+      "repository": "TheQtCompanyRnD/agent-skills",
+      "commit": "a784c48445e34f126760f17ba0600a25f2d19968",
+      "path": ".mcp.json",
+      "line": null,
+      "reason": "Qt docs endpoint 匿名 initialize 200；没有据此认定需要第三方账户。",
+      "anonymous_probe": {
+        "url": "https://qt-docs-mcp.qt.io/mcp",
+        "http_status": 200,
+        "auth_scheme": null,
+        "probed_at_utc": "2026-10-30T11:13:26.224807+00:00"
+      },
+      "counted_as_whole_plugin_credential_blocker": false
+    }
+  ],
+  "probe_summary": {
+    "endpoints": 121,
+    "http_401": 103,
+    "http_401_with_auth_challenge": 96,
+    "http_403": 3,
+    "http_200": 12,
+    "redirect_or_not_found": 3,
+    "business_calls": 0,
+    "login_flows": 0
+  }
+}
