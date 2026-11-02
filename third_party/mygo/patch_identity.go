@@ -16,17 +16,17 @@ type SourcePatch struct {
 // These values are also recorded in the executable's Go linker settings.
 // Development builds keep sourcePatchSHA256 empty; release verification rejects
 // such builds and requires the complete fixed identity.
-var sourcePatchRevision = "rcode-native-ui.21"
+var sourcePatchRevision = "rcode-native-ui.22"
 var sourcePatchSHA256 string
 var sourcePatchIdentity string
 
 // FrameworkPatch reports the framework's upstream version and local patch.
 func FrameworkPatch() SourcePatch {
-	return SourcePatch{UpstreamVersion: "v0.7.3", Revision: sourcePatchRevision, SourceSHA256: sourcePatchSHA256}
+	return SourcePatch{UpstreamVersion: "v0.7.4", Revision: sourcePatchRevision, SourceSHA256: sourcePatchSHA256}
 }
 
 func init() {
-	if sourcePatchRevision != "rcode-native-ui.21" {
+	if sourcePatchRevision != "rcode-native-ui.22" {
 		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
 	}
 	if sourcePatchSHA256 != "" {
@@ -35,7 +35,7 @@ func init() {
 			panic(fmt.Sprintf("mygo: invalid local source fingerprint: %q", sourcePatchSHA256))
 		}
 	}
-	if sourcePatchIdentity != "" && sourcePatchIdentity != "RCODE_MYGO_PATCH[v0.7.3|"+sourcePatchRevision+"|"+sourcePatchSHA256+"]" {
+	if sourcePatchIdentity != "" && sourcePatchIdentity != "RCODE_MYGO_PATCH[v0.7.4|"+sourcePatchRevision+"|"+sourcePatchSHA256+"]" {
 		panic("mygo: inconsistent framework release identity")
 	}
 }

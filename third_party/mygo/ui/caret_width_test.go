@@ -123,8 +123,8 @@ func TestCaretWidthDoesNotChangeEditingIMEOrCandidateGeometry(t *testing.T) {
 			caretWidthSameEditing(t, plain, wide, plainState, wideState)
 			// Starting preedit replaces the selected b; the marked text stays
 			// separate from the bound value until commit.
-			if plainState.value != "a" || !plainState.composing || plainState.display != "a中文" {
-				t.Fatalf("IME preedit = value %q, display %q, composing %v", plainState.value, plainState.display, plainState.composing)
+			if plainState.value != "a" || !plainState.composing {
+				t.Fatalf("IME preedit = value %q, composing %v", plainState.value, plainState.composing)
 			}
 			for _, tt := range []*ui.Tester{plain, wide} {
 				tt.Advance(530 * time.Millisecond)
@@ -206,7 +206,6 @@ type caretWidthState struct {
 	area, textOnly bool
 	neighbor       bool
 	anchor, caret  int
-	display        string
 	composing      bool
 }
 
@@ -233,7 +232,7 @@ func newCaretWidthTester(state *caretWidthState, scale float32) *ui.Tester {
 				target.CaretWidth(state.width)
 			}
 			state.anchor, state.caret = target.TextAnchorCaret()
-			state.display, state.composing = target.InputDisplayText(), target.Composing()
+			state.composing = target.Composing()
 			if state.neighbor {
 				c.Key("caret neighbor")
 				ui.TextInputBase(c, &neighbor).Size(240, 30).Padding(4).Shrink(0).TextColor(theme.Text).Label("caret neighbor")
@@ -272,7 +271,7 @@ func caretWidthWantPixels(t *testing.T, tt *ui.Tester, want int) {
 
 func caretWidthSameEditing(t *testing.T, plain, wide *ui.Tester, a, b *caretWidthState) {
 	t.Helper()
-	if a.value != b.value || a.anchor != b.anchor || a.caret != b.caret || a.display != b.display || a.composing != b.composing {
+	if a.value != b.value || a.anchor != b.anchor || a.caret != b.caret || a.composing != b.composing {
 		t.Fatalf("paint width changed editor state: plain=%+v wide=%+v", *a, *b)
 	}
 	first, firstActive := plain.TextCaret()

@@ -6,7 +6,7 @@ projects identified below. Their original licenses and attribution are included
 offline in `licenses/`. The original texts take precedence over this index.
 
 - Zeron source material, artwork and rendering adapters: MIT, copyright 2026 Wing.
-- MyGo v0.7.3 with the reviewed `rcode-native-ui.21` patches: MIT, MyGo contributors.
+- MyGo v0.7.4 with the reviewed `rcode-native-ui.22` patches: MIT, MyGo contributors.
 - Geist and Geist Mono v1.7.2: SIL Open Font License 1.1, The Geist Project Authors.
 - **Solar Icons by 480 Design**: Creative Commons Attribution 4.0 International.
   Imported SVGs retain their source bytes; native controls may resize or tint them.

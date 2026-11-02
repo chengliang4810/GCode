@@ -158,6 +158,7 @@ type view struct {
 	// boxes and the scroll bar, a hand over links, an I-beam over text.
 	cursor     ui.Cursor
 	thumb      bool
+	inView     bool // the pointer is over the editor, which shows the scroll bar
 	thumbGrab  float32
 	focused    bool
 	blinkStart time.Time
@@ -240,6 +241,7 @@ func build(c *ui.Context, doc *Document, options []EditorOptions, styled bool) u
 	v.setLook(t, styled)
 	v.sync()
 	v.publishState()
+	v.inView = e.Hovered()
 	focused := e.Focused()
 	if focused != v.focused {
 		v.focused = focused

@@ -111,7 +111,6 @@ func TestSplitDragAppliesBeforeThePanesBuild(t *testing.T) {
 			changes++
 		}
 	}, 400, 200)
-	// The grip reaches 10 DIPs before the seam: a press there is a drag.
 	tt.Press(size-9, 100)
 	builds = 0
 	tt.Move(size-9+50, 100)

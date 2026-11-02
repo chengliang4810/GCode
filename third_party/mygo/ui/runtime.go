@@ -1187,6 +1187,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 		// disabled after building it, as a Fieldset.
 		s.flags |= flagDisabled
 	}
+	s.ignoreInput = e.ignoreInput || e.parent != nil && e.parent.st.ignoreInput
 	s.cursor, s.tip = e.cursor, e.tip
 	s.webView = e.webView
 	s.role = e.role
@@ -1217,6 +1218,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 	if e.flags&(flagScrollX|flagScrollY) != 0 {
 		s.contentW, s.contentH = e.contentW, e.contentH
 		s.barInset = e.barInset
+		s.barWidth = e.theme().scrollbarWidth()
 	}
 	s.hideScrollbars = e.hideScrollbars
 	// What is invisible keeps its box but takes neither the pointer nor
@@ -1225,18 +1227,21 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 	invisible := e.flags&(flagInvisible|flagInert) != 0 || hidden || e.hidden || e.backface && e.transform.facesAway()
 	if invisible {
 		s.vw, s.vh = 0, 0
-		if rt.focused == e.id {
-			rt.focused = 0
-		}
+	}
+	// What ignores input shows, has its text and reads to assistive
+	// technology, but takes neither the pointer nor the focus either.
+	noInput := invisible || s.ignoreInput
+	if noInput && rt.focused == e.id {
+		rt.focused = 0
 	}
 	if e.webView != nil {
 		rt.noteWebView(e, clip, invisible)
 	}
-	if e.maximizeButton && !invisible && rt.maxButton == (Rect{}) && v.W > 0 && v.H > 0 {
+	if e.maximizeButton && !noInput && rt.maxButton == (Rect{}) && v.W > 0 && v.H > 0 {
 		rt.maxButton = v
 	}
 	switch {
-	case e.flags&flagPassThrough != 0 || invisible:
+	case e.flags&flagPassThrough != 0 || noInput:
 	case inline:
 		// Inline elements take the pointer over their words.
 		for _, r := range e.frags {
@@ -1261,7 +1266,7 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 			rt.labels = append(rt.labels, labelNode{e.id, label, intersect(e.visualRect(e.frags[0]), clip)})
 		}
 	}
-	if e.flags&flagFocusable != 0 && !e.IsDisabled() && !invisible {
+	if e.flags&flagFocusable != 0 && !e.IsDisabled() && !noInput {
 		rt.focusOrder = append(rt.focusOrder, e.id)
 		rt.focusScopes = append(rt.focusScopes, rt.commitScope)
 		// Tab goes to the radio button or tab chosen; not to a toggle
@@ -1358,7 +1363,7 @@ func (rt *engine) overScrollbar(id uint64) bool {
 	x, y := s.local(rt.pointerX, rt.pointerY)
 	x += s.x
 	y += s.y
-	g := scrollBars(Rect{s.x, s.y, s.w, s.h}, s.barInset, float32(s.contentW), float32(s.contentH), float32(s.scrollX), float32(s.scrollY), s.flags, rt.c.theme.scrollbarWidth(), s.rtl)
+	g := scrollBars(Rect{s.x, s.y, s.w, s.h}, s.barInset, float32(s.contentW), float32(s.contentH), float32(s.scrollX), float32(s.scrollY), s.flags, s.barWidth, s.rtl)
 	return g.vertical && g.vTrack.Contains(x, y) || g.horizontal && g.hTrack.Contains(x, y)
 }
 

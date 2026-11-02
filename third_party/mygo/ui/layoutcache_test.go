@@ -451,11 +451,11 @@ func TestLayoutInputs(t *testing.T) {
 	other := "epoch key valueInput id depth track transform originX originY originSet world content contentSet " +
 		"pose poseAnim poseSet poseM poseFade reposed ink noCull backface bg fill grad stripes borderC borderStyle radius " +
 		"shadows material effect effecting cache grads blur opacity opacitySet cursor paintFn objectFn styleFn paintAfterFn " +
-		"inputFn hoverFn filesDropFn textClient caret takesText noIME copyData webView maximizeButton fit gray dismissed rotate label widget role " +
-		"checked expanded vertical tip highlighted accValue accRange hasRange accFill accStep barInset scrollBase " +
-		"listRow rowIndex rowsOf focusGroup groupSelects segment activeDescendant nameFrom nameJoin focusTo hideScrollbars " +
+		"inputFn hoverFn textClient caret takesText noIME copyData webView maximizeButton fit gray dismissed rotate label widget role filesDropFn " +
+		"checked expanded vertical tip highlighted accValue accRange hasRange accFill accStep barInset scrollBase hideScrollbars " +
+		"listRow rowIndex rowsOf focusGroup groupSelects segment activeDescendant nameFrom nameJoin focusTo " +
 		"setPos setSize choosesItems search description invalid followX sort level expandable " +
-		"chooseMany serial"
+		"chooseMany serial ignoreInput themed"
 	known := map[string]bool{}
 	for _, f := range strings.Fields(read + " " + other) {
 		known[f] = true

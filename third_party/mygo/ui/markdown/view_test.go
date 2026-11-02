@@ -189,6 +189,45 @@ func TestThemeOverrides(t *testing.T) {
 	}
 }
 
+// TestThemeLinkSpans checks that Theme.LinkWeight lifts link text, code
+// in a link too, which keeps the code face and wash, and leaves text
+// outside links alone.
+func TestThemeLinkSpans(t *testing.T) {
+	o := &Options{Theme: &Theme{LinkWeight: 500}}
+	th := resolve(o.Theme, DefaultTheme(ui.LightTheme()))
+	var st *viewState
+	ui.NewTester(func(c *ui.Context) {
+		st = *ui.Local(View(c, "Read [the `x.go` docs](https://example.com) and `y.go`.", o), stateKey{}, newState)
+	}, 400, 100)
+	var link, linkCode, code *ui.Span
+	for i := range st.paras {
+		for _, pc := range st.paras[i].p.pieces {
+			for k := range pc.spans {
+				switch s := &pc.spans[k]; s.Text {
+				case "the ":
+					link = s
+				case "x.go":
+					linkCode = s
+				case "y.go":
+					code = s
+				}
+			}
+		}
+	}
+	if link == nil || linkCode == nil || code == nil {
+		t.Fatalf("link or code span missing in %+v", st.paras)
+	}
+	if link.Weight != th.LinkWeight {
+		t.Errorf("link text weighs %d, want %d", link.Weight, th.LinkWeight)
+	}
+	if linkCode.Font != th.CodeFont || linkCode.Background != th.CodeBackground || linkCode.Weight != th.LinkWeight {
+		t.Errorf("code in a link shows %+v, want the code face and wash at %d", *linkCode, th.LinkWeight)
+	}
+	if code.Font != th.CodeFont || code.Background != th.CodeBackground || code.Weight == th.LinkWeight {
+		t.Errorf("code outside a link shows %+v, want the code face and wash at its own weight", *code)
+	}
+}
+
 // TestThemeLink checks that links draw in Theme.Link, not the window
 // theme's accent.
 func TestThemeLink(t *testing.T) {
@@ -211,41 +250,6 @@ func TestThemeLink(t *testing.T) {
 	}
 	if reds == 0 || accent > 0 {
 		t.Errorf("%d pixels in Theme.Link, %d in the window theme's accent", reds, accent)
-	}
-}
-
-// TestThemeLinkSpans checks that Theme.LinkWeight lifts plain link text,
-// and that a code span inside a link shows as the link — the body face at
-// the body size, without the code wash — while code outside links keeps
-// the code face and wash.
-func TestThemeLinkSpans(t *testing.T) {
-	o := &Options{Theme: &Theme{LinkWeight: 500}}
-	th := resolve(o.Theme, DefaultTheme(ui.LightTheme()))
-	var st *viewState
-	ui.NewTester(func(c *ui.Context) {
-		st = *ui.Local(View(c, "Read [`x.go`](https://example.com) and `y.go`.", o), stateKey{}, newState)
-	}, 400, 100)
-	var link, code *ui.Span
-	for i := range st.paras {
-		for _, pc := range st.paras[i].p.pieces {
-			for k := range pc.spans {
-				switch s := &pc.spans[k]; s.Text {
-				case "x.go":
-					link = s
-				case "y.go":
-					code = s
-				}
-			}
-		}
-	}
-	if link == nil || code == nil {
-		t.Fatalf("link or code span missing in %+v", st.paras)
-	}
-	if link.Font != th.Font || link.Size != th.FontSize || link.Background.A != 0 || link.Weight < th.LinkWeight {
-		t.Errorf("code in a link shows %+v, want the body face at %d without a wash", *link, th.LinkWeight)
-	}
-	if code.Font != th.CodeFont || code.Background != th.CodeBackground {
-		t.Errorf("code outside a link shows %+v, want the code face and wash", *code)
 	}
 }
 

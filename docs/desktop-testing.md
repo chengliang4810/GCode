@@ -300,16 +300,19 @@ uifixture 回归通过，Linux 无桌面服务完成交叉编译；未请求外�
 
 ## 插件来源和固定补丁
 
-2026-10-31 已整体升级到官方 MyGo v0.7.3（提交 `6f28d7bb07b31177cf218e51586f6a5e99b38016`，
-MIT 许可沿用框架原始 LICENSE）。`plugins/automation` 与原生 UI 接口由上游原生提供，
-原第 15 项 automation 反向移植补丁随之删除；第 5 项独立安装名补丁被上游
-`windows.displayName`/`windows.installDirName` 与 slug 文件命名取代，一并删除。
+2026-11-02 已整体升级到官方 MyGo v0.7.4（发布提交 `9bd34e1eb9`，MIT 许可沿用框架
+原始 LICENSE）。上游已收录本仓库提交的 13 个 PR 能力（含 `PlaceholderColor`、
+`CaretWidth`、`Scrollbars(false)`、`DottedUnderline`、`Context.Instant`、
+`markdown.Options.Anchor`、`Theme.LinkWeight`、`Notification.ShowContext`、
+`updater.AvailableVersion`、文本客户端辅助功能与包重命名重试），相应本地补丁删除。
+`plugins/automation` 与原生 UI 接口由上游原生提供；独立安装名由上游
+`windows.displayName`/`windows.installDirName` 与 slug 文件命名覆盖。
 应用命名完全跟随 `mygo.json` 的 `name`（GCode 为 ASCII，上游默认值即可覆盖）。
 
-当前框架固定为 `rcode-native-ui.21`；源码锁、补丁 SHA 和构建身份由
-`go run ./scripts/check-framework.go` 检查。当前树为 2,034 文件、29 个补丁条目，
+当前框架固定为 `rcode-native-ui.22`；源码锁、补丁 SHA 和构建身份由
+`go run ./scripts/check-framework.go` 检查。当前树为 2,053 文件、21 个补丁条目，
 SHA-256 为
-`2f3ca58c451bedec8a0791cdffc6e084f70a45ae2570ab2043886f868bc441a1`。
+`c90ff414c0fea3d4e69035714777eae43bd875320ea22746894b1507075b069e`。
 补丁清单见 [mygo-patches.md](mygo-patches.md)；下述 `.9`/`.10` 重放指纹是
 v0.6.4 时期引入第 15 项补丁时的历史记录。
 第 15 补丁反向还原后应得到原 `.9` 的 1,864 文件和

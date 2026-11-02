@@ -1,0 +1,226 @@
+diff --git a/third_party/mygo/app.go b/third_party/mygo/app.go
+index 286ec57..39319a2 100644
+--- a/third_party/mygo/app.go
++++ b/third_party/mygo/app.go
+@@ -41,6 +41,9 @@ type Application struct {
+ 	menu      *Menu
+ 	menuSet   bool
+ 	paths     map[PathName]string
++
++	webViewDataDirectory string
++
+ 	// stateStore is the WindowStateStore, or nil for the file.
+ 	stateStore WindowStateStore
+ 	finished   sync.Once
+@@ -99,13 +102,15 @@ func (a *Application) Run() error {
+ 		return errors.New("mygo: App.Run called twice")
+ 	}
+ 	a.running = true
++	webViewDataDirectory := a.webViewDataDirectory
+ 	a.mu.Unlock()
+ 	go cleanUpdateLeftovers()
+ 
+ 	b := backend()
+ 	if err := b.Init(appHandler{}, platform.AppOptions{
+-		Name:             a.Name(),
+-		ActivationPolicy: string(a.ActivationPolicy()),
++		Name:                 a.Name(),
++		ActivationPolicy:     string(a.ActivationPolicy()),
++		WebViewDataDirectory: webViewDataDirectory,
+ 	}); err != nil {
+ 		return err
+ 	}
+diff --git a/third_party/mygo/internal/platform/platform.go b/third_party/mygo/internal/platform/platform.go
+index 1670f9d..64dc9cd 100644
+--- a/third_party/mygo/internal/platform/platform.go
++++ b/third_party/mygo/internal/platform/platform.go
+@@ -138,6 +138,9 @@ type AppOptions struct {
+ 	// ActivationPolicy is "regular" (default), "accessory" or "prohibited".
+ 	// Only meaningful on macOS.
+ 	ActivationPolicy string
++	// WebViewDataDirectory overrides persistent WebView2 profile storage on Windows.
++	// Empty keeps the backend's default.
++	WebViewDataDirectory string
+ }
+ 
+ // AppHandler receives application level events from the backend.
+diff --git a/third_party/mygo/internal/windows/app.go b/third_party/mygo/internal/windows/app.go
+index f6950f7..6fcfefa 100644
+--- a/third_party/mygo/internal/windows/app.go
++++ b/third_party/mygo/internal/windows/app.go
+@@ -21,10 +21,11 @@ import (
+ // Backend is the Windows (Win32 + WebView2) implementation of
+ // platform.Backend.
+ type Backend struct {
+-	h       platform.AppHandler
+-	name    string
+-	appHwnd uintptr // hidden window receiving app level messages
+-	running bool
++	h                    platform.AppHandler
++	name                 string
++	appHwnd              uintptr // hidden window receiving app level messages
++	running              bool
++	webViewDataDirectory string
+ 
+ 	signaled atomic.Bool
+ 	// posted are the functions post runs on the main thread.
+@@ -136,6 +137,7 @@ func (b *Backend) IsMainThread() bool { return currentThreadID() == mainThreadID
+ func (b *Backend) Init(h platform.AppHandler, opts platform.AppOptions) error {
+ 	b.h = h
+ 	b.name = opts.Name
++	b.webViewDataDirectory = opts.WebViewDataDirectory
+ 	theBackend = b
+ 	procCoInitializeEx.Call(0, coinitApartmentThreaded)
+ 	if has(procSetProcessDpiAwarenessContext) {
+@@ -182,12 +184,10 @@ func (b *Backend) startEnvironment(o *platform.WindowOptions) error {
+ 		}
+ 		return nil
+ 	}
+-	dir := os.Getenv("LOCALAPPDATA")
+-	if dir == "" {
+-		dir = os.TempDir()
++	userData := b.webViewUserDataDirectory()
++	if err := os.MkdirAll(userData, 0o755); err != nil {
++		return fmt.Errorf("mygo: create WebView2 data directory: %w", err)
+ 	}
+-	userData := filepath.Join(dir, sanitize(b.name), "WebView2")
+-	_ = os.MkdirAll(userData, 0o755)
+ 	language := ""
+ 	if len(b.languages) > 0 {
+ 		language = b.languages[0]
+@@ -217,6 +217,17 @@ func (b *Backend) startEnvironment(o *platform.WindowOptions) error {
+ 	return err
+ }
+ 
++func (b *Backend) webViewUserDataDirectory() string {
++	if b.webViewDataDirectory != "" {
++		return b.webViewDataDirectory
++	}
++	dir := os.Getenv("LOCALAPPDATA")
++	if dir == "" {
++		dir = os.TempDir()
++	}
++	return filepath.Join(dir, sanitize(b.name), "WebView2")
++}
++
+ // whenEnvironment runs fn once the WebView2 environment, which
+ // startEnvironment started, exists (or failed).
+ func (b *Backend) whenEnvironment(fn func()) {
+diff --git a/third_party/mygo/internal/windows/webview_data_test.go b/third_party/mygo/internal/windows/webview_data_test.go
+new file mode 100644
+index 0000000..b5a708e
+--- /dev/null
++++ b/third_party/mygo/internal/windows/webview_data_test.go
+@@ -0,0 +1,28 @@
++//go:build windows && (amd64 || arm64)
++
++package windows
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++)
++
++func TestWebViewUserDataDirectory(t *testing.T) {
++	local := t.TempDir()
++	t.Setenv("LOCALAPPDATA", local)
++	backend := &Backend{name: "GCode"}
++	if got := backend.webViewUserDataDirectory(); got != filepath.Join(local, "GCode", "WebView2") {
++		t.Fatalf("default profile = %q", got)
++	}
++	custom := filepath.Join(t.TempDir(), "运行目录", "browser")
++	backend.webViewDataDirectory = custom
++	if got := backend.webViewUserDataDirectory(); got != custom {
++		t.Fatalf("configured profile = %q, want %q", got, custom)
++	}
++	backend.webViewDataDirectory = ""
++	t.Setenv("LOCALAPPDATA", "")
++	if got := backend.webViewUserDataDirectory(); got != filepath.Join(os.TempDir(), "GCode", "WebView2") {
++		t.Fatalf("fallback profile = %q", got)
++	}
++}
+diff --git a/third_party/mygo/webview_data.go b/third_party/mygo/webview_data.go
+new file mode 100644
+index 0000000..a5ad948
+--- /dev/null
++++ b/third_party/mygo/webview_data.go
+@@ -0,0 +1,33 @@
++package mygo
++
++import (
++	"errors"
++	"fmt"
++	"path/filepath"
++	"runtime"
++
++	"github.com/egoist/mygo/internal/platform"
++)
++
++// SetWebViewDataDirectory selects the persistent browser profile on Windows.
++// Call it before Run; an empty path keeps the platform's default. A non-empty
++// path must be absolute. Other platforms currently return an error matching
++// errors.ErrUnsupported.
++func (a *Application) SetWebViewDataDirectory(path string) error {
++	if path != "" {
++		if !filepath.IsAbs(path) {
++			return errors.New("mygo: webview data directory must be absolute")
++		}
++		if runtime.GOOS != "windows" {
++			return fmt.Errorf("mygo: custom webview data directory: %w", platform.ErrUnsupported)
++		}
++		path = filepath.Clean(path)
++	}
++	a.mu.Lock()
++	defer a.mu.Unlock()
++	if a.running {
++		return errors.New("mygo: webview data directory must be set before App.Run")
++	}
++	a.webViewDataDirectory = path
++	return nil
++}
+diff --git a/third_party/mygo/webview_data_test.go b/third_party/mygo/webview_data_test.go
+new file mode 100644
+index 0000000..4b2aeb7
+--- /dev/null
++++ b/third_party/mygo/webview_data_test.go
+@@ -0,0 +1,39 @@
++package mygo
++
++import (
++	"errors"
++	"path/filepath"
++	"runtime"
++	"testing"
++)
++
++func TestWebViewDataDirectoryConfiguration(t *testing.T) {
++	app := &Application{}
++	if err := app.SetWebViewDataDirectory("relative"); err == nil {
++		t.Fatal("relative browser profile accepted")
++	}
++	path := filepath.Join(t.TempDir(), "browser")
++	err := app.SetWebViewDataDirectory(path)
++	if runtime.GOOS != "windows" {
++		if !errors.Is(err, errors.ErrUnsupported) {
++			t.Fatalf("unsupported platform error = %v", err)
++		}
++	} else {
++		if err != nil {
++			t.Fatal(err)
++		}
++		if app.webViewDataDirectory != path {
++			t.Fatalf("profile = %q, want %q", app.webViewDataDirectory, path)
++		}
++	}
++	if err := app.SetWebViewDataDirectory(""); err != nil {
++		t.Fatal(err)
++	}
++	if app.webViewDataDirectory != "" {
++		t.Fatal("clearing the custom browser profile retained the old directory")
++	}
++	app.running = true
++	if err := app.SetWebViewDataDirectory(""); err == nil {
++		t.Fatal("running app allowed its browser profile to change")
++	}
++}
