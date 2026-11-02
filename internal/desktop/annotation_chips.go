@@ -13,19 +13,29 @@ func (a *App) attachAnnotation(annotation contracts.Annotation) {
 	a.focusComposer = true
 }
 func (a *App) annotationChips(c *ui.Context) {
+	hovered := uint32(0)
 	for i, annotation := range a.annotations {
 		index, item := i, annotation
-		ui.Row(c).Padding(4, 7).Gap(5).Radius(7).Border(1, a.palette.Border).Tooltip(item.Title + " · " + item.Element).OnHover(func(hovered bool) {
-			if hovered {
-				a.workspace.FocusAnnotation(item.Index)
-			} else {
-				a.workspace.FocusAnnotation(0)
-			}
-		}).Children(func() {
+		chip := ui.Row(c).Padding(4, 7).Gap(5).Radius(7).Border(1, a.palette.Border).Tooltip(item.Title + " · " + item.Element)
+		if chip.Hovered() {
+			hovered = item.Index
+		}
+		chip.Children(func() {
 			icon(c, "cursor-square", 13)
 			ui.Text(c, a.annotationLabel(item.Index)).FontSize(design.TextSize(c, design.TextSmall))
 			iconButton(c, "close", tr(c, "Remove ")+a.annotationLabel(item.Index)).Size(16, 16).OnClick(func() { a.removeAnnotation(index) })
 		})
+	}
+	// The framework polls for the pointer, so the chip under it is read each
+	// frame: the workspace follows the annotation it names, and drops the
+	// focus when no chip is under the pointer.
+	if hovered != a.hoveredAnnotation {
+		if hovered != 0 {
+			a.workspace.FocusAnnotation(hovered)
+		} else {
+			a.workspace.FocusAnnotation(0)
+		}
+		a.hoveredAnnotation = hovered
 	}
 }
 

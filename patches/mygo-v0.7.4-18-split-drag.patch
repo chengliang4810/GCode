@@ -17,10 +17,10 @@ index 04d5f1d..679d1eb 100644
  ```go
  ui.Split(c, &app.sidebarWidth, func() { app.files(c) }, func() { app.editor(c) }).Fill()
 diff --git a/third_party/mygo/ui/input.go b/third_party/mygo/ui/input.go
-index 00173ff..278137a 100644
+index 423ed0c..7b334fb 100644
 --- a/third_party/mygo/ui/input.go
 +++ b/third_party/mygo/ui/input.go
-@@ -1411,6 +1411,21 @@ func (e *node) Dragged() (dx, dy float32, ok bool) {
+@@ -1396,6 +1396,21 @@ func (e *node) Dragged() (dx, dy float32, ok bool) {
  	return s.dragX, s.dragY, true
  }
  

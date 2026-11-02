@@ -239,7 +239,11 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 	})
 	a.promptPanel(c, composer, p, prompt)
 	if p.onFilesDrop != nil {
-		composer.OnFilesDrop(p.onFilesDrop)
+		// The framework polls for dropped files, and a drop asks for a
+		// frame, so the paths arrive in the build after it.
+		if paths := composer.DroppedFiles(); len(paths) > 0 {
+			p.onFilesDrop(paths)
+		}
 	}
 	if composer.FileDragOver() {
 		composer.Border(1, a.palette.Accent)

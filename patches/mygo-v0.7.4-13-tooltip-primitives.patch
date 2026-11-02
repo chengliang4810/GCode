@@ -309,7 +309,7 @@ index 0000000..0abde8e
 +	snapWantRect(t, tt, "point tooltip", ui.Rect{X: 151, Y: 151, W: 80, H: 30})
 +}
 diff --git a/third_party/mygo/ui/context.go b/third_party/mygo/ui/context.go
-index e4bf8ff..6d2df23 100644
+index 26da648..376641b 100644
 --- a/third_party/mygo/ui/context.go
 +++ b/third_party/mygo/ui/context.go
 @@ -34,8 +34,10 @@ type context struct {
@@ -346,7 +346,7 @@ index e4bf8ff..6d2df23 100644
  	// the last frame, going at releaseVX and releaseVY in the element's
  	// axes, releaseWX and releaseWY in the window's.
 diff --git a/third_party/mygo/ui/element.go b/third_party/mygo/ui/element.go
-index ccd60a0..7946f16 100644
+index 55e6245..d885ace 100644
 --- a/third_party/mygo/ui/element.go
 +++ b/third_party/mygo/ui/element.go
 @@ -236,6 +236,9 @@ type layoutStyle struct {
@@ -359,7 +359,7 @@ index ccd60a0..7946f16 100644
  	grid                   bool
  	justifyItems           Align // of a grid
  	cell                   gridCell
-@@ -988,6 +991,7 @@ func (a attachment) anchors() (at, self Anchor) { return Anchor((a - 1) / 15), A
+@@ -986,6 +989,7 @@ func (a attachment) anchors() (at, self Anchor) { return Anchor((a - 1) / 15), A
  // Right, Bottom and Left then move it from there; the element keeps its
  // own size.
  func (e *node) Attach(at, self Anchor) *node {
@@ -367,7 +367,7 @@ index ccd60a0..7946f16 100644
  	e.flags |= flagAbsolute
  	e.attach = attachment(1 + min(at, AnchorBottomEnd)*15 + min(self, AnchorBottomEnd))
  	return e
-@@ -1011,6 +1015,7 @@ func (e *node) AttachTo(target *node, at, self Anchor) *node {
+@@ -1009,6 +1013,7 @@ func (e *node) AttachTo(target *node, at, self Anchor) *node {
  	if target == nil {
  		return e
  	}
@@ -405,13 +405,13 @@ index 999033a..b3a766b 100644
  	var old Element
  	first := true
 diff --git a/third_party/mygo/ui/input.go b/third_party/mygo/ui/input.go
-index 76e1b6b..00173ff 100644
+index d4d13f9..423ed0c 100644
 --- a/third_party/mygo/ui/input.go
 +++ b/third_party/mygo/ui/input.go
-@@ -12,6 +12,15 @@ import (
+@@ -11,6 +11,15 @@ import (
+ // event handles a surface event on the main thread. It reports whether
  // an element takes files dragged over or dropped at the event's position.
  func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
- 	defer rt.publishHoverChanges()
 +	if observe := rt.observeInput; observe != nil {
 +		observe(ev)
 +	}
@@ -424,7 +424,7 @@ index 76e1b6b..00173ff 100644
  	if ev.Kind == platform.SurfaceCommandEnabled {
  		// A menu asking about its item changes nothing.
  		return rt.commandEnabled(ev.Text)
-@@ -57,7 +66,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
+@@ -56,7 +65,7 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
  		rt.pointerMove(x, y)
  	case platform.PointerDown:
  		rt.pointerMove(x, y)
@@ -433,7 +433,7 @@ index 76e1b6b..00173ff 100644
  	case platform.PointerUp:
  		rt.pointerMove(x, y)
  		rt.pointerUp(ev.Button, ev.Clicks)
-@@ -318,9 +327,10 @@ func (rt *engine) pointerMove(x, y float32) {
+@@ -303,9 +312,10 @@ func (rt *engine) pointerMove(x, y float32) {
  
  const interactive = flagClickable | flagFocusable | flagEditable | flagSelectable | flagDragWindow | flagDraggable | flagTrackPointer
  
@@ -445,7 +445,7 @@ index 76e1b6b..00173ff 100644
  	chain := rt.hitChain(x, y)
  	rt.setHover(chain)
  	rt.pressDragger = 0
-@@ -365,6 +375,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
+@@ -350,6 +360,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
  	if h != nil && rt.deliver(h, InputEvent{Kind: InputPointerDown, Button: button, Mods: mods, Clicks: clicks}) {
  		// It takes the moves and the release.
  		rt.pressed, rt.pressButton, rt.pressClicks = h, button, clicks
@@ -455,7 +455,7 @@ index 76e1b6b..00173ff 100644
  		h.pressed = true
  		h.pressPending = true
  		h.pressX, h.pressY = h.local(x, y)
-@@ -393,6 +406,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
+@@ -378,6 +391,9 @@ func (rt *engine) pointerDown(x, y float32, button int, mods Modifiers, clicks i
  		return
  	}
  	rt.pressed, rt.pressButton, rt.pressClicks = target, button, clicks
@@ -1258,10 +1258,10 @@ index 915f178..6be5f78 100644
  		e.gridFit != nil || e.leaving != 0 || e.kind == kindText && e.first != nil
  	if tree {
 diff --git a/third_party/mygo/ui/runtime.go b/third_party/mygo/ui/runtime.go
-index dfd6c73..b1c3b47 100644
+index c1e3147..90e389e 100644
 --- a/third_party/mygo/ui/runtime.go
 +++ b/third_party/mygo/ui/runtime.go
-@@ -254,6 +254,14 @@ type engine struct {
+@@ -253,6 +253,14 @@ type engine struct {
  	pointerX, pointerY float32
  	pointerIn          bool
  	hover              []uint64
@@ -1276,14 +1276,14 @@ index dfd6c73..b1c3b47 100644
  	// chain is a buffer for the elements under the pointer.
  	chain       []uint64
  	pressed     *state
-@@ -971,6 +979,7 @@ func (rt *engine) prune() {
+@@ -970,6 +978,7 @@ func (rt *engine) prune() {
  	}
  	for id, s := range rt.states {
  		if s.seen != rt.frame || s.pass != rt.pass {
 +			s.primaryDownEpoch = 0
- 			rt.changeHover(s, false)
  			if rt.pressed == s {
  				rt.pressed = nil
+ 			}
 diff --git a/third_party/mygo/ui/tooltip.go b/third_party/mygo/ui/tooltip.go
 index e030b35..c9d9204 100644
 --- a/third_party/mygo/ui/tooltip.go

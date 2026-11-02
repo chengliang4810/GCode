@@ -1,61 +1,58 @@
 # MyGo v0.7.4 固定补丁
 
 2026-11-02：框架自 v0.7.3 升级到官方 **v0.7.4**（提交 `9bd34e1eb9…`,
-2026-11-01 发布），本地修订号 `rcode-native-ui.22`。上游 v0.7.4 已收录本仓库此前
-提交的 13 个 PR（#949、#953、#960、#962、#963、#969、#971、#972、#967、#952、#943、
-#944、#945、#947、#949、#975），因此对应的本地补丁**删除**：
+2026-11-01 发布），本地修订号 `rcode-native-ui.23`。上游 v0.7.4 已收录本仓库此前
+提交的 13 个 PR 能力（#949、#953、#960、#962、#963、#969、#971、#972、#967、#952、
+#943、#944、#945、#947、#975 等），对应的本地补丁**删除**：
 
 - `PlaceholderColor`、`CaretWidth`、`Scrollbars(false)`、`DottedUnderline`、
   `Context.Instant`、`markdown.Options.Anchor`、`markdown.Theme.LinkWeight`、
   `Notification.ShowContext`、`updater.AvailableVersion`、
   `ui.Scrollbar`/编辑器滚动条样式、Windows WebView2 首选配色、
   `mygo build` 的包重命名重试，均已由上游原生实现提供。
-- 上游未收录、本仓库仍需要的补丁继续保留并重放到 v0.7.4 原版上：
-  窗口级动效覆盖、原生 hover 回调、原生文件拖放回调、Markdown 精确行高、
-  `SnapToWindow`、输入显示快照、Windows UIA 服务端 provider、富文本 composer 钩子、
-  正文链接拖拽手势、折叠动效、WebView2 数据目录、Windows ClearType quarter 定位、
-  链接 hover 点状下划线、点定位 tooltip 与输入事实、UIA benchmark 收尾、
-  选区 span 快照、代码块制表位。
 
-上游 v0.7.4 引入的新能力（本次未使用，留作后续）：`ui.Themed`、`DecimalInput`、
-径向渐变、`Element.IgnoreInput`、`Calendar.Browse`、Windows 窗口首帧才显示、
-`WebViewOptions.ScrollToContainer`、Edit 菜单按焦点启用、`mygo build -skip-installer`、
-Arch Linux `PKGBUILD`、`linux.command` 多命令名、macOS 空闲窗口省电。
+上游未收录、本仓库仍需要的补丁继续保留并重放到 v0.7.4 原版上：窗口级动效覆盖、
+Markdown 精确行高、`SnapToWindow`、输入显示快照、Windows UIA 服务端 provider、
+富文本 composer 钩子、正文链接拖拽手势、折叠动效、WebView2 数据目录、
+Windows ClearType quarter 定位、链接 hover 点状下划线、点定位 tooltip 与输入事实、
+UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同帧生效。
 
-升级在 v0.7.4 原版上按序重放全部 21 个补丁：框架 `go build ./...`、应用
+上游明确建议以轮询替代回调的两项也已按其意见改写：应用改用上游的 `Hovered()` 与
+`DroppedFiles()` 查询（第 13、14 节），本地 `OnHover`、`OnFilesDrop` 两个补丁随之删除，
+补丁链再减两项。
+
+升级在 v0.7.4 原版上按序重放全部 19 个补丁：框架 `go build ./...`、应用
 `go build ./...`、`go tool mygo vet .`、设置组件回归通过。原生窗口与视觉验收
 仍未运行，待后续单独验收。状态：上游为 `github.com/egoist/mygo v0.7.4`。
 `go.mod` 只允许该模块替换到 `./third_party/mygo`。
 完整框架源码约 17 MB，保留上游 LICENSE、go.mod、go.sum、API 生成器、构建工具、
 平台资源和测试；没有修改全局 Go 模块缓存。
 
-按顺序应用的补丁（21 个条目）：
+按顺序应用的补丁（19 个条目）：
 
 1. [`mygo-v0.7.4-01-motion.patch`](../patches/mygo-v0.7.4-01-motion.patch)：窗口级动效与滚轮缓动偏好。
-2. [`mygo-v0.7.4-02-hover.patch`](../patches/mygo-v0.7.4-02-hover.patch)：原生 hover 回调；字段清单并集含 `hoverFn`，`event` 入口发布 hover 变化。
-3. [`mygo-v0.7.4-03-files-drop.patch`](../patches/mygo-v0.7.4-03-files-drop.patch)：原生文件拖放事件回调；字段清单并集含 `filesDropFn`。
-4. [`mygo-v0.7.4-04-markdown-line-height.patch`](../patches/mygo-v0.7.4-04-markdown-line-height.patch)：Markdown 可选 DIP 精确行高（与上游倍数行高并存）。
-5. [`mygo-v0.7.4-05-snap-to-window.patch`](../patches/mygo-v0.7.4-05-snap-to-window.patch)：可选按本轮实际 margin box 贴窗，不自动翻转。
-6. [`mygo-v0.7.4-06-input-display-text.patch`](../patches/mygo-v0.7.4-06-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
-7. [`mygo-v0.7.4-07-windows-uia-provider.patch`](../patches/mygo-v0.7.4-07-windows-uia-provider.patch)：Windows UIA 服务端 provider（`ServerSideProvider|UseComThreading` = `0x22`）与 COM 契约测试。
-8. [`mygo-v0.7.4-08-richtext-composer.patch`](../patches/mygo-v0.7.4-08-richtext-composer.patch)：原生富文本键盘/粘贴回调、IME 与内容测量快照、固定行高；与上游段落缩进/两端对齐并集，保留 `UseJustify`。
-9. [`mygo-v0.7.4-09-richtext-usejustify.patch`](../patches/mygo-v0.7.4-09-richtext-usejustify.patch)：保留上游 `text.Shared().UseJustify()` 调用。
-10. [`mygo-v0.7.4-10-inline-link-selection.patch`](../patches/mygo-v0.7.4-10-inline-link-selection.patch)：正文 `RoleLink` 越过拖拽阈值后手势交回段落；不触发打开。
-11. [`mygo-v0.7.4-11-collapsible-animation.patch`](../patches/mygo-v0.7.4-11-collapsible-animation.patch)：`ui.CollapsibleBaseWithAnimation`，默认仍 200ms，可设 140ms 独立曲线。
-12. [`mygo-v0.7.4-12-webview-data-directory.patch`](../patches/mygo-v0.7.4-12-webview-data-directory.patch)：`Application.SetWebViewDataDirectory`（Windows WebView2 目录）。
-13. [`mygo-v0.7.4-13-windows-glyph-placement.patch`](../patches/mygo-v0.7.4-13-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与 ClearType quarter 定位。
-14. [`mygo-v0.7.4-14-rendering-parity.patch`](../patches/mygo-v0.7.4-14-rendering-parity.patch)：链接 hover 改为点状下划线；quarter 定位的绘制路径同步 `dotted` 装饰。
-15. [`mygo-v0.7.4-15-tooltip-primitives.patch`](../patches/mygo-v0.7.4-15-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属；`api_gen`/`layout.go` 手工移植。
-16. [`mygo-v0.7.4-16-uia-benchmark-close.patch`](../patches/mygo-v0.7.4-16-uia-benchmark-close.patch)：补齐 UIA benchmark 合并后的函数收尾。
-17. [`mygo-v0.7.4-17-selection-spans.patch`](../patches/mygo-v0.7.4-17-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制。
-18. [`mygo-v0.7.4-18-code-block-tabs.patch`](../patches/mygo-v0.7.4-18-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。
-19. [`mygo-v0.7.4-19-api-gen.patch`](../patches/mygo-v0.7.4-19-api-gen.patch)：`go generate ./ui` 重新生成公开 API 包装，纳入本链新增的 `Element`/`Context` 方法。
-20. [`mygo-v0.7.4-20-split-drag.patch`](../patches/mygo-v0.7.4-20-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告。
-21. [`mygo-v0.7.4-21-patch-identity.patch`](../patches/mygo-v0.7.4-21-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.22` 身份。
+2. [`mygo-v0.7.4-02-markdown-line-height.patch`](../patches/mygo-v0.7.4-02-markdown-line-height.patch)：Markdown 可选 DIP 精确行高（与上游倍数行高并存）。
+3. [`mygo-v0.7.4-03-snap-to-window.patch`](../patches/mygo-v0.7.4-03-snap-to-window.patch)：可选按本轮实际 margin box 贴窗，不自动翻转。
+4. [`mygo-v0.7.4-04-input-display-text.patch`](../patches/mygo-v0.7.4-04-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
+5. [`mygo-v0.7.4-05-windows-uia-provider.patch`](../patches/mygo-v0.7.4-05-windows-uia-provider.patch)：Windows UIA 服务端 provider（`ServerSideProvider|UseComThreading` = `0x22`）与 COM 契约测试。
+6. [`mygo-v0.7.4-06-richtext-composer.patch`](../patches/mygo-v0.7.4-06-richtext-composer.patch)：原生富文本键盘/粘贴回调、IME 与内容测量快照、固定行高；与上游段落缩进/两端对齐并集。
+7. [`mygo-v0.7.4-07-richtext-usejustify.patch`](../patches/mygo-v0.7.4-07-richtext-usejustify.patch)：保留上游 `text.Shared().UseJustify()` 调用。
+8. [`mygo-v0.7.4-08-inline-link-selection.patch`](../patches/mygo-v0.7.4-08-inline-link-selection.patch)：正文 `RoleLink` 越过拖拽阈值后手势交回段落；不触发打开。
+9. [`mygo-v0.7.4-09-collapsible-animation.patch`](../patches/mygo-v0.7.4-09-collapsible-animation.patch)：`ui.CollapsibleBaseWithAnimation`，默认仍 200ms，可设 140ms 独立曲线。
+10. [`mygo-v0.7.4-10-webview-data-directory.patch`](../patches/mygo-v0.7.4-10-webview-data-directory.patch)：`Application.SetWebViewDataDirectory`（Windows WebView2 目录）。
+11. [`mygo-v0.7.4-11-windows-glyph-placement.patch`](../patches/mygo-v0.7.4-11-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与 ClearType quarter 定位。
+12. [`mygo-v0.7.4-12-rendering-parity.patch`](../patches/mygo-v0.7.4-12-rendering-parity.patch)：链接 hover 改为点状下划线；quarter 定位的绘制路径同步 `dotted` 装饰。
+13. [`mygo-v0.7.4-13-tooltip-primitives.patch`](../patches/mygo-v0.7.4-13-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属。
+14. [`mygo-v0.7.4-14-uia-benchmark-close.patch`](../patches/mygo-v0.7.4-14-uia-benchmark-close.patch)：补齐 UIA benchmark 合并后的函数收尾。
+15. [`mygo-v0.7.4-15-selection-spans.patch`](../patches/mygo-v0.7.4-15-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制。
+16. [`mygo-v0.7.4-16-code-block-tabs.patch`](../patches/mygo-v0.7.4-16-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。
+17. [`mygo-v0.7.4-17-api-gen.patch`](../patches/mygo-v0.7.4-17-api-gen.patch)：`go generate ./ui` 重新生成公开 API 包装，纳入本链新增的 `Element`/`Context` 方法。
+18. [`mygo-v0.7.4-18-split-drag.patch`](../patches/mygo-v0.7.4-18-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告；含 `TestSplitDragAppliesBeforeThePanesBuild` 回归测试。
+19. [`mygo-v0.7.4-19-patch-identity.patch`](../patches/mygo-v0.7.4-19-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.23` 身份。
 
 源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.22` 的
-2,053 个文件的 SHA-256 树指纹为
-`c90ff414c0fea3d4e69035714777eae43bd875320ea22746894b1507075b069e`。
+2,050 个文件的 SHA-256 树指纹为
+`c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。
 补丁按上述顺序在 v0.7.4 原版上重放得到与锁定树逐字节一致的结果；
 各补丁的 SHA-256 以源码锁与 `scripts/frameworkpin/pin.go` 的 `patchChain` 为准。
 树指纹按 UTF-8 相对路径的字节序排序，再对每个 `路径 + NUL + 文件 SHA-256 十六进制 + LF`
@@ -74,6 +71,8 @@ Arch Linux `PKGBUILD`、`linux.command` 多命令名、macOS 空闲窗口省电�
 
 | 原补丁 | 上游来源 | 说明 |
 | --- | --- | --- |
+| `02-hover` | #964（关闭） | 上游建议用 `Hovered()` 轮询，应用已改写，第 2 项删除。 |
+| `03-files-drop` | #956（关闭） | 上游建议用 `DroppedFiles()` 轮询，应用已改写，第 3 项删除。 |
 | `06-placeholder-color` | #969 | `PlaceholderColor` 已由上游提供。 |
 | `08-caret-width` | #972 | `CaretWidth` 已由上游提供。 |
 | `10-scrollbars` | #972 | `Scrollbars(false)` 已由上游提供。 |
@@ -161,25 +160,27 @@ c.SetMotionPreferences(nil)
 - `ui/api_gen.go`：通过 `go generate ./ui` 生成的公开方法包装。
 - `ui/motion_preferences_test.go`：覆盖/系统恢复、即时滚动、开关切换、减少动态优先级、公开生成 API。
 
-## 原生 Hover API
+## 悬停与拖放：改用上游轮询
+
+上游不接受 `OnHover`、`OnFilesDrop` 回调（#964、#956）：`Hovered()` 只在悬停状态改变时
+请求一帧，`DroppedFiles()` 在 drop 时请求一帧，轮询并不比回调更费。应用因此改用
+上游查询，本地两个补丁删除：
 
 ```go
-ui.Row(c).Key(annotation.ID).OnHover(func(over bool) {
-    if over {
-        workspace.FocusAnnotation(annotation.Index)
-    } else {
-        workspace.FocusAnnotation(0)
-    }
-})
+// 悬停：模型列表的行与标注 chip 各自读取自己的状态。
+if button.Hovered() {
+    a.modelCursor = i
+}
+
+// 拖放：composer 每帧读取自上次以来落入的路径。
+if paths := composer.DroppedFiles(); len(paths) > 0 {
+    p.onFilesDrop(paths)
+}
 ```
 
-`Element.OnHover(func(bool)) Element` 的回调在主线程处理输入之后或帧提交之后执行，
-不会在 View 构建时启动脚本任务。它沿 `setHover` 使用已提交元素的稳定 identity，
-遵循 `Hovered` 的按压行为；重建不重复进入通知。禁用、隐藏、移除或布局改变使元素离开时
-发送一次 false。已回收的 state 不会收到旧的进入通知，离开通知使用对应旧回调完成清理。
-回调不能保留跨帧 `Element` 或 `Context`。
-
-`ui/hover_test.go` 覆盖进入/离开、重复帧、消失、state 重用、禁用和最新提交回调。
+标注 chip 与 transcript 行需要“离开”通知，因此应用自己保存上一帧的悬停项：
+标注 chip 用 `App.hoveredAnnotation`，transcript 行用既有的 `transcriptHover` 映射；
+指向的行消失时，下一次构建里重建该行会把它清掉。
 
 ## 文件拖放与 Markdown 行高 API
 
@@ -189,12 +190,6 @@ ui.Box(c).OnFilesDrop(func(paths []string) {
     importer.Import(paths)
 })
 ```
-
-`Element.OnFilesDrop(func([]string)) Element` 沿用原有文件拖放命中路径，在主线程原生 drop
-事件中调用最新已提交的处理函数，并复制路径切片。禁用、隐藏和已移除元素不接收事件。
-回调消费该次事件，因此同一元素的 `DroppedFiles()` 不会重复返回这些路径。
-未注册回调的原有 `DroppedFiles()` 查询保持原样，内部 `ui.Drop[FileDrag]` 也未改动。
-`ui/files_drop_callback_test.go` 覆盖身份更新、路径所有权、禁用/移除及重复帧。
 
 Markdown 新增可选字段：`markdown.Theme.FixedLineHeight`、`CodeFixedLineHeight` 和
 `markdown.HeadingStyle.FixedLineHeight`，单位为逻辑像素；0 保留上游的倍数行高。
@@ -250,7 +245,7 @@ go run ./scripts/check-framework.go
 go test ./scripts/frameworkpin
 ```
 
-`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、二十个补丁哈希和完整源码树哈希。
+`scripts/frameworkpin` 固定上游版本、模块校验和、本地修订、十九个补丁哈希和完整源码树哈希。
 它核对 Go 实际选中的模块，拒绝其他 replace 目录、版本、未替换上游、符号链接及源码增删改。
 有意修改框架必须更新补丁、修订、锁文件和校验器中的固定值，作为新的可审查变更。
 

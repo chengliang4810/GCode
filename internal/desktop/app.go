@@ -55,6 +55,7 @@ type App struct {
 	commands            commandPaletteState
 	newProject          newProjectState
 	annotations         []contracts.Annotation
+	hoveredAnnotation   uint32
 	focusComposer       bool
 	visibleSidebarWidth float32
 	sidebarContentWidth float32

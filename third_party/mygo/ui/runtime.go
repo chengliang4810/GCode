@@ -113,7 +113,6 @@ type engine struct {
 	focusFields     map[any]*focusField
 	refs            []*refState
 	actions         []action
-	hoverChanges    []hoverChange
 	textInputClosed bool
 	view            func(*context)
 	host            host
@@ -980,7 +979,6 @@ func (rt *engine) prune() {
 	for id, s := range rt.states {
 		if s.seen != rt.frame || s.pass != rt.pass {
 			s.primaryDownEpoch = 0
-			rt.changeHover(s, false)
 			if rt.pressed == s {
 				rt.pressed = nil
 			}
@@ -1114,7 +1112,6 @@ func (rt *engine) close() {
 // during it.
 func (rt *engine) endFrame() {
 	rt.inFrame = false
-	rt.publishHoverChanges()
 	if rt.closing {
 		rt.close()
 	}
@@ -1192,11 +1189,6 @@ func (rt *engine) commitElement(e *node, clip Rect, hidden bool) {
 	s.webView = e.webView
 	s.role = e.role
 	s.input, s.caret, s.takesText, s.noIME = e.inputFn, e.caret, e.takesText, e.noIME
-	if e.hoverFn == nil || s.flags&flagDisabled != 0 {
-		rt.changeHover(s, false)
-	}
-	s.onHover = e.hoverFn
-	s.onFilesDrop = e.filesDropFn
 	s.copyData = e.copyData
 	if s.textClient != e.textClient {
 		if s.textAdapter != nil {

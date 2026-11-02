@@ -650,11 +650,9 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 				} else if button.Hovered() {
 					button.Background(a.palette.Hover)
 				}
-				button.OnHover(func(hovered bool) {
-					if hovered {
-						a.modelCursor = i
-					}
-				})
+				if button.Hovered() {
+					a.modelCursor = i
+				}
 				button.Children(func() {
 					ui.Text(c, m.Label).MinWidth(0).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 					ui.Box(c).Size(12, 12).Children(func() {

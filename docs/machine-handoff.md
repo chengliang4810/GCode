@@ -1,7 +1,7 @@
 # 2026-10-28 换机交接与进度
 
-> 桌面测试已接入 MyGo Automation，原子命令引用使用富文本输入框，当前源码修订为 `rcode-native-ui.22`。
-> MyGo 为 v0.7.4，2,053 文件、21 补丁，树 `c90ff414c0fea3d4e69035714777eae43bd875320ea22746894b1507075b069e`。
+> 桌面测试已接入 MyGo Automation，原子命令引用使用富文本输入框，当前源码修订为 `rcode-native-ui.23`。
+> MyGo 为 v0.7.4，2,050 文件、19 补丁，树 `c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。
 > 入口、固定来源和验证边界见 [desktop-testing.md](desktop-testing.md)；
 > 下文 R16/R17 的 `.9` 及更早指纹继续保留其历史证据身份。
 
@@ -30,8 +30,8 @@ Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数�
 保留原交接基线；最新封存 R16 为 MyGo `.6`（1,836文件/11补丁）。R17 `.9`
 （1,864文件、14补丁，树
 `27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`）保留为历史阶段；
-当前源码为 MyGo v0.7.4 + `rcode-native-ui.22`（2,053文件、21补丁，树
-`c90ff414c0fea3d4e69035714777eae43bd875320ea22746894b1507075b069e`）。R17 阶段基于2931项正式输入的
+当前源码为 MyGo v0.7.4 + `rcode-native-ui.23`（2,050文件、19补丁，树
+`c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`）。R17 阶段基于2931项正式输入的
 pin与五门槛、canonical四目标候选包构建/校验已通过；installer、Mac原生和
 完整视觉/发布接受仍待完成。旧C4/AX包及V5隔离原图保留原身份。R17 阶段证据见 `machine-resume.md` 和
 `audit-tabstrip-tooltip-primitives.md`；`reference/validation/resume-result.json`仍为R16历史hub，

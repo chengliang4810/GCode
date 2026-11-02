@@ -309,10 +309,10 @@ uifixture 回归通过，Linux 无桌面服务完成交叉编译；未请求外�
 `windows.displayName`/`windows.installDirName` 与 slug 文件命名覆盖。
 应用命名完全跟随 `mygo.json` 的 `name`（GCode 为 ASCII，上游默认值即可覆盖）。
 
-当前框架固定为 `rcode-native-ui.22`；源码锁、补丁 SHA 和构建身份由
-`go run ./scripts/check-framework.go` 检查。当前树为 2,053 文件、21 个补丁条目，
+当前框架固定为 `rcode-native-ui.23`；源码锁、补丁 SHA 和构建身份由
+`go run ./scripts/check-framework.go` 检查。当前树为 2,050 文件、19 个补丁条目，
 SHA-256 为
-`c90ff414c0fea3d4e69035714777eae43bd875320ea22746894b1507075b069e`。
+`c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。
 补丁清单见 [mygo-patches.md](mygo-patches.md)；下述 `.9`/`.10` 重放指纹是
 v0.6.4 时期引入第 15 项补丁时的历史记录。
 第 15 补丁反向还原后应得到原 `.9` 的 1,864 文件和

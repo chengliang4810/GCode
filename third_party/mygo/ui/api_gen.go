@@ -5037,38 +5037,6 @@ func (_handle Element) NoWrap() Element {
 	return wrapElement(_node.NoWrap())
 }
 
-// OnFilesDrop receives files dropped from another application, on the main
-// thread while handling the native drop event, never while building the view.
-// The callback belongs to the latest committed element and receives its own
-// copy of the paths. It consumes the drop instead of delivering DroppedFiles.
-// Disabled, removed and hidden elements receive no drops. Keep a stable Key
-// when rows reorder, and do not retain Element or Context in the callback.
-func (_handle Element) OnFilesDrop(fn func(arg0 []string)) Element {
-	_node := _handle.node()
-	if _node == nil {
-		return Element{}
-	}
-	_ctx := _node.c
-	_ = _ctx
-	return wrapElement(_node.OnFilesDrop(fn))
-}
-
-// OnHover calls fn when the pointer enters or leaves this element, including
-// when it disappears, is disabled, or a layout change moves it away. It follows
-// Hovered's press behavior. Calls run on the main thread after input or a
-// committed frame, never while the view is being constructed. A stable Key
-// keeps hover identity when rows reorder. The callback must not retain Element
-// or Context values from a build.
-func (_handle Element) OnHover(fn func(arg0 bool)) Element {
-	_node := _handle.node()
-	if _node == nil {
-		return Element{}
-	}
-	_ctx := _node.c
-	_ = _ctx
-	return wrapElement(_node.OnHover(fn))
-}
-
 // OnPaste has fn see a paste into a text input, by Cmd+V, Ctrl+V or a
 // Paste menu item, before it is inserted, on the main thread as the paste
 // comes: text is the clipboard's text, empty when it holds none, as with

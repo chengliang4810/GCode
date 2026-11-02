@@ -356,14 +356,12 @@ type node struct {
 
 	// Input the element takes itself (HandleInput), and where the caret of
 	// the text it takes is (TextCaret).
-	inputFn     func(InputEvent) bool
-	hoverFn     func(bool)
-	filesDropFn func([]string)
-	textClient  TextInputClient
-	caret       Rect
-	takesText   bool
-	noIME       bool // InputMethod(false)
-	copyData    func(parts []SelectedText) transfer.Data
+	inputFn    func(InputEvent) bool
+	textClient TextInputClient
+	caret      Rect
+	takesText  bool
+	noIME      bool // InputMethod(false)
+	copyData   func(parts []SelectedText) transfer.Data
 
 	// Content.
 	spans    []Span // of a RichText

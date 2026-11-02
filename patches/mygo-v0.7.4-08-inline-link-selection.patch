@@ -102,10 +102,10 @@ index 0000000..2071c5f
 +	}
 +}
 diff --git a/third_party/mygo/ui/input.go b/third_party/mygo/ui/input.go
-index 02c0916..76e1b6b 100644
+index cd71c3e..d4d13f9 100644
 --- a/third_party/mygo/ui/input.go
 +++ b/third_party/mygo/ui/input.go
-@@ -267,6 +267,7 @@ func (rt *engine) pointerMove(x, y float32) {
+@@ -255,6 +255,7 @@ func (rt *engine) pointerMove(x, y float32) {
  		rt.pressed.dragX += dx
  		rt.pressed.dragY += dy
  		rt.pressed.drag.move(rt.now(), dx, dy, x-rt.pointerX, y-rt.pointerY)

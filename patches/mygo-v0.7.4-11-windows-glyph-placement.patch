@@ -2026,7 +2026,7 @@ index 0000000..5936a34
 +  ]
 +}
 diff --git a/third_party/mygo/ui/element.go b/third_party/mygo/ui/element.go
-index 3e325ac..ccd60a0 100644
+index 3f01cab..55e6245 100644
 --- a/third_party/mygo/ui/element.go
 +++ b/third_party/mygo/ui/element.go
 @@ -154,8 +154,8 @@ type shadow struct {

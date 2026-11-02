@@ -70,7 +70,13 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 	// The row keeps its identity by the list row's key, so hover and its
 	// callbacks outlive a rebuild of the row's content.
 	wrapper := ui.Row(c).Key("row:" + row.Key).FillWidth().Justify(ui.Center)
-	wrapper.OnHover(func(over bool) { a.hoverTranscriptRow(pane.scope, row.Key, over) })
+	// The framework polls for the pointer: the row under it claims the hover,
+	// and the row that had it gives it up.
+	if wrapper.Hovered() {
+		a.hoverTranscriptRow(pane.scope, row.Key, true)
+	} else if a.transcriptHover[pane.scope] == row.Key {
+		a.hoverTranscriptRow(pane.scope, row.Key, false)
+	}
 	wrapper.Children(func() {
 		column := ui.Column(c).FillWidth()
 		if layout.width > 0 {
