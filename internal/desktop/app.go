@@ -60,14 +60,14 @@ type App struct {
 	sidebarContentWidth float32
 	// sidebarSplit is the split size the last built frame left, which tells
 	// a keyboard step landing after that frame from a drag it already drew.
-	sidebarSplit float32
-	imageZoom    float32
-	conversationQuery   string
-	findIndex           int
-	fit                 panelAllocation
-	panelOpened         [3]uint64
-	rightExpanded       bool
-	chatWidth           float32
+	sidebarSplit      float32
+	imageZoom         float32
+	conversationQuery string
+	findIndex         int
+	fit               panelAllocation
+	panelOpened       [3]uint64
+	rightExpanded     bool
+	chatWidth         float32
 	// Panel columns ease between widths on open and close (panel_tween.go).
 	// painted is the width drawn this frame, content the width each moving
 	// pane lays itself out at, motion the toggles waiting for this frame's

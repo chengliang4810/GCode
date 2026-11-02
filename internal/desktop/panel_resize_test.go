@@ -114,6 +114,56 @@ func TestSidebarDragSavesOnceTheDragRests(t *testing.T) {
 	}
 }
 
+// A drag left past the sidebar minimum stops there, and the next frame keeps
+// the limit: the split size the drag left is not mistaken for a keyboard step.
+func TestSidebarDragStopsAtItsMinimum(t *testing.T) {
+	a := testApp(t, "default")
+	tt := ui.NewTester(a.View, 1320, 880)
+	divider, ok := tt.Find("Divider")
+	if !ok {
+		t.Fatal("sidebar divider missing")
+	}
+	tt.Press(divider.X, 200)
+	tt.Move(divider.X-80, 200)
+	tt.Release(divider.X-80, 200)
+	if a.sidebarWidth != design.SidebarMin {
+		t.Fatalf("the drag stopped at %g, want %g", a.sidebarWidth, design.SidebarMin)
+	}
+	tt.Frame()
+	if a.sidebarWidth != design.SidebarMin {
+		t.Fatalf("the next frame moved the width to %g", a.sidebarWidth)
+	}
+	if a.state.Settings.SidebarWidth != float64(design.SidebarMin) {
+		t.Fatalf("the limit did not reach preferences: %g", a.state.Settings.SidebarWidth)
+	}
+}
+
+// An arrow step on the focused divider lands after the frame that built the
+// split; the next frame adopts and keeps it.
+func TestSidebarArrowStepPersists(t *testing.T) {
+	a := testApp(t, "default")
+	tt := ui.NewTester(a.View, 1320, 880)
+	divider, ok := tt.Find("Divider")
+	if !ok {
+		t.Fatal("sidebar divider missing")
+	}
+	start := a.sidebarWidth
+	tt.ClickAt(divider.X, 200)
+	tt.Key(0, ui.KeyRight)
+	tt.Frame()
+	if a.sidebarWidth <= start {
+		t.Fatalf("Right did not widen the sidebar: %g from %g", a.sidebarWidth, start)
+	}
+	want := a.sidebarWidth
+	tt.Frame()
+	if a.sidebarWidth != want {
+		t.Fatalf("the adopted step moved again: %g from %g", a.sidebarWidth, want)
+	}
+	if a.state.Settings.SidebarWidth != float64(want) {
+		t.Fatalf("the step did not reach preferences: %g", a.state.Settings.SidebarWidth)
+	}
+}
+
 func TestSidebarDragBouncesPastItsMaximum(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)

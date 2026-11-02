@@ -60,7 +60,7 @@ GCode 用 MyGo 的 `ui.Split`，同样直接跟指针并复用 `panel_resize.go`
 侧栏显示时用 split 当帧的 `sidebarContentWidth` 重算 `frameColumns`，
 `TestSidebarDragMovesColumnsInTheSameFrame` 锁住这一点。
 
-框架层修正（`patches/mygo-v0.7.3-29-*`）：
+框架层修正（`patches/mygo-v0.7.4-20-split-drag.patch`）：
 
 - split 的拖拽命中区从主题的 1.5 DIP 线宽扩到 20 DIP（左右各约 10 DIP），
   与参考的 `PANE_RESIZE_HALF_WIDTH = 10` 一致；可视分隔线仍为 1 DIP。
@@ -88,10 +88,21 @@ GCode 用 MyGo 的 `ui.Split`，同样直接跟指针并复用 `panel_resize.go`
 - `go test ./internal/desktop -run 'TestFitPanels|TestPanelWidths|TestWorkspace|TestFitHiddenPanel|TestSidebarDrag|TestFilesWorkspace'`：
   既有列宽、fit、拖拽与接管测试保持通过（首帧按 settled 宽度出现，直接
   赋值面板标志的测试不经过补间）。
+- `go test ./internal/desktop -run 'TestSidebarDragStopsAtItsMinimum|TestSidebarArrowStepPersists'`：
+  向左拖过下限后宽度停在 `SidebarMin`，下一帧不会被上一帧的 split 宽度
+  改写；方向键步进在下一帧被采纳并只保存一次。
+- MyGo `go test ./ui -run TestSplitDragAppliesBeforeThePanesBuild`：从接缝前
+  9 DIP 按下即可拖动（20 DIP 命中区），一次移动只构建 1 趟，拖拽不触发
+  `Changed()`。
+- MyGo `go test ./ui`、`go vet ./ui` 与 `go build ./...`（Windows/Linux/macOS）
+  通过；`go run ./scripts/check-framework.go` 验证 `.22` 补丁链与树指纹。
 
 ## 未验收
 
 - 原生窗口中的开合节奏、侧栏内容是否在 180–240ms 内看起来像被“揭示”而不是
   缩放，尚未录制屏幕证据。
-- 真实指针拖拽的手感与 split 边界回弹在原生窗口中的表现未验收。
+- 真实指针拖拽的手感与 split 边界回弹在原生窗口中的表现未验收。框架改动
+  已把每次移动的构建从 3 趟降到 2 趟，但即时模式仍重建整棵视图；参考的
+  GPUI 是保留模式，只重排被拖的分栏。这一层差距需要更大的架构改动，本轮
+  未做。
 - fit-exit 的补间未实现，窗口从宽变窄时被隐藏的列仍会直接消失。
