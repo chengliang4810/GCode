@@ -349,9 +349,18 @@ func (a *composerController) effortPanel(c *ui.Context) {
 		}
 		ui.Column(c).FillWidth().Padding(2, 8, 4, 8).Children(func() {
 			slider := ui.SliderBase(c.Key("effort-slider"), &a.effortValue, 0, float64(len(levels)-1)).Step(1).Label(tr(c, a.controlLabel("Reasoning effort"))).Height(36).FillWidth().Padding(0, 22)
-			fraction := float32(a.effortValue / float64(max(1, len(levels)-1)))
 			pressed := slider.Pressed()
-			slider.Children(func() { a.reasoningSliderMaterial(c, fraction, len(levels), false, pressed) }).OnChange(func() {
+			still := a.reduceMotion(c) || c.Instant()
+			paint := a.effortMotion.paint(c, effort.selected, len(levels), pressed, still, a.effortLive(c))
+			if pressed {
+				// A drag carries the fill under the pointer; letting go eases
+				// it to the stop the pointer landed on.
+				if fraction, ok := effortPointerFraction(slider); ok {
+					paint.fraction = fraction
+					a.effortMotion.front.jump(c.Now(), fraction)
+				}
+			}
+			slider.Children(func() { a.reasoningSliderMaterial(c, paint) }).OnChange(func() {
 				a.pickReasoningChoice(effort, max(0, min(len(levels)-1, int(math.Round(a.effortValue)))))
 			})
 		})
@@ -373,24 +382,21 @@ func modelRailPlate(c *ui.Context, dark bool) ui.Element {
 	return plate.LinearGradient(modelVerticalGradient(black.Alpha(.075), black.Alpha(.04))).Border(1, black.Alpha(.08)).InsetShadow(0, 1, 2*2, 0, black.Alpha(.08)).InsetShadow(0, -1, 0, 0, white.Alpha(.55))
 }
 
-func modelAccentPlate(c *ui.Context, palette design.Tokens, fast bool) ui.Element {
-	return modelAccentPlateWith(c, palette, palette.AccentStrong, fast)
+func modelAccentPlate(c *ui.Context, palette design.Tokens, glow float32) ui.Element {
+	return modelAccentPlateWith(c, palette, palette.AccentStrong, glow)
 }
 
 // modelAccentPlateWith keeps the source glass construction and takes the fill
-// token from the caller, so the reasoning slider can paint its preset.
-func modelAccentPlateWith(c *ui.Context, palette design.Tokens, accent ui.Color, fast bool) ui.Element {
+// token from the caller, so the reasoning slider can paint its preset. glow
+// is the source's intensity*(0.2+0.25*breath): the accent's coloured halo
+// spreads and deepens as it breathes.
+func modelAccentPlateWith(c *ui.Context, palette design.Tokens, accent ui.Color, glow float32) ui.Element {
 	white, black := ui.Hex("#ffffff"), ui.Hex("#000000")
 	lift, highlight, ring, halo := float32(.22), float32(.32), float32(.22), float32(.14)
 	rim := accent.Mix(black, .14)
 	if palette.Dark {
 		lift, highlight, ring, halo = .06, .12, 0, 0
 		rim = accent.Mix(white, .35).Alpha(.35)
-	}
-	glow := float32(0)
-	if fast {
-		// Reduced-motion source state: intensity=1, breath=.5.
-		glow = .325
 	}
 	plate := ui.Box(c).Radius(14).LinearGradient(modelVerticalGradient(accent.Mix(white, lift), accent)).Border(1, rim).
 		Shadow(0, 2+2*glow, 2*(6+14*glow), 0, accent.Alpha(halo+.3*glow))
@@ -401,11 +407,16 @@ func modelAccentPlateWith(c *ui.Context, palette design.Tokens, accent ui.Color,
 }
 
 // modelEffortPlate paints the preset's three stops across the filled rail,
-// inside the same rim and inset lighting as the accent plate.
-func modelEffortPlate(c *ui.Context, palette design.Tokens, effort design.EffortPalette, fast bool) ui.Element {
-	plate := modelAccentPlateWith(c, palette, effort.Colors[0], fast)
+// inside the same rim and inset lighting as the accent plate. While the
+// accent lives, the stops carry the reference's flowing light.
+func modelEffortPlate(c *ui.Context, palette design.Tokens, effort design.EffortPalette, paint effortSliderPaint) ui.Element {
+	plate := modelAccentPlateWith(c, palette, effort.Colors[0], effortGlow(paint.breath))
 	plate.Draw(func(p *ui.Painter, r ui.Rect) {
 		inner := ui.Rect{X: r.X + 1, Y: r.Y + 1, W: max(0, r.W-2), H: max(0, r.H-2)}
+		if paint.live && inner.W > 2 && inner.H > 2 {
+			effortFlow(p, effort, paint, r)
+			return
+		}
 		p.FillGradient(inner, ui.LinearGradient{Angle: 90, Stops: []ui.GradientStop{
 			{Color: effort.Colors[0], At: 0},
 			{Color: effort.Colors[1], At: .5},
@@ -422,18 +433,26 @@ func modelAccentInsetOverlay(c *ui.Context) ui.Element {
 	return ui.Box(c).Absolute().Left(-1).Right(-1).Top(-1).Bottom(-1).Radius(14)
 }
 
-func modelThumbPlate(c *ui.Context, palette design.Tokens, fast, pressed bool) ui.Element {
+// modelThumbPlate draws the handle. halo is the source's live breathing light
+// under it, and press how far its press shadow has eased in.
+func modelThumbPlate(c *ui.Context, palette design.Tokens, effort design.EffortPalette, halo, press float32) ui.Element {
 	white, black := ui.Hex("#ffffff"), ui.Hex("#000000")
 	rim, drop := float32(.11), float32(.14)
 	if palette.Dark {
 		rim, drop = .12, .22
 	}
 	plate := ui.Box(c).Radius(16).LinearGradient(modelVerticalGradient(white, ui.RGB(246, 246, 246))).Border(1, black.Alpha(rim)).InsetShadow(0, 1, 0, 0, white.Alpha(.8))
-	if fast {
-		plate.Shadow(0, 1, 2*10, 0, palette.Accent.Alpha(.35*.775))
+	// The source lays the halo and the press under the handle, so they go on
+	// first and the handle's own drop stays over them.
+	if halo > .001 {
+		glow := effort.Colors[2].Alpha(.35 * halo)
+		if effort.Light {
+			glow = black.Alpha(.12 * halo)
+		}
+		plate.Shadow(0, 1, 2*10, 0, glow)
 	}
-	if pressed {
-		plate.Shadow(0, 2, 2*8, 0, black.Alpha(.12))
+	if press > .001 {
+		plate.Shadow(0, 2*press, 2*8, 0, black.Alpha(.12*press))
 	}
 	plate.Shadow(0, 1, 2*2, 0, black.Alpha(drop))
 	if !palette.Dark {
@@ -442,7 +461,7 @@ func modelThumbPlate(c *ui.Context, palette design.Tokens, fast, pressed bool) u
 	return plate
 }
 
-func (a *composerController) reasoningSliderMaterial(c *ui.Context, fraction float32, count int, fast, pressed bool) {
+func (a *composerController) reasoningSliderMaterial(c *ui.Context, paint effortSliderPaint) {
 	palette := a.modelPopupPalette(c)
 	effort := a.effortPalette()
 	if palette.Dark {
@@ -453,25 +472,26 @@ func (a *composerController) reasoningSliderMaterial(c *ui.Context, fraction flo
 	}
 	modelRailPlate(c, palette.Dark).Absolute().Left(0).Right(0).Top(4).Height(28)
 	ui.Box(c).Absolute().Left(22).Right(22).Top(0).Bottom(0).Children(func() {
-		modelEffortPlate(c, palette, effort, fast).Absolute().Left(-22).RightPercent(100*(1-fraction)).Margin(0, -14, 0, 0).Top(4).Height(28)
+		modelEffortPlate(c, palette, effort, paint).Absolute().Left(-22).RightPercent(100*(1-paint.fraction)).Margin(0, -14, 0, 0).Top(4).Height(28)
 	})
 	ui.Box(c).Absolute().Left(0).Right(0).Top(0).Bottom(0).Draw(func(p *ui.Painter, r ui.Rect) {
 		filled := effort.Spark().Alpha(.55)
 		if effort.Light {
 			filled = effort.Spark().Alpha(.45)
 		}
-		for i := 0; i < count; i++ {
-			stop := float32(i) / float32(max(1, count-1))
+		// Filled stops follow the animated front, never jumping ahead of it.
+		for i := 0; i < paint.count; i++ {
+			stop := float32(i) / float32(max(1, paint.count-1))
 			x := r.X + 22 + (r.W-44)*stop
 			color := palette.Muted.Alpha(.28)
-			if stop <= fraction {
+			if stop <= paint.fraction {
 				color = filled
 			}
 			p.Fill(ui.Rect{X: x - 2, Y: r.Y + 16, W: 4, H: 4}, color, 2)
 		}
 	})
 	ui.Box(c).Absolute().Left(22).Right(22).Top(2).Height(32).Children(func() {
-		modelThumbPlate(c, palette, fast, pressed).Absolute().LeftPercent(fraction*100).Margin(0, 0, 0, -22).Width(44).Height(32)
+		modelThumbPlate(c, palette, effort, effortHalo(paint.breath), paint.press).Absolute().LeftPercent(paint.fraction*100).Margin(0, 0, 0, -22).Width(44).Height(32)
 	})
 }
 

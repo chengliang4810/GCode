@@ -17,6 +17,7 @@ type composerControls struct {
 	modelCursor                                          int
 	modelSearch                                          ui.Handle
 	effortValue                                          float64
+	effortMotion                                         effortMotion
 }
 
 // composerController binds reusable native controls to one captured session.

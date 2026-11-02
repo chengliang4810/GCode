@@ -112,7 +112,7 @@ func TestReasoningSliderPainterUsesSelectedEffortPalette(t *testing.T) {
 				c.SetTheme(theme.UI())
 				c.DisableAnimations()
 				c.Root().Background(theme.Background)
-				modelEffortPlate(c, theme, effort, false).Absolute().Left(20).Top(20).Size(200, 28).Label("Effort plate")
+				modelEffortPlate(c, theme, effort, effortSliderPaint{breath: .5, count: 3}).Absolute().Left(20).Top(20).Size(200, 28).Label("Effort plate")
 			}, 240, 80)
 			box, ok := tt.Find("Effort plate")
 			if !ok || box != (ui.Rect{X: 20, Y: 20, W: 200, H: 28}) {

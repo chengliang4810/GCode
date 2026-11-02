@@ -47,7 +47,7 @@ func TestModelAccentPlateSourceOuterRimAtTwoX(t *testing.T) {
 				c.SetTheme(palette.UI())
 				c.DisableAnimations()
 				c.Root().Background(tc.plane)
-				modelAccentPlate(c, palette, false).Absolute().Left(20).Top(20).Size(200, 28).Label("Accent plate")
+				modelAccentPlate(c, palette, 0).Absolute().Left(20).Top(20).Size(200, 28).Label("Accent plate")
 			}, 240, 80)
 			tt.SetScale(2)
 			box, ok := tt.Find("Accent plate")
