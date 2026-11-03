@@ -59,6 +59,25 @@ func captionMaximizeGlyph(maximized bool) string {
 	return "caption-maximize"
 }
 
+// Native macOS controls report their occupied band; center our controls in it.
+func titlebarLayoutHeight(bar ui.TitleBar) float32 {
+	return max(titlebarBandHeight(), bar.Height)
+}
+
+func titlebarTopPadding(bar ui.TitleBar) float32 {
+	if bar.Left > 0 {
+		return 0
+	}
+	return 4
+}
+
+func titlebarNavigationLeft(bar ui.TitleBar) float32 {
+	if bar.Left > 0 {
+		return bar.Left + 12
+	}
+	return 10
+}
+
 func (a *App) titlebar(c *ui.Context) { a.titlebarRow(c, false) }
 
 // titlebarOverlay draws the title bar over the full-height content row: the
@@ -81,13 +100,10 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 	if drawn {
 		caption = titlebarCaptionWidth() + titlebarControlGap + titlebarEdgeInset
 	}
-	height := titlebarBandHeight()
+	height := titlebarLayoutHeight(bar)
 	navigation := float32(0)
 	if !a.fit.Sidebar {
-		navigation = 10 + design.Controls().IconButtonSize*2 + 5
-		if bar.Left > 0 {
-			navigation += bar.Left + 5
-		}
+		navigation = titlebarNavigationLeft(bar) + design.Controls().IconButtonSize*2 + 5
 	}
 	takeover := !onCanvas && a.workspaceTakeover()
 	gapBudget := float32(24)
@@ -106,10 +122,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 	}
 	row.Children(func() {
 		if !a.fit.Sidebar {
-			ui.Row(c).Width(navigation).Height(height).Shrink(0).Padding(4, 0, 0, 10).Gap(5).AlignItems(ui.Center).Children(func() {
-				if bar.Left > 0 {
-					ui.Spacer(c).Width(bar.Left).Shrink(0)
-				}
+			ui.Row(c).Width(navigation).Height(height).Shrink(0).Padding(titlebarTopPadding(bar), 0, 0, titlebarNavigationLeft(bar)).Gap(5).AlignItems(ui.Center).Children(func() {
 				c.Key("titlebar-sidebar")
 				iconButton(c, "sidebar-minimalistic", tr(c, "Toggle sidebar")).Shrink(0).OnClick(func() { a.setPanel(0, true) })
 				c.Key("titlebar-back")
@@ -118,7 +131,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 		}
 		identity := ui.Row(c).Grow(1).MinWidth(0).Height(height).AlignItems(ui.Center)
 		if !takeover {
-			identity.Padding(4, 8, 0, 10).Gap(8)
+			identity.Padding(titlebarTopPadding(bar), 8, 0, 10).Gap(8)
 		}
 		identity.Children(func() {
 			if a.route == "settings" {
@@ -148,7 +161,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 			if a.fit.Right && surface >= 44 {
 				ui.Box(c).Width(surface).Height(height).Shrink(0).Clip().Children(func() { a.workspace.TabStrip(c, a.rightExpanded) })
 			}
-			ui.Row(c).Width(controls).Height(height).Shrink(0).Padding(4, 0, 0, 0).Gap(4).Justify(ui.End).AlignItems(ui.Center).Children(func() {
+			ui.Row(c).Width(controls).Height(height).Shrink(0).Padding(titlebarTopPadding(bar), 0, 0, 0).Gap(4).Justify(ui.End).AlignItems(ui.Center).Children(func() {
 				c.Key("titlebar-files")
 				iconButton(c, "folder-tree", tr(c, "Files")).Shrink(0).OnClick(func() { a.togglePanel(2) })
 				c.Key("titlebar-right-pane")

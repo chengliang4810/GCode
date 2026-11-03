@@ -17,8 +17,8 @@ func (a *App) sidebarView(c *ui.Context) {
 		p.Fill(ui.Rect{X: bounds.X + bounds.W - 1, Y: bounds.Y, W: 1, H: bounds.H}, a.palette.Border, 0)
 	}).Children(func() {
 		bar := c.TitleBar()
-		ui.Row(c).Height(38).Padding(4, 8, 0, max(10, bar.Left)).Gap(4).AlignItems(ui.Center).DragWindow().Children(func() {
-			iconButton(c, "sidebar-minimalistic", tr(c, "Toggle sidebar")).OnClick(func() { a.setPanel(0, false) })
+		ui.Row(c.Key("sidebar-titlebar")).Height(titlebarLayoutHeight(bar)).Padding(titlebarTopPadding(bar), 8, 0, titlebarNavigationLeft(bar)).Gap(4).AlignItems(ui.Center).DragWindow().Children(func() {
+			iconButton(c.Key("sidebar-toggle"), "sidebar-minimalistic", tr(c, "Toggle sidebar")).OnClick(func() { a.setPanel(0, false) })
 			iconButton(c.Key("sidebar-back"), "alt-arrow-left", tr(c, "Back")).Disabled(a.historyIndex <= 0).OnClick(func() { a.back(-1) })
 			iconButton(c.Key("sidebar-forward"), "alt-arrow-right", tr(c, "Forward")).Disabled(a.historyIndex+1 >= len(a.history)).OnClick(func() { a.back(1) })
 			ui.Spacer(c)
@@ -103,8 +103,14 @@ func (a *App) sidebarView(c *ui.Context) {
 
 func (a *App) sidebarNavigation(c *ui.Context) {
 	s := design.Sidebar()
+	left := s.PaddingX
+	if bar := c.TitleBar(); bar.Left > 0 {
+		// TrafficLightPosition uses equal X/Y insets, so half the native
+		// band is also the close button center measured from the left.
+		left = max(0, bar.Height/2-s.RowPaddingX-s.IconSize/2)
+	}
 	ui.Column(c.Key("sidebar-primary-navigation")).FillWidth().
-		Padding(s.NavigationPaddingY, s.PaddingX).Children(func() {
+		Padding(s.NavigationPaddingY, s.PaddingX, s.NavigationPaddingY, left).Children(func() {
 		controlSidebarRow(c.Key("sidebar-new-conversation"), tr(c, "New conversation"), false).
 			OnClick(a.newConversation).Children(func() {
 			icon(c, "add-circle", s.IconSize)
@@ -155,10 +161,10 @@ func (a *App) sidebarSection(c *ui.Context, row sidebarRow) {
 				}
 			})
 		if projects {
-			label, glyph := "Expand all projects", "alt-arrow-down"
+			label, glyph := "Expand all projects", "expand-arrows"
 			expanded := a.sidebarProjectsExpanded()
 			if expanded {
-				label, glyph = "Collapse all projects", "fold-vertical"
+				label, glyph = "Collapse all projects", "collapse-arrows"
 			}
 			iconButton(c.Key("sidebar-toggle-projects"), glyph, tr(c, label)).
 				Disabled(len(a.state.Projects) == 0).OnClick(func() {
@@ -242,7 +248,7 @@ func (a *App) sidebarProjectsExpanded() bool {
 func (a *App) sidebarConversationContent(c *ui.Context, row sidebarRow) {
 	switch {
 	case row.Empty:
-		controlSidebarEmptyRow(c.Key("sidebar-empty:"+row.Group), tr(c, "No conversations"))
+		controlSidebarEmptyRow(c.Key("sidebar-empty:"+row.Group), a.sidebarEmptyText(row))
 	case row.More:
 		controlSidebarMoreRow(c.Key(row.Key), tr(c, "Show more")).OnClick(func() {
 			if a.sidebarUI.limits == nil {

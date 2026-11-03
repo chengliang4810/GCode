@@ -980,7 +980,7 @@ func (a *App) mainView(c *ui.Context) {
 			a.frameColumns = columns
 		}
 		a.chatWidth = columns.Chat
-		band := titlebarBandHeight()
+		band := titlebarLayoutHeight(c.TitleBar())
 		workspaceView := func() {
 			ui.Column(c).Label(tr(c, "Tools workspace")).Fill().MinWidth(0).Children(func() {
 				if a.fit.Right {

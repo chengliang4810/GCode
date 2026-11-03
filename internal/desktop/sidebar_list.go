@@ -27,7 +27,7 @@ func (a *App) prepareSidebarList(rows []sidebarRow) {
 	a.sidebarList.Key = func(i int) any { return "sidebar-list-row:" + rows[i].Key }
 	a.sidebarList.Label = func(i int) string {
 		if rows[i].Empty {
-			return a.t("No conversations")
+			return a.sidebarEmptyText(rows[i])
 		}
 		if rows[i].Header != "" {
 			return a.sidebarHeaderText(rows[i])

@@ -10,7 +10,7 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func TestSidebarEmptyStateFollowsConversationHeading(t *testing.T) {
+func TestSidebarEmptyProjectsAndHiddenConversations(t *testing.T) {
 	for _, scenario := range []string{"empty", "search"} {
 		for _, dark := range []bool{false, true} {
 			for _, size := range []float64{14, 20} {
@@ -30,18 +30,22 @@ func TestSidebarEmptyStateFollowsConversationHeading(t *testing.T) {
 					}
 					app.state.Settings.Appearance.ThemeID = ""
 					tt := ui.NewTester(app.View, 1200, 1400)
-					heading, ok := tt.Find("对话")
-					if !ok {
-						t.Fatal("conversation heading is missing")
+					if _, ok := tt.Find("对话"); ok {
+						t.Fatal("empty top-level conversations section must be hidden")
 					}
-					empty, ok := tt.Find("暂无对话")
+					heading, ok := tt.Find("项目")
 					if !ok {
-						t.Fatal("empty conversation message is missing")
+						t.Fatal("projects heading is missing")
+					}
+					empty, ok := tt.Find("未添加项目")
+					if !ok {
+						t.Fatal("empty projects message is missing")
 					}
 					gap := empty.Y - (heading.Y + heading.H)
 					if gap < 0 || gap > 16 {
-						t.Fatalf("empty state must follow its heading, gap=%g heading=%+v empty=%+v", gap, heading, empty)
+						t.Fatalf("project empty state gap=%g", gap)
 					}
+
 					if dir := os.Getenv("RCODE_SIDEBAR_EVIDENCE"); dir != "" && scenario == "empty" {
 						if err := os.MkdirAll(dir, 0755); err != nil {
 							t.Fatal(err)
@@ -56,11 +60,11 @@ func TestSidebarEmptyStateFollowsConversationHeading(t *testing.T) {
 							t.Fatalf("capture: %v %v", err, closeErr)
 						}
 					}
-					if err := tt.Click("对话"); err != nil {
+					if err := tt.Click("项目"); err != nil {
 						t.Fatal(err)
 					}
-					if tt.HasText("暂无对话") {
-						t.Fatal("collapsed conversation section retained its empty state")
+					if tt.HasText("未添加项目") {
+						t.Fatal("collapsed projects section retained its empty state")
 					}
 				})
 			}

@@ -91,6 +91,9 @@ func (a *App) projectSidebarRows() []sidebarRow {
 	rows = a.appendSidebarPinned(rows, pinned)
 	rows = append(rows, sidebarRow{Key: "section:projects", Header: "Projects"})
 	if !a.sidebarUI.projectsClosed {
+		if len(a.state.Projects) == 0 {
+			rows = append(rows, sidebarRow{Key: "projects:empty", Group: "projects", Empty: true})
+		}
 		for _, project := range a.state.Projects {
 			key := "project:" + project.ID
 			sessions := byProject[project.ID]
@@ -103,9 +106,11 @@ func (a *App) projectSidebarRows() []sidebarRow {
 			}
 		}
 	}
-	rows = append(rows, sidebarRow{Key: "section:conversations", Header: "Conversations"})
-	if !a.sidebarUI.conversationsClosed {
-		rows = a.appendSidebarConversations(rows, "conversations", unassigned, false)
+	if len(unassigned) > 0 {
+		rows = append(rows, sidebarRow{Key: "section:conversations", Header: "Conversations"})
+		if !a.sidebarUI.conversationsClosed {
+			rows = a.appendSidebarConversations(rows, "conversations", unassigned, false)
+		}
 	}
 	return rows
 }
@@ -320,4 +325,11 @@ func (a *App) appendSidebarConversations(rows []sidebarRow, group string, sessio
 		rows = append(rows, sidebarRow{Key: group + ":more", Group: group, More: true, Inset: inset})
 	}
 	return rows
+}
+
+func (a *App) sidebarEmptyText(row sidebarRow) string {
+	if row.Group == "projects" {
+		return a.t("No projects added")
+	}
+	return a.t("No conversations")
 }
