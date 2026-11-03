@@ -144,7 +144,7 @@ func TestSidebarDragMovesColumnsInTheSameFrame(t *testing.T) {
 	}
 	tt.Press(divider.X, 300)
 	defer tt.Release(divider.X, 300)
-	for _, dx := range []float32{40, 80, 40, 0, -30} {
+	for _, dx := range []float32{40, 80, 40, 0, -10} {
 		tt.Move(divider.X+dx, 300)
 		tt.Frame()
 		chat, _ := tt.Find("Conversation pane")

@@ -34,7 +34,9 @@
 侧栏、右侧工作区与 Files 停靠栏的开合使用 `internal/desktop/panel_tween.go`
 的宽度补间（180–240ms，CSS `ease`，减少动效时立即落位），拖拽仍直接跟随
 指针，边缘回弹由 `internal/desktop/panel_resize.go` 统一定义；页面不另写
-开合动画。分栏分隔条的命中区为 20 DIP（MyGo split 的 grip），可视分隔线
+开合动画。左侧栏、右侧工作区与 Files 栏缩至最小宽度后，继续向收起方向
+拖拽立即触发关闭，复用开合动画，重新打开时恢复最小宽度。
+分栏分隔条的命中区为 20 DIP（MyGo split 的 grip），可视分隔线
 仍为 1 DIP；拖拽后的宽度由调用方在 split 返回后读取，不依赖 `Changed()`。
 资源列表的图标容器和信息标签使用 `controlResourceAvatar` / `controlResourceBadge`；
 `ResourceIconSize`、`BadgePaddingX`、`BadgePaddingY` 仍在统一尺寸定义中维护。

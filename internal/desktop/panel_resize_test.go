@@ -2,7 +2,9 @@ package desktop
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/egoist/mygo/ui"
 
@@ -114,27 +116,86 @@ func TestSidebarDragSavesOnceTheDragRests(t *testing.T) {
 	}
 }
 
-// A drag left past the sidebar minimum stops there, and the next frame keeps
-// the limit: the split size the drag left is not mistaken for a keyboard step.
-func TestSidebarDragStopsAtItsMinimum(t *testing.T) {
-	a := testApp(t, "default")
-	tt := ui.NewTester(a.View, 1320, 880)
-	divider, ok := tt.Find("Divider")
-	if !ok {
-		t.Fatal("sidebar divider missing")
-	}
-	tt.Press(divider.X, 200)
-	tt.Move(divider.X-80, 200)
-	tt.Release(divider.X-80, 200)
-	if a.sidebarWidth != design.SidebarMin {
-		t.Fatalf("the drag stopped at %g, want %g", a.sidebarWidth, design.SidebarMin)
-	}
-	tt.Frame()
-	if a.sidebarWidth != design.SidebarMin {
-		t.Fatalf("the next frame moved the width to %g", a.sidebarWidth)
-	}
-	if a.state.Settings.SidebarWidth != float64(design.SidebarMin) {
-		t.Fatalf("the limit did not reach preferences: %g", a.state.Settings.SidebarWidth)
+// Reaching the minimum keeps the pane open. Continuing the same drag closes
+// only that pane, and reopening restores its minimum width.
+func TestPanelDragPastMinimumCloses(t *testing.T) {
+	for _, panel := range []struct {
+		name, label string
+		index       int
+		minimum     float32
+	}{
+		{"sidebar", "Session sidebar", 0, design.SidebarMin},
+		{"workspace", "Tools workspace", 1, design.RightMin},
+		{"files", "Files explorer", 2, design.FilesMin},
+	} {
+		for _, reduced := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/reduced=%t", panel.name, reduced), func(t *testing.T) {
+				a := testApp(t, "default")
+				recorder := &paneSaveRecordingService{Service: a.service}
+				a.service = recorder
+				a.selectSession("chat-0")
+				a.state.Settings.Appearance.ReduceMotion = reduced
+				a.workspace.OpenSurface("changes")
+				a.sidebar, a.right, a.files = true, true, true
+				tt := ui.NewTester(a.View, 1800, 880)
+				pane, ok := tt.Find(panel.label)
+				if !ok {
+					t.Fatal("pane missing")
+				}
+				width := func() float32 {
+					return [3]float32{a.sidebarWidth, a.rightWidth, a.filesWidth}[panel.index]
+				}
+				open := func() [3]bool { return [3]bool{a.sidebar, a.right, a.files} }
+				seam, direction := pane.X-1, float32(1)
+				if panel.index == 0 {
+					seam, direction = pane.X+pane.W, -1
+				}
+				target := seam + direction*(width()-panel.minimum)
+				tt.Press(seam, 200)
+				tt.Move(target, 200)
+				if !open()[panel.index] || width() != panel.minimum {
+					t.Fatalf("at minimum: open=%v width=%g, want open at %g", open(), width(), panel.minimum)
+				}
+				tt.Move(target+direction*12, 200)
+				if open()[panel.index] {
+					t.Fatal("continuing past the minimum did not close the pane before release")
+				}
+				for i, otherOpen := range open() {
+					if i != panel.index && !otherOpen {
+						t.Fatalf("drag closed neighboring pane %d", i)
+					}
+				}
+				tt.Release(target+direction*12, 200)
+				tt.Advance(300 * time.Millisecond)
+				if _, visible := tt.Find(panel.label); visible || a.panelPainted[panel.index] != 0 {
+					t.Fatal("closed pane remained visible")
+				}
+				a.setPanel(panel.index, true)
+				tt.Frame()
+				tt.Advance(300 * time.Millisecond)
+				if _, visible := tt.Find(panel.label); !visible || width() != panel.minimum {
+					t.Fatalf("reopened pane: visible=%t width=%g, want %g", visible, width(), panel.minimum)
+				}
+				if len(recorder.saved) == 0 {
+					t.Fatal("dragged width was not saved")
+				}
+				saved := recorder.saved[len(recorder.saved)-1]
+				if got := [3]float64{saved.SidebarWidth, saved.RightPaneWidth, saved.FilesWidth}[panel.index]; got != float64(panel.minimum) {
+					t.Fatalf("saved width=%g, want %g", got, panel.minimum)
+				}
+				pane, _ = tt.Find(panel.label)
+				seam = pane.X - 1
+				if panel.index == 0 {
+					seam = pane.X + pane.W
+				}
+				tt.Press(seam, 200)
+				tt.Move(seam+direction*80, 200)
+				tt.Release(seam+direction*80, 200)
+				if open()[panel.index] {
+					t.Fatal("a fast drag after reopening did not close the pane")
+				}
+			})
+		}
 	}
 }
 

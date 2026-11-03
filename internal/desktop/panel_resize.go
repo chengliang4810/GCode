@@ -8,8 +8,8 @@ import (
 
 // A split divider follows the pointer directly: the width the pointer asks
 // for is the width the pane shows. Pushing the seam past one of its limits
-// plays a single short bounce instead of stopping dead at a hard wall, the
-// way the reference shell answers a divider that reaches its edge.
+// plays a single short bounce, unless the caller closes a collapsible pane
+// after the pointer crosses its minimum width.
 const (
 	resizeBounceDuration = 220 * time.Millisecond
 	resizeBounceTravel   = float32(5)

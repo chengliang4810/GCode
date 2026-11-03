@@ -943,6 +943,10 @@ func (a *App) View(c *ui.Context) {
 					a.sidebarWidth = a.sidebarResize.observe(c, requested, design.SidebarMin, design.SidebarMax, reduced)
 					a.state.Settings.SidebarWidth = float64(a.sidebarWidth)
 					a.schedulePaneSave(c, paneSidebar)
+					if requested < design.SidebarMin {
+						a.sidebarResize.reset()
+						a.setPanel(0, false)
+					}
 				}
 			}
 		} else {
@@ -1052,6 +1056,10 @@ func (a *App) mainView(c *ui.Context) {
 					a.rightWidth = max(design.RightMin, min(columns.Chat+columns.Right-design.ChatMin, columns.Chat+columns.Right-chatWidth))
 					a.state.Settings.RightPaneWidth = float64(a.rightWidth)
 					a.schedulePaneSave(c, paneRight)
+					if requested > maxChat {
+						a.rightResize.reset()
+						a.setPanel(1, false)
+					}
 				}
 			} else {
 				a.rightResize.reset()
@@ -1083,6 +1091,10 @@ func (a *App) mainView(c *ui.Context) {
 					a.filesWidth = max(design.FilesMin, min(design.FilesMax, available-firstWidth))
 					a.state.Settings.FilesWidth = float64(a.filesWidth)
 					a.schedulePaneSave(c, paneFiles)
+					if requested > maxFirst {
+						a.filesResize.reset()
+						a.setPanel(2, false)
+					}
 				}
 			} else {
 				a.filesResize.reset()
