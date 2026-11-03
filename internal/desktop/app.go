@@ -379,6 +379,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.refreshWallpaperColors()
 		a.restoreModelSelection()
 		a.syncModelFetchDialog()
+		a.syncPluginSourceOperation()
 		a.prefetchMedia(snapshotMediaRefs(s))
 		a.workspace.Update(s)
 		a.bottom.Update(s)

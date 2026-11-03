@@ -209,14 +209,6 @@ func (e *Engine) startPluginOperationLocked(command contracts.Command) error {
 			return err
 		}
 	}
-	var source plugins.MarketplaceSource
-	if command.Kind == "plugins.source.save" {
-		var err error
-		source, err = marketplaceSource(*command.Plugin.Marketplace)
-		if err != nil {
-			return err
-		}
-	}
 	for _, op := range e.state.Plugins.Operations {
 		if op.State == "running" && op.TargetID == command.ID && command.ID != "" {
 			return errors.New("a plugin operation for this target is already running")
@@ -262,7 +254,15 @@ func (e *Engine) startPluginOperationLocked(command contracts.Command) error {
 		var err error
 		switch command.Kind {
 		case "plugins.source.save":
-			err = e.plugins.PutSource(ctx, source)
+			input := *command.Plugin.Marketplace
+			if input.ID == "" {
+				_, err = e.plugins.AddSource(ctx, input.Source)
+			} else {
+				var source plugins.MarketplaceSource
+				if source, err = marketplaceSource(input); err == nil {
+					err = e.plugins.PutSource(ctx, source)
+				}
+			}
 		case "plugins.source.remove":
 			err = e.plugins.RemoveSource(ctx, command.ID)
 		case "plugins.source.refresh":

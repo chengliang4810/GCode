@@ -115,6 +115,7 @@ func (a *App) selectSettingsSection(section string) {
 	state.plugins.configID, state.plugins.config, state.plugins.removeConfig = "", nil, nil
 	state.plugins.sourcesOpen, state.plugins.sourceOpen = false, false
 	state.plugins.source = contracts.PluginMarketplaceInput{}
+	state.plugins.sourcePending, state.plugins.sourceError = "", ""
 	state.mcpOpen, state.skillOpen, state.commandOpen, state.hookOpen = false, false, false, false
 	state.skillDetailsOpen, state.skillImportOpen = false, false
 	state.mcpEnv, state.mcpHeaders, state.mcpJSON = "", "", ""

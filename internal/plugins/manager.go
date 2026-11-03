@@ -171,6 +171,45 @@ func (m *Manager) Refresh(ctx context.Context, id string) (Catalog, error) {
 	if !source.Enabled {
 		return Catalog{}, errors.New("marketplace source is disabled")
 	}
+	catalog, err := m.prepareCatalog(ctx, *source)
+	if err != nil {
+		return Catalog{}, err
+	}
+	next := copyValue(m.data)
+	next.Catalogs = slices.DeleteFunc(next.Catalogs, func(c Catalog) bool { return c.SourceID == id })
+	next.Catalogs = append(next.Catalogs, catalog)
+	if err := m.commit(next); err != nil {
+		return Catalog{}, err
+	}
+	return copyValue(catalog), nil
+}
+
+// AddSource identifies a marketplace from its location and publishes its source
+// and validated catalog together. Failed additions never register an empty market.
+func (m *Manager) AddSource(ctx context.Context, location string) (MarketplaceSource, error) {
+	m.opMu.Lock()
+	defer m.opMu.Unlock()
+	origin, err := parseMarketplaceLocation(location)
+	if err != nil {
+		return MarketplaceSource{}, err
+	}
+	source := MarketplaceSource{Source: origin, Enabled: true}
+	catalog, err := m.prepareCatalog(ctx, source)
+	if err != nil {
+		return MarketplaceSource{}, err
+	}
+	source.ID, source.Name = catalog.Marketplace.Name, catalog.Marketplace.Name
+	catalog.SourceID = source.ID
+	next := copyValue(m.data)
+	next.Sources = append(next.Sources, source)
+	next.Catalogs = append(next.Catalogs, catalog)
+	if err := m.commit(next); err != nil {
+		return MarketplaceSource{}, err
+	}
+	return source, nil
+}
+
+func (m *Manager) prepareCatalog(ctx context.Context, source MarketplaceSource) (Catalog, error) {
 	stage, err := m.stage()
 	if err != nil {
 		return Catalog{}, err
@@ -203,6 +242,13 @@ func (m *Manager) Refresh(ctx context.Context, id string) (Catalog, error) {
 	if !validName.MatchString(marketplace.Name) || marketplace.Owner.Name == "" {
 		return Catalog{}, errors.New("marketplace requires a valid name and owner")
 	}
+	if source.ID == "" {
+		for _, registered := range m.data.Sources {
+			if registered.ID == marketplace.Name || registered.Name == marketplace.Name {
+				return Catalog{}, errors.New("marketplace is already registered")
+			}
+		}
+	}
 	seen := map[string]bool{}
 	for _, entry := range marketplace.Plugins {
 		if !validName.MatchString(entry.Name) || seen[entry.Name] {
@@ -226,7 +272,7 @@ func (m *Manager) Refresh(ctx context.Context, id string) (Catalog, error) {
 		}
 	}
 	for _, other := range m.data.Catalogs {
-		if other.SourceID != id && other.Marketplace.Name == marketplace.Name {
+		if other.SourceID != source.ID && other.Marketplace.Name == marketplace.Name {
 			return Catalog{}, errors.New("another source already claims this marketplace name")
 		}
 	}
@@ -234,14 +280,8 @@ func (m *Manager) Refresh(ctx context.Context, id string) (Catalog, error) {
 	if err != nil {
 		return Catalog{}, err
 	}
-	catalog := Catalog{SourceID: id, Marketplace: marketplace, Root: final, Links: sourceTree.Links, Commit: commit, RefreshedAt: time.Now().UTC()}
-	next := copyValue(m.data)
-	next.Catalogs = slices.DeleteFunc(next.Catalogs, func(c Catalog) bool { return c.SourceID == id })
-	next.Catalogs = append(next.Catalogs, catalog)
-	if err := m.commit(next); err != nil {
-		return Catalog{}, err
-	}
-	return copyValue(catalog), nil
+	catalog := Catalog{SourceID: source.ID, Marketplace: marketplace, Root: final, Links: sourceTree.Links, Commit: commit, RefreshedAt: time.Now().UTC()}
+	return catalog, nil
 }
 
 func (m *Manager) Install(ctx context.Context, marketplace, name string) (Installation, error) {

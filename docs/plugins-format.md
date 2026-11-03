@@ -18,6 +18,8 @@ Hook、MCP 或 LSP 进程；业务宿主通过类型化 `Bundle` 使用已加载
   将完整 Git archive 导出为普通文件与 `SourceTree.Links`，返回源树和实际 commit。
 - `NewManager(root)`：打开受管插件目录。首次创建只登记两个默认市场，不联网。
 - `Sources`、`Catalogs`、`Installed`：返回独立的内存快照，不等待网络刷新。
+- `AddSource(ctx, location)`：识别 GitHub 仓库、Git URL、清单文件或目录，读取清单中的名称，
+  校验成功后一次提交来源与目录；无效、重复或已取消的添加不发布部分登记。
 - `PutSource`、`RemoveSource`、`Refresh`：维护市场来源和目录快照。
 - `Install`、`SetEnabled`、`Update`、`Uninstall`：维护插件安装记录。
 - `Bundles()`：返回宿主用户级已启用且依赖可用的插件，各项目使用同一组插件。

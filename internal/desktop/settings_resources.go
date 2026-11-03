@@ -358,6 +358,7 @@ func (a *App) editCommand(command *contracts.UserCommand) {
 // editor, and credential values are recovered only from the submitted command,
 // never from the public snapshot.
 func (a *App) capabilityCommandFinished(command contracts.Command, err error) {
+	a.pluginSourceCommandFinished(command, err)
 	a.customSubagentCommandFinished(command, err)
 	s := &a.capabilityUI
 	if command.Kind == "settings.update" && command.Settings != nil {

@@ -6,10 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"gcode/internal/contracts"
@@ -86,11 +88,16 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 	app.waitKey("plugin-source-manage")
 	pluginCapture(app, "marketplace")
 	app.act("plugin-source-add", "press", "")
-	app.act("plugin-source-name", "setValue", "native-market")
-	app.act("plugin-source-location", "setValue", market)
-	app.act("plugin-source-kind", "press", "")
-	pluginActLabel(app, "Source type git")
+	pluginCapture(app, "simple-add-marketplace")
+	app.act("plugin-source-location", "setValue", filepath.Join(artifacts, "missing-market"))
 	app.act("plugin-source-save", "press", "")
+	app.waitKey("plugin-source-error")
+	pluginCapture(app, "invalid-marketplace-draft-retained")
+	sourceURL := (&url.URL{Scheme: "file", Path: "/" + strings.TrimPrefix(filepath.ToSlash(market), "/")}).String()
+	app.act("plugin-source-location", "setValue", sourceURL)
+	app.act("plugin-source-save", "press", "")
+	app.waitKey("plugin-marketplace-native-market")
+	app.act("plugin-source-manage", "press", "")
 	app.waitKey("plugin-refresh-native-market")
 	app.act("plugin-refresh-native-market", "press", "")
 	app.await("private Git marketplace catalog", func() error {
@@ -239,6 +246,10 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 		}
 		return nil
 	})
+	restarted.act("dialog-close", "press", "")
+	restarted.act("plugin-source-add", "press", "")
+	restarted.waitKey("plugin-source-choose-directory")
+	pluginCapture(restarted, "simple-add-marketplace-dark-chinese")
 }
 
 func pluginActLabel(app *nativeApp, label string) {

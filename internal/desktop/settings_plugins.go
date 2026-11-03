@@ -11,12 +11,14 @@ import (
 )
 
 type pluginSettingsState struct {
-	query, marketplace      string
-	sourcesOpen, sourceOpen bool
-	source                  contracts.PluginMarketplaceInput
-	configID                string
-	config                  map[string]*string
-	removeConfig            []string
+	query, marketplace         string
+	sourcesOpen, sourceOpen    bool
+	source                     contracts.PluginMarketplaceInput
+	sourcePending, sourceError string
+	sourceEpoch                uint64
+	configID                   string
+	config                     map[string]*string
+	removeConfig               []string
 }
 
 func (a *App) pluginSettings(c *ui.Context) {
@@ -35,11 +37,7 @@ func (a *App) pluginMarketplaceActions(c *ui.Context) {
 			a.capabilityUI.plugins.sourcesOpen = true
 			a.capabilityUI.plugins.sourceOpen = false
 		})
-		primaryButton(c.Key("plugin-source-add"), tr(c, "Add marketplace source")).OnClick(func() {
-			s := &a.capabilityUI.plugins
-			s.source = contracts.PluginMarketplaceInput{Kind: "github"}
-			s.sourcesOpen, s.sourceOpen = true, true
-		})
+		primaryButton(c.Key("plugin-source-add"), tr(c, "Add marketplace source")).OnClick(a.openPluginSourceAdd)
 	})
 }
 
@@ -164,18 +162,23 @@ func (a *App) pluginSourcesDialog(c *ui.Context) {
 	s := &a.capabilityUI.plugins
 	title := "Manage marketplace sources"
 	if s.sourceOpen {
-		title = "Add marketplace source"
+		title = "Add plugin marketplace"
 		if s.source.ID != "" {
 			title = "Edit marketplace source"
 		}
 	}
 	a.settingsDialog(c, "plugin-sources-dialog", title, &s.sourcesOpen, 680, func() {
-		a.pluginOperations(c)
-		a.pluginSources(c)
+		if s.sourceOpen && s.source.ID == "" {
+			a.pluginSourceAddForm(c)
+		} else {
+			a.pluginOperations(c)
+			a.pluginSources(c)
+		}
 	})
 	if !s.sourcesOpen {
 		s.sourceOpen = false
 		s.source = contracts.PluginMarketplaceInput{}
+		s.sourcePending, s.sourceError = "", ""
 	}
 }
 
