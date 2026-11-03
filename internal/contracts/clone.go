@@ -102,6 +102,7 @@ func CloneSnapshot(v Snapshot) Snapshot {
 		v.Queue[i].Attachments = slices.Clone(v.Queue[i].Attachments)
 	}
 	v.Runs = slices.Clone(v.Runs)
+	v.ModelRequests = slices.Clone(v.ModelRequests)
 	for i := range v.Runs {
 		if v.Runs[i].FinishedAt != nil {
 			t := *v.Runs[i].FinishedAt

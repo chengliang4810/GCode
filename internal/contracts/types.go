@@ -46,6 +46,7 @@ type Snapshot struct {
 	Terminals           []Terminal              `json:"terminals"`
 	Queue               []QueuedMessage         `json:"queue"`
 	Runs                []Run                   `json:"runs"`
+	ModelRequests       []ModelRequest          `json:"modelRequests"`
 	Account             Account                 `json:"account"`
 	Appshots            []Attachment            `json:"appshots"`
 	Attachments         []Attachment            `json:"attachments"`
