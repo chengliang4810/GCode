@@ -84,17 +84,17 @@ type SidebarTokens struct {
 // the relative time and, while hovered, the archive control, so its minimum is
 // that control rather than an arbitrary wider number.
 func Sidebar() SidebarTokens {
-	// A conversation row pads 8 either side, then the leading status slot, then
-	// a 4 gap before the title. Everything that has to line up with that title
+	// A conversation row shares the project/navigation padding and leading
+	// icon slot, then an 8px gap before the title. Everything that has to line up with that title
 	// (Show more, the empty state) is padded by the same sum, so it is derived
 	// here instead of being restated as a second magic number.
-	const conversationRowPaddingX = 8
-	const conversationGap = 4
+	const conversationRowPaddingX = 10
+	const conversationGap = 8
 	controls := Controls()
 	leading := controls.IconSize
 	return SidebarTokens{
 		PaddingX: 8, NavigationPaddingY: 12,
-		RowHeight: 32, HeaderHeight: 28, RowPaddingX: 10,
+		RowHeight: 32, HeaderHeight: 28, RowPaddingX: conversationRowPaddingX,
 		RowRadius: 8, RowGap: 2, IconSize: 16, ConversationLeadingWidth: leading,
 		ConversationTrailingWidth: controls.InlineIconButtonSize,
 		ChildInset:                8, ConversationTextInset: conversationRowPaddingX + leading + conversationGap,

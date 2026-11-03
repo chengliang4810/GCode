@@ -83,7 +83,7 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 	})
 	row.Children(func() {
-		ui.Row(c).FillWidth().Height(design.Sidebar().RowHeight).Gap(4).MinWidth(0).AlignItems(ui.Center).Children(func() {
+		ui.Row(c).FillWidth().Height(design.Sidebar().RowHeight).Gap(8).MinWidth(0).AlignItems(ui.Center).Children(func() {
 			ui.Box(c).Width(design.Sidebar().ConversationLeadingWidth).Shrink(0).Center().Children(func() {
 				if session.Status != contracts.Idle || session.Unread {
 					a.sidebarStatusGlyph(c, session)

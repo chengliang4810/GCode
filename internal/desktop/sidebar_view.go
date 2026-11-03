@@ -41,6 +41,9 @@ func (a *App) sidebarView(c *ui.Context) {
 			baseTheme := c.Theme()
 			listTheme := *baseTheme
 			listTheme.Accent = ui.Transparent
+			// Shared rows own both state washes, including the child inset and
+			// radius. A native hover wash would paint a second, wider box.
+			listTheme.SurfaceHover = ui.Transparent
 			listTheme.AccentText = a.palette.Text
 			restoreRoot := func() {
 				c.Root().Background(design.Glass(a.palette, a.state.Settings.Appearance.Surface, c.Vibrancy()))
@@ -69,7 +72,7 @@ func (a *App) sidebarView(c *ui.Context) {
 				c.SetTheme(&listTheme)
 				restoreRoot()
 			}).Label(tr(c, "Sessions list")).Grow(1).FillWidth().
-				Padding(4, design.Sidebar().PaddingX).Gap(design.Sidebar().RowGap)
+				Padding(4, design.Sidebar().PaddingX, 4, sidebarLeftInset(c.TitleBar())).Gap(design.Sidebar().RowGap)
 			c.SetTheme(baseTheme)
 			restoreRoot()
 			list.OnChange(func() { a.openSidebarSelection(rows) }).OnSubmit(func() { a.openSidebarSelection(rows) })
@@ -101,14 +104,21 @@ func (a *App) sidebarView(c *ui.Context) {
 	})
 }
 
+// sidebarLeftInset shares the native close-button column across navigation,
+// section headings, project icons and conversation status slots.
+func sidebarLeftInset(bar ui.TitleBar) float32 {
+	s := design.Sidebar()
+	if bar.Left > 0 {
+		// TrafficLightPosition has equal X/Y insets; the band midpoint is also
+		// the close button center measured from the window's left edge.
+		return max(0, bar.Height/2-s.RowPaddingX-s.IconSize/2)
+	}
+	return s.PaddingX
+}
+
 func (a *App) sidebarNavigation(c *ui.Context) {
 	s := design.Sidebar()
-	left := s.PaddingX
-	if bar := c.TitleBar(); bar.Left > 0 {
-		// TrafficLightPosition uses equal X/Y insets, so half the native
-		// band is also the close button center measured from the left.
-		left = max(0, bar.Height/2-s.RowPaddingX-s.IconSize/2)
-	}
+	left := sidebarLeftInset(c.TitleBar())
 	ui.Column(c.Key("sidebar-primary-navigation")).FillWidth().
 		Padding(s.NavigationPaddingY, s.PaddingX, s.NavigationPaddingY, left).Children(func() {
 		controlSidebarRow(c.Key("sidebar-new-conversation"), tr(c, "New conversation"), false).
@@ -128,7 +138,7 @@ func (a *App) sidebarNavigation(c *ui.Context) {
 }
 
 func (a *App) sidebarListToolbar(c *ui.Context) {
-	ui.Row(c.Key("sidebar-list-toolbar")).FillWidth().Padding(8, 8, 4, 18).
+	ui.Row(c.Key("sidebar-list-toolbar")).FillWidth().Padding(8, 8, 4, sidebarLeftInset(c.TitleBar())+design.Sidebar().RowPaddingX).
 		Gap(2).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, tr(c, "Conversation list")).Grow(1).SingleLine().
 			FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Muted)

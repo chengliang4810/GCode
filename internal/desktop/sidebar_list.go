@@ -86,7 +86,7 @@ func (a *App) sidebarHeader(c *ui.Context, row sidebarRow, index int) {
 	if !closed && !timeline {
 		below = 2
 	}
-	heading := controlSidebarHeading(c, a.sidebarHeaderText(row)).FillWidth().Margin(above, 0, below, 0).OnClick(func() {
+	heading := controlSidebarHeading(c.Key(row.Key+":toggle"), a.sidebarHeaderText(row)).FillWidth().Margin(above, 0, below, 0).OnClick(func() {
 		a.expanded[row.Key] = !a.expanded[row.Key]
 	})
 	if row.SessionGroup {

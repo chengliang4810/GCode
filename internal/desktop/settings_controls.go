@@ -404,7 +404,7 @@ func controlSidebarConversationRow(c *ui.Context, label string, style sidebarCon
 	// Keep the shared row's center alignment: the content row is as tall as
 	// the row itself, so stretching it would pin it under the top padding
 	// and read low.
-	return controlSidebarRow(c, label, style.Selected).Height(height).Padding(4, 8).
+	return controlSidebarRow(c, label, style.Selected).Height(height).Padding(4, design.Sidebar().RowPaddingX).
 		Justify(ui.Start)
 }
 

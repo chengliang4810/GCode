@@ -131,6 +131,27 @@ func TestSidebarNestedRowKeepsTheListEdge(t *testing.T) {
 	}
 }
 
+func TestSidebarHoverStaysInsideConversationRow(t *testing.T) {
+	for _, width := range []float32{264, 350} {
+		t.Run(fmt.Sprintf("width-%g", width), func(t *testing.T) {
+			app := sidebarLayoutApp(t)
+			app.sidebarWidth = width
+			tt := ui.NewTester(app.View, 1440, 1400)
+			row, ok := tt.Find("第二项目的对话")
+			if !ok {
+				t.Fatal("nested conversation missing")
+			}
+			x, y := int(row.X)-2, int(row.Y+row.H/2)
+			before := tt.Image().RGBAAt(x, y)
+			tt.Move(row.X+row.W/2, row.Y+row.H/2)
+			tt.Frame()
+			if after := tt.Image().RGBAAt(x, y); after != before {
+				t.Fatalf("hover painted outside the shared row: before=%v after=%v", before, after)
+			}
+		})
+	}
+}
+
 func TestSidebarLayoutHierarchyAndPagination(t *testing.T) {
 	app := sidebarLayoutApp(t)
 	tt := ui.NewTester(app.View, 1440, 1400)
