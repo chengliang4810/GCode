@@ -29,7 +29,7 @@ func TestLanguageDefaultsAndFallback(t *testing.T) {
 	if In(Chinese, "New untranslated message") != "New untranslated message" {
 		t.Fatal("English fallback missing")
 	}
-	if got := In(Chinese, "Save changes to %s?", "Settings.go"); got != "保存对 Settings.go 的修改？" {
+	if got := In(Chinese, "Save changes to %s?", "Settings.go"); got != "保存对 Settings.go 的更改？" {
 		t.Fatal(got)
 	}
 }

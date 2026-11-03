@@ -596,7 +596,7 @@ func (s *State) picker(c *ui.Context) {
 	}
 	items = append(items, struct{ kind, title, icon string }{"browser", "Browser", "globe"}, struct{ kind, title, icon string }{"terminal", "Terminal", "terminal"})
 	if s.hasGit() {
-		items = append(items, struct{ kind, title, icon string }{"changes", "Diffs", "list"}, struct{ kind, title, icon string }{"history", "History", "git-branch"})
+		items = append(items, struct{ kind, title, icon string }{"changes", "Changes", "list"}, struct{ kind, title, icon string }{"history", "History", "git-branch"})
 	}
 	ui.Column(c).Grow(1).FillWidth().Padding(16).Center().Children(func() {
 		ui.Column(c).FillWidth().MaxWidth(280).Gap(8).Children(func() {

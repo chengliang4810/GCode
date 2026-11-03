@@ -117,7 +117,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 							s.OpenSurface("sidechat")
 						}
 					}
-					for _, item := range []struct{ kind, title string }{{"files", "Files"}, {"browser", "Browser"}, {"terminal", "Terminal"}, {"changes", "Diffs"}, {"history", "History"}} {
+					for _, item := range []struct{ kind, title string }{{"files", "Files"}, {"browser", "Browser"}, {"terminal", "Terminal"}, {"changes", "Changes"}, {"history", "History"}} {
 						if (item.kind == "changes" || item.kind == "history") && !s.hasGit() {
 							continue
 						}

@@ -277,7 +277,7 @@ func TestSurfacePickerMatchesReferenceChoices(t *testing.T) {
 	s, _, _ := testWorkspace(t)
 	s.ProjectID = s.snapshot.Projects[0].ID
 	tt := ui.NewTester(s.View, 520, 842)
-	for _, label := range []string{"Browser", "Terminal", "Diffs", "History"} {
+	for _, label := range []string{"Browser", "Terminal", "Changes", "History"} {
 		if !tt.HasText(label) {
 			t.Fatalf("missing reference picker choice %q", label)
 		}
@@ -292,7 +292,7 @@ func TestSurfacePickerMatchesReferenceChoices(t *testing.T) {
 		s.snapshot.Projects[i].GitDetected = false
 	}
 	tt.Frame()
-	if tt.HasText("Diffs") || tt.HasText("History") {
+	if tt.HasText("Changes") || tt.HasText("History") {
 		t.Fatal("Git-only surfaces shown for a non-Git project")
 	}
 	for i := range s.snapshot.Projects {
@@ -301,7 +301,7 @@ func TestSurfacePickerMatchesReferenceChoices(t *testing.T) {
 		s.snapshot.Projects[i].Branches = nil
 	}
 	tt.Frame()
-	if !tt.HasText("Diffs") || !tt.HasText("History") {
+	if !tt.HasText("Changes") || !tt.HasText("History") {
 		t.Fatal("detected Git without a loaded branch list lost its launcher entries")
 	}
 }

@@ -96,14 +96,14 @@ func TestTabStripSourceEmptyAndNonGitMenu(t *testing.T) {
 	if err := tt.Click("New surface"); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := tt.Menu(), []string{"Files", "Browser", "Terminal", "Diffs", "History"}; !reflect.DeepEqual(got, want) {
+	if got, want := tt.Menu(), []string{"Files", "Browser", "Terminal", "Changes", "History"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("detected Git with an unloaded branch list lost entries: %v", got)
 	}
-	if err := tt.ChooseMenuItem("Diffs"); err != nil {
+	if err := tt.ChooseMenuItem("Changes"); err != nil {
 		t.Fatal(err)
 	}
 	if s.ActiveKind() != "changes" {
-		t.Fatal("detected Git's Diffs action did not open its surface")
+		t.Fatal("detected Git's Changes action did not open its surface")
 	}
 }
 
@@ -662,7 +662,7 @@ func TestTabStripSourceHoverAndExpandedGlyph(t *testing.T) {
 			if err := tt.Click("New surface"); err != nil {
 				t.Fatal(err)
 			}
-			if got, want := tt.Menu(), []string{"Files", "Browser", "Terminal", "Diffs", "History"}; !reflect.DeepEqual(got, want) {
+			if got, want := tt.Menu(), []string{"Files", "Browser", "Terminal", "Changes", "History"}; !reflect.DeepEqual(got, want) {
 				t.Fatalf("Git menu = %v, want %v", got, want)
 			}
 			tt.Move(2, 70)
@@ -761,7 +761,7 @@ func TestTabStripGitDetectionDoesNotBorrowAnotherProject(t *testing.T) {
 			s.Update(snapshot)
 			s.ProjectID = project
 			tt := ui.NewTester(s.View, 360, 600)
-			if tt.HasText("Diffs") || tt.HasText("History") || !tt.HasText("Browser") || !tt.HasText("Terminal") {
+			if tt.HasText("Changes") || tt.HasText("History") || !tt.HasText("Browser") || !tt.HasText("Terminal") {
 				t.Fatal("launcher borrowed Git detection from a different project")
 			}
 			s.OpenSurface("files")

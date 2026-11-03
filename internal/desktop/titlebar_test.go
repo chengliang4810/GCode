@@ -102,7 +102,7 @@ func TestTitlebarSlotsKeepVisibleControlsReachable(t *testing.T) {
 							if err := tt.Click("New surface"); err != nil {
 								t.Fatal(err)
 							}
-							if !reflect.DeepEqual(tt.Menu(), []string{"Side chat", "Files", "Browser", "Terminal", "Diffs", "History"}) {
+							if !reflect.DeepEqual(tt.Menu(), []string{"Side chat", "Files", "Browser", "Terminal", "Changes", "History"}) {
 								t.Fatalf("New surface center was not reachable: %v", tt.Menu())
 							}
 							tt.CloseMenu()
