@@ -276,10 +276,8 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 				ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
 			}
 		})
-		// The central conversation keeps a status strip below its composer;
-		// the pane reserves the same strip so both pills share one bottom
-		// line even though only the conversation ever writes to it.
-		ui.Row(c).Height(composerStatusHeight)
+		// Share the central composer's bottom inset so both pills align.
+		ui.Box(c).Height(composerBottomInset)
 	})
 }
 

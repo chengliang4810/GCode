@@ -87,6 +87,61 @@ func TestConversationMetricsMarkUnrecordedRunsWithoutChargingForks(t *testing.T)
 	}
 }
 
+func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		request contracts.ModelRequest
+		want    string
+	}{
+		{name: "unknown failed request"},
+		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: "0 tokens · — tokens/s · — cache"},
+		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "≥12 tokens · — tokens/s · — cache"},
+		{name: "speed only", request: contracts.ModelRequest{Usage: model.Usage{OutputKnown: true}, DecodeDuration: time.Second}, want: "— tokens · 0.0 tokens/s · — cache"},
+		{name: "cache without usable denominator", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true}}},
+		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "≥20 tokens · — tokens/s · 50.0% cache"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.state.ModelRequests = nil
+			a.state.Runs = nil
+			sessionID := "metrics"
+			tt := ui.NewTester(func(c *ui.Context) {
+				a.conversationMetricsView(c, sessionID)
+			}, 720, 80)
+			if len(tt.Texts()) != 0 {
+				t.Fatalf("empty conversation exposed metrics: %v", tt.Texts())
+			}
+			tc.request.SessionID = sessionID
+			a.state.ModelRequests = []contracts.ModelRequest{tc.request}
+			tt.Frame()
+			if tc.want == "" {
+				if len(tt.Texts()) != 0 {
+					t.Fatalf("unknown data exposed placeholder metrics: %v", tt.Texts())
+				}
+				return
+			}
+			if !tt.HasText(tc.want) {
+				t.Fatalf("first useful data did not reveal metrics: %v", tt.Texts())
+			}
+			a.state.ModelRequests = append(a.state.ModelRequests, contracts.ModelRequest{SessionID: sessionID})
+			tt.Frame()
+			if len(tt.Texts()) == 0 {
+				t.Fatal("subsequent unknown request hid existing metrics")
+			}
+			sessionID = "empty"
+			tt.Frame()
+			if len(tt.Texts()) != 0 {
+				t.Fatalf("switching sessions retained another conversation's metrics: %v", tt.Texts())
+			}
+			sessionID = "metrics"
+			tt.Frame()
+			if len(tt.Texts()) == 0 {
+				t.Fatal("returning to the conversation lost its metrics")
+			}
+		})
+	}
+}
+
 func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		a := testApp(t, "default")

@@ -132,6 +132,12 @@ func (a *App) conversationMetricsView(c *ui.Context, sessionID string) {
 		return
 	}
 	stats := a.metricsFor(sessionID, "")
+	_, speedKnown := stats.totals.TokensPerSecond()
+	_, cacheKnown := stats.totals.CacheHitFraction()
+	if stats.totals.Requests == stats.totals.UnknownUsage &&
+		stats.totals.Input+stats.totals.Output == 0 && !speedKnown && !cacheKnown {
+		return
+	}
 	details := metricsDisplay(c, stats.totals) + "\n" + tr(c, "Conversation total") + "\n" + metricsDetails(c, stats.totals)
 	ui.Text(c.Key("conversation-metrics:"+sessionID), metricsDisplay(c, stats.totals)).
 		FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).

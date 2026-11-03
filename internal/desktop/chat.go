@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	composerStatusHeight     = float32(24)
+	composerBottomInset      = float32(24)
 	transcriptListTopPadding = float32(28)
 )
 
@@ -123,12 +123,7 @@ func (a *App) chatView(c *ui.Context) {
 			// a content-height change in the same frame cannot make it lag.
 			ui.Spacer(c).Grow(1 - frame.Amount).MinHeight(0)
 		}
-		ui.Row(c).Height(composerStatusHeight).Padding(0, 24).Gap(6).AlignItems(ui.Center).Children(func() {
-			session := a.currentSession()
-			if session.Status == contracts.Errored {
-				ui.Text(c, tr(c, "Run failed")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
-			}
-		})
+		ui.Box(c).Height(composerBottomInset)
 	})
 }
 
