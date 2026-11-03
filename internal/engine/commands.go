@@ -123,6 +123,8 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	switch command.Kind {
 	case "provider.test":
 		return e.startModelCheckLocked(command.ID)
+	case "provider.models.fetch":
+		return e.startModelFetchLocked(command.ID)
 	case "resource.refresh", "resource.skill.save", "resource.skill.import", "resource.skill.delete", "resource.skill.toggle",
 		"resource.command.save", "resource.command.delete", "resource.command.toggle",
 		"resource.mcp.save", "resource.mcp.delete", "resource.mcp.toggle", "resource.mcp.test":
@@ -543,10 +545,12 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	if command.Kind == "provider.save" {
 		e.cancelProviderNamingLocked(command.Provider.Provider.ID)
 		e.invalidateModelChecksLocked(command.Provider.Provider.ID)
+		e.invalidateModelFetchesLocked(command.Provider.Provider.ID)
 		e.refreshProvidersLocked()
 	} else if command.Kind == "provider.delete" {
 		e.cancelProviderNamingLocked(command.ID)
 		e.invalidateModelChecksLocked(command.ID)
+		e.invalidateModelFetchesLocked(command.ID)
 		e.refreshProvidersLocked()
 	}
 	if command.Kind == "settings.update" && before.Settings.General.ThreadNamingModel != e.state.Settings.General.ThreadNamingModel {

@@ -129,7 +129,7 @@ func (c Command) Validate() error {
 			return errors.New("provider configuration is required")
 		}
 		return c.Provider.Provider.Validate()
-	case "provider.delete", "provider.test":
+	case "provider.delete", "provider.test", "provider.models.fetch":
 		if c.ID == "" {
 			return errors.New("provider ID is required")
 		}

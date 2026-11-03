@@ -20,6 +20,7 @@ func CloneSnapshot(v Snapshot) Snapshot {
 	for i := range v.CustomProviders {
 		v.CustomProviders[i].Provider = model.CloneProvider(v.CustomProviders[i].Provider)
 		v.CustomProviders[i].ModelChecks = CloneModelChecks(v.CustomProviders[i].ModelChecks)
+		v.CustomProviders[i].ModelFetch = CloneModelFetch(v.CustomProviders[i].ModelFetch)
 	}
 	v.Integrations = cloneIntegrations(v.Integrations)
 	v.ThemeLibrary = slices.Clone(v.ThemeLibrary)

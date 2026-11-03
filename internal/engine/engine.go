@@ -86,6 +86,8 @@ type Engine struct {
 	resources         userResourceCatalog
 	modelChecks       map[string]*modelCheckRun
 	modelCheckResults map[string]contracts.ModelCheck
+	modelFetchRuns    map[string]*modelFetchRun
+	modelFetchResults map[string]contracts.ModelFetch
 	catalog           *modelcatalog.Cache
 	catalogCancel     context.CancelFunc
 	catalogDone       chan struct{}
@@ -113,6 +115,7 @@ func Open(options Options) (*Engine, error) {
 	}
 	e := &Engine{toolGuard: options.ToolGuard, storage: options.Storage, client: client, runs: map[string]*activeRun{}, subs: map[uint64]chan contracts.Event{}, done: make(chan struct{}), history: map[string][]model.Message{}, context: map[string][]model.Message{}, terminals: map[string]*terminalhost.Session{}}
 	e.modelChecks, e.modelCheckResults = map[string]*modelCheckRun{}, map[string]contracts.ModelCheck{}
+	e.modelFetchRuns, e.modelFetchResults = map[string]*modelFetchRun{}, map[string]contracts.ModelFetch{}
 	e.projectScans = map[string]*projectScan{}
 	e.projectScanner = collectProjectFiles
 	e.naming = map[string]*namingRun{}
@@ -313,7 +316,7 @@ func (e *Engine) refreshProvidersLocked() {
 	for _, config := range e.providers {
 		public := model.CloneProvider(config)
 		public.APIKey = ""
-		e.state.CustomProviders = append(e.state.CustomProviders, contracts.ProviderConfiguration{Provider: public, HasAPIKey: config.APIKey != "", ModelChecks: e.providerModelChecksLocked(config.ID)})
+		e.state.CustomProviders = append(e.state.CustomProviders, contracts.ProviderConfiguration{Provider: public, HasAPIKey: config.APIKey != "", ModelChecks: e.providerModelChecksLocked(config.ID), ModelFetch: e.providerModelFetchLocked(config.ID)})
 		provider := contracts.Provider{ID: config.ID, Name: config.Name, Icon: "widget", Enabled: !config.Disabled, Status: "ready"}
 		ready := config.Ready()
 		if config.Disabled {

@@ -18,6 +18,7 @@ type ProviderConfiguration struct {
 	Provider    model.Provider `json:"provider"`
 	HasAPIKey   bool           `json:"hasApiKey"`
 	ModelChecks []ModelCheck   `json:"modelChecks"`
+	ModelFetch  *ModelFetch    `json:"modelFetch,omitempty"`
 }
 
 type ProviderInput struct {

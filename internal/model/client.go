@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strings"
@@ -75,16 +76,9 @@ func (c *Client) Bind(provider Provider, selected Model) (*Gateway, error) {
 	if selected.Disabled {
 		return nil, errors.New("model is disabled")
 	}
-	var wire adapter
-	switch provider.Protocol {
-	case Chat:
-		wire = chatAdapter{}
-	case Responses:
-		wire = responsesAdapter{}
-	case Messages:
-		wire = messagesAdapter{}
-	default:
-		return nil, errors.New("unsupported model protocol")
+	wire, err := adapterFor(provider.Protocol)
+	if err != nil {
+		return nil, err
 	}
 	return &Gateway{
 		http: c.HTTP, provider: provider, adapter: wire,
@@ -97,6 +91,80 @@ func equalModel(left, right Model) bool {
 	sameLimits := left.ContextWindow == right.ContextWindow && left.MaxOutput == right.MaxOutput
 	samePrices := left.InputPrice == right.InputPrice && left.OutputPrice == right.OutputPrice
 	return sameIdentity && sameLimits && samePrices && slices.Equal(left.ReasoningLevels, right.ReasoningLevels) && slices.Equal(left.InputTypes, right.InputTypes)
+}
+
+// adapterFor resolves one protocol to its complete wire boundary.
+func adapterFor(protocol Protocol) (adapter, error) {
+	switch protocol {
+	case Chat:
+		return chatAdapter{}, nil
+	case Responses:
+		return responsesAdapter{}, nil
+	case Messages:
+		return messagesAdapter{}, nil
+	default:
+		return nil, errors.New("unsupported model protocol")
+	}
+}
+
+// maxModelListBytes bounds a provider models response independently of streams.
+const maxModelListBytes = 8 << 20
+
+// ListModels requests the configured provider's own models endpoint and
+// returns the deduplicated, sorted model IDs it reports. Both wire protocols
+// answer {"data":[{"id":...}]}.
+func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, error) {
+	provider = CloneProvider(provider)
+	if err := provider.Validate(); err != nil {
+		return nil, err
+	}
+	if provider.Disabled {
+		return nil, errors.New("provider is disabled")
+	}
+	if provider.BaseURL == "" {
+		return nil, errors.New("configure the provider base URL before listing its models")
+	}
+	wire, err := adapterFor(provider.Protocol)
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(provider.BaseURL, "/")+"/models", nil)
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Accept", "application/json")
+	wire.headers(request.Header, provider.APIKey)
+	response, err := c.HTTP.Do(request)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, errors.New("provider connection failed")
+	}
+	defer response.Body.Close()
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		return nil, fmt.Errorf("model list request failed (HTTP %d)", response.StatusCode)
+	}
+	var payload struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(io.LimitReader(response.Body, maxModelListBytes)).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("parse model list: %w", err)
+	}
+	ids := make([]string, 0, len(payload.Data))
+	seen := make(map[string]bool, len(payload.Data))
+	for _, entry := range payload.Data {
+		id := strings.TrimSpace(entry.ID)
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		ids = append(ids, id)
+	}
+	slices.Sort(ids)
+	return ids, nil
 }
 
 func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) error) (Result, error) {
