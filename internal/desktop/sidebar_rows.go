@@ -110,7 +110,7 @@ func (a *App) projectSidebarRows() []sidebarRow {
 				Group: key, Project: true, Count: len(sessions), Working: working[project.ID],
 			})
 			if !a.expanded[key] {
-				rows = a.appendSidebarConversations(rows, key, sessions, true)
+				rows = a.appendSidebarConversations(rows, key, sessions, false)
 			}
 		}
 	}

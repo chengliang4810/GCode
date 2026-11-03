@@ -92,8 +92,8 @@ sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分
 ## 验证
 
 `TestSidebarLayoutHierarchyAndPagination` 核对顺序、行高、分页和分区折叠；
-`TestSidebarNestedRowKeepsTheListEdge` 在 264/350px 下核对嵌套行只缩进内容：
-选中底色与顶层行同右边缘、左缘恰好差 `ChildInset`，标题同一列缩进同一数值；
+`TestSidebarNestedRowKeepsTheListEdge` 在 264/350px 下核对项目内对话与顶层行同列：
+选中底色左右边缘一致，图标及标题不增加额外缩进；
 `TestSidebarProjectAccordionPreservesDraftAndComposerTarget` 核对折叠隔离；
 `sidebar_tree_test.go` 覆盖项目归属、重复排除、独立分页、深处/同一对话导航、
 定向重命名、归档排除、置顶恢复及真实时钟；
@@ -110,6 +110,8 @@ sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分
 
 macOS 标题栏图标以系统按钮预留高度的中心线对齐，系统按钮右侧保留 12 DIP 间隔；新建对话图标中心与关闭按钮中心同列。项目分区不再提供单独的批量开合图标。
 
-左侧对齐采用共享 `sidebarLeftInset`：新建对话、置顶/项目/对话标题与顶层条目使用同一外边距；标题左边缘与图标区域左边缘对齐，图标中心与 macOS 关闭按钮同列。项目名称、顶层对话标题和新建对话文字共用 10px 行内边距、16px 图标槽和 8px 图文间距；项目内对话保留 8px 层级缩进。列表工具栏与空状态也由这些尺寸推导。
+左侧对齐采用共享 `sidebarLeftInset`：新建对话、置顶/项目/对话标题与顶层条目使用同一外边距；标题左边缘与图标区域左边缘对齐，图标中心与 macOS 关闭按钮同列。项目名称、顶层对话标题和新建对话文字共用 10px 行内边距、16px 图标槽和 8px 图文间距；项目内对话与项目行同列，不额外缩进。列表工具栏与空状态也由这些尺寸推导。
 
 项目收起时，如果该项目任意未归档会话处于 `Working`，项目行右侧显示与会话行一致的原生旋转运行指示；项目展开或全部会话停止运行后隐藏。运行状态从完整业务快照派生，不受搜索、分页、置顶或子会话隐藏影响，不为显示状态而自动展开项目。
+
+项目下的对话图标与项目文件夹图标同列，名称与项目名称同列；层级通过项目分区和展开/收起来表达。运行指示使用主题 Accent，等待输入使用 Warning，错误使用 Danger，未读使用 Accent；颜色随主题变化。

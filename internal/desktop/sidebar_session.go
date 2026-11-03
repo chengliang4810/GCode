@@ -122,11 +122,11 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 func (a *App) sidebarStatusGlyph(c *ui.Context, session contracts.Session) {
 	switch session.Status {
 	case contracts.Working:
-		ui.Spinner(c).Size(12, 12)
+		ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
 	case contracts.AwaitingInput:
 		ui.Box(c).Size(6, 6).Radius(3).Background(a.palette.Warning)
 	case contracts.Errored:
-		icon(c, "close-circle", 12)
+		ui.Box(c).TextColor(a.palette.Danger).Children(func() { icon(c, "close-circle", 12) })
 	default:
 		if session.Unread {
 			ui.Box(c).Size(6, 6).Radius(3).Background(a.palette.Accent)

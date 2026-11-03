@@ -230,7 +230,7 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 		ui.Text(c, row.Header).SingleLine().MinWidth(0).Grow(1)
 		if closed && row.Working {
 			ui.Box(c.Key("sidebar-project-working:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).Shrink(0).Center().Label(tr(c, "Running")).Tooltip(tr(c, "Running")).Children(func() {
-				ui.Spinner(c).Size(12, 12)
+				ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
 			})
 		}
 		if offline {

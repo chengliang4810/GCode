@@ -25,7 +25,7 @@ func TestSidebarSharedLeftRail(t *testing.T) {
 					tt.SetTitleBar(ui.TitleBar{Height: 44, Left: 68})
 					s := design.Sidebar()
 					expected := float32(22) - s.RowPaddingX - s.IconSize/2
-					for _, label := range []string{"新建对话", "已置顶", "项目", "对话", "fnbot", "未归属项目的对话", "了解对话输出目录内容"} {
+					for _, label := range []string{"新建对话", "已置顶", "项目", "对话", "fnbot", "未归属项目的对话", "了解对话输出目录内容", "第二项目的对话"} {
 						r, ok := tt.Find(label)
 						if !ok {
 							t.Fatalf("missing %s", label)

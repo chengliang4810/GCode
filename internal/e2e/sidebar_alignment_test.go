@@ -15,7 +15,7 @@ func TestDesktopScenarioSidebarAlignment(t *testing.T) {
 			app := startApp(t, binary, artifacts, "sidebar-alignment", filepath.Join(artifacts, "data"), "--scenario", "default", "--appearance", appearance, "--width", "900")
 			app.act("back-to-conversations", "press", "")
 			navigation := app.waitKey("sidebar-new-conversation")
-			for _, key := range []string{"group:pinned:toggle", "section:projects:toggle", "section:conversations:toggle", "sidebar-project:fieldnotes", "sidebar-session:chat-0"} {
+			for _, key := range []string{"group:pinned:toggle", "section:projects:toggle", "section:conversations:toggle", "sidebar-project:fieldnotes", "sidebar-session:chat-0", "sidebar-session:chat-2"} {
 				node := app.waitKey(key)
 				if math.Abs(node.Bounds.X-navigation.Bounds.X) > 0.5 {
 					t.Fatalf("%s left=%g, navigation left=%g", key, node.Bounds.X, navigation.Bounds.X)

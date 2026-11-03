@@ -110,7 +110,7 @@ func TestDesktopLocalSidebarLayout(t *testing.T) {
 			for _, session := range snapshot.Sessions {
 				if session.ProjectID == firstID && session.Title != "第一项目对话 0" && session.Title != "第一项目对话 1" {
 					node := app.waitKey("sidebar-session:" + session.ID)
-					if node.Bounds.Y <= first.Bounds.Y || node.Bounds.Y >= second.Bounds.Y || node.Bounds.X <= first.Bounds.X {
+					if node.Bounds.Y <= first.Bounds.Y || node.Bounds.Y >= second.Bounds.Y || node.Bounds.X != first.Bounds.X {
 						t.Fatalf("project conversation is outside its accordion: %+v", node.Bounds)
 					}
 				}

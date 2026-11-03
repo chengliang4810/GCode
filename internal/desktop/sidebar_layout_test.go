@@ -47,9 +47,8 @@ func sidebarLayoutApp(t *testing.T) *App {
 	return app
 }
 
-// A nested conversation indents its content, not its box: the selected row's
-// wash must stop at the same right edge as a top-level row instead of running
-// past the list's padding to the sidebar edge.
+// Project conversations share the top-level row geometry: both the selected
+// wash and title keep the same edges rather than adding a hierarchy indent.
 func TestSidebarNestedRowKeepsTheListEdge(t *testing.T) {
 	for _, width := range []float32{264, 350} {
 		t.Run(fmt.Sprintf("width-%g", width), func(t *testing.T) {
@@ -121,10 +120,10 @@ func TestSidebarNestedRowKeepsTheListEdge(t *testing.T) {
 			if topLast != nestedLast {
 				t.Fatalf("nested row wash ends at %d, top-level at %d: the indented row overran the list edge", nestedLast, topLast)
 			}
-			if got, want := nestedFirst-topFirst, int(design.Sidebar().ChildInset); got != want {
+			if got, want := nestedFirst-topFirst, 0; got != want {
 				t.Fatalf("nested row wash starts %dpx past the top-level row, want %d", got, want)
 			}
-			if got, want := nestedText-topText, int(design.Sidebar().ChildInset); got != want {
+			if got, want := nestedText-topText, 0; got != want {
 				t.Fatalf("nested title indents %dpx past the top-level title, want %d", got, want)
 			}
 		})
