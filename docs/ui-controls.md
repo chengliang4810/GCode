@@ -70,6 +70,10 @@ a.controlSwitch(c.Key("enabled"), &enabled, label, saving, func(value bool) {
 密钥使用 `controlSecretInput`，保留输入焦点的显示按钮不会抢先触发失焦保存。
 调用方根据草稿或已保存密钥决定显示按钮是否可用，并在点击后通过类型化接口
 按需读取已保存密钥；隐藏、保存或离开编辑器时清除明文展示缓存。
+普通设置中的文本输入框（包括多行输入）失去焦点后保存，输入期间及回车时不提交；
+选择器、复选框和开关在选择后立即保存生效，不增加独立保存按钮。
+供应商名称、Base URL 与 API Key 共用这一规则。保存期间发生的失焦提交会接续处理，
+失败时保留草稿并显示错误，再次编辑后重新保存。
 
 允许设置 label、key、Disabled、OnClick、OnChange、Bind、Grow、Width、
 FillWidth、Margin 等内容/行为/布局属性。禁止在页面覆写控件外观；

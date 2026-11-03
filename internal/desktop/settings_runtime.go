@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"slices"
 	"strconv"
-	"strings"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -71,7 +70,10 @@ func (a *App) dataDirectorySettings(c *ui.Context) {
 		}
 		a.settingsRow(c, "Data directory", current, func() {})
 		ui.Column(c).Padding(0, 16, 12, 16).Gap(8).Children(func() {
-			controlTextInput(c.Key("data-directory"), &state.directory).Label(tr(c, "Data directory")).FillWidth()
+			input := controlTextInput(c.Key("data-directory"), &state.directory).Label(tr(c, "Data directory")).FillWidth()
+			settingsInputCommit(input, &state.directory, func() {
+				a.dispatch(contracts.Command{Kind: "storage.change", Path: state.directory})
+			})
 			ui.Row(c).Gap(8).Children(func() {
 				textButton(c.Key("data-directory-browse"), tr(c, "Browse…")).Disabled(info.Remote).OnClick(func() {
 					window := a.win
@@ -88,12 +90,10 @@ func (a *App) dataDirectorySettings(c *ui.Context) {
 								a.errorText = err.Error()
 							} else if len(paths) > 0 {
 								a.runtimeUI.directory = paths[0]
+								a.dispatch(contracts.Command{Kind: "storage.change", Path: paths[0]})
 							}
 						})
 					}()
-				})
-				textButton(c.Key("data-directory-apply"), tr(c, "Apply")).Disabled(strings.TrimSpace(state.directory) == "").OnClick(func() {
-					a.dispatch(contracts.Command{Kind: "storage.change", Path: state.directory})
 				})
 			})
 			if info.PendingDirectory != "" {

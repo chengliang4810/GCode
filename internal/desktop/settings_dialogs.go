@@ -87,6 +87,9 @@ func (a *App) settingsRemovalDialog(c *ui.Context) {
 }
 
 func (a *App) selectSettingsSection(section string) {
+	if a.section == "Personalization" && section != a.section && a.agentsDraft != a.agentsSaved {
+		a.saveGlobalAgentsDraft()
+	}
 	if a.section == "Model settings" && section != a.section && a.modelsUI.inlineID != "" {
 		if a.modelsUI.inlineSaving {
 			a.modelsUI.nextSection = section

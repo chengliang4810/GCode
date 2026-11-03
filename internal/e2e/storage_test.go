@@ -75,8 +75,9 @@ func TestDesktopLocalStorageSwitchAndContinuation(t *testing.T) {
 	}
 	<-requests
 	app := startApp(t, binary, artifacts, "select-runtime-root", configRoot, "--local")
+	app.act("data-directory", "focus", "")
 	app.act("data-directory", "setValue", nextRoot)
-	app.act("data-directory-apply", "press", "")
+	app.act("data-directory-browse", "focus", "")
 	app.await("new runtime root registered without moving historical files", func() error {
 		data, err := os.ReadFile(filepath.Join(configRoot, "location.json"))
 		if err != nil {

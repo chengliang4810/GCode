@@ -29,8 +29,11 @@ type modelSettingsState struct {
 	inlineError, inlinePendingKey         string
 	inlinePending                         *contracts.ProviderInput
 	inlineRevision, pendingRevision       uint64
+	inlineSaveRequested                   bool
+	inlineEditedInput                     int
 	nextSelection                         string
 	nextSection                           string
+	nextRoute                             string
 	addAfterSave                          bool
 	reorderPendingKey, reorderError       string
 	fetchDialogOpen                       bool
@@ -266,6 +269,8 @@ func (a *App) syncInlineProvider(config contracts.ProviderConfiguration) {
 	if state.inlineID != config.Provider.ID {
 		state.inlineID, state.inlineError, state.showKey = config.Provider.ID, "", false
 		state.inlineDirty, state.inlineSaving = false, false
+		state.inlineSaveRequested = false
+		state.inlineEditedInput = -1
 		state.revealedKey, state.keyLoading = "", false
 		state.keyRequest++
 		state.fetchDialogOpen, state.fetchSeen, state.fetchRows = false, "", nil
@@ -280,6 +285,11 @@ func (a *App) markInlineProviderDirty() {
 	a.modelsUI.inlineDirty = true
 	a.modelsUI.inlineRevision++
 	a.modelsUI.inlineError = ""
+}
+
+func (a *App) inlineProviderInputChanged(index int) {
+	a.markInlineProviderDirty()
+	a.modelsUI.inlineEditedInput = index
 }
 
 func (a *App) toggleProviderKey() {
@@ -326,7 +336,7 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 	ui.Row(c).FillWidth().Gap(10).AlignItems(ui.Center).Children(func() {
 		modelProviderIcon(c, 19)
 		controlTextInput(c.Key("custom-provider-name"), &a.runtimeUI.provider.Name).Grow(1).MinWidth(0).
-			Label(tr(c, "Provider name")).Bind(&state.inputs[0]).OnChange(a.markInlineProviderDirty).OnSubmit(func() { a.saveInlineProvider() })
+			Label(tr(c, "Provider name")).Bind(&state.inputs[0]).OnChange(func() { a.inlineProviderInputChanged(0) })
 		enabled := !provider.Disabled
 		a.controlSwitch(c.Key("provider-enabled"), &enabled, tr(c, "Enable provider")+" "+provider.Name, a.modelSettingsBusy(), func(value bool) {
 			provider.Disabled = !value
@@ -342,7 +352,7 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 	ui.Column(c).FillWidth().Gap(7).Children(func() {
 		ui.Text(c, "Base URL").TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
 		controlTextInput(c.Key("custom-provider-url"), &a.runtimeUI.provider.BaseURL).FillWidth().MinWidth(0).Label(tr(c, "Provider Base URL")).Placeholder("https://api.example.com/v1").
-			Bind(&state.inputs[1]).OnChange(a.markInlineProviderDirty).OnSubmit(func() { a.saveInlineProvider() })
+			Bind(&state.inputs[1]).OnChange(func() { a.inlineProviderInputChanged(1) })
 	})
 	ui.Column(c).FillWidth().Gap(7).Children(func() {
 		ui.Text(c, tr(c, "API format")).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
@@ -372,27 +382,12 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 					OnChange(func() {
 						a.runtimeUI.key = *key
 						state.revealedKey = ""
-						a.markInlineProviderDirty()
-					}).OnSubmit(func() { a.saveInlineProvider() })
+						a.inlineProviderInputChanged(2)
+					})
 			}, a.toggleProviderKey)
 	})
 	if state.inlineError != "" {
 		ui.Text(c, state.inlineError).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
-	}
-	if state.inlineDirty {
-		ui.Row(c).FillWidth().Gap(8).Justify(ui.End).Children(func() {
-			textButton(c, tr(c, "Cancel")).KeepFocus().Disabled(a.modelSettingsBusy()).OnClick(func() {
-				state.inlineDirty, state.inlineError = false, ""
-				state.nextSelection, state.nextSection = "", ""
-				state.addAfterSave = false
-				a.runtimeUI.key = ""
-				state.showKey, state.revealedKey, state.keyLoading = false, "", false
-				state.keyRequest++
-				state.inlineSource = model.Provider{}
-				a.syncInlineProvider(config)
-			})
-			primaryButton(c, tr(c, "Save")).Label(tr(c, "Save provider")).Disabled(a.modelSettingsBusy()).OnClick(func() { a.saveInlineProvider() })
-		})
 	}
 	ui.Column(c).FillWidth().Gap(6).Children(func() {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
@@ -423,14 +418,18 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 			a.configuredModelRow(c, config, i, candidate)
 		}
 	})
-	// Focus loss is a guarded edge, not an unconditional render side effect.
+	// Remember focus loss while a previous save is still in flight.
 	lostFocus := false
 	for i := range state.inputs {
-		focused := state.inputs[i].Focused(c)
+		focused := state.inputs[i].FocusWithin(c)
 		lostFocus = lostFocus || state.focused[i] && !focused
 		state.focused[i] = focused
 	}
-	if lostFocus && state.inlineDirty && !a.modelSettingsBusy() && state.inlineError == "" {
+	editedBlurred := state.inlineEditedInput >= 0 && !state.inputs[state.inlineEditedInput].FocusWithin(c)
+	if (lostFocus || editedBlurred) && state.inlineDirty {
+		state.inlineSaveRequested = true
+	}
+	if state.inlineSaveRequested && state.inlineDirty && state.inlineError == "" && !a.modelSettingsBusy() {
 		a.saveInlineProvider()
 	}
 }
@@ -538,6 +537,8 @@ func (a *App) saveInlineProvider() bool {
 	if !a.modelsUI.inlineDirty {
 		return true
 	}
+	a.modelsUI.inlineSaveRequested = false
+	a.modelsUI.inlineEditedInput = -1
 	provider := model.CloneProvider(a.runtimeUI.provider)
 	for _, config := range a.state.CustomProviders {
 		if config.Provider.ID == provider.ID {
@@ -619,6 +620,7 @@ func (a *App) modelSettingsCommandFinished(command contracts.Command, err error)
 		state.inlineDirty, state.inlineError = true, err.Error()
 		state.nextSelection = ""
 		state.nextSection = ""
+		state.nextRoute = ""
 		state.addAfterSave = false
 		return
 	}
@@ -634,6 +636,11 @@ func (a *App) modelSettingsCommandFinished(command contracts.Command, err error)
 			section := state.nextSection
 			state.nextSection = ""
 			a.selectSettingsSection(section)
+		}
+		if state.nextRoute != "" {
+			route := state.nextRoute
+			state.nextRoute = ""
+			a.OpenRoute(route)
 		}
 		if state.addAfterSave {
 			state.addAfterSave = false

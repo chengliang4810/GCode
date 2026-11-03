@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -169,12 +170,11 @@ func TestModelSettingsSaveFailureRetainsDraft(t *testing.T) {
 	}
 }
 
-func TestModelSettingsRevealAndCancelKeepUnsubmittedDraft(t *testing.T) {
+func TestModelSettingsRevealKeepsUnsubmittedDraft(t *testing.T) {
 	for _, test := range []struct {
 		name, action string
 	}{
 		{name: "reveal", action: "Show API key"},
-		{name: "cancel", action: "Cancel"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			app, core := runtimeSettingsTestApp(t)
@@ -199,10 +199,52 @@ func TestModelSettingsRevealAndCancelKeepUnsubmittedDraft(t *testing.T) {
 			if test.name == "reveal" && (app.runtimeUI.key != "unsubmitted-secret" || !app.modelsUI.showKey) {
 				t.Fatal("revealing the secret lost the current draft")
 			}
-			if test.name == "cancel" && (app.runtimeUI.key != "" || app.modelsUI.inlineDirty) {
-				t.Fatal("cancel did not discard the unsubmitted draft")
-			}
 		})
+	}
+}
+
+func TestModelSettingsKeySavesOnlyOnBlur(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{700, 1000} {
+			t.Run(fmt.Sprintf("dark=%t/width=%d", dark, width), func(t *testing.T) {
+				app, core := runtimeSettingsTestApp(t)
+				app.palette = design.Palette("rcode-dark", dark)
+				provider := model.Provider{ID: "auto-key", Name: "Auto key", Protocol: model.Chat}
+				app.dispatch(contracts.Command{Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: provider}})
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(app.palette.UI())
+					ui.Column(c).Fill().Children(func() { app.customProviderSettings(c) })
+				}, width, 800)
+				if err := tt.Click("API key"); err != nil {
+					t.Fatal(err)
+				}
+				tt.Type("first-")
+				tt.Advance(400 * time.Millisecond)
+				tt.Type("secret")
+				tt.Advance(400 * time.Millisecond)
+				key, err := core.ReadProviderKey(context.Background(), provider.ID)
+				if err != nil || key != "" {
+					t.Fatal("saved while the input was focused")
+				}
+				if _, ok := tt.Find("Save provider"); ok {
+					t.Fatal("manual provider save is still present")
+				}
+				tt.Key(0, ui.KeyEnter)
+				if !app.modelsUI.inlineDirty {
+					t.Fatal("Enter saved a focused input")
+				}
+				if err := tt.Click("Provider name"); err != nil {
+					t.Fatal(err)
+				}
+				key, err = core.ReadProviderKey(context.Background(), provider.ID)
+				if err != nil || key != "first-secret" {
+					t.Fatalf("automatic save failed: %v", err)
+				}
+				if app.modelsUI.inlineDirty || app.runtimeUI.key != "" {
+					t.Fatal("successful save retained the secret draft")
+				}
+			})
+		}
 	}
 }
 
@@ -245,12 +287,14 @@ func TestModelSettingsRevealSavedKey(t *testing.T) {
 				if err := tt.Click("API key"); err != nil {
 					t.Fatal(err)
 				}
-				tt.Key(ui.Ctrl, ui.KeyA)
+				tt.Key(ui.Cmd, ui.KeyA)
 				tt.Type("replacement-secret")
 				if app.runtimeUI.key != "replacement-secret" {
 					t.Fatal("editing a revealed key did not update the draft")
 				}
-				tt.Key(0, ui.KeyEnter)
+				if err := tt.Click("Provider name"); err != nil {
+					t.Fatal(err)
+				}
 				saved, err := core.ReadProviderKey(context.Background(), provider.ID)
 				if err != nil || saved != "replacement-secret" {
 					t.Fatal("edited key did not reach the core")
@@ -294,9 +338,11 @@ func TestModelSettingsRevealedKeyIsNotResubmittedByUnrelatedEdits(t *testing.T) 
 	if err := tt.Click("Provider name"); err != nil {
 		t.Fatal(err)
 	}
-	tt.Key(ui.Ctrl, ui.KeyA)
+	tt.Key(ui.Cmd, ui.KeyA)
 	tt.Type("Renamed")
-	tt.Key(0, ui.KeyEnter)
+	if err := tt.Click("Provider Base URL"); err != nil {
+		t.Fatal(err)
+	}
 	key, err := core.ReadProviderKey(context.Background(), provider.ID)
 	if err != nil || key != "rotated-secret" {
 		t.Fatal("unrelated edit overwrote the saved key with an old revealed value")
@@ -346,7 +392,7 @@ func TestModelSettingsDiscardsObsoleteKeyReveal(t *testing.T) {
 	}
 }
 
-func TestModelSettingsInlineSubmitAndBlurReachRealCore(t *testing.T) {
+func TestModelSettingsInlineBlurReachesRealCore(t *testing.T) {
 	app, core := runtimeSettingsTestApp(t)
 	provider := model.Provider{ID: "inline-input", Name: "Inline inputs", Protocol: model.Chat, BaseURL: "https://example.com/v1",
 		Models: []model.Model{{ID: "model"}}}
@@ -359,27 +405,25 @@ func TestModelSettingsInlineSubmitAndBlurReachRealCore(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Type("saved-secret")
-	tt.Key(0, ui.KeyEnter)
+	if err := tt.Click("Provider name"); err != nil {
+		t.Fatal(err)
+	}
 	snapshot, _ := core.Snapshot(context.Background())
 	if !snapshot.CustomProviders[0].HasAPIKey || app.runtimeUI.key != "" || app.modelsUI.inlineDirty {
-		t.Fatal("submitting a key did not save it and clear the local secret")
+		t.Fatal("leaving the key input did not save it and clear the local secret")
 	}
 	for _, test := range []struct {
 		name, url string
-		submit    bool
 	}{
-		{name: "enter", url: "https://gateway.example.com/v1", submit: true},
 		{name: "blur", url: "https://other.example.com/v1"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if err := tt.Click("Provider Base URL"); err != nil {
 				t.Fatal(err)
 			}
-			tt.Key(ui.Ctrl, ui.KeyA)
+			tt.Key(ui.Cmd, ui.KeyA)
 			tt.Type(test.url)
-			if test.submit {
-				tt.Key(0, ui.KeyEnter)
-			} else if err := tt.Click("Provider name"); err != nil {
+			if err := tt.Click("Provider name"); err != nil {
 				t.Fatal(err)
 			}
 			snapshot, _ := core.Snapshot(context.Background())

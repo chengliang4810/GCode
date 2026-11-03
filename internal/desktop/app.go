@@ -37,6 +37,7 @@ type App struct {
 	settingsImport  settingsImportState
 	cloudPage       cloudSettingsPageState
 	agentsDraft     string
+	agentsSaved     string
 	agentsLoadedFor string
 	branchCreation  *branchCreation
 	now             func() time.Time
@@ -613,6 +614,14 @@ func (a *App) saveSettingsWithID(requestID string) {
 }
 func (a *App) OpenRoute(route string) {
 	if route != "settings" && !strings.HasPrefix(route, "settings/") {
+		if a.route == "settings" && a.section == "Model settings" && (a.modelsUI.inlineDirty || a.modelsUI.inlineSaving) {
+			a.modelsUI.nextRoute = route
+			a.modelsUI.inlineSaveRequested = true
+			if !a.modelsUI.inlineSaving {
+				a.saveInlineProvider()
+			}
+			return
+		}
 		a.capabilityUI.plugins.configID, a.capabilityUI.plugins.config = "", nil
 	}
 	// A session pick or annotation may leave settings before the next View.
@@ -623,6 +632,9 @@ func (a *App) OpenRoute(route string) {
 	defer a.syncCloudSettingsPage()
 	a.refreshBackground()
 	if route != "settings" && !strings.HasPrefix(route, "settings/") {
+		if a.route == "settings" && a.section == "Personalization" && a.agentsDraft != a.agentsSaved {
+			a.saveGlobalAgentsDraft()
+		}
 		a.clearShortcutRecording()
 		if a.chatWorkspacePending {
 			a.syncChatWorkspace()
