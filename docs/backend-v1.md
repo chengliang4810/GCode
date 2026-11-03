@@ -21,8 +21,11 @@ go run ./cmd/gcode-server
 单实例锁按用户区分（socket 位于用户临时目录），不同 Windows 账户互不影响。
 
 桌面默认简体中文，语言设置可选择英文。设置 → 模型设置中新增自定义供应商，填写名称、
-协议、Base URL、API Key 与模型 ID。Base URL 填 API 前缀，例如 `https://host/v1`，
-核心根据协议追加 `/chat/completions`、`/responses` 或 `/messages`。
+协议、Base URL、API Key 与模型 ID。Base URL 填服务地址，例如 `https://host`，
+核心根据协议拼接 `/v1/chat/completions`、`/v1/responses` 或 `/v1/messages`；
+填写末尾带 `/v1` 的地址时不重复添加。自定义网关路径前缀保留，
+例如 `https://host/gateway` 与 `https://host/gateway/v1` 均请求 `/gateway/v1/...`。
+模型列表使用同一规则请求 `/v1/models`，保存的 Base URL 保留用户输入。
 不内置供应商品牌、账号登录或官方模型目录；也不自动猜测自定义模型的能力。
 
 仅支持三种协议：

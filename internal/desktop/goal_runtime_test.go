@@ -23,7 +23,7 @@ func TestGoalRealCoreComposerCreationPauseResumeAndStop(t *testing.T) {
 	cancelled := make(chan struct{}, 4)
 	var workCalls, verificationCalls atomic.Int32
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/chat/completions" {
+		if r.URL.Path != "/v1/chat/completions" {
 			http.NotFound(w, r)
 			return
 		}

@@ -47,7 +47,7 @@ func TestModelCheckUsesOnlySelectedModelAcrossProtocols(t *testing.T) {
 				goalResponse(w, protocol, "OK", nil, true)
 			}))
 			t.Cleanup(server.Close)
-			core := modelCheckCore(t, protocol, server.URL+"/v1")
+			core := modelCheckCore(t, protocol, server.URL)
 			if requests.Load() != 0 {
 				t.Fatal("saving a model made an unsolicited request")
 			}

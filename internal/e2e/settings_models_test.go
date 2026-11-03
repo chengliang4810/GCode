@@ -29,7 +29,7 @@ func TestDesktopLocalModelIconActions(t *testing.T) {
 		var body struct {
 			Model string `json:"model"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Model != "first" || r.URL.Path != "/chat/completions" {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Model != "first" || r.URL.Path != "/v1/chat/completions" {
 			http.Error(w, "unexpected model diagnostic", http.StatusBadRequest)
 			return
 		}

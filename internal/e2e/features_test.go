@@ -48,7 +48,7 @@ func TestDesktopLocalNamingAndWorktree(t *testing.T) {
 
 	var namingRequests, chatRequests atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/chat/completions" {
+		if r.URL.Path != "/v1/chat/completions" {
 			http.NotFound(w, r)
 			return
 		}

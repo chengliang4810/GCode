@@ -35,7 +35,7 @@ func TestModelFetchReadsConfiguredProviderEndpoint(t *testing.T) {
 				fmt.Fprint(w, `{"data":[{"id":"zeta"},{"id":"alpha"},{"id":"alpha"},{"id":"  "},{"object":"model"}]}`)
 			}))
 			t.Cleanup(server.Close)
-			core := modelCheckCore(t, protocol, server.URL+"/v1")
+			core := modelCheckCore(t, protocol, server.URL)
 			if err := core.Execute(context.Background(), contracts.Command{Kind: "provider.models.fetch", ID: "checks"}); err != nil {
 				t.Fatal(err)
 			}

@@ -89,6 +89,68 @@ func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 	}
 }
 
+func TestClientResolvesProviderBaseURL(t *testing.T) {
+	for _, protocol := range []struct {
+		name Protocol
+		path string
+		wire string
+	}{
+		{Chat, "/chat/completions", "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"},
+		{Responses, "/responses", "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"ok\"}]}]}}\n\n"},
+		{Messages, "/messages", "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"ok\"}}\n\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\ndata: {\"type\":\"message_stop\"}\n\n"},
+	} {
+		t.Run(string(protocol.name), func(t *testing.T) {
+			for _, base := range []struct{ name, input, prefix string }{
+				{"root", "", "/v1"},
+				{"root-slash", "/", "/v1"},
+				{"version", "/v1", "/v1"},
+				{"version-slash", "/v1/", "/v1"},
+				{"gateway", "/gateway", "/gateway/v1"},
+				{"gateway-version", "/gateway/v1/", "/gateway/v1"},
+				{"similar-version", "/v10", "/v10/v1"},
+				{"version-in-prefix", "/v1/gateway", "/v1/gateway/v1"},
+				{"escaped-prefix", "/tenant%2Fgateway/v1/", "/tenant%2Fgateway/v1"},
+			} {
+				t.Run(base.name, func(t *testing.T) {
+					calls := 0
+					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						calls++
+						switch {
+						case r.Method == http.MethodGet && r.URL.EscapedPath() == base.prefix+"/models":
+							fmt.Fprint(w, `{"data":[{"id":"model"}]}`)
+						case r.Method == http.MethodPost && r.URL.EscapedPath() == base.prefix+protocol.path:
+							w.Header().Set("Content-Type", "text/event-stream")
+							fmt.Fprint(w, protocol.wire)
+						default:
+							t.Errorf("unexpected request: %s %s", r.Method, r.URL.EscapedPath())
+							http.Error(w, "wrong API path", http.StatusMethodNotAllowed)
+						}
+					}))
+					defer server.Close()
+					provider := Provider{ID: "custom", Name: "Custom", Protocol: protocol.name,
+						BaseURL: server.URL + base.input, Models: []Model{{ID: "model"}}}
+					client := NewClient()
+					models, err := client.ListModels(t.Context(), provider)
+					if err != nil || len(models) != 1 || models[0] != "model" {
+						t.Errorf("model list failed: models=%v err=%v", models, err)
+					}
+					gateway, err := client.Bind(provider, provider.Models[0])
+					if err != nil {
+						t.Fatal(err)
+					}
+					result, err := gateway.Stream(t.Context(), Request{History: []Message{{Role: "user", Text: "hello"}}}, nil)
+					if err != nil || result.Message.Text != "ok" {
+						t.Fatalf("model request failed: result=%+v err=%v", result, err)
+					}
+					if calls != 2 || gateway.provider.BaseURL != provider.BaseURL {
+						t.Fatal("request routing retried or rewrote the configured Base URL")
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestBindRejectsDisabledConfiguration(t *testing.T) {
 	for _, kind := range []string{"provider", "model", "stale enabled model"} {
 		t.Run(kind, func(t *testing.T) {

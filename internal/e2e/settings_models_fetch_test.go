@@ -60,7 +60,7 @@ func TestDesktopLocalModelFetchImport(t *testing.T) {
 				t.Fatal(err)
 			}
 			provider := model.Provider{ID: "fetcher", Name: "Fetch fixture", Protocol: model.Chat,
-				BaseURL: server.URL + "/v1", Models: []model.Model{{ID: "existing", ContextWindow: 10000}}}
+				BaseURL: server.URL, Models: []model.Model{{ID: "existing", ContextWindow: 10000}}}
 			if err := core.Execute(context.Background(), contracts.Command{Kind: "provider.save",
 				Provider: &contracts.ProviderInput{Provider: provider}}); err != nil {
 				t.Fatal(err)

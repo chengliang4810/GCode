@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -109,6 +110,19 @@ func adapterFor(protocol Protocol) (adapter, error) {
 	}
 }
 
+// The configured URL is a service root, optionally with a gateway prefix.
+// An explicit trailing /v1 already supplies the protocol's version segment.
+func providerEndpoint(baseURL, resource string) (string, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+	if !strings.HasSuffix(strings.TrimRight(base.Path, "/"), "/v1") {
+		resource = "/v1" + resource
+	}
+	return url.JoinPath(baseURL, resource)
+}
+
 // maxModelListBytes bounds a provider models response independently of streams.
 const maxModelListBytes = 8 << 20
 
@@ -130,7 +144,11 @@ func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, e
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(provider.BaseURL, "/")+"/models", nil)
+	endpoint, err := providerEndpoint(provider.BaseURL, "/models")
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +199,10 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 	if err != nil {
 		return Result{}, err
 	}
-	endpoint := strings.TrimRight(g.provider.BaseURL, "/") + g.adapter.path()
+	endpoint, err := providerEndpoint(g.provider.BaseURL, g.adapter.path())
+	if err != nil {
+		return Result{}, err
+	}
 	requestID := rand.Text()
 	// HTTP retries only precede a response stream; every attempt uses identical bytes.
 	for attempt := 0; ; attempt++ {

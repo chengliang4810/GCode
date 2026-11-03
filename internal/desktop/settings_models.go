@@ -230,7 +230,7 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 	})
 	ui.Column(c).FillWidth().Gap(7).Children(func() {
 		ui.Text(c, "Base URL").TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
-		controlTextInput(c.Key("custom-provider-url"), &a.runtimeUI.provider.BaseURL).FillWidth().MinWidth(0).Label(tr(c, "Provider Base URL")).Placeholder("https://api.example.com/v1").
+		controlTextInput(c.Key("custom-provider-url"), &a.runtimeUI.provider.BaseURL).FillWidth().MinWidth(0).Label(tr(c, "Provider Base URL")).Placeholder("https://api.example.com").
 			Bind(&state.inputs[1]).OnChange(func() { a.inlineProviderInputChanged(1) })
 	})
 	ui.Column(c).FillWidth().Gap(7).Children(func() {
