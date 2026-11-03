@@ -478,8 +478,12 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			}
 		}
 		e.cancelNamingLocked(command.ID)
+		if index := e.sessionIndex(command.ID); index >= 0 {
+			e.removeTrajectory(e.state.Sessions[index])
+		}
 		e.state.Sessions = slices.DeleteFunc(e.state.Sessions, func(s contracts.Session) bool { return s.ID == command.ID })
 		delete(e.state.Messages, command.ID)
+		e.state.ModelRequests = slices.DeleteFunc(e.state.ModelRequests, func(request contracts.ModelRequest) bool { return request.SessionID == command.ID })
 		delete(e.history, command.ID)
 		delete(e.context, command.ID)
 		e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.SessionID == command.ID })

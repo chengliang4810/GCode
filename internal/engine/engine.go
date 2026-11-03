@@ -59,6 +59,8 @@ type activeRun struct {
 }
 
 type Engine struct {
+	trajectoryMu      sync.Mutex
+	trajectoryIssues  map[string]error
 	toolGuard         ToolGuard
 	mu                sync.Mutex
 	storage           *storage.Store

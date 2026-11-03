@@ -242,6 +242,11 @@ func (e *Engine) startRunLocked(
 		selection: contracts.ModelSelection{ModelID: session.ModelID, Reasoning: session.ReasoningLevel},
 		profiles:  contracts.EffectiveSubagentProfiles(e.state.Settings.Subagents), model: m,
 	}
+	source := "main"
+	if child != nil {
+		source = "subagent"
+	}
+	gateway.Observe = e.trajectoryRecorder(session, run.id, source)
 	if child != nil {
 		run.goal = child.goal
 	} else if session.Goal != nil && session.Goal.Status == contracts.GoalActive {
@@ -311,9 +316,9 @@ func (e *Engine) startRunLocked(
 		defer e.wg.Done()
 		defer cancel()
 		defer e.signalSubagentStarted(child)
-		var bound agent.Model = gateway
+		var bound agent.Model = meteredModel{inner: gateway, core: e, sessionID: session.ID, turnID: run.id, provider: provider, modelID: m.ID}
 		if run.goal.id != "" {
-			bound = goalModel{inner: gateway, core: e, scope: run.goal, sessionID: session.ID}
+			bound = goalModel{inner: bound, core: e, scope: run.goal, sessionID: session.ID}
 			if child == nil {
 				stopHeartbeat := e.startGoalHeartbeat(runCtx, run.goal)
 				defer stopHeartbeat()

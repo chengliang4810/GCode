@@ -39,6 +39,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	run := &activeRun{id: id("run"), cancel: cancel, answers: map[string]chan string{}, compacting: true, pending: map[string]contracts.QueuedMessage{}, wake: make(chan struct{}, 1), model: m}
+	gateway.Observe = e.trajectoryRecorder(session, run.id, "compact")
 	hookRules := contracts.CloneHookRules(e.state.Settings.Hooks)
 	configSnapshot := clonePluginConfig(e.pluginConfig)
 	profileSnapshot := contracts.CloneSubagentProfiles(e.state.Settings.Subagents)
@@ -63,12 +64,13 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	go func() {
 		defer e.wg.Done()
 		defer cancel()
+		bound := meteredModel{inner: gateway, core: e, sessionID: session.ID, turnID: run.id, provider: provider, modelID: m.ID}
 		resources, tools, cleanup, err := e.compactHookResources(ctx, session, root, configSnapshot, profileSnapshot)
 		defer cleanup()
 		tools, protocolWarnings := filterMCPToolsForProtocol(tools, provider.Protocol)
 		resources.warnings = append(resources.warnings, protocolWarnings...)
 		hookRules = append(hookRules, resources.hooks...)
-		hooks, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: gateway, Protocol: provider.Protocol, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
+		hooks, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Protocol: provider.Protocol, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
 		var compacted []model.Message
 		var startupContext []model.Message
 		if err == nil {
@@ -79,7 +81,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 			}
 		}
 		if err == nil {
-			compacted, err = agent.Compact(ctx, hookRuntimeDiagnosticModel{inner: gateway, warnings: resources.warnings}, model.Request{History: history})
+			compacted, err = agent.Compact(ctx, hookRuntimeDiagnosticModel{inner: bound, warnings: resources.warnings}, model.Request{History: history})
 		}
 		if err == nil {
 			summary := ""

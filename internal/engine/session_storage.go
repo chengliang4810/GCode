@@ -29,18 +29,19 @@ type diskState struct {
 }
 
 type sessionDisk struct {
-	Format       int                       `json:"format"`
-	SessionID    string                    `json:"sessionId"`
-	RootID       string                    `json:"rootId"`
-	Session      contracts.Session         `json:"session"`
-	Messages     []contracts.Message       `json:"messages"`
-	History      []model.Message           `json:"history"`
-	Context      []model.Message           `json:"context"`
-	Runs         []contracts.Run           `json:"runs"`
-	Queue        []contracts.QueuedMessage `json:"queue"`
-	ContextUsage contracts.ContextUsage    `json:"contextUsage"`
-	Changes      []contracts.Change        `json:"changes"`
-	Terminals    []contracts.Terminal      `json:"terminals"`
+	Format        int                       `json:"format"`
+	SessionID     string                    `json:"sessionId"`
+	RootID        string                    `json:"rootId"`
+	Session       contracts.Session         `json:"session"`
+	Messages      []contracts.Message       `json:"messages"`
+	History       []model.Message           `json:"history"`
+	Context       []model.Message           `json:"context"`
+	Runs          []contracts.Run           `json:"runs"`
+	ModelRequests []contracts.ModelRequest  `json:"modelRequests"`
+	Queue         []contracts.QueuedMessage `json:"queue"`
+	ContextUsage  contracts.ContextUsage    `json:"contextUsage"`
+	Changes       []contracts.Change        `json:"changes"`
+	Terminals     []contracts.Terminal      `json:"terminals"`
 }
 
 func (e *Engine) loadPersistence() error {
@@ -69,6 +70,7 @@ func (e *Engine) loadPersistence() error {
 	e.state.Messages = make(map[string][]contracts.Message)
 	e.state.ContextUsage = make(map[string]contracts.ContextUsage)
 	e.state.Runs, e.state.Queue = nil, nil
+	e.state.ModelRequests = nil
 	seen := make(map[string]bool, len(e.state.Sessions))
 	for i := range e.state.Sessions {
 		session := &e.state.Sessions[i]
@@ -122,6 +124,7 @@ func (e *Engine) loadSessionLocked(session contracts.Session) error {
 	e.state.Messages[session.ID] = disk.Messages
 	e.history[session.ID], e.context[session.ID] = disk.History, disk.Context
 	e.state.Runs = append(e.state.Runs, disk.Runs...)
+	e.state.ModelRequests = append(e.state.ModelRequests, disk.ModelRequests...)
 	e.state.Queue = append(e.state.Queue, disk.Queue...)
 	e.state.ContextUsage[session.ID] = disk.ContextUsage
 	e.state.Changes = append(e.state.Changes, disk.Changes...)
@@ -185,6 +188,11 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 			ContextUsage: e.state.ContextUsage[session.ID],
 		}
 		disk.Session.StorageError = ""
+		for _, request := range e.state.ModelRequests {
+			if request.SessionID == session.ID {
+				disk.ModelRequests = append(disk.ModelRequests, request)
+			}
+		}
 		for _, change := range e.state.Changes {
 			if change.SessionID == session.ID {
 				disk.Changes = append(disk.Changes, change)
@@ -234,6 +242,7 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	snapshot.Plugins = contracts.PluginState{}
 	snapshot.Messages, snapshot.ContextUsage = nil, nil
 	snapshot.Runs, snapshot.Queue = nil, nil
+	snapshot.ModelRequests = nil
 	snapshot.Sessions = slices.Clone(snapshot.Sessions)
 	for i := range snapshot.Sessions {
 		snapshot.Sessions[i].StorageError = ""

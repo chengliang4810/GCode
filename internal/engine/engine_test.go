@@ -94,6 +94,14 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 				t.Fatalf("unfinished run: %+v", state.Runs)
 			}
 			sid := state.Sessions[0].ID
+			trajectory, trajectoryErr := core.ReadModelTrajectory(ctx, sid)
+			if trajectoryErr != nil || len(trajectory.Records) != 2 {
+				t.Fatalf("real tool-loop trajectory missing: records=%d error=%v", len(trajectory.Records), trajectoryErr)
+			}
+			if len(trajectory.Records[0].Response.Message.Calls) != 1 || trajectory.Records[0].CompletedAt == nil ||
+				len(trajectory.Records[1].Messages) < 3 || trajectory.Records[1].Response.Message.Text != "完成" {
+				t.Fatal("trajectory lost the actual request context, tool call or response")
+			}
 			for _, message := range state.Messages[sid] {
 				if message.Role == "assistant" && message.ModelID != "custom/model" {
 					t.Fatalf("request model was not recorded for usage statistics: %+v", message)
@@ -122,6 +130,10 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			}
 			defer core.Close()
 			restored, _ := core.Snapshot(ctx)
+			restoredTrajectory, trajectoryErr := core.ReadModelTrajectory(ctx, sid)
+			if trajectoryErr != nil || len(restoredTrajectory.Records) != 2 {
+				t.Fatal("restart lost the separately persisted model trajectory")
+			}
 			for _, message := range restored.Messages[sid] {
 				if message.Role == "assistant" && message.ModelID != "custom/model" {
 					t.Fatal("restart lost the recorded request model")
