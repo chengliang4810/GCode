@@ -153,6 +153,11 @@ func testPaths(t *testing.T) (binary, artifacts string) {
 
 func startApp(t *testing.T, binary, artifacts, phase, data string, extra ...string) *nativeApp {
 	t.Helper()
+	return startAppReady(t, binary, artifacts, phase, data, "Compact mode", extra...)
+}
+
+func startAppReady(t *testing.T, binary, artifacts, phase, data, readyKey string, extra ...string) *nativeApp {
+	t.Helper()
 	phaseDir := filepath.Join(artifacts, phase)
 	if err := os.MkdirAll(phaseDir, 0700); err != nil {
 		t.Fatal(err)
@@ -195,7 +200,7 @@ func startApp(t *testing.T, binary, artifacts, phase, data string, extra ...stri
 			app.stop()
 		}
 	})
-	app.await("GCode native window and General controls", func() error {
+	app.await("GCode native window and "+readyKey, func() error {
 		var result struct {
 			Windows []struct {
 				Title   string `json:"title"`
@@ -217,7 +222,7 @@ func startApp(t *testing.T, binary, artifacts, phase, data string, extra ...stri
 		if err != nil {
 			return err
 		}
-		_, err = tree.findKey("Compact mode")
+		_, err = tree.findKey(readyKey)
 		return err
 	})
 	return app

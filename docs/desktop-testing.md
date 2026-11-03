@@ -89,7 +89,8 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | `TestDesktopLocalCustomSubagentSettings` | 原生窗口 + `--local` 真实核心；创建自定义子智能体、取消草稿、禁用、重启读回、确认删除；不请求模型 |
 | `TestDesktopLocalPluginManagement` | 原生窗口 + `--local` 真实核心；私有临时 Git 市场、市场源添加/刷新、local 范围真实项目目录安装、配置取消/保存/清除、真实 Git 更新、禁用、独立进程重启及卸载；不访问公开市场或模型 |
 | `TestDesktopLocalSidebarFooter` | 原生窗口 + `--local` 真实核心；中英文/深浅主题与窄窗下的底栏入口、未发现新版本时隐藏更新入口、会话页返回设置、用量设置页导航/筛选和设置页手动检查更新；不访问供应商或更新源 |
-| `TestDesktopLocalApplicationUsage` | 原生窗口 + `--local` 真实核心；本地 HTTP 模型夹具实际请求两个模型、切换模型、分叉并重启，验证用量去重、模型各占 50%、7/30 天、热力图模式与刷新；英文浅色和中文深色窄窗，不访问真实供应商 |
+| `TestDesktopLocalCallTrajectory` | 原生窗口 + `--local` 真实核心、本地 HTTP 模型与真实 Read 工具；重启读取请求/响应/工具结果/HTTP 错误，验证右侧 Tab、搜索与刷新。系统右键菜单由 `ui.Tester` 验证，原生通过生产路由打开；见 `call-trajectory.md` |
+| `TestDesktopLocalApplicationUsage` | 原生窗口 + `--local` 真实核心；本地 HTTP 模型夹具实际请求两个模型、切换模型、分叉并重启，验证对话累计用量/速度/缓存命中率、复制旁的单次统计及历史供应商/模型、窄窗几何，省略缓存字段的请求不稀释命中率；同时覆盖用量页去重、模型各占 50%、7/30 天、热力图与刷新；英文浅色和中文深色窄窗，不访问真实供应商，统计口径见 `conversation-metrics.md` |
 | `TestDesktopLocalPromptReferences` | 原生窗口 + `--local` 真实核心；深浅主题窄窗的命令/技能候选、原子引用、展开发送、持久化及重启恢复；模型为本地 HTTP 夹具 |
 | `TestDesktopPromptPickerOverGoalTodos` | 原生窗口 + `--local` 真实核心；使用预置的暂停目标和待办显示数据，验证菜单始终位于上方、覆盖重叠内容并可点击；不执行目标或请求模型 |
 | `TestDesktopWindowCaptionControls` | 原生窗口 + 确定性场景；窗口隐藏系统按钮后自绘的最小化/最大化/关闭存在，28×28 且与左侧 Files、面板开关同中心线、4px 节奏、右缘 6px 内缩；按下最大化后中键切换为还原图形并可恢复。证据 `output/native-tests/20261101-023437-2195741834/` |
