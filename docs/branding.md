@@ -70,3 +70,11 @@ Windows PE 的 ProductName/FileDescription 为 `GCode`，
 InternalName/OriginalFilename 为 `GCode.exe`。
 macOS 已验证 `.app` 名、Info.plist 和架构；本机是交叉构建，没有生成 DMG，
 也不代表 macOS 实机安装或公证验收。
+
+macOS 的窗口 `SetIcon` 不设置 Dock 图标。桌面 Attach 在 macOS 使用 `App.Dock.SetIcon` 加载 macOS 专用品牌 PNG，使普通开发启动也显示 GC Logo；发布包仍通过 `mygo.json` 生成应用包图标。
+
+macOS 专用图标由 `go run ./scripts/app-icon` 从现有 GC 矢量路径生成：
+`app-icon-macos.png` 为 1024×1024，黑色底板占 832×832，四边各留 96px 透明区域；
+`app-icon-macos.icns` 包含 16/32/64/128/256/512/1024 原生分辨率图像。
+开发版 Dock 使用专用 PNG，发布包通过 `macos.icon` 使用同源 ICNS。
+通用 PNG 与 Windows 小尺寸资源保持原有尺寸。此比例是本次视觉调整值，不代表已完成 Dock 并排实机验收。

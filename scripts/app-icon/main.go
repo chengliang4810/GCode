@@ -3,10 +3,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -91,7 +93,53 @@ func generate(out string) error {
 		}
 		fmt.Printf("%s: %dx%d\n", filepath.Join(out, name), size, size)
 	}
-	return nil
+	return generateMacIcon(out)
+}
+
+// generateMacIcon keeps the tile inside a centered 832/1024 footprint.
+// Render each ICNS representation from the paths, rather than downscaling a PNG.
+func generateMacIcon(out string) error {
+	var entries bytes.Buffer
+	for _, entry := range []struct {
+		size int
+		kind string
+	}{
+		{16, "icp4"}, {32, "icp5"}, {64, "icp6"}, {128, "ic07"},
+		{256, "ic08"}, {512, "ic09"}, {1024, "ic10"},
+	} {
+		size := entry.size
+		inset := int(float64(size)*96/1024 + 0.5)
+		tileImage := image.NewNRGBA(image.Rect(0, 0, size-2*inset, size-2*inset))
+		if err := paint(tileImage, tile, color.NRGBA{R: 17, G: 17, B: 17, A: 255}); err != nil {
+			return err
+		}
+		if err := paint(tileImage, mark, color.NRGBA{R: 255, G: 255, B: 255, A: 255}); err != nil {
+			return err
+		}
+		canvas := image.NewNRGBA(image.Rect(0, 0, size, size))
+		draw.Draw(canvas, image.Rect(inset, inset, size-inset, size-inset), tileImage, image.Point{}, draw.Src)
+		var data bytes.Buffer
+		if err := png.Encode(&data, canvas); err != nil {
+			return err
+		}
+		entries.WriteString(entry.kind)
+		if err := binary.Write(&entries, binary.BigEndian, uint32(data.Len()+8)); err != nil {
+			return err
+		}
+		entries.Write(data.Bytes())
+		if size == 1024 {
+			if err := os.WriteFile(filepath.Join(out, "app-icon-macos.png"), data.Bytes(), 0644); err != nil {
+				return err
+			}
+		}
+	}
+	var icns bytes.Buffer
+	icns.WriteString("icns")
+	if err := binary.Write(&icns, binary.BigEndian, uint32(entries.Len()+8)); err != nil {
+		return err
+	}
+	icns.Write(entries.Bytes())
+	return os.WriteFile(filepath.Join(out, "app-icon-macos.icns"), icns.Bytes(), 0644)
 }
 
 func paint(dst *image.NRGBA, path string, fill color.NRGBA) error {

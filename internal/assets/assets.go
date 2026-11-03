@@ -17,6 +17,9 @@ var files embed.FS
 //go:embed branding/app-icon.png
 var appIcon []byte
 
+//go:embed branding/app-icon-macos.png
+var macAppIcon []byte
+
 //go:embed branding/app-icon-*.png
 var smallAppIcons embed.FS
 
@@ -105,6 +108,11 @@ func Icon(name string) *ui.SVG {
 // AppIcon returns a fresh copy of the GCode desktop application icon.
 func AppIcon() []byte {
 	return append([]byte(nil), appIcon...)
+}
+
+// MacAppIcon returns the macOS artwork with transparent space around the tile.
+func MacAppIcon() []byte {
+	return append([]byte(nil), macAppIcon...)
 }
 
 // AppIconForSize returns artwork rasterized for the requested native icon size.

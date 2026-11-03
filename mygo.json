@@ -10,6 +10,7 @@
     "github": "chengliang4810/GCode"
   },
   "macos": {
+    "icon": "internal/assets/branding/app-icon-macos.icns",
     "minimumSystemVersion": "13.0"
   }
 }
