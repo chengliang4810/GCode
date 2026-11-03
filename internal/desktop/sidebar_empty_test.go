@@ -10,7 +10,7 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func TestSidebarEmptyProjectsAndHiddenConversations(t *testing.T) {
+func TestSidebarEmptyProjectsAndConversationEntry(t *testing.T) {
 	for _, scenario := range []string{"empty", "search"} {
 		for _, dark := range []bool{false, true} {
 			for _, size := range []float64{14, 20} {
@@ -30,8 +30,11 @@ func TestSidebarEmptyProjectsAndHiddenConversations(t *testing.T) {
 					}
 					app.state.Settings.Appearance.ThemeID = ""
 					tt := ui.NewTester(app.View, 1200, 1400)
-					if _, ok := tt.Find("对话"); ok {
-						t.Fatal("empty top-level conversations section must be hidden")
+					if _, ok := tt.Find("对话"); !ok {
+						t.Fatal("empty conversations heading is missing")
+					}
+					if _, ok := tt.Find("新建对话"); !ok {
+						t.Fatal("new conversation entry is missing")
 					}
 					heading, ok := tt.Find("项目")
 					if !ok {

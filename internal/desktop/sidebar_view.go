@@ -153,7 +153,14 @@ func (a *App) sidebarSection(c *ui.Context, row sidebarRow) {
 	}
 	ui.Row(c.Key(row.Key)).FillWidth().MinHeight(design.Sidebar().HeaderHeight).
 		Margin(6, 0, 0, 0).AlignItems(ui.Center).Children(func() {
-		controlSidebarHeading(c, a.sidebarHeaderText(row)).Expanded(!*closed).OnClick(func() { *closed = !*closed }).
+		controlSidebarHeading(c.Key(row.Key+":toggle"), a.sidebarHeaderText(row)).Expanded(!*closed).OnClick(func() {
+			*closed = !*closed
+			if projects && *closed {
+				for _, project := range a.state.Projects {
+					a.expanded["project:"+project.ID] = true
+				}
+			}
+		}).
 			Children(func() {
 				ui.Text(c, a.sidebarHeaderText(row)).SingleLine()
 				if *closed {
@@ -161,19 +168,10 @@ func (a *App) sidebarSection(c *ui.Context, row sidebarRow) {
 				}
 			})
 		if projects {
-			label, glyph := "Expand all projects", "expand-arrows"
-			expanded := a.sidebarProjectsExpanded()
-			if expanded {
-				label, glyph = "Collapse all projects", "collapse-arrows"
-			}
-			iconButton(c.Key("sidebar-toggle-projects"), glyph, tr(c, label)).
-				Disabled(len(a.state.Projects) == 0).OnClick(func() {
-				for _, project := range a.state.Projects {
-					a.expanded["project:"+project.ID] = expanded
-				}
-				a.sidebarUI.projectsClosed = false
-			})
 			iconButton(c.Key("sidebar-add-project"), "plus", tr(c, "New project")).OnClick(a.openNewProject)
+		}
+		if row.Key == "section:conversations" || grouped {
+			iconButton(c.Key("sidebar-add-conversation"), "plus", tr(c, "New conversation")).OnClick(a.newConversation)
 		}
 		if grouped {
 			iconButton(c.Key("sidebar-add-group"), "plus", tr(c, "New group")).OnClick(a.createNewSessionGroup)
@@ -234,15 +232,6 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 			})
 		})
 	}
-}
-
-func (a *App) sidebarProjectsExpanded() bool {
-	for _, project := range a.state.Projects {
-		if !a.expanded["project:"+project.ID] {
-			return true
-		}
-	}
-	return false
 }
 
 func (a *App) sidebarConversationContent(c *ui.Context, row sidebarRow) {

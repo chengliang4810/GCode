@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"fmt"
 	"math"
 	"path/filepath"
 	"runtime"
@@ -21,16 +20,11 @@ func TestDesktopLocalSidebarEmpty(t *testing.T) {
 			if empty.Label != "No projects added" {
 				t.Fatalf("empty projects label=%q", empty.Label)
 			}
-			app.await("empty conversations section hidden", func() error {
-				tree, err := app.client.tree()
-				if err != nil {
-					return err
-				}
-				if _, err := tree.findKey("section:conversations"); err == nil {
-					return fmt.Errorf("empty conversations section remains visible")
-				}
-				return nil
-			})
+			app.waitKey("section:conversations:toggle")
+			app.waitKey("sidebar-add-conversation")
+			app.act("sidebar-add-conversation", "press", "")
+			app.waitKey("input")
+
 			toggle := app.waitKey("sidebar-toggle")
 			back := app.waitKey("sidebar-back")
 			if math.Abs(toggle.Bounds.Y+toggle.Bounds.Height/2-back.Bounds.Y-back.Bounds.Height/2) > 0.5 {

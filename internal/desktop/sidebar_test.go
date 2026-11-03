@@ -8,24 +8,39 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func TestSidebarToggleAllProjectsPreservesComposer(t *testing.T) {
-	a := testApp(t, "default")
-	tt := ui.NewTester(a.View, 1320, 880)
-	target := a.projectID
+func TestSidebarProjectSectionCollapsesChildrenAndPreservesComposer(t *testing.T) {
+	a := sidebarLayoutApp(t)
 	a.draft = "Keep draft"
-	if err := tt.Click("Collapse all projects"); err != nil {
+	target := a.projectID
+	tt := ui.NewTester(a.View, 1440, 1400)
+	if _, ok := tt.Find("Collapse all projects"); ok {
+		t.Fatal("removed bulk toggle remains")
+	}
+	if err := tt.Click("项目"); err != nil {
 		t.Fatal(err)
 	}
-	if a.sidebarProjectsExpanded() || a.projectID != target || a.draft != "Keep draft" {
-		t.Fatal("collapse all changed the composer or left a project open")
-	}
-	if err := tt.Click("Expand all projects"); err != nil {
-		t.Fatal(err)
+	if !a.sidebarUI.projectsClosed || a.projectID != target || a.draft != "Keep draft" {
+		t.Fatal("section collapse changed composer state")
 	}
 	for _, project := range a.state.Projects {
-		if a.expanded["project:"+project.ID] {
-			t.Fatal("expand all left a project closed")
+		if !a.expanded["project:"+project.ID] {
+			t.Fatal("project children remain expanded")
 		}
+	}
+	if err := tt.Click("项目"); err != nil {
+		t.Fatal(err)
+	}
+	if tt.HasText("第二项目的对话") || tt.HasText("了解对话输出目录内容") {
+		t.Fatal("reopening section reopened child conversations")
+	}
+	if err := tt.Click("bzaqsc-new"); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("第二项目的对话") || tt.HasText("了解对话输出目录内容") {
+		t.Fatal("project did not expand independently")
+	}
+	if a.projectID != target || a.draft != "Keep draft" {
+		t.Fatal("individual expansion changed composer")
 	}
 }
 
@@ -65,5 +80,20 @@ func TestSidebarVirtualizesStressRowsAndPreservesGroups(t *testing.T) {
 	}
 	if len(pinned) < 2 || pinned[0] != "chat-1" || pinned[1] != "chat-0" {
 		t.Fatalf("pin reorder lost after flattening: %v", pinned)
+	}
+}
+
+func TestSidebarConversationHeadingNewEntry(t *testing.T) {
+	a := sidebarLayoutApp(t)
+	a.selectSession(a.state.Sessions[0].ID)
+	a.draft = "old draft"
+	tt := ui.NewTester(func(c *ui.Context) {
+		a.sidebarSection(c, sidebarRow{Key: "section:conversations", Header: "Conversations"})
+	}, 350, 100)
+	if err := tt.Click("New conversation"); err != nil {
+		t.Fatal(err)
+	}
+	if a.sessionID != "" || a.draft != "" {
+		t.Fatal("new conversation entry did not open a blank draft")
 	}
 }

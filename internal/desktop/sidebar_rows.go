@@ -106,11 +106,9 @@ func (a *App) projectSidebarRows() []sidebarRow {
 			}
 		}
 	}
-	if len(unassigned) > 0 {
-		rows = append(rows, sidebarRow{Key: "section:conversations", Header: "Conversations"})
-		if !a.sidebarUI.conversationsClosed {
-			rows = a.appendSidebarConversations(rows, "conversations", unassigned, false)
-		}
+	rows = append(rows, sidebarRow{Key: "section:conversations", Header: "Conversations"})
+	if !a.sidebarUI.conversationsClosed {
+		rows = a.appendSidebarConversations(rows, "conversations", unassigned, false)
 	}
 	return rows
 }
