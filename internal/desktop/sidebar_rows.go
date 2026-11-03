@@ -47,6 +47,7 @@ type sidebarRow struct {
 	Count                  int
 	More                   bool
 	Empty                  bool
+	Working                bool
 	Project                bool
 	SessionGroup           bool
 	Inset                  bool
@@ -72,6 +73,13 @@ func (a *App) sidebarRows() []sidebarRow {
 func (a *App) projectSidebarRows() []sidebarRow {
 	rows := []sidebarRow{}
 	byProject := make(map[string][]contracts.Session)
+	working := make(map[string]bool)
+	// Runtime activity is independent of search, pinning and list pagination.
+	for _, session := range a.state.Sessions {
+		if !session.Archived && session.Status == contracts.Working {
+			working[session.ProjectID] = true
+		}
+	}
 	var pinned, unassigned []contracts.Session
 	projects := make(map[string]bool, len(a.state.Projects))
 	for _, project := range a.state.Projects {
@@ -99,7 +107,7 @@ func (a *App) projectSidebarRows() []sidebarRow {
 			sessions := byProject[project.ID]
 			rows = append(rows, sidebarRow{
 				Key: "sidebar-project:" + project.ID, Header: project.Name, ProjectID: project.ID,
-				Group: key, Project: true, Count: len(sessions),
+				Group: key, Project: true, Count: len(sessions), Working: working[project.ID],
 			})
 			if !a.expanded[key] {
 				rows = a.appendSidebarConversations(rows, key, sessions, true)

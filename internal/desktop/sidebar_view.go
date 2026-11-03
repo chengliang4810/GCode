@@ -212,6 +212,9 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 	}
 	closed := a.expanded[row.Group]
 	button := controlSidebarProjectRow(c.Key(row.Key), row.Header, false, offline).Expanded(!closed)
+	if closed && row.Working {
+		button.Label(row.Header + " · " + tr(c, "Running"))
+	}
 	// The folder glyph itself carries the folded/open state; project rows show
 	// no separate chevron.
 	button.OnClick(func() {
@@ -225,6 +228,11 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 			icon(c, folder, design.Sidebar().IconSize)
 		}
 		ui.Text(c, row.Header).SingleLine().MinWidth(0).Grow(1)
+		if closed && row.Working {
+			ui.Box(c.Key("sidebar-project-working:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).Shrink(0).Center().Label(tr(c, "Running")).Tooltip(tr(c, "Running")).Children(func() {
+				ui.Spinner(c).Size(12, 12)
+			})
+		}
 		if offline {
 			ui.Box(c).Label(tr(c, "Device offline")).Children(func() { icon(c, "wifi-off", 12) })
 		}
