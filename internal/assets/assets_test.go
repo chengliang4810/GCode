@@ -11,8 +11,19 @@ import (
 	"strings"
 	"testing"
 
+	"gcode/internal/providerlogo"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestProviderBrandIconsResolve(t *testing.T) {
+	for _, brand := range providerlogo.Brands() {
+		t.Run(brand.ID, func(t *testing.T) {
+			if Icon(brand.ID) == nil {
+				t.Fatalf("provider logo %q has no usable artwork", brand.Name)
+			}
+		})
+	}
+}
 
 func TestAppIconMatchesDistributionAndDecodes(t *testing.T) {
 	data, err := os.ReadFile("../../mygo.json")

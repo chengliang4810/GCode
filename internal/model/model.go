@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"gcode/internal/providerlogo"
 )
 
 type Protocol string
@@ -99,6 +101,7 @@ func (m Model) validateReasoningLevels() error {
 }
 
 type Provider struct {
+	Logo     string   `json:"logo"`
 	ID       string   `json:"id"`
 	Name     string   `json:"name"`
 	Disabled bool     `json:"disabled"`
@@ -121,6 +124,13 @@ func CloneProvider(provider Provider) Provider {
 // Validate checks saved configuration, including an unfinished provider draft.
 // Execution additionally requires a base URL and an enabled configured model.
 func (p Provider) Validate() error {
+	if err := providerlogo.Validate(p.Logo); err != nil {
+		return err
+	}
+	return p.validateConfiguration()
+}
+
+func (p Provider) validateConfiguration() error {
 	if strings.TrimSpace(p.ID) == "" || strings.TrimSpace(p.Name) == "" {
 		return errors.New("provider ID and name are required")
 	}
@@ -163,7 +173,7 @@ func (p Provider) Validate() error {
 // Ready reports whether the provider has at least one model available to run.
 // Credentials may be empty for services that do not require authentication.
 func (p Provider) Ready() bool {
-	if p.Disabled || p.BaseURL == "" || p.Validate() != nil {
+	if p.Disabled || p.BaseURL == "" || p.validateConfiguration() != nil {
 		return false
 	}
 	for _, m := range p.Models {

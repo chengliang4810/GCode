@@ -24,11 +24,16 @@ var macAppIcon []byte
 var smallAppIcons embed.FS
 
 // glyphs holds control glyphs drawn for GCode rather than imported from the
-// frozen reference artwork: the window caption buttons, which must match the
-// titlebar icon grid and stroke weight instead of an optional system font.
+// frozen reference artwork, including window caption and reasoning controls.
+// These match the app's icon grid and inherit the current theme's text color.
 //
 //go:embed glyphs/*.svg
 var glyphs embed.FS
+
+// Additional licensed brand artwork is kept apart from the frozen reference.
+//
+//go:embed brands/*.svg
+var brands embed.FS
 
 var fontOnce sync.Once
 var fontError error
@@ -86,7 +91,7 @@ func Glyph(name string) *ui.SVG {
 	return actual.(*ui.SVG)
 }
 
-// Icon returns the original SVG by its filename stem. An unknown name returns nil;
+// Icon returns a bundled SVG by its filename stem. An unknown name returns nil;
 // callers should select an existing asset instead of drawing an approximate glyph.
 func Icon(name string) *ui.SVG {
 	name = strings.TrimSuffix(name, ".svg")
@@ -95,7 +100,10 @@ func Icon(name string) *ui.SVG {
 	}
 	data, err := Read("icons/" + name + ".svg")
 	if err != nil {
-		return nil
+		data, err = brands.ReadFile("brands/" + name + ".svg")
+		if err != nil {
+			return nil
+		}
 	}
 	icon, err := ui.ParseSVG(data)
 	if err != nil {

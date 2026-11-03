@@ -293,6 +293,9 @@ func TestDesktopLocalModelPickerLayout(t *testing.T) {
 					}
 					return nil
 				})
+				if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+					t.Fatal(err)
+				}
 				app.capture("conversation-compact")
 				assertCompactComposerHasNoScrollbar(t, app, 900)
 				app.act("model-trigger", "press", "")

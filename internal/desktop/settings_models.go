@@ -46,6 +46,10 @@ type modelSettingsState struct {
 	fetchCancel                           context.CancelFunc
 	inputs                                [3]ui.Handle
 	focused                               [3]bool
+	logoOpen, logoLoading                 bool
+	logoProvider, logoError               string
+	logoRequest                           uint64
+	logoCancel                            context.CancelFunc
 }
 
 func (a *App) customProviderSettings(c *ui.Context) {
@@ -79,7 +83,7 @@ func (a *App) customProviderSettings(c *ui.Context) {
 				row.Children(func() {
 					button := controlNavButton(c.Key("select"), tr(c, "Select provider")+" "+provider.Name, a.modelsUI.selected == provider.ID).Grow(1).MinWidth(0)
 					button.Children(func() {
-						modelProviderIcon(c, 16)
+						providerLogo(c, provider.Logo, 16)
 						ui.Text(c, provider.Name).Grow(1).MinWidth(0).SingleLine().FontWeight(500)
 						color, status := a.palette.Success, "Configured"
 						if provider.Disabled {
@@ -128,20 +132,7 @@ func (a *App) customProviderSettings(c *ui.Context) {
 	})
 	a.modelMetadataDialog(c)
 	a.modelFetchDialog(c)
-}
-
-// This small native vector is independent of any reference application's assets.
-func modelProviderIcon(c *ui.Context, size float32) {
-	color := c.Theme().Text
-	ui.Box(c).Size(size, size).Shrink(0).Draw(func(p *ui.Painter, r ui.Rect) {
-		x, y, s := r.X, r.Y, r.W
-		path := (&ui.Path{}).MoveTo(x+s*.5, y+s*.04).LineTo(x+s*.9, y+s*.26).LineTo(x+s*.9, y+s*.73).
-			LineTo(x+s*.5, y+s*.97).LineTo(x+s*.1, y+s*.73).LineTo(x+s*.1, y+s*.26).Close()
-		p.StrokePath(path, 1.2, color)
-		lines := (&ui.Path{}).MoveTo(x+s*.1, y+s*.26).LineTo(x+s*.5, y+s*.49).LineTo(x+s*.9, y+s*.26).
-			MoveTo(x+s*.5, y+s*.49).LineTo(x+s*.5, y+s*.97).MoveTo(x+s*.3, y+s*.15).LineTo(x+s*.7, y+s*.38)
-		p.StrokePath(lines, 1.1, color)
-	})
+	a.providerLogoDialog(c)
 }
 
 func (a *App) syncInlineProvider(config contracts.ProviderConfiguration) {
@@ -157,6 +148,7 @@ func (a *App) syncInlineProvider(config contracts.ProviderConfiguration) {
 		state.revealedKey, state.keyLoading = "", false
 		state.keyRequest++
 		a.dismissModelFetch()
+		a.dismissProviderLogo()
 		state.fetchSeen = ""
 		state.focused = [3]bool{}
 		a.runtimeUI.key = ""
@@ -218,7 +210,10 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 	provider := config.Provider
 	state := &a.modelsUI
 	ui.Row(c).FillWidth().Gap(10).AlignItems(ui.Center).Children(func() {
-		modelProviderIcon(c, 19)
+		controlProviderLogoButton(c.Key("provider-logo"), tr(c, "Choose provider logo")).
+			Disabled(a.modelSettingsBusy()).Children(func() {
+			providerLogo(c, a.runtimeUI.provider.Logo, 19)
+		}).OnClick(a.openProviderLogo)
 		controlTextInput(c.Key("custom-provider-name"), &a.runtimeUI.provider.Name).Grow(1).MinWidth(0).
 			Label(tr(c, "Provider name")).Bind(&state.inputs[0]).OnChange(func() { a.inlineProviderInputChanged(0) })
 		enabled := !provider.Disabled
@@ -439,6 +434,7 @@ func (a *App) submitProviderSettings(provider model.Provider) bool {
 	state := &a.modelsUI
 	if state.inlineID == provider.ID && state.inlineDirty {
 		provider.Name, provider.BaseURL, provider.Protocol = a.runtimeUI.provider.Name, a.runtimeUI.provider.BaseURL, a.runtimeUI.provider.Protocol
+		provider.Logo = a.runtimeUI.provider.Logo
 	}
 	provider.Name, provider.BaseURL = strings.TrimSpace(provider.Name), strings.TrimSpace(provider.BaseURL)
 	provider.APIKey = ""

@@ -32,6 +32,11 @@ type ProviderKeyService interface {
 	ReadProviderKey(context.Context, string) (string, error)
 }
 
+// ProviderLogoService fetches public website artwork through the business host.
+type ProviderLogoService interface {
+	FetchProviderLogo(context.Context, string) (string, error)
+}
+
 // ModelMetadataService looks up metadata in the business host's local catalog.
 type ModelMetadataService interface {
 	LookupModelMetadata(context.Context, modelcatalog.Query) (modelcatalog.Metadata, error)

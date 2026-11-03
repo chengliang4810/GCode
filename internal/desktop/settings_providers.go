@@ -102,7 +102,7 @@ func (a *App) providerRow(c *ui.Context, p contracts.Provider, d contracts.Provi
 			}
 		})
 		trigger.Children(func() {
-			ui.Box(c).Size(36, 36).Radius(10).Background(a.palette.Text.Alpha(.06)).Center().Children(func() { icon(c, p.Icon, 16) })
+			ui.Box(c).Size(36, 36).Radius(10).Background(a.palette.Text.Alpha(.06)).Center().Children(func() { providerLogo(c, p.Logo, 16) })
 			ui.Column(c).Grow(1).AlignItems(ui.Start).Gap(3).Children(func() {
 				ui.Text(c, p.Name).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).LineHeight(1.5)
 				meta := providerVersion(d)

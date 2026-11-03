@@ -19,7 +19,7 @@ const (
 	providerPanelMinWidth float32 = 120
 	providerPanelMaxWidth float32 = 240
 	modelPanelMinWidth    float32 = 192
-	providerRowChrome     float32 = 74
+	providerRowChrome     float32 = 96
 	managementRowChrome   float32 = 52
 	modelRowChrome        float32 = 36
 )
@@ -224,11 +224,12 @@ func (a *composerController) modelPopover(c *ui.Context, anchor ui.Element) ui.E
 		placeComposerSelector(panel, anchor, false)
 		viewportWidth, _ := c.Size()
 		providerWidth, modelWidth := a.modelPickerColumns(c)
+		trigger := anchor.Bounds()
+		providerWidth = max(providerWidth, trigger.W)
 		width := min(providerWidth+modelPickerGap+modelWidth, min(modelPickerMaxWidth, max(float32(0), viewportWidth-16)))
 		providerWidth = min(providerWidth, max(float32(0), width-modelPickerGap))
 		modelWidth = max(float32(0), width-providerWidth-modelPickerGap)
 		providerOffset := providerWidth / 2
-		trigger := anchor.Bounds()
 		// Keep the provider card's centerline on the trigger. The model list
 		// goes beside it, to the right unless the window lacks that room.
 		modelsOnLeft := trigger.X+trigger.W/2+width-providerOffset > viewportWidth-8
@@ -265,7 +266,7 @@ func (a *composerController) reasoningTrigger(c *ui.Context) (anchor, panel ui.E
 		button.Background(a.palette.Hover)
 	}
 	button.Children(func() {
-		icon(c, "tuning", 14)
+		icon(c, "brain", 14)
 		ui.Text(c, tr(c, label)).SingleLine().MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 	})
 	button.OnClick(func() {
@@ -805,6 +806,12 @@ func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
 		current = a.selectedProvider().ID
 	}
 	b := controlPromptChoice(c.Key("model-provider:"+id), current == id).FillWidth().Label(label).Tooltip(label).Children(func() {
+		for _, provider := range a.state.Providers {
+			if provider.ID == id {
+				providerLogo(c, provider.Logo, 16)
+				break
+			}
+		}
 		ui.Text(c, label).SingleLine().MinWidth(0).Shrink(1)
 		if a.selectedModel().ProviderID == id {
 			icon(c, "check", 12)

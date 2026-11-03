@@ -159,6 +159,9 @@ func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Eleme
 		button.Background(a.palette.Hover)
 	}
 	button.Children(func() {
+		if !manageModels && a.selectedProvider().ID != "" {
+			providerLogo(c, a.selectedProvider().Logo, 16)
+		}
 		ui.Text(c, a.modelLabel()).SingleLine().MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 	})
 	button.OnClick(func() {

@@ -216,7 +216,7 @@ func modelPickerFixtureCatalog() contracts.Snapshot {
 		ModelCatalog: contracts.ModelCatalogState{State: contracts.CatalogReady},
 		Devices:      []contracts.Device{{ID: "local", Name: "This device", Current: true, Status: "connected"}},
 		Providers: []contracts.Provider{{
-			ID: "codex", Name: "Codex", Icon: "openai-mark", Status: "connected", Enabled: true,
+			ID: "codex", Name: "Codex", Logo: "openai-mark", Status: "connected", Enabled: true,
 			Models: []string{"gpt-5.4", "gpt-5.3-codex", "gpt-5.2", "gpt-5.1-codex-mini"},
 		}},
 		Integrations: contracts.IntegrationState{

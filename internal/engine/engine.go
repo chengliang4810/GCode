@@ -319,7 +319,7 @@ func (e *Engine) refreshProvidersLocked() {
 		public := model.CloneProvider(config)
 		public.APIKey = ""
 		e.state.CustomProviders = append(e.state.CustomProviders, contracts.ProviderConfiguration{Provider: public, HasAPIKey: config.APIKey != "", ModelChecks: e.providerModelChecksLocked(config.ID), ModelFetch: e.providerModelFetchLocked(config.ID)})
-		provider := contracts.Provider{ID: config.ID, Name: config.Name, Icon: "widget", Enabled: !config.Disabled, Status: "ready"}
+		provider := contracts.Provider{ID: config.ID, Name: config.Name, Logo: config.Logo, Enabled: !config.Disabled, Status: "ready"}
 		ready := config.Ready()
 		if config.Disabled {
 			provider.Status = "disabled"

@@ -28,6 +28,7 @@ func (s Server) Handler() (http.Handler, error) {
 	s.linkedFileHandlers(mux)
 	s.terminalHandlers(mux)
 	s.providerKeyHandlers(mux)
+	s.providerLogoHandlers(mux)
 	s.modelMetadataHandlers(mux)
 	s.trajectoryHandlers(mux)
 	mux.HandleFunc("GET /v1/snapshot", func(w http.ResponseWriter, r *http.Request) {

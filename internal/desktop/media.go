@@ -4,6 +4,7 @@ import (
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/providerlogo"
 	"github.com/egoist/mygo/ui"
 	"strings"
 	"sync"
@@ -37,12 +38,19 @@ func loadMedia(ref string) media {
 		return hit
 	}
 	mediaCacheMu.Unlock()
-	data, err := assets.Read(strings.TrimPrefix(ref, "asset://"))
+	var data []byte
+	var err error
+	svg := strings.HasSuffix(strings.ToLower(ref), ".svg")
+	if strings.HasPrefix(ref, "data:image/") {
+		data, svg, err = providerlogo.ImageData(ref)
+	} else {
+		data, err = assets.Read(strings.TrimPrefix(ref, "asset://"))
+	}
 	if err != nil {
 		return media{}
 	}
 	result := media{}
-	if strings.HasSuffix(strings.ToLower(ref), ".svg") {
+	if svg {
 		result.svg, _ = ui.ParseSVG(data)
 	} else {
 		result.bitmap, _ = ui.DecodeBitmap(data)

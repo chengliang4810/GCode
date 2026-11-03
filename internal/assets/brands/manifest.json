@@ -1,0 +1,57 @@
+{
+  "source": "lobehub/lobe-icons",
+  "revision": "9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "deepseek-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/deepseek.svg",
+      "sha256": "8f9443e351b6dacce71871790201b799d92e8bf96a45ef79aeb5e9bf4db423e2"
+    },
+    {
+      "path": "qwen-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/qwen.svg",
+      "sha256": "b2c16efc3bd32b88a941842d41222e1e1e0e40441222218b725afc0aef6d9a36"
+    },
+    {
+      "path": "doubao-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/doubao.svg",
+      "sha256": "cbda61929dbe7263a969d34ca8a022226d45d20fddfe333c1608abcb52de7b52"
+    },
+    {
+      "path": "zhipu-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/zhipu.svg",
+      "sha256": "d4c3fe5ff92820b2ae5e3ddaaa30e6fc622cb746b75baad97f4bb2428fa25c5d"
+    },
+    {
+      "path": "kimi-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/kimi.svg",
+      "sha256": "ed08131b46acf70e6e2144eceb775e74098b58ea65fa21eaee04be7b05cfe63b"
+    },
+    {
+      "path": "minimax-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/minimax.svg",
+      "sha256": "bb96e2005081494716de6af5fd030701ae551ee68393ad61b325c07325607848"
+    },
+    {
+      "path": "hunyuan-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/hunyuan.svg",
+      "sha256": "7306a65eb71c4de61e21a637e5c4fef94afde823678e225c46f891cc783f6531"
+    },
+    {
+      "path": "wenxin-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/wenxin.svg",
+      "sha256": "3624b6084ce8ebefcbbb90ae6ab6485c4df9083187ae6e4012e1aba9a4bcea04"
+    },
+    {
+      "path": "spark-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/spark.svg",
+      "sha256": "e19b6b5d7c398d115934e4c8762a8fde525db792e2c4e8bc6934a71e70e7ce7c"
+    },
+    {
+      "path": "baichuan-mark.svg",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/packages/static-svg/icons/baichuan.svg",
+      "sha256": "6f2640b1b3eca4bd3758bb823b1a2df0327d286959706ba14bb564de11ae0ffb"
+    }
+  ]
+}

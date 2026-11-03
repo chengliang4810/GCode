@@ -56,7 +56,7 @@ func TestModelSearchFontAndLineHeightFollowPreference(t *testing.T) {
 func modelListSurfaceTestApp(t *testing.T, appearance string) *App {
 	t.Helper()
 	a := modelSurfaceTestApp(t, appearance)
-	a.state.Providers = []contracts.Provider{{ID: "openai", Name: "OpenAI", Icon: "openai-mark"}}
+	a.state.Providers = []contracts.Provider{{ID: "openai", Name: "OpenAI"}}
 	a.state.Models = []contracts.Model{
 		{ID: "gpt-5.4", ProviderID: "openai", Label: "GPT-5.4", ReasoningLevels: []string{"Low", "Medium", "High", "Extra High"}},
 		{ID: "gpt-5.3-codex", ProviderID: "openai", Label: "GPT-5.3 Codex"},
@@ -73,6 +73,7 @@ func TestModelPickerSupplierNamesAndSeparateCards(t *testing.T) {
 	for _, appearance := range []string{"light", "dark"} {
 		t.Run(appearance, func(t *testing.T) {
 			a := modelListSurfaceTestApp(t, appearance)
+			a.state.Models[0].Label = "deepseek-v4.1-flash-long-model-name"
 			tt := ui.NewTester(a.View, 900, 600)
 			tt.Advance(time.Second)
 			panel, panelOK := tt.Find("Model picker")
@@ -81,6 +82,10 @@ func TestModelPickerSupplierNamesAndSeparateCards(t *testing.T) {
 			row, rowOK := tt.Find("GPT-5.3 Codex")
 			if !panelOK || !settingsOK || !providerOK || !rowOK {
 				t.Fatalf("missing picker controls: %v", tt.Texts())
+			}
+			trigger, triggerOK := tt.Find("Select model")
+			if !triggerOK || provider.W+10 < trigger.W {
+				t.Fatalf("supplier card is narrower than trigger: provider=%+v trigger=%+v", provider, trigger)
 			}
 			if settings.Y < provider.Y+provider.H || !(row.X > provider.X+provider.W || row.X+row.W < provider.X) || settings.Y+settings.H > panel.Y+panel.H {
 				t.Fatalf("invalid supplier/model cards: panel=%+v management=%+v provider=%+v row=%+v", panel, settings, provider, row)
@@ -117,7 +122,7 @@ func TestModelPickerProviderScrollKeepsSettingsFixed(t *testing.T) {
 	a := testApp(t, "default")
 	for index := 0; index < 30; index++ {
 		id := fmt.Sprintf("provider-%02d", index)
-		a.state.Providers = append(a.state.Providers, contracts.Provider{ID: id, Name: id, Icon: "widget"})
+		a.state.Providers = append(a.state.Providers, contracts.Provider{ID: id, Name: id})
 		a.state.Integrations.Providers = append(a.state.Integrations.Providers, contracts.ProviderDetails{ProviderID: id, TargetID: "local", Installed: true, Enabled: true})
 		a.state.Models = append(a.state.Models, contracts.Model{ID: id + "/model", ProviderID: id, Label: id + " model"})
 	}

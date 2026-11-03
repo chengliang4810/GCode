@@ -7,6 +7,9 @@ identified explicitly below. `manifest.json` records the delivered bytes.
 
 | Component | Version / revision | License documents |
 | --- | --- | --- |
+| Additional Chinese AI brand artwork from Lobe Icons | `9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b` | `icons/Lobe-Icons-MIT.txt`; artwork source paths and hashes: `internal/assets/brands/manifest.json` |
+| Fyne image / ICO codec | v0.1.1 | `go/fyne-image-LICENSE.txt`, `go/fyne-ico-LICENSE-reader.txt`, `go/fyne-ico-LICENSE-writer.txt` |
+| gobmp | `v0.0.0-20230614200233-a9de23ed2e25` | `go/gobmp-COPYING.txt` |
 | Models.dev catalog | JSON snapshot retrieved 2026-10-30 | `models-dev/LICENSE.txt` — original MIT, copyright 2025 models.dev |
 | Zeron source, artwork and rendering adapters | v0.2.128 / `ab189159f10cf8e63c0502be75a59bbc487e0eaf` | `zeron/LICENSE.txt` — original MIT text, copyright 2026 Wing |
 | MyGo | v0.7.4 + `rcode-native-ui.23` | `mygo/LICENSE.txt` — original MIT; patch source is fixed by `third_party/mygo.lock.json` in the source distribution |

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "ed04b29cdfda45fa1a9fcc7b45cc4e226e8393d6e6371df91627cc138ee9664d",
+  "noticeSha256": "936355af00f62912d62c475b583b50447378fd0d2d95da1b8ea25ef7e3831de7",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -10,8 +10,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5858,
-      "sha256": "f81839d8885367a4f7b6884a771b02d4c9963adbf4c142e7fa1c6c1af0b3707c",
+      "bytes": 6269,
+      "sha256": "392da8370788229d820a582d3a2c809670b1b0c5a12179c112bde535b82dd44a",
       "source": "project-maintained component/source index; no substituted license terms"
     },
     {
@@ -87,6 +87,24 @@
       "source": "go1.27.3 selected toolchain/PATENTS"
     },
     {
+      "path": "go/fyne-ico-LICENSE-reader.txt",
+      "bytes": 11357,
+      "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
+      "source": "github.com/fyne-io/image@v0.1.1/ico/LICENSE-reader (local module cache)"
+    },
+    {
+      "path": "go/fyne-ico-LICENSE-writer.txt",
+      "bytes": 1479,
+      "sha256": "dd26a7abddd02e2d0aba97805b31f248ef7835d9e10da289b22e3b8ab78b324d",
+      "source": "github.com/fyne-io/image@v0.1.1/ico/LICENSE-writer (local module cache)"
+    },
+    {
+      "path": "go/fyne-image-LICENSE.txt",
+      "bytes": 1515,
+      "sha256": "b9c31d8f1a43d7260789099ef59cc17a8b72aa3fccd1479bd516ec1b924637c3",
+      "source": "github.com/fyne-io/image@v0.1.1/LICENSE (local module cache)"
+    },
+    {
       "path": "go/go-latex-BSD-3-Clause.txt",
       "bytes": 1537,
       "sha256": "08270e7773daa4f6e4b05c2f6acf7973afea615bd5a65d0b84ad9f4ff5e02d82",
@@ -109,6 +127,12 @@
       "bytes": 3005,
       "sha256": "a1e5b69b12756927cfe3b3a373df05a55c1aaa69c6b259e06d8746257cb17d06",
       "source": "github.com/go-text/typesetting-utils@v0.0.0-20260419141703-4ffe8874dabc/LICENSE (local module cache; test only)"
+    },
+    {
+      "path": "go/gobmp-COPYING.txt",
+      "bytes": 1062,
+      "sha256": "027529c1f33b6ef9280c5b9569e120734dbbee0e5e37436fb9a1bc7a0153b0ae",
+      "source": "github.com/jsummers/gobmp@v0.0.0-20230614200233-a9de23ed2e25/COPYING.txt (local module cache)"
     },
     {
       "path": "go/purego-Apache-2.0.txt",
@@ -193,6 +217,12 @@
       "bytes": 18657,
       "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
       "source": "https://creativecommons.org/licenses/by/4.0/legalcode.txt"
+    },
+    {
+      "path": "icons/Lobe-Icons-MIT.txt",
+      "bytes": 1064,
+      "sha256": "add9d7531d1b21646317a8958e38fc727506fa39d24bdecb44154d943c82753a",
+      "source": "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/LICENSE (verbatim source)"
     },
     {
       "path": "icons/Solar-ATTRIBUTION.md",

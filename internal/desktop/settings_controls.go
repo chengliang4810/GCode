@@ -337,6 +337,19 @@ func controlRowButton(c *ui.Context) ui.Element {
 	return b
 }
 
+func controlProviderLogoButton(c *ui.Context, label string) ui.Element {
+	return controlIconButton(c, label).Center()
+}
+
+func controlProviderLogoChoice(c *ui.Context, label string, selected bool) ui.Element {
+	size := design.Controls().ResourceIconSize
+	button := controlIconButton(c, label).Size(size, size).Center()
+	if selected {
+		button.Background(c.Theme().SurfacePressed).Border(design.Controls().BorderWidth, c.Theme().Accent)
+	}
+	return button
+}
+
 func controlPromptChoice(c *ui.Context, selected bool) ui.Element {
 	button := controlRowButton(c).Gap(design.Controls().ButtonGap)
 	if selected {

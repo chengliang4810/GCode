@@ -268,7 +268,7 @@ func groupCredits(value float64) string {
 }
 
 func seedAdditionalProviders(s *contracts.Snapshot) {
-	for _, p := range []contracts.Provider{{ID: "antigravity", Name: "Antigravity", Icon: "antigravity-mark"}, {ID: "grok", Name: "Grok", Icon: "grok-mark"}, {ID: "devin", Name: "Devin", Icon: "devin-mark"}, {ID: "opencode", Name: "OpenCode", Icon: "opencode-mark"}, {ID: "pi", Name: "Pi", Icon: "pi-mark"}, {ID: "hermes", Name: "Hermes", Icon: "hermes-mark"}, {ID: "muse", Name: "Muse Code", Icon: "muse-mark"}} {
+	for _, p := range []contracts.Provider{{ID: "antigravity", Name: "Antigravity"}, {ID: "grok", Name: "Grok"}, {ID: "devin", Name: "Devin"}, {ID: "opencode", Name: "OpenCode"}, {ID: "pi", Name: "Pi"}, {ID: "hermes", Name: "Hermes"}, {ID: "muse", Name: "Muse Code"}} {
 		p.Status = "notConnected"
 		s.Providers = append(s.Providers, p)
 	}

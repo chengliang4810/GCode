@@ -288,7 +288,7 @@ type ModelOption struct {
 type Provider struct {
 	ID      string   `json:"id"`
 	Name    string   `json:"name"`
-	Icon    string   `json:"icon"`
+	Logo    string   `json:"logo"`
 	Status  string   `json:"status"`
 	Account string   `json:"account"`
 	Enabled bool     `json:"enabled"`

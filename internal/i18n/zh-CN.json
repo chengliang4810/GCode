@@ -1156,5 +1156,15 @@
   "Save models": "保存模型",
   "Select all models": "全选模型",
   "Context window for %s": "%s 的上下文容量",
-  "%s input for %s": "%s输入：%s"
+  "%s input for %s": "%s输入：%s",
+  "Choose provider logo": "选择供应商图标",
+  "Provider logo": "供应商图标",
+  "Fetching website logo…": "正在获取网站图标…",
+  "Fetch from website": "从网站获取",
+  "Use default icon": "使用默认图标",
+  "Website logo fetching is unavailable.": "当前连接不支持获取网站图标。",
+  "The website logo cannot be displayed.": "网站返回的图标无法显示，请选择内置图标。",
+  "enter a valid provider Base URL first": "请先填写有效的供应商 Base URL。",
+  "no usable website logo found; choose a built-in logo or retry": "未找到可用的网站图标，请选择内置图标或重试。",
+  "The provider changed while fetching its logo. Please retry.": "获取期间供应商配置已更改，请重试。"
 }
