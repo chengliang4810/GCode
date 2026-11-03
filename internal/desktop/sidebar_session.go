@@ -23,10 +23,6 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 	})
 	row.ContextMenu(func(menu *ui.Menu) {
-		if menu.Item(tr(c, "Call trajectory")).Chosen() {
-			a.openModelTrajectory(session.ID)
-		}
-		menu.Separator()
 		if menu.Item(tr(c, "Rename")).Chosen() {
 			a.startSidebarRename(session.ID)
 		}
@@ -44,17 +40,15 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		if menu.Item(tr(c, "Archive")).Chosen() {
 			a.archiveSidebarSession(session.ID)
 		}
-		menu.Submenu("Copy", func(menu *ui.Menu) {
-			if menu.Item(tr(c, "Title")).Chosen() {
-				c.Services().WriteClipboard(session.Title)
-			}
-			if menu.Item(tr(c, "Session ID")).Chosen() {
-				c.Services().WriteClipboard(session.ID)
-			}
-			if menu.Item(tr(c, "Branch")).Disabled(session.Branch == "").Chosen() {
-				c.Services().WriteClipboard(session.Branch)
-			}
-		})
+		if menu.Item(tr(c, "Copy title")).Chosen() {
+			c.Services().WriteClipboard(session.Title)
+		}
+		if menu.Item(tr(c, "Copy session ID")).Chosen() {
+			c.Services().WriteClipboard(session.ID)
+		}
+		if menu.Item(tr(c, "Copy branch")).Disabled(session.Branch == "").Chosen() {
+			c.Services().WriteClipboard(session.Branch)
+		}
 		if len(a.state.SessionGroups) > 0 || session.GroupID != "" {
 			menu.Submenu(tr(c, "Move to group"), func(menu *ui.Menu) {
 				for _, group := range a.orderedSessionGroups() {
@@ -75,6 +69,9 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		if menu.Item(tr(c, unreadLabel)).Chosen() {
 			value := !session.Unread
 			a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: session.ID, Unread: &value}})
+		}
+		if menu.Item(tr(c, "Call trajectory")).Chosen() {
+			a.openModelTrajectory(session.ID)
 		}
 		menu.Separator()
 		if menu.Item(tr(c, "Delete")).Chosen() {

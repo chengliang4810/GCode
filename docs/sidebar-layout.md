@@ -64,6 +64,11 @@ sidebarShowArchived、sidebarCompact、sidebarShowBranch、showProjectLabels 保
 sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分组一并删除。
 排序、置顶、归档、状态、重命名、拖动置顶排序和删除继续使用原业务命令。
 
+对话右键菜单直接提供“复制标题”“复制对话 ID”“复制分支”，不再使用复制子菜单；
+无分支时禁用“复制分支”。“调用轨迹”紧跟“标为未读/标为已读”，删除位于分隔线之后。
+删除确认明确提示“删除后，该对话将无法找回。如果只是想从列表中隐藏，可以使用归档操作。”
+对话信息卡片先于模态浮层绘制，因此会被删除确认的遮罩压暗，且不能透过遮罩操作。
+
 分组视图的拖拽与置顶拖拽共用原生列表的整行拖拽：
 拖分组标题可调整分组先后（`group.reorder`，顺序密集重编号）；
 拖对话可在组内调整位置、拖到另一组（含未分组区）即改变归属
@@ -107,6 +112,15 @@ sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分
 草稿保护、从搜索打开折叠项目中的对话、返回画布恢复草稿，并保存真实窗口截图。
 模型菜单与底部入口另复用原有原生回归。
 这些检查不访问真实模型供应商，不恢复已暂停的全面视觉一致性目标。
+
+2026-11-03：`TestSidebarSessionMenuFlatCopyAndTrajectoryOrder` 覆盖中英文的一级复制、
+剪贴板内容及未读两态下的菜单顺序；`TestSessionDeleteDialogDimsSessionInfo` 覆盖
+900/1700 宽度、深浅主题的信息卡片变暗、背景点击阻挡、取消与 Escape。
+组件截图位于 `output/session-menu-fix/component/`。
+`TestDesktopLocalSessionDeleteConfirmation` 通过归档设置页打开同一个生产弹窗，
+在独立原生进程及真实本地核心中验证英文浅色/中文深色的提示、取消保留和确认删除落盘，
+原生截图与记录位于 `output/session-menu-fix/native/20261103-163842-815770487/`。
+OS 右键菜单选择仍由组件测试覆盖，不将归档页的原生流程当作右键菜单实机验收。
 
 macOS 标题栏图标以系统按钮预留高度的中心线对齐，系统按钮右侧保留 12 DIP 间隔；新建对话图标中心与关闭按钮中心同列。项目分区不再提供单独的批量开合图标。
 

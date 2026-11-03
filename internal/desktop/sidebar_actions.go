@@ -113,16 +113,16 @@ func (a *App) nextSidebarSession(skip string) {
 // sessionDeleteDialog confirms deletion of a conversation from the sidebar or
 // the settings archived page; both feed sidebarUI.deleteID.
 func (a *App) sessionDeleteDialog(c *ui.Context) {
-	ui.DialogBase(c, &a.sidebarUI.deleteOpen, func(back, panel ui.Element) {
+	ui.DialogBase(c.Key("session-delete-dialog"), &a.sidebarUI.deleteOpen, func(back, panel ui.Element) {
 		back.Background(ui.RGBA(0, 0, 0, .35))
-		panel.Width(400).Padding(24).Radius(12)
+		panel.Width(400).Padding(24).Radius(12).Label(tr(c, "Delete session?"))
 		a.floatingSurface(c, panel, 12)
 		ui.Column(c).Gap(16).Children(func() {
 			ui.Text(c, tr(c, "Delete session?")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
-			ui.Text(c, tr(c, "This action cannot be undone.")).TextColor(a.palette.Muted)
+			ui.Text(c, tr(c, "Once deleted, this conversation cannot be recovered. To hide it from the list instead, use Archive.")).FillWidth().TextColor(a.palette.Muted)
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
-				textButton(c, tr(c, "Cancel")).OnClick(func() { a.sidebarUI.deleteOpen = false })
-				textButton(c, tr(c, "Delete")).TextColor(a.palette.Danger).OnClick(func() {
+				textButton(c.Key("session-delete-cancel"), tr(c, "Cancel")).OnClick(func() { a.sidebarUI.deleteOpen = false })
+				textButton(c.Key("session-delete-confirm"), tr(c, "Delete")).TextColor(a.palette.Danger).OnClick(func() {
 					id := a.sidebarUI.deleteID
 					a.sidebarUI.deleteOpen = false
 					a.dispatch(contracts.Command{Kind: "session.delete", ID: id})

@@ -1165,5 +1165,9 @@
   "The website logo cannot be displayed.": "网站返回的图标无法显示，请选择内置图标。",
   "enter a valid provider Base URL first": "请先填写有效的供应商 Base URL。",
   "no usable website logo found; choose a built-in logo or retry": "未找到可用的网站图标，请选择内置图标或重试。",
-  "The provider changed while fetching its logo. Please retry.": "获取期间供应商配置已更改，请重试。"
+  "The provider changed while fetching its logo. Please retry.": "获取期间供应商配置已更改，请重试。",
+  "Once deleted, this conversation cannot be recovered. To hide it from the list instead, use Archive.": "删除后，该对话将无法找回。如果只是想从列表中隐藏，可以使用归档操作。",
+  "Copy title": "复制标题",
+  "Copy session ID": "复制对话 ID",
+  "Copy branch": "复制分支"
 }

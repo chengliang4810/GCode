@@ -952,9 +952,10 @@ func (a *App) View(c *ui.Context) {
 			a.mainView(c)
 		}
 	})
+	// Persistent conversation cards belong below modal backdrops.
+	a.sessionInfo(c)
 	a.overlays(c)
 	a.sessionDeleteDialog(c)
-	a.sessionInfo(c)
 	a.imageDialog(c)
 	if a.toast != "" && time.Now().Before(a.toastUntil) {
 		ui.Overlay(c, func() {
