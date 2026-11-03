@@ -78,6 +78,11 @@ func TestDisconnectDoesNotCancelHostTaskAndReconnectRestoresState(t *testing.T) 
 	case <-time.After(5 * time.Second):
 		t.Fatal("host task did not start")
 	}
+	running, _ := core.Snapshot(context.Background())
+	pending, err := client.ReadModelTrajectory(context.Background(), running.Sessions[0].ID)
+	if err != nil || len(pending.Records) != 1 || pending.Records[0].CompletedAt != nil || pending.Records[0].Error != "" {
+		t.Fatalf("live remote call was unavailable or incorrectly marked abandoned: %v", err)
+	}
 	cancel()
 	_ = client.Close()
 	close(release)
@@ -104,6 +109,13 @@ func TestDisconnectDoesNotCancelHostTaskAndReconnectRestoresState(t *testing.T) 
 	}
 	if len(state.Sessions) != 1 || state.Runs[0].Status != "completed" {
 		t.Fatal("reconnect lost host result")
+	}
+	trajectory, err := reconnected.ReadModelTrajectory(context.Background(), state.Sessions[0].ID)
+	if err != nil || len(trajectory.Records) != 1 || trajectory.Records[0].Response.Message.Text != "host task completed" {
+		t.Fatalf("remote trajectory did not read the host-owned model call: %v", err)
+	}
+	if _, err := reconnected.ReadModelTrajectory(context.Background(), "../foreign"); err == nil {
+		t.Fatal("remote trajectory accepted an invalid conversation")
 	}
 	target := t.TempDir()
 	if err := reconnected.Execute(context.Background(), contracts.Command{Kind: "storage.change", Path: target}); err != nil {
