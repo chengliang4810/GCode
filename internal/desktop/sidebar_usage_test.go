@@ -2,55 +2,59 @@ package desktop
 
 import (
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
 
-func TestSidebarUsageAggregatesRecordedConversations(t *testing.T) {
-	messages := map[string][]contracts.Message{
-		"one": {{Usage: contracts.Usage{InputTokens: 100, OutputTokens: 30, CachedTokens: 60}}},
-		"two": {{Usage: contracts.Usage{InputTokens: 50, OutputTokens: 20, CachedTokens: 10}},
-			{Usage: contracts.Usage{InputTokens: -1, OutputTokens: -1, CachedTokens: -1}}},
-	}
-	got := summarizeConversationUsage(messages)
-	if got.Input != 150 || got.Output != 50 || got.Cached != 70 || got.Input+got.Output != 200 {
-		t.Fatalf("cached input must not be counted twice: %+v", got)
-	}
+func TestSidebarUsageOpensApplicationStatisticsSettings(t *testing.T) {
 	a := testApp(t, "default")
+	now := a.now()
+	messages := map[string][]contracts.Message{
+		"one": {{ID: "one", ModelID: "provider/model-a", CreatedAt: now, Usage: contracts.Usage{InputTokens: 100, OutputTokens: 30, CachedTokens: 60}}},
+		"two": {{ID: "two", ModelID: "provider/model-b", CreatedAt: now.AddDate(0, 0, -8), Usage: contracts.Usage{InputTokens: 50, OutputTokens: 20, CachedTokens: 10}}},
+	}
 	a.state.Messages = messages
-	tt := ui.NewTester(a.View, 900, 600)
+	a.state.Runs = nil
+	tt := ui.NewTester(a.View, 1320, 1200)
 	if err := tt.Click(a.t("Usage statistics")); err != nil {
 		t.Fatal(err)
 	}
 	tt.Frame()
-	for _, value := range []string{"150", "50", "70", "200"} {
+	if a.route != "settings" || a.section != "Usage statistics" {
+		t.Fatalf("usage entry did not open settings: %s/%s", a.route, a.section)
+	}
+	for _, value := range []string{"200", a.t("Token activity"), a.t("Daily model usage"), a.t("Model usage"), "provider/model-a"} {
 		if !tt.HasText(value) {
-			t.Fatalf("usage dialog is missing %q", value)
+			t.Fatalf("usage page is missing %q", value)
 		}
 	}
-	if err := tt.Click(a.t("Close dialog")); err != nil {
+	if tt.HasText("provider/model-b") {
+		t.Fatal("default 7-day chart included an older request")
+	}
+	if err := tt.Click(a.t("Last 30 days")); err != nil {
 		t.Fatal(err)
 	}
-	if a.sidebarUI.usageOpen {
-		t.Fatal("usage dialog did not close")
+	tt.Frame()
+	if !tt.HasText("provider/model-b") || !tt.HasText("200") {
+		t.Fatal("30-day filter lost the older model or changed lifetime totals")
 	}
-}
-
-func TestSidebarUsageCountsForkedExecutionOnce(t *testing.T) {
-	messages := map[string][]contracts.Message{
-		"parent": {
-			{TurnID: "run-one", Usage: contracts.Usage{InputTokens: 100, OutputTokens: 30, CachedTokens: 60}},
-			{TurnID: "run-one", Usage: contracts.Usage{InputTokens: 50, OutputTokens: 20, CachedTokens: 10}},
-		},
-		"fork": {
-			{TurnID: "run-one", Usage: contracts.Usage{InputTokens: 100, OutputTokens: 30, CachedTokens: 60}},
-			{TurnID: "run-one", Usage: contracts.Usage{InputTokens: 50, OutputTokens: 20, CachedTokens: 10}},
-			{TurnID: "run-two", Usage: contracts.Usage{InputTokens: 10, OutputTokens: 5}},
-		},
+	for _, label := range []string{"Weekly", "Cumulative", "Daily"} {
+		if err := tt.Click(a.t(label)); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if usage := summarizeConversationUsage(messages); usage.Input != 160 || usage.Output != 55 || usage.Cached != 70 {
-		t.Fatalf("forked history was counted again or a new step was lost: %+v", usage)
+	a.now = func() time.Time { return now.AddDate(0, 0, 1) }
+	a.refreshAppUsage()
+	if !a.appUsage.generated.Equal(a.now()) {
+		t.Fatal("refresh did not rebuild calendar bounds")
+	}
+	if err := tt.Click(a.t("Back to conversations")); err != nil {
+		t.Fatal(err)
+	}
+	if a.route != "chat" {
+		t.Fatal("cannot return to conversations from usage settings")
 	}
 }
 

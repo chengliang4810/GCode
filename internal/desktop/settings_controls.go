@@ -436,6 +436,39 @@ func controlSidebarHoverCard(c *ui.Context, title string, infos []sidebarHoverIn
 	return card
 }
 
+func controlMessageRailTick(c *ui.Context, label string, active bool) ui.Element {
+	s, theme := design.MessageRail(), c.Theme()
+	button := ui.ButtonBase(c).Label(label).Checked(active).
+		Size(s.Width, s.SlotHeight).Justify(ui.Start).AlignItems(ui.Center)
+	width, color := s.MarkWidth, theme.Text.Alpha(.16)
+	if active || button.Hovered() || button.FocusVisible() {
+		color = theme.Text.Alpha(.8)
+	}
+	if button.Hovered() || button.FocusVisible() {
+		width = s.HoverWidth
+	}
+	button.Draw(func(p *ui.Painter, bounds ui.Rect) {
+		p.Fill(ui.Rect{X: bounds.X, Y: bounds.Y + (bounds.H-s.MarkHeight)/2, W: width, H: s.MarkHeight}, color, s.MarkHeight/2)
+	})
+	return button
+}
+
+func controlMessageRailPreview(c *ui.Context, prompt, reply, count string) ui.Element {
+	s := design.MessageRail()
+	card := ui.Column(c).Role(ui.RoleGroup).Width(s.PreviewWidth).Padding(s.PreviewPadding).Gap(s.PreviewGap).
+		Radius(s.PreviewRadius).Background(c.Theme().Surface).Border(design.Controls().BorderWidth, c.Theme().Border)
+	card.Children(func() {
+		ui.Text(c, prompt).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().Text).FillWidth()
+		if reply != "" {
+			ui.Text(c, reply).FontSize(design.TextSize(c, design.TextXS)).TextColor(c.Theme().TextMuted).FillWidth()
+		}
+		if count != "" {
+			ui.Text(c, count).FontSize(design.TextSize(c, design.TextXS)).TextColor(c.Theme().TextMuted)
+		}
+	})
+	return card
+}
+
 func controlSidebarHeading(c *ui.Context, label string) ui.Element {
 	s := design.Sidebar()
 	b := ui.ButtonBase(c).Label(label).MinWidth(0).Grow(1).

@@ -93,6 +93,9 @@ FillWidth、Margin 等内容/行为/布局属性。禁止在页面覆写控件�
 会话表格的浮动横向滚动条使用共享 `controlHorizontalScrollbar`，尺寸在 `Controls()` 的
 `ScrollbarHeight`、`ScrollbarMinThumb` 统一定义，保留原生滑块键盘、拖动和可访问范围。
 
+主对话区的消息导航条使用共享 `controlMessageRailTick` 与 `controlMessageRailPreview`，
+几何在 `MessageRail()` 统一定义；宽度门槛、消息分桶和列表定位见 `message-rail.md`。
+
 聊天侧栏使用共享 `controlSidebarRow`、`controlSidebarProjectRow`、
 `controlSidebarConversationRow`、`controlSidebarHeading`、`controlSidebarMoreRow`
 和 `controlSidebarEmptyRow`。项目子行的缩进也由 `Sidebar()` 统一维护。

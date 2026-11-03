@@ -75,6 +75,7 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 
 | 用例 | 实际路径 |
 | --- | --- |
+| `TestDesktopLocalMessageRail` | 原生窗口 + 私有 `--local` 真实核心重开持久化历史夹具；深浅主题、中英文、1320/900 宽度；刻度几何、悬停预览、点击和键盘定位、当前刻度、单轮/窄区隐藏、会话切换与草稿保留；不请求模型。运行状态与证据见 `message-rail.md` |
 | `TestDesktopLocalProjectCreationWithIgnoredArtifacts` | 原生项目选择器添加实际 GCode checkout；独立进程、配置和 socket；验证登记成功、后台文件列表完成、未跟踪验收缓存被忽略及重启后项目仍可见；无模型调用。最新证据 `output/project-create-async-native/20261030-200639-2897047696/evidence.json` |
 | `TestDesktopLocalTranscriptActivity` | 深浅主题原生窗口 + `--local` 真实核心；实际读取 80 行文件、持久化恢复、思考折叠预览、思考与输出最多 24 行可视高度及内部滚到底、外层位置不变、完整参数、提问单卡片与回答后续执行；模型为本地 HTTP 夹具 |
 | `TestDesktopLocalTranscriptFoldMotion` | 深浅主题原生窗口 + 真实本机核心；工具组、思考及读取详情开闭和快速反向点击的连续几何采样、24 行内部滚动、减少动态效果、草稿及核心重开保持；模型为本地 HTTP 夹具 |
@@ -87,7 +88,8 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | `TestDesktopLocalModelPickerLayout` | 原生窗口 + `--local` 真实核心；900×600、中英文、深浅主题及 2/12 模型目录，验证新建页与带消息会话在不同输入高度下均与模型按钮保持 6 像素间隔、上方双列菜单、供应商名称与底部模型管理、大小目录搜索策略、选中后关闭、无紧凑开关或收藏、单模型编辑保存及独立思考强度落盘；不请求模型 |
 | `TestDesktopLocalCustomSubagentSettings` | 原生窗口 + `--local` 真实核心；创建自定义子智能体、取消草稿、禁用、重启读回、确认删除；不请求模型 |
 | `TestDesktopLocalPluginManagement` | 原生窗口 + `--local` 真实核心；私有临时 Git 市场、市场源添加/刷新、local 范围真实项目目录安装、配置取消/保存/清除、真实 Git 更新、禁用、独立进程重启及卸载；不访问公开市场或模型 |
-| `TestDesktopLocalSidebarFooter` | 原生窗口 + `--local` 真实核心；中英文/深浅主题与窄窗下的底栏入口、未发现新版本时隐藏更新入口、会话页返回设置、用量窗口开关和设置页手动检查更新；不访问供应商或更新源 |
+| `TestDesktopLocalSidebarFooter` | 原生窗口 + `--local` 真实核心；中英文/深浅主题与窄窗下的底栏入口、未发现新版本时隐藏更新入口、会话页返回设置、用量设置页导航/筛选和设置页手动检查更新；不访问供应商或更新源 |
+| `TestDesktopLocalApplicationUsage` | 原生窗口 + `--local` 真实核心；本地 HTTP 模型夹具实际请求两个模型、切换模型、分叉并重启，验证用量去重、模型各占 50%、7/30 天、热力图模式与刷新；英文浅色和中文深色窄窗，不访问真实供应商 |
 | `TestDesktopLocalPromptReferences` | 原生窗口 + `--local` 真实核心；深浅主题窄窗的命令/技能候选、原子引用、展开发送、持久化及重启恢复；模型为本地 HTTP 夹具 |
 | `TestDesktopPromptPickerOverGoalTodos` | 原生窗口 + `--local` 真实核心；使用预置的暂停目标和待办显示数据，验证菜单始终位于上方、覆盖重叠内容并可点击；不执行目标或请求模型 |
 | `TestDesktopWindowCaptionControls` | 原生窗口 + 确定性场景；窗口隐藏系统按钮后自绘的最小化/最大化/关闭存在，28×28 且与左侧 Files、面板开关同中心线、4px 节奏、右缘 6px 内缩；按下最大化后中键切换为还原图形并可恢复。证据 `output/native-tests/20261101-023437-2195741834/` |

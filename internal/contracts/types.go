@@ -136,6 +136,7 @@ type SessionGroup struct {
 	Order int    `json:"order"`
 }
 type Message struct {
+	ModelID        string    `json:"modelId,omitempty"`
 	ContinuationOf string    `json:"continuationOf,omitempty"`
 	DurationMS     int64     `json:"durationMs,omitempty"`
 	ID             string    `json:"id"`

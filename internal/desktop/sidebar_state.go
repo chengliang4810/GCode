@@ -6,7 +6,6 @@ import (
 )
 
 type sidebarState struct {
-	usageOpen             bool
 	pullRequests          *contracts.RepoRefScope
 	selection             int
 	selectedSession       string

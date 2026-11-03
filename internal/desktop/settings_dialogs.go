@@ -116,4 +116,7 @@ func (a *App) selectSettingsSection(section string) {
 	a.settingsRemoval.Open = false
 	a.settingsImport = settingsImportState{}
 	a.section = section
+	if section == "Usage statistics" {
+		a.refreshAppUsage()
+	}
 }

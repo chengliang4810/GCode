@@ -12,7 +12,10 @@ import (
 	"unicode/utf8"
 )
 
-const composerStatusHeight = float32(24)
+const (
+	composerStatusHeight     = float32(24)
+	transcriptListTopPadding = float32(28)
+)
 
 func (a *App) chatView(c *ui.Context) {
 	composerFocused := a.composer.Focused(c)
@@ -96,13 +99,14 @@ func (a *App) chatView(c *ui.Context) {
 				}
 				pane := transcriptPane{cache: &a.transcriptCache, scope: a.sessionID, session: a.sessionID}
 				a.transcriptScope(c, a.sessionID, func() {
-					ui.List(c, &a.messages, len(rows), func(i int) {
+					ui.List(c.Key("chat-transcript-list"), &a.messages, len(rows), func(i int) {
 						a.transcriptRowView(c, pane, messages, rows, i, transcriptRowLayout{width: width, padding: 24})
-					}).Grow(1).FillWidth().Gap(0).Padding(28, 0, 24, 0)
+					}).Grow(1).FillWidth().Gap(0).Padding(transcriptListTopPadding, 0, 24, 0)
 				})
+				a.messageRail(c, a.transcriptCache.rail)
 				if !a.messages.AtEnd() {
 					ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
-						iconButton(c, "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
+						iconButton(c.Key("transcript-latest"), "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
 					})
 				}
 				a.queueRows(c, a.sessionID)

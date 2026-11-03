@@ -815,6 +815,9 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 	switch event.Kind {
 	case "message.start":
 		message := contracts.Message{ID: id("message"), SessionID: sessionID, TurnID: runID, Role: "assistant", CreatedAt: time.Now(), Streaming: true}
+		if run := e.runs[sessionID]; run != nil {
+			message.ModelID = run.selection.ModelID
+		}
 		*current = message.ID
 		e.state.Messages[sessionID] = append(messages, message)
 		e.publishLocked(contracts.Event{Kind: "message.changed", SessionID: sessionID, RunID: runID, Message: &message})

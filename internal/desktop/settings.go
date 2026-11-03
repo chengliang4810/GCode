@@ -32,7 +32,7 @@ func (a *App) sections() []string {
 	if runtime.GOOS == "darwin" && a.state.Capabilities.Appshots {
 		s = append(s, "Appshots")
 	}
-	return append(s, "Archived sessions")
+	return append(s, "Usage statistics", "Archived sessions")
 }
 
 func settingsIcon(section string) string {
@@ -67,6 +67,8 @@ func settingsIcon(section string) string {
 		return "cloud"
 	case "Billing":
 		return "wallet"
+	case "Usage statistics":
+		return "widget"
 	case "Files":
 		return "folder"
 	case "Archived sessions":
@@ -133,6 +135,7 @@ func (a *App) settingsNavigation(c *ui.Context) {
 
 func (a *App) settingLinks() []settingLink {
 	links := []settingLink{
+		{"Usage statistics", "Usage statistics", "application tokens activity models 应用用量 使用统计 热力图 模型"},
 		{"Subagents", "Subagents", "agent profile prompt model reasoning 子智能体 提示词 模型 思考"},
 		{"Model settings", "Model settings", "provider protocol API key models 模型 供应商"},
 		{"MCP servers", "MCP servers", "tools stdio HTTP servers MCP 服务器"},
@@ -238,6 +241,8 @@ func (a *App) settingsView(c *ui.Context) {
 				a.cloudSettings(c)
 			case "Billing":
 				a.billingSettings(c)
+			case "Usage statistics":
+				a.appUsageSettings(c)
 			case "Files":
 				a.fileSettings(c)
 			case "Appshots":

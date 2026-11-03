@@ -92,7 +92,7 @@ func (a *App) sidebarView(c *ui.Context) {
 			if !project.GitDetected {
 				pullRequests.Tooltip(tr(c, "This project has no supported pull request remote."))
 			}
-			usageIconButton(c.Key("sidebar-usage"), tr(c, "Usage statistics")).OnClick(func() { a.sidebarUI.usageOpen = true })
+			usageIconButton(c.Key("sidebar-usage"), tr(c, "Usage statistics")).OnClick(func() { a.navigate("settings/Usage statistics") })
 			ui.Spacer(c)
 			if a.checkForUpdates != nil && a.updateAvailable {
 				updateIconButton(c.Key("sidebar-updates"), tr(c, "Check for updates…")).OnClick(a.checkForUpdates)

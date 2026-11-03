@@ -94,6 +94,11 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 				t.Fatalf("unfinished run: %+v", state.Runs)
 			}
 			sid := state.Sessions[0].ID
+			for _, message := range state.Messages[sid] {
+				if message.Role == "assistant" && message.ModelID != "custom/model" {
+					t.Fatalf("request model was not recorded for usage statistics: %+v", message)
+				}
+			}
 			data, err := os.ReadFile(filepath.Join(workspace, "answer.txt"))
 			if err != nil || string(data) != "真实 Go 工具写入" {
 				t.Fatalf("file write failed %s %v", data, err)
@@ -117,6 +122,11 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			}
 			defer core.Close()
 			restored, _ := core.Snapshot(ctx)
+			for _, message := range restored.Messages[sid] {
+				if message.Role == "assistant" && message.ModelID != "custom/model" {
+					t.Fatal("restart lost the recorded request model")
+				}
+			}
 			if len(restored.Sessions) != 1 || len(core.history[sid]) != 4 || len(restored.Providers) != 1 {
 				t.Fatal("restart lost runtime data")
 			}

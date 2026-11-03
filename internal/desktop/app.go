@@ -43,6 +43,7 @@ type App struct {
 	pendingSends    map[string]primaryPendingSend
 	composerControls
 	footerUsage         composerUsageState
+	appUsage            appUsageState
 	footerGit           composerFooterGitState
 	sideComposers       map[string]*sideComposerState
 	background          backgroundSettingsState
@@ -366,6 +367,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.refreshVisibleAppUsage()
 		a.finishSidebarPullRequests()
 		a.refreshWallpaperColors()
 		a.restoreModelSelection()
@@ -439,6 +441,9 @@ func (a *App) applyEvent(event contracts.Event) {
 		s.Messages[event.SessionID] = messages
 		s.Revision = event.Revision
 		a.state = s
+		if event.Kind != "message.delta" {
+			a.refreshVisibleAppUsage()
+		}
 		a.workspace.Update(s)
 		a.bottom.Update(s)
 	}
@@ -912,7 +917,6 @@ func (a *App) View(c *ui.Context) {
 		}
 	})
 	a.overlays(c)
-	a.sidebarUsageDialog(c)
 	a.sessionDeleteDialog(c)
 	a.sessionInfo(c)
 	a.imageDialog(c)

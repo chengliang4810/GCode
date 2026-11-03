@@ -70,6 +70,9 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 	// The row keeps its identity by the list row's key, so hover and its
 	// callbacks outlive a rebuild of the row's content.
 	wrapper := ui.Row(c).Key("row:" + row.Key).FillWidth().Justify(ui.Center)
+	if row.User {
+		pane.cache.bindMessageRailRow(wrapper, index)
+	}
 	// The framework polls for the pointer: the row under it claims the hover,
 	// and the row that had it gives it up.
 	if wrapper.Hovered() {

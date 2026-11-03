@@ -187,6 +187,7 @@ type transcriptCache struct {
 	entries  []contracts.Message
 	rows     map[string]transcriptProjection
 	flat     []conversationRow
+	rail     []messageRailTick
 }
 
 // transcriptProjection is an entry's block rows and the fingerprint of the
@@ -260,7 +261,7 @@ func (cache *transcriptCache) entriesFor(revision uint64, session string, messag
 		return cache.entries
 	}
 	cache.revision, cache.session, cache.stamp, cache.compact = revision, session, stamp, compact
-	cache.entries, cache.flat = transcriptEntries(messages), nil
+	cache.entries, cache.flat, cache.rail = transcriptEntries(messages), nil, nil
 	if cache.rows == nil {
 		cache.rows = map[string]transcriptProjection{}
 	}
@@ -299,6 +300,7 @@ func (cache *transcriptCache) conversationFor(entries []contracts.Message, compa
 	cache.flat = conversationRows(entries, func(entry contracts.Message) []transcriptRow {
 		return cache.rowsFor(entry, compact)
 	})
+	cache.rail = messageRailTicks(entries, cache.flat)
 	return cache.flat
 }
 

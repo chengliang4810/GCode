@@ -42,17 +42,24 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 				t.Fatalf("empty profile usage total=%q, want 0", node.Label)
 			}
 			app.capture("usage")
-			app.act("dialog-close", "press", "")
-			app.await("usage dialog closed", func() error {
+			app.waitKey("usage-range-7")
+			app.act("usage-range-30", "press", "")
+			app.act("usage-heatmap-weekly", "press", "")
+			app.act("usage-heatmap-cumulative", "press", "")
+			app.act("usage-heatmap-daily", "press", "")
+			app.act("back-to-conversations", "press", "")
+			app.await("usage settings closed", func() error {
 				tree, err := app.client.tree()
 				if err != nil {
 					return err
 				}
 				if _, err := tree.findKey("usage-total"); err == nil {
-					return fmt.Errorf("usage dialog remains open")
+					return fmt.Errorf("usage settings remain open")
 				}
 				return nil
 			})
+			app.act("sidebar-settings", "press", "")
+			app.act("settings-nav-General", "press", "")
 			app.act("check-for-updates", "press", "")
 			app.waitKey("ok") // The raw E2E build cannot self-update or contact a feed.
 			app.waitKey("title")

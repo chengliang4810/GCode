@@ -48,6 +48,24 @@ func Controls() ControlTokens {
 	}
 }
 
+// MessageRailTokens keeps the conversation outline's compact navigation and
+// preview geometry together with the other shared controls.
+type MessageRailTokens struct {
+	MinContainerWidth, Left, Width, VerticalMargin          float32
+	SlotHeight, Gap, MarkWidth, HoverWidth, MarkHeight      float32
+	PreviewWidth, PreviewGap, PreviewPadding, PreviewRadius float32
+	MaxMarks                                                int
+}
+
+func MessageRail() MessageRailTokens {
+	return MessageRailTokens{
+		MinContainerWidth: 768, Left: 16, Width: 26, VerticalMargin: 24,
+		SlotHeight: 10, Gap: 3, MarkWidth: 12, HoverWidth: 20, MarkHeight: 2,
+		PreviewWidth: 280, PreviewGap: 6, PreviewPadding: 12, PreviewRadius: 12,
+		MaxMarks: 12,
+	}
+}
+
 // SidebarTokens follows the reference sidebar's navigation/list hierarchy.
 // Geometry stays independent of the interface font; rows grow for large text.
 type SidebarTokens struct {
