@@ -190,6 +190,8 @@ func tabIcon(kind string) string {
 		return "terminal"
 	case "session":
 		return "chat-round-line"
+	case "trajectory":
+		return "list"
 	case "history":
 		return "git-branch"
 	case "diff", "changes":
@@ -202,6 +204,9 @@ func tabIcon(kind string) string {
 }
 
 func (s *State) tabDetail(tab surface) string {
+	if tab.kind == "trajectory" {
+		return tab.title + "\n" + tab.id
+	}
 	if d := s.documents[tab.id]; tab.kind == "file" && d != nil {
 		return d.file.Path
 	}

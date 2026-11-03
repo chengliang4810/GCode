@@ -269,6 +269,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 				onMention: func(file workbench.FileDrag) { state.Draft += " @" + file.Path },
 			})
 			ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Justify(ui.End).Padding(0, 10, 0, 4).Children(func() {
+				a.conversationMetricsView(c, session.ID)
 				a.composerUsage(c, session, &state.FooterUsage, true)
 			})
 			if state.Failure != "" {

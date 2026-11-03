@@ -31,6 +31,21 @@ func TestTranscriptContinuationJoinsOnlyAdjacentTurn(t *testing.T) {
 	}
 }
 
+func TestTranscriptContinuationSumsRoundUsage(t *testing.T) {
+	first := contracts.Message{ID: "one", Role: "assistant", TurnID: "turn",
+		Usage: contracts.Usage{InputTokens: 100, OutputTokens: 20, CachedTokens: 40, Cost: .25, ContextTokens: 100, ContextLimit: 1000}}
+	second := contracts.Message{ID: "two", Role: "assistant", TurnID: "turn",
+		Usage: contracts.Usage{InputTokens: 30, OutputTokens: 10, CachedTokens: 5, Cost: .5, ContextTokens: 30, ContextLimit: 2000}}
+	joined := transcriptEntries([]contracts.Message{first, second})
+	want := contracts.Usage{InputTokens: 130, OutputTokens: 30, CachedTokens: 45, Cost: .75, ContextTokens: 30, ContextLimit: 2000}
+	if len(joined) != 1 || joined[0].Usage != want {
+		t.Fatalf("multi-round usage lost earlier requests or summed context occupancy: %+v", joined)
+	}
+	if first.Usage.InputTokens != 100 || second.Usage.InputTokens != 30 {
+		t.Fatal("projection changed source accounting")
+	}
+}
+
 func TestTranscriptRowsPreserveActivityAndNarrationOrder(t *testing.T) {
 	blocks := []contracts.Block{
 		{ID: "thought1", Kind: "reasoning", Text: "Inspect"},

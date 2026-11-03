@@ -85,6 +85,7 @@ type State struct {
 	OnOpenSession     func(string)
 	OnCloseSession    func(string)
 	RenderSession     func(*ui.Context, string)
+	RenderTrajectory  func(*ui.Context, string)
 	OnNewSideChat     func()
 	CanNewSideChat    func() bool
 	OnOpenSurface     func()
@@ -125,6 +126,22 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 		return
 	}
 	s.snapshot = snapshot
+	for i := len(s.tabs) - 1; i >= 0; i-- {
+		if s.tabs[i].kind != "trajectory" {
+			continue
+		}
+		found := false
+		for _, session := range snapshot.Sessions {
+			if session.ID == s.tabs[i].id {
+				s.tabs[i].title = session.Title
+				found = true
+				break
+			}
+		}
+		if !found {
+			s.removeTab(i)
+		}
+	}
 	for id, d := range s.documents {
 		found := false
 		for _, f := range snapshot.Files {
@@ -514,7 +531,7 @@ func (s *State) BodyBelow(c *ui.Context, top float32) { s.view(c, false, top) }
 func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 	s.syncAppearance(c)
 	p := s.palette()
-	container := ui.Column(c).Key("workspace:" + s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
+	container := ui.Column(c).Key("workspace:"+s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
 	if value, ok := ui.Drop[FileDrag](container); ok {
 		s.OpenFile(value.ID)
 	}
@@ -555,6 +572,10 @@ func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 		case "session":
 			if s.RenderSession != nil {
 				s.RenderSession(c, t.id)
+			}
+		case "trajectory":
+			if s.RenderTrajectory != nil {
+				s.RenderTrajectory(c, t.id)
 			}
 		default:
 			s.picker(c)
@@ -640,7 +661,7 @@ func (s *State) FilesDockBelow(c *ui.Context, top float32) {
 func (s *State) filesView(c *ui.Context, host string, controls *fileExplorerControls, top float32) {
 	s.syncAppearance(c)
 	p := s.palette()
-	ui.Column(c.Key("files-explorer:" + s.scopeID + ":" + host)).Label(tr(c, "Files explorer")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
+	ui.Column(c.Key("files-explorer:"+s.scopeID+":"+host)).Label(tr(c, "Files explorer")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Children(func() {
 		ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
 			ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
 				ui.Icon(c, assets.Icon("magnifer")).Size(12, 12).TextColor(p.Faint)

@@ -70,7 +70,12 @@ func transcriptEntries(messages []contracts.Message) []contracts.Message {
 				last.Blocks = append(last.Blocks, message.Blocks...)
 				last.Streaming = message.Streaming
 				last.DurationMS = max(last.DurationMS, message.DurationMS)
-				last.Usage = message.Usage
+				last.Usage.InputTokens += message.Usage.InputTokens
+				last.Usage.OutputTokens += message.Usage.OutputTokens
+				last.Usage.CachedTokens += message.Usage.CachedTokens
+				last.Usage.Cost += message.Usage.Cost
+				last.Usage.ContextTokens = message.Usage.ContextTokens
+				last.Usage.ContextLimit = message.Usage.ContextLimit
 				previousID = message.ID
 				continue
 			}

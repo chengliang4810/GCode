@@ -513,13 +513,13 @@ type activityDiffCache struct {
 func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered bool) {
 	services := c.Services()
 	ui.Row(c).FillWidth().MinHeight(max(16, design.TextSize(c, design.TextSmall)*1.5)).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
-		row := ui.Row(c).Gap(6).AlignItems(ui.Center)
+		row := ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center)
 		if !hovered {
 			row.Opacity(0)
 		}
 		row.Children(func() {
 			ui.Text(c, date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
-			ui.ButtonBase(c).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
+			ui.ButtonBase(c.Key("copy-message:"+message.ID)).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
 				var text []string
 				for _, b := range message.Blocks {
 					if b.Kind == "text" && b.Text != "" {
@@ -528,6 +528,7 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 				}
 				services.WriteClipboard(strings.Join(text, "\n\n"))
 			}).Children(func() { icon(c, "copy", 12) })
+			a.replyMetricsView(c, message)
 		})
 	})
 }

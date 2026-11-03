@@ -49,7 +49,7 @@ func enforceSingleInstance(scenario string, headless bool) bool {
 
 func main() {
 	scenario := flag.String("scenario", "", "Deterministic data scenario (default, empty, loading, live, transcript, questions, permissions, showcase, offline, error, stress)")
-	route := flag.String("route", "chat", "Initial route: chat, chat/<id>, settings/<section>")
+	route := flag.String("route", "chat", "Initial route: chat, chat/<id>, settings/<section>, trajectory/<id>")
 	stateDir := flag.String("data-dir", "", "Fixed configuration/profile directory; runtime root is selected in settings; scenarios default to memory")
 	connect := flag.String("connect", "", "Connect to a GCode headless host by HTTP(S) URL")
 	tokenFile := flag.String("token-file", "", "File containing the remote host API token")

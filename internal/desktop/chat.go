@@ -247,6 +247,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 			ui.Box(c).Height(8).Shrink(0)
 			ui.Row(c).Key("composer-footer").FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 				ui.Row(c).Grow(1).MinWidth(0).AlignItems(ui.Center).Children(func() { a.composerFooterGit(c) })
+				a.conversationMetricsView(c, a.sessionID)
 				if footer := frame.Footer; footer > .001 {
 					ui.Row(c).Shrink(0).Padding(0, 10, 0, 4).Opacity(footer).Children(func() { a.composerUsage(c, a.currentSession(), &a.footerUsage, false) })
 				}

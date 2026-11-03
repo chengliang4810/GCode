@@ -44,6 +44,7 @@ type App struct {
 	composerControls
 	footerUsage         composerUsageState
 	appUsage            appUsageState
+	trajectoryViews     map[string]*trajectoryViewState
 	footerGit           composerFooterGitState
 	sideComposers       map[string]*sideComposerState
 	background          backgroundSettingsState
@@ -225,6 +226,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	a.workspace.OnCloseSurface = func() { a.setPanel(1, false) }
 	a.workspace.OnOpenSession = a.selectSession
 	a.workspace.RenderSession = a.sideTranscript
+	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
 	a.workspace.CanNewSideChat = a.canNewSideChat
@@ -277,6 +279,7 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.OnCloseSurface = func() { a.setPanel(1, false) }
 	a.workspace.OnOpenSession = a.selectSession
 	a.workspace.RenderSession = a.sideTranscript
+	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
 	a.workspace.CanNewSideChat = a.canNewSideChat
@@ -367,6 +370,11 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		for sessionID := range a.trajectoryViews {
+			if !a.hasSession(sessionID) {
+				delete(a.trajectoryViews, sessionID)
+			}
+		}
 		a.refreshVisibleAppUsage()
 		a.finishSidebarPullRequests()
 		a.refreshWallpaperColors()
@@ -407,6 +415,11 @@ func (a *App) applyEvent(event contracts.Event) {
 	a.notifications.ObserveEvent(event, a.state.Settings, a.notificationWindowFocused())
 	if event.Kind == "session.naming.failed" {
 		a.notification(event.Text)
+	}
+	if event.Kind == "model.request.recorded" || event.Kind == "run.finished" {
+		if state := a.trajectoryViews[event.SessionID]; state != nil {
+			a.refreshModelTrajectory(event.SessionID)
+		}
 	}
 	if event.Snapshot != nil {
 		a.apply(*event.Snapshot)
@@ -629,6 +642,13 @@ func (a *App) OpenRoute(route string) {
 		if !a.terminal {
 			a.toggleTerminal()
 		}
+		return
+	}
+	if strings.HasPrefix(route, "trajectory/") {
+		sessionID := strings.TrimPrefix(route, "trajectory/")
+		a.route = "chat"
+		a.selectSession(sessionID)
+		a.openModelTrajectory(sessionID)
 		return
 	}
 	if strings.HasPrefix(route, "settings/") {

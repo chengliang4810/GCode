@@ -130,7 +130,12 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 			}
 			ui.Row(c).Grow(1).MinWidth(0).Clip().Gap(5).AlignItems(ui.Center).Children(func() {
 				if session.ID != "" {
-					ui.Text(c, session.Title).FontWeight(600).SingleLine().MinWidth(0)
+					ui.Text(c.Key("conversation-title"), session.Title).FontWeight(600).SingleLine().MinWidth(0).
+						ContextMenu(func(menu *ui.Menu) {
+							if menu.Item(tr(c, "Call trajectory")).Chosen() {
+								a.openModelTrajectory(session.ID)
+							}
+						})
 					ui.Text(c, "~ @ "+a.deviceLabel()).TextColor(a.palette.Muted).SingleLine().Shrink(0)
 				}
 			})

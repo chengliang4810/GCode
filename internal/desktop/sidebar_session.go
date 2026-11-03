@@ -23,6 +23,10 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		}
 	})
 	row.ContextMenu(func(menu *ui.Menu) {
+		if menu.Item(tr(c, "Call trajectory")).Chosen() {
+			a.openModelTrajectory(session.ID)
+		}
+		menu.Separator()
 		if menu.Item(tr(c, "Rename")).Chosen() {
 			a.startSidebarRename(session.ID)
 		}
