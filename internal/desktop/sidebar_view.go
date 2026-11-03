@@ -89,9 +89,9 @@ func (a *App) sidebarView(c *ui.Context) {
 		ui.Row(c.Key("sidebar-footer")).Height(54).Padding(10, 12).Justify(ui.SpaceEvenly).AlignItems(ui.Center).Children(func() {
 			updateIconButton(c.Key("sidebar-updates"), tr(c, "Check for updates…")).
 				Disabled(a.checkForUpdates == nil).OnClick(a.checkForUpdates)
-			usageIconButton(c.Key("sidebar-usage"), tr(c, "Usage statistics")).OnClick(func() { a.navigate("settings/Usage statistics") })
 			iconButton(c.Key("sidebar-mobile"), "smartphone", tr(c, "Mobile")).
 				OnClick(func() { a.sidebarUI.mobileOpen = true })
+			usageIconButton(c.Key("sidebar-usage"), tr(c, "Usage statistics")).OnClick(func() { a.navigate("settings/Usage statistics") })
 			iconButton(c.Key("sidebar-settings"), "settings", tr(c, "Settings")).OnClick(func() { a.navigate("settings") })
 		})
 	})

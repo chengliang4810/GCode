@@ -34,7 +34,7 @@ func TestSidebarFooterSettingsAndUpdates(t *testing.T) {
 						t.Fatalf("removed sidebar control remains: %q", label)
 					}
 				}
-				labels := []string{"Check for updates…", "Usage statistics", "Mobile", "Settings"}
+				labels := []string{"Check for updates…", "Mobile", "Usage statistics", "Settings"}
 				var previous ui.Rect
 				var gap float32
 				for i, label := range labels {

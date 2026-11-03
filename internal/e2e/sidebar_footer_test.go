@@ -20,7 +20,7 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 			binary, artifacts := testPaths(t)
 			app := startApp(t, binary, artifacts, "local", filepath.Join(artifacts, "data"),
 				"--local", "--language", test.language, "--appearance", test.appearance, "--width", test.width)
-			for _, key := range []string{"sidebar-updates", "sidebar-usage", "sidebar-mobile", "sidebar-settings"} {
+			for _, key := range []string{"sidebar-updates", "sidebar-mobile", "sidebar-usage", "sidebar-settings"} {
 				app.waitKey(key)
 			}
 			assertFooterActions(t, app)
@@ -114,7 +114,7 @@ func assertFooterActions(t *testing.T, app *nativeApp) {
 	}
 	var previous accessNode
 	var gap float64
-	for i, key := range []string{"sidebar-updates", "sidebar-usage", "sidebar-mobile", "sidebar-settings"} {
+	for i, key := range []string{"sidebar-updates", "sidebar-mobile", "sidebar-usage", "sidebar-settings"} {
 		node, err := tree.findKey(key)
 		if err != nil {
 			t.Fatal(err)

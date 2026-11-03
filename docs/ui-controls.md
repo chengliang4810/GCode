@@ -41,8 +41,8 @@
 资源列表的图标容器和信息标签使用 `controlResourceAvatar` / `controlResourceBadge`；
 `ResourceIconSize`、`BadgePaddingX`、`BadgePaddingY` 仍在统一尺寸定义中维护。
 图标按钮的点击区域保持逻辑像素尺寸，不因文字缩放挤出标题栏；
-侧栏的更新圆形按钮和用量图标同样由 `settings_controls.go` 提供，
-圆角读取 `Controls().RoundIconButtonRadius`，页面只配置 key、标签与回调。
+侧栏的更新和用量图标同样由 `settings_controls.go` 提供，
+与手机、设置复用普通图标按钮的圆角和交互状态，默认无背景；页面只配置 key、标签与回调。
 文字按 UI 字号 token 作像素偏移，图标、间距、圆角和开关几何不随文字缩放。
 按钮、输入框、选择器按当前文字行高保留最小高度，避免大字号裁切。
 刻度滑块保留原生刻度所需的最小高度，小字号也不压缩刻度区域。

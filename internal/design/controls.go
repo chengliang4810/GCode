@@ -9,7 +9,6 @@ type ControlTokens struct {
 	ButtonHeight, ButtonRadius, ButtonPaddingX, ButtonPaddingY float32
 	ButtonGap, IconButtonSize, IconSize                        float32
 	InlineIconButtonSize                                       float32
-	RoundIconButtonRadius                                      float32
 	InputHeight, InputRadius, InputPaddingX, InputPaddingY     float32
 	SelectMinWidth, PopupPadding, PopupRadius                  float32
 	OptionPaddingX, OptionPaddingY, OptionRadius               float32
@@ -31,9 +30,8 @@ func Controls() ControlTokens {
 		FontSize: TextBase, BorderWidth: 1,
 		ButtonHeight: 28.8, ButtonRadius: 6, ButtonPaddingX: 8, ButtonPaddingY: 4,
 		ButtonGap: 6, IconButtonSize: 28, IconSize: 16,
-		InlineIconButtonSize:  24,
-		RoundIconButtonRadius: 14,
-		InputHeight:           32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,
+		InlineIconButtonSize: 24,
+		InputHeight:          32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,
 		SelectMinWidth: 124, PopupPadding: 5, PopupRadius: 10,
 		OptionPaddingX: 10, OptionPaddingY: 7, OptionRadius: 6,
 		SwitchWidth: 44.8, SwitchHeight: 28.8,

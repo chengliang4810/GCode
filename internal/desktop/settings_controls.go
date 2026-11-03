@@ -129,12 +129,7 @@ func inlineIconButton(c *ui.Context, name, label string) ui.Element {
 
 func updateIconButton(c *ui.Context, label string) ui.Element {
 	s, t := design.Controls(), c.Theme()
-	button := controlIconButton(c, label).Radius(s.RoundIconButtonRadius).
-		Background(t.SurfaceHover)
-	if button.Hovered() || button.Pressed() {
-		button.Background(t.SurfacePressed)
-	}
-	return button.Children(func() {
+	return controlIconButton(c, label).Children(func() {
 		size := s.IconSize
 		ui.Box(c).Size(size, size).Radius(size/2).Border(s.BorderWidth, t.Text).
 			Center().Children(func() { icon(c, "arrow-up", size*.75) })
