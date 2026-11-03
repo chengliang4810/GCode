@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,6 +46,7 @@ type adapter interface {
 // Gateway binds a frozen channel/model configuration to one protocol adapter.
 // Its Stream input and output contain no endpoint, credentials or protocol choice.
 type Gateway struct {
+	Observe  func(Invocation)
 	http     *http.Client
 	provider Provider
 	target   adapterTarget
@@ -180,24 +182,11 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 		return Result{}, err
 	}
 	endpoint := strings.TrimRight(g.provider.BaseURL, "/") + g.adapter.path()
+	requestID := rand.Text()
 	// HTTP retries only precede a response stream; every attempt uses identical bytes.
 	for attempt := 0; ; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
-		if err != nil {
-			return Result{}, err
-		}
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Accept", "text/event-stream")
-		g.adapter.headers(req.Header, g.provider.APIKey)
-		response, err := g.http.Do(req)
-		if err != nil {
-			if ctx.Err() != nil {
-				return Result{}, ctx.Err()
-			}
-			return Result{}, errors.New("model connection failed")
-		}
-		if (response.StatusCode == 429 || response.StatusCode >= 500) && attempt < 2 {
-			_ = response.Body.Close()
+		result, status, err := g.streamAttempt(ctx, input, emit, endpoint, body, requestID, attempt+1)
+		if (status == 429 || status >= 500) && attempt < 2 {
 			select {
 			case <-ctx.Done():
 				return Result{}, ctx.Err()
@@ -205,18 +194,54 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 			}
 			continue
 		}
-		if response.StatusCode < 200 || response.StatusCode >= 300 {
-			_ = response.Body.Close()
-			return Result{}, fmt.Errorf("model request failed (HTTP %d)", response.StatusCode)
-		}
-		result, streamErr := decodeStream(response.Body, g.adapter.decoder(), emit)
-		_ = response.Body.Close()
-		if ctx.Err() != nil {
-			return result, ctx.Err()
-		}
-		if streamErr == nil && result.Message.Continuation != nil {
-			result.Message.Continuation.scope = g.target.scope
-		}
-		return result, streamErr
+		return result, err
 	}
+}
+
+func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(Delta) error, endpoint string, body []byte,
+	requestID string, attempt int) (result Result, status int, callErr error) {
+	if g.Observe != nil {
+		trace := g.invocation(requestID, attempt, input, time.Now())
+		g.Observe(trace)
+		defer func() {
+			now := time.Now()
+			trace.CompletedAt, trace.DurationMS, trace.HTTPStatus = &now, now.Sub(trace.StartedAt).Milliseconds(), status
+			response := result
+			response.Message = traceMessages([]Message{result.Message}, g.provider.APIKey, &trace.Truncated)[0]
+			if status >= 200 && status < 300 {
+				trace.Response = &response
+			}
+			if callErr != nil {
+				trace.Error = traceText(callErr.Error(), g.provider.APIKey, &trace.Truncated)
+			}
+			g.Observe(trace)
+		}()
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	if err != nil {
+		return result, 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "text/event-stream")
+	g.adapter.headers(req.Header, g.provider.APIKey)
+	response, err := g.http.Do(req)
+	if err != nil {
+		if ctx.Err() != nil {
+			return result, 0, ctx.Err()
+		}
+		return result, 0, errors.New("model connection failed")
+	}
+	defer response.Body.Close()
+	status = response.StatusCode
+	if status < 200 || status >= 300 {
+		return result, status, fmt.Errorf("model request failed (HTTP %d)", status)
+	}
+	result, callErr = decodeStream(response.Body, g.adapter.decoder(), emit)
+	if ctx.Err() != nil {
+		return result, status, ctx.Err()
+	}
+	if callErr == nil && result.Message.Continuation != nil {
+		result.Message.Continuation.scope = g.target.scope
+	}
+	return result, status, callErr
 }

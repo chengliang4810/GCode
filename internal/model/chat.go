@@ -131,15 +131,20 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 		Usage struct {
 			Prompt     *int `json:"prompt_tokens"`
 			Completion *int `json:"completion_tokens"`
+			CacheHit   *int `json:"prompt_cache_hit_tokens"`
 			Details    struct {
-				Cached int `json:"cached_tokens"`
+				Cached *int `json:"cached_tokens"`
 			} `json:"prompt_tokens_details"`
 		} `json:"usage"`
 	}
 	if err := json.Unmarshal([]byte(payload), &event); err != nil {
 		return Delta{}, errors.New("invalid model streaming event")
 	}
-	d.recordUsage(event.Usage.Prompt, event.Usage.Completion, event.Usage.Details.Cached)
+	cached := event.Usage.Details.Cached
+	if cached == nil {
+		cached = event.Usage.CacheHit
+	}
+	d.recordUsage(event.Usage.Prompt, event.Usage.Completion, cached)
 	if event.Type == "error" || (len(event.Error) > 0 && string(event.Error) != "null") {
 		return Delta{}, errors.New("model reported a streaming error")
 	}
@@ -148,6 +153,7 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 		delta.Text += choice.Delta.Content
 		delta.Reasoning += choice.Delta.Reasoning
 		for _, change := range choice.Delta.Calls {
+			delta.Output = delta.Output || change.Function.Arguments != ""
 			call := d.calls[change.Index]
 			if call == nil {
 				call = &Call{}

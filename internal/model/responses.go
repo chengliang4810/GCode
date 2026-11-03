@@ -118,7 +118,7 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 				Input   *int `json:"input_tokens"`
 				Output  *int `json:"output_tokens"`
 				Details struct {
-					Cached int `json:"cached_tokens"`
+					Cached *int `json:"cached_tokens"`
 				} `json:"input_tokens_details"`
 			} `json:"usage"`
 		} `json:"response"`
@@ -138,6 +138,8 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 		delta.Text = event.Delta
 	case "response.reasoning_summary_text.delta":
 		delta.Reasoning = event.Delta
+	case "response.function_call_arguments.delta", "response.reasoning_text.delta":
+		delta.Output = event.Delta != ""
 	case "response.output_item.done":
 		d.output[event.OutputIndex] = event.Item
 	case "response.completed":

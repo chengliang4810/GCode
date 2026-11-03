@@ -6,7 +6,49 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestDecodeTimingUsesFirstActualOutput(t *testing.T) {
+	for _, tc := range []struct {
+		name                string
+		adapter             adapter
+		before, output, end string
+	}{
+		{"chat reasoning", chatAdapter{}, `{"choices":[{"delta":{"role":"assistant"}}]}`, `{"choices":[{"delta":{"reasoning_content":"think"}}]}`, "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]"},
+		{"chat tool", chatAdapter{}, `{}`, `{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"t","function":{"name":"Read","arguments":"{}"}}]}}]}`, "{\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]"},
+		{"responses tool", responsesAdapter{}, `{"type":"response.created"}`, `{"type":"response.function_call_arguments.delta","delta":"{}"}`, `{"type":"response.completed","response":{"status":"completed"}}`},
+		{"messages tool", messagesAdapter{}, `{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t","name":"Read"}}`, `{"type":"content_block_delta","index":0,"delta":{"partial_json":"{}"}}`, "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"}}\n\ndata: {\"type\":\"message_stop\"}"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reader, writer := io.Pipe()
+			defer reader.Close()
+			go func() {
+				defer writer.Close()
+				_, _ = io.WriteString(writer, "data: "+tc.before+"\n\n")
+				// Simulate provider prefill separately from decode.
+				time.Sleep(60 * time.Millisecond)
+				_, _ = io.WriteString(writer, "data: "+tc.output+"\n\n")
+				time.Sleep(20 * time.Millisecond)
+				_, _ = io.WriteString(writer, "data: "+tc.end+"\n\n")
+			}()
+			started := time.Now()
+			result, err := decodeStream(reader, tc.adapter.decoder(), nil)
+			if err != nil || result.DecodeDuration <= 0 || time.Since(started)-result.DecodeDuration < 50*time.Millisecond {
+				t.Fatalf("timing included first-token wait or missed tool output: %v, %+v", err, result)
+			}
+		})
+	}
+	for _, fixture := range []string{
+		"data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n",
+		`{"choices":[{"message":{"content":"buffered"}}],"usage":{"prompt_tokens":10,"completion_tokens":3}}`,
+	} {
+		result, _ := decodeStream(strings.NewReader(fixture), chatAdapter{}.decoder(), nil)
+		if result.DecodeDuration != 0 {
+			t.Fatal("non-streaming output or empty deltas invented speed")
+		}
+	}
+}
 
 func TestDecoderRejectsIncompleteStreamsAndCalls(t *testing.T) {
 	cases := []struct {
@@ -231,13 +273,13 @@ func TestDecodersUsagePresence(t *testing.T) {
 		{name: "empty usage"},
 		{name: "null counters", input: `"input_tokens":null,`, output: `"output_tokens":null,`},
 		{name: "input only", input: `"input_tokens":12,`, want: Usage{Input: 12}},
-		{name: "output only", output: `"output_tokens":7,`, want: Usage{Output: 7}},
+		{name: "output only", output: `"output_tokens":7,`, want: Usage{OutputKnown: true, Output: 7}},
 		{name: "zero input only", input: `"input_tokens":0,`},
-		{name: "zero output only", output: `"output_tokens":0,`},
-		{name: "explicit zero", input: `"input_tokens":0,`, output: `"output_tokens":0,`, want: Usage{Known: true}},
+		{name: "zero output only", output: `"output_tokens":0,`, want: Usage{OutputKnown: true}},
+		{name: "explicit zero", input: `"input_tokens":0,`, output: `"output_tokens":0,`, want: Usage{Known: true, OutputKnown: true}},
 		{
 			name: "complete", input: `"input_tokens":12,`, output: `"output_tokens":7,`,
-			want: Usage{Known: true, Input: 12, Output: 7},
+			want: Usage{Known: true, OutputKnown: true, Input: 12, Output: 7},
 		},
 	}
 	for _, protocol := range protocols {
@@ -316,7 +358,7 @@ func TestDecodersPreserveUsageOnStreamErrors(t *testing.T) {
 			name: "chat provider error", adapter: chatAdapter{},
 			fixture: `data: {"usage":{"prompt_tokens":12,"completion_tokens":7}}` + "\n\n" +
 				"data: {\"type\":\"error\"}\n\n",
-			want: Usage{Known: true, Input: 12, Output: 7},
+			want: Usage{Known: true, OutputKnown: true, Input: 12, Output: 7},
 		},
 		{
 			name: "chat interrupted partial", adapter: chatAdapter{},
@@ -326,7 +368,7 @@ func TestDecodersPreserveUsageOnStreamErrors(t *testing.T) {
 		{
 			name: "responses truncated", adapter: responsesAdapter{},
 			fixture: `data: {"type":"response.incomplete","response":{"usage":{"input_tokens":12,"output_tokens":7}}}` + "\n\n",
-			want:    Usage{Known: true, Input: 12, Output: 7},
+			want:    Usage{Known: true, OutputKnown: true, Input: 12, Output: 7},
 		},
 		{
 			name: "responses failed partial", adapter: responsesAdapter{},
@@ -338,7 +380,7 @@ func TestDecodersPreserveUsageOnStreamErrors(t *testing.T) {
 			fixture: `data: {"type":"message_start","message":{"usage":{"input_tokens":12,"cache_read_input_tokens":20,"cache_creation_input_tokens":30}}}` + "\n\n" +
 				"data: {\"type\":\"message_delta\",\"usage\":{\"output_tokens\":7}}\n\n" +
 				"data: {\"type\":\"error\"}\n\n",
-			want: Usage{Known: true, Input: 62, Output: 7, Cached: 20},
+			want: Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 62, Output: 7, Cached: 20},
 		},
 		{
 			name: "messages interrupted partial", adapter: messagesAdapter{},
@@ -365,7 +407,7 @@ func TestDecodePreservesUsageOnConsumerAbort(t *testing.T) {
 	result, err := decodeStream(strings.NewReader(fixture), chatAdapter{}.decoder(), func(Delta) error {
 		return consumerError
 	})
-	want := Usage{Known: true, Input: 12, Output: 7}
+	want := Usage{Known: true, OutputKnown: true, Input: 12, Output: 7}
 	if !errors.Is(err, consumerError) || result.Usage != want {
 		t.Fatalf("consumer abort lost usage: %+v %v", result.Usage, err)
 	}

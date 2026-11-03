@@ -141,7 +141,7 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 			Usage struct {
 				Input    *int `json:"input_tokens"`
 				Output   *int `json:"output_tokens"`
-				Cached   int  `json:"cache_read_input_tokens"`
+				Cached   *int `json:"cache_read_input_tokens"`
 				Creation int  `json:"cache_creation_input_tokens"`
 			} `json:"usage"`
 		} `json:"message"`
@@ -160,7 +160,10 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 		// Anthropic input_tokens excludes cache reads and writes:
 		// https://platform.claude.com/docs/en/build-with-claude/prompt-caching
 		usage := event.Message.Usage
-		input := usage.Cached + usage.Creation
+		input := usage.Creation
+		if usage.Cached != nil {
+			input += max(0, *usage.Cached)
+		}
 		if usage.Input != nil {
 			input += *usage.Input
 			d.recordUsage(&input, nil, usage.Cached)
@@ -187,6 +190,7 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 	case "content_block_delta":
 		change := event.Delta
 		delta.Text, delta.Reasoning = change.Text, change.Thinking
+		delta.Output = change.Partial != ""
 		block := d.blocks[event.Index]
 		if block == nil {
 			// Some compatible endpoints omit an empty text block start.
@@ -215,7 +219,7 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 			d.stopErr = errors.New("unsupported model stop reason")
 		}
 		// message_delta usage is cumulative, not an increment.
-		d.recordUsage(nil, event.Usage.Output, 0)
+		d.recordUsage(nil, event.Usage.Output, nil)
 	case "message_stop":
 		d.complete = true
 	}

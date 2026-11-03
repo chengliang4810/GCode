@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 )
 
 type Protocol string
@@ -226,6 +227,11 @@ type Usage struct {
 	// Known requires provider-reported input and output counters; explicit zero
 	// counts. Otherwise Input and Output retain only the reported lower bounds.
 	Known bool `json:"known"`
+	// OutputKnown permits decode-speed accounting even if input was omitted.
+	OutputKnown bool `json:"outputKnown"`
+	// CacheKnown requires explicitly reported cached input and total input.
+	// Missing cache fields are never an observed zero-hit request.
+	CacheKnown bool `json:"cacheKnown"`
 	// Input includes cached input. Cached is a subset, never added to Input again.
 	Input  int `json:"input"`
 	Output int `json:"output"`
@@ -242,12 +248,17 @@ type Request struct {
 type Delta struct {
 	Text      string
 	Reasoning string
+	// Output also marks tool argument fragments that have no visible text.
+	Output bool
 }
 
 type Result struct {
 	Message Message
 	Usage   Usage
 	Stop    StopReason
+	// DecodeDuration spans the first output delta through protocol completion.
+	// Zero means no observed streaming output, never request wall time.
+	DecodeDuration time.Duration
 }
 
 // StopReason describes execution semantics, independent of provider finish strings.

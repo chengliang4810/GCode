@@ -8,6 +8,7 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 )
 
 // ErrStreamInterrupted means the response ended before its protocol completion event.
@@ -30,6 +31,7 @@ type streamState struct {
 	stopErr        error
 	inputReported  bool
 	outputReported bool
+	cacheReported  bool
 }
 
 func newStreamState() streamState {
@@ -47,7 +49,7 @@ func (s *streamState) add(delta Delta) {
 	s.result.Message.Reasoning += delta.Reasoning
 }
 
-func (s *streamState) recordUsage(input, output *int, cached int) {
+func (s *streamState) recordUsage(input, output, cached *int) {
 	if input != nil {
 		s.inputReported = true
 		s.result.Usage.Input = max(s.result.Usage.Input, *input)
@@ -56,8 +58,13 @@ func (s *streamState) recordUsage(input, output *int, cached int) {
 		s.outputReported = true
 		s.result.Usage.Output = max(s.result.Usage.Output, *output)
 	}
-	s.result.Usage.Cached = max(s.result.Usage.Cached, cached)
+	if cached != nil && *cached >= 0 {
+		s.cacheReported = true
+		s.result.Usage.Cached = max(s.result.Usage.Cached, *cached)
+	}
 	s.result.Usage.Known = s.inputReported && s.outputReported
+	s.result.Usage.OutputKnown = s.outputReported
+	s.result.Usage.CacheKnown = s.inputReported && s.cacheReported && s.result.Usage.Cached <= s.result.Usage.Input
 }
 
 func (s *streamState) finish() (Result, error) {
@@ -101,7 +108,13 @@ func (s *streamState) finish() (Result, error) {
 }
 
 // decodeStream owns SSE framing only. Adapters own all provider event decoding.
-func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) error) (Result, error) {
+func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) error) (result Result, err error) {
+	var firstOutput time.Time
+	defer func() {
+		if !firstOutput.IsZero() {
+			result.DecodeDuration = time.Since(firstOutput)
+		}
+	}()
 	scanner := bufio.NewScanner(reader)
 	scanner.Buffer(make([]byte, 4096), 8<<20)
 	var data []string
@@ -114,6 +127,9 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		delta, err := decoder.consume(payload)
 		if err != nil {
 			return err
+		}
+		if firstOutput.IsZero() && (delta.Output || delta.Text != "" || delta.Reasoning != "") {
+			firstOutput = time.Now()
 		}
 		if emit != nil && (delta.Text != "" || delta.Reasoning != "") {
 			return emit(delta)

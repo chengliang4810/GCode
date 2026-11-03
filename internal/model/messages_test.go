@@ -53,7 +53,7 @@ func TestMessagesUsageIncludesAllInputAndKeepsCumulativeOutput(t *testing.T) {
 		`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"}}` + "\n\n" +
 		"data: {\"type\":\"message_stop\"}\n\n"
 	result, err := decodeStream(strings.NewReader(fixture), messagesAdapter{}.decoder(), nil)
-	want := Usage{Known: true, Input: 62, Output: 7, Cached: 20}
+	want := Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 62, Output: 7, Cached: 20}
 	if err != nil || result.Usage != want {
 		t.Fatalf("usage = %+v, error = %v; want %+v", result.Usage, err, want)
 	}
@@ -65,7 +65,7 @@ func TestMessagesCacheOnlyUsageRemainsPartial(t *testing.T) {
 		`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":7}}` + "\n\n" +
 		"data: {\"type\":\"message_stop\"}\n\n"
 	result, err := decodeStream(strings.NewReader(fixture), messagesAdapter{}.decoder(), nil)
-	want := Usage{Input: 50, Output: 7, Cached: 20}
+	want := Usage{OutputKnown: true, Input: 50, Output: 7, Cached: 20}
 	if err != nil || result.Usage != want {
 		t.Fatalf("usage = %+v, error = %v; want %+v", result.Usage, err, want)
 	}
