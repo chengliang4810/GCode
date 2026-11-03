@@ -33,6 +33,8 @@ func (m meteredModel) Stream(ctx context.Context, request model.Request, emit fu
 		ID: id("request"), SessionID: m.sessionID, TurnID: m.turnID,
 		ProviderID: m.provider.ID, ProviderName: m.provider.Name, ModelID: m.modelID,
 		Usage: result.Usage, DecodeDuration: result.DecodeDuration,
+		RequestDuration:   result.RequestDuration,
+		FirstTokenLatency: result.FirstTokenLatency, FirstTokenObserved: result.FirstTokenObserved,
 	})
 	// Accounting survives an error or cancellation even when no assistant
 	// execution message can safely be committed.

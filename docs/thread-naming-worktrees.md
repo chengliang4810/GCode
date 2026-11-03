@@ -21,10 +21,32 @@ an actionable error. Switching runs `git switch` without force or reset. Active
 project runs and checkout preparation prevent branch switching. A dirty checkout
 that Git cannot safely switch remains intact.
 
+Repository refs refresh when the new-conversation canvas is first shown in a
+window, when a new draft is opened (including a project's row action), whenever
+the ref picker is opened, and after a failed checkout send. Persisted Ready rows
+are display data, not a reason to skip these refreshes. Refreshes read existing
+local and remote-tracking Git refs; they do not fetch from a remote.
+The picker immediately renders the same repository's last successful rows while
+the background refresh is queued or running. Cached rows remain searchable; a
+failed refresh keeps them visible beside the error and retry action. Loading
+placeholders are used only when no previous rows are available.
+Queued requests, an active refresh and a branch switch are deduplicated, including
+the interval before the host's loading snapshot arrives. Ordinary render passes
+do not poll, and an error waits for reopening or an explicit retry.
+When fresh rows arrive, the open picker's keyboard cursor follows its ref name,
+including navigation performed while the cached rows were visible. If that row
+disappears, the cursor returns to the selected/current ref. A selection made
+during refresh is accepted as pending and applied after the refresh finishes,
+so a Git switch never races the repository read. Sending waits for that pending
+choice/switch; a deleted ref produces an error instead of choosing another branch.
+
 `SendRequest.Checkout` is consumed when creating a conversation:
 
-- `current` uses the selected project directory and verifies any selected branch.
-  Plain directories are supported.
+- `current` uses the selected project directory. The default has no pinned
+  branch: the core reads the actual checkout at send time. An explicitly picked
+  branch is verified and cannot silently become another branch.
+  Plain directories are supported. A new draft clears the preceding draft's
+  explicit ref choice.
 - `reuseWorktree` verifies the path, branch and optional identity against Git's
   registered worktrees in that repository.
 - `newWorktree` resolves the requested base to a commit (`HEAD` when empty), then
@@ -41,6 +63,13 @@ on its original branch when creating another worktree. Worktrees and conversatio
 ownership survive a host restart. An existing conversation keeps its own checkout
 when a later send carries a draft checkout choice. Duplicate accepted request IDs
 do not create additional worktrees.
+
+The displayed cached current branch is never inserted as an implicit fixed
+branch/base into a send. An unpicked `newWorktree` base stays empty until the core
+resolves HEAD. Explicit worktree picks keep their path while refs are refreshing,
+and the core validates that path against real Git worktrees. If an explicit
+selection becomes invalid, the failed send restores its draft/attachments and
+refreshes refs; it does not automatically execute on another branch.
 
 The configuration directory (`Store.ConfigDirectory()`, normally `~/.gcode`) owns
 settings and the small conversation index. `Store.Directory()` is the active
@@ -81,3 +110,18 @@ short directory IDs, missing-root rejection, actual Agent writes in the new
 checkout, restart/reuse, duplicate submissions, and dirty
 switch failures. These tests do not constitute real-provider or native desktop
 acceptance.
+
+2026-11-04 refs refresh acceptance uses a private real Git repository and the
+native local desktop. It starts with a persisted Ready cache for main, switches
+Git externally before opening the UI, creates branches between picker openings,
+opens another draft after another switch, then switches once more after the last
+refresh and sends a real Read tool request. The conversation records the actual
+branch and reads the actual checkout file. Model streams come from a local HTTP
+fixture, not a real provider. It also checks that Enter after refresh keeps the
+current branch. Final native evidence is
+`output/repository-refs-refresh-final/20261104-002911-2028736766/`;
+both themes passed for refs refresh and project-row conversation creation.
+Desktop/checkout regressions, full contracts/mock/remote tests, Go/MyGo vet,
+Windows desktop build and Linux amd64 headless-server build passed.
+The earlier full-source settings failures remain recorded in
+`conversation-metrics.md`; these targeted results are not a full-suite claim.

@@ -9,6 +9,9 @@ type ControlTokens struct {
 	ButtonHeight, ButtonRadius, ButtonPaddingX, ButtonPaddingY float32
 	ButtonGap, IconButtonSize, IconSize                        float32
 	InlineIconButtonSize                                       float32
+	ComposerTargetIconSize, ComposerTargetGap                  float32
+	ComposerTargetPaddingX, ComposerTargetPaddingY             float32
+	ComposerTargetRadius                                       float32
 	InputHeight, InputRadius, InputPaddingX, InputPaddingY     float32
 	SelectMinWidth, PopupPadding, PopupRadius                  float32
 	OptionPaddingX, OptionPaddingY, OptionRadius               float32
@@ -30,8 +33,10 @@ func Controls() ControlTokens {
 		FontSize: TextBase, BorderWidth: 1,
 		ButtonHeight: 28.8, ButtonRadius: 6, ButtonPaddingX: 8, ButtonPaddingY: 4,
 		ButtonGap: 6, IconButtonSize: 28, IconSize: 16,
-		InlineIconButtonSize: 24,
-		InputHeight:          32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,
+		InlineIconButtonSize:   24,
+		ComposerTargetIconSize: 12, ComposerTargetGap: 5,
+		ComposerTargetPaddingX: 4, ComposerTargetPaddingY: 3, ComposerTargetRadius: 5,
+		InputHeight: 32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,
 		SelectMinWidth: 124, PopupPadding: 5, PopupRadius: 10,
 		OptionPaddingX: 10, OptionPaddingY: 7, OptionRadius: 6,
 		SwitchWidth: 44.8, SwitchHeight: 28.8,
@@ -43,6 +48,19 @@ func Controls() ControlTokens {
 		GradientSwatchWidth: 24, GradientSwatchHeight: 12,
 		ReorderIndicatorWidth: 2,
 		ResourceIconSize:      36, BadgePaddingX: 6, BadgePaddingY: 2,
+	}
+}
+
+// Metrics keeps conversation and reply readings on the same shared control.
+type MetricsTokens struct {
+	Height, PaddingX, PaddingY, Gap, IconSize, Radius float32
+	PanelWidth, PanelMaxHeight, PanelPadding, RowGap  float32
+}
+
+func Metrics() MetricsTokens {
+	return MetricsTokens{
+		Height: 24, PaddingX: 6, PaddingY: 2, Gap: 5, IconSize: 14, Radius: 6,
+		PanelWidth: 340, PanelMaxHeight: 480, PanelPadding: 10, RowGap: 10,
 	}
 }
 
@@ -70,6 +88,7 @@ type SidebarTokens struct {
 	PaddingX, NavigationPaddingY         float32
 	RowHeight, HeaderHeight, RowPaddingX float32
 	RowRadius, RowGap, IconSize          float32
+	FooterGap                            float32
 	ConversationLeadingWidth             float32
 	ConversationTrailingWidth            float32
 	ChildInset, ConversationTextInset    float32
@@ -94,6 +113,7 @@ func Sidebar() SidebarTokens {
 		PaddingX: 8, NavigationPaddingY: 12,
 		RowHeight: 32, HeaderHeight: 28, RowPaddingX: conversationRowPaddingX,
 		RowRadius: 8, RowGap: 2, IconSize: 16, ConversationLeadingWidth: leading,
+		FooterGap:                 8,
 		ConversationTrailingWidth: controls.InlineIconButtonSize,
 		ChildInset:                8, ConversationTextInset: conversationRowPaddingX + leading + conversationGap,
 		PageSize: 5,

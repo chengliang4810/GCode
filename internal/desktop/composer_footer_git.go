@@ -15,6 +15,10 @@ type composerFooterGitState struct {
 	Branch, Query          string
 	RefOpen, CheckoutOpen  bool
 	Requested              bool
+	RefLoading             bool
+	RefLoadBaseline        uint64
+	RefReadyGeneration     uint64
+	CursorRef, PendingRef  string
 	Sequence               uint64
 	Switching, SwitchError string
 	RefError               string
@@ -126,6 +130,9 @@ func (a *App) syncComposerFooterGit() (contracts.Project, contracts.RepoRefs, bo
 		}
 		f.Scope, f.Branch, f.Query, f.Switching, f.SwitchError = scope, "", "", "", ""
 		f.RefError = ""
+		f.RefLoading = false
+		f.RefReadyGeneration = 0
+		f.CursorRef, f.PendingRef = "", ""
 		f.RefOpen, f.CheckoutOpen, f.Requested, f.Cursor = false, false, false, 0
 		f.Sequence++
 		f.Kind = f.Kinds[scope.Key()]
@@ -140,6 +147,27 @@ func (a *App) syncComposerFooterGit() (contracts.Project, contracts.RepoRefs, bo
 		f.Kind = contracts.CheckoutCloud
 	}
 	resource := a.state.RepoRefs[scope.Key()]
+	if f.RefLoading && resource.Generation > f.RefLoadBaseline {
+		f.RefLoading = false
+	}
+	if resource.State == contracts.LoadReady && resource.Generation != f.RefReadyGeneration {
+		f.RefReadyGeneration = resource.Generation
+		if f.RefOpen {
+			f.Cursor = 0
+			for i, row := range footerFilteredRefs(resource, f.Query) {
+				if f.Branch != "" && row.Name == f.Branch || f.Branch == "" && row.Current {
+					f.Cursor = min(i, 299)
+					break
+				}
+			}
+			for i, row := range footerFilteredRefs(resource, f.Query) {
+				if row.Name == f.CursorRef {
+					f.Cursor = min(i, 299)
+					break
+				}
+			}
+		}
+	}
 	if f.Switching != "" && resource.Generation > f.SwitchBaseline && resource.Switching == "" && resource.State != "" {
 		if resource.SwitchError != "" {
 			f.SwitchError = resource.SwitchError
@@ -148,13 +176,27 @@ func (a *App) syncComposerFooterGit() (contracts.Project, contracts.RepoRefs, bo
 		}
 		f.Switching = ""
 	}
+	if f.PendingRef != "" && !f.RefLoading && resource.State != contracts.LoadLoading {
+		name := f.PendingRef
+		f.PendingRef = ""
+		if found && project.GitDetected && a.sessionID == "" {
+			matched := false
+			for _, row := range resource.Rows {
+				if row.Name == name {
+					matched = true
+					a.pickComposerFooterRef(row)
+					break
+				}
+			}
+			if !matched {
+				f.SwitchError = a.t("Selected ref is no longer available. Choose another ref.")
+			}
+		}
+	}
 	return project, resource, found && project.GitDetected
 }
 
 func (f *composerFooterGitState) selectedRef(resource contracts.RepoRefs) *contracts.RepoRef {
-	if resource.State != contracts.LoadReady {
-		return nil
-	}
 	for _, row := range resource.Rows {
 		if f.Branch != "" && row.Name == f.Branch || f.Branch == "" && row.Current {
 			copy := row
@@ -187,7 +229,14 @@ func (f *composerFooterGitState) displayRef(resource contracts.RepoRefs) *contra
 func (a *App) ensureComposerFooterRefs(force bool) {
 	_, resource, git := a.syncComposerFooterGit()
 	f := &a.footerGit
-	if !git || a.currentSession().ID != "" || !force && (f.Requested || resource.State != "") {
+	if !git || a.currentSession().ID != "" {
+		return
+	}
+	if f.RefLoading || resource.State == contracts.LoadLoading || resource.Switching != "" || f.Switching != "" {
+		f.Requested = true
+		return
+	}
+	if !force && f.Requested {
 		return
 	}
 	if force {
@@ -197,9 +246,11 @@ func (a *App) ensureComposerFooterRefs(force bool) {
 		}
 	}
 	f.Requested = true
+	f.RefLoading, f.RefLoadBaseline = true, resource.Generation
 	f.RefError = ""
 	f.Sequence++
-	a.dispatch(contracts.Command{Kind: "git.refs.load", Version: f.Sequence, Git: &contracts.GitRequest{Scope: f.Scope, Force: force}})
+	a.dispatch(contracts.Command{Kind: "git.refs.load", Version: f.Sequence, Git: &contracts.GitRequest{Scope: f.Scope, Force: force || resource.State != ""}})
+	a.syncComposerFooterGit()
 }
 
 func (a *App) composerFooterCheckoutPlan() *contracts.CheckoutPlan {
@@ -215,19 +266,24 @@ func (a *App) composerFooterCheckoutPlan() *contracts.CheckoutPlan {
 	name := f.effectiveRef(resource)
 	switch f.Kind {
 	case contracts.CheckoutNew:
-		return &contracts.CheckoutPlan{Kind: contracts.CheckoutNew, Base: name}
+		// With no explicit base, resolve HEAD in the core at send time.
+		return &contracts.CheckoutPlan{Kind: contracts.CheckoutNew, Base: f.Branch}
 	case contracts.CheckoutCloud:
 		return &contracts.CheckoutPlan{Kind: contracts.CheckoutCloud, Branch: name}
 	default:
+		// Cached rows retain the destination while refreshing. The core still
+		// validates its path and branch against the actual repository.
 		if row := f.selectedRef(resource); row != nil {
 			if row.Current {
-				return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: row.Name}
+				// The default follows the actual checkout, not its cached label.
+				// An explicit ref selection still pins and validates its branch.
+				return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: f.Branch}
 			}
 			if row.WorktreePath != "" {
 				return &contracts.CheckoutPlan{Kind: contracts.CheckoutReuse, Path: row.WorktreePath, Branch: row.Name}
 			}
 		}
-		return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: name}
+		return &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: f.Branch}
 	}
 }
 
@@ -237,7 +293,13 @@ func (a *App) pickComposerFooterRef(row contracts.RepoRef) {
 	}
 	_, resource, git := a.syncComposerFooterGit()
 	f := &a.footerGit
-	if !git || f.Switching != "" {
+	if !git || f.Switching != "" || f.PendingRef != "" {
+		return
+	}
+	if f.RefLoading || resource.State == contracts.LoadLoading {
+		// Keep the user's choice while the owned refresh finishes, rather than
+		// racing a git switch against the core's active repository operation.
+		f.PendingRef, f.SwitchError = row.Name, ""
 		return
 	}
 	if f.Kind == contracts.CheckoutCloud || f.Kind == contracts.CheckoutNew || row.Current || row.WorktreePath != "" {
@@ -251,6 +313,10 @@ func (a *App) pickComposerFooterRef(row contracts.RepoRef) {
 	f.SwitchBaseline = resource.Generation
 	f.Sequence++
 	a.dispatch(contracts.Command{Kind: "git.ref.switch", Version: f.Sequence, Git: &contracts.GitRequest{Scope: f.Scope, Ref: row.Name}})
+}
+
+func (a *App) composerFooterGitBusy() bool {
+	return a.sessionID == "" && (a.footerGit.PendingRef != "" || a.footerGit.Switching != "")
 }
 
 func (a *App) pickComposerFooterCheckout(kind contracts.CheckoutKind) {
@@ -285,6 +351,7 @@ func (a *App) composerFooterGitCommandFinished(command contracts.Command, err er
 			// An RPC rejection may precede a resource snapshot. Keep the error
 			// until an explicit retry rather than retrying on every render.
 			f.RefError = err.Error()
+			f.RefLoading = false
 		}
 		return true
 	}
@@ -346,13 +413,17 @@ func (a *App) composerFooterGit(c *ui.Context) {
 	ref.OnClick(func() {
 		f.RefOpen, f.CheckoutOpen, f.Query, f.Cursor = !f.RefOpen, false, "", 0
 		if f.RefOpen {
+			f.CursorRef = ""
 			for i, row := range footerFilteredRefs(resource, "") {
 				if f.Branch != "" && row.Name == f.Branch || f.Branch == "" && row.Current {
 					f.Cursor = min(i, 299)
 					break
 				}
 			}
-			a.ensureComposerFooterRefs(resource.State == contracts.LoadError || f.RefError != "")
+			if rows := footerFilteredRefs(resource, ""); len(rows) > f.Cursor {
+				f.CursorRef = rows[f.Cursor].Name
+			}
+			a.ensureComposerFooterRefs(true)
 		}
 	})
 	a.footerRefPopover(c, ref)
@@ -370,7 +441,7 @@ func footerGitLabel(c *ui.Context, p design.Tokens, glyph, text, label string, m
 }
 
 func (a *App) footerGitTrigger(c *ui.Context, glyph, text, label string, open bool) ui.Element {
-	b := ui.ButtonBase(c.Key(label)).Height(20).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(6).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label))
+	b := ui.ButtonBase(c.Key(label)).Height(20).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(6).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label)).Value(text)
 	if open || b.Hovered() {
 		b.Background(a.palette.Hover)
 	}
@@ -441,7 +512,7 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 		a.footerGitPopoverCard(c, panel)
 		panel.Label(tr(c, "Ref picker")).Width(320)
 		budget := a.footerGitPopoverPosition(c, panel, anchor)
-		search := ui.TextInputBase(c.Key("composer-ref-search"), &f.Query).Label(tr(c, "Search refs")).Placeholder(tr(c, "Search refs…")).Height(32).FillWidth().Padding(0, 8).FontSize(design.TextSize(c, design.TextBase)).AutoFocus().OnChange(func() { f.Cursor = 0 })
+		search := ui.TextInputBase(c.Key("composer-ref-search"), &f.Query).Label(tr(c, "Search refs")).Placeholder(tr(c, "Search refs…")).Height(32).FillWidth().Padding(0, 8).FontSize(design.TextSize(c, design.TextBase)).AutoFocus().OnChange(func() { f.Cursor, f.CursorRef = 0, "" })
 		composing := search.Composing()
 		search.OnTextKey(func(key ui.TextKey) bool {
 			pressed := key.Key
@@ -462,7 +533,7 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 			f.Query = key.Text()
 			rows := footerFilteredRefs(a.state.RepoRefs[f.Scope.Key()], f.Query)
 			count := min(len(rows), 300)
-			if count > 0 && f.Switching == "" {
+			if count > 0 && f.Switching == "" && f.PendingRef == "" {
 				f.Cursor = max(0, min(f.Cursor, count-1))
 				switch pressed {
 				case ui.KeyDown:
@@ -472,18 +543,19 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 				case ui.KeyEnter:
 					a.pickComposerFooterRef(rows[f.Cursor])
 				}
+				f.CursorRef = rows[f.Cursor].Name
 			}
 			return true
 		})
 		resource := a.state.RepoRefs[f.Scope.Key()]
-		if f.RefError != "" {
-			resource.State, resource.Error = contracts.LoadError, f.RefError
+		refError := ""
+		if resource.State == contracts.LoadError && !f.RefLoading {
+			refError = resource.Error
 		}
-		switch resource.State {
-		case contracts.LoadError:
-			ui.Text(c, resource.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Padding(8)
-			textButton(c, tr(c, "Retry refs")).OnClick(func() { a.ensureComposerFooterRefs(true) })
-		case contracts.LoadReady:
+		if f.RefError != "" {
+			refError = f.RefError
+		}
+		if resource.State == contracts.LoadReady || len(resource.Rows) > 0 {
 			rows := footerFilteredRefs(resource, f.Query)
 			if len(rows) == 0 {
 				ui.Text(c, tr(c, "No refs found.")).FontSize(design.TextSize(c, design.TextBase)).Padding(8)
@@ -491,10 +563,11 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 			if len(rows) > 0 {
 				// pickers.rs caps the filtered rows and keyboard cursor at 300.
 				f.Cursor = max(0, min(f.Cursor, min(len(rows), 300)-1))
+				f.CursorRef = rows[f.Cursor].Name
 				ui.Scroll(c).FillWidth().MaxHeight(max(float32(0), min(budget-144, 224))).Gap(2).Children(func() {
 					for i, row := range rows[:min(len(rows), 300)] {
 						row := row
-						b := ui.ButtonBase(c.Key(row.Name)).FillWidth().Height(32).Padding(0, 8).Gap(8).Radius(7).Justify(ui.Start).Label(tr(c, "Ref ") + row.Name).Disabled(f.Switching != "")
+						b := ui.ButtonBase(c.Key(row.Name)).FillWidth().Height(32).Padding(0, 8).Gap(8).Radius(7).Justify(ui.Start).Label(tr(c, "Ref ") + row.Name).Disabled(f.Switching != "" || f.PendingRef != "")
 						if b.Hovered() || f.Branch == row.Name || f.Cursor == i {
 							b.Background(a.palette.Hover)
 						}
@@ -509,7 +582,7 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 							} else if row.WorktreePath != "" {
 								tag = "worktree"
 							}
-							if f.Switching == row.Name {
+							if f.Switching == row.Name || f.PendingRef == row.Name {
 								tag = "switching…"
 							}
 							if tag != "" {
@@ -522,10 +595,16 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 					ui.Text(c, fmt.Sprintf(tr(c, "Showing 300 of %d refs"), len(rows))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Padding(4, 8)
 				}
 			}
-		default:
-			for range 4 {
-				ui.Box(c).Height(18).FillWidth().Margin(5, 8).Radius(4).Background(a.palette.Text.Alpha(.08))
-			}
+		} else if refError == "" {
+			ui.Column(c.Key("composer-ref-loading")).Role(ui.RoleGroup).FillWidth().Children(func() {
+				for range 4 {
+					ui.Box(c).Height(18).FillWidth().Margin(5, 8).Radius(4).Background(a.palette.Text.Alpha(.08))
+				}
+			})
+		}
+		if refError != "" {
+			ui.Text(c.Key("composer-ref-error"), refError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Padding(8)
+			textButton(c, tr(c, "Retry refs")).OnClick(func() { a.ensureComposerFooterRefs(true) })
 		}
 		if f.SwitchError != "" {
 			ui.Text(c, f.SwitchError).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger).Padding(4, 8)
@@ -534,9 +613,6 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 }
 
 func footerFilteredRefs(resource contracts.RepoRefs, query string) []contracts.RepoRef {
-	if resource.State != contracts.LoadReady {
-		return nil
-	}
 	query = strings.ToLower(strings.TrimSpace(query))
 	var prefix, remainder []contracts.RepoRef
 	for _, row := range resource.Rows {

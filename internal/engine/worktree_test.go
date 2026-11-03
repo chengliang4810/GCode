@@ -165,6 +165,51 @@ func TestGitRefsSwitchRealCheckoutAndDirtyFailure(t *testing.T) {
 	}
 }
 
+func TestWorktreeDefaultCurrentFollowsActualBranchAfterExternalSwitch(t *testing.T) {
+	repository := temporaryGitRepository(t)
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		goalResponse(w, model.Chat, "Done", nil, true)
+	}))
+	defer server.Close()
+	core := modelCheckCore(t, model.Chat, server.URL)
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{Path: repository}}); err != nil {
+		t.Fatal(err)
+	}
+	project := waitForProjectFiles(t, core).Projects[0]
+	scope := contracts.RepoRefScope{ProjectID: project.ID, TargetID: "local", RepoPath: repository}
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "git.refs.load", Git: &contracts.GitRequest{Scope: scope}}); err != nil {
+		t.Fatal(err)
+	}
+	waitGitRefs(t, core, scope)
+	runGitTest(t, repository, "switch", "-c", "external-branch")
+	stale, _ := core.Snapshot(t.Context())
+	if stale.Projects[0].Branch != "main" {
+		t.Fatal("fixture did not preserve the old refs cache")
+	}
+	send := contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
+		ProjectID: project.ID, ModelID: "checks/unselected", Text: "Use the actual current checkout",
+		Checkout: &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: "main"},
+	}}
+	if err := core.Execute(t.Context(), send); err == nil {
+		t.Fatal("an explicit stale branch silently executed somewhere else")
+	}
+	if state, _ := core.Snapshot(t.Context()); len(state.Sessions) != 0 || requests.Load() != 0 {
+		t.Fatal("rejected explicit selection still created a conversation or called the provider")
+	}
+	send.Send.Checkout.Branch = ""
+	if err := core.Execute(t.Context(), send); err != nil {
+		t.Fatal(err)
+	}
+	state := waitIdle(t, core)
+	session := state.Sessions[0]
+	if session.Branch != "external-branch" || session.CWD != repository || session.SourceContext == nil ||
+		session.SourceContext.Branch != "external-branch" || state.Projects[0].Branch != "external-branch" {
+		t.Fatalf("default current checkout did not use authoritative Git state: %+v", session)
+	}
+}
+
 func TestWorktreeRejectsInvalidSelectionAndUnavailableDataDirectory(t *testing.T) {
 	repository := temporaryGitRepository(t)
 	project := contracts.Project{Path: repository, GitDetected: true}

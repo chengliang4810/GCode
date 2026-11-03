@@ -1,9 +1,11 @@
 package desktop
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
+	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
@@ -125,6 +127,27 @@ func inlineIconButton(c *ui.Context, name, label string) ui.Element {
 	size := design.Controls().InlineIconButtonSize
 	return controlIconButton(c, label).Size(size, size).
 		Children(func() { icon(c, name, design.Controls().IconSize) })
+}
+
+// The canvas target keeps a compact glyph slot beside an independent picker.
+// Replacing that slot with an action must not move the project name.
+func controlComposerTargetGroup(c *ui.Context) ui.Element {
+	s := design.Controls()
+	return ui.Row(c).Role(ui.RoleGroup).Padding(s.ComposerTargetPaddingY, s.ComposerTargetPaddingX).
+		Radius(s.ComposerTargetRadius).Gap(s.ComposerTargetGap).AlignItems(ui.Center)
+}
+
+func controlComposerTargetPicker(c *ui.Context, label string) ui.Element {
+	s := design.Controls()
+	return ui.ButtonBase(c).Padding(0).Radius(s.ComposerTargetRadius).
+		Gap(s.ComposerTargetGap).AlignItems(ui.Center).Label(label)
+}
+
+func controlComposerTargetClear(c *ui.Context, label string) ui.Element {
+	s := design.Controls()
+	return ui.ButtonBase(c).MinHeight(0).Size(s.ComposerTargetIconSize, s.ComposerTargetIconSize).
+		Padding(0).Radius(s.ComposerTargetIconSize / 2).Center().TextColor(c.Theme().TextMuted).
+		Label(label).Tooltip(label).Children(func() { icon(c, "dismiss-circle", s.ComposerTargetIconSize) })
 }
 
 func updateIconButton(c *ui.Context, label string) ui.Element {
@@ -320,6 +343,43 @@ func controlSelectItem(c *ui.Context, item ui.Element) ui.Element {
 	return item
 }
 
+// Menu search shares the form typography and spacing without an inner border.
+func controlMenuSearch(c *ui.Context, value *string, label string) ui.Element {
+	s := design.Controls()
+	var input ui.Element
+	ui.Row(c).FillWidth().Shrink(0).
+		Height(max(s.InputHeight, design.TextSize(c, s.FontSize)*1.5+s.InputPaddingY*2)).
+		Padding(0, s.OptionPaddingX).Gap(s.ButtonGap).AlignItems(ui.Center).Children(func() {
+		ui.Box(c).Size(s.IconSize, s.IconSize).TextColor(c.Theme().TextMuted).
+			Children(func() { icon(c, "magnifer", s.IconSize) })
+		input = ui.TextInputBase(c.Key("search"), value).Grow(1).MinWidth(0).
+			Label(label).Placeholder(label).PlaceholderColor(c.Theme().TextMuted).
+			FontSize(design.TextSize(c, s.FontSize)).LineHeight(1.5)
+	})
+	return input
+}
+
+func controlProjectMenuRow(c *ui.Context, label, glyph string, selected, navigating bool) ui.Element {
+	s := design.Controls()
+	return controlPromptChoice(c, navigating).MinHeight(
+		max(s.NavigationHeight, design.TextSize(c, s.FontSize)*1.5+s.ButtonPaddingY*2)).
+		FillWidth().Role(ui.RoleMenuItem).Label(label).Checked(selected).Children(func() {
+		icon(c, glyph, s.IconSize)
+		ui.Text(c, label).SingleLine().Grow(1).MinWidth(0)
+		ui.Box(c).Size(s.IconSize, s.IconSize).Children(func() {
+			if selected {
+				icon(c.Key("selected"), "check", s.IconSize)
+			}
+		})
+	})
+}
+
+func controlMenuDivider(c *ui.Context) ui.Element {
+	s := design.Controls()
+	return ui.Box(c).AlignSelf(ui.Stretch).Height(s.BorderWidth).Shrink(0).
+		Margin(s.PopupPadding, s.OptionPaddingX).Background(c.Theme().Border)
+}
+
 func controlRowButton(c *ui.Context) ui.Element {
 	s := design.Controls()
 	b := ui.ButtonBase(c).MinHeight(s.ButtonHeight).
@@ -353,6 +413,28 @@ func controlPromptChoice(c *ui.Context, selected bool) ui.Element {
 	return button
 }
 
+func controlQuestionOption(c *ui.Context, option contracts.QuestionOption, number int, selected, multi bool) ui.Element {
+	return controlPromptChoice(c, selected).Selected(selected).FillWidth().Label(option.Label).Gap(design.Controls().ButtonGap).Children(func() {
+		if multi {
+			if selected {
+				icon(c, "check", design.Controls().IconSize)
+			} else {
+				ui.Box(c).Size(design.Controls().IconSize, design.Controls().IconSize)
+			}
+		}
+		ui.Column(c).Grow(1).MinWidth(0).Gap(design.Controls().ButtonGap).Children(func() {
+			ui.Text(c, option.Label).FontWeight(500)
+			if option.Description != "" {
+				ui.Text(c, option.Description).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted)
+			}
+			if option.Preview != "" {
+				ui.Text(c, option.Preview).FontSize(design.TextSize(c, design.TextSmall)).Selectable()
+			}
+		})
+		ui.Text(c, fmt.Sprint(number)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted).Shrink(0)
+	})
+}
+
 func controlNavButton(c *ui.Context, label string, selected bool) ui.Element {
 	s := design.Controls()
 	b := ui.ButtonBase(c).Height(max(s.NavigationHeight, design.TextSize(c, s.FontSize)*1.5)).Padding(0, s.NavigationPaddingX).
@@ -367,8 +449,12 @@ func controlNavButton(c *ui.Context, label string, selected bool) ui.Element {
 }
 
 func controlSidebarRow(c *ui.Context, label string, selected bool) ui.Element {
+	return styleSidebarRow(c, ui.ButtonBase(c), label, selected)
+}
+
+func styleSidebarRow(c *ui.Context, b ui.Element, label string, selected bool) ui.Element {
 	s := design.Sidebar()
-	b := ui.ButtonBase(c).Label(label).FillWidth().MinWidth(0).
+	b.Label(label).FillWidth().MinWidth(0).
 		Height(max(s.RowHeight, design.TextSize(c, design.TextBase)*1.5+8)).
 		Padding(0, s.RowPaddingX).Gap(8).Radius(s.RowRadius).
 		FontSize(design.TextSize(c, design.TextBase)).FontWeight(400).LineHeight(1.5).
@@ -382,11 +468,16 @@ func controlSidebarRow(c *ui.Context, label string, selected bool) ui.Element {
 }
 
 func controlSidebarProjectRow(c *ui.Context, label string, selected, offline bool) ui.Element {
-	row := controlSidebarRow(c, label, selected).TextColor(c.Theme().TextMuted)
+	row := styleSidebarRow(c, ui.Row(c), label, selected).Role(ui.RoleGroup).TextColor(c.Theme().TextMuted)
 	if offline {
 		row.Opacity(.5)
 	}
 	return row
+}
+
+func controlSidebarProjectToggle(c *ui.Context, label string) ui.Element {
+	return ui.ButtonBase(c).Label(label).Grow(1).MinWidth(0).FillHeight().
+		Gap(design.Controls().ButtonGap).AlignItems(ui.Center).Justify(ui.Start)
 }
 
 func controlSidebarMoreRow(c *ui.Context, label string) ui.Element {
@@ -530,6 +621,45 @@ func controlResourceBadge(c *ui.Context, label string) ui.Element {
 	return ui.Text(c, label).SingleLine().MinWidth(0).FontSize(design.TextSize(c, design.TextSmall)).
 		Padding(s.BadgePaddingY, s.BadgePaddingX).
 		Radius(s.OptionRadius).Background(c.Theme().SurfaceHover).TextColor(c.Theme().TextMuted)
+}
+
+func controlMetricButton(c *ui.Context, glyph, label, reading string, open bool) ui.Element {
+	s, t := design.Metrics(), c.Theme()
+	b := ui.ButtonBase(c).MinHeight(s.Height).Padding(s.PaddingY, s.PaddingX).
+		Radius(s.Radius).Gap(s.Gap).AlignItems(ui.Center).MinWidth(0).Shrink(1).
+		TextColor(t.TextMuted).FontSize(design.TextSize(c, design.TextSmall)).Label(label)
+	if open || b.Hovered() {
+		b.Background(t.SurfaceHover)
+	}
+	if b.Pressed() {
+		b.Background(t.SurfacePressed)
+	}
+	return b.Children(func() {
+		icon(c, glyph, s.IconSize)
+		ui.Text(c, reading).SingleLine().MinWidth(0)
+	})
+}
+
+func controlMetricPanel(c *ui.Context, label string) ui.Element {
+	s := design.Metrics()
+	return ui.Column(c).FillWidth().Padding(s.PanelPadding).Gap(s.RowGap).Label(label)
+}
+
+func controlMetricHeading(c *ui.Context, glyph, title, value string) {
+	ui.Row(c).FillWidth().Gap(design.Metrics().Gap).AlignItems(ui.Center).Children(func() {
+		icon(c, glyph, design.Controls().IconSize)
+		ui.Text(c, title).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
+		ui.Spacer(c).Grow(1).MinWidth(0)
+		ui.Text(c, value).FontSize(design.TextSize(c, design.TextBase)).TextAlign(ui.End).MinWidth(0)
+	})
+	ui.Box(c).FillWidth().Height(design.Controls().BorderWidth).Background(c.Theme().Border)
+}
+
+func controlMetricField(c *ui.Context, label, value string) ui.Element {
+	return ui.Row(c).FillWidth().Gap(design.Controls().ButtonGap).Label(label + ": " + value).Tooltip(value).Children(func() {
+		ui.Text(c, label).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted).Shrink(0)
+		ui.Text(c, value).Grow(1).MinWidth(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).Selectable()
+	})
 }
 
 // controlEffortSwatch previews a reasoning-slider preset: three equal stops

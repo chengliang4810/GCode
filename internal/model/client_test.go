@@ -9,7 +9,44 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestGatewayRecordsRequestAndFirstTokenTiming(t *testing.T) {
+	for _, output := range []bool{false, true} {
+		t.Run(fmt.Sprint(output), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				time.Sleep(30 * time.Millisecond) // prefill before response headers
+				w.Header().Set("Content-Type", "text/event-stream")
+				content := "{}"
+				if output {
+					content = `{"content":"timed answer"}`
+				}
+				fmt.Fprintf(w, "data: {\"choices\":[{\"delta\":%s,\"finish_reason\":\"stop\"}]}\n\n", content)
+				w.(http.Flusher).Flush()
+				time.Sleep(20 * time.Millisecond)
+				fmt.Fprint(w, "data: [DONE]\n\n")
+			}))
+			defer server.Close()
+			provider := Provider{ID: "timing", Name: "Timing", Protocol: Chat, BaseURL: server.URL, Models: []Model{{ID: "model"}}}
+			gateway, err := NewClient().Bind(provider, provider.Models[0])
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := gateway.Stream(t.Context(), Request{}, nil)
+			if err != nil || result.RequestDuration < 40*time.Millisecond || result.FirstTokenObserved != output {
+				t.Fatalf("request timing not observed: %+v %v", result, err)
+			}
+			if output && (result.FirstTokenLatency < 20*time.Millisecond || result.DecodeDuration < 15*time.Millisecond ||
+				result.FirstTokenLatency+result.DecodeDuration > result.RequestDuration) {
+				t.Fatalf("TTFT includes decode or loses header wait: %+v", result)
+			}
+			if !output && (result.FirstTokenLatency != 0 || result.DecodeDuration != 0) {
+				t.Fatal("empty stream invented first-token timing")
+			}
+		})
+	}
+}
 
 func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 	for _, protocol := range []Protocol{Chat, Responses, Messages} {

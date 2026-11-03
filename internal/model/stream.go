@@ -109,10 +109,13 @@ func (s *streamState) finish() (Result, error) {
 
 // decodeStream owns SSE framing only. Adapters own all provider event decoding.
 func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) error) (result Result, err error) {
+	started := time.Now()
 	var firstOutput time.Time
 	defer func() {
 		if !firstOutput.IsZero() {
 			result.DecodeDuration = time.Since(firstOutput)
+			result.FirstTokenObserved = true
+			result.FirstTokenLatency = firstOutput.Sub(started)
 		}
 	}()
 	scanner := bufio.NewScanner(reader)

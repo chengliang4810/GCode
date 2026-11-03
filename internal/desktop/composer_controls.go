@@ -155,6 +155,13 @@ func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Eleme
 		label = "Model management"
 	}
 	button := ui.ButtonBase(c.Key("model-trigger")).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel(label)))
+	if model := a.selectedModel(); model.ID != "" {
+		identity := model.Label
+		if provider := a.selectedProvider(); provider.Name != "" {
+			identity = provider.Name + " · " + model.Label
+		}
+		button.Value(identity).Tooltip(identity)
+	}
 	if a.modelMenu || button.Hovered() {
 		button.Background(a.palette.Hover)
 	}

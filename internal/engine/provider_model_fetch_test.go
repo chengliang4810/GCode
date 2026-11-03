@@ -63,7 +63,7 @@ func TestModelFetchSurfacesSanitizedErrors(t *testing.T) {
 	t.Run("http", func(t *testing.T) {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, `{"error":{"message":"fetch-secret"}}`)
+			fmt.Fprint(w, `{"error":{"message":"check-secret","code":"invalid_api_key","request_id":"req-42"}}`)
 		}))
 		t.Cleanup(server.Close)
 		core := modelCheckCore(t, model.Chat, server.URL)
@@ -75,11 +75,13 @@ func TestModelFetchSurfacesSanitizedErrors(t *testing.T) {
 			return fetch != nil && fetch.State == "error"
 		})
 		encoded, _ := json.Marshal(state)
-		if strings.Contains(string(encoded), "fetch-secret") {
+		if strings.Contains(string(encoded), "check-secret") {
 			t.Fatal("model fetch snapshot leaked provider error payload")
 		}
-		if !strings.Contains(state.CustomProviders[0].ModelFetch.Error, "401") {
-			t.Fatalf("fetch diagnostic omitted its safe status: %q", state.CustomProviders[0].ModelFetch.Error)
+		if detail := state.CustomProviders[0].ModelFetch.Error; !strings.Contains(detail, "401") ||
+			!strings.Contains(detail, `"code":"invalid_api_key"`) || !strings.Contains(detail, `"request_id":"req-42"`) ||
+			!strings.Contains(detail, "[redacted]") {
+			t.Fatalf("fetch diagnostic omitted original safe details: %q", detail)
 		}
 	})
 	t.Run("payload", func(t *testing.T) {

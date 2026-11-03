@@ -661,14 +661,14 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 			}
 			a.modelList.Key = func(i int) any { return rows[i].model.ID }
 			a.modelList.Label = func(i int) string { return rows[i].model.Label }
-			a.modelList.Selected = &a.modelCursor
+			// The keyboard cursor is navigation state, not a committed model.
+			// Native List selection would paint it before the pointer arrives.
+			a.modelList.Selected = nil
 			list := ui.List(c, &a.modelList, len(rows), func(i int) {
 				row := rows[i]
 				m := row.model
 				button := ui.ButtonBase(c.Key("model-choice:"+m.ID)).FillWidth().Height(rowHeight).Padding(0, 4, 0, 8).Radius(7).Gap(4).AlignItems(ui.Center).Justify(ui.SpaceBetween).Label(tr(c, a.controlLabel("Select model")) + " " + m.Label).Tooltip(m.Label).TextColor(a.palette.Text)
-				if a.modelID == m.ID {
-					button.Background(modelSelectionColor(palette))
-				} else if button.Hovered() {
+				if button.Hovered() {
 					button.Background(a.palette.Hover)
 				}
 				if button.Hovered() {
@@ -682,11 +682,30 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 						}
 					})
 				}).OnClick(func() { a.activateModelRow(rows, i) })
-			}).Grow(1).MinHeight(0).FillWidth().Gap(2)
+			}).Grow(1).MinHeight(0).FillWidth().Gap(2).Focusable()
 			if !a.modelSearchVisible() {
 				list.AutoFocus().KeepFocus()
 			}
-			list.OnSubmit(func() { a.activateModelRow(rows, a.modelCursor) })
+			for _, key := range []ui.Key{ui.KeyUp, ui.KeyDown, ui.KeyHome, ui.KeyEnd, ui.KeyPageUp, ui.KeyPageDown} {
+				list.OnShortcut(0, key, func() {
+					switch key {
+					case ui.KeyUp:
+						a.modelCursor = max(0, a.modelCursor-1)
+					case ui.KeyDown:
+						a.modelCursor = min(len(rows)-1, a.modelCursor+1)
+					case ui.KeyHome:
+						a.modelCursor = 0
+					case ui.KeyEnd:
+						a.modelCursor = len(rows) - 1
+					case ui.KeyPageUp:
+						a.modelCursor = max(0, a.modelCursor-7)
+					case ui.KeyPageDown:
+						a.modelCursor = min(len(rows)-1, a.modelCursor+7)
+					}
+					a.modelList.ScrollIntoView(a.modelCursor)
+				})
+			}
+			list.OnShortcut(0, ui.KeyEnter, func() { a.activateModelRow(rows, a.modelCursor) })
 		})
 	}
 	ui.Row(c).FillWidth().Gap(modelPickerGap).AlignItems(ui.Start).Children(func() {
@@ -805,7 +824,7 @@ func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
 	if current == "" {
 		current = a.selectedProvider().ID
 	}
-	b := controlPromptChoice(c.Key("model-provider:"+id), current == id).FillWidth().Label(label).Tooltip(label).Children(func() {
+	b := controlPromptChoice(c.Key("model-provider:"+id), current == id).FillWidth().Label(label).Children(func() {
 		for _, provider := range a.state.Providers {
 			if provider.ID == id {
 				providerLogo(c, provider.Logo, 16)
@@ -819,15 +838,30 @@ func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
 		ui.Box(c).Grow(1)
 		icon(c, "alt-arrow-right", 12)
 	})
+	wasHovered := ui.Local(b, "provider-hover", func() bool { return false })
+	hovered := b.Hovered()
+	if hovered && !*wasHovered && current != id {
+		a.browseModelProvider(id)
+		// The models card can precede this rail when it opens on the left.
+		c.Invalidate()
+	}
+	*wasHovered = hovered
 	b.OnClick(func() {
-		a.modelProvider = id
-		a.modelQuery = ""
-		a.modelCursor = 0
-		a.modelList.ScrollIntoView(0)
+		a.browseModelProvider(id)
 		if a.modelSearchVisible() {
 			a.modelSearch.Focus(c)
 		}
 	})
+}
+
+func (a *composerController) browseModelProvider(id string) {
+	if a.modelProvider == id {
+		return
+	}
+	a.modelProvider = id
+	a.modelQuery = ""
+	a.modelCursor = 0
+	a.modelList.ScrollIntoView(0)
 }
 
 func (a *composerController) modelProviderLocked() bool {

@@ -155,7 +155,7 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 	delta := Delta{}
 	switch event.Type {
 	case "error":
-		return Delta{}, errors.New("model reported a streaming error")
+		return Delta{}, &streamProviderError{payload: payload}
 	case "message_start":
 		// Anthropic input_tokens excludes cache reads and writes:
 		// https://platform.claude.com/docs/en/build-with-claude/prompt-caching

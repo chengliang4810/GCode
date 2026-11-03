@@ -126,7 +126,11 @@ func cloneBlocks(src []contracts.Block) []contracts.Block {
 		}
 		if b.Question != nil {
 			v := *b.Question
-			v.Options = slices.Clone(v.Options)
+			v.Pages = slices.Clone(v.Pages)
+			for i := range v.Pages {
+				v.Pages[i].Options = slices.Clone(v.Pages[i].Options)
+			}
+			v.Answers = contracts.CloneQuestionAnswers(v.Answers)
 			b.Question = &v
 		}
 		if b.Permission != nil {

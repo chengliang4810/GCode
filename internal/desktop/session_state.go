@@ -47,7 +47,7 @@ func (a *App) restoreCanvasTarget() {
 	if syntheticCloud {
 		pickedDevice = target.ProjectDeviceID
 	}
-	a.projectID, a.deviceID = target.ProjectID, pickedDevice
+	a.projectID, a.deviceID, a.branch = target.ProjectID, pickedDevice, ""
 	if target.ProjectID == "" {
 		return
 	}
@@ -104,6 +104,9 @@ func (a *App) newConversation() {
 	a.pendingNewRequestID = ""
 	delete(a.pendingSends, "")
 	a.navigate("chat")
+	a.footerGit.Requested, a.footerGit.Branch = false, ""
+	a.footerGit.PendingRef, a.footerGit.CursorRef = "", ""
+	a.footerGit.RefOpen, a.footerGit.CheckoutOpen = false, false
 	a.terminal = false
 	a.draft = ""
 	a.attachments = nil
@@ -111,6 +114,46 @@ func (a *App) newConversation() {
 	a.workspace.ResetAnnotations()
 	a.drafts[""] = ""
 	delete(a.sessionStates, "")
+}
+
+func (a *App) newProjectConversation(projectID string) {
+	for _, project := range a.state.Projects {
+		if project.ID != projectID {
+			continue
+		}
+		// Opening the canvas can restore its previous project bookmark.
+		// Apply this explicit destination after that navigation has finished.
+		a.newConversation()
+		a.projectID, a.deviceID, a.branch = project.ID, project.DeviceID, project.Branch
+		a.projectMenu, a.deviceMenu, a.branchMenu = false, false, false
+		a.bottom.ProjectID = project.ID
+		a.syncChatWorkspace()
+		a.restoreModelSelection()
+		a.normalizeReasoning()
+		a.focusComposer = true
+		return
+	}
+}
+
+func (a *App) clearComposerProject() {
+	if a.sessionID != "" || a.pendingNew {
+		return
+	}
+	project, _ := a.footerGitProject()
+	a.projectID, a.branch = "", ""
+	a.projectMenu, a.branchMenu = false, false
+	// A synthetic Cloud destination requires a project repository. Keep its
+	// underlying host when removing that repository from the blank canvas.
+	if footerCloudDevice(a.deviceID) {
+		a.deviceID = project.DeviceID
+		if a.deviceID == "" {
+			a.deviceID = "local"
+		}
+	}
+	a.bottom.ProjectID = ""
+	a.syncChatWorkspace()
+	a.syncComposerFooterGit()
+	a.restoreModelSelection()
 }
 
 // NewConversation opens an empty draft from the native application menu.
@@ -148,6 +191,9 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
+	if a.questionCommandFinished(cmd, err) {
+		return
+	}
 	a.capabilityCommandFinished(cmd, err)
 	a.modelSettingsCommandFinished(cmd, err)
 	a.settingsImportCommandFinished(cmd, err)
@@ -207,6 +253,13 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 			// The session was never minted: the composer returns to the
 			// canvas along the same dock clock it left on.
 			a.launchingNewSession = false
+			projectID := req.ProjectID
+			if projectID == "" {
+				projectID = cmd.ProjectID
+			}
+			if req.Checkout != nil && a.sessionID == "" && a.projectID == projectID {
+				a.ensureComposerFooterRefs(true)
+			}
 		}
 		if a.sessionID == req.SessionID {
 			if a.draft == "" {

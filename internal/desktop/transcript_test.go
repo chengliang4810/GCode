@@ -94,6 +94,50 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 	}
 }
 
+func TestTranscriptContentLeftAlignment(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		width   int
+		padding float32
+		dark    bool
+		compact bool
+	}{
+		{name: "main-light", width: 760, padding: 24},
+		{name: "main-dark", width: 760, padding: 24, dark: true},
+		{name: "narrow-light", width: 360, padding: 24},
+		{name: "side-dark", width: 360, padding: 16, dark: true},
+		{name: "compact-light", width: 760, padding: 24, compact: true},
+		{name: "compact-side-dark", width: 360, padding: 16, dark: true, compact: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.palette = design.Palette("rcode", tc.dark)
+			a.state.Settings.General.CompactMode = tc.compact
+			message := activityFixture()
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.DisableAnimations()
+				c.SetTheme(a.palette.UI())
+				ui.Scroll(c).Fill().Padding(tc.padding).Children(func() {
+					a.transcriptMessageForTest(c, message)
+				})
+			}, tc.width, 900)
+			body, bodyOK := tt.Find(message.Blocks[len(message.Blocks)-1].Text)
+			title := contracts.SummarizeActivity(message.Blocks[:len(message.Blocks)-1]).Label()
+			if tc.compact {
+				title = a.workedFor(message.DurationMS)
+			}
+			summary, summaryOK := tt.Find(title)
+			header, headerOK := tt.Find("Activity: " + contracts.SummarizeActivity(message.Blocks[:len(message.Blocks)-1]).Label())
+			copyButton, copyOK := tt.Find("Copy message")
+			if !bodyOK || !summaryOK || !headerOK || !copyOK ||
+				header.X+activityLeadingInset != body.X || summary.X <= body.X || copyButton.X != body.X {
+				t.Fatalf("activity disclosure and copy must align with content while the title remains indented: body=%+v header=%+v title=%+v copy=%+v",
+					body, header, summary, copyButton)
+			}
+		})
+	}
+}
+
 func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.T) {
 	a := testApp(t, "default")
 	m := activityFixture()
@@ -374,10 +418,11 @@ func TestTranscriptTreeRailHasNoDoubleAlphaSeams(t *testing.T) {
 	a.rememberActivityFold(m.ID+":activity:"+m.Blocks[0].ID, true)
 	tt := transcriptTester(t, a, &m, 760, 900, false)
 	image := tt.Image()
+	header, _ := tt.Find("Activity: " + contracts.SummarizeActivity(m.Blocks[:len(m.Blocks)-1]).Label())
 	// Header bottom, top-pad seam, first branch, and next-row seam have the
 	// same 12% ink contribution. Overlapping round stroke caps darken seams.
 	for _, y := range []int{49, 50, 51, 52, 53, 58, 61, 62, 63, 64, 65, 68, 80, 84, 85} {
-		pixel := image.RGBAAt(36, y)
+		pixel := image.RGBAAt(int(header.X+activityTrunkX), y)
 		if pixel.R != 224 || pixel.G != 224 || pixel.B != 224 {
 			t.Fatalf("rail alpha seam at y=%d: %+v", y, pixel)
 		}

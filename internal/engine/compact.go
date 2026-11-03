@@ -38,7 +38,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		return errors.New("not enough history to compact")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	run := &activeRun{id: id("run"), cancel: cancel, answers: map[string]chan string{}, compacting: true, pending: map[string]contracts.QueuedMessage{}, wake: make(chan struct{}, 1), model: m}
+	run := &activeRun{id: id("run"), cancel: cancel, answers: map[string]chan []contracts.QuestionAnswer{}, compacting: true, pending: map[string]contracts.QueuedMessage{}, wake: make(chan struct{}, 1), model: m}
 	gateway.Observe = e.trajectoryRecorder(session, run.id, "compact")
 	hookRules := contracts.CloneHookRules(e.state.Settings.Hooks)
 	configSnapshot := clonePluginConfig(e.pluginConfig)

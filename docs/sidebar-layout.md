@@ -41,9 +41,20 @@
 （projects/grouped/timeline/device）。此前一轮删除的 sidebarShowHarness、
 sidebarShowArchived、sidebarCompact、sidebarShowBranch、showProjectLabels 保持删除。
 对话行只显示状态点、标题和时间（悬浮时为归档按钮）；项目行显示文件夹与名称。
+2026-11-04：鼠标悬停或键盘焦点位于项目行时，行尾显示方框铅笔图标的新建对话按钮。
+它与项目折叠按钮是同一行内的两个独立控件；点击项目名仍只折叠，
+点击新建入口则打开空白画布，明确选中该行项目、所属设备与分支，
+并将焦点移到输入框。对话在首次发送时由核心创建，工作目录来自所选项目。
+原对话草稿与附件保留；新的空白画布不继承它们，
+也不会被此前画布的项目书签覆盖。运行中与离线标记继续保留在行内。
+新建对话页悬停项目选择器或将键盘焦点移入时，文件夹槽位替换为圆形关闭按钮；
+项目名位置保持不变，点击关闭显示「不使用项目」，保留草稿与附件，同时清除草稿的项目、
+分支和工作区目标。项目名仍可打开选择列表；此操作不删除项目，也不修改已有对话。
 原有元数据移入共享悬浮卡片（`controlSidebarHoverCard`）：悬浮项目行显示项目名称、
 聊天数和路径；悬浮对话行显示位置（项目 @ 设备）、分支和最近活动时间。
-2026-11-03：底部从左到右为检查更新、手机、用量统计、设置，四个入口等距分布。
+2026-11-04：底部从左到右为检查更新、手机、用量统计、设置，四个入口作为一组靠右排列，
+按钮间固定 8 DIP，右侧保留 12 DIP；侧栏拉宽不再将入口平均铺开。间距统一维护在
+`design.Sidebar().FooterGap`。
 更新入口默认无背景，悬停和按下与其他三个入口使用同一共享图标按钮样式。
 检查更新入口常驻，直接调用原生手动检查；Git/PR 菜单及其专用请求状态已移除。
 手机入口打开共享模态窗口，当前仅保留标题和关闭按钮，内容待定。
@@ -113,6 +124,8 @@ sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分
 `TestSidebarNestedRowKeepsTheListEdge` 在 264/350px 下核对项目内对话与顶层行同列：
 选中底色左右边缘一致，图标及标题不增加额外缩进；
 `TestSidebarProjectAccordionPreservesDraftAndComposerTarget` 核对折叠隔离；
+`TestSidebarProjectNewConversationHoverAndTarget` 覆盖深浅主题与 264/350px 侧栏，
+检查悬停显隐、行尾位置、按钮不触发折叠、跨项目/设备/分支的画布目标及原对话草稿保留；
 `sidebar_tree_test.go` 覆盖项目归属、重复排除、独立分页、深处/同一对话导航、
 定向重命名、归档排除、置顶恢复及真实时钟；
 `TestSidebarEmptyStateFollowsConversationHeading` 在高窗口、深浅主题和 14/20px 字号下，
@@ -125,6 +138,17 @@ sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分
 草稿保护、从搜索打开折叠项目中的对话、返回画布恢复草稿，并保存真实窗口截图。
 模型菜单与底部入口另复用原有原生回归。
 这些检查不访问真实模型供应商，不恢复已暂停的全面视觉一致性目标。
+
+2026-11-04 项目新建入口的最终 Windows 原生证据位于
+`output/project-new-conversation-final/20261104-000509-4046059942/`：
+新建对话、侧栏布局、收起项目运行状态三个场景的深浅主题共六个流程通过，
+已检查方框铅笔图标的实窗截图。新建流程通过指针按下/释放触发按钮，
+使用真实本机核心执行 Read，核对目标项目文件、对话归属和工作目录，
+返回旧对话后草稿保留；模型端为本地 HTTP 夹具。
+侧栏组件、共享控件门禁、i18n、Go/MyGo vet 和 Windows 桌面构建通过。
+首次原生检查暴露了按钮嵌套导致可访问性树隐藏入口的问题，
+已拆为同一共享行内的两个独立按钮；测试也改为等待草稿和导航的可观察状态，
+保留早期失败证据。
 
 2026-11-03：`TestSidebarSessionMenuFlatCopyAndTrajectoryOrder` 覆盖中英文的一级复制、
 剪贴板内容及未读两态下的菜单顺序；`TestSessionDeleteDialogDimsSessionInfo` 覆盖

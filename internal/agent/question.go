@@ -7,22 +7,12 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
 
-type QuestionOption struct {
-	Label       string `json:"label"`
-	Description string `json:"description"`
-	Preview     string `json:"preview,omitempty"`
-}
-type Question struct {
-	Question    string           `json:"question"`
-	Header      string           `json:"header"`
-	Options     []QuestionOption `json:"options"`
-	MultiSelect bool             `json:"multiSelect"`
-}
 type QuestionTool struct {
-	Ask func(context.Context, Question) (string, error)
+	Ask func(context.Context, []contracts.QuestionPage) ([]contracts.QuestionAnswer, error)
 }
 
 func (t QuestionTool) Definition() model.Tool {
@@ -34,7 +24,7 @@ func (t QuestionTool) Definition() model.Tool {
 func (t QuestionTool) Concurrent() bool { return false }
 func (t QuestionTool) Execute(ctx context.Context, _ string, raw json.RawMessage) (model.ToolOutput, error) {
 	var input struct {
-		Questions []Question `json:"questions"`
+		Questions []contracts.QuestionPage `json:"questions"`
 	}
 	if err := decodeSearchInput(raw, &input); err != nil {
 		return model.ToolOutput{}, err
@@ -59,20 +49,35 @@ func (t QuestionTool) Execute(ctx context.Context, _ string, raw json.RawMessage
 	if t.Ask == nil {
 		return model.ToolOutput{}, errors.New("AskUserQuestion is unavailable on this host")
 	}
+	if err := ctx.Err(); err != nil {
+		return model.ToolOutput{}, err
+	}
+	collected, err := t.Ask(ctx, input.Questions)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	if err := contracts.ValidateQuestionAnswers(input.Questions, collected); err != nil {
+		return model.ToolOutput{}, err
+	}
 	answers := map[string]string{}
-	for _, q := range input.Questions {
-		if err := ctx.Err(); err != nil {
-			return model.ToolOutput{}, err
+	for i, q := range input.Questions {
+		answer := collected[i]
+		switch {
+		case strings.TrimSpace(answer.Text) != "":
+			answers[q.Question] = strings.TrimSpace(answer.Text)
+		case q.MultiSelect:
+			encoded, err := json.Marshal(answer.Options)
+			if err != nil {
+				return model.ToolOutput{}, err
+			}
+			answers[q.Question] = string(encoded)
+		default:
+			answers[q.Question] = answer.Options[0]
 		}
-		answer, err := t.Ask(ctx, q)
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		answers[q.Question] = answer
 	}
 	data := struct {
-		Questions []Question        `json:"questions"`
-		Answers   map[string]string `json:"answers"`
+		Questions []contracts.QuestionPage `json:"questions"`
+		Answers   map[string]string        `json:"answers"`
 	}{input.Questions, answers}
 	output, err := json.Marshal(data)
 	return model.ToolOutput{Text: string(output), Data: data}, err

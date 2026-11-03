@@ -236,7 +236,7 @@ func (e *Engine) startRunLocked(
 	}
 	runCtx, cancel := context.WithCancel(ctx)
 	run := &activeRun{
-		cancel: cancel, id: id("run"), answers: map[string]chan string{},
+		cancel: cancel, id: id("run"), answers: map[string]chan []contracts.QuestionAnswer{},
 		done: make(chan struct{}), subagent: child,
 		wake: make(chan struct{}, 1), pending: map[string]contracts.QueuedMessage{},
 		selection: contracts.ModelSelection{ModelID: session.ModelID, Reasoning: session.ReasoningLevel},
@@ -438,29 +438,22 @@ func (e *Engine) startRunLocked(
 				system += "\n\n" + goalContinuation(session.Goal)
 			}
 		}
-		tools = append(tools, agent.QuestionTool{Ask: func(ctx context.Context, question agent.Question) (string, error) {
+		tools = append(tools, agent.QuestionTool{Ask: func(ctx context.Context, questions []contracts.QuestionPage) ([]contracts.QuestionAnswer, error) {
 			e.mu.Lock()
 			questionID := id("question")
-			options := make([]string, len(question.Options))
-			descriptions := make([]string, len(question.Options))
-			for i, option := range question.Options {
-				options[i], descriptions[i] = option.Label, option.Description
-				if option.Preview != "" {
-					descriptions[i] += "\n\n" + option.Preview
-				}
-			}
-			answer := make(chan string, 1)
+			request := &contracts.Question{ID: questionID, Pages: questions}
+			answer := make(chan []contracts.QuestionAnswer, 1)
 			run.answers[questionID] = answer
 			messages := e.state.Messages[session.ID]
 			foundMessage := false
 			for i := range messages {
 				if messages[i].ID == currentMessage {
 					foundMessage = true
-					messages[i].Blocks = append(messages[i].Blocks, contracts.Block{ID: questionID, Kind: "question", Question: &contracts.Question{ID: questionID, Title: question.Question, Header: question.Header, Options: options, OptionDescriptions: descriptions, MultiSelect: question.MultiSelect}})
+					messages[i].Blocks = append(messages[i].Blocks, contracts.Block{ID: questionID, Kind: "question", Question: request})
 				}
 			}
 			if !foundMessage {
-				e.state.Messages[session.ID] = append(messages, contracts.Message{ID: id("message"), SessionID: session.ID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: questionID, Kind: "question", Question: &contracts.Question{ID: questionID, Title: question.Question, Header: question.Header, Options: options, OptionDescriptions: descriptions, MultiSelect: question.MultiSelect}}}})
+				e.state.Messages[session.ID] = append(messages, contracts.Message{ID: id("message"), SessionID: session.ID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: questionID, Kind: "question", Question: request}}})
 			}
 			if index := e.sessionIndex(session.ID); index >= 0 {
 				e.state.Sessions[index].Status = contracts.AwaitingInput
@@ -468,7 +461,7 @@ func (e *Engine) startRunLocked(
 			if err := e.persistLocked(session.ID); err != nil {
 				delete(run.answers, questionID)
 				e.mu.Unlock()
-				return "", err
+				return nil, err
 			}
 			e.publishLocked(contracts.Event{Kind: "input.requested", SessionID: session.ID})
 			e.mu.Unlock()
@@ -482,7 +475,7 @@ func (e *Engine) startRunLocked(
 			}()
 			select {
 			case <-ctx.Done():
-				return "", ctx.Err()
+				return nil, ctx.Err()
 			case value := <-answer:
 				return value, nil
 			}
@@ -717,6 +710,9 @@ func (e *Engine) startRunLocked(
 			e.state.Messages[session.ID][i].Streaming = false
 			for j := range e.state.Messages[session.ID][i].Blocks {
 				tool := e.state.Messages[session.ID][i].Blocks[j].Tool
+				if question := e.state.Messages[session.ID][i].Blocks[j].Question; question != nil && e.state.Messages[session.ID][i].TurnID == run.id {
+					question.Resolved = true
+				}
 				if tool != nil && tool.Status == "running" {
 					now := time.Now()
 					tool.Status = "interrupted"
@@ -736,7 +732,7 @@ func (e *Engine) startRunLocked(
 					detail = "模型连接在回复完成前断开，重试后仍未恢复。已完成的工具结果已保留，可继续发送消息。"
 				}
 			}
-			message := contracts.Message{ID: id("message"), SessionID: session.ID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: id("block"), Kind: "text", Text: label + detail}}}
+			message := contracts.Message{ID: id("message"), SessionID: session.ID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: id("block"), Kind: "error", Text: label + detail}}}
 			e.state.Messages[session.ID] = append(e.state.Messages[session.ID], message)
 		}
 		delete(e.runs, session.ID)

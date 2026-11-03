@@ -141,7 +141,7 @@ func hookRuntimePermission(options hookRuntimeOptions) func(context.Context, age
 		if len(input.ToolInput) > 0 {
 			question += "\n" + string(input.ToolInput)
 		}
-		raw, err := json.Marshal(map[string]any{"questions": []agent.Question{{Question: question, Header: "Permission", Options: []agent.QuestionOption{
+		raw, err := json.Marshal(map[string]any{"questions": []contracts.QuestionPage{{Question: question, Header: "Permission", Options: []contracts.QuestionOption{
 			{Label: "Allow", Description: "Execute this tool call using the shown parameters."},
 			{Label: "Deny", Description: "Reject this tool call."}}}}})
 		if err != nil {

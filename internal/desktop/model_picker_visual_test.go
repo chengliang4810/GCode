@@ -84,6 +84,61 @@ func TestModelTriggerOpenAndHoverWash(t *testing.T) {
 	}
 }
 
+func TestModelRowsOnlyPaintBackgroundOnPointerHover(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		t.Run(appearance, func(t *testing.T) {
+			a := modelSurfaceTestApp(t, appearance)
+			a.modelMenu, a.effortMenu = true, false
+			a.modelProvider, a.modelID = "claude", "gpt-5.4"
+			a.modelCursor = 0
+			tt := ui.NewTester(func(c *ui.Context) {
+				a.palette = design.Palette("rcode-"+appearance, appearance == "dark")
+				c.SetTheme(a.palette.UI())
+				c.DisableAnimations()
+				c.Root().Background(a.palette.Shell).Font("Geist").FontSize(13)
+				ui.Column(c).Fill().Padding(20).Children(func() {
+					a.centralControls().modelListPanel(c, 400, 180, 240, false)
+				})
+			}, 700, 500)
+			rows := a.modelRows()
+			if len(rows) < 2 {
+				t.Fatal("fixture needs two rows for keyboard navigation")
+			}
+			row, ok := tt.Find("Select model " + rows[0].model.Label)
+			if !ok {
+				t.Fatal("model row missing")
+			}
+			x, y := int(row.X+3), int(row.Y+row.H/2)
+			idle := tt.Image().RGBAAt(x, y)
+			plane := tt.Image().RGBAAt(x, int(row.Y-2))
+			if idle != plane {
+				t.Fatalf("keyboard cursor painted an unhovered row: row=%v plane=%v", idle, plane)
+			}
+			a.modelID = rows[0].model.ID
+			tt.Frame()
+			if got := tt.Image().RGBAAt(x, y); got != idle {
+				t.Fatalf("committed model painted an unhovered row: %v, want %v", got, idle)
+			}
+			tt.Move(float32(x), float32(y))
+			if got := tt.Image().RGBAAt(x, y); got == idle {
+				t.Fatal("pointer hover did not change the row background")
+			}
+			tt.Move(680, 480)
+			if got := tt.Image().RGBAAt(x, y); got != idle {
+				t.Fatalf("pointer departure retained row background: %v, want %v", got, idle)
+			}
+			tt.Key(0, ui.KeyDown)
+			if a.modelCursor != 1 || a.modelID != rows[0].model.ID {
+				t.Fatal("keyboard navigation failed or committed the model early")
+			}
+			tt.Key(0, ui.KeyEnter)
+			if a.modelID != rows[1].model.ID || a.modelMenu {
+				t.Fatal("keyboard selection did not commit and close")
+			}
+		})
+	}
+}
+
 func TestModelPopupRetainsTriggerTypographyAcrossOverlayRoot(t *testing.T) {
 	a := modelSurfaceTestApp(t, "dark")
 	var outsideWidth float32

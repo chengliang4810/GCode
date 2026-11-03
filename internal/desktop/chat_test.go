@@ -22,7 +22,7 @@ func TestChatFailureOnlyAppearsInTranscript(t *testing.T) {
 			const failure = "Run failed: model request failed (HTTP 405)"
 			a.state.Messages[a.sessionID] = []contracts.Message{{
 				ID: "failure", SessionID: a.sessionID, Role: "assistant",
-				Blocks: []contracts.Block{{Kind: "text", Text: failure}},
+				Blocks: []contracts.Block{{Kind: "error", Text: failure}},
 			}}
 			tt := ui.NewTester(func(c *ui.Context) {
 				c.SetTheme(a.palette.UI())

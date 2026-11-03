@@ -498,17 +498,22 @@ func TestHookEditorTypedHandlersAndEventCatalog(t *testing.T) {
 
 func TestQuestionMultipleSelectionWaitsForSubmit(t *testing.T) {
 	app, service := pluginUIFixture(t)
-	question := &contracts.Question{ID: "multiple", Title: "Choose features", Header: "Features", MultiSelect: true,
-		Options: []string{"Skills", "Hooks"}, OptionDescriptions: []string{"Reusable instructions", "Lifecycle callbacks"}}
+	question := &contracts.Question{ID: "multiple", Pages: []contracts.QuestionPage{{
+		Question: "Choose features", Header: "Features", MultiSelect: true,
+		Options: []contracts.QuestionOption{{Label: "Skills", Description: "Reusable instructions"}, {Label: "Hooks", Description: "Lifecycle callbacks"}},
+	}}}
+	app.state.Sessions = []contracts.Session{{ID: "question-session", Status: contracts.AwaitingInput}}
+	app.sessionID = "question-session"
+	app.state.Messages[app.sessionID] = []contracts.Message{{Blocks: []contracts.Block{{Kind: "question", Question: question}}}}
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(app.palette.UI())
-		app.transcriptBlock(c, contracts.Message{}, contracts.Block{Kind: "question", Question: question})
+		app.questionComposer(c, app.sessionID, "test")
 	}, 700, 800)
 	if !tt.HasText("Reusable instructions") || !tt.HasText("Features") {
 		t.Fatal("question metadata omitted")
 	}
-	for _, option := range question.Options {
-		if err := tt.Click(option); err != nil {
+	for _, option := range question.Pages[0].Options {
+		if err := tt.Click(option.Label); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -518,9 +523,8 @@ func TestQuestionMultipleSelectionWaitsForSubmit(t *testing.T) {
 	if err := tt.Click("Submit"); err != nil {
 		t.Fatal(err)
 	}
-	var answers []string
-	if len(service.commands) != 1 || json.Unmarshal([]byte(service.commands[0].Text), &answers) != nil ||
-		!slices.Equal(answers, question.Options) {
+	if len(service.commands) != 1 || len(service.commands[0].QuestionAnswers) != 1 ||
+		!slices.Equal(service.commands[0].QuestionAnswers[0].Options, []string{"Skills", "Hooks"}) {
 		t.Fatalf("multi-select answer lost labels: %+v", service.commands)
 	}
 }

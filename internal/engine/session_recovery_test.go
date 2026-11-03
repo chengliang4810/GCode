@@ -37,6 +37,7 @@ func TestReconcileLoadedSessionInterruptsOnlyItsHistoricalWork(t *testing.T) {
 			{Kind: "tool", Tool: &contracts.ToolCall{ID: "pending", Status: "running"}},
 			{Kind: "tool", Tool: &contracts.ToolCall{ID: "finished", Status: "completed", Output: "keep"}},
 			{Kind: "subagent", Subagent: &contracts.Subagent{Status: "running"}},
+			{Kind: "question", Question: &contracts.Question{ID: "pending-question", Pages: []contracts.QuestionPage{{Question: "Mode"}}}},
 		},
 	}}
 	core.state.Messages[other.ID] = []contracts.Message{{
@@ -65,7 +66,7 @@ func TestReconcileLoadedSessionInterruptsOnlyItsHistoricalWork(t *testing.T) {
 	}
 	message := core.state.Messages[target.ID][0]
 	if message.Streaming || message.Blocks[0].Tool.Status != "interrupted" ||
-		message.Blocks[1].Tool.Output != "keep" || message.Blocks[2].Subagent.Status != "interrupted" {
+		message.Blocks[1].Tool.Output != "keep" || message.Blocks[2].Subagent.Status != "interrupted" || !message.Blocks[3].Question.Resolved {
 		t.Fatal("historical transcript was not reconciled")
 	}
 	for _, messages := range [][]model.Message{core.history[target.ID], core.context[target.ID]} {

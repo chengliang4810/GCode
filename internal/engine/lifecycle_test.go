@@ -314,7 +314,7 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 		body, _ := io.ReadAll(r.Body)
 		w.Header().Set("Content-Type", "text/event-stream")
 		if calls.Add(1) == 1 {
-			arguments := `{"questions":[{"question":"Choose","header":"Choice","options":[{"label":"A","description":"First choice"},{"label":"B","description":"Second choice"}],"multiSelect":false}]}`
+			arguments := `{"questions":[{"question":"Choose","header":"Choice","options":[{"label":"A","description":"First choice"},{"label":"B","description":"Second choice"}],"multiSelect":false},{"question":"Features","header":"Features","options":[{"label":"X","description":"Feature X"},{"label":"Y","description":"Feature Y"}],"multiSelect":true}]}`
 			sendSSE(w, map[string]any{"choices": []any{map[string]any{"delta": map[string]any{"tool_calls": []any{map[string]any{"index": 0, "id": "ask", "function": map[string]any{"name": "AskUserQuestion", "arguments": arguments}}}}, "finish_reason": "tool_calls"}}})
 			fmt.Fprint(w, "data: [DONE]\n\n")
 		} else {
@@ -335,7 +335,7 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 				var result struct {
 					Answers map[string]string `json:"answers"`
 				}
-				if json.Unmarshal([]byte(message.Content), &result) == nil && result.Answers["Choose"] == "A" {
+				if json.Unmarshal([]byte(message.Content), &result) == nil && result.Answers["Choose"] == "A" && result.Answers["Features"] == `["X","Y"]` {
 					recorded++
 				}
 			}
@@ -372,6 +372,9 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 				for _, block := range message.Blocks {
 					if block.Question != nil {
 						questionID = block.Question.ID
+						if len(block.Question.Pages) != 2 {
+							t.Fatal("questions were published as separate waits instead of a single paged request")
+						}
 					}
 				}
 			}
@@ -383,7 +386,14 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 	if questionID == "" {
 		t.Fatal("no native question was published")
 	}
-	answer := contracts.Command{Kind: "request.answer", ID: questionID, Text: "A"}
+	partial := contracts.Command{Kind: "request.answer", ID: questionID, QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"A"}}}}
+	if err = core.Execute(ctx, partial); err == nil {
+		t.Fatal("a partial answer resolved the whole question request")
+	}
+	if calls.Load() != 1 {
+		t.Fatal("invalid partial answer resumed model execution")
+	}
+	answer := contracts.Command{Kind: "request.answer", ID: questionID, QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"A"}}, {Options: []string{"X", "Y"}}}}
 	if err = core.Execute(ctx, answer); err != nil {
 		t.Fatal(err)
 	}

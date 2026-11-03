@@ -85,7 +85,7 @@ func TestDesktopNotificationsQuestionsErrorsAndInterruptions(t *testing.T) {
 	n := notificationTestController(snapshot)
 	snapshot.Sessions[0].Status = contracts.AwaitingInput
 	snapshot.Messages = map[string][]contracts.Message{"session": {{Blocks: []contracts.Block{
-		{Question: &contracts.Question{ID: "question-1", Title: "Choose"}},
+		{Question: &contracts.Question{ID: "question-1", Pages: []contracts.QuestionPage{{Question: "Choose", Header: "Choose"}}}},
 	}}}}
 	n.Observe(snapshot, false)
 	n.Observe(snapshot, false)

@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+
+	"gcode/internal/contracts"
 )
 
 func TestQuestionToolCollectsStructuredAnswers(t *testing.T) {
-	asked := []Question{}
-	tool := QuestionTool{Ask: func(_ context.Context, question Question) (string, error) {
-		asked = append(asked, question)
-		if question.MultiSelect {
-			return "A, B", nil
-		}
-		return "Custom answer", nil
+	asked := []contracts.QuestionPage{}
+	calls := 0
+	tool := QuestionTool{Ask: func(_ context.Context, questions []contracts.QuestionPage) ([]contracts.QuestionAnswer, error) {
+		calls++
+		asked = append(asked, questions...)
+		return []contracts.QuestionAnswer{{Options: []string{"A", "B"}}, {Text: "Custom answer"}}, nil
 	}}
 	raw := json.RawMessage(`{"questions":[{"question":"Choose features?","header":"Features","options":[{"label":"A","description":"Feature A"},{"label":"B","description":"Feature B"}],"multiSelect":true},{"question":"Choose mode?","header":"Mode","options":[{"label":"Fast","description":"Run quickly"},{"label":"Full","description":"Run fully"}]}]}`)
 	out, err := tool.Execute(context.Background(), "", raw)
@@ -22,13 +23,13 @@ func TestQuestionToolCollectsStructuredAnswers(t *testing.T) {
 		t.Fatal(err)
 	}
 	var result struct {
-		Questions []Question        `json:"questions"`
-		Answers   map[string]string `json:"answers"`
+		Questions []contracts.QuestionPage `json:"questions"`
+		Answers   map[string]string        `json:"answers"`
 	}
 	if err := json.Unmarshal([]byte(out.Text), &result); err != nil {
 		t.Fatal(err)
 	}
-	if len(asked) != 2 || !asked[0].MultiSelect || asked[0].Options[1].Description != "Feature B" || result.Answers["Choose features?"] != "A, B" || result.Answers["Choose mode?"] != "Custom answer" {
+	if calls != 1 || len(asked) != 2 || !asked[0].MultiSelect || asked[0].Options[1].Description != "Feature B" || result.Answers["Choose features?"] != `["A","B"]` || result.Answers["Choose mode?"] != "Custom answer" {
 		t.Fatalf("lost structured question/answer data: %+v %+v", asked, result)
 	}
 }
@@ -42,7 +43,10 @@ func TestQuestionToolValidatesAllQuestionsBeforeAsking(t *testing.T) {
 		{"unknown option", `{"questions":[{"question":"Pick?","header":"Pick","options":[{"label":"A","description":"A","extra":true},{"label":"B","description":"B"}]}]}`},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			tool := QuestionTool{Ask: func(context.Context, Question) (string, error) { t.Fatal("asked invalid input"); return "", nil }}
+			tool := QuestionTool{Ask: func(context.Context, []contracts.QuestionPage) ([]contracts.QuestionAnswer, error) {
+				t.Fatal("asked invalid input")
+				return nil, nil
+			}}
 			if _, err := tool.Execute(context.Background(), "", json.RawMessage(test.raw)); err == nil {
 				t.Fatal("accepted invalid input")
 			}
@@ -53,7 +57,10 @@ func TestQuestionToolValidatesAllQuestionsBeforeAsking(t *testing.T) {
 func TestQuestionToolPropagatesCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	tool := QuestionTool{Ask: func(context.Context, Question) (string, error) { t.Fatal("asked cancelled question"); return "", nil }}
+	tool := QuestionTool{Ask: func(context.Context, []contracts.QuestionPage) ([]contracts.QuestionAnswer, error) {
+		t.Fatal("asked cancelled question")
+		return nil, nil
+	}}
 	_, err := tool.Execute(ctx, "", json.RawMessage(`{"questions":[{"question":"Pick?","header":"Pick","options":[{"label":"A","description":"A"},{"label":"B","description":"B"}]}]}`))
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancellation: %v", err)

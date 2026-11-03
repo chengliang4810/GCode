@@ -15,6 +15,7 @@
 | 玻璃壳、浮层毛玻璃与侧边栏 tone 的配方（tint、模糊半径、发丝线） | `internal/design/material.go`；绘制入口 `internal/desktop/frost.go` |
 | 界面字号层级及等量像素偏移 | `internal/design/text.go` |
 | 聊天侧栏导航、项目/对话行与分区尺寸 | `internal/design/controls.go` 的 `Sidebar()` |
+| 对话统计入口与详情面板的尺寸、内边距和行间距 | `internal/design/controls.go` 的 `Metrics()` |
 
 所有设置页使用 `settings_page.go` 的共享视口、内容框和标题构造函数。
 外层统一使用 1200 最大宽度、54 顶部内边距、40 水平内边距和 48 底部内边距；
@@ -27,6 +28,9 @@
 例如修改 `ButtonRadius` 会更新全部共享操作按钮；修改 `InputHeight` 会同时更新
 设置文本框和选择器；修改 `SwitchWidth` / `SwitchHeight` 会同时更新普通设置、
 集成设置、供应商与资源列表开关。开关绘制按统一尺寸缩放。
+底部提问面板使用 `controlQuestionOption`（基于 `controlPromptChoice`）、
+`controlTextArea`、`textButton` 和 `primaryButton`；选项的内边距、圆角、字号和
+选择状态在共享控件中维护，业务面板只负责分页、答案草稿和提交。
 标题栏的图标槽位也读取 `IconButtonSize`，不另写一份 28 px 宽度。
 窗口隐藏系统按钮时的自绘规则见文末「标题栏窗口按钮」。
 排序手柄复用共享图标按钮；拖拽落点指示线使用主题强调色，线宽统一由
@@ -43,6 +47,17 @@
 图标按钮的点击区域保持逻辑像素尺寸，不因文字缩放挤出标题栏；
 侧栏的更新和用量图标同样由 `settings_controls.go` 提供，
 与手机、设置复用普通图标按钮的圆角和交互状态，默认无背景；页面只配置 key、标签与回调。
+新建对话页的项目选择器使用 `controlComposerTargetGroup`、`controlComposerTargetPicker`
+和 `controlComposerTargetClear`；紧凑尺寸统一由 `Controls().ComposerTarget*` 维护。
+文件夹与清除按钮共用同一图标槽，悬停替换时不移动项目名；清除按钮与选择按钮独立处理点击。
+项目弹层打开时保持文件夹图标，不再显示快捷清除按钮。
+项目弹层使用共享 `controlSelectPopup`、`controlMenuSearch`、`controlProjectMenuRow`
+和 `controlMenuDivider`。顶部按项目名搜索，中间列表最多显示五行并独立滚动，
+当前项目右侧显示勾号，底部固定“新建项目…”；仅已选项目时显示“不使用项目”。
+弹层优先在选择器上方打开，与包含文件夹的选择器整体左侧对齐；右侧空间不足时缩窄，
+上方空间不足时才翻转到下方，底部操作数随当前项目状态计算。
+搜索支持中文与不区分大小写的匹配；上下键导航、回车选择，重新打开时清空搜索。
+选择项目同步目标设备、工作区与分支；切换或清除项目均保留输入草稿。
 文字按 UI 字号 token 作像素偏移，图标、间距、圆角和开关几何不随文字缩放。
 按钮、输入框、选择器按当前文字行高保留最小高度，避免大字号裁切。
 刻度滑块保留原生刻度所需的最小高度，小字号也不压缩刻度区域。
@@ -102,10 +117,22 @@ FillWidth、Margin 等内容/行为/布局属性。禁止在页面覆写控件�
 主对话区的消息导航条使用共享 `controlMessageRailTick` 与 `controlMessageRailPreview`，
 几何在 `MessageRail()` 统一定义；宽度门槛、消息分桶和列表定位见 `message-rail.md`。
 
+对话与回复统计共用 `controlMetricButton`、`controlMetricPanel`、
+`controlMetricHeading` 和 `controlMetricField`，状态颜色与字段字号在共享实现维护。
+业务页仅配置统计值、字段、稳定 key、弹出位置和显隐行为；
+浮层复用 `footerPopover`，回复沿入口左边自动翻转，对话底栏沿入口右边定位。
+回复和对话底栏的用量、用时共用悬停打开、移入面板保持和移出延迟关闭的交互。
+对话正文、工具分组的展开箭头和回复复制按钮共用正文左侧对齐线，分组标题保留缩进。
+工具分组仅在现有正文内边距中向左借用图标画布的留白；主对话、侧聊和紧凑模式共用实现。
+口径与证据见 `conversation-metrics.md`。
+
 聊天侧栏使用共享 `controlSidebarRow`、`controlSidebarProjectRow`、
+`controlSidebarProjectToggle`、
 `controlSidebarConversationRow`、`controlSidebarHeading`、`controlSidebarMoreRow`
 和 `controlSidebarEmptyRow`。项目子行的缩进也由 `Sidebar()` 统一维护。
 列表与分区的业务回调由侧栏提供；布局依据与保留的 GCode 语义见 `sidebar-layout.md`。
+项目行的折叠与新建是独立按钮，外层共享行负责悬停底色；
+新建入口复用 `inlineIconButton` 和现有 `pen-new-square` 图标。
 
 模型列表只显示一行请求模型 ID，不再提供独立显示名称。
 供应商详情图标通过共享 `controlProviderLogoButton` 打开内置品牌/网站图标选择框，

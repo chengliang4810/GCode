@@ -94,7 +94,7 @@ func TestForkCannotAnswerParentsPendingRequest(t *testing.T) {
 		for _, b := range m.Blocks {
 			if b.Question != nil {
 				found = true
-				if b.Question.ID == "question-layout" || b.Question.Answer != "Cancelled" {
+				if b.Question.ID == "question-layout" || !b.Question.Resolved {
 					t.Fatal("fork retained actionable parent request identity")
 				}
 				if err := s.Answer(ctx, b.Question.ID, "new answer"); err == nil {
@@ -106,7 +106,7 @@ func TestForkCannotAnswerParentsPendingRequest(t *testing.T) {
 	if !found {
 		t.Fatal("fork lost transcript question")
 	}
-	if err := s.Answer(ctx, "question-layout", "Keep the current layout"); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "request.answer", ID: "question-layout", QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"Keep the current layout"}}}}); err != nil {
 		t.Fatal("parent question became ambiguous after fork", err)
 	}
 	if err := s.Stop(ctx, "chat-0"); err != nil {

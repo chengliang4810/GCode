@@ -10,14 +10,17 @@ import (
 // transcript folding, compaction and the currently selected provider.
 // TurnID is empty for conversation maintenance such as automatic naming.
 type ModelRequest struct {
-	ID             string        `json:"id"`
-	SessionID      string        `json:"sessionId"`
-	TurnID         string        `json:"turnId,omitempty"`
-	ProviderID     string        `json:"providerId"`
-	ProviderName   string        `json:"providerName"`
-	ModelID        string        `json:"modelId"`
-	Usage          model.Usage   `json:"usage"`
-	DecodeDuration time.Duration `json:"decodeDuration"`
+	ID                 string        `json:"id"`
+	SessionID          string        `json:"sessionId"`
+	TurnID             string        `json:"turnId,omitempty"`
+	ProviderID         string        `json:"providerId"`
+	ProviderName       string        `json:"providerName"`
+	ModelID            string        `json:"modelId"`
+	Usage              model.Usage   `json:"usage"`
+	DecodeDuration     time.Duration `json:"decodeDuration"`
+	RequestDuration    time.Duration `json:"requestDuration"`
+	FirstTokenLatency  time.Duration `json:"firstTokenLatency"`
+	FirstTokenObserved bool          `json:"firstTokenObserved"`
 }
 
 // ModelRequestTotals only pairs output tokens with their own measured decode
@@ -30,6 +33,8 @@ type ModelRequestTotals struct {
 	Unrecorded                             bool
 	CacheRequests                          int
 	CacheInputTokens, CacheReadTokens      int64
+	TimedRequests, FirstTokenRequests      int
+	RequestDuration, FirstTokenLatency     time.Duration
 }
 
 func (s *ModelRequestTotals) Add(request ModelRequest) {
@@ -40,6 +45,14 @@ func (s *ModelRequestTotals) Add(request ModelRequest) {
 	s.Input += int64(max(0, request.Usage.Input))
 	s.Output += int64(max(0, request.Usage.Output))
 	s.Cached += int64(max(0, request.Usage.Cached))
+	if request.RequestDuration > 0 {
+		s.TimedRequests++
+		s.RequestDuration += request.RequestDuration
+	}
+	if request.FirstTokenObserved && request.FirstTokenLatency >= 0 {
+		s.FirstTokenRequests++
+		s.FirstTokenLatency += request.FirstTokenLatency
+	}
 	if request.Usage.CacheKnown && request.Usage.Input >= 0 &&
 		request.Usage.Cached >= 0 && request.Usage.Cached <= request.Usage.Input {
 		s.CacheRequests++

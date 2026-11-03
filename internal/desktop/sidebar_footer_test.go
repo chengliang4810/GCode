@@ -14,8 +14,9 @@ func TestSidebarFooterSettingsAndUpdates(t *testing.T) {
 	for _, language := range []string{i18n.Chinese, i18n.English} {
 		for _, size := range []struct {
 			width, height int
+			sidebar       float32
 			dark          bool
-		}{{900, 600, false}, {1320, 900, false}, {900, 600, true}, {1320, 900, true}} {
+		}{{900, 600, 264, false}, {1320, 900, 400, false}, {900, 600, 264, true}, {1320, 900, 400, true}} {
 			t.Run(fmt.Sprintf("%s-%dx%d-dark=%v", language, size.width, size.height, size.dark), func(t *testing.T) {
 				a := testApp(t, "default")
 				a.state.Settings.General.Language = language
@@ -26,6 +27,7 @@ func TestSidebarFooterSettingsAndUpdates(t *testing.T) {
 					a.state.Settings.Appearance.ThemeID = "rcode-dark"
 				}
 				a.saveSettings()
+				a.sidebarWidth = size.sidebar
 				checks := 0
 				a.checkForUpdates = func() { checks++ }
 				tt := ui.NewTester(a.View, size.width, size.height)
@@ -36,7 +38,6 @@ func TestSidebarFooterSettingsAndUpdates(t *testing.T) {
 				}
 				labels := []string{"Check for updates…", "Mobile", "Usage statistics", "Settings"}
 				var previous ui.Rect
-				var gap float32
 				for i, label := range labels {
 					button, ok := tt.Find(a.t(label))
 					if !ok || button.W != design.Controls().IconButtonSize || button.H != design.Controls().IconButtonSize || button.X < 0 || button.X+button.W > a.visibleSidebarWidth || button.Y+button.H > float32(size.height) {
@@ -44,12 +45,14 @@ func TestSidebarFooterSettingsAndUpdates(t *testing.T) {
 					}
 					if i > 0 {
 						currentGap := button.X - previous.X - previous.W
-						if currentGap <= 0 || button.Y != previous.Y || (i > 1 && math.Abs(float64(currentGap-gap)) > 1) {
-							t.Fatalf("footer spacing/order differs at %q: previous=%+v current=%+v gap=%v", label, previous, button, gap)
+						if button.Y != previous.Y || math.Abs(float64(currentGap-design.Sidebar().FooterGap)) > 1 {
+							t.Fatalf("footer spacing/order differs at %q: previous=%+v current=%+v gap=%v", label, previous, button, currentGap)
 						}
-						gap = currentGap
 					}
 					previous = button
+				}
+				if math.Abs(float64(a.visibleSidebarWidth-1-12-previous.X-previous.W)) > 1 {
+					t.Fatalf("footer icons do not align to the right: sidebar=%v last=%+v", a.visibleSidebarWidth, previous)
 				}
 				if _, ok := tt.Find(a.t("Pull requests")); ok {
 					t.Fatal("removed Git menu remains")

@@ -11,6 +11,27 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+func TestTranscriptErrorPreservesOriginalProviderText(t *testing.T) {
+	body := "Run failed: model request failed (HTTP 503)\n" +
+		`{"message":"**upstream_error** <not markup> [request](req-42)","code":50301}` +
+		"\n  # provider diagnostics  \n"
+	lines := detailLines(activityDetailSource{kind: "error", text: body})
+	var plain []string
+	for _, line := range lines {
+		var text strings.Builder
+		for _, run := range line {
+			if run.style != (thoughtStyle{}) {
+				t.Fatal("provider error interpreted as markup")
+			}
+			text.WriteString(run.text)
+		}
+		plain = append(plain, text.String())
+	}
+	if strings.Join(plain, "\n") != body {
+		t.Fatal("provider error text was rewritten")
+	}
+}
+
 func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.T) {
 	a := testApp(t, "default")
 	m := contracts.Message{ID: "preview", Role: "assistant", Streaming: true, Blocks: []contracts.Block{
@@ -111,8 +132,8 @@ func TestTranscriptQuestionAppearsOnlyAsQuestionCard(t *testing.T) {
 	for _, compact := range []bool{false, true} {
 		for _, streaming := range []bool{false, true} {
 			m := contracts.Message{ID: "question", Role: "assistant", Streaming: streaming, Blocks: []contracts.Block{
-				{ID: "ask", Kind: "tool", Tool: &contracts.ToolCall{ID: "ask", Name: "ask_user"}},
-				{ID: "input", Kind: "question", Question: &contracts.Question{ID: "input", Title: "Choose"}},
+				{ID: "ask", Kind: "tool", Tool: &contracts.ToolCall{ID: "ask", Name: "AskUserQuestion"}},
+				{ID: "input", Kind: "question", Question: &contracts.Question{ID: "input", Pages: []contracts.QuestionPage{{Question: "Choose", Header: "Choose"}}}},
 			}}
 			rows := transcriptRows(m, compact)
 			if len(rows) != 1 || rows[0].Block.Question == nil {
@@ -134,7 +155,7 @@ func TestTranscriptFailedQuestionWithoutCardKeepsItsError(t *testing.T) {
 			for _, compact := range []bool{false, true} {
 				m := contracts.Message{ID: "failed-question", Role: "assistant", Blocks: []contracts.Block{
 					{ID: "failed", Kind: "tool", Tool: &contracts.ToolCall{
-						ID: "failed", Name: "ask_user", Args: test.args, Status: "failed", IsError: true, Output: test.output,
+						ID: "failed", Name: "AskUserQuestion", Args: test.args, Status: "failed", IsError: true, Output: test.output,
 					}},
 				}}
 				rows := transcriptRows(m, compact)

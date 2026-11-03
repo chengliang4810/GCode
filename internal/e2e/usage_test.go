@@ -112,34 +112,76 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
 				t.Fatal(err)
 			}
-			total := app.waitKey("conversation-metrics:" + sessionID)
-			if !strings.HasPrefix(total.Label, "240 tokens · ") || strings.Contains(total.Label, "— tokens/s") {
+			scope := "conversation-metrics:" + sessionID
+			total := app.waitKey(scope + ":usage")
+			if !strings.Contains(total.Label, "240 Token") {
 				t.Fatalf("conversation totals/speed lost on restart: %s", total.Label)
 			}
-			wantCache, noCache, coverage := "40.0% cache", "— cache", "Cache data available for 1/2 requests."
-			if language == "zh-CN" {
-				wantCache, noCache, coverage = "缓存 40.0%", "缓存 —", "1/2 次请求有可用的缓存数据。"
-			}
-			if !strings.Contains(total.Label, wantCache) || !strings.Contains(total.Label, coverage) {
+			if !strings.Contains(total.Label, "40.0%") {
 				t.Fatalf("unreported cache diluted the hit rate after restart: %s", total.Label)
 			}
+			closeMetrics := func(panel string) {
+				if err := app.client.call("input", map[string]any{"events": []map[string]any{{"type": "key", "key": "Escape"}}}, nil); err != nil {
+					t.Fatal(err)
+				}
+				app.await("metrics panel closes with Escape", func() error {
+					tree, err := app.client.tree()
+					if err != nil {
+						return err
+					}
+					if _, err := tree.findKey(panel); err == nil {
+						return fmt.Errorf("panel remains open")
+					}
+					return nil
+				})
+			}
+			app.hoverMetric(scope + ":usage")
+			app.waitKey(scope + ":usage-panel")
+			if label := app.waitKey(scope + ":cache-hit").Label; !strings.Contains(label, "40.0%") {
+				t.Fatal(label)
+			}
+			app.assertNoMetricCoverage()
+			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.capture("conversation-usage-panel")
+			closeMetrics(scope + ":usage-panel")
+			app.hoverMetric(scope + ":time")
+			app.waitKey(scope + ":time-panel")
+			if strings.Contains(app.waitKey(scope+":first-token").Label, "—") || strings.Contains(app.waitKey(scope+":model-time").Label, "—") {
+				t.Fatal("actual model timing was not persisted")
+			}
+			app.assertNoMetricCoverage()
+			app.capture("conversation-time-panel")
+			closeMetrics(scope + ":time-panel")
 			var lastReply string
 			for _, message := range snapshot.Messages[sessionID] {
 				if message.Role != "assistant" {
 					continue
 				}
-				node := app.waitKey("reply-metrics:" + message.ID)
+				replyScope := "reply-metrics:" + message.ID
+				node := app.waitKey(replyScope + ":usage")
 				wantModel := strings.TrimPrefix(message.ModelID, "usage/")
-				if !strings.HasPrefix(node.Label, "120 tokens · ") || !strings.Contains(node.Label, "Local fixture / "+wantModel) {
+				if !strings.Contains(node.Label, "120 Token") {
 					t.Fatalf("reply model identity or usage is wrong: %s", node.Label)
 				}
-				expectedCache := wantCache
+				expectedCache := "40.0%"
 				if wantModel == "beta" {
-					expectedCache = noCache
+					expectedCache = "—"
 				}
-				if !strings.Contains(node.Label, expectedCache) {
-					t.Fatalf("reply treated unreported cache as zero: %s", node.Label)
+				app.hoverMetric(replyScope + ":usage")
+				app.waitKey(replyScope + ":usage-panel")
+				if label := app.waitKey(replyScope + ":model").Label; !strings.Contains(label, "Local fixture · "+wantModel) {
+					t.Fatalf("saved provider/model missing: %s", label)
 				}
+				if label := app.waitKey(replyScope + ":cache-hit").Label; !strings.Contains(label, expectedCache) {
+					t.Fatalf("reply treated unreported cache as zero: %s", label)
+				}
+				if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+					t.Fatal(err)
+				}
+				app.capture("reply-" + wantModel + "-panel")
+				closeMetrics(replyScope + ":usage-panel")
 				lastReply = message.ID
 			}
 			node := app.waitKey("reply-metrics:" + lastReply)
@@ -153,7 +195,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			}
 			copy := app.waitKey("copy-message:" + lastReply)
 			windowWidth, _ := strconv.Atoi(width)
-			if node.Bounds.X < copy.Bounds.X+copy.Bounds.Width-1 || node.Bounds.X+node.Bounds.Width > float64(windowWidth)+1 {
+			if copy.Bounds.X+copy.Bounds.Width > node.Bounds.X+1 || node.Bounds.X+node.Bounds.Width > float64(windowWidth)+1 {
 				t.Fatalf("reply metrics overlap copy or leave narrow window: copy=%+v metrics=%+v", copy.Bounds, node.Bounds)
 			}
 			app.capture("conversation-metrics")

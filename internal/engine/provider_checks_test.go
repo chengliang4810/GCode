@@ -198,7 +198,7 @@ func TestModelCheckErrorsDoNotPublishCredentials(t *testing.T) {
 				if failure == "http" {
 					w.WriteHeader(http.StatusUnauthorized)
 				}
-				fmt.Fprint(w, `data: {"error":{"message":"check-secret"}}`+"\n\n")
+				fmt.Fprint(w, `data: {"error":{"message":"check-secret","code":"upstream_capacity","request_id":"req-42"}}`+"\n\n")
 			}))
 			t.Cleanup(server.Close)
 			core := modelCheckCore(t, model.Chat, server.URL)
@@ -215,6 +215,10 @@ func TestModelCheckErrorsDoNotPublishCredentials(t *testing.T) {
 			}
 			if failure == "http" && !strings.Contains(state.CustomProviders[0].ModelChecks[0].Error, "401") {
 				t.Fatal("HTTP diagnostic omitted its safe status")
+			}
+			if detail := state.CustomProviders[0].ModelChecks[0].Error; !strings.Contains(detail, `"code":"upstream_capacity"`) ||
+				!strings.Contains(detail, `"request_id":"req-42"`) || !strings.Contains(detail, "[redacted]") {
+				t.Fatalf("model test discarded original provider details: %s", detail)
 			}
 		})
 	}

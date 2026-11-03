@@ -160,7 +160,7 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 	case "showcase", "transcript":
 		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "showcase-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{
 			{ID: "showcase-code", Kind: "code", Language: "go", Text: "type Workspace struct {\n    SidebarWidth float64\n    ContentWidth float64\n}\n"},
-			{ID: "showcase-question", Kind: "question", Question: &contracts.Question{ID: "question-showcase", Title: "Which panel should open first?", Options: []string{"Files", "Changes", "Browser"}, Answer: "Files"}},
+			{ID: "showcase-question", Kind: "question", Question: fixtureQuestion("question-showcase", "Which panel should open first?", "Files", "Changes", "Browser")},
 			{ID: "showcase-permission", Kind: "permission", Permission: &contracts.Permission{ID: "permission-showcase", Title: "Run project checks", Description: "Allow this command in the current workspace?", Command: "go test ./...", Answer: "Allow once"}},
 			{ID: "showcase-attachment", Kind: "attachment", Attachment: &contracts.Attachment{ID: "attachment-readme", Name: "README.md", MIME: "text/markdown", Size: 512, AssetRef: "file-readme", Status: "ready"}},
 			{ID: "showcase-image", Kind: "image", Attachment: &contracts.Attachment{ID: "attachment-icon", Name: "GCode.png", MIME: "image/png", Width: 1024, Height: 1024, AssetRef: "asset://app-icon.png", Status: "ready"}},
@@ -193,7 +193,7 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 		s.Account.CloudStatus = "disconnected"
 	case "questions":
 		s.Sessions[0].Status = contracts.AwaitingInput
-		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "question-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: "question-block", Kind: "question", Question: &contracts.Question{ID: "question-layout", Title: "Which layout should we use?", Options: []string{"Keep the current layout", "Use a wider workspace", "Compare both approaches"}}}}})
+		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "question-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: "question-block", Kind: "question", Question: fixtureQuestion("question-layout", "Which layout should we use?", "Keep the current layout", "Use a wider workspace", "Compare both approaches")}}})
 	case "permissions":
 		s.Sessions[0].Status = contracts.AwaitingInput
 		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "permission-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: "permission-block", Kind: "permission", Permission: &contracts.Permission{ID: "permission-tests", Title: "Run project checks", Description: "Allow the agent to run the project's test suite?", Command: "go test ./..."}}}})
@@ -206,4 +206,17 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 			s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: fmt.Sprintf("stress-message-%d", i), SessionID: "chat-0", Role: []string{"user", "assistant"}[i%2], CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: fmt.Sprintf("stress-block-%d", i), Kind: "text", Text: fmt.Sprintf("Review item %d. Preserve the current layout, keyboard focus, and scroll position while updating the workspace.", i+1)}}})
 		}
 	}
+}
+
+func fixtureQuestion(id, title string, options ...string) *contracts.Question {
+	page := contracts.QuestionPage{Question: title, Header: "Layout"}
+	for _, label := range options {
+		page.Options = append(page.Options, contracts.QuestionOption{Label: label})
+	}
+	question := &contracts.Question{ID: id, Pages: []contracts.QuestionPage{page}}
+	if id == "question-showcase" {
+		question.Resolved = true
+		question.Answers = []contracts.QuestionAnswer{{Options: []string{options[0]}}}
+	}
+	return question
 }

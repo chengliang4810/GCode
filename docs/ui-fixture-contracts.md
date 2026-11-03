@@ -17,6 +17,10 @@ Current application identifiers use GCode; see [branding.md](branding.md). Scena
 native profiles now live under `~/.gcode/acceptance/<scenario>`, or beside an
 explicit state file under `native`, as implemented in `cmd/rcode/paths.go`.
 
+2026-11-04: question fixtures use the current paged request DTO below. The full
+interactive form replaces the bottom composer; the transcript shows only a
+passive record. Earlier full question cards are superseded.
+
 # Desktop data contract
 
 Schema version: **1**. Reference: Zeron **v0.2.128**, commit
@@ -364,7 +368,7 @@ again before commit. IDs not present in the current snapshot return errors.
 | message.send | send: SendRequest; empty sessionId atomically creates then sends; projectId envelope fills missing send.projectId |
 | message.stop, message.retry | sessionId; retry retains configuration without duplicating prompt |
 | queue.remove, queue.update | id; update uses text; removes or edits queued send |
-| request.answer | id, text; records once and continues or denies wait |
+| request.answer | id, questionAnswers for a whole question request; text for permission decisions; records once and continues or denies wait |
 | file.create | projectId, relative path (name shorthand), text; enabled means directory |
 | file.rename | id, name; renames descendants while retaining stable identities |
 | file.delete | id; removes directory descendants after read-only preflight |
@@ -858,6 +862,7 @@ Generated from the exported struct fields in `internal/contracts/*.go`; `?` mark
 
 | JSON field | Go type |
 |---|---|
+| `questionAnswers?` | `[]QuestionAnswer` |
 | `git?` | `*GitRequest` |
 | `projectCreate?` | `*ProjectCreate` |
 | `integration?` | `*IntegrationRequest` |
@@ -1298,10 +1303,33 @@ and their settings search entry have been removed.
 | JSON field | Go type |
 |---|---|
 | `id` | `string` |
-| `title` | `string` |
-| `options` | `[]string` |
+| `pages` | `[]QuestionPage` |
+| `answers` | `[]QuestionAnswer` |
+| `resolved` | `bool` |
+
+### QuestionPage
+
+| JSON field | Go type |
+|---|---|
+| `question` | `string` |
+| `header` | `string` |
+| `options` | `[]QuestionOption` |
 | `multiSelect` | `bool` |
-| `answer` | `string` |
+
+### QuestionOption
+
+| JSON field | Go type |
+|---|---|
+| `label` | `string` |
+| `description` | `string` |
+| `preview` | `string` |
+
+### QuestionAnswer
+
+| JSON field | Go type |
+|---|---|
+| `options` | `[]string` |
+| `text` | `string` |
 
 ### QueuedMessage
 

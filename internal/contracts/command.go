@@ -12,6 +12,7 @@ import (
 
 // Clone freezes a command before it crosses a goroutine/queue boundary.
 func (c Command) Clone() Command {
+	c.QuestionAnswers = CloneQuestionAnswers(c.QuestionAnswers)
 	c.Plugin = c.Plugin.Clone()
 	c.Resource = c.Resource.Clone()
 	c.Goal = copyPointer(c.Goal)
@@ -77,6 +78,9 @@ func copyPointer[T any](p *T) *T {
 
 // Validate rejects ambiguous tagged payloads before any state is mutated.
 func (c Command) Validate() error {
+	if c.QuestionAnswers != nil && (c.Kind != "request.answer" || c.Text != "") {
+		return errors.New("question answers require a request.answer command without a text payload")
+	}
 	if err := c.validatePlugins(); err != nil {
 		return err
 	}

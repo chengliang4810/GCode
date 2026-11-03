@@ -46,6 +46,9 @@ func (e *Engine) reconcileSessionLocked(sessionID string) {
 		messages[i].Streaming = false
 		for j := range messages[i].Blocks {
 			block := &messages[i].Blocks[j]
+			if block.Question != nil && !block.Question.Resolved {
+				block.Question.Resolved = true
+			}
 			if tool := block.Tool; tool != nil && tool.Status == "running" {
 				tool.Status = "interrupted"
 			}

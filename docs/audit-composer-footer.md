@@ -4,6 +4,12 @@
 正文保留当时的源码审计与验收证据；当前实施范围见
 [UI 残留清理](ui-residual-cleanup.md)，不再把这些旧入口列为待实现功能。
 
+2026-11-04：GCode 的分支刷新时机和默认 checkout 语义已修正，见
+[Git checkout 当前实现](thread-naming-worktrees.md)。
+分支列表优先展示当前仓库上次成功加载的数据，同时立即在后台刷新；
+刷新失败保留旧列表并显示错误与重试。下文“普通 render 只从 Idle 拉取”等描述
+保留为冻结参考审计，不表示当前 GCode 会因已有 Ready 缓存而跳过刷新。
+
 日期：2026-10-28。事实源固定为 Zeron v0.2.128
 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`，只读目录
 `output/reference-sources/zeron`。原版 UI 文件名简写从 `crates/ui/src/` 解析；

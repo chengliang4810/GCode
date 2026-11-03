@@ -163,7 +163,7 @@ func pendingQuestion(messages []contracts.Message) string {
 	var result strings.Builder
 	for _, message := range messages {
 		for _, block := range message.Blocks {
-			if block.Question != nil && block.Question.Answer == "" {
+			if block.Question != nil && !block.Question.Resolved {
 				result.WriteString(block.Question.ID)
 				result.WriteByte(0)
 			}

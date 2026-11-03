@@ -127,7 +127,7 @@ func providerEndpoint(baseURL, resource string) (string, error) {
 const maxModelListBytes = 8 << 20
 
 // ListModels requests the configured provider's own models endpoint and
-// returns the deduplicated, sorted model IDs it reports. Both wire protocols
+// returns the deduplicated, sorted model IDs it reports. All three protocols
 // answer {"data":[{"id":...}]}.
 func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, error) {
 	provider = CloneProvider(provider)
@@ -159,11 +159,11 @@ func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, e
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, errors.New("provider connection failed")
+		return nil, providerConnectionError("provider connection failed", err, provider.APIKey)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return nil, fmt.Errorf("model list request failed (HTTP %d)", response.StatusCode)
+		return nil, providerHTTPError(response, "model list request failed", provider.APIKey)
 	}
 	var payload struct {
 		Data []struct {
@@ -187,7 +187,9 @@ func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, e
 	return ids, nil
 }
 
-func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) error) (Result, error) {
+func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) error) (result Result, callErr error) {
+	started := time.Now()
+	defer func() { result.RequestDuration = time.Since(started) }()
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
@@ -206,7 +208,11 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 	requestID := rand.Text()
 	// HTTP retries only precede a response stream; every attempt uses identical bytes.
 	for attempt := 0; ; attempt++ {
+		attemptStarted := time.Now()
 		result, status, err := g.streamAttempt(ctx, input, emit, endpoint, body, requestID, attempt+1)
+		if result.FirstTokenObserved {
+			result.FirstTokenLatency += attemptStarted.Sub(started)
+		}
 		if (status == 429 || status >= 500) && attempt < 2 {
 			select {
 			case <-ctx.Done():
@@ -221,6 +227,7 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 
 func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(Delta) error, endpoint string, body []byte,
 	requestID string, attempt int) (result Result, status int, callErr error) {
+	started := time.Now()
 	if g.Observe != nil {
 		trace := g.invocation(requestID, attempt, input, time.Now())
 		g.Observe(trace)
@@ -238,6 +245,7 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 			g.Observe(trace)
 		}()
 	}
+	defer func() { result.RequestDuration = time.Since(started) }()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
 	if err != nil {
 		return result, 0, err
@@ -250,16 +258,25 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		if ctx.Err() != nil {
 			return result, 0, ctx.Err()
 		}
-		return result, 0, errors.New("model connection failed")
+		return result, 0, providerConnectionError("model connection failed", err, g.provider.APIKey)
 	}
 	defer response.Body.Close()
 	status = response.StatusCode
 	if status < 200 || status >= 300 {
-		return result, status, fmt.Errorf("model request failed (HTTP %d)", status)
+		return result, status, providerHTTPError(response, "model request failed", g.provider.APIKey)
 	}
+	streamStarted := time.Now()
 	result, callErr = decodeStream(response.Body, g.adapter.decoder(), emit)
+	if result.FirstTokenObserved {
+		result.FirstTokenLatency += streamStarted.Sub(started)
+	}
 	if ctx.Err() != nil {
 		return result, status, ctx.Err()
+	}
+	var providerErr *streamProviderError
+	if errors.As(callErr, &providerErr) {
+		detail, truncated := providerErrorDetail(providerErr.payload, g.provider.APIKey)
+		callErr = &ProviderError{HTTPStatus: status, operation: "model reported a streaming error", detail: detail, truncated: truncated}
 	}
 	if callErr == nil && result.Message.Continuation != nil {
 		result.Message.Continuation.scope = g.target.scope

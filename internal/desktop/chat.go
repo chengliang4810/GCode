@@ -190,6 +190,9 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	ui.Row(c).Key("main-composer").FillWidth().Justify(ui.Center).Children(func() {
 		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
 		block.Children(func() {
+			if a.questionComposer(c, a.sessionID, "main:"+a.sessionID) {
+				return
+			}
 			if selectors := frame.Selectors; selectors > .001 {
 				// The blank canvas's target selectors leave before the pill
 				// travels; keeping them in one clipped container lets their
@@ -202,7 +205,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				})
 			}
 			running := a.currentSession().Status == contracts.Working
-			canSend := !a.pendingNew && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations))
+			canSend := !a.pendingNew && !a.composerFooterGitBusy() && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations))
 			// The reference's SendButtonMode: Stop only with an empty
 			// composer; typing during a run sends by the setting.
 			mode := composerSend
@@ -251,13 +254,22 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	})
 }
 func (a *App) projectPicker(c *ui.Context) {
-	b := ui.ButtonBase(c.Key("composer-project-picker")).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select project") + ": " + a.projectLabel()).Children(func() {
-		icon(c, "folder", 12)
-		ui.Text(c, a.projectLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-		icon(c, "alt-arrow-down", 10)
+	group := controlComposerTargetGroup(c.Key("composer-project-picker-group"))
+	clearable := !a.projectMenu && a.sessionID == "" && !a.pendingNew && a.projectID != "" && (group.Hovered() || group.FocusWithin())
+	group.Children(func() {
+		if clearable {
+			controlComposerTargetClear(c.Key("composer-project-clear"), tr(c, "Don't work in a project")).OnClick(a.clearComposerProject)
+		} else {
+			ui.Box(c.Key("composer-project-folder")).Size(design.Controls().ComposerTargetIconSize, design.Controls().ComposerTargetIconSize).
+				Children(func() { icon(c, "folder", design.Controls().ComposerTargetIconSize) })
+		}
+		b := controlComposerTargetPicker(c.Key("composer-project-picker"), tr(c, "Select project")+": "+a.projectLabel()).Children(func() {
+			ui.Text(c, a.projectLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			icon(c, "alt-arrow-down", 10)
+		})
+		b.OnClick(a.toggleProjectMenu)
 	})
-	b.OnClick(func() { a.projectMenu = !a.projectMenu })
-	a.projectPopover(c, b)
+	a.projectPopover(c, group)
 }
 func (a *App) devicePicker(c *ui.Context) {
 	a.reconcileComposerCloudDevice()

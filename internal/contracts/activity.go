@@ -57,7 +57,7 @@ func (t ToolCall) Failed() bool {
 }
 
 func (t ToolCall) IsQuestion() bool {
-	return t.Name == "ask_user"
+	return t.Name == "AskUserQuestion"
 }
 
 // ActivitySummary is derived from actual ordered activity, never fixture labels.

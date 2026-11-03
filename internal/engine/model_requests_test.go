@@ -83,6 +83,9 @@ func TestModelRequestsAccountRetriesToolsModelsAndRestart(t *testing.T) {
 			request.ModelID != "family/model" || !request.Usage.Known || request.DecodeDuration < 0 {
 			t.Fatalf("wrong request ownership or identity: %+v", request)
 		}
+		if request.RequestDuration <= 0 || !request.FirstTokenObserved || request.FirstTokenLatency < 0 {
+			t.Fatalf("actual model timing was not recorded: %+v", request)
+		}
 	}
 	if total.Input+total.Output != 66 || total.Cached != 16 || total.UnknownUsage != 0 {
 		t.Fatalf("actual attempts total=%+v", total)

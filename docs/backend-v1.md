@@ -164,7 +164,10 @@ JSON 仍使用临时文件与原子替换；Windows 有界重试不会先删除�
   取消前台 shell 会终止该次自有进程树。
 - 运行中发送的消息进入队列；普通消息在当前回答后继续，“作为引导发送”在模型步骤
   边界注入。删除队列项后不再执行。AskUserQuestion 接收 questions 数组、对象选项与
-  multiSelect，经原生问题区逐问等待，回传 questions 和按问题文本索引的 answers。
+  multiSelect。核心一次发布整组问题，桌面在底部临时用分页提问面板替换普通输入框；
+  单选稍后自动前进，多选和自定义文字手动提交，支持返回修改。整组答案通过类型化
+  `QuestionAnswers` 一次校验并提交，工具回传 questions 和按问题文本索引的 answers。
+  普通消息草稿不参与答案编辑，提交成功后恢复；对话历史只保留简短的提问记录。
 - 主会话、空侧聊、复制历史的 fork 共用核心，各自拥有运行与取消状态。
 - 内置子 Agent 为 general-purpose、Explore、Plan、claude。Agent 按类型启动真实子会话，
   前台等待，后台通知；Explore/Plan 为只读调查/规划类型。`sonnet/opus/haiku/inherit`

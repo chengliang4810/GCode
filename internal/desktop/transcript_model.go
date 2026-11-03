@@ -253,6 +253,15 @@ func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint
 		if block.Subagent != nil {
 			hash = fnvMix(hash, block.Subagent.ID)
 		}
+		if question := block.Question; question != nil {
+			hash = fnvMix(hash, question.ID)
+			if question.Resolved {
+				hash = fnvMixInt(hash, 1)
+			}
+			if len(question.Pages) > 0 {
+				hash = fnvMix(hash, question.Pages[0].Header)
+			}
+		}
 	}
 	return hash
 }

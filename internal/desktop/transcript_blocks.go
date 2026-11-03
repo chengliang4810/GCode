@@ -1,13 +1,11 @@
 package desktop
 
 import (
-	"encoding/json"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/linktarget"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
-	"strconv"
 	"strings"
 )
 
@@ -30,44 +28,15 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 	case "question":
 		if b.Question != nil {
 			q := b.Question
-			ui.Column(c).FillWidth().Padding(16).Radius(10).Border(1, a.palette.Border).Gap(10).Children(func() {
-				if q.Header != "" {
-					ui.Text(c, q.Header).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-				}
-				ui.Text(c, q.Title).FontWeight(600)
-				for index, option := range q.Options {
-					answer := option
-					key := "question-option-" + q.ID + "-" + strconv.Itoa(index)
-					if q.MultiSelect {
-						selected := a.expanded[key]
-						controlCheckbox(c.Key(key), &selected, option).Disabled(q.Answer != "").
-							OnClick(func() { a.expanded[key] = selected })
-					} else {
-						textButton(c.Key(key), option).FillWidth().Disabled(q.Answer != "").
-							OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: q.ID, Text: answer}) })
-					}
-					if index < len(q.OptionDescriptions) && q.OptionDescriptions[index] != "" {
-						ui.Text(c, q.OptionDescriptions[index]).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-					}
-				}
-				if q.MultiSelect && q.Answer == "" {
-					answers := []string{}
-					for index, option := range q.Options {
-						if a.expanded["question-option-"+q.ID+"-"+strconv.Itoa(index)] {
-							answers = append(answers, option)
-						}
-					}
-					primaryButton(c.Key("question-submit-"+q.ID), tr(c, "Submit")).Disabled(len(answers) == 0).OnClick(func() {
-						encoded, _ := json.Marshal(answers)
-						a.dispatch(contracts.Command{Kind: "request.answer", ID: q.ID, Text: string(encoded)})
-						for index := range q.Options {
-							delete(a.expanded, "question-option-"+q.ID+"-"+strconv.Itoa(index))
-						}
-					})
-				}
-				if q.Answer != "" {
-					ui.Text(c, q.Answer).TextColor(a.palette.Success)
-				}
+			value := tr(c, "Awaiting your answer…")
+			if q.Resolved && len(q.Pages) > 0 {
+				value = q.Pages[0].Header
+			}
+			ui.Row(c.Key("question-record-"+q.ID)).FillWidth().Padding(6, 8).Radius(design.Controls().InputRadius).
+				Border(1, a.palette.Border).Gap(8).AlignItems(ui.Center).Children(func() {
+				icon(c, "chat-round-line", design.Controls().IconSize)
+				ui.Text(c, tr(c, "Question")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+				ui.Text(c, value).SingleLine().Grow(1).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			})
 		}
 	case "permission":

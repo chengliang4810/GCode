@@ -287,7 +287,7 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 					a.refreshFooterUsage(state, now)
 				}
 			})
-			a.footerPopover(c, trigger, &state.accountsOpen, "Account usage menu", 400, func() { a.footerAccountsCard(c, state) })
+			a.footerPopover(c, trigger, &state.accountsOpen, "Account usage menu", 400, false, func() { a.footerAccountsCard(c, state) })
 		} else {
 			state.accountsOpen = false
 		}
@@ -307,7 +307,7 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 		}
 		trigger := a.footerRing(c, contextLabel, label, fraction, color, color, state.contextOpen)
 		trigger.OnClick(func() { state.contextOpen = !state.contextOpen; state.accountsOpen = false })
-		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 360, func() {
+		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 360, false, func() {
 			a.footerContextCard(c, usage)
 		})
 	})
@@ -387,9 +387,14 @@ func paintFooterArc(p *ui.Painter, bounds ui.Rect, fraction float64, color ui.Co
 	p.StrokePath(&path, 1.8, color)
 }
 
-func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label string, width float32, body func()) {
-	ui.PopoverBase(c, anchor, open, func(panel ui.Element) {
-		panel.Label(tr(c, label)).AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).SnapToWindow(8).Margin(0, 0, 6, 0).Padding(4).Gap(2).Radius(12)
+func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label string, width float32, alignStart bool, body func()) ui.Element {
+	return ui.PopoverBase(c, anchor, open, func(panel ui.Element) {
+		panel.Label(tr(c, label)).Margin(0, 0, 6, 0).Padding(4).Gap(2).Radius(12)
+		if alignStart {
+			panel.AttachTo(anchor, ui.AnchorTopStart, ui.AnchorBottomStart)
+		} else {
+			panel.AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).SnapToWindow(8)
+		}
 		if !a.frosted(c) {
 			panel.Shadow(0, 10, 30, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 12, -4, ui.RGBA(0, 0, 0, .1))
 		}

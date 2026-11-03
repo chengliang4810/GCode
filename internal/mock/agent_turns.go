@@ -96,7 +96,7 @@ func reconcileAgentTurns(snapshot *contracts.Snapshot, opts Options) {
 					if block.Tool != nil && block.Tool.FinishedAt != nil && block.Tool.FinishedAt.After(end) {
 						end = *block.Tool.FinishedAt
 					}
-					waiting = waiting || (block.Question != nil && block.Question.Answer == "") || (block.Permission != nil && block.Permission.Answer == "")
+					waiting = waiting || (block.Question != nil && !block.Question.Resolved) || (block.Permission != nil && block.Permission.Answer == "")
 					if block.Kind == "error" {
 						failed = true
 						run.Error = block.Text

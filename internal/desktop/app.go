@@ -47,6 +47,7 @@ type App struct {
 	trajectoryViews     map[string]*trajectoryViewState
 	footerGit           composerFooterGitState
 	sideComposers       map[string]*sideComposerState
+	questionForms       map[string]*questionFormState
 	background          backgroundSettingsState
 	pickAttachmentFiles func() ([]string, error)
 	attachmentImports   map[string]int
@@ -150,6 +151,7 @@ type App struct {
 	chooseTableExportPath                                      func() (string, error)
 	nestedMarkdownTable                                        bool
 	projectMenu, deviceMenu, branchMenu, viewMenu, paletteOpen bool
+	projectSelect                                              projectSelectState
 	renameOpen, projectOpen, attachmentOpen, imageOpen         bool
 	renameID, renameText, imageRef                             string
 	branch, checkout                                           string
@@ -1111,7 +1113,7 @@ func (a *App) mainView(c *ui.Context) {
 }
 
 func (a *App) send(text string) bool {
-	if a.pendingNew || a.attachmentImports[a.attachmentScope()] > 0 || a.modelID == "" || a.sessionID == "" && a.modelNoAgents() {
+	if a.pendingNew || a.composerFooterGitBusy() || a.attachmentImports[a.attachmentScope()] > 0 || a.modelID == "" || a.sessionID == "" && a.modelNoAgents() {
 		return false
 	}
 	text = strings.TrimSpace(text)

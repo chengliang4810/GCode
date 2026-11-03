@@ -219,6 +219,9 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 	outerWidth := composerOuterWidth(columns.Right, transcriptWidth, false)
 	ui.Column(c).FillWidth().Children(func() {
 		ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
+			if a.questionComposer(c, session.ID, "side:"+session.ID) {
+				return
+			}
 			running := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
 			canSend := state.Pending == nil && state.Importing == 0 && state.modelID != "" && composerHasContent(state.Draft, len(state.Attachments))
 			mode := composerSend

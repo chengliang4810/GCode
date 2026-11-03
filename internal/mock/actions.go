@@ -206,8 +206,8 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 			ms[mi].Streaming = false
 			for bi := range ms[mi].Blocks {
 				b := &ms[mi].Blocks[bi]
-				if b.Question != nil && b.Question.Answer == "" {
-					b.Question.Answer = "Cancelled"
+				if b.Question != nil && !b.Question.Resolved {
+					b.Question.Resolved = true
 				}
 				if b.Permission != nil && b.Permission.Answer == "" {
 					b.Permission.Answer = "Cancelled"
@@ -589,7 +589,7 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 		ms := s.state.Messages[session.ID]
 		last := &ms[len(ms)-1]
 		last.Streaming = false
-		last.Blocks = []contracts.Block{{ID: s.idLocked("block"), Kind: "question", Question: &contracts.Question{ID: s.idLocked("question"), Title: "Which implementation should we use?", Options: []string{"Keep the current structure", "Use the new layout", "Compare both approaches"}}}}
+		last.Blocks = []contracts.Block{{ID: s.idLocked("block"), Kind: "question", Question: fixtureQuestion(s.idLocked("question"), "Which implementation should we use?", "Keep the current structure", "Use the new layout", "Compare both approaches")}}
 		s.state.Messages[session.ID] = ms
 		session.Status = contracts.AwaitingInput
 		s.state.Runs[len(s.state.Runs)-1].Status = "awaitingInput"
@@ -719,8 +719,8 @@ func (s *Server) Stop(ctx context.Context, sessionID string) error {
 		ms[mi].Streaming = false
 		for bi := range ms[mi].Blocks {
 			b := &ms[mi].Blocks[bi]
-			if b.Question != nil && b.Question.Answer == "" {
-				b.Question.Answer = "Cancelled"
+			if b.Question != nil && !b.Question.Resolved {
+				b.Question.Resolved = true
 			}
 			if b.Permission != nil && b.Permission.Answer == "" {
 				b.Permission.Answer = "Cancelled"
@@ -788,10 +788,14 @@ func (s *Server) Retry(ctx context.Context, sessionID string) (contracts.Run, er
 }
 
 func (s *Server) Answer(ctx context.Context, id, answer string) error {
+	return s.answer(ctx, id, answer, nil)
+}
+
+func (s *Server) answer(ctx context.Context, id, answer string, answers []contracts.QuestionAnswer) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if strings.TrimSpace(answer) == "" {
+	if strings.TrimSpace(answer) == "" && len(answers) == 0 {
 		return errors.New("answer is empty")
 	}
 	s.mu.Lock()
@@ -812,11 +816,16 @@ func (s *Server) Answer(ctx context.Context, id, answer string) error {
 				match := false
 				denied := false
 				if b.Question != nil && b.Question.ID == id {
-					if b.Question.Answer != "" {
+					if b.Question.Resolved {
 						s.mu.Unlock()
 						return errors.New("question has already been answered")
 					}
-					b.Question.Answer = answer
+					if err := contracts.ValidateQuestionAnswers(b.Question.Pages, answers); err != nil {
+						s.mu.Unlock()
+						return err
+					}
+					b.Question.Answers = contracts.CloneQuestionAnswers(answers)
+					b.Question.Resolved = true
 					match = true
 				}
 				if b.Permission != nil && b.Permission.ID == id {

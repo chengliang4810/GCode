@@ -78,7 +78,7 @@ func TestListModelsSurfacesHTTPAndPayloadFailures(t *testing.T) {
 		}))
 		t.Cleanup(server.Close)
 		_, err := NewClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1", Models: []Model{{ID: "m"}}})
-		if err == nil || err.Error() != "model list request failed (HTTP 403)" {
+		if err == nil || err.Error() != "model list request failed (HTTP 403)\ndenied" {
 			t.Fatalf("unexpected status error: %v", err)
 		}
 	})

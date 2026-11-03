@@ -93,7 +93,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	providers := slices.Clone(e.providers)
 	history, executionContext := maps.Clone(e.history), maps.Clone(e.context)
 	hashes, records, loaded := maps.Clone(e.sessionHashes), maps.Clone(e.sessionRecords), maps.Clone(e.loadedSessions)
-	var answerChannel chan string
+	var answerChannel chan []contracts.QuestionAnswer
 	var answerOwner *activeRun
 	defer func() {
 		if resultErr != nil {
@@ -188,16 +188,32 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if answerChannel == nil || len(answerChannel) != 0 {
 			return errors.New("question is no longer waiting for an answer")
 		}
+		foundQuestion := false
 		for id, messages := range e.state.Messages {
 			for i := range messages {
 				for j := range messages[i].Blocks {
 					question := messages[i].Blocks[j].Question
 					if question != nil && question.ID == command.ID {
-						question.Answer = command.Text
+						if command.SessionID != "" && command.SessionID != id {
+							return errors.New("question belongs to another session")
+						}
+						if question.Resolved {
+							return errors.New("question is no longer waiting for an answer")
+						}
+						if err := contracts.ValidateQuestionAnswers(question.Pages, command.QuestionAnswers); err != nil {
+							return err
+						}
+						question.Answers = contracts.CloneQuestionAnswers(command.QuestionAnswers)
+						question.Resolved = true
+						affectedSession = id
+						foundQuestion = true
 					}
 				}
 			}
 			e.state.Messages[id] = messages
+		}
+		if !foundQuestion {
+			return errors.New("question request not found")
 		}
 	case "settings.update":
 		if command.Settings == nil {
@@ -564,7 +580,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	}
 	if answerChannel != nil {
 		delete(answerOwner.answers, command.ID)
-		answerChannel <- command.Text
+		answerChannel <- contracts.CloneQuestionAnswers(command.QuestionAnswers)
 	}
 	for _, session := range e.state.Sessions {
 		if session.Archived {

@@ -7,6 +7,8 @@ import (
 	"math"
 	"path/filepath"
 	"testing"
+
+	"gcode/internal/design"
 )
 
 func TestDesktopLocalSidebarFooter(t *testing.T) {
@@ -36,6 +38,42 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 				return nil
 			})
 			app.capture("footer")
+			footer := app.waitKey("sidebar-footer")
+			seam := footer.Bounds.X + footer.Bounds.Width
+			target := float64(design.SidebarMax) - 1
+			for _, event := range []map[string]any{
+				{"type": "pointerMove", "x": seam, "y": 200},
+				{"type": "pointerDown", "x": seam, "y": 200},
+				{"type": "pointerMove", "x": target, "y": 200},
+			} {
+				if err := app.client.call("input", map[string]any{"events": []map[string]any{event}}, nil); err != nil {
+					t.Fatal(err)
+				}
+			}
+			app.await("widened sidebar retains fixed footer gaps and right alignment", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				footer, err := tree.findKey("sidebar-footer")
+				if err != nil {
+					return err
+				}
+				if math.Abs(footer.Bounds.Width-target) > 1 {
+					return fmt.Errorf("sidebar footer width=%v, want %v", footer.Bounds.Width, target)
+				}
+				return nil
+			})
+			if err := app.client.call("input", map[string]any{"events": []map[string]any{{
+				"type": "pointerUp", "x": target, "y": 200,
+			}}}, nil); err != nil {
+				t.Fatal(err)
+			}
+			assertFooterActions(t, app)
+			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.capture("wide-sidebar-footer")
 			app.act("sidebar-mobile", "press", "")
 			app.waitKey("dialog-close")
 			app.capture("mobile-dialog")
@@ -113,7 +151,6 @@ func assertFooterActions(t *testing.T, app *nativeApp) {
 		t.Fatal("removed Git menu remains")
 	}
 	var previous accessNode
-	var gap float64
 	for i, key := range []string{"sidebar-updates", "sidebar-mobile", "sidebar-usage", "sidebar-settings"} {
 		node, err := tree.findKey(key)
 		if err != nil {
@@ -121,11 +158,17 @@ func assertFooterActions(t *testing.T, app *nativeApp) {
 		}
 		if i > 0 {
 			currentGap := node.Bounds.X - previous.Bounds.X - previous.Bounds.Width
-			if currentGap <= 0 || math.Abs(node.Bounds.Y-previous.Bounds.Y) > 1 || (i > 1 && math.Abs(currentGap-gap) > 1) {
-				t.Fatalf("footer is not evenly ordered: previous=%+v current=%+v gap=%v", previous.Bounds, node.Bounds, gap)
+			if math.Abs(node.Bounds.Y-previous.Bounds.Y) > 1 || math.Abs(currentGap-float64(design.Sidebar().FooterGap)) > 1 {
+				t.Fatalf("footer spacing/order differs: previous=%+v current=%+v gap=%v", previous.Bounds, node.Bounds, currentGap)
 			}
-			gap = currentGap
 		}
 		previous = node
+	}
+	footer, err := tree.findKey("sidebar-footer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if margin := footer.Bounds.X + footer.Bounds.Width - previous.Bounds.X - previous.Bounds.Width; math.Abs(margin-12) > 1 {
+		t.Fatalf("footer icons are not right aligned: right margin=%v", margin)
 	}
 }

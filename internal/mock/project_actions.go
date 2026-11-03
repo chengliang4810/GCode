@@ -75,8 +75,8 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 				}
 				if b.Question != nil {
 					b.Question.ID = s.idLocked("question")
-					if b.Question.Answer == "" {
-						b.Question.Answer = "Cancelled"
+					if !b.Question.Resolved {
+						b.Question.Resolved = true
 					}
 				}
 				if b.Permission != nil {

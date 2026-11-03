@@ -179,7 +179,7 @@ func TestPendingAnswerContinuesSameTurn(t *testing.T) {
 	pending := before.Messages["chat-0"][len(before.Messages["chat-0"])-1]
 	events, _ := s.Subscribe(ctx)
 	<-events
-	if err := s.Answer(ctx, "question-layout", "Keep the current layout"); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "request.answer", ID: "question-layout", QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"Keep the current layout"}}}}); err != nil {
 		t.Fatal(err)
 	}
 	after := await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })

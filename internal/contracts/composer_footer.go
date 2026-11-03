@@ -52,8 +52,9 @@ const (
 	CheckoutCloud   CheckoutKind = "cloud"
 )
 
-// CheckoutPlan is consumed only when creating a conversation. Empty Base for
-// NewWorktree means HEAD, matching composer.rs's actual WorktreeSpec consumer.
+// CheckoutPlan is consumed only when creating a conversation. Current with no
+// Branch follows the actual checkout at send time; a nonempty Branch validates
+// an explicit selection. Empty Base for NewWorktree resolves HEAD at send time.
 type CheckoutPlan struct {
 	Kind       CheckoutKind `json:"kind"`
 	Branch     string       `json:"branch,omitempty"`

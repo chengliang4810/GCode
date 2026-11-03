@@ -86,7 +86,7 @@ func (a *App) sidebarView(c *ui.Context) {
 				}
 			})
 		}
-		ui.Row(c.Key("sidebar-footer")).Height(54).Padding(10, 12).Justify(ui.SpaceEvenly).AlignItems(ui.Center).Children(func() {
+		ui.Row(c.Key("sidebar-footer")).Role(ui.RoleGroup).Height(54).Padding(10, 12).Justify(ui.End).Gap(design.Sidebar().FooterGap).AlignItems(ui.Center).Children(func() {
 			updateIconButton(c.Key("sidebar-updates"), tr(c, "Check for updates…")).
 				Disabled(a.checkForUpdates == nil).OnClick(a.checkForUpdates)
 			iconButton(c.Key("sidebar-mobile"), "smartphone", tr(c, "Mobile")).
@@ -210,30 +210,39 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 		}
 	}
 	closed := a.expanded[row.Group]
-	button := controlSidebarProjectRow(c.Key(row.Key), row.Header, false, offline).Expanded(!closed)
-	if closed && row.Working {
-		button.Label(row.Header + " · " + tr(c, "Running"))
-	}
+	container := controlSidebarProjectRow(c.Key("sidebar-project-row:"+row.ProjectID), row.Header, false, offline)
+	showNewConversation := container.Hovered() || container.FocusWithin()
 	// The folder glyph itself carries the folded/open state; project rows show
 	// no separate chevron.
-	button.OnClick(func() {
-		a.expanded[row.Group] = !a.expanded[row.Group]
-	}).Children(func() {
-		if a.state.Settings.ShowIcons {
-			folder := "folder"
-			if !closed {
-				folder = "folder-with-files"
-			}
-			icon(c, folder, design.Sidebar().IconSize)
-		}
-		ui.Text(c, row.Header).SingleLine().MinWidth(0).Grow(1)
+	container.Children(func() {
+		button := controlSidebarProjectToggle(c.Key(row.Key), row.Header).Expanded(!closed)
 		if closed && row.Working {
-			ui.Box(c.Key("sidebar-project-working:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).Shrink(0).Center().Label(tr(c, "Running")).Tooltip(tr(c, "Running")).Children(func() {
-				ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
-			})
+			button.Label(row.Header + " · " + tr(c, "Running"))
 		}
-		if offline {
-			ui.Box(c).Label(tr(c, "Device offline")).Children(func() { icon(c, "wifi-off", 12) })
+		button.OnClick(func() {
+			a.expanded[row.Group] = !a.expanded[row.Group]
+		}).Children(func() {
+			if a.state.Settings.ShowIcons {
+				folder := "folder"
+				if !closed {
+					folder = "folder-with-files"
+				}
+				icon(c, folder, design.Sidebar().IconSize)
+			}
+			ui.Text(c, row.Header).SingleLine().MinWidth(0).Grow(1)
+			if closed && row.Working {
+				ui.Box(c.Key("sidebar-project-working:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).Shrink(0).Center().Label(tr(c, "Running")).Tooltip(tr(c, "Running")).Children(func() {
+					ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
+				})
+			}
+			if offline {
+				ui.Box(c).Label(tr(c, "Device offline")).Children(func() { icon(c, "wifi-off", 12) })
+			}
+		})
+		if found && showNewConversation {
+			inlineIconButton(c.Key("sidebar-project-new-conversation:"+row.ProjectID), "pen-new-square",
+				fmt.Sprintf(tr(c, "New conversation in %s"), row.Header)).
+				OnClick(func() { a.newProjectConversation(row.ProjectID) })
 		}
 	})
 	if found {
@@ -241,9 +250,9 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 			{Icon: "chat-round-line", Text: fmt.Sprintf(tr(c, "%d chats"), row.Count)},
 			{Icon: "folder", Text: project.Path, Mono: true},
 		}
-		ui.TooltipBase(c, button, func(tip ui.Element) {
+		ui.TooltipBase(c, container, func(tip ui.Element) {
 			// Beside the project row, as the session hover card is.
-			tip.AttachTo(button, ui.AnchorEnd, ui.AnchorStart).MarginStart(6)
+			tip.AttachTo(container, ui.AnchorEnd, ui.AnchorStart).MarginStart(6)
 			tip.Children(func() {
 				controlSidebarHoverCard(c, row.Header, infos)
 			})

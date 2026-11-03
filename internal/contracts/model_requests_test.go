@@ -11,8 +11,10 @@ import (
 func TestModelRequestTotalsUsesPairedDecodeWeights(t *testing.T) {
 	var totals ModelRequestTotals
 	for _, request := range []ModelRequest{
-		{Usage: model.Usage{Known: true, OutputKnown: true, Input: 100, Output: 100, Cached: 80}, DecodeDuration: time.Second},
-		{Usage: model.Usage{Known: true, OutputKnown: true, Input: 200, Output: 90}, DecodeDuration: 9 * time.Second},
+		{Usage: model.Usage{Known: true, OutputKnown: true, Input: 100, Output: 100, Cached: 80}, DecodeDuration: time.Second,
+			RequestDuration: 2 * time.Second, FirstTokenObserved: true, FirstTokenLatency: 200 * time.Millisecond},
+		{Usage: model.Usage{Known: true, OutputKnown: true, Input: 200, Output: 90}, DecodeDuration: 9 * time.Second,
+			RequestDuration: 10 * time.Second, FirstTokenObserved: true, FirstTokenLatency: 600 * time.Millisecond},
 		{Usage: model.Usage{Known: true, OutputKnown: true, Input: 10, Output: 500}}, // no stream timing
 		{Usage: model.Usage{Input: 5, Output: 40}, DecodeDuration: time.Second},      // output is a lower bound
 	} {
@@ -21,6 +23,10 @@ func TestModelRequestTotalsUsesPairedDecodeWeights(t *testing.T) {
 	speed, known := totals.TokensPerSecond()
 	if !known || speed != 19 || totals.Input+totals.Output != 1045 || totals.Cached != 80 || totals.UnknownUsage != 1 {
 		t.Fatalf("weighted totals=%+v, speed=%v, known=%v", totals, speed, known)
+	}
+	if totals.TimedRequests != 2 || totals.RequestDuration != 12*time.Second ||
+		totals.FirstTokenRequests != 2 || totals.FirstTokenLatency/2 != 400*time.Millisecond {
+		t.Fatalf("missing timing diluted averages: %+v", totals)
 	}
 	var zero ModelRequestTotals
 	zero.Add(ModelRequest{Usage: model.Usage{Known: true, OutputKnown: true}, DecodeDuration: time.Second})
@@ -33,8 +39,9 @@ func TestModelRequestsCloneAndWireRoundTrip(t *testing.T) {
 	snapshot := Snapshot{ModelRequests: []ModelRequest{{
 		ID: "request", SessionID: "session", TurnID: "turn", ProviderID: "custom",
 		ProviderName: "User provider", ModelID: "family/model",
-		Usage:          model.Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 20, Output: 8, Cached: 10},
-		DecodeDuration: 250 * time.Millisecond,
+		Usage:           model.Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 20, Output: 8, Cached: 10},
+		DecodeDuration:  250 * time.Millisecond,
+		RequestDuration: time.Second, FirstTokenObserved: true, FirstTokenLatency: 750 * time.Millisecond,
 	}}}
 	cloned := CloneSnapshot(snapshot)
 	cloned.ModelRequests[0].ProviderName = "changed"

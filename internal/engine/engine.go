@@ -35,7 +35,7 @@ type activeRun struct {
 	hook        func(context.Context, agent.HookInput) (agent.HookResult, error)
 	cancel      context.CancelFunc
 	id          string
-	answers     map[string]chan string
+	answers     map[string]chan []contracts.QuestionAnswer
 	edits       map[string]editBefore
 	compacting  bool
 	done        chan struct{}

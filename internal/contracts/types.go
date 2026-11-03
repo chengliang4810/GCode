@@ -183,13 +183,25 @@ type ToolCall struct {
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
 }
 type Question struct {
-	Header             string   `json:"header,omitempty"`
-	MultiSelect        bool     `json:"multiSelect"`
-	OptionDescriptions []string `json:"optionDescriptions,omitempty"`
-	ID                 string   `json:"id"`
-	Title              string   `json:"title"`
-	Options            []string `json:"options"`
-	Answer             string   `json:"answer"`
+	ID       string           `json:"id"`
+	Pages    []QuestionPage   `json:"pages"`
+	Answers  []QuestionAnswer `json:"answers,omitempty"`
+	Resolved bool             `json:"resolved"`
+}
+type QuestionPage struct {
+	Question    string           `json:"question"`
+	Header      string           `json:"header"`
+	Options     []QuestionOption `json:"options"`
+	MultiSelect bool             `json:"multiSelect"`
+}
+type QuestionOption struct {
+	Label       string `json:"label"`
+	Description string `json:"description"`
+	Preview     string `json:"preview,omitempty"`
+}
+type QuestionAnswer struct {
+	Options []string `json:"options,omitempty"`
+	Text    string   `json:"text,omitempty"`
 }
 type Permission struct {
 	ID          string `json:"id"`
@@ -491,30 +503,31 @@ type SessionUpdate struct {
 
 // Command is a typed action envelope used by the application coordinator.
 type Command struct {
-	Plugin        *PluginInput          `json:"plugin,omitempty"`
-	Resource      *ResourceInput        `json:"resource,omitempty"`
-	Goal          *GoalInput            `json:"goal,omitempty"`
-	Provider      *ProviderInput        `json:"provider,omitempty"`
-	Reorder       *ReorderInput         `json:"reorder,omitempty"`
-	RequestID     string                `json:"requestId,omitempty"`
-	Git           *GitRequest           `json:"git,omitempty"`
-	ProjectCreate *ProjectCreate        `json:"projectCreate,omitempty"`
-	Integration   *IntegrationRequest   `json:"integration,omitempty"`
-	Adjustment    *BackgroundAdjustment `json:"adjustment,omitempty"`
-	TerminalSize  *TerminalSize         `json:"terminalSize,omitempty"`
-	Kind          string                `json:"kind"`
-	ID            string                `json:"id,omitempty"`
-	SessionID     string                `json:"sessionId,omitempty"`
-	ProjectID     string                `json:"projectId,omitempty"`
-	Text          string                `json:"text,omitempty"`
-	Name          string                `json:"name,omitempty"`
-	Path          string                `json:"path,omitempty"`
-	Enabled       bool                  `json:"enabled"`
-	Version       uint64                `json:"version,omitempty"`
-	Send          *SendRequest          `json:"send,omitempty"`
-	Settings      *Settings             `json:"settings,omitempty"`
-	Session       *SessionUpdate        `json:"session,omitempty"`
-	Attachment    *Attachment           `json:"attachment,omitempty"`
+	QuestionAnswers []QuestionAnswer      `json:"questionAnswers,omitempty"`
+	Plugin          *PluginInput          `json:"plugin,omitempty"`
+	Resource        *ResourceInput        `json:"resource,omitempty"`
+	Goal            *GoalInput            `json:"goal,omitempty"`
+	Provider        *ProviderInput        `json:"provider,omitempty"`
+	Reorder         *ReorderInput         `json:"reorder,omitempty"`
+	RequestID       string                `json:"requestId,omitempty"`
+	Git             *GitRequest           `json:"git,omitempty"`
+	ProjectCreate   *ProjectCreate        `json:"projectCreate,omitempty"`
+	Integration     *IntegrationRequest   `json:"integration,omitempty"`
+	Adjustment      *BackgroundAdjustment `json:"adjustment,omitempty"`
+	TerminalSize    *TerminalSize         `json:"terminalSize,omitempty"`
+	Kind            string                `json:"kind"`
+	ID              string                `json:"id,omitempty"`
+	SessionID       string                `json:"sessionId,omitempty"`
+	ProjectID       string                `json:"projectId,omitempty"`
+	Text            string                `json:"text,omitempty"`
+	Name            string                `json:"name,omitempty"`
+	Path            string                `json:"path,omitempty"`
+	Enabled         bool                  `json:"enabled"`
+	Version         uint64                `json:"version,omitempty"`
+	Send            *SendRequest          `json:"send,omitempty"`
+	Settings        *Settings             `json:"settings,omitempty"`
+	Session         *SessionUpdate        `json:"session,omitempty"`
+	Attachment      *Attachment           `json:"attachment,omitempty"`
 }
 
 type TerminalSize struct {

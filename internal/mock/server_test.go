@@ -66,7 +66,7 @@ func TestSnapshotIsolation(t *testing.T) {
 	copy1.Commits[0].Refs[0] = "mutated"
 	ms := copy1.Messages["chat-0"]
 	q := ms[len(ms)-1].Blocks[0].Question
-	q.Options[0] = "mutated"
+	q.Pages[0].Options[0].Label = "mutated"
 	copy1.Messages["chat-0"] = nil
 	after, err := s.Snapshot(ctx)
 	if err != nil {
@@ -281,7 +281,7 @@ func TestAnswersAndSettingsNormalization(t *testing.T) {
 		s := newTestServer(t, Options{Scenario: "questions", Instant: true})
 		events, _ := s.Subscribe(context.Background())
 		<-events
-		if err := s.Answer(context.Background(), "question-layout", "Keep the current layout"); err != nil {
+		if err := s.Execute(context.Background(), contracts.Command{Kind: "request.answer", ID: "question-layout", QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"Keep the current layout"}}}}); err != nil {
 			t.Fatal(err)
 		}
 		got := await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })
@@ -289,7 +289,7 @@ func TestAnswersAndSettingsNormalization(t *testing.T) {
 		for _, m := range got.Messages["chat-0"] {
 			for _, b := range m.Blocks {
 				if b.Question != nil && b.Question.ID == "question-layout" {
-					found = b.Question.Answer == "Keep the current layout"
+					found = b.Question.Resolved && len(b.Question.Answers) == 1 && b.Question.Answers[0].Options[0] == "Keep the current layout"
 				}
 			}
 		}

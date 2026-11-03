@@ -30,7 +30,14 @@ func detailSource(block contracts.Block, live bool) activityDetailSource {
 }
 
 func detailLines(source activityDetailSource) []thoughtLine {
-	if source.kind == "reasoning" || source.kind == "text" || source.kind == "error" {
+	if source.kind == "error" {
+		var lines []thoughtLine
+		for _, line := range strings.Split(source.text, "\n") {
+			lines = append(lines, thoughtLine{{text: line}})
+		}
+		return lines
+	}
+	if source.kind == "reasoning" || source.kind == "text" {
 		return thoughtLines(source.text, source.live)
 	}
 	invocation := source.args

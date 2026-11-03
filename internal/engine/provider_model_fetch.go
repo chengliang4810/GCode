@@ -3,8 +3,6 @@ package engine
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 	"time"
 
 	"gcode/internal/contracts"
@@ -79,22 +77,17 @@ func (e *Engine) startModelFetchLocked(providerID string) error {
 	return nil
 }
 
-// Provider error payloads are untrusted and may echo request headers. Preserve
-// only host-generated categories and numeric HTTP status; never publish them.
+// ProviderError already contains bounded diagnostics with credentials redacted.
 func modelFetchError(err error) string {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
 		return "Model list request timed out."
 	case errors.Is(err, context.Canceled):
 		return "Model list request was canceled."
-	case err.Error() == "provider connection failed":
-		return "Could not connect to the provider endpoint."
 	}
-	var status int
-	if _, scanErr := fmt.Sscanf(err.Error(), "model list request failed (HTTP %d)", &status); scanErr == nil &&
-		status >= 100 && status <= 599 &&
-		err.Error() == "model list request failed (HTTP "+strconv.Itoa(status)+")" {
-		return "Model list request failed (HTTP " + strconv.Itoa(status) + ")."
+	var providerErr *model.ProviderError
+	if errors.As(err, &providerErr) {
+		return providerErr.Error()
 	}
 	return "The provider returned an invalid model list."
 }

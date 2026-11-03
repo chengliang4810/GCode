@@ -14,6 +14,9 @@ import (
 
 const (
 	activityHeaderHeight = float32(26)
+	activityHeaderInset  = float32(22)
+	// The inherited disclosure canvas has a leading gutter before its ink.
+	activityLeadingInset = float32(10)
 	activityRowHeight    = float32(32)
 	activityGutter       = float32(48)
 	activityTextGap      = float32(8)
@@ -155,7 +158,7 @@ func (a *App) transcriptEntryHovered(pane, entryID string) bool {
 // accessibility state and reduced-motion handling. Only the source-specific
 // geometry, typography and connector rail are painted by the application.
 func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.Message) {
-	root := ui.Column(c).FillWidth().Key(row.ID)
+	root := ui.Column(c).FillWidth().Margin(0, 0, 0, -activityLeadingInset).Key(row.ID)
 	open := ui.Local(root, "open", func() bool { return row.AutoOpen })
 	a.activityFold(row.ID, open, row.AutoOpen)
 	summary := a.activitySummary(contracts.SummarizeActivity(row.Activity))
@@ -219,7 +222,7 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 		}
 		trigger.OnClick(a.manualActivityFold(c, row.ID, open, ""))
 		trigger.Children(func() {
-			ui.Box(c).Size(22, activityHeaderHeight).Shrink(0).Draw(func(p *ui.Painter, bounds ui.Rect) {
+			ui.Box(c).Size(activityHeaderInset, activityHeaderHeight).Shrink(0).Draw(func(p *ui.Painter, bounds ui.Rect) {
 				if *open {
 					p.Fill(ui.Rect{X: bounds.X + activityTrunkX - .5, Y: bounds.Y + activityHeaderHeight/2 + 6, W: 1, H: activityHeaderHeight/2 - 6}, a.activityInk(.12), 0)
 				}
@@ -514,12 +517,9 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 	services := c.Services()
 	ui.Row(c).FillWidth().MinHeight(max(16, design.TextSize(c, design.TextSmall)*1.5)).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
 		row := ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center)
-		if !hovered {
-			row.Opacity(0)
-		}
+		metricsOpen := false
 		row.Children(func() {
-			ui.Text(c, date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
-			ui.ButtonBase(c.Key("copy-message:"+message.ID)).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Center).OnClick(func() {
+			ui.ButtonBase(c.Key("copy-message:"+message.ID)).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() {
 				var text []string
 				for _, b := range message.Blocks {
 					if b.Kind == "text" && b.Text != "" {
@@ -528,8 +528,12 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 				}
 				services.WriteClipboard(strings.Join(text, "\n\n"))
 			}).Children(func() { icon(c, "copy", 12) })
-			a.replyMetricsView(c, message)
+			metricsOpen = a.replyMetricsView(c, message)
+			ui.Text(c.Key("message-date:"+message.ID), date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
 		})
+		if !hovered && !metricsOpen {
+			row.Opacity(0)
+		}
 	})
 }
 

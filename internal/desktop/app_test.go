@@ -114,17 +114,20 @@ func TestQuestionAndPermissionAnswers(t *testing.T) {
 			if scenario == "questions" {
 				for _, m := range a.state.Messages[a.sessionID] {
 					for _, b := range m.Blocks {
-						if b.Question != nil && len(b.Question.Options) > 0 {
-							option := b.Question.Options[0]
+						if b.Question != nil && len(b.Question.Pages) > 0 {
+							option := b.Question.Pages[0].Options[0].Label
 							if err := tt.Click(option); err != nil {
 								t.Fatal(err)
 							}
+							tt.Advance(questionAutoAdvance)
 							state, _ := a.service.Snapshot(context.Background())
 							answer := ""
 							for _, message := range state.Messages[a.sessionID] {
 								for _, block := range message.Blocks {
 									if block.Question != nil {
-										answer = block.Question.Answer
+										if len(block.Question.Answers) > 0 {
+											answer = block.Question.Answers[0].Options[0]
+										}
 									}
 								}
 							}

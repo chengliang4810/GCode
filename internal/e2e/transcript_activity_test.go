@@ -280,7 +280,7 @@ func TestDesktopLocalTranscriptActivity(t *testing.T) {
 						for _, message := range current.Messages[sessionID] {
 							for _, block := range message.Blocks {
 								ask = ask || block.Tool != nil && block.Tool.Name == "AskUserQuestion" && block.Tool.Status == "completed"
-								answered = answered || block.Question != nil && block.Question.Answer == "Activity answer A"
+								answered = answered || block.Question != nil && block.Question.Resolved && len(block.Question.Answers) == 1 && len(block.Question.Answers[0].Options) == 1 && block.Question.Answers[0].Options[0] == "Activity answer A"
 							}
 						}
 						if ask && answered {

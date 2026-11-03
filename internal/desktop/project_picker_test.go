@@ -10,6 +10,61 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+func TestComposerProjectHoverClearKeepsDraftAndRemovesTarget(t *testing.T) {
+	a := testApp(t, "default")
+	project := a.state.Projects[0]
+	a.newProjectConversation(project.ID)
+	a.draft = "Keep the draft while clearing its project"
+	device := a.deviceID
+	tt := ui.NewTester(a.View, 1320, 880)
+	label := "Select project: " + project.Name
+	picker, ok := tt.Find(label)
+	if !ok {
+		t.Fatal("project picker missing")
+	}
+	if _, ok := tt.Find("Don't work in a project"); ok {
+		t.Fatal("clear action visible before hover")
+	}
+	tt.Move(picker.X+picker.W/2, picker.Y+picker.H/2)
+	if _, ok := tt.Find("Don't work in a project"); !ok {
+		t.Fatal("hover did not replace the folder with a clear action")
+	}
+	if after, _ := tt.Find(label); after.X != picker.X || after.Y != picker.Y {
+		t.Fatal("hover replacement moved the project name")
+	}
+	a.branch, a.footerGit.Branch = "stale-project-branch", "stale-project-branch"
+	if err := tt.Click("Don't work in a project"); err != nil {
+		t.Fatal(err)
+	}
+	if a.projectID != "" || a.branch != "" || a.footerGit.Branch != "" || a.footerGit.Scope.Valid() ||
+		a.workspace.ProjectID != "" || a.bottom.ProjectID != "" || a.projectMenu {
+		t.Fatalf("clear retained a project target or opened its picker: project=%q branch=%q footer=%+v", a.projectID, a.branch, a.footerGit)
+	}
+	if a.draft != "Keep the draft while clearing its project" || a.deviceID != device {
+		t.Fatal("clearing project changed the draft or its device")
+	}
+	if _, ok := tt.Find("Select project: Don't work in a project"); !ok {
+		t.Fatal("cleared project label missing")
+	}
+	a.selectSession("chat-0")
+	a.selectSession("")
+	if a.projectID != "" || a.draft != "Keep the draft while clearing its project" {
+		t.Fatal("session browsing restored the removed project or lost the draft")
+	}
+	recorder := &sideRecordingService{Service: a.service}
+	a.service = recorder
+	a.send(a.draft)
+	for _, command := range recorder.commands {
+		if command.Kind == "message.send" {
+			if command.ProjectID != "" || command.Send.ProjectID != "" || command.Send.Branch != "" || command.Send.Checkout != nil {
+				t.Fatalf("project-free draft sent a stale target: project=%q request=%+v", command.ProjectID, command.Send)
+			}
+			return
+		}
+	}
+	t.Fatal("project-free draft did not send")
+}
+
 func TestCreatedProjectSelectsNewConversationWithoutChangingExistingSession(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		t.Run(map[bool]string{false: "success", true: "failure"}[fail], func(t *testing.T) {

@@ -269,6 +269,12 @@ type Result struct {
 	// DecodeDuration spans the first output delta through protocol completion.
 	// Zero means no observed streaming output, never request wall time.
 	DecodeDuration time.Duration
+	// RequestDuration includes transport setup, HTTP retries and stream delivery.
+	RequestDuration time.Duration
+	// FirstTokenLatency includes setup and ends at the first observed output.
+	// FirstTokenObserved distinguishes a real zero latency from missing output.
+	FirstTokenLatency  time.Duration
+	FirstTokenObserved bool
 }
 
 // StopReason describes execution semantics, independent of provider finish strings.

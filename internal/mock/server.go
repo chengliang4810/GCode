@@ -433,7 +433,7 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 		_, err := s.SaveFile(ctx, c.ID, c.Text, c.Version)
 		return err
 	case "request.answer":
-		return s.Answer(ctx, c.ID, c.Text)
+		return s.answer(ctx, c.ID, c.Text, c.QuestionAnswers)
 	case "terminal.input":
 		_, err := s.TerminalInput(ctx, c.ID, c.Text)
 		return err

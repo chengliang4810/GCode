@@ -133,7 +133,7 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 	}
 	switch event.Type {
 	case "error", "response.failed":
-		return Delta{}, errors.New("model reported a streaming error")
+		return Delta{}, &streamProviderError{payload: payload}
 	case "response.output_text.delta":
 		delta.Text = event.Delta
 	case "response.reasoning_summary_text.delta":

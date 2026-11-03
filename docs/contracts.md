@@ -125,9 +125,16 @@ not read account, subscription or provider billing state.
 
 Tool-start events retain original JSON arguments in `ToolCall.Args`, decode the
 shell script into `Command`, and project search patterns into readable summaries.
-This projection is shared by local and remote clients. `ask_user` remains in
-execution history while the desktop renders its independent question card and
-excludes its invocation from activity counts. A failed question call retains an
+This projection is shared by local and remote clients. `AskUserQuestion` remains in
+execution history and is excluded from activity counts. Interactive questions
+temporarily replace the bottom message composer; the transcript retains only a
+passive one-line record. `Question` owns a request ID, `pages`, typed `answers`
+and `resolved`; each `QuestionPage` contains `question`, `header`, object
+`options` and `multiSelect`. The UI submits all `QuestionAnswer` values through
+`Command.QuestionAnswers` once, using either selected labels or custom text per
+page. Local calls remain typed Go values; only remote boundaries and model tool
+results encode them. Partial or invalid answers do not resume execution.
+Successful submission restores the ordinary message draft. A failed question call retains an
 independent error detail, including validation failures that create no card.
 Work-detail viewports retain all received text and scroll internally above
 24 visible lines; they do not change the tools' execution/output budgets.

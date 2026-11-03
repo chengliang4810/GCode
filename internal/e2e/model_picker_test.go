@@ -148,42 +148,37 @@ func TestDesktopLocalModelPickerLayout(t *testing.T) {
 				}
 
 				app.capture("model-list")
-				// Pressing a provider dismisses its tooltip until the pointer
-				// leaves. Start the hover check from the search field.
-				search := app.waitKey("model-choice:alpha/m0")
+				// Browsing follows the pointer without committing a model.
+				provider = app.waitKey("model-provider:beta")
 				if err := app.client.call("input", map[string]any{"events": []map[string]any{{
-					"type": "pointerMove", "x": search.Bounds.X + search.Bounds.Width/2, "y": search.Bounds.Y + search.Bounds.Height/2,
+					"type": "pointerMove", "x": provider.Bounds.X + provider.Bounds.Width/2, "y": provider.Bounds.Y + provider.Bounds.Height/2,
 				}}}, nil); err != nil {
 					t.Fatal(err)
 				}
-				if _, err := app.client.tree(); err != nil {
+				app.waitKey("model-choice:beta/m0")
+				provider = app.waitKey("model-provider:alpha")
+				if err := app.client.call("input", map[string]any{"events": []map[string]any{{
+					"type": "pointerMove", "x": provider.Bounds.X + provider.Bounds.Width/2, "y": provider.Bounds.Y + provider.Bounds.Height/2,
+				}}}, nil); err != nil {
 					t.Fatal(err)
 				}
-				hoverX, hoverY := float64(-1), float64(-1)
-				app.await("provider name appears on hover", func() error {
+				app.waitKey("model-choice:alpha/m1")
+				app.await("provider hover has no duplicate name tooltip", func() error {
 					tree, err := app.client.tree()
 					if err != nil {
 						return err
 					}
 					for _, node := range tree.Nodes {
 						if node.Role == "tooltip" && node.Label == "我的模型服务 alpha" {
-							return nil
+							return fmt.Errorf("redundant provider tooltip remains")
 						}
 					}
-					provider, err := tree.findKey("model-provider:alpha")
-					if err != nil {
-						return err
-					}
-					x, y := provider.Bounds.X+provider.Bounds.Width/2, provider.Bounds.Y+provider.Bounds.Height/2
-					if x != hoverX || y != hoverY {
-						if err := app.client.call("input", map[string]any{"events": []map[string]any{{"type": "pointerMove", "x": x, "y": y}}}, nil); err != nil {
-							return err
-						}
-						hoverX, hoverY = x, y
-					}
-					return fmt.Errorf("provider tooltip is not visible")
+					return nil
 				})
-				app.capture("provider-tooltip")
+				if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+					t.Fatal(err)
+				}
+				app.capture("provider-hover-without-tooltip")
 				app.act("model-settings", "press", "")
 				app.waitKey("add-provider")
 				app.act("edit-model-alpha/m1", "press", "")

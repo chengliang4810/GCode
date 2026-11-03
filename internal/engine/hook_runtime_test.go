@@ -111,12 +111,13 @@ func TestHookRuntimePermissionUsesRealQuestionTool(t *testing.T) {
 	}{{"approved", "Allow", true}, {"denied", "Deny", false}, {"custom answer fails closed", "maybe", false}} {
 		t.Run(test.name, func(t *testing.T) {
 			asked := false
-			question := agent.QuestionTool{Ask: func(_ context.Context, q agent.Question) (string, error) {
+			question := agent.QuestionTool{Ask: func(_ context.Context, questions []contracts.QuestionPage) ([]contracts.QuestionAnswer, error) {
 				asked = true
+				q := questions[0]
 				if !strings.Contains(q.Question, `"command":"pwd"`) {
 					t.Errorf("permission omitted arguments: %+v", q)
 				}
-				return test.answer, nil
+				return []contracts.QuestionAnswer{{Text: test.answer}}, nil
 			}}
 			allowed, err := hookRuntimePermission(hookRuntimeOptions{Tools: []agent.Tool{question}})(context.Background(), agent.HookInput{ToolName: "Bash", ToolInput: json.RawMessage(`{"command":"pwd"}`)}, "guard")
 			if err != nil || allowed != test.allowed || !asked {

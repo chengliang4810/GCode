@@ -10,6 +10,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/mock"
+	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -110,8 +111,12 @@ func TestComposerFooterCurrentRefPreservesProjectDirectory(t *testing.T) {
 		},
 	}
 	plan := a.composerFooterCheckoutPlan()
-	if plan == nil || plan.Kind != contracts.CheckoutCurrent || plan.Path != "" || plan.Branch != "main" {
+	if plan == nil || plan.Kind != contracts.CheckoutCurrent || plan.Path != "" || plan.Branch != "" {
 		t.Fatalf("current ref would replace the selected project directory: %+v", plan)
+	}
+	a.pickComposerFooterRef(a.state.RepoRefs[scope.Key()].Rows[0])
+	if plan := a.composerFooterCheckoutPlan(); plan.Branch != "main" {
+		t.Fatalf("explicit branch selection lost its validation: %+v", plan)
 	}
 	a.state.Projects[0].GitDetected = false
 	if plan := a.composerFooterCheckoutPlan(); plan != nil {
@@ -211,6 +216,291 @@ func TestComposerFooterRejectedLoadDoesNotRetryEveryFrame(t *testing.T) {
 	}
 }
 
+func TestComposerFooterRefreshesSavedRefsOnEntryAndEveryOpen(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	recorder := &footerGitRecordingService{Service: a.service}
+	a.service = recorder
+	a.footerGit.Requested = false
+	before := a.state.RepoRefs[a.footerGit.Scope.Key()].Generation
+	tt := footerGitTester(a)
+	assertLoads := func(want int) {
+		t.Helper()
+		if len(recorder.commands) != want {
+			t.Fatalf("loads=%d want=%d", len(recorder.commands), want)
+		}
+		for _, command := range recorder.commands {
+			if command.Kind != "git.refs.load" || !command.Git.Force {
+				t.Fatalf("saved Ready refs were reused instead of refreshed: %+v", command)
+			}
+		}
+	}
+	assertLoads(1)
+	if a.state.RepoRefs[a.footerGit.Scope.Key()].Generation <= before {
+		t.Fatal("entry retained the persisted refs generation")
+	}
+	for range 3 {
+		tt.Frame()
+	}
+	assertLoads(1)
+	footerGitClick(t, tt, "Select ref")
+	assertLoads(2)
+	tt.Key(0, ui.KeyEscape)
+	footerGitClick(t, tt, "Select ref")
+	assertLoads(3)
+	footerGitClick(t, tt, "Ref main")
+	if a.footerGit.Branch != "main" {
+		t.Fatal("explicit ref choice was not recorded")
+	}
+	a.newConversation()
+	tt.Frame()
+	assertLoads(4)
+	if a.footerGit.Branch != "" {
+		t.Fatal("new draft inherited the preceding draft's pinned branch")
+	}
+}
+
+func TestComposerFooterRefreshDoesNotDuplicateInFlightOperation(t *testing.T) {
+	for _, switching := range []bool{false, true} {
+		t.Run(fmt.Sprint(switching), func(t *testing.T) {
+			a := footerGitTestApp(t, "")
+			recorder := &footerGitRecordingService{Service: a.service}
+			a.service = recorder
+			scope := a.footerGit.Scope
+			resource := a.state.RepoRefs[scope.Key()]
+			resource.State = contracts.LoadLoading
+			if switching {
+				resource.State, resource.Switching = contracts.LoadReady, "topic"
+			}
+			a.state.RepoRefs[scope.Key()] = resource
+			a.footerGit.Requested = false
+			a.ensureComposerFooterRefs(false)
+			a.ensureComposerFooterRefs(true)
+			if len(recorder.commands) != 0 {
+				t.Fatal("opening a picker duplicated an active repository operation")
+			}
+		})
+	}
+}
+
+func TestComposerFooterRefreshWaitsForQueuedRequestSnapshot(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	a.win = &mygo.Window{}
+	defer func() { a.win = nil }()
+	a.footerGit.Requested = false
+	a.ensureComposerFooterRefs(false)
+	command := <-a.jobs
+	a.ensureComposerFooterRefs(true)
+	if len(a.jobs) != 0 {
+		t.Fatal("menu open duplicated a refresh still waiting in the service queue")
+	}
+	a.composerFooterGitCommandFinished(command, nil)
+	a.ensureComposerFooterRefs(true)
+	if len(a.jobs) != 0 {
+		t.Fatal("command receipt was mistaken for an updated repository snapshot")
+	}
+	resource := a.state.RepoRefs[a.footerGit.Scope.Key()]
+	resource.Generation++
+	resource.State = contracts.LoadLoading
+	a.state.RepoRefs[a.footerGit.Scope.Key()] = resource
+	a.ensureComposerFooterRefs(true)
+	if len(a.jobs) != 0 {
+		t.Fatal("published loading snapshot admitted a duplicate")
+	}
+	resource.State = contracts.LoadReady
+	a.state.RepoRefs[a.footerGit.Scope.Key()] = resource
+	a.ensureComposerFooterRefs(true)
+	if len(a.jobs) != 1 {
+		t.Fatal("completed refresh prevented the next explicit refresh")
+	}
+}
+
+func TestComposerFooterDefaultPlansDoNotPinCachedBranch(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	scope := a.footerGit.Scope
+	a.state.RepoRefs[scope.Key()] = contracts.RepoRefs{Scope: scope, State: contracts.LoadReady,
+		Rows: []contracts.RepoRef{{Name: "obsolete-cached-branch", Current: true}}}
+	if plan := a.composerFooterCheckoutPlan(); plan.Kind != contracts.CheckoutCurrent || plan.Branch != "" {
+		t.Fatalf("default current checkout pinned an unverified cached branch: %+v", plan)
+	}
+	a.footerGit.Kind = contracts.CheckoutNew
+	if plan := a.composerFooterCheckoutPlan(); plan.Base != "" {
+		t.Fatalf("default new worktree pinned an unverified cached HEAD: %+v", plan)
+	}
+}
+
+func TestComposerFooterRefreshKeepsExplicitWorktreeDestination(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	a.pickComposerFooterRef(contracts.RepoRef{Name: "fieldnotes/workspace", WorktreePath: "~/worktrees/fieldnotes-workspace"})
+	scope := a.footerGit.Scope
+	for _, status := range []contracts.LoadStatus{contracts.LoadLoading, contracts.LoadError} {
+		t.Run(string(status), func(t *testing.T) {
+			resource := a.state.RepoRefs[scope.Key()]
+			resource.State = status
+			a.state.RepoRefs[scope.Key()] = resource
+			plan := a.composerFooterCheckoutPlan()
+			if plan.Kind != contracts.CheckoutReuse || plan.Path != "~/worktrees/fieldnotes-workspace" || plan.Branch != "fieldnotes/workspace" {
+				t.Fatalf("refresh retargeted an explicit worktree selection: %+v", plan)
+			}
+		})
+	}
+}
+
+func TestComposerFooterRefreshKeepsCurrentKeyboardRow(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	tt := footerGitTester(a)
+	footerGitClick(t, tt, "Select ref")
+	scope := a.footerGit.Scope
+	resource := a.state.RepoRefs[scope.Key()]
+	resource.Generation++
+	resource.Rows = append([]contracts.RepoRef{{Name: "added-before-current"}}, resource.Rows...)
+	a.state.RepoRefs[scope.Key()] = resource
+	tt.Frame()
+	rows := footerFilteredRefs(resource, "")
+	if rows[a.footerGit.Cursor].Name != "main" {
+		t.Fatalf("refresh moved keyboard choice to another branch: %+v", rows[a.footerGit.Cursor])
+	}
+	tt.Key(0, ui.KeyEnter)
+	if a.footerGit.Branch != "main" || a.state.Projects[0].Branch != "main" {
+		t.Fatal("Enter after refresh switched to an unchosen branch")
+	}
+}
+
+func TestComposerFooterCachedRowsStayVisibleWhileRefreshIsQueuedLoadingOrFailed(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	a.win = &mygo.Window{}
+	defer func() { a.win = nil }()
+	tt := footerGitTester(a)
+	footerGitClick(t, tt, "Select ref")
+	if len(a.jobs) != 1 {
+		t.Fatal("opening the picker did not immediately queue a refresh")
+	}
+	assertCachedRow := func() {
+		t.Helper()
+		if _, ok := tt.Find("Ref fieldnotes/settings-search"); !ok {
+			t.Fatal("refresh hid the previous successful ref list")
+		}
+	}
+	assertCachedRow() // No host loading snapshot has arrived yet.
+	scope := a.footerGit.Scope
+	resource := a.state.RepoRefs[scope.Key()]
+	resource.State, resource.Generation = contracts.LoadLoading, resource.Generation+1
+	a.state.RepoRefs[scope.Key()] = resource
+	tt.Frame()
+	assertCachedRow()
+	footerGitClick(t, tt, "Search refs")
+	tt.Type("settings")
+	assertCachedRow()
+	if _, ok := tt.Find("Ref main"); ok {
+		t.Fatal("cached refs ignored the search query")
+	}
+	resource.State, resource.Error = contracts.LoadError, "Refresh fixture unavailable"
+	a.state.RepoRefs[scope.Key()] = resource
+	tt.Frame()
+	assertCachedRow()
+	if _, ok := tt.Find("Retry refs"); !ok || !tt.HasText(resource.Error) {
+		t.Fatal("failed refresh hid the cache or lost its retry/error")
+	}
+	footerGitClick(t, tt, "Retry refs")
+	assertCachedRow()
+	if len(a.jobs) != 2 {
+		t.Fatal("retry did not queue a new refresh")
+	}
+}
+
+func TestComposerFooterRefreshPreservesNavigatedCursorByRefName(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	a.win = &mygo.Window{}
+	defer func() { a.win = nil }()
+	a.footerGit.Kind = contracts.CheckoutNew
+	tt := footerGitTester(a)
+	footerGitClick(t, tt, "Select ref")
+	tt.Key(0, ui.KeyDown)
+	scope := a.footerGit.Scope
+	resource := a.state.RepoRefs[scope.Key()]
+	chosen := footerFilteredRefs(resource, "")[a.footerGit.Cursor].Name
+	if chosen == "main" {
+		t.Fatal("fixture did not navigate away from the current ref")
+	}
+	resource.Generation++
+	resource.Rows = append([]contracts.RepoRef{{Name: "inserted-before-the-cursor"}}, resource.Rows...)
+	a.state.RepoRefs[scope.Key()] = resource
+	tt.Frame()
+	if got := footerFilteredRefs(resource, "")[a.footerGit.Cursor].Name; got != chosen {
+		t.Fatalf("refresh shifted the cursor from %q to %q", chosen, got)
+	}
+	tt.Key(0, ui.KeyEnter)
+	if a.footerGit.Branch != chosen {
+		t.Fatal("Enter selected a different branch after refresh")
+	}
+}
+
+func TestComposerFooterCachedSelectionWaitsForRefreshBeforeSwitching(t *testing.T) {
+	for _, removed := range []bool{false, true} {
+		t.Run(fmt.Sprint(removed), func(t *testing.T) {
+			a := footerGitTestApp(t, "")
+			a.win = &mygo.Window{}
+			defer func() { a.win = nil }()
+			tt := footerGitTester(a)
+			footerGitClick(t, tt, "Select ref")
+			footerGitClick(t, tt, "Ref fieldnotes/settings-search")
+			if a.footerGit.PendingRef != "fieldnotes/settings-search" || len(a.jobs) != 1 {
+				t.Fatal("cached selection raced the queued refresh")
+			}
+			a.draft = "Keep pending branch draft"
+			if a.send(a.draft) || a.draft != "Keep pending branch draft" {
+				t.Fatal("send ran on the old branch before pending selection completed")
+			}
+			scope := a.footerGit.Scope
+			resource := a.state.RepoRefs[scope.Key()]
+			resource.Generation++
+			if removed {
+				resource.Rows = []contracts.RepoRef{{Name: "main", Current: true}}
+			}
+			a.state.RepoRefs[scope.Key()] = resource
+			tt.Frame()
+			if a.footerGit.PendingRef != "" {
+				t.Fatal("completed refresh retained a pending selection")
+			}
+			refresh := <-a.jobs
+			if refresh.Kind != "git.refs.load" {
+				t.Fatal("first operation was not the refresh")
+			}
+			if removed {
+				if len(a.jobs) != 0 || a.footerGit.SwitchError == "" || a.footerGit.Branch != "" {
+					t.Fatal("removed cached ref switched to a different branch or lost its error")
+				}
+				return
+			}
+			if len(a.jobs) != 1 {
+				t.Fatal("completed refresh did not release the chosen branch switch")
+			}
+			switchCommand := <-a.jobs
+			if switchCommand.Kind != "git.ref.switch" || switchCommand.Git.Ref != "fieldnotes/settings-search" {
+				t.Fatalf("wrong deferred operation: %+v", switchCommand)
+			}
+		})
+	}
+}
+
+func TestComposerFooterFailedCheckoutRestoresDraftAndRefreshes(t *testing.T) {
+	a := footerGitTestApp(t, "")
+	recorder := &footerGitRecordingService{Service: a.service}
+	a.service = recorder
+	a.pendingNew = true
+	a.pendingSends = map[string]primaryPendingSend{"": {RequestID: "stale-selection", DraftEpoch: a.draftEpoch}}
+	command := contracts.Command{Kind: "message.send", ProjectID: a.projectID, Send: &contracts.SendRequest{
+		RequestID: "stale-selection", Text: "Keep this draft", Attachments: []contracts.Attachment{{Name: "draft.txt"}},
+		Checkout: &contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent, Branch: "old"},
+	}}
+	a.commandFinished(command, errors.New("selected checkout changed"))
+	if a.pendingNew || a.draft != command.Send.Text || len(a.attachments) != 1 {
+		t.Fatal("failed checkout lost the pending message or left send locked")
+	}
+	if len(recorder.commands) != 1 || recorder.commands[0].Kind != "git.refs.load" || !recorder.commands[0].Git.Force {
+		t.Fatal("failed checkout did not refresh repository refs")
+	}
+}
+
 func TestComposerFooterScopeAndGenerationRejectLateSwitch(t *testing.T) {
 	a := footerGitTestApp(t, "")
 	oldScope, oldSequence := a.footerGit.Scope, a.footerGit.Sequence
@@ -279,6 +569,12 @@ func TestComposerFooterRefSearchFiltersBeforeSourceCap(t *testing.T) {
 		resource.Rows = append(resource.Rows, contracts.RepoRef{Name: fmt.Sprintf("topic-%03d", i)})
 	}
 	a.state.RepoRefs[a.footerGit.Scope.Key()] = resource
+	a.state.Projects[0].Branches = nil
+	for _, row := range resource.Rows {
+		a.state.Projects[0].Branches = append(a.state.Projects[0].Branches, row.Name)
+	}
+	a = modelSnapshotApp(t, a.state)
+	a.syncComposerFooterGit()
 	a.footerGit.Kind = contracts.CheckoutNew
 	tt := footerGitTester(a)
 	footerGitClick(t, tt, "Select ref")
@@ -301,6 +597,9 @@ func TestComposerFooterRefRankingAndReopenKeepsSelectedKeyboardRow(t *testing.T)
 	resource := a.state.RepoRefs[a.footerGit.Scope.Key()]
 	resource.Rows = []contracts.RepoRef{{Name: "feature/topic"}, {Name: "topic-one"}, {Name: "TOPIC-two"}, {Name: "main", Current: true}}
 	a.state.RepoRefs[a.footerGit.Scope.Key()] = resource
+	a.state.Projects[0].Branches = []string{"feature/topic", "topic-one", "TOPIC-two", "main"}
+	a = modelSnapshotApp(t, a.state)
+	a.syncComposerFooterGit()
 	rows := footerFilteredRefs(resource, " TOPIC ")
 	if len(rows) != 3 || rows[0].Name != "topic-one" || rows[1].Name != "TOPIC-two" || rows[2].Name != "feature/topic" {
 		t.Fatalf("source trimmed, stable prefix/substring ranking lost: %+v", rows)

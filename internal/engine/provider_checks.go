@@ -3,8 +3,6 @@ package engine
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -120,22 +118,18 @@ func (e *Engine) startModelCheckLocked(modelID string) error {
 	return nil
 }
 
-// Provider error payloads are untrusted and may echo request headers. Preserve
-// only host-generated categories and numeric HTTP status; never publish them.
+// The model boundary redacts credentials before constructing ProviderError.
+// Keep its original provider diagnostics in the model test as in conversations.
 func modelCheckError(err error) string {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
 		return "Model test timed out."
 	case errors.Is(err, context.Canceled):
 		return "Model test was canceled."
-	case err.Error() == "model connection failed":
-		return "Could not connect to the model endpoint."
 	}
-	var status int
-	if _, scanErr := fmt.Sscanf(err.Error(), "model request failed (HTTP %d)", &status); scanErr == nil &&
-		status >= 100 && status <= 599 &&
-		err.Error() == "model request failed (HTTP "+strconv.Itoa(status)+")" {
-		return "Model request failed (HTTP " + strconv.Itoa(status) + ")."
+	var providerErr *model.ProviderError
+	if errors.As(err, &providerErr) {
+		return providerErr.Error()
 	}
 	return "Model returned an invalid or incomplete response."
 }

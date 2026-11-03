@@ -146,7 +146,7 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 	}
 	d.recordUsage(event.Usage.Prompt, event.Usage.Completion, cached)
 	if event.Type == "error" || (len(event.Error) > 0 && string(event.Error) != "null") {
-		return Delta{}, errors.New("model reported a streaming error")
+		return Delta{}, &streamProviderError{payload: payload}
 	}
 	delta := Delta{}
 	for _, choice := range event.Choices {

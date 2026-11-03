@@ -1,5 +1,21 @@
 # Native agent transcript audit
 
+2026-11-04 左侧对齐修正：按用户确认，以工具分组的展开箭头对齐正文，
+分组标题保留缩进；回复复制按钮改为起始侧对齐图标。
+分组整体使用 10 DIP 的负左外边距抵消原有 disclosure 画布留白，
+标题前的 22 DIP 槽位、分组内部 48+8 DIP 层级和连接线相对几何保持不变。
+下文源码参考的几何数值均相对分组根节点，不再代表其相对正文的绝对位置。
+`TestTranscriptContentLeftAlignment` 覆盖主对话/侧聊内边距、窄窗、深浅主题与紧凑模式；
+transcript、统计、共享控件专项与桌面包 MyGo vet 通过。
+调整前原生截图位于 `output/transcript-left-before/20261104-032719-806348220/`，
+最终原生对齐与悬停专项深浅主题通过并检查截图，位于
+`output/transcript-left-final/20261104-033340-1304840333/`。
+完整活动原生场景仍在思考预览断言失败，证据位于
+`output/transcript-left-aligned/20261104-033108-529947149/`。
+使用 Go overlay 仅撤去本次分组左偏移、保持工作区不变后，浅色同一断言仍失败，
+见 `output/transcript-left-baseline/20261104-033316-3376082655/`；
+未将完整活动场景记作通过，未修改范围外的思考预览或其测试。
+
 2026-10-30 tool-detail update: the user authorized the later RCode thought
 preview and question deduplication behavior, superseding the frozen-reference
 rules for those interactions. Thoughts and folded notes retain every formatted
@@ -13,9 +29,11 @@ Markdown outside these detail viewports.
 Thought details open only on user input. Folded live thoughts show the latest
 nonblank source line without waiting for a newline; settled thoughts show the
 first. Opening a detail pins its parent group open, so completion cannot hide a
-reader's explicit choice. `ask_user` keeps its real core history but is omitted
-from ordinary work rows and tool counts; its independent question card remains
-operable. Failed question calls retain an independent bounded error detail even
+reader's explicit choice. `AskUserQuestion` keeps its real core history but is omitted
+from ordinary work rows and tool counts. As of 2026-11-04 its interactive form
+replaces the bottom composer, with paged questions, Back, text overrides and
+draft restoration. The transcript keeps a passive one-line record instead of
+the full form. Failed question calls retain an independent bounded error detail even
 when argument validation prevented creation of a question card.
 Readable command/search fields are decoded by the core at `tool.start`, with
 the original arguments retained for inspection.
@@ -120,7 +138,7 @@ and historical screenshots remain unchanged.
 | TR-36 | 100%, 125%, 150%, 200% device scale retain logical geometry and operable disclosures | `TestTranscriptLogicalGeometryAtDesktopScales` | Tested in Tester; Windows monitor/DPI transitions pending |
 | TR-37 | All 30 original theme variants retain bounds and failed-row tint | `TestTranscriptAllThemesKeepGeometryAndFailureTint` | Tested |
 | TR-38 | Existing question/permission operations still dispatch backend answers | Existing `TestQuestionAndPermissionAnswers` | Tested |
-| TR-39 | Question tools do not duplicate their independent question card or tool count | `TestTranscriptQuestionAppearsOnlyAsQuestionCard` | Tested |
+| TR-39 | Question tools do not duplicate the passive transcript record or tool count; interaction lives in the bottom composer | `TestTranscriptQuestionAppearsOnlyAsQuestionCard`; `TestQuestionComposerReplacesMessageAndRestoresDraft` | Tested |
 | TR-40 | Diff and invocation share a bounded scroll viewport without moving the conversation | `TestTranscriptDiffUsesOneBoundedScrollingViewport` | Tested in implementation |
 
 The 2026-10-30 detail update passed the full Go suite, Go vet and MyGo vet.
