@@ -105,6 +105,7 @@ func (a *App) selectSettingsSection(section string) {
 	}
 	a.runtimeUI.subagentOpen = false
 	a.runtimeUI.key, a.runtimeUI.provider.ID, a.runtimeUI.subagent.ID = "", "", ""
+	a.dismissModelFetch()
 	a.modelsUI.modelOpen, a.modelsUI.pendingKey, a.modelsUI.pendingCommand = false, "", ""
 	a.modelsUI.inlineID, a.modelsUI.inlineError = "", ""
 	a.modelsUI.inlineDirty, a.modelsUI.showKey = false, false

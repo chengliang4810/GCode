@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"reflect"
@@ -39,15 +40,12 @@ type modelSettingsState struct {
 	fetchDialogOpen                       bool
 	fetchSeen                             string
 	fetchRows                             []fetchedModelRow
+	fetchLoading, fetchMetadataLoading    bool
+	fetchError, fetchValidation           string
+	fetchRequest                          uint64
+	fetchCancel                           context.CancelFunc
 	inputs                                [3]ui.Handle
 	focused                               [3]bool
-}
-
-// fetchedModelRow is one selectable entry of a fetched provider model list.
-type fetchedModelRow struct {
-	ID         string
-	Configured bool
-	Checked    bool
 }
 
 func (a *App) customProviderSettings(c *ui.Context) {
@@ -132,121 +130,6 @@ func (a *App) customProviderSettings(c *ui.Context) {
 	a.modelFetchDialog(c)
 }
 
-// fetchProviderModels asks the engine to read this provider's own models
-// endpoint. The result arrives as a snapshot projection; nothing is written
-// to the configuration until the user confirms a selection.
-func (a *App) fetchProviderModels(providerID string) {
-	if a.modelSettingsBusy() {
-		return
-	}
-	a.dispatch(contracts.Command{Kind: "provider.models.fetch", ID: providerID})
-}
-
-// syncModelFetchDialog opens the fetched-model list exactly once per fetch
-// result while the same provider is still being edited.
-func (a *App) syncModelFetchDialog() {
-	state := &a.modelsUI
-	if state.fetchDialogOpen || a.section != "Model settings" {
-		return
-	}
-	for _, config := range a.state.CustomProviders {
-		fetch := config.ModelFetch
-		if config.Provider.ID != state.inlineID || fetch == nil || fetch.State != "ready" {
-			continue
-		}
-		signature := fetch.ProviderID + fetch.StartedAt.String()
-		if state.fetchSeen == signature {
-			return
-		}
-		state.fetchSeen = signature
-		state.fetchRows = make([]fetchedModelRow, 0, len(fetch.Models))
-		for _, id := range fetch.Models {
-			configured := slices.ContainsFunc(config.Provider.Models, func(m model.Model) bool { return m.ID == id })
-			state.fetchRows = append(state.fetchRows, fetchedModelRow{ID: id, Configured: configured, Checked: !configured})
-		}
-		state.fetchDialogOpen = true
-		return
-	}
-}
-
-func (a *App) dismissModelFetch() {
-	state := &a.modelsUI
-	state.fetchDialogOpen, state.fetchRows = false, nil
-}
-
-func (a *App) modelFetchDialog(c *ui.Context) {
-	state := &a.modelsUI
-	if !state.fetchDialogOpen {
-		return
-	}
-	var fetch *contracts.ModelFetch
-	for _, config := range a.state.CustomProviders {
-		if config.Provider.ID == state.inlineID {
-			fetch = config.ModelFetch
-			break
-		}
-	}
-	if fetch == nil || fetch.State != "ready" {
-		a.dismissModelFetch()
-		return
-	}
-	a.settingsDialogWithFooter(c, "model-fetch-dialog", "Fetched models", &state.fetchDialogOpen, 560, func() {
-		if len(state.fetchRows) == 0 {
-			ui.Text(c, tr(c, "The provider returned no models.")).FillWidth().TextColor(a.palette.Muted)
-		}
-		for i := range state.fetchRows {
-			row := &state.fetchRows[i]
-			if row.Configured {
-				ui.Row(c.Key("fetched-configured-"+row.ID)).FillWidth().Gap(8).AlignItems(ui.Center).Padding(4, 0).Children(func() {
-					ui.Text(c, row.ID).Grow(1).MinWidth(0).SingleLine().TextColor(a.palette.Muted)
-					ui.Text(c, tr(c, "Already configured")).Shrink(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
-				})
-				continue
-			}
-			controlCheckbox(c.Key("fetched-model-"+row.ID), &row.Checked, row.ID)
-		}
-	}, func() {
-		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {
-			selected := 0
-			for _, row := range state.fetchRows {
-				if row.Checked {
-					selected++
-				}
-			}
-			ui.Text(c, fmt.Sprintf(tr(c, "%d selected"), selected)).Grow(1).TextColor(a.palette.Muted)
-			textButton(c, tr(c, "Cancel")).OnClick(a.dismissModelFetch)
-			primaryButton(c.Key("confirm-fetch"), tr(c, "Add models")).Label(fmt.Sprintf(tr(c, "Add %d models"), selected)).
-				Disabled(selected == 0).OnClick(a.confirmFetchModels)
-		})
-	})
-}
-
-// confirmFetchModels appends the selected IDs as plain models; per-model
-// metadata stays editable through the existing model editor afterwards.
-func (a *App) confirmFetchModels() {
-	state := &a.modelsUI
-	var provider model.Provider
-	found := false
-	for _, config := range a.state.CustomProviders {
-		if config.Provider.ID == state.inlineID {
-			provider = model.CloneProvider(config.Provider)
-			found = true
-			break
-		}
-	}
-	if !found {
-		a.dismissModelFetch()
-		return
-	}
-	for _, row := range state.fetchRows {
-		if row.Checked && !slices.ContainsFunc(provider.Models, func(m model.Model) bool { return m.ID == row.ID }) {
-			provider.Models = append(provider.Models, model.Model{ID: row.ID})
-		}
-	}
-	a.dismissModelFetch()
-	a.submitProviderSettings(provider)
-}
-
 // This small native vector is independent of any reference application's assets.
 func modelProviderIcon(c *ui.Context, size float32) {
 	color := c.Theme().Text
@@ -273,7 +156,8 @@ func (a *App) syncInlineProvider(config contracts.ProviderConfiguration) {
 		state.inlineEditedInput = -1
 		state.revealedKey, state.keyLoading = "", false
 		state.keyRequest++
-		state.fetchDialogOpen, state.fetchSeen, state.fetchRows = false, "", nil
+		a.dismissModelFetch()
+		state.fetchSeen = ""
 		state.focused = [3]bool{}
 		a.runtimeUI.key = ""
 	}
@@ -390,23 +274,15 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 		ui.Text(c, state.inlineError).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
 	}
 	ui.Column(c).FillWidth().Gap(6).Children(func() {
-		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
+		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(12).Children(func() {
 			ui.Text(c, tr(c, "Model list")).Grow(1).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
 			fetching := config.ModelFetch != nil && config.ModelFetch.State == "fetching"
-			buttonWithIcon(c.Key("fetch-models"), tr(c, "Fetch models"), "list", buttonPrimary).
+			buttonWithIcon(c.Key("fetch-models"), tr(c, "Fetch models"), "list", buttonSecondary).
 				Disabled(a.modelSettingsBusy() || fetching).
 				OnClick(func() { a.fetchProviderModels(provider.ID) })
 			buttonWithIcon(c.Key("add-model"), tr(c, "Add model"), "plus", buttonPrimary).
 				Disabled(a.modelSettingsBusy()).OnClick(func() { a.openSavedModel(provider.ID, "") })
 		})
-		if fetch := config.ModelFetch; fetch != nil {
-			switch fetch.State {
-			case "fetching":
-				ui.Text(c, tr(c, "Fetching models…")).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
-			case "error":
-				ui.Text(c, fetch.Error).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
-			}
-		}
 		if len(provider.Models) == 0 {
 			ui.Row(c.Key("model-empty-state")).FillWidth().MinHeight(48).Padding(12, 16).Gap(9).AlignItems(ui.Center).
 				Radius(8).Border(1, a.palette.Border).BorderStyle(ui.BorderDashed).TextColor(a.palette.Muted).Children(func() {
@@ -595,7 +471,8 @@ func (a *App) modelSettingsCommandFinished(command contracts.Command, err error)
 	}
 	if command.Kind == "provider.models.fetch" {
 		if err != nil {
-			a.modelsUI.inlineError = err.Error()
+			a.modelsUI.fetchLoading = false
+			a.modelsUI.fetchError = err.Error()
 		}
 		return
 	}

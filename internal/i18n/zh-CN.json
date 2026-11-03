@@ -804,9 +804,6 @@
   "Fetching models…": "正在拉取模型列表…",
   "Fetched models": "拉取到的模型",
   "%d selected": "已选 %d 项",
-  "Add %d models": "添加 %d 个模型",
-  "Add models": "添加模型",
-  "Already configured": "已配置",
   "The provider returned no models.": "供应商未返回任何模型。",
   "Model ID": "模型 ID",
   "Model %d": "模型 %d",
@@ -1153,5 +1150,11 @@
   "Add marketplace source": "添加市场源",
   "Edit marketplace source": "编辑市场源",
   "Manage marketplace sources": "管理市场源",
-  "No marketplace sources": "尚未添加市场源"
+  "No marketplace sources": "尚未添加市场源",
+  "Loading model details…": "正在查询模型参数…",
+  "Context": "上下文",
+  "Save models": "保存模型",
+  "Select all models": "全选模型",
+  "Context window for %s": "%s 的上下文容量",
+  "%s input for %s": "%s输入：%s"
 }
