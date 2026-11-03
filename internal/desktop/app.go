@@ -892,13 +892,15 @@ func (a *App) View(c *ui.Context) {
 	showChatPanels := a.route == "chat" && a.currentSession().ID != ""
 	open := [3]bool{a.sidebar, a.right && showChatPanels, a.files && showChatPanels}
 	keyboardStep := a.sidebarContentWidth - a.sidebarSplit
-	if open[0] && !a.panelAnimating(0) && a.sidebarSplit > 0 &&
+	if open[0] && !a.panelAnimating(0) && !a.panelMotion[0] && a.sidebarSplit > 0 &&
 		max(keyboardStep, -keyboardStep) > 0.5 {
 		// A keyboard step of the sidebar divider lands after the frame that
 		// built the split: adopt it here, before this frame lays anything
 		// out, instead of asking the split to report the move again. A drag
 		// also leaves the split size changed, but in the pass that drew it;
 		// sidebarSplit remembers that value, so only a later step adopts.
+		// A pending toggle still carries the last tween frame's clipped
+		// width; it is not a keyboard step and must not change preferences.
 		a.sidebarWidth = min(max(a.sidebarContentWidth+1, design.SidebarMin), design.SidebarMax)
 		a.state.Settings.SidebarWidth = float64(a.sidebarWidth)
 		a.schedulePaneSave(c, paneSidebar)

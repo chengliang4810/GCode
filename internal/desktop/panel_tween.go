@@ -153,7 +153,9 @@ func (a *App) panelAnimating(which int) bool { return a.panelTween[which].runnin
 
 // panelContentBox lays a moving pane's content out at the width it held when
 // the tween began, so the column's clipped edge reveals it instead of
-// reflowing it every frame. A resting pane builds its content directly.
+// reflowing it every frame. The wrapper must keep the parent's full height as
+// well, so growing lists and bottom-anchored controls retain their layout.
+// A resting pane builds its content directly.
 func (a *App) panelContentBox(c *ui.Context, which int, build func()) {
 	if !a.panelAnimating(which) {
 		build()
@@ -163,5 +165,5 @@ func (a *App) panelContentBox(c *ui.Context, which int, build func()) {
 	if which == 0 {
 		width = max(0, width-1)
 	}
-	ui.Box(c).Width(width).Shrink(0).Clip().Children(build)
+	ui.Box(c).Width(width).FillHeight().Shrink(0).Clip().Children(build)
 }
