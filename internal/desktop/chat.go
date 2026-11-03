@@ -256,7 +256,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	})
 }
 func (a *App) projectPicker(c *ui.Context) {
-	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select project")).Children(func() {
+	b := ui.ButtonBase(c.Key("composer-project-picker")).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select project") + ": " + a.projectLabel()).Children(func() {
 		icon(c, "folder", 12)
 		ui.Text(c, a.projectLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)

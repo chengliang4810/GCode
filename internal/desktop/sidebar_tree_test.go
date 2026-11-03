@@ -216,7 +216,6 @@ func TestSidebarNewProjectRevealWaitsForAuthoritativeSnapshot(t *testing.T) {
 	a := sidebarLayoutApp(t)
 	a.sidebarUI.projectsClosed = true
 	a.draft = "Keep pending project draft"
-	target := a.projectID
 	request := contracts.ProjectCreate{DeviceID: "local", Name: "Created after reply", Path: "/pending-project"}
 	a.newProject.submission, a.newProject.submissionID = &request, "pending-project"
 	a.projectOpen = true
@@ -228,13 +227,14 @@ func TestSidebarNewProjectRevealWaitsForAuthoritativeSnapshot(t *testing.T) {
 	a.state.Projects = append(a.state.Projects, contracts.Project{
 		ID: "created", Name: request.Name, Path: request.Path, DeviceID: request.DeviceID,
 	})
+	a.apply(a.state)
 	tt.Frame()
 	r, ok := tt.Find(request.Name)
 	if !ok || r.X >= a.sidebarWidth || r.Y < 0 || r.Y+r.H > 600-54 || a.sidebarUI.revealProject != nil {
 		t.Fatalf("authoritative project did not become visible: %+v", r)
 	}
-	if a.projectID != target || a.draft != "Keep pending project draft" {
-		t.Fatal("asynchronous project creation changed composer state")
+	if a.projectID != "created" || a.draft != "Keep pending project draft" {
+		t.Fatal("asynchronous project creation did not select the project and preserve the draft")
 	}
 }
 

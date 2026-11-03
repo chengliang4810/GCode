@@ -65,6 +65,20 @@ func TestDesktopLocalProjectCreationWithIgnoredArtifacts(t *testing.T) {
 		}
 		return nil
 	})
+	app.await("created project is selected in the conversation composer", func() error {
+		tree, err := app.client.tree()
+		if err != nil {
+			return err
+		}
+		node, err := tree.findKey("composer-project-picker")
+		if err != nil {
+			return err
+		}
+		if node.Label != "Select project: "+loaded.Projects[0].Name {
+			return fmt.Errorf("composer project = %q, want %q", node.Label, loaded.Projects[0].Name)
+		}
+		return nil
+	})
 	app.await("checkout file tree loaded independently", func() error {
 		if err := readState(); err != nil {
 			return err

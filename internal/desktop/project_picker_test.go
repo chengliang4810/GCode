@@ -2,12 +2,51 @@ package desktop
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
 	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestCreatedProjectSelectsNewConversationWithoutChangingExistingSession(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(map[bool]string{false: "success", true: "failure"}[fail], func(t *testing.T) {
+			a := testApp(t, "default")
+			session := a.state.Sessions[0]
+			a.selectSession(session.ID)
+			a.draft = "Keep existing conversation draft"
+			request := contracts.ProjectCreate{DeviceID: "remote", Path: "/created", Name: "Created"}
+			project := contracts.Project{ID: "created", DeviceID: request.DeviceID, Path: request.Path, Name: request.Name, Branch: "feature"}
+			a.state.Projects = append(a.state.Projects, project)
+			a.newProject.submission, a.newProject.submissionID = &request, "create"
+			a.projectOpen = true
+			var err error
+			if fail {
+				err = errors.New("creation failed")
+			}
+			a.projectCommandFinished(contracts.Command{Kind: "project.create", ID: "create", ProjectCreate: &request}, err)
+			if fail {
+				if a.sessionID != session.ID || a.projectID != session.ProjectID || !a.projectOpen || a.newProject.created != nil {
+					t.Fatal("failed creation changed the conversation target")
+				}
+				return
+			}
+			if a.sessionID != "" || a.route != "chat" || a.projectID != project.ID || a.deviceID != project.DeviceID || a.branch != project.Branch {
+				t.Fatal("successful creation did not open a new conversation targeting the created project")
+			}
+			a.selectSession(session.ID)
+			if a.draft != "Keep existing conversation draft" || a.currentSession().ProjectID != session.ProjectID {
+				t.Fatal("project creation changed the existing conversation or lost its draft")
+			}
+			a.selectSession("")
+			if a.projectID != project.ID {
+				t.Fatal("returning to the new conversation lost the created project selection")
+			}
+		})
+	}
+}
 
 func TestNewProjectDeviceFolderKeyboardAndSubmit(t *testing.T) {
 	a := testApp(t, "default")
@@ -40,6 +79,9 @@ func TestNewProjectDeviceFolderKeyboardAndSubmit(t *testing.T) {
 	project := a.state.Projects[len(a.state.Projects)-1]
 	if project.DeviceID != "local" || project.Name != "internal" {
 		t.Fatalf("create discarded selection: %+v", project)
+	}
+	if a.projectID != project.ID || a.deviceID != project.DeviceID || a.branch != project.Branch || a.workspace.ProjectID != project.ID || a.bottom.ProjectID != project.ID {
+		t.Fatal("created project was not selected as the conversation target")
 	}
 	if a.sidebarUI.projectsClosed || a.draft != "Keep project draft" {
 		t.Fatal("creating a project left it hidden or changed the draft")

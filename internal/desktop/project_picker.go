@@ -25,6 +25,7 @@ type newProjectState struct {
 	cancel                            context.CancelFunc
 	submission                        *contracts.ProjectCreate
 	submissionID                      string
+	created                           *contracts.ProjectCreate
 }
 type projectPickerRow struct {
 	key, title, glyph string
@@ -284,8 +285,31 @@ func (a *App) projectCommandFinished(command contracts.Command, err error) bool 
 		a.sidebarUI.projectsClosed = false
 		request := *command.ProjectCreate
 		a.sidebarUI.revealProject = &request
+		p.created = &request
+		a.selectCreatedProject()
 	}
 	return true
+}
+
+func (a *App) selectCreatedProject() {
+	request := a.newProject.created
+	if request == nil {
+		return
+	}
+	for _, project := range a.state.Projects {
+		if project.Path != request.Path || project.DeviceID != request.DeviceID {
+			continue
+		}
+		a.newProject.created = nil
+		// A command reply can precede the snapshot carrying the project's ID.
+		// Leave existing conversations intact and target the new-chat canvas.
+		a.navigate("chat")
+		a.projectID, a.deviceID, a.branch = project.ID, project.DeviceID, project.Branch
+		a.projectMenu, a.deviceMenu, a.branchMenu = false, false, false
+		a.bottom.ProjectID = project.ID
+		a.syncChatWorkspace()
+		return
+	}
 }
 func (a *App) projectPickerBack() {
 	p := &a.newProject

@@ -410,6 +410,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		delete(a.pendingSends, removed)
 	}
 	a.reconcileBranchCreation()
+	a.selectCreatedProject()
 }
 
 func (a *App) applyEvent(event contracts.Event) {
