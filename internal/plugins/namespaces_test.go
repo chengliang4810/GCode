@@ -3,7 +3,6 @@ package plugins
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -54,32 +53,21 @@ func TestManagerRejectsVisibleCrossMarketplaceNamespaceCollision(t *testing.T) {
 	}
 }
 
-func TestManagerAllowsSameNamespaceInDisjointProjects(t *testing.T) {
+func TestManagerReportsInvalidUserNamespaceCollision(t *testing.T) {
 	t.Parallel()
 	manager := namespaceManager(t)
-	root := t.TempDir()
-	first, second := filepath.Join(root, "first"), filepath.Join(root, "second")
-	for i, market := range []string{"first", "second"} {
-		path := []string{first, second}[i]
-		if _, err := manager.Install(context.Background(), market, "demo", InstallOptions{Scope: "project", ProjectPath: path}); err != nil {
-			t.Fatal(err)
-		}
+	first, err := manager.Install(context.Background(), "first", "demo")
+	if err != nil {
+		t.Fatal(err)
 	}
-	for _, path := range []string{first, second} {
-		bundles, err := manager.BundlesFor(path)
-		if err != nil || len(bundles) != 1 {
-			t.Fatalf("disjoint namespace failed: %d %v", len(bundles), err)
-		}
-	}
-	// Existing invalid state must fail explicitly rather than silently overriding
-	// a skill or creating duplicate MCP tool definitions.
+	// Corrupt registry state must fail rather than silently override resources.
 	manager.mu.Lock()
-	for i := range manager.data.Installations {
-		manager.data.Installations[i].Scope, manager.data.Installations[i].ProjectPath = "user", ""
-	}
+	second := first
+	second.ID, second.Marketplace = "demo@second", "second"
+	manager.data.Installations = append(manager.data.Installations, second)
 	manager.mu.Unlock()
 	if _, err := manager.Bundles(); err == nil {
-		t.Fatal("existing namespace conflict was silently loaded")
+		t.Fatal("namespace conflict was silently loaded")
 	}
 }
 

@@ -137,7 +137,7 @@ func TestPluginOptionalMetadataWarningReachesHostDiagnostics(t *testing.T) {
 	if len(state.Plugins.Installed) != 1 || len(state.Plugins.Installed[0].Issues) == 0 {
 		t.Fatal("optional metadata warning disappeared from the public installation")
 	}
-	bundles, err := core.plugins.BundlesFor(cwd)
+	bundles, err := core.plugins.Bundles()
 	if err != nil {
 		t.Fatal(err)
 	}

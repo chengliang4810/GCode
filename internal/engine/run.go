@@ -324,7 +324,7 @@ func (e *Engine) startRunLocked(
 				defer stopHeartbeat()
 			}
 		}
-		bundles, resourcesErr := e.plugins.BundlesFor(session.CWD)
+		bundles, resourcesErr := e.plugins.Bundles()
 		if child != nil {
 			bundles = child.plugins
 		}

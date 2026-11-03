@@ -185,7 +185,7 @@ JSON 仍使用临时文件与原子替换；Windows 有界重试不会先删除�
 `anthropics/claude-plugins-community`，登记源不会自动安装其中全部插件。
 市场清单、插件 manifest 和 Markdown 组件由 internal/plugins 解析；宿主后台处理
 刷新、安装、更新、启停、卸载及配置，UI 与本机核心仍通过类型化 Go 接口交互。
-支持 user/project/local 安装范围，项目和 local 以宿主项目目录绑定；
+插件仅支持用户级安装，同一宿主所有项目共用安装、启停和配置；
 运行使用固定安装目录和配置快照，更新不会覆盖活动执行读取的旧安装版本。
 
 运行层接入 skills、commands、agents、hooks 与 MCP。项目资源按名称覆盖插件资源，

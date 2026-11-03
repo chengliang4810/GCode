@@ -17,7 +17,7 @@ func (e *Engine) compactHookResources(ctx context.Context, session contracts.Ses
 	if err != nil {
 		return resources, nil, func() {}, err
 	}
-	bundles, err := e.plugins.BundlesFor(session.CWD)
+	bundles, err := e.plugins.Bundles()
 	if err != nil {
 		return resources, nil, func() {}, err
 	}

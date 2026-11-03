@@ -1089,8 +1089,7 @@
   "Installed": "已安装",
   "Sources": "市场源",
   "Search plugins": "搜索插件",
-  "All marketplaces": "所有市场",
-  "Installation scope": "安装范围",
+  "All marketplaces": "所有",
   "User": "用户",
   "Project": "项目",
   "Local": "本地",
@@ -1102,7 +1101,6 @@
   "Source type": "来源类型",
   "Directory": "目录",
   "Git reference": "Git 引用",
-  "Add marketplace": "添加市场",
   "No installed plugins": "尚未安装插件",
   "Uninstall": "卸载",
   "Configure": "配置",
@@ -1150,5 +1148,10 @@
   "Number": "数值",
   "Leave unchanged": "保持不变",
   "Investigate requirements and design an implementation plan without modifying files.": "调查需求并设计实施计划，不修改文件。",
-  "Handle a task with the invoking conversation's model and a separate execution context.": "使用调用方的模型，在独立执行上下文中处理任务。"
+  "Handle a task with the invoking conversation's model and a separate execution context.": "使用调用方的模型，在独立执行上下文中处理任务。",
+  "Browse plugin marketplace": "前往插件市场",
+  "Add marketplace source": "添加市场源",
+  "Edit marketplace source": "编辑市场源",
+  "Manage marketplace sources": "管理市场源",
+  "No marketplace sources": "尚未添加市场源"
 }

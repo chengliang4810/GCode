@@ -50,8 +50,6 @@ type InstalledPlugin struct {
 	Marketplace string              `json:"marketplace"`
 	Version     string              `json:"version,omitempty"`
 	Commit      string              `json:"commit,omitempty"`
-	Scope       string              `json:"scope"`
-	ProjectPath string              `json:"projectPath,omitempty"`
 	Enabled     bool                `json:"enabled"`
 	Path        string              `json:"path"`
 	Components  []string            `json:"components"`
@@ -97,8 +95,6 @@ type PluginMarketplaceInput struct {
 type PluginInstallInput struct {
 	Marketplace string `json:"marketplace"`
 	Name        string `json:"name"`
-	Scope       string `json:"scope"`
-	ProjectPath string `json:"projectPath,omitempty"`
 }
 
 type PluginInput struct {
@@ -167,11 +163,8 @@ func (c Command) validatePlugins() error {
 			return errors.New("plugin installation details are required")
 		}
 		i := c.Plugin.Install
-		if i.Name == "" || i.Marketplace == "" || (i.Scope != "user" && i.Scope != "project" && i.Scope != "local") {
-			return errors.New("an installation requires plugin, marketplace and user/project/local scope")
-		}
-		if i.Scope != "user" && strings.TrimSpace(i.ProjectPath) == "" {
-			return errors.New("project and local installations require a host project path")
+		if strings.TrimSpace(i.Name) == "" || strings.TrimSpace(i.Marketplace) == "" {
+			return errors.New("an installation requires plugin and marketplace")
 		}
 	case "plugins.configure":
 		if c.ID == "" || c.Plugin == nil || c.Plugin.Configuration == nil ||

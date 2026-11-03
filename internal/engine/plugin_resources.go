@@ -52,7 +52,7 @@ type forkSkillScopeKey struct{}
 func pluginDataDirectory(root string, b plugins.Bundle) string {
 	key := b.ID
 	if b.Installation != nil {
-		key = installationKey(*b.Installation)
+		key = b.Installation.ID
 	}
 	sum := sha256.Sum256([]byte(key))
 	return filepath.Join(root, "plugins", "data", hex.EncodeToString(sum[:16]))
@@ -116,7 +116,7 @@ func buildRuntimeResources(configRoot, runtimeRoot, cwd, sessionID string, bundl
 		}
 		var saved map[string]string
 		if b.Installation != nil {
-			saved = config[installationKey(*b.Installation)]
+			saved = config[b.Installation.ID]
 		}
 		values, configErr := effectivePluginConfig(b.Manifest.UserConfig, saved)
 		if configErr != nil {

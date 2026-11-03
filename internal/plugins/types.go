@@ -151,11 +151,6 @@ type Catalog struct {
 	RefreshedAt time.Time         `json:"refreshedAt"`
 }
 
-type InstallOptions struct {
-	Scope       string
-	ProjectPath string
-}
-
 type Installation struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
@@ -165,8 +160,6 @@ type Installation struct {
 	Commit        string    `json:"commit,omitempty"`
 	Path          string    `json:"path"`
 	Enabled       bool      `json:"enabled"`
-	Scope         string    `json:"scope"`
-	ProjectPath   string    `json:"projectPath,omitempty"`
 	InstalledAt   time.Time `json:"installedAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 	Manifest      Manifest  `json:"manifest"`

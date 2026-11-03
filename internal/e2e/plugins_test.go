@@ -4,8 +4,6 @@ package e2e
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -82,7 +80,11 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 	}
 	app := startApp(t, binary, artifacts, "install", data, "--local")
 	app.act("settings-nav-Plugins", "press", "")
-	app.act("plugin-tab-sources", "press", "")
+	app.waitKey("plugin-browse-marketplace")
+	pluginCapture(app, "empty-installed")
+	app.act("plugin-browse-marketplace", "press", "")
+	app.waitKey("plugin-source-manage")
+	pluginCapture(app, "marketplace")
 	app.act("plugin-source-add", "press", "")
 	app.act("plugin-source-name", "setValue", "native-market")
 	app.act("plugin-source-location", "setValue", market)
@@ -109,28 +111,27 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 		}
 		return nil
 	})
-	app.act("plugin-tab-catalog", "press", "")
-	app.act("plugin-install-scope", "press", "")
-	pluginActLabel(app, "Installation scope local")
-	app.act("plugin-install-project", "press", "")
-	pluginActLabel(app, "Project directory "+project)
+	pluginCapture(app, "marketplace-sources")
+	app.act("dialog-close", "press", "")
+	pluginWaitNoKey(app, "plugin-refresh-native-market")
+	app.act("plugin-marketplace-native-market", "press", "")
+	pluginCapture(app, "marketplace-source-tab")
 	app.act("plugin-install-fixture@native-market", "press", "")
-	app.await("local scope plugin installed on the real host", func() error {
+	app.await("user plugin installed on the real host", func() error {
 		installed, err := readInstalled()
 		if err != nil {
 			return err
 		}
-		if len(installed) != 1 || installed[0].Scope != "local" || installed[0].ProjectPath != project {
-			return fmt.Errorf("local installation not persisted: %+v", installed)
+		if len(installed) != 1 || installed[0].ID != "fixture@native-market" {
+			return fmt.Errorf("user installation not persisted: %+v", installed)
 		}
 		_, err = os.Stat(filepath.Join(installed[0].Path, "skills", "fixture", "SKILL.md"))
 		return err
 	})
-	sum := sha256.Sum256([]byte("local\x00" + filepath.Clean(project)))
-	id := "fixture@native-market#local-" + hex.EncodeToString(sum[:8])
-	app.act("plugin-tab-installed", "press", "")
+	id := "fixture@native-market"
+	app.act("settings-nav-Plugins", "press", "")
 	app.waitKey("plugin-enabled-" + id)
-	pluginCapture(app, "installed-local")
+	pluginCapture(app, "installed-user")
 	app.act("plugin-configure-"+id, "press", "")
 	app.act("value", "setValue", "discarded-fixture-secret")
 	app.act("plugin-config-cancel", "press", "")
@@ -183,9 +184,8 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 	})
 	pluginCapture(app, "configured-disabled")
 	app.stop()
-	restarted := startApp(t, binary, artifacts, "restart", data, "--local", "--appearance", "dark", "--width", "900", "--height", "600")
+	restarted := startApp(t, binary, artifacts, "restart", data, "--local", "--language", "zh-CN", "--appearance", "dark", "--width", "900", "--height", "600")
 	restarted.act("settings-nav-Plugins", "press", "")
-	restarted.act("plugin-tab-installed", "press", "")
 	restarted.waitChecked("plugin-enabled-"+id, false)
 	pluginCapture(restarted, "restored-dark-narrow")
 	restarted.act("plugin-configure-"+id, "press", "")
@@ -216,7 +216,29 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 		}
 		return nil
 	})
+	restarted.waitKey("plugin-browse-marketplace")
 	pluginCapture(restarted, "uninstalled")
+	restarted.act("plugin-browse-marketplace", "press", "")
+	restarted.act("plugin-source-manage", "press", "")
+	restarted.waitKey("plugin-remove-native-market")
+	pluginCapture(restarted, "sources-dark-narrow")
+	restarted.act("plugin-remove-native-market", "press", "")
+	restarted.await("marketplace source removed from host", func() error {
+		payload, err := os.ReadFile(filepath.Join(data, "plugins", "registry.json"))
+		if err != nil {
+			return err
+		}
+		var registry struct {
+			Sources []plugins.MarketplaceSource `json:"sources"`
+		}
+		if err := json.Unmarshal(payload, &registry); err != nil {
+			return err
+		}
+		if slices.ContainsFunc(registry.Sources, func(source plugins.MarketplaceSource) bool { return source.ID == "native-market" }) {
+			return fmt.Errorf("marketplace still registered")
+		}
+		return nil
+	})
 }
 
 func pluginActLabel(app *nativeApp, label string) {

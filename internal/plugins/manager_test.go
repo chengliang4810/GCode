@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -86,7 +85,7 @@ func TestManagerLocalMarketInstallUpdateRollback(t *testing.T) {
 	}
 }
 
-func TestManagerScopeAndSnapshotIsolation(t *testing.T) {
+func TestManagerUserInstallationAndSnapshotIsolation(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	m, err := NewManager(t.TempDir())
@@ -106,19 +105,20 @@ func TestManagerScopeAndSnapshotIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	project := t.TempDir()
-	options := InstallOptions{Scope: "project", ProjectPath: project}
-	if _, err := m.Install(ctx, "scope", "demo", options); err != nil {
+	if _, err := m.Install(ctx, "scope", "demo"); err != nil {
 		t.Fatal(err)
 	}
-	if err := m.SetEnabled(ctx, install.ID, false, options); err != nil {
+	if len(m.Installed()) != 1 {
+		t.Fatal("reinstall created a second user installation")
+	}
+	if bundles, err := m.Bundles(); err != nil || len(bundles) != 1 {
+		t.Fatalf("user installation missing: %v", err)
+	}
+	if err := m.SetEnabled(ctx, install.ID, false); err != nil {
 		t.Fatal(err)
 	}
-	if bundles, err := m.BundlesFor(filepath.Join(project, "nested")); err != nil || len(bundles) != 0 {
-		t.Fatalf("disabled project must mask user: %v", err)
-	}
-	if bundles, err := m.BundlesFor(t.TempDir()); err != nil || len(bundles) != 1 {
-		t.Fatalf("user install outside project: %v", err)
+	if bundles, err := m.Bundles(); err != nil || len(bundles) != 0 {
+		t.Fatalf("disabled user installation remained active: %v", err)
 	}
 	sources := m.Sources()
 	sources[0].Source.Repo = "mutated"

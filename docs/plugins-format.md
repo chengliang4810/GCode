@@ -20,11 +20,10 @@ Hook、MCP 或 LSP 进程；业务宿主通过类型化 `Bundle` 使用已加载
 - `Sources`、`Catalogs`、`Installed`：返回独立的内存快照，不等待网络刷新。
 - `PutSource`、`RemoveSource`、`Refresh`：维护市场来源和目录快照。
 - `Install`、`SetEnabled`、`Update`、`Uninstall`：维护插件安装记录。
-- `BundlesFor(cwd)`：选择当前目录适用的启用插件；`local` 优先于 `project`，
-  `project` 优先于 `user`，窄作用域禁用会覆盖全局启用。
+- `Bundles()`：返回宿主用户级已启用且依赖可用的插件，各项目使用同一组插件。
 
-安装身份为 `plugin@marketplace`，同一身份可具有不同作用域和项目路径。除 `Install`
-外的安装操作默认选择 `user` 作用域；修改项目或本地安装须传入对应 `InstallOptions`。
+安装身份为 `plugin@marketplace`，同一身份只有一条用户级安装记录。
+安装操作不接受作用域或项目路径；启停、更新、卸载与配置都直接按安装身份执行。
 `Update` 使用已经刷新的目录，调用方先对来源执行 `Refresh` 才能发现远端更新。
 
 默认来源：
@@ -101,7 +100,7 @@ Git 和 HTTP 操作使用调用方 context，具有独立超时，Git 不询问
 的对象。安装和更新会准备完整依赖图，环、缺失插件、版本冲突或其中任一安装失败
 都不会发布部分安装记录。已经满足约束且启用的依赖会复用。
 
-跨市场自动安装由根市场的 `allowCrossMarketplaceDependenciesOn` 控制；同作用域
+跨市场自动安装由根市场的 `allowCrossMarketplaceDependenciesOn` 控制；用户级
 已经显式启用的目标依赖不要求该列表。Git 依赖约束通过远程 `<name>--v<version>`
 标签选择最高满足版本，仅拉取该提交，不克隆完整历史。git-subdir 保留该提交的完整
 源树供链接解析，然后只物化指定插件及其引用的同源共享资源；不能在解析前丢弃兄弟目录。
@@ -109,8 +108,8 @@ Git 和 HTTP 操作使用调用方 context，具有独立超时，Git 不询问
 返回明确错误。默认排除未显式请求的预发布版本。
 
 禁用或卸载操作若新增启用插件的依赖缺口会被拒绝。`Installed().Issues`、
-`DependencyIssues(cwd)` 给出缺失、禁用、版本不满足和循环原因；依赖有问题的插件
-不会进入 `BundlesFor(cwd)` 的可执行清单。
+`DependencyIssues()` 给出缺失、禁用、版本不满足和循环原因；依赖有问题的插件
+不会进入 `Bundles()` 的可执行清单。
 
 ## 明确保留的边界
 

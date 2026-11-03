@@ -12,6 +12,8 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
+	localize "gcode/internal/i18n/view"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -50,7 +52,7 @@ func pluginUIFixture(t *testing.T) (*App, *pluginUIService) {
 			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill", Components: []string{"skills"}, Issues: []string{"Fixture dependency issue"}},
 		},
 		Installed: []contracts.InstalledPlugin{
-			{ID: "fixture@official:user", CatalogID: "fixture@official", Name: "fixture", Marketplace: "official", Scope: "user", Enabled: true,
+			{ID: "fixture@official", CatalogID: "fixture@official", Name: "fixture", Marketplace: "official", Enabled: true,
 				Config: []contracts.PluginConfigField{{Key: "token", Title: "Plugin token", Type: "string", Sensitive: true, Configured: true, Saved: true}}},
 		},
 	}
@@ -61,57 +63,91 @@ func pluginUIFixture(t *testing.T) (*App, *pluginUIService) {
 }
 
 func pluginUITester(app *App) *ui.Tester {
+	if app.section != "Marketplace" {
+		app.section = "Plugins"
+	}
 	return ui.NewTester(func(c *ui.Context) {
+		localize.Set(c, app.state.Settings.General.Language)
 		c.SetTheme(app.palette.UI())
-		ui.Column(c).Fill().Padding(16).Gap(10).Children(func() { app.pluginSettings(c) })
+		app.settingsView(c)
 	}, 900, 1200)
 }
 
-func TestPluginSettingsInstallUsesHostProjectPath(t *testing.T) {
-	app, service := pluginUIFixture(t)
-	app.capabilityUI.plugins.scope = "project"
+func TestPluginSettingsNavigationAndEmptyState(t *testing.T) {
+	app, _ := pluginUIFixture(t)
+	sections := app.sections()
+	models := slices.Index(sections, "Model settings")
+	if models < 0 || sections[models+1] != "Marketplace" || !slices.Contains(sections, "Plugins") {
+		t.Fatalf("marketplace must immediately follow model settings: %v", sections)
+	}
+	app.state.Plugins.Installed = nil
 	tt := pluginUITester(app)
-	if err := tt.Click("Installation scope"); err != nil {
+	if !tt.HasText("No installed plugins") {
+		t.Fatal("empty installed state missing")
+	}
+	if _, ok := tt.Find("Search plugins"); ok {
+		t.Fatal("installed page displays marketplace catalog")
+	}
+	if err := tt.Click("Browse plugin marketplace"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Installation scope local"); err != nil {
-		t.Fatal(err)
+	if app.section != "Marketplace" {
+		t.Fatal("empty state did not navigate to marketplace")
 	}
-	if err := tt.Click("Project directory"); err != nil {
-		t.Fatal(err)
+	if _, ok := tt.Find("Search plugins"); !ok {
+		t.Fatal("marketplace search missing after navigation")
 	}
-	if err := tt.Click("Project directory " + app.state.Projects[0].Path); err != nil {
-		t.Fatal(err)
+}
+
+func TestPluginSettingsInstallUsesUserRegistry(t *testing.T) {
+	app, service := pluginUIFixture(t)
+	app.section = "Marketplace"
+	app.state.Plugins.Installed = nil
+	tt := pluginUITester(app)
+	for _, removed := range []string{"Installation scope", "Project directory", "Marketplace"} {
+		if _, ok := tt.Find(removed); ok {
+			t.Fatalf("obsolete selector present: %s", removed)
+		}
 	}
 	if err := tt.Click("Install fixture"); err != nil {
 		t.Fatal(err)
 	}
-	if len(service.commands) != 1 {
-		t.Fatalf("expected one typed installation command: %#v; %s", service.commands, app.errorText)
-	}
-	command := service.commands[0]
-	if command.Kind != "plugins.install" || command.Plugin.Install.Scope != "local" ||
-		command.Plugin.Install.ProjectPath != app.state.Projects[0].Path ||
-		command.Plugin.Install.ProjectPath == "project-id" {
-		t.Fatalf("installation lost scope or host path: %+v", command)
+	if len(service.commands) != 1 || service.commands[0].Kind != "plugins.install" ||
+		*service.commands[0].Plugin.Install != (contracts.PluginInstallInput{Marketplace: "official", Name: "fixture"}) {
+		t.Fatalf("expected user installation command: %#v; %s", service.commands, app.errorText)
 	}
 }
 
 func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	app, service := pluginUIFixture(t)
+	app.section = "Marketplace"
+	app.state.Plugins.Installed = nil
 	tt := pluginUITester(app)
+	all, ok := tt.Find("All marketplaces")
+	official, found := tt.Find("Official")
+	if !ok || !found || all.X >= official.X {
+		t.Fatal("All must be the first marketplace tab")
+	}
 	app.capabilityUI.plugins.query = "missing"
 	tt.Frame()
 	if _, ok := tt.Find("Install fixture"); ok {
 		t.Fatal("search did not filter catalog")
 	}
 	app.capabilityUI.plugins.query = "fixture"
-	app.capabilityUI.plugins.marketplace = "community"
 	tt.Frame()
-	if _, ok := tt.Find("Install fixture"); ok {
-		t.Fatal("market filter did not filter catalog")
+	if err := tt.Click("Community"); err != nil {
+		t.Fatal(err)
 	}
-	if err := tt.Click("Sources"); err != nil {
+	if _, ok := tt.Find("Install fixture"); ok {
+		t.Fatal("market tab did not filter catalog")
+	}
+	if err := tt.Click("All marketplaces"); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := tt.Find("Install fixture"); !ok {
+		t.Fatal("All did not restore catalog")
+	}
+	if err := tt.Click("Manage marketplace sources"); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.Click("Refresh official"); err != nil {
@@ -132,12 +168,57 @@ func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	if saved.Kind != "plugins.source.save" || saved.Plugin.Marketplace.ID != "official" || saved.Plugin.Marketplace.Ref != "pinned-commit" {
 		t.Fatalf("source update lost identity or ref: %+v", saved)
 	}
+	if err := tt.Click("Remove community"); err != nil {
+		t.Fatal(err)
+	}
+	if service.commands[len(service.commands)-1].Kind != "plugins.source.remove" {
+		t.Fatal("source removal not dispatched")
+	}
+	if err := tt.Click("Close dialog"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Add marketplace source"); err != nil {
+		t.Fatal(err)
+	}
+	if !app.capabilityUI.plugins.sourcesOpen || !app.capabilityUI.plugins.sourceOpen {
+		t.Fatal("add source did not open editor dialog")
+	}
+	app.selectSettingsSection("Plugins")
+	tt.Frame()
+	if app.capabilityUI.plugins.sourcesOpen {
+		t.Fatal("leaving marketplace retained source dialog")
+	}
+}
+
+func TestPluginSettingsRemovedSourceResetsToAll(t *testing.T) {
+	app, _ := pluginUIFixture(t)
+	app.section = "Marketplace"
+	app.capabilityUI.plugins.marketplace = "community"
+	tt := pluginUITester(app)
+	app.state.Plugins.Marketplaces = app.state.Plugins.Marketplaces[:1]
+	tt.Frame()
+	if app.capabilityUI.plugins.marketplace != "" {
+		t.Fatal("removed market left an invisible active filter")
+	}
+}
+
+func TestPluginSettingsChineseAllTab(t *testing.T) {
+	app, _ := pluginUIFixture(t)
+	app.section = "Marketplace"
+	app.state.Settings.General.Language = "zh-CN"
+	tt := pluginUITester(app)
+	tt.SetLocale(i18n.Native("zh-CN"))
+	all, ok := tt.Find("所有")
+	firstSource, found := tt.Find("Official")
+	if !ok || !found || all.X >= firstSource.X {
+		t.Fatal("Chinese marketplace must begin with the 所有 tab")
+	}
 }
 
 func TestPluginSettingsRecognizesInstalledEntryWithDifferentRuntimeName(t *testing.T) {
 	app, service := pluginUIFixture(t)
+	app.section = "Marketplace"
 	app.state.Plugins.Installed[0].Name = "runtime-namespace"
-	app.capabilityUI.plugins.scope = "user"
 	tt := pluginUITester(app)
 	_ = tt.Click("Install fixture")
 	if len(service.commands) != 0 {
@@ -147,7 +228,6 @@ func TestPluginSettingsRecognizesInstalledEntryWithDifferentRuntimeName(t *testi
 
 func TestPluginSettingsSecretDraftAndActions(t *testing.T) {
 	app, service := pluginUIFixture(t)
-	app.capabilityUI.plugins.tab = "installed"
 	tt := pluginUITester(app)
 	id := service.state.Installed[0].ID
 	if err := tt.Click("Enable " + id); err != nil {
@@ -214,7 +294,6 @@ func TestPluginSettingsConfigurationTypesAndDefaultOwnership(t *testing.T) {
 	}
 	app.state.Plugins.Installed[0].Config = fields
 	service.state.Installed[0].Config = fields
-	app.capabilityUI.plugins.tab = "installed"
 	tt := pluginUITester(app)
 	id := service.state.Installed[0].ID
 	if err := tt.Click("Configure " + id); err != nil {
@@ -284,29 +363,46 @@ func TestPluginSettingsThemesNarrowAndOperationState(t *testing.T) {
 				{ID: "failed", Kind: "plugins.install", TargetID: "fixture", State: "failed", Error: "fixture install error"},
 			}
 			tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, test.width, 1100)
-			for _, label := range []string{"Settings page viewport", "Settings page content", "Settings page heading: Plugins", "Search plugins"} {
+			for _, label := range []string{"Settings page viewport", "Settings page content", "Settings page heading: Plugins", "Browse plugin marketplace"} {
 				if _, ok := tt.Find(label); !ok {
 					t.Fatalf("missing shared page/control %q", label)
 				}
 			}
-			if !tt.HasText("fixture install error") || !tt.HasText("Fixture dependency issue") {
-				t.Fatal("operation error or component issue omitted")
+			if !tt.HasText("fixture install error") {
+				t.Fatal("operation error omitted")
 			}
-			for _, tab := range []struct{ value, control string }{
-				{"catalog", "Search plugins"}, {"installed", "Configure fixture@official:user"}, {"sources", "Add marketplace"},
+			for _, page := range []struct{ section, control string }{
+				{"Plugins", "Configure fixture@official"}, {"Marketplace", "Search plugins"},
 			} {
-				app.capabilityUI.plugins.tab = tab.value
+				app.selectSettingsSection(page.section)
 				tt.Frame()
-				rect, ok := tt.Find(tab.control)
+				rect, ok := tt.Find(page.control)
 				if !ok || rect.X < 0 || rect.X+rect.W > float32(test.width)+1 {
-					t.Fatalf("%s control overflows the shared narrow page: %+v", tab.value, rect)
+					t.Fatalf("%s control overflows the shared narrow page: %+v", page.section, rect)
+				}
+				if page.section == "Marketplace" {
+					if !tt.HasText("Fixture dependency issue") {
+						t.Fatal("catalog component issue omitted")
+					}
+					manage, ok := tt.Find("Manage marketplace sources")
+					add, found := tt.Find("Add marketplace source")
+					if !ok || !found || manage.X+manage.W > add.X || add.X+add.W > float32(test.width) {
+						t.Fatalf("marketplace toolbar geometry invalid: %+v %+v", manage, add)
+					}
+					if err := tt.Click("Manage marketplace sources"); err != nil {
+						t.Fatal(err)
+					}
+					rect, ok = tt.Find("Edit official")
+					if !ok || rect.X < 0 || rect.X+rect.W > float32(test.width) {
+						t.Fatalf("marketplace dialog overflows: %+v", rect)
+					}
 				}
 				if os.Getenv("RCODE_CAPTURE_PLUGIN_SETTINGS") == "1" {
-					folder := filepath.Join("..", "..", "output", "plugin-settings")
+					folder := filepath.Join("..", "..", "output", "plugin-settings-split")
 					if err := os.MkdirAll(folder, 0o755); err != nil {
 						t.Fatal(err)
 					}
-					file, err := os.Create(filepath.Join(folder, test.name+"-"+tab.value+".png"))
+					file, err := os.Create(filepath.Join(folder, test.name+"-"+page.section+".png"))
 					if err != nil {
 						t.Fatal(err)
 					}

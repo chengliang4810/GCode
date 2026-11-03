@@ -48,11 +48,7 @@ func resolveDependencyTag(ctx context.Context, source Source, name string, const
 
 // install prepares a dependency graph in isolation and publishes the registry once.
 // Prepared immutable directories may remain after a failure; no active record changes.
-func (m *Manager) install(ctx context.Context, marketplace, name string, options InstallOptions) (Installation, error) {
-	options, err := normalizeOptions(options)
-	if err != nil {
-		return Installation{}, err
-	}
+func (m *Manager) install(ctx context.Context, marketplace, name string) (Installation, error) {
 	next := copyValue(m.data)
 	visiting := map[string]bool{}
 	completed := map[string]Installation{}
@@ -95,15 +91,14 @@ func (m *Manager) install(ctx context.Context, marketplace, name string, options
 		visiting[id] = true
 		defer delete(visiting, id)
 		var candidate Installation
-		existing, exists := selectInstallations(next.Installations, options.ProjectPath)[id]
-		if !root && exists && existing.Enabled && checkVersions(existing.Version, constraints[id]) == nil &&
-			(market == rootMarketplace || sameInstallation(existing, id, options) || slices.Contains(crossAllowed, market)) {
+		existing, exists := selectInstallations(next.Installations)[id]
+		if !root && exists && existing.Enabled && checkVersions(existing.Version, constraints[id]) == nil {
 			candidate = existing
 		} else {
 			if !root && market != rootMarketplace && !slices.Contains(crossAllowed, market) {
 				return Installation{}, fmt.Errorf("cross-marketplace dependency %s is not in %s allowCrossMarketplaceDependenciesOn", id, rootMarketplace)
 			}
-			prepared, err := m.prepare(ctx, market, plugin, options, constraints[id])
+			prepared, err := m.prepare(ctx, market, plugin, constraints[id])
 			if err != nil {
 				return Installation{}, fmt.Errorf("install %s: %w", id, err)
 			}
@@ -112,7 +107,7 @@ func (m *Manager) install(ctx context.Context, marketplace, name string, options
 				return Installation{}, fmt.Errorf("dependency %s: %w", id, err)
 			}
 			for _, old := range next.Installations {
-				if sameInstallation(old, candidate.ID, options) {
+				if old.ID == candidate.ID {
 					candidate.InstalledAt = old.InstalledAt
 					if root {
 						candidate.Enabled = old.Enabled
@@ -152,7 +147,7 @@ func (m *Manager) install(ctx context.Context, marketplace, name string, options
 
 func upsertInstallation(data *registry, candidate Installation) {
 	for i, old := range data.Installations {
-		if sameInstallation(old, candidate.ID, InstallOptions{Scope: candidate.Scope, ProjectPath: candidate.ProjectPath}) {
+		if old.ID == candidate.ID {
 			data.Installations[i] = candidate
 			return
 		}
@@ -174,17 +169,10 @@ func dependencyTarget(dependency Dependency, ownMarketplace string) (string, str
 	return plugin, market, nil
 }
 
-func selectInstallations(installations []Installation, cwd string) map[string]Installation {
-	selected := map[string]Installation{}
+func selectInstallations(installations []Installation) map[string]Installation {
+	selected := make(map[string]Installation, len(installations))
 	for _, installation := range installations {
-		if installation.Scope != "user" && (cwd == "" || !inside(installation.ProjectPath, cwd)) {
-			continue
-		}
-		old, exists := selected[installation.ID]
-		if !exists || scopePriority(installation.Scope) > scopePriority(old.Scope) ||
-			(scopePriority(installation.Scope) == scopePriority(old.Scope) && len(installation.ProjectPath) > len(old.ProjectPath)) {
-			selected[installation.ID] = installation
-		}
+		selected[installation.ID] = installation
 	}
 	return selected
 }
@@ -226,10 +214,10 @@ func installationIssues(installation Installation, selected map[string]Installat
 	return issues
 }
 
-// DependencyIssues exposes why enabled plugins are withheld from BundlesFor.
-func (m *Manager) DependencyIssues(cwd string) []Issue {
+// DependencyIssues exposes why enabled plugins are withheld from Bundles.
+func (m *Manager) DependencyIssues() []Issue {
 	m.mu.RLock()
-	selected := selectInstallations(m.data.Installations, cwd)
+	selected := selectInstallations(m.data.Installations)
 	m.mu.RUnlock()
 	var issues []Issue
 	for id, installation := range selected {
@@ -243,17 +231,11 @@ func (m *Manager) DependencyIssues(cwd string) []Issue {
 }
 
 func dependencyState(data registry) map[string]bool {
-	contexts := map[string]bool{"": true}
-	for _, install := range data.Installations {
-		contexts[install.ProjectPath] = true
-	}
 	issues := map[string]bool{}
-	for cwd := range contexts {
-		selected := selectInstallations(data.Installations, cwd)
-		for id, installation := range selected {
-			for _, issue := range installationIssues(installation, selected, map[string]bool{}) {
-				issues[cwd+" "+id+" requires "+issue.Path+": "+issue.Message] = true
-			}
+	selected := selectInstallations(data.Installations)
+	for id, installation := range selected {
+		for _, issue := range installationIssues(installation, selected, map[string]bool{}) {
+			issues[id+" requires "+issue.Path+": "+issue.Message] = true
 		}
 	}
 	return issues

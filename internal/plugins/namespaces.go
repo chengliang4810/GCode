@@ -30,18 +30,9 @@ func namespaceConflicts(selected map[string]Installation) []string {
 }
 
 func namespaceState(data registry) map[string]bool {
-	contexts := map[string]bool{"": true}
-	for _, installation := range data.Installations {
-		contexts[installation.ProjectPath] = true
-	}
 	result := map[string]bool{}
-	for cwd := range contexts {
-		for _, conflict := range namespaceConflicts(selectInstallations(data.Installations, cwd)) {
-			if cwd != "" {
-				conflict += " (" + cwd + ")"
-			}
-			result[conflict] = true
-		}
+	for _, conflict := range namespaceConflicts(selectInstallations(data.Installations)) {
+		result[conflict] = true
 	}
 	return result
 }

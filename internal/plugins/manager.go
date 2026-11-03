@@ -95,8 +95,8 @@ func (m *Manager) Installed() []Installation {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	result := copyValue(m.data.Installations)
+	selected := selectInstallations(m.data.Installations)
 	for i := range result {
-		selected := selectInstallations(m.data.Installations, result[i].ProjectPath)
 		result[i].Issues = installationIssues(result[i], selected, map[string]bool{})
 	}
 	return result
@@ -244,46 +244,13 @@ func (m *Manager) Refresh(ctx context.Context, id string) (Catalog, error) {
 	return copyValue(catalog), nil
 }
 
-func (m *Manager) Install(ctx context.Context, marketplace, name string, options ...InstallOptions) (Installation, error) {
+func (m *Manager) Install(ctx context.Context, marketplace, name string) (Installation, error) {
 	m.opMu.Lock()
 	defer m.opMu.Unlock()
-	return m.install(ctx, marketplace, name, firstOptions(options))
+	return m.install(ctx, marketplace, name)
 }
 
-func firstOptions(options []InstallOptions) InstallOptions {
-	if len(options) != 0 {
-		return options[0]
-	}
-	return InstallOptions{Scope: "user"}
-}
-
-func normalizeOptions(options InstallOptions) (InstallOptions, error) {
-	if options.Scope == "" {
-		options.Scope = "user"
-	}
-	switch options.Scope {
-	case "user":
-		options.ProjectPath = ""
-	case "project", "local":
-		if options.ProjectPath == "" {
-			return options, errors.New("project/local installation requires project path")
-		}
-		path, err := filepath.Abs(options.ProjectPath)
-		if err != nil {
-			return options, err
-		}
-		options.ProjectPath = filepath.Clean(path)
-	default:
-		return options, fmt.Errorf("invalid installation scope %q", options.Scope)
-	}
-	return options, nil
-}
-
-func (m *Manager) prepare(ctx context.Context, marketplace, name string, options InstallOptions, constraints []string) (Installation, error) {
-	options, err := normalizeOptions(options)
-	if err != nil {
-		return Installation{}, err
-	}
+func (m *Manager) prepare(ctx context.Context, marketplace, name string, constraints []string) (Installation, error) {
 	var catalog *Catalog
 	var entry *MarketplaceEntry
 	for i := range m.data.Catalogs {
@@ -391,8 +358,8 @@ func (m *Manager) prepare(ctx context.Context, marketplace, name string, options
 	install := Installation{
 		ID: name + "@" + catalog.Marketplace.Name, Name: name, Marketplace: catalog.Marketplace.Name,
 		SourceID: catalog.SourceID, Path: final, Version: bundle.Manifest.Version, Commit: commit,
-		Enabled: bundle.Manifest.DefaultEnabled == nil || *bundle.Manifest.DefaultEnabled,
-		Scope:   options.Scope, ProjectPath: options.ProjectPath, InstalledAt: now, UpdatedAt: now, Manifest: bundle.Manifest, EntryManifest: entry.Manifest, Source: origin,
+		Enabled:     bundle.Manifest.DefaultEnabled == nil || *bundle.Manifest.DefaultEnabled,
+		InstalledAt: now, UpdatedAt: now, Manifest: bundle.Manifest, EntryManifest: entry.Manifest, Source: origin,
 	}
 	return copyValue(install), nil
 }
@@ -401,23 +368,15 @@ func hasComponents(m Manifest) bool {
 	return len(m.Commands)+len(m.Agents)+len(m.Skills)+len(m.Hooks)+len(m.MCPServers)+len(m.LSPServers)+len(m.OutputStyles) != 0
 }
 
-func sameInstallation(installation Installation, id string, options InstallOptions) bool {
-	return installation.ID == id && installation.Scope == options.Scope && installation.ProjectPath == options.ProjectPath
-}
-
-func (m *Manager) SetEnabled(ctx context.Context, id string, enabled bool, options ...InstallOptions) error {
+func (m *Manager) SetEnabled(ctx context.Context, id string, enabled bool) error {
 	if err := ctx.Err(); err != nil {
-		return err
-	}
-	opts, err := normalizeOptions(firstOptions(options))
-	if err != nil {
 		return err
 	}
 	m.opMu.Lock()
 	defer m.opMu.Unlock()
 	next := copyValue(m.data)
 	for i := range next.Installations {
-		if sameInstallation(next.Installations[i], id, opts) {
+		if next.Installations[i].ID == id {
 			next.Installations[i].Enabled = enabled
 			if err := validateDependencyTransition(m.data, next); err != nil {
 				return err
@@ -428,34 +387,26 @@ func (m *Manager) SetEnabled(ctx context.Context, id string, enabled bool, optio
 	return fmt.Errorf("plugin installation %q not found", id)
 }
 
-func (m *Manager) Update(ctx context.Context, id string, options ...InstallOptions) (Installation, error) {
-	opts, err := normalizeOptions(firstOptions(options))
-	if err != nil {
-		return Installation{}, err
-	}
+func (m *Manager) Update(ctx context.Context, id string) (Installation, error) {
 	m.opMu.Lock()
 	defer m.opMu.Unlock()
 	for _, old := range m.data.Installations {
-		if sameInstallation(old, id, opts) {
-			return m.install(ctx, old.Marketplace, old.Name, opts)
+		if old.ID == id {
+			return m.install(ctx, old.Marketplace, old.Name)
 		}
 	}
 	return Installation{}, fmt.Errorf("plugin installation %q not found", id)
 }
 
-func (m *Manager) Uninstall(ctx context.Context, id string, options ...InstallOptions) error {
+func (m *Manager) Uninstall(ctx context.Context, id string) error {
 	if err := ctx.Err(); err != nil {
-		return err
-	}
-	opts, err := normalizeOptions(firstOptions(options))
-	if err != nil {
 		return err
 	}
 	m.opMu.Lock()
 	defer m.opMu.Unlock()
 	next := copyValue(m.data)
 	before := len(next.Installations)
-	next.Installations = slices.DeleteFunc(next.Installations, func(i Installation) bool { return sameInstallation(i, id, opts) })
+	next.Installations = slices.DeleteFunc(next.Installations, func(i Installation) bool { return i.ID == id })
 	if len(next.Installations) == before {
 		return fmt.Errorf("plugin installation %q not found", id)
 	}
@@ -467,15 +418,10 @@ func (m *Manager) Uninstall(ctx context.Context, id string, options ...InstallOp
 }
 
 func (m *Manager) Bundles() ([]Bundle, error) {
-	return m.BundlesFor("")
-}
-
-// BundlesFor selects enabled scopes applicable to cwd; narrower scopes win by ID.
-func (m *Manager) BundlesFor(cwd string) ([]Bundle, error) {
 	m.mu.RLock()
 	installations := copyValue(m.data.Installations)
 	m.mu.RUnlock()
-	selected := selectInstallations(installations, cwd)
+	selected := selectInstallations(installations)
 	if conflicts := namespaceConflicts(selected); len(conflicts) != 0 {
 		return nil, fmt.Errorf("plugin configuration conflict: %s", strings.Join(conflicts, "; "))
 	}
@@ -501,17 +447,6 @@ func (m *Manager) BundlesFor(cwd string) ([]Bundle, error) {
 		bundles = append(bundles, bundle)
 	}
 	return bundles, nil
-}
-
-func scopePriority(scope string) int {
-	switch scope {
-	case "local":
-		return 3
-	case "project":
-		return 2
-	default:
-		return 1
-	}
 }
 
 func inside(root, path string) bool {

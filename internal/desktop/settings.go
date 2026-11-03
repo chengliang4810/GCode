@@ -17,7 +17,7 @@ type settingOption struct{ value, label string }
 func (a *App) sections() []string {
 	s := []string{"General", "Appearance", "Notifications", "Devices", "Shortcuts"}
 	if a.state.Runtime != nil {
-		s = append(s, "Model settings", "Personalization", "Plugins", "Subagents", "Skills", "Commands", "Hooks", "MCP servers")
+		s = append(s, "Model settings", "Marketplace", "Personalization", "Plugins", "Subagents", "Skills", "Commands", "Hooks", "MCP servers")
 	} else {
 		s = append(s, "Providers", "Personalization")
 	}
@@ -53,6 +53,8 @@ func settingsIcon(section string) string {
 		return "star"
 	case "Plugins":
 		return "widget"
+	case "Marketplace":
+		return "global"
 	case "Commands":
 		return "command"
 	case "Hooks":
@@ -113,7 +115,15 @@ func (a *App) settingsView(c *ui.Context) {
 	}
 	settingsPageViewport(c.Key("settings-page-" + a.section)).Children(func() {
 		settingsPageContent(c).Children(func() {
-			settingsPageHeading(c, a.section)
+			if a.section == "Marketplace" {
+				ui.Row(c).FillWidth().Wrap().Gap(8).AlignItems(ui.Center).Children(func() {
+					settingsPageHeading(c, a.section)
+					ui.Spacer(c).Grow(1)
+					a.pluginMarketplaceActions(c)
+				})
+			} else {
+				settingsPageHeading(c, a.section)
+			}
 			if (a.section == "Providers" || a.section == "Devices" || a.section == "Cloud" || a.section == "Billing") && a.integrationUI.Error != "" {
 				controlRowButton(c).FillWidth().Label(tr(c, "Dismiss settings error")).OnClick(func() { a.integrationUI.Error = "" }).Children(func() {
 					ui.Text(c, a.integrationUI.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
@@ -146,6 +156,8 @@ func (a *App) settingsView(c *ui.Context) {
 				a.hookSettings(c)
 			case "Plugins":
 				a.pluginSettings(c)
+			case "Marketplace":
+				a.pluginMarketplaceSettings(c)
 			case "Devices":
 				a.deviceSettings(c)
 			case "Cloud":
@@ -163,6 +175,7 @@ func (a *App) settingsView(c *ui.Context) {
 			}
 		})
 	})
+	a.pluginSourcesDialog(c)
 	a.integrationDialogs(c)
 	a.settingsImportDialog(c)
 	a.settingsRemovalDialog(c)

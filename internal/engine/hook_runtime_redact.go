@@ -54,7 +54,7 @@ func (e *Engine) hookTextRedactor(rule contracts.HookRule) func(string) string {
 	if e.plugins != nil {
 		for _, installed := range e.plugins.Installed() {
 			schema := installed.Manifest.UserConfig
-			secrets = append(secrets, pluginConfigSecrets(schema, saved[installationKey(installed)])...)
+			secrets = append(secrets, pluginConfigSecrets(schema, saved[installed.ID])...)
 			secrets = append(secrets, pluginConfigSecrets(schema, nil)...)
 			if matchesOwner(installed.ID, installed.Path) {
 				for key, option := range schema {

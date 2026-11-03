@@ -11,29 +11,44 @@ import (
 )
 
 type pluginSettingsState struct {
-	tab, query, marketplace, scope, projectPath string
-	sourceOpen                                  bool
-	source                                      contracts.PluginMarketplaceInput
-	configID                                    string
-	config                                      map[string]*string
-	removeConfig                                []string
+	query, marketplace      string
+	sourcesOpen, sourceOpen bool
+	source                  contracts.PluginMarketplaceInput
+	configID                string
+	config                  map[string]*string
+	removeConfig            []string
 }
 
 func (a *App) pluginSettings(c *ui.Context) {
-	s := &a.capabilityUI.plugins
-	if s.tab == "" {
-		s.tab = "catalog"
-	}
-	if s.scope == "" {
-		s.scope = "user"
-	}
-	ui.Row(c.Key("plugin-tabs")).FillWidth().Gap(8).Children(func() {
-		for _, tab := range []settingOption{{"catalog", "Marketplace"}, {"installed", "Installed"}, {"sources", "Sources"}} {
-			controlNavButton(c.Key("plugin-tab-"+tab.value), tr(c, tab.label), s.tab == tab.value).
-				Children(func() { ui.Text(c, tr(c, tab.label)) }).
-				OnClick(func() { s.tab = tab.value; s.configID = ""; s.config = nil })
-		}
+	ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+		textButton(c.Key("plugin-browse-marketplace"), tr(c, "Browse plugin marketplace")).OnClick(func() {
+			a.selectSettingsSection("Marketplace")
+		})
 	})
+	a.pluginOperations(c)
+	a.pluginInstalled(c)
+}
+
+func (a *App) pluginMarketplaceActions(c *ui.Context) {
+	ui.Row(c.Key("plugin-marketplace-actions")).Gap(8).AlignItems(ui.Center).Children(func() {
+		iconButton(c.Key("plugin-source-manage"), "list", tr(c, "Manage marketplace sources")).OnClick(func() {
+			a.capabilityUI.plugins.sourcesOpen = true
+			a.capabilityUI.plugins.sourceOpen = false
+		})
+		primaryButton(c.Key("plugin-source-add"), tr(c, "Add marketplace source")).OnClick(func() {
+			s := &a.capabilityUI.plugins
+			s.source = contracts.PluginMarketplaceInput{Kind: "github"}
+			s.sourcesOpen, s.sourceOpen = true, true
+		})
+	})
+}
+
+func (a *App) pluginMarketplaceSettings(c *ui.Context) {
+	a.pluginOperations(c)
+	a.pluginCatalog(c)
+}
+
+func (a *App) pluginOperations(c *ui.Context) {
 	for _, operation := range a.state.Plugins.Operations {
 		if operation.State != "running" && operation.Error == "" {
 			continue
@@ -57,14 +72,6 @@ func (a *App) pluginSettings(c *ui.Context) {
 			color = a.palette.Danger
 		}
 		ui.Text(c, text).FontSize(design.TextSize(c, design.TextSmall)).TextColor(color).Selectable()
-	}
-	switch s.tab {
-	case "sources":
-		a.pluginSources(c)
-	case "installed":
-		a.pluginInstalled(c)
-	default:
-		a.pluginCatalog(c)
 	}
 }
 
@@ -90,21 +97,19 @@ func (a *App) pluginAction(c *ui.Context, key, label, kind, id string) {
 func (a *App) pluginCatalog(c *ui.Context) {
 	s := &a.capabilityUI.plugins
 	controlTextInput(c.Key("plugin-search"), &s.query).FillWidth().Label(tr(c, "Search plugins")).Placeholder(tr(c, "Search plugins"))
-	options := []settingOption{{"", "All marketplaces"}}
-	for _, source := range a.state.Plugins.Marketplaces {
-		options = append(options, settingOption{source.ID, source.Name})
+	if s.marketplace != "" && !slices.ContainsFunc(a.state.Plugins.Marketplaces, func(source contracts.PluginMarketplace) bool {
+		return source.ID == s.marketplace
+	}) {
+		s.marketplace = ""
 	}
-	a.resourceSelect(c, "plugin-marketplace-filter", "Marketplace", &s.marketplace, options)
-	a.resourceSelect(c, "plugin-install-scope", "Installation scope", &s.scope, []settingOption{{"user", "User"}, {"project", "Project"}, {"local", "Local"}})
-	if s.scope != "user" {
-		projects := []settingOption{{"", "Choose project"}}
-		for _, project := range a.state.Projects {
-			if project.Path != "" {
-				projects = append(projects, settingOption{project.Path, project.Name + " · " + project.Path})
-			}
+	ui.Row(c.Key("plugin-marketplace-tabs")).FillWidth().Wrap().Gap(8).Children(func() {
+		controlNavButton(c.Key("plugin-marketplace-all"), tr(c, "All marketplaces"), s.marketplace == "").
+			Children(func() { ui.Text(c, tr(c, "All marketplaces")) }).OnClick(func() { s.marketplace = "" })
+		for _, source := range a.state.Plugins.Marketplaces {
+			controlNavButton(c.Key("plugin-marketplace-"+source.ID), source.Name, s.marketplace == source.ID).
+				Children(func() { ui.Text(c, source.Name).SingleLine() }).OnClick(func() { s.marketplace = source.ID })
 		}
-		a.resourceSelect(c, "plugin-install-project", "Project directory", &s.projectPath, projects)
-	}
+	})
 	found := false
 	filterName := s.marketplace
 	for _, source := range a.state.Plugins.Marketplaces {
@@ -128,19 +133,15 @@ func (a *App) pluginCatalog(c *ui.Context) {
 			a.pluginDetails(c, item.Components, item.Issues)
 			already := false
 			for _, installed := range a.state.Plugins.Installed {
-				if installed.CatalogID == item.ID &&
-					installed.Scope == s.scope && (s.scope == "user" || installed.ProjectPath == s.projectPath) {
+				if installed.CatalogID == item.ID {
 					already = true
 				}
 			}
 			primaryButton(c.Key("plugin-install-"+item.ID), tr(c, "Install")).
 				Label(tr(c, "Install") + " " + item.Name).
-				Disabled(already || pluginBusy(a.state.Plugins, item.ID) || (s.scope != "user" && s.projectPath == "")).
+				Disabled(already || pluginBusy(a.state.Plugins, item.ID)).
 				OnClick(func() {
-					input := contracts.PluginInstallInput{Marketplace: item.Marketplace, Name: item.Name, Scope: s.scope}
-					if s.scope != "user" {
-						input.ProjectPath = s.projectPath
-					}
+					input := contracts.PluginInstallInput{Marketplace: item.Marketplace, Name: item.Name}
 					a.dispatch(contracts.Command{Kind: "plugins.install", Plugin: &contracts.PluginInput{Install: &input}})
 				})
 		})
@@ -159,6 +160,25 @@ func (a *App) pluginDetails(c *ui.Context, components, issues []string) {
 	}
 }
 
+func (a *App) pluginSourcesDialog(c *ui.Context) {
+	s := &a.capabilityUI.plugins
+	title := "Manage marketplace sources"
+	if s.sourceOpen {
+		title = "Add marketplace source"
+		if s.source.ID != "" {
+			title = "Edit marketplace source"
+		}
+	}
+	a.settingsDialog(c, "plugin-sources-dialog", title, &s.sourcesOpen, 680, func() {
+		a.pluginOperations(c)
+		a.pluginSources(c)
+	})
+	if !s.sourcesOpen {
+		s.sourceOpen = false
+		s.source = contracts.PluginMarketplaceInput{}
+	}
+}
+
 func (a *App) pluginSources(c *ui.Context) {
 	s := &a.capabilityUI.plugins
 	if s.sourceOpen {
@@ -167,7 +187,7 @@ func (a *App) pluginSources(c *ui.Context) {
 		a.resourceSelect(c, "plugin-source-kind", "Source type", &s.source.Kind,
 			[]settingOption{{"github", "GitHub"}, {"git", "Git"}, {"directory", "Directory"}, {"file", "File"}, {"url", "URL"}})
 		resourceText(c, "plugin-source-ref", "Git reference", &s.source.Ref)
-		ui.Row(c).Gap(8).Children(func() {
+		ui.Row(c).Wrap().Gap(8).Children(func() {
 			textButton(c.Key("plugin-source-cancel"), tr(c, "Cancel")).OnClick(func() { s.sourceOpen = false })
 			primaryButton(c.Key("plugin-source-save"), tr(c, "Save")).Disabled(strings.TrimSpace(s.source.Source) == "").
 				OnClick(func() {
@@ -178,10 +198,10 @@ func (a *App) pluginSources(c *ui.Context) {
 		})
 		return
 	}
-	primaryButton(c.Key("plugin-source-add"), tr(c, "Add marketplace")).OnClick(func() {
-		s.source = contracts.PluginMarketplaceInput{Kind: "github"}
-		s.sourceOpen = true
-	})
+	if len(a.state.Plugins.Marketplaces) == 0 {
+		ui.Text(c, tr(c, "No marketplace sources")).TextColor(a.palette.Muted)
+	}
+
 	for _, source := range a.state.Plugins.Marketplaces {
 		ui.Column(c.Key("plugin-source-"+source.ID)).FillWidth().Gap(8).Padding(12, 0).
 			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
@@ -191,7 +211,7 @@ func (a *App) pluginSources(c *ui.Context) {
 			if source.Error != "" {
 				ui.Text(c, source.Error).TextColor(a.palette.Danger).Selectable()
 			}
-			ui.Row(c).Gap(8).Children(func() {
+			ui.Row(c).Wrap().Gap(8).Children(func() {
 				a.pluginAction(c, "refresh", "Refresh", "plugins.source.refresh", source.ID)
 				textButton(c.Key("plugin-source-edit-"+source.ID), tr(c, "Edit")).Label(tr(c, "Edit") + " " + source.ID).
 					Disabled(pluginBusy(a.state.Plugins, source.ID)).OnClick(func() {
@@ -213,7 +233,7 @@ func (a *App) pluginInstalled(c *ui.Context) {
 		ui.Column(c.Key("plugin-installed-"+installed.ID)).FillWidth().Gap(8).Padding(12, 0).
 			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 			ui.Text(c, installed.Name).FontWeight(600)
-			detail := pluginSummary(installed.Marketplace, installed.Version, installed.Scope, installed.ProjectPath)
+			detail := pluginSummary(installed.Marketplace, installed.Version)
 			ui.Text(c, detail).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Selectable()
 			a.pluginDetails(c, installed.Components, installed.Issues)
 			ui.Row(c).FillWidth().Gap(8).Children(func() {

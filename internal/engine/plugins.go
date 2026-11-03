@@ -2,8 +2,6 @@ package engine
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,14 +17,6 @@ import (
 	"gcode/internal/plugins"
 	"gcode/internal/storage"
 )
-
-func installationKey(i plugins.Installation) string {
-	if i.Scope == "user" {
-		return i.ID
-	}
-	sum := sha256.Sum256([]byte(i.Scope + "\x00" + filepath.Clean(i.ProjectPath)))
-	return i.ID + "#" + i.Scope + "-" + hex.EncodeToString(sum[:8])
-}
 
 func readPluginConfiguration(root string) (map[string]map[string]string, error) {
 	path := filepath.Join(root, "plugin-configuration.json")
@@ -124,9 +114,8 @@ func (e *Engine) pluginProjection() contracts.PluginState {
 	}
 	for _, install := range e.plugins.Installed() {
 		item := contracts.InstalledPlugin{
-			ID: installationKey(install), CatalogID: install.ID, Name: install.Name, Marketplace: install.Marketplace,
-			Version: install.Version, Commit: install.Commit, Scope: install.Scope,
-			ProjectPath: install.ProjectPath, Enabled: install.Enabled, Path: install.Path,
+			ID: install.ID, CatalogID: install.ID, Name: install.Name, Marketplace: install.Marketplace,
+			Version: install.Version, Commit: install.Commit, Enabled: install.Enabled, Path: install.Path,
 		}
 		bundle, err := plugins.LoadInstallation(install)
 		if err != nil {
@@ -161,13 +150,13 @@ func (e *Engine) pluginProjection() contracts.PluginState {
 	return result
 }
 
-func (e *Engine) installOptionsLocked(target string) (plugins.Installation, plugins.InstallOptions, error) {
+func (e *Engine) installedPluginLocked(target string) (plugins.Installation, error) {
 	for _, i := range e.plugins.Installed() {
-		if installationKey(i) == target {
-			return i, plugins.InstallOptions{Scope: i.Scope, ProjectPath: i.ProjectPath}, nil
+		if i.ID == target {
+			return i, nil
 		}
 	}
-	return plugins.Installation{}, plugins.InstallOptions{}, errors.New("installed plugin not found")
+	return plugins.Installation{}, errors.New("installed plugin not found")
 }
 
 func marketplaceSource(input contracts.PluginMarketplaceInput) (plugins.MarketplaceSource, error) {
@@ -213,10 +202,9 @@ func (e *Engine) startPluginOperationLocked(command contracts.Command) error {
 		return errors.New("at most eight plugin operations can be pending")
 	}
 	var install plugins.Installation
-	var options plugins.InstallOptions
 	if strings.HasPrefix(command.Kind, "plugins.") && !strings.HasPrefix(command.Kind, "plugins.source.") && command.Kind != "plugins.install" {
 		var err error
-		install, options, err = e.installOptionsLocked(command.ID)
+		install, err = e.installedPluginLocked(command.ID)
 		if err != nil {
 			return err
 		}
@@ -281,15 +269,15 @@ func (e *Engine) startPluginOperationLocked(command contracts.Command) error {
 			_, err = e.plugins.Refresh(ctx, command.ID)
 		case "plugins.install":
 			i := command.Plugin.Install
-			_, err = e.plugins.Install(ctx, i.Marketplace, i.Name, plugins.InstallOptions{Scope: i.Scope, ProjectPath: i.ProjectPath})
+			_, err = e.plugins.Install(ctx, i.Marketplace, i.Name)
 		case "plugins.enable", "plugins.disable":
-			err = e.plugins.SetEnabled(ctx, install.ID, command.Kind == "plugins.enable", options)
+			err = e.plugins.SetEnabled(ctx, install.ID, command.Kind == "plugins.enable")
 		case "plugins.update":
 			if _, err = e.plugins.Refresh(ctx, install.SourceID); err == nil {
-				_, err = e.plugins.Update(ctx, install.ID, options)
+				_, err = e.plugins.Update(ctx, install.ID)
 			}
 		case "plugins.uninstall":
-			err = e.plugins.Uninstall(ctx, install.ID, options)
+			err = e.plugins.Uninstall(ctx, install.ID)
 		}
 		projection := e.pluginProjection()
 		e.mu.Lock()
