@@ -20,16 +20,6 @@ func (a *App) workedFor(milliseconds int64) string {
 
 func (a *App) t(message string) string { return i18n.In(a.state.Settings.General.Language, message) }
 
-func (a *App) localizedSettingsSearch(query string) []settingLink {
-	links := a.settingLinks()
-	for index := range links {
-		link := &links[index]
-		// Search both languages, while keeping the original routing/reveal keys.
-		link.description += " " + i18n.In(i18n.Chinese, link.title) + " " + i18n.In(i18n.Chinese, link.section)
-	}
-	return settingsSearchHits(links, query)
-}
-
 func (a *App) settingOptionText(c *ui.Context, label, value, text string) string {
 	switch label {
 	case "Interface font", "Terminal font", "Code & diff font", "Math font", "Light theme", "Dark theme":

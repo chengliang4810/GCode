@@ -133,32 +133,18 @@ func TestCloudSettingsNavigationEnablesOnlyFreshAvailableOff(t *testing.T) {
 	}
 }
 
-func TestCloudSettingsNavigationFromSectionAndSearch(t *testing.T) {
-	for _, search := range []bool{false, true} {
-		name := "section"
-		if search {
-			name = "settings search"
-		}
-		t.Run(name, func(t *testing.T) {
-			a, service := cloudNavigationTestApp(t)
-			a.OpenRoute("settings/General")
-			tt := ui.NewTester(a.View, 1320, 1000)
-			if search {
-				if err := tt.Click("Search settings"); err != nil {
-					t.Fatal(err)
-				}
-				tt.Type("Cloud")
-			}
-			if err := tt.Click("Cloud"); err != nil {
-				t.Fatal(err)
-			}
-			if a.section != "Cloud" || a.state.Integrations.Cloud.State != "ready" {
-				t.Fatalf("visible Cloud navigation did not enable: section=%s status=%+v", a.section, a.state.Integrations.Cloud)
-			}
-			if got := cloudNavigationKinds(t, service); !reflect.DeepEqual(got, []string{"cloud.refresh", "cloud.enable"}) {
-				t.Fatalf("Cloud requests = %v", got)
-			}
-		})
+func TestCloudSettingsNavigationFromSection(t *testing.T) {
+	a, service := cloudNavigationTestApp(t)
+	a.OpenRoute("settings/General")
+	tt := ui.NewTester(a.View, 1320, 1000)
+	if err := tt.Click("Cloud"); err != nil {
+		t.Fatal(err)
+	}
+	if a.section != "Cloud" || a.state.Integrations.Cloud.State != "ready" {
+		t.Fatalf("Cloud navigation failed: section=%s status=%+v", a.section, a.state.Integrations.Cloud)
+	}
+	if got := cloudNavigationKinds(t, service); !reflect.DeepEqual(got, []string{"cloud.refresh", "cloud.enable"}) {
+		t.Fatalf("Cloud requests = %v", got)
 	}
 }
 

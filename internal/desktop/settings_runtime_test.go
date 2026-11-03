@@ -76,11 +76,6 @@ func TestDataDirectorySettingsPendingRestartKeepsOriginalConversations(t *testin
 
 func TestGeneralSettingsDoNotOfferCustomWorktreeStorage(t *testing.T) {
 	app, _ := settingsTestApp(t)
-	for _, link := range app.settingLinks() {
-		if link.title == "Custom worktree location" {
-			t.Fatal("settings search still offers a separate worktree root")
-		}
-	}
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(app.palette.UI())
 		app.generalSettings(c)

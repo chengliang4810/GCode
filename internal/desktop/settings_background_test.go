@@ -166,8 +166,9 @@ func TestBackgroundAdjustmentFitsMinimumWindow(t *testing.T) {
 	app.apply(snapshot)
 	app.section = "Appearance"
 	app.palette = design.Palette("rcode-dark", true)
-	app.expanded["settings-target:New thread background"] = true
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
+	tt.Scroll(700, 400, 0, 500)
+	tt.Frame()
 	if err = tt.Click("Adjust background"); err != nil {
 		t.Fatal(err)
 	}

@@ -29,7 +29,7 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if _, err := tree.findKey("settings-search"); err == nil {
+				if _, err := tree.findKey("settings-nav-General"); err == nil {
 					return fmt.Errorf("settings has not closed")
 				}
 				return nil

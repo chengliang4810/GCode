@@ -20,16 +20,13 @@ func TestDesktopScenarioSettings(t *testing.T) {
 	app.act("Compact mode", "press", "")
 	app.waitChecked("Compact mode", !original)
 
-	app.act("settings-search", "setValue", "Autosave")
-	app.waitKey("search-Autosave")
-	app.act("search-Autosave", "press", "")
+	app.act("settings-nav-Files", "press", "")
 	app.waitKey("Autosave")
 	autosave := app.waitKey("Autosave").checked()
 	app.act("Autosave", "press", "")
 	app.waitChecked("Autosave", !autosave)
-	app.capture("searched-files")
+	app.capture("files")
 
-	app.act("settings-search", "setValue", "")
 	app.act("settings-nav-Appearance", "press", "")
 	app.waitKey("appearance-mode-dark")
 	app.capture("appearance")

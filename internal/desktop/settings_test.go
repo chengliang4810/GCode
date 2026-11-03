@@ -5,7 +5,6 @@ import (
 	"gcode/internal/assets"
 	"strings"
 	"testing"
-	"time"
 
 	"gcode/internal/design"
 	"gcode/internal/mock"
@@ -117,71 +116,6 @@ func TestAppearanceSelectionChangesModeAndClearsOverride(t *testing.T) {
 	}
 	if snapshot.Settings.Appearance.Mode != "light" || snapshot.Settings.Appearance.ThemeID != "" {
 		t.Fatalf("mode selection not persisted: %+v", snapshot.Settings.Appearance)
-	}
-}
-
-func TestSettingsSearchNavigatesToAppearance(t *testing.T) {
-	app, _ := settingsTestApp(t)
-	app.palette = design.Palette("rcode-dark", true)
-	app.section = "General"
-	app.settingsSearch = "theme"
-	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsNavigation(c) }, 256, 880)
-	if !tt.HasText("Light theme") || !tt.HasText("Theme library") {
-		t.Fatal("settings search omitted relevant rows")
-	}
-	if err := tt.Click("Light theme"); err != nil {
-		t.Fatal(err)
-	}
-	if app.section != "Appearance" {
-		t.Fatalf("landed in %s", app.section)
-	}
-	app.settingsSearch = "zzzz-no-setting"
-	tt.Frame()
-	if !tt.HasText("No settings found") {
-		t.Fatal("missing empty search state")
-	}
-}
-
-func TestSettingsSearchRanksAndCorrectsTypos(t *testing.T) {
-	app, _ := settingsTestApp(t)
-	hits := settingsSearchHits(app.settingLinks(), "thmee")
-	if len(hits) == 0 {
-		t.Fatal("adjacent typo lost theme results")
-	}
-	found := false
-	for _, hit := range hits {
-		if hit.title == "Light theme" {
-			found = true
-		}
-	}
-	if !found {
-		t.Fatal("theme typo omitted Light theme")
-	}
-	hits = settingsSearchHits(app.settingLinks(), "light theme")
-	if len(hits) == 0 || hits[0].title != "Light theme" {
-		t.Fatal("exact title should rank first")
-	}
-	if len(settingsSearchHits(app.settingLinks(), "theme nonexistentword")) != 0 {
-		t.Fatal("all query words must match")
-	}
-}
-
-func TestSettingsSearchRevealsTargetRowOnce(t *testing.T) {
-	app, _ := settingsTestApp(t)
-	app.section = "Appearance"
-	app.palette = design.Palette("rcode-dark", true)
-	app.expanded["settings-target:Terminal font"] = true
-	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 600)
-	r, ok := tt.Find("Terminal font")
-	if !ok || r.Y < 0 || r.Y+r.H > 600 {
-		t.Fatalf("target was not revealed: %+v", r)
-	}
-	if app.expanded["settings-target:Terminal font"] {
-		t.Fatal("reveal request not consumed")
-	}
-	tt.Advance(2 * time.Second)
-	if app.expanded["settings-target:Terminal font"] {
-		t.Fatal("highlight reissued a scroll request")
 	}
 }
 
@@ -405,21 +339,6 @@ func TestFilesAutosaveOnlyShowsOriginalDelayChoices(t *testing.T) {
 	}
 	if snapshot.Settings.Files.AutosaveDelay != 600 {
 		t.Fatal("autosave selection did not persist")
-	}
-}
-
-func TestSettingsSearchTargetsParentOfHiddenRow(t *testing.T) {
-	app, _ := settingsTestApp(t)
-	app.section = "General"
-	app.settingsSearch = "autosave delay"
-	app.state.Settings.Files.Autosave = false
-	app.palette = design.Palette("rcode-dark", true)
-	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsNavigation(c) }, 256, 880)
-	if err := tt.Click("Autosave delay"); err != nil {
-		t.Fatal(err)
-	}
-	if app.section != "Files" || !app.expanded["settings-target:Autosave"] || app.expanded["settings-target:Autosave delay"] {
-		t.Fatal("hidden row did not land at its parent control")
 	}
 }
 

@@ -327,7 +327,7 @@ func TestTitlebarSettingsAfterTakeoverKeepsItsOwnChrome(t *testing.T) {
 		t.Fatal("Settings sidebar button was not reachable")
 	}
 	tt.Advance(250 * time.Millisecond)
-	titlebarRect(t, tt, "Search settings")
+	titlebarRect(t, tt, "General")
 }
 
 func TestTitlebarCanvasKeepsDraftVisibleWithoutSessionPanels(t *testing.T) {

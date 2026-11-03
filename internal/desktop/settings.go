@@ -3,9 +3,7 @@ package desktop
 import (
 	"fmt"
 	"runtime"
-	"sort"
 	"strings"
-	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -15,16 +13,14 @@ import (
 )
 
 type settingOption struct{ value, label string }
-type settingLink struct{ title, section, description string }
 
 func (a *App) sections() []string {
-	s := []string{"General", "Appearance", "Personalization", "Notifications", "Shortcuts"}
+	s := []string{"General", "Appearance", "Notifications", "Devices", "Shortcuts"}
 	if a.state.Runtime != nil {
-		s = append(s, "Model settings", "Plugins", "Subagents", "MCP servers", "Skills", "Commands", "Hooks")
+		s = append(s, "Model settings", "Personalization", "Plugins", "Subagents", "Skills", "Commands", "Hooks", "MCP servers")
 	} else {
-		s = append(s, "Providers")
+		s = append(s, "Providers", "Personalization")
 	}
-	s = append(s, "Devices")
 	if a.state.Capabilities.Cloud && a.state.User.SignedIn {
 		s = append(s, "Cloud", "Billing")
 	}
@@ -83,43 +79,10 @@ func (a *App) settingsNavigation(c *ui.Context) {
 			icon(c, "alt-arrow-left", 16)
 			ui.Text(c, tr(c, "Back")).FontSize(design.TextSize(c, design.TextBase))
 		}).OnClick(func() { a.clearShortcutRecording(); a.navigate("chat") })
-		controlTextInput(c.Key("settings-search"), &a.settingsSearch).Placeholder(tr(c, "Search settings")).Label(tr(c, "Search settings")).Margin(2, 0, 8, 0).OnChange(func() {})
 		ui.Scroll(c.Key("settings-navigation")).Grow(1).Gap(3).Children(func() {
-			if strings.TrimSpace(a.settingsSearch) != "" {
-				query := strings.ToLower(strings.TrimSpace(a.settingsSearch))
-				found := false
-				for _, hit := range a.localizedSettingsSearch(query) {
-					found = true
-					h := hit
-					b := controlNavButton(c.Key("search-"+h.title), tr(c, h.title), false).FillWidth()
-					b.Children(func() {
-						icon(c, settingsIcon(h.section), 17)
-						ui.Column(c).Grow(1).Gap(3).Children(func() {
-							a.settingsMatchLabel(c, h.title, query)
-							ui.Text(c, tr(c, h.section)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-						})
-					})
-					b.OnClick(func() {
-						a.clearShortcutRecording()
-						a.selectSettingsSection(h.section)
-						target := h.title
-						if target == "Autosave delay" && !a.state.Settings.Files.Autosave {
-							target = "Autosave"
-						}
-						if target == "Background effect" && a.state.Settings.Appearance.Background == "" {
-							target = "New thread background"
-						}
-						a.expanded["settings-target:"+target] = true
-					})
-				}
-				if !found {
-					ui.Text(c, tr(c, "No settings found")).TextColor(a.palette.Muted).Padding(12, 10)
-				}
-				return
-			}
 			for _, name := range a.sections() {
 				section := name
-				if name == "Providers" || name == "Files" {
+				if name == "Providers" || name == "Personalization" || name == "Files" {
 					ui.Spacer(c).Height(12)
 				}
 				b := controlNavButton(c.Key("settings-nav-"+section), tr(c, section), a.section == section).FillWidth()
@@ -131,54 +94,6 @@ func (a *App) settingsNavigation(c *ui.Context) {
 			}
 		})
 	})
-}
-
-func (a *App) settingLinks() []settingLink {
-	links := []settingLink{
-		{"Usage statistics", "Usage statistics", "application tokens activity models 应用用量 使用统计 热力图 模型"},
-		{"Subagents", "Subagents", "agent profile prompt model reasoning 子智能体 提示词 模型 思考"},
-		{"Model settings", "Model settings", "provider protocol API key models 模型 供应商"},
-		{"MCP servers", "MCP servers", "tools stdio HTTP servers MCP 服务器"},
-		{"Skills", "Skills", "SKILL.md instructions import 技能 导入"},
-		{"Commands", "Commands", "slash prompt commands 命令 提示词"},
-		{"Hooks", "Hooks", "events process shell hooks 钩子 事件"},
-		{"Plugins", "Plugins", "marketplace install update skills commands MCP hooks 插件 市场 安装 更新"},
-		{"Data directory", "General", "data storage path folder 数据 保存 目录"},
-		{"Language", "General", "中文 Chinese English language 语言 国际化"},
-		{"Send messages with", "General", "Enter keyboard composer"}, {"Compact mode", "General", "Collapse thinking and tools"}, {"Stop agent with Escape", "General", "Keyboard"}, {"Thread naming", "General", "Model"},
-		{"Color scheme", "Appearance", "System light dark mode"}, {"Light theme", "Appearance", "Palette colors"}, {"Dark theme", "Appearance", "Palette colors"}, {"Reasoning theme", "Appearance", "思考强度 滑块 渐变 slider gradient swatch"}, {"Theme library", "Appearance", "Import add custom themes"}, {"Accent color", "Appearance", "Tint highlight swatch"}, {"Glass", "Appearance", "Frosted translucent opaque transparency blur vibrancy surface"}, {"Interface font", "Appearance", "Typography text typeface size menus conversations"}, {"Terminal font", "Appearance", "Monospace text typeface size"}, {"Code & diff font", "Appearance", "Editor text monospace typeface files size"}, {"Conversation width", "Appearance", "Transcript messages composer column maximum"}, {"New thread background", "Appearance", "Image picture wallpaper composer"}, {"Background effect", "Appearance", "Blur dim image"}, {"Reduce motion", "Appearance", "Animations accessibility"},
-		{"Auto memory", "Personalization", "记忆 memory recall facts persist 保存 记住 事实 会话"}, {"Global instructions", "Personalization", "AGENTS.md 全局指令 instructions 编辑 editor global"},
-		{"Match wallpaper colors", "Appearance", "Tint accent surface desktop"}, {"Pause animations in background", "Appearance", "focus unfocused inactive window battery"}, {"Render math", "Appearance", "Latex formulas equations markdown typeset"}, {"Math font", "Appearance", "Latex formulas typeface"}, {"Math size", "Appearance", "Latex formulas scale"},
-		{"Session sounds", "Notifications", "Task completed input required"}, {"Desktop notifications", "Notifications", "Alerts banners system"}, {"Keyboard shortcuts", "Shortcuts", "Keybindings"}, {"Providers", "Providers", "Accounts models authentication"}, {"Devices", "Devices", "Remote connection"}, {"Cloud", "Cloud", "Sync storage"}, {"Billing", "Billing", "Plan credits usage invoices"}, {"Autosave", "Files", "Save files delay"}, {"Word wrap", "Files", "Editor"}, {"Show hidden and ignored files", "Files", "Explorer"}, {"Archived sessions", "Archived sessions", "Restore conversations"},
-		{"Task completed", "Notifications", "Done finished audio sound"}, {"Input required", "Notifications", "Question waiting approval audio sound"}, {"Errors and disconnections", "Notifications", "Failure offline audio sound"}, {"Only when in the background", "Notifications", "Focus unfocused"}, {"Autosave delay", "Files", "Debounce wait"},
-	}
-	if a.checkForUpdates != nil {
-		links = append(links, settingLink{"Software updates", "General", "Check for updates version release 软件 更新 版本"})
-	}
-	for _, shortcut := range a.state.Settings.Shortcuts {
-		links = append(links, settingLink{shortcut.Label, "Shortcuts", shortcut.Group + " " + shortcut.Keys + " keyboard shortcut keybinding"})
-	}
-	if runtime.GOOS == "darwin" && a.state.Capabilities.Appshots {
-		links = append(links,
-			settingLink{"Capture Appshots", "Appshots", "Screenshot screen"},
-			settingLink{"Capture sound", "Appshots", "Shutter audio"},
-			settingLink{"Global shortcut", "Appshots", "Capture appshot screenshot preferred keybinding hotkey"},
-			settingLink{"Destination", "Appshots", "Session composer where"},
-			settingLink{"Window capture", "Appshots", "Screen recording permission"},
-			settingLink{"Application text", "Appshots", "Accessibility semantic permission"},
-		)
-	}
-	visible := make(map[string]bool)
-	for _, name := range a.sections() {
-		visible[name] = true
-	}
-	filtered := links[:0]
-	for _, link := range links {
-		if visible[link.section] {
-			filtered = append(filtered, link)
-		}
-	}
-	return filtered
 }
 
 func (a *App) settingsView(c *ui.Context) {
@@ -198,11 +113,7 @@ func (a *App) settingsView(c *ui.Context) {
 	}
 	settingsPageViewport(c.Key("settings-page-" + a.section)).Children(func() {
 		settingsPageContent(c).Children(func() {
-			heading := settingsPageHeading(c, a.section)
-			if a.expanded["settings-target:"+a.section] {
-				heading.ScrollIntoView()
-				delete(a.expanded, "settings-target:"+a.section)
-			}
+			settingsPageHeading(c, a.section)
 			if (a.section == "Providers" || a.section == "Devices" || a.section == "Cloud" || a.section == "Billing") && a.integrationUI.Error != "" {
 				controlRowButton(c).FillWidth().Label(tr(c, "Dismiss settings error")).OnClick(func() { a.integrationUI.Error = "" }).Children(func() {
 					ui.Text(c, a.integrationUI.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
@@ -378,19 +289,6 @@ func (a *App) settingsDataRow(c *ui.Context, title, description string, control 
 
 func (a *App) settingsRowWithText(c *ui.Context, key, title, description string, control func(), leading ...func()) ui.Element {
 	row := ui.Row(c.Key("setting-row-"+key)).FillWidth().MinHeight(60).AlignItems(ui.Center).Gap(16).Padding(12, 16)
-	started := ui.Local(row, "search-reveal", func() time.Time { return time.Time{} })
-	if a.expanded["settings-target:"+key] {
-		delete(a.expanded, "settings-target:"+key)
-		row.ScrollIntoView()
-		*started = c.Now()
-	}
-	if !started.IsZero() {
-		elapsed := c.Now().Sub(*started)
-		if elapsed < 1100*time.Millisecond {
-			row.Background(a.palette.Accent.Alpha(.12))
-			c.After(1100*time.Millisecond - elapsed)
-		}
-	}
 	row.Children(func() {
 		for _, draw := range leading {
 			draw()
@@ -404,138 +302,6 @@ func (a *App) settingsRowWithText(c *ui.Context, key, title, description string,
 		control()
 	})
 	return row
-}
-
-func (a *App) settingsMatchLabel(c *ui.Context, title, query string) {
-	title = tr(c, title)
-	lower := strings.ToLower(title)
-	start, end := -1, -1
-	for _, word := range strings.Fields(query) {
-		if at := strings.Index(lower, word); at >= 0 {
-			start, end = at, at+len(word)
-			break
-		}
-	}
-	if start < 0 {
-		ui.Text(c, tr(c, title)).FontWeight(600)
-		return
-	}
-	ui.RichText(c, ui.Span{Text: title[:start]}, ui.Span{Text: title[start:end], Color: a.palette.Accent, Background: a.palette.Accent.Alpha(.24), Radius: 2}, ui.Span{Text: title[end:]}).FontWeight(600)
-}
-
-// Matches the original settings index policy: all words must match, title
-// matches rank first, and edit-distance fallback is suppressed for real words.
-func settingsSearchHits(links []settingLink, query string) []settingLink {
-	words := strings.Fields(strings.ToLower(query))
-	if len(words) == 0 {
-		return nil
-	}
-	misspelled := make([]bool, len(words))
-	for i, word := range words {
-		misspelled[i] = true
-		for _, link := range links {
-			if strings.Contains(strings.ToLower(link.title+" "+link.description+" "+link.section), word) {
-				misspelled[i] = false
-				break
-			}
-		}
-	}
-	type ranked struct {
-		link  settingLink
-		score int
-	}
-	var rankedHits []ranked
-	for _, link := range links {
-		score := 0
-		matched := true
-		for i, word := range words {
-			best := 0
-			for _, field := range []struct {
-				text   string
-				weight int
-			}{{link.title, 100}, {link.description, 40}, {link.section, 20}} {
-				text := strings.ToLower(field.text)
-				if at := strings.Index(text, word); at >= 0 {
-					weight := field.weight
-					if at == 0 || text[at-1] == ' ' || text[at-1] == '&' {
-						weight += weight / 2
-					}
-					best = max(best, weight)
-				}
-			}
-			if best == 0 && misspelled[i] && (settingsTypo(strings.ToLower(link.title), word) || settingsTypo(strings.ToLower(link.section), word)) {
-				best = 10
-			}
-			if best == 0 {
-				matched = false
-				break
-			}
-			score += best
-		}
-		if matched {
-			if strings.ToLower(link.title) == strings.Join(words, " ") {
-				score += 100
-			}
-			rankedHits = append(rankedHits, ranked{link, score})
-		}
-	}
-	sort.SliceStable(rankedHits, func(i, j int) bool { return rankedHits[i].score > rankedHits[j].score })
-	result := make([]settingLink, len(rankedHits))
-	for i, hit := range rankedHits {
-		result[i] = hit.link
-	}
-	return result
-}
-
-func settingsTypo(field, word string) bool {
-	if len(word) < 4 {
-		return false
-	}
-	budget := 1
-	if len(word) >= 8 {
-		budget = 2
-	}
-	for _, candidate := range strings.FieldsFunc(field, func(r rune) bool { return (r < 'a' || r > 'z') && (r < '0' || r > '9') }) {
-		for _, length := range []int{len(candidate), len(word) - 1, len(word), len(word) + 1} {
-			if length >= 0 && length <= len(candidate) && settingsDistance(word, candidate[:length], budget) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func settingsDistance(a, b string, budget int) bool {
-	if len(a)-len(b) > budget || len(b)-len(a) > budget {
-		return false
-	}
-	width := len(b) + 1
-	rows := make([]int, 3*width)
-	before, last, current := 0, width, 2*width
-	for j := 0; j < width; j++ {
-		rows[last+j] = j
-	}
-	for i := 1; i <= len(a); i++ {
-		rows[current] = i
-		rowMin := i
-		for j := 1; j <= len(b); j++ {
-			cost := 0
-			if a[i-1] != b[j-1] {
-				cost = 1
-			}
-			cell := min(rows[last+j]+1, rows[current+j-1]+1, rows[last+j-1]+cost)
-			if i > 1 && j > 1 && a[i-1] == b[j-2] && a[i-2] == b[j-1] {
-				cell = min(cell, rows[before+j-2]+1)
-			}
-			rows[current+j] = cell
-			rowMin = min(rowMin, cell)
-		}
-		if rowMin > budget {
-			return false
-		}
-		before, last, current = last, current, before
-	}
-	return rows[last+len(b)] <= budget
 }
 
 func (a *App) shortcutRecording() bool {
@@ -723,10 +489,6 @@ func (a *App) appearanceSettings(c *ui.Context) {
 	p := &a.state.Settings.Appearance
 	sectionTitle(c, tr(c, "Color scheme"))
 	choices := ui.Row(c.Key("color-scheme")).FillWidth().Gap(16)
-	if a.expanded["settings-target:Color scheme"] {
-		choices.ScrollIntoView()
-		delete(a.expanded, "settings-target:Color scheme")
-	}
 	choices.Children(func() {
 		for _, choice := range []struct{ value, label, icon string }{{"system", "System", "monitor"}, {"light", "Light", "sun"}, {"dark", "Dark", "moon"}} {
 			choice := choice

@@ -63,9 +63,4 @@ func TestSoftwareUpdatesAbsentWithoutDesktopUpdater(t *testing.T) {
 	if tt.HasText("Check for updates…") {
 		t.Fatal("updater entry appeared without a native updater")
 	}
-	for _, link := range app.settingLinks() {
-		if link.title == "Software updates" {
-			t.Fatal("unavailable update entry appeared in settings search")
-		}
-	}
 }

@@ -57,11 +57,7 @@ func TestDesktopLocalTypography(t *testing.T) {
 						}
 						return fmt.Errorf("heading %s is not visible", section)
 					})
-					search := app.waitKey("settings-search")
-					want := math.Max(32, size*1.5+12)
-					if math.Abs(search.Bounds.Height-want) > 1 {
-						t.Fatalf("input clips selected font: height=%g want=%g", search.Bounds.Height, want)
-					}
+
 				}
 				app.waitKey("data-directory")
 				checkHeading("General")

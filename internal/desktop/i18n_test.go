@@ -34,7 +34,10 @@ func TestLanguageDefaultsAndSwitchesWithoutRestart(t *testing.T) {
 	before := app.state.Messages
 	app.OpenRoute("settings/General")
 	tt := ui.NewTester(app.View, 1320, 1000)
-	for _, text := range []string{"通用", "语言", "简体中文", "发送消息按键", "搜索设置"} {
+	if _, ok := tt.Find("搜索设置"); ok {
+		t.Fatal("settings search must not be shown")
+	}
+	for _, text := range []string{"通用", "语言", "简体中文", "发送消息按键"} {
 		if !tt.HasText(text) {
 			t.Fatalf("Chinese UI missing %q", text)
 		}
@@ -56,19 +59,6 @@ func TestLanguageDefaultsAndSwitchesWithoutRestart(t *testing.T) {
 	}
 	if !tt.HasText("通用") || app.draft != "Keep my English draft 设置" || !reflect.DeepEqual(before, app.state.Messages) {
 		t.Fatal("language switch lost page/draft or changed conversation content")
-	}
-	if err := tt.Click("搜索设置"); err != nil {
-		t.Fatal(err)
-	}
-	tt.Type("语言")
-	if !tt.HasText("语言") {
-		t.Fatal("Chinese settings search failed")
-	}
-	if err := tt.Click("语言"); err != nil {
-		t.Fatal(err)
-	}
-	if app.section != "General" {
-		t.Fatal("localized search changed routing identity")
 	}
 	snapshot, err := backend.Snapshot(context.Background())
 	if err != nil || snapshot.Settings.General.Language != i18n.Chinese {

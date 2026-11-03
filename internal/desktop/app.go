@@ -98,32 +98,32 @@ type App struct {
 	win                   *mygo.Window
 	// captionButtons reports that the window hides its native caption
 	// controls, so the title bar draws the shared SVG ones instead.
-	captionButtons                                                bool
-	systemDark                                                    bool
-	state                                                         contracts.Snapshot
-	jobs                                                          chan contracts.Command
-	closed                                                        bool
-	closeOnce                                                     sync.Once
-	workspace                                                     *workbench.State
-	route, section, sessionID, projectID, deviceID                string
-	history                                                       []string
-	historyIndex                                                  int
-	sidebar, files, right, terminal                               bool
-	sidebarWidth, filesWidth, rightWidth, terminalHeight          float32
-	sidebarResize, terminalResize, rightResize, filesResize       splitResize
-	paneSaveAt                                                    time.Time
-	paneDirty                                                     paneDirty
-	draft, search, settingsSearch, paletteQuery, errorText, toast string
-	attachments                                                   []contracts.Attachment
-	drafts                                                        map[string]string
-	expanded                                                      map[string]bool
-	integrationUI                                                 integrationUIState
-	messages                                                      ui.ListState
-	md                                                            markdown.Options
-	userMD                                                        markdown.Options
-	linkOptions                                                   map[string]*markdown.Options
-	linkSource                                                    string
-	linkSelection                                                 *linkui.Selection
+	captionButtons                                          bool
+	systemDark                                              bool
+	state                                                   contracts.Snapshot
+	jobs                                                    chan contracts.Command
+	closed                                                  bool
+	closeOnce                                               sync.Once
+	workspace                                               *workbench.State
+	route, section, sessionID, projectID, deviceID          string
+	history                                                 []string
+	historyIndex                                            int
+	sidebar, files, right, terminal                         bool
+	sidebarWidth, filesWidth, rightWidth, terminalHeight    float32
+	sidebarResize, terminalResize, rightResize, filesResize splitResize
+	paneSaveAt                                              time.Time
+	paneDirty                                               paneDirty
+	draft, search, paletteQuery, errorText, toast           string
+	attachments                                             []contracts.Attachment
+	drafts                                                  map[string]string
+	expanded                                                map[string]bool
+	integrationUI                                           integrationUIState
+	messages                                                ui.ListState
+	md                                                      markdown.Options
+	userMD                                                  markdown.Options
+	linkOptions                                             map[string]*markdown.Options
+	linkSource                                              string
+	linkSelection                                           *linkui.Selection
 	// transcriptSelections are the selection scopes of the open transcripts
 	// by pane, and transcriptHover the row the pointer is in on each.
 	transcriptSelections map[string]*linkui.Selection
