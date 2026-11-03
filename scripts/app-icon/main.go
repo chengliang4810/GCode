@@ -113,9 +113,14 @@ func generateMacIcon(out string) error {
 		if err := paint(tileImage, tile, color.NRGBA{R: 17, G: 17, B: 17, A: 255}); err != nil {
 			return err
 		}
-		if err := paint(tileImage, mark, color.NRGBA{R: 255, G: 255, B: 255, A: 255}); err != nil {
+		// Give the monogram its own inner margin without shrinking the Dock tile.
+		markSize := int(float64(tileImage.Bounds().Dx())*0.82 + 0.5)
+		markImage := image.NewNRGBA(image.Rect(0, 0, markSize, markSize))
+		if err := paint(markImage, mark, color.NRGBA{R: 255, G: 255, B: 255, A: 255}); err != nil {
 			return err
 		}
+		markInset := (tileImage.Bounds().Dx() - markSize) / 2
+		draw.Draw(tileImage, image.Rect(markInset, markInset, markInset+markSize, markInset+markSize), markImage, image.Point{}, draw.Over)
 		canvas := image.NewNRGBA(image.Rect(0, 0, size, size))
 		draw.Draw(canvas, image.Rect(inset, inset, size-inset, size-inset), tileImage, image.Point{}, draw.Src)
 		var data bytes.Buffer

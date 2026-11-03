@@ -78,3 +78,5 @@ macOS 专用图标由 `go run ./scripts/app-icon` 从现有 GC 矢量路径生�
 `app-icon-macos.icns` 包含 16/32/64/128/256/512/1024 原生分辨率图像。
 开发版 Dock 使用专用 PNG，发布包通过 `macos.icon` 使用同源 ICNS。
 通用 PNG 与 Windows 小尺寸资源保持原有尺寸。此比例是本次视觉调整值，不代表已完成 Dock 并排实机验收。
+
+macOS 图标内部的 GC 图案按底板画布的 82% 独立矢量绘制并居中，增加图案与底板之间的内留白；832px 底板和 96px 外透明边距不变。
