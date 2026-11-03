@@ -58,7 +58,7 @@ func (a *composerController) selectedModel() contracts.Model {
 
 func (a *composerController) modelLabel() string {
 	if a.sessionID == "" && a.modelNoAgents() {
-		return a.t("No models configured")
+		return a.t("Model management")
 	}
 	if model := a.selectedModel(); model.Label != "" {
 		return model.Label
@@ -149,7 +149,12 @@ func (a *composerController) saveComposerConfig(update *contracts.SessionUpdate)
 }
 
 func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Element) {
-	button := ui.ButtonBase(c.Key("model-trigger")).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel("Select model")))
+	label := "Select model"
+	manageModels := a.sessionID == "" && a.modelNoAgents()
+	if manageModels {
+		label = "Model management"
+	}
+	button := ui.ButtonBase(c.Key("model-trigger")).Height(32).Padding(0, 6).Radius(8).MaxWidth(248).MinWidth(24).Shrink(1).Gap(6).AlignItems(ui.Center).FontWeight(500).Label(tr(c, a.controlLabel(label)))
 	if a.modelMenu || button.Hovered() {
 		button.Background(a.palette.Hover)
 	}
@@ -157,6 +162,10 @@ func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Eleme
 		ui.Text(c, a.modelLabel()).SingleLine().MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 	})
 	button.OnClick(func() {
+		if manageModels {
+			a.openModelSettings()
+			return
+		}
 		a.modelMenu = !a.modelMenu
 		if a.modelMenu {
 			a.effortMenu = false

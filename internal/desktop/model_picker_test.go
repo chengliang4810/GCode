@@ -289,7 +289,7 @@ func TestAllDisabledProvidersHaveNoAgentsButKeepExistingChatModel(t *testing.T) 
 		a.state.Integrations.Providers[i].Enabled = false
 	}
 	a = modelSnapshotApp(t, a.state)
-	if !a.modelNoAgents() || a.modelLabel() != "No models configured" {
+	if !a.modelNoAgents() || a.modelLabel() != "Model management" {
 		t.Fatal("all-disabled catalog remained a perpetual loading list")
 	}
 	a.selectSession("chat-0")

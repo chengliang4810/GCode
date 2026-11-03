@@ -85,3 +85,17 @@ func persistedCompactMode(path string, want bool) error {
 	}
 	return nil
 }
+
+func TestDesktopUnconfiguredModelManagement(t *testing.T) {
+	binary, artifacts := testPaths(t)
+	app := startApp(t, binary, artifacts, "unconfigured-models", filepath.Join(artifacts, "data"), "--local")
+	app.act("back-to-conversations", "press", "")
+	entry := app.waitKey("model-trigger")
+	if entry.Label != "Model management" {
+		t.Fatalf("unconfigured model entry label=%q", entry.Label)
+	}
+	app.capture("model-management-entry")
+	app.act("model-trigger", "press", "")
+	app.waitKey("add-provider")
+	app.capture("model-settings")
+}

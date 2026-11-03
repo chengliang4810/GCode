@@ -813,7 +813,7 @@ func (a *App) modelLabel() string {
 		return a.centralControls().modelLabel()
 	}
 	if a.sessionID == "" && a.modelNoAgents() {
-		return a.t("No models configured")
+		return a.t("Model management")
 	}
 	for _, m := range a.state.Models {
 		if m.ID == a.modelID {

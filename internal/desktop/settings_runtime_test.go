@@ -258,3 +258,18 @@ func TestModelPickerManagementEntryDoesNotSelectModel(t *testing.T) {
 		t.Fatalf("opening settings changed model selection preferences: %v", err)
 	}
 }
+
+func TestUnconfiguredComposerOpensModelSettingsDirectly(t *testing.T) {
+	app, _ := runtimeSettingsTestApp(t)
+	app.navigate("chat")
+	tt := ui.NewTester(app.View, 900, 600)
+	if !tt.HasText("Model management") || tt.HasText("No models configured") {
+		t.Fatalf("unconfigured composer has the wrong entry: %v", tt.Texts())
+	}
+	if err := tt.Click("Model management"); err != nil {
+		t.Fatal(err)
+	}
+	if app.route != "settings" || app.section != "Model settings" || app.modelMenu {
+		t.Fatalf("entry did not open model settings directly: route=%q section=%q menu=%v", app.route, app.section, app.modelMenu)
+	}
+}
