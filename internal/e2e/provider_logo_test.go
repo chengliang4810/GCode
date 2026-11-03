@@ -28,11 +28,16 @@ import (
 // Native controls and the real local core. Only the public website is a local
 // HTTP fixture; no model endpoint is requested and no user profile is touched.
 func TestDesktopLocalProviderLogo(t *testing.T) {
+	shadowSVG, err := os.ReadFile("../providerlogo/testdata/shadow.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, appearance := range []string{"light", "dark"} {
 		t.Run(appearance, func(t *testing.T) {
 			binary, artifacts := testPaths(t)
 			var requests atomic.Int32
 			var broken atomic.Bool
+			var svgMode atomic.Bool
 			release := make(chan struct{})
 			var once sync.Once
 			unblock := func() { once.Do(func() { close(release) }) }
@@ -47,7 +52,14 @@ func TestDesktopLocalProviderLogo(t *testing.T) {
 				}
 				switch r.URL.Path {
 				case "/":
-					fmt.Fprint(w, `<link rel="icon" href="/logo.png">`)
+					if svgMode.Load() {
+						fmt.Fprint(w, `<link rel="icon" type="image/svg+xml" href="/logo.svg">`)
+					} else {
+						fmt.Fprint(w, `<link rel="icon" href="/logo.png">`)
+					}
+				case "/logo.svg":
+					w.Header().Set("Content-Type", "image/svg+xml")
+					_, _ = w.Write(shadowSVG)
 				case "/logo.png":
 					select {
 					case <-release:
@@ -176,6 +188,26 @@ func TestDesktopLocalProviderLogo(t *testing.T) {
 				t.Fatal(err)
 			}
 			app.capture("website-logo-saved")
+			svgMode.Store(true)
+			app.act("provider-logo", "press", "")
+			app.act("provider-logo-fetch", "press", "")
+			app.await("SVG logo saved with filters removed", func() error {
+				logo, err := readLogo()
+				if err != nil || !strings.HasPrefix(logo, "data:image/svg+xml;base64,") {
+					return fmt.Errorf("SVG logo not persisted: %v", err)
+				}
+				content, _, err := providerlogo.ImageData(logo)
+				if err != nil || providerlogo.Validate(logo) != nil || strings.Contains(string(content), "feDropShadow") ||
+					strings.Contains(string(content), `filter="`) || !strings.Contains(string(content), "linearGradient") {
+					return fmt.Errorf("SVG logo was not normalized correctly: %v", err)
+				}
+				savedLogo = logo
+				return nil
+			})
+			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.capture("website-svg-logo-saved")
 			broken.Store(true)
 			app.act("provider-logo", "press", "")
 			app.act("provider-logo-fetch", "press", "")

@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -81,6 +83,70 @@ func TestFetchProviderLogoICOAndSVG(t *testing.T) {
 				t.Fatalf("could not normalize %s: %v %q", tc.name, err, value)
 			}
 		})
+	}
+}
+
+func TestFetchProviderLogoRemovesSVGFilters(t *testing.T) {
+	source, err := os.ReadFile("testdata/shadow.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	site := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/":
+			fmt.Fprint(w, `<link rel="icon" type="image/svg+xml" href="/logo.svg">`)
+		case "/logo.svg":
+			w.Header().Set("Content-Type", "image/svg+xml")
+			_, _ = w.Write(source)
+		default:
+			t.Errorf("unexpected fallback request: %s", r.URL.Path)
+			http.NotFound(w, r)
+		}
+	}))
+	defer site.Close()
+	value, err := Fetch(t.Context(), site.URL+"/v1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, svg, err := ImageData(value)
+	if err != nil || !svg || Validate(value) != nil {
+		t.Fatalf("normalized SVG cannot be saved: svg=%t err=%v", svg, err)
+	}
+	for _, removed := range []string{"<filter", "feDropShadow", `filter="`, "#shadow"} {
+		if bytes.Contains(data, []byte(removed)) {
+			t.Fatalf("unsupported filter remains: %s", data)
+		}
+	}
+	for _, preserved := range []string{"linearGradient", `fill="url(#brand)"`, `stroke="#fff"`, "M10 10h12L10 22h12"} {
+		if !bytes.Contains(data, []byte(preserved)) {
+			t.Fatalf("SVG artwork was lost (%s): %s", preserved, data)
+		}
+	}
+}
+
+func TestProviderLogoSVGFilterProcessingRejectsUnsafeContent(t *testing.T) {
+	for _, tc := range []struct{ name, source string }{
+		{"script-in-filter", `<svg><filter><script>alert(1)</script></filter></svg>`},
+		{"external-filter", `<svg><path filter="url(https://example.com/shadow)"/></svg>`},
+		{"external-reference-in-filter", `<svg><filter><feDropShadow href="https://example.com/image"/></filter></svg>`},
+		{"event-in-filter", `<svg><filter><feDropShadow onload="alert(1)"/></filter></svg>`},
+		{"malformed-filter", `<svg><filter><feDropShadow/></svg>`},
+		{"multiple-roots", `<svg/><svg><filter/></svg>`},
+		{"filter-primitive-outside-filter", `<svg><feDropShadow/></svg>`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := normalize([]byte(tc.source)); err == nil {
+				t.Fatal("unsafe or malformed SVG accepted")
+			}
+		})
+	}
+	original, err := os.ReadFile("testdata/shadow.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	value := "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(original)
+	if Validate(value) == nil {
+		t.Fatal("saved SVG validation accepted unprocessed filters")
 	}
 }
 

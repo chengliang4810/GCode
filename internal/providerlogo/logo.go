@@ -103,7 +103,8 @@ func normalize(data []byte) (value string, err error) {
 		return "", errors.New("website logo exceeds the size limit")
 	}
 	if bytes.HasPrefix(bytes.TrimSpace(data), []byte("<")) {
-		if err := validateSVG(data); err != nil {
+		data, err = processSVG(data, true)
+		if err != nil {
 			return "", err
 		}
 		return "data:image/svg+xml;base64," + base64.StdEncoding.EncodeToString(data), nil
@@ -179,45 +180,103 @@ func boundedICO(data []byte) bool {
 // Website SVGs must be self-contained artwork, with no active content or
 // external references. The native renderer never opens a web view for them.
 func validateSVG(data []byte) error {
+	_, err := processSVG(data, false)
+	return err
+}
+
+// MyGo renders vector shapes and gradients but not SVG filters. Remove static
+// filter definitions and references on import, while validating every token,
+// including discarded content. Saved SVGs use the strict path above.
+func processSVG(data []byte, removeFilters bool) ([]byte, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
+	var output bytes.Buffer
+	encoder := xml.NewEncoder(&output)
 	root, count := false, 0
+	filterDepth, depth := 0, 0
+	changed := false
 	for {
 		token, err := decoder.Token()
-		if err == io.EOF && root {
-			return nil
+		if err == io.EOF && root && depth == 0 {
+			if !changed {
+				return data, nil
+			}
+			if err := encoder.Flush(); err != nil || output.Len() > MaxBytes {
+				return nil, errors.New("website logo exceeds the size limit")
+			}
+			return output.Bytes(), nil
 		}
 		if err != nil {
-			return errors.New("invalid website SVG logo")
+			return nil, errors.New("invalid website SVG logo")
 		}
 		count++
 		if count > 10000 {
-			return errors.New("website SVG logo is too complex")
+			return nil, errors.New("website SVG logo is too complex")
 		}
 		if directive, ok := token.(xml.Directive); ok && len(directive) > 0 {
-			return errors.New("website SVG logo contains a directive")
+			return nil, errors.New("website SVG logo contains a directive")
 		}
-		element, ok := token.(xml.StartElement)
-		if !ok {
-			continue
-		}
-		if !root {
-			if element.Name.Local != "svg" {
-				return errors.New("website response is not an SVG logo")
+		switch element := token.(type) {
+		case xml.StartElement:
+			if depth == 0 {
+				if root || element.Name.Local != "svg" {
+					return nil, errors.New("website response is not an SVG logo")
+				}
+				root = true
 			}
-			root = true
-		}
-		switch element.Name.Local {
-		case "svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon",
-			"defs", "linearGradient", "radialGradient", "stop", "clipPath", "mask", "title", "desc", "use", "symbol":
+			depth++
+			switch element.Name.Local {
+			case "svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon",
+				"defs", "linearGradient", "radialGradient", "stop", "clipPath", "mask", "title", "desc", "use", "symbol":
+			case "filter":
+				if !removeFilters {
+					return nil, errors.New("website SVG logo contains unsupported content")
+				}
+			case "feDropShadow", "feGaussianBlur", "feOffset", "feFlood", "feComposite", "feBlend",
+				"feMerge", "feMergeNode", "feColorMatrix", "feComponentTransfer", "feFuncR", "feFuncG", "feFuncB", "feFuncA":
+				if filterDepth == 0 {
+					return nil, errors.New("website SVG logo contains unsupported content")
+				}
+			default:
+				return nil, errors.New("website SVG logo contains unsupported content")
+			}
+			attrs := make([]xml.Attr, 0, len(element.Attr))
+			for _, attr := range element.Attr {
+				value := strings.ToLower(strings.TrimSpace(attr.Value))
+				if strings.HasPrefix(strings.ToLower(attr.Name.Local), "on") ||
+					(attr.Name.Local == "href" && !strings.HasPrefix(value, "#")) ||
+					(strings.Contains(value, "url(") && !strings.HasPrefix(value, "url(#")) {
+					return nil, errors.New("website SVG logo contains an external reference")
+				}
+				if removeFilters && attr.Name.Local == "filter" {
+					changed = true
+					continue
+				}
+				// The encoder declares namespaces from resolved token names.
+				if attr.Name.Space != "xmlns" && (attr.Name.Space != "" || attr.Name.Local != "xmlns") {
+					attrs = append(attrs, attr)
+				}
+			}
+			if filterDepth > 0 || element.Name.Local == "filter" {
+				filterDepth++
+				changed = true
+				continue
+			}
+			element.Attr = attrs
+			token = element
+		case xml.EndElement:
+			depth--
+			if filterDepth > 0 {
+				filterDepth--
+				continue
+			}
 		default:
-			return errors.New("website SVG logo contains unsupported content")
+			if filterDepth > 0 {
+				continue
+			}
 		}
-		for _, attr := range element.Attr {
-			value := strings.ToLower(strings.TrimSpace(attr.Value))
-			if strings.HasPrefix(strings.ToLower(attr.Name.Local), "on") ||
-				(attr.Name.Local == "href" && !strings.HasPrefix(value, "#")) ||
-				(strings.Contains(value, "url(") && !strings.HasPrefix(value, "url(#")) {
-				return errors.New("website SVG logo contains an external reference")
+		if removeFilters {
+			if err := encoder.EncodeToken(token); err != nil || output.Len() > MaxBytes {
+				return nil, errors.New("website logo exceeds the size limit")
 			}
 		}
 	}
