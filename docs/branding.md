@@ -4,7 +4,11 @@
 现有内部命令、主题 ID、代码标识和资源文件名使用 `rcode`；
 环境变量前缀使用 `RCODE_`；需要连字符的仓库式 slug 使用 `r-code`。
 
-桌面入口为 `go run ./cmd/rcode`，安装名为 `GCode`，程序名为
+开发启动使用 `make run`：先构建 `.mygo/run/GCode`（Windows 为 `GCode.exe`），
+再启动该程序，确保 macOS Dock 使用 GCode 名称。
+直接 `go run ./cmd/rcode` 会以内部命令名 `rcode` 创建临时程序；
+`App.SetName("GCode")` 不会改变这个临时文件名及其 Dock 名称。
+安装名为 `GCode`，程序名为
 `GCode.exe`，macOS 应用包为 `GCode.app`，应用标识为 `dev.gcode.rcode`。模块名 `gcode`、服务入口
 `cmd/gcode-server` 和数据目录 `~/.gcode` 保持现有实现。主题为
 `rcode-light` / `rcode-dark`，网页批注链接为

@@ -45,7 +45,7 @@ package builds and verification passed in their separate attempt02. Visual accep
 wrapping parity and the historical C4 versus R16 size increase remain open.
 
 ```powershell
-go run ./cmd/rcode
+make run
 go test ./...
 go vet ./...
 go tool mygo vet .
@@ -53,6 +53,11 @@ go tool mygo vet .
 ./scripts/lint.ps1
 go run ./scripts/desktop-e2e
 ```
+
+`make run` builds and launches an executable named `GCode`, so macOS Dock uses
+the application name. Direct `go run ./cmd/rcode` uses `rcode` as its temporary
+executable name. Without Make, use `go build -o GCode ./cmd/rcode` and `./GCode`
+on macOS, or `go build -o GCode.exe ./cmd/rcode` and `.\GCode.exe` on Windows.
 
 [Desktop testing](docs/desktop-testing.md) defines the native Automation plugin
 workflow, isolated test data, evidence and the remaining OS verification scope.
