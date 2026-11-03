@@ -28,7 +28,6 @@ type App struct {
 	notifications   *desktopNotifications
 	wallpaper       wallpaperState
 	checkForUpdates func()
-	updateAvailable bool
 	connections     contracts.ConnectionSettingsService
 	runtimeUI       runtimeSettingsState
 	modelsUI        modelSettingsState
@@ -377,7 +376,6 @@ func (a *App) apply(s contracts.Snapshot) {
 			}
 		}
 		a.refreshVisibleAppUsage()
-		a.finishSidebarPullRequests()
 		a.refreshWallpaperColors()
 		a.restoreModelSelection()
 		a.syncModelFetchDialog()
@@ -956,6 +954,7 @@ func (a *App) View(c *ui.Context) {
 	a.sessionInfo(c)
 	a.overlays(c)
 	a.sessionDeleteDialog(c)
+	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
 	if a.toast != "" && time.Now().Before(a.toastUntil) {
 		ui.Overlay(c, func() {

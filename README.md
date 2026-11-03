@@ -33,7 +33,7 @@ its source and patch hashes. Windows 11 22H2+ amd64 and macOS 13+ amd64/arm64
 are targets.
 
 Desktop updates use MyGo's native updater and signed GitHub Releases from
-`chengliang4810/GCode`. Open **设置 → 通用 → 软件更新** to check.
+`chengliang4810/GCode`. Open **设置 → 关于 → 软件更新** to check.
 Release builds require the signing key; see [update and release setup](docs/updates.md).
 The GitHub repository must be public before distributing these builds.
 

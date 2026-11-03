@@ -148,11 +148,6 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
-	if scope := a.sidebarUI.pullRequests; scope != nil && cmd.Kind == "git.refs.load" &&
-		cmd.Git != nil && cmd.Git.Scope == *scope && err != nil {
-		a.sidebarUI.pullRequests = nil
-		a.errorText = err.Error()
-	}
 	a.capabilityCommandFinished(cmd, err)
 	a.modelSettingsCommandFinished(cmd, err)
 	a.settingsImportCommandFinished(cmd, err)

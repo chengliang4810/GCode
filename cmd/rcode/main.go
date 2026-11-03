@@ -316,12 +316,6 @@ func main() {
 			offSecond := mygo.App.OnSecondInstance(func([]string, string) { window.Focus() })
 			window.OnClosed(offSecond)
 		}
-		if desktopOptions.CheckForUpdates != nil {
-			updateAvailability := func() { app.SetUpdateAvailable(updater.AvailableVersion() != "") }
-			off := updater.OnChange(updateAvailability)
-			window.OnClosed(off)
-			updateAvailability()
-		}
 		window.Update(func() { app.OpenRoute(*route) })
 		if *capture != "" {
 			go func() {

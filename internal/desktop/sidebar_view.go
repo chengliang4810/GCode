@@ -86,21 +86,20 @@ func (a *App) sidebarView(c *ui.Context) {
 				}
 			})
 		}
-		ui.Row(c.Key("sidebar-footer")).Height(54).Padding(10, 12).Gap(4).AlignItems(ui.Center).Children(func() {
-			iconButton(c.Key("sidebar-settings"), "settings", tr(c, "Settings")).OnClick(func() { a.navigate("settings") })
-			project, _ := a.footerGitProject()
-			pullRequests := iconButton(c.Key("sidebar-pull-requests"), "pull-request", tr(c, "Pull requests")).
-				Disabled(!project.GitDetected || a.sidebarUI.pullRequests != nil).
-				OnClick(a.openSidebarPullRequests)
-			if !project.GitDetected {
-				pullRequests.Tooltip(tr(c, "This project has no supported pull request remote."))
-			}
+		ui.Row(c.Key("sidebar-footer")).Height(54).Padding(10, 12).Justify(ui.SpaceEvenly).AlignItems(ui.Center).Children(func() {
+			updateIconButton(c.Key("sidebar-updates"), tr(c, "Check for updates…")).
+				Disabled(a.checkForUpdates == nil).OnClick(a.checkForUpdates)
 			usageIconButton(c.Key("sidebar-usage"), tr(c, "Usage statistics")).OnClick(func() { a.navigate("settings/Usage statistics") })
-			ui.Spacer(c)
-			if a.checkForUpdates != nil && a.updateAvailable {
-				updateIconButton(c.Key("sidebar-updates"), tr(c, "Check for updates…")).OnClick(a.checkForUpdates)
-			}
+			iconButton(c.Key("sidebar-mobile"), "smartphone", tr(c, "Mobile")).
+				OnClick(func() { a.sidebarUI.mobileOpen = true })
+			iconButton(c.Key("sidebar-settings"), "settings", tr(c, "Settings")).OnClick(func() { a.navigate("settings") })
 		})
+	})
+}
+
+func (a *App) sidebarMobileDialog(c *ui.Context) {
+	a.settingsDialog(c, "sidebar-mobile-dialog", "Mobile", &a.sidebarUI.mobileOpen, 480, func() {
+		ui.Box(c).FillWidth().Height(160)
 	})
 }
 

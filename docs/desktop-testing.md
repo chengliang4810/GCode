@@ -87,8 +87,8 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | `TestDesktopLocalModelIconActions` | 原生窗口 + `--local` 真实核心；模型行图标测试、编辑与删除，使用本地 HTTP 响应夹具并检查落盘 |
 | `TestDesktopLocalModelPickerLayout` | 原生窗口 + `--local` 真实核心；900×600、中英文、深浅主题及 2/12 模型目录，验证新建页与带消息会话在不同输入高度下均与模型按钮保持 6 像素间隔、上方双列菜单、供应商名称与底部模型管理、大小目录搜索策略、选中后关闭、无紧凑开关或收藏、单模型编辑保存及独立思考强度落盘；不请求模型 |
 | `TestDesktopLocalCustomSubagentSettings` | 原生窗口 + `--local` 真实核心；创建自定义子智能体、取消草稿、禁用、重启读回、确认删除；不请求模型 |
-| `TestDesktopLocalPluginManagement` | 原生窗口 + `--local` 真实核心；私有临时 Git 市场、市场源添加/刷新、local 范围真实项目目录安装、配置取消/保存/清除、真实 Git 更新、禁用、独立进程重启及卸载；不访问公开市场或模型 |
-| `TestDesktopLocalSidebarFooter` | 原生窗口 + `--local` 真实核心；中英文/深浅主题与窄窗下的底栏入口、未发现新版本时隐藏更新入口、会话页返回设置、用量设置页导航/筛选和设置页手动检查更新；不访问供应商或更新源 |
+| `TestDesktopLocalPluginManagement` | 原生窗口 + `--local` 真实核心；私有临时 Git 市场、市场源添加/刷新、用户级安装、独立市场菜单、来源 tab 与管理弹窗、配置取消/保存/清除、真实 Git 更新、禁用、独立进程重启及卸载；不访问公开市场或模型 |
+| `TestDesktopLocalSidebarFooter` | 原生窗口 + `--local` 真实核心；中英文/深浅主题与窄窗下的底栏反序与等距分布、常驻检查更新、移除 Git/PR、手机弹窗开关、会话页返回设置、用量设置页导航/筛选；确认通用页已移除更新入口，关于页提供 GitHub/Star 按钮并能打开原生更新窗口；不访问供应商或更新源 |
 | `TestDesktopLocalCallTrajectory` | 原生窗口 + `--local` 真实核心、本地 HTTP 模型与真实 Read 工具；重启读取请求/响应/工具结果/HTTP 错误，验证右侧 Tab、搜索与刷新。系统右键菜单由 `ui.Tester` 验证，原生通过生产路由打开；见 `call-trajectory.md` |
 | `TestDesktopLocalApplicationUsage` | 原生窗口 + `--local` 真实核心；本地 HTTP 模型夹具实际请求两个模型、切换模型、分叉并重启，验证对话累计用量/速度/缓存命中率、复制旁的单次统计及历史供应商/模型、窄窗几何，省略缓存字段的请求不稀释命中率；同时覆盖用量页去重、模型各占 50%、7/30 天、热力图与刷新；英文浅色和中文深色窄窗，不访问真实供应商，统计口径见 `conversation-metrics.md` |
 | `TestDesktopLocalPromptReferences` | 原生窗口 + `--local` 真实核心；深浅主题窄窗的命令/技能候选、原子引用、展开发送、持久化及重启恢复；模型为本地 HTTP 夹具 |
@@ -269,7 +269,13 @@ uifixture 回归通过，Linux 无桌面服务完成交叉编译；未请求外�
 未激活后台测试窗口或声称系统键盘/输入法验收。完整功能语义见
 [prompt-references.md](prompt-references.md)。
 
-2026-10-30：更新入口显隐专项通过，证据位于
+2026-11-03：底栏反序与等距布局专项通过，证据位于
+`output/sidebar-footer-reordered/20261103-175043-3098085740/evidence.json`。
+英文浅色与中文深色窄窗验证检查更新、用量、手机、设置的顺序和间距，
+Git/PR 入口已移除；手机空白弹窗可打开和关闭，底栏与设置页均可打开原生检查更新窗口。
+实窗截图已检查，未访问更新源或执行下载安装。
+
+2026-10-30：以下为旧版更新入口显隐的历史证据；2026-11-03 起入口常驻。该专项当时通过，证据位于
 `output/updater-visibility-native/20261030-115505-4284844316/evidence.json`。
 英文浅色与中文深色窄窗均验证未检测到新版本时底栏仅保留设置、PR 与用量，
 并通过设置页打开、关闭原生更新窗口后再次确认底栏更新入口隐藏。

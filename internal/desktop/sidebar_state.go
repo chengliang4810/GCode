@@ -6,7 +6,7 @@ import (
 )
 
 type sidebarState struct {
-	pullRequests          *contracts.RepoRefScope
+	mobileOpen            bool
 	selection             int
 	selectedSession       string
 	initialized           bool

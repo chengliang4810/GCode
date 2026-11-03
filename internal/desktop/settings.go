@@ -28,7 +28,7 @@ func (a *App) sections() []string {
 	if runtime.GOOS == "darwin" && a.state.Capabilities.Appshots {
 		s = append(s, "Appshots")
 	}
-	return append(s, "Usage statistics", "Archived sessions")
+	return append(s, "Usage statistics", "Archived sessions", "About")
 }
 
 func settingsIcon(section string) string {
@@ -71,6 +71,8 @@ func settingsIcon(section string) string {
 		return "folder"
 	case "Archived sessions":
 		return "archive-minimalistic"
+	case "About":
+		return "info-circle"
 	}
 	return "settings"
 }
@@ -131,7 +133,6 @@ func (a *App) settingsView(c *ui.Context) {
 			}
 			switch a.section {
 			case "General":
-				a.softwareUpdateSettings(c)
 				a.dataDirectorySettings(c)
 				a.generalSettings(c)
 			case "Appearance":
@@ -172,6 +173,8 @@ func (a *App) settingsView(c *ui.Context) {
 				a.appshotSettings(c)
 			case "Archived sessions":
 				a.archivedSettings(c)
+			case "About":
+				a.aboutSettings(c)
 			}
 		})
 	})

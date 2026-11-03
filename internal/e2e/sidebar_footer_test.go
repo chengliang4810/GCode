@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 	"testing"
 )
@@ -19,10 +20,10 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 			binary, artifacts := testPaths(t)
 			app := startApp(t, binary, artifacts, "local", filepath.Join(artifacts, "data"),
 				"--local", "--language", test.language, "--appearance", test.appearance, "--width", test.width)
-			for _, key := range []string{"sidebar-settings", "sidebar-pull-requests", "sidebar-usage"} {
+			for _, key := range []string{"sidebar-updates", "sidebar-usage", "sidebar-mobile", "sidebar-settings"} {
 				app.waitKey(key)
 			}
-			assertFooterUpdateHidden(t, app)
+			assertFooterActions(t, app)
 			app.act("back-to-conversations", "press", "")
 			app.await("left settings action opens General", func() error {
 				tree, err := app.client.tree()
@@ -35,6 +36,24 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 				return nil
 			})
 			app.capture("footer")
+			app.act("sidebar-mobile", "press", "")
+			app.waitKey("dialog-close")
+			app.capture("mobile-dialog")
+			app.act("dialog-close", "press", "")
+			app.await("mobile dialog closed", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				if _, err := tree.findKey("dialog-close"); err == nil {
+					return fmt.Errorf("mobile dialog remains open")
+				}
+				return nil
+			})
+			app.act("sidebar-updates", "press", "")
+			app.waitKey("ok")
+			app.capture("footer-update-check")
+			app.act("ok", "press", "")
 			app.act("sidebar-settings", "press", "")
 			app.waitKey("Compact mode")
 			app.act("sidebar-usage", "press", "")
@@ -60,25 +79,53 @@ func TestDesktopLocalSidebarFooter(t *testing.T) {
 			})
 			app.act("sidebar-settings", "press", "")
 			app.act("settings-nav-General", "press", "")
+			app.waitKey("Compact mode")
+			tree, err := app.client.tree()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := tree.findKey("check-for-updates"); err == nil {
+				t.Fatal("software updates remain in General")
+			}
+			app.act("settings-nav-About", "press", "")
+			app.waitKey("about-github")
+			app.waitKey("about-star")
+			app.capture("about")
 			app.act("check-for-updates", "press", "")
 			app.waitKey("ok") // The raw E2E build cannot self-update or contact a feed.
 			app.waitKey("title")
 			app.capture("native-updater")
 			app.act("ok", "press", "")
 			app.waitKey("sidebar-settings")
-			assertFooterUpdateHidden(t, app)
+			assertFooterActions(t, app)
 			app.capture("returned-settings")
 		})
 	}
 }
 
-func assertFooterUpdateHidden(t *testing.T, app *nativeApp) {
+func assertFooterActions(t *testing.T, app *nativeApp) {
 	t.Helper()
 	tree, err := app.client.tree()
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := tree.findKey("sidebar-updates"); err == nil {
-		t.Fatal("the footer exposed an update before a new version was detected")
+	if _, err := tree.findKey("sidebar-pull-requests"); err == nil {
+		t.Fatal("removed Git menu remains")
+	}
+	var previous accessNode
+	var gap float64
+	for i, key := range []string{"sidebar-updates", "sidebar-usage", "sidebar-mobile", "sidebar-settings"} {
+		node, err := tree.findKey(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if i > 0 {
+			currentGap := node.Bounds.X - previous.Bounds.X - previous.Bounds.Width
+			if currentGap <= 0 || math.Abs(node.Bounds.Y-previous.Bounds.Y) > 1 || (i > 1 && math.Abs(currentGap-gap) > 1) {
+				t.Fatalf("footer is not evenly ordered: previous=%+v current=%+v gap=%v", previous.Bounds, node.Bounds, gap)
+			}
+			gap = currentGap
+		}
+		previous = node
 	}
 }
