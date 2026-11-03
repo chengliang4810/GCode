@@ -307,10 +307,44 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 		}
 		trigger := a.footerRing(c, contextLabel, label, fraction, color, color, state.contextOpen)
 		trigger.OnClick(func() { state.contextOpen = !state.contextOpen; state.accountsOpen = false })
-		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 0, func() {
-			a.footerHeading(c, "Context window")
-			details := footerContextDetails(usage, a.state.Settings.General.Language)
-			ui.Text(c, details).Width(footerTextWidth(c, details, design.TextSize(c, design.TextBase), 400)+16).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(a.palette.Muted).Padding(0, 8, 6, 8)
+		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 360, func() {
+			a.footerContextCard(c, usage)
+		})
+	})
+}
+
+// Context counts follow the active language; unknown usage remains unknown.
+func footerContextSummary(usage contracts.ContextUsage, language string) string {
+	count := func(n uint64) string {
+		if language == "zh-CN" && n >= 10000 {
+			return strings.TrimSuffix(strconv.FormatFloat(float64(n)/10000, 'f', 1, 64), ".0") + "万"
+		}
+		return footerCount(n)
+	}
+	if !usage.HasWindow() {
+		return "—"
+	}
+	if usage.Tokens == nil {
+		return "—/" + count(*usage.Window)
+	}
+	fraction, _ := usage.Fraction()
+	return fmt.Sprintf("%s/%s (%.1f%%)", count(*usage.Tokens), count(*usage.Window), fraction*100)
+}
+
+func (a *App) footerContextCard(c *ui.Context, usage contracts.ContextUsage) {
+	fraction, known := usage.Fraction()
+	ui.Column(c).FillWidth().Padding(8).Gap(16).Children(func() {
+		ui.Row(c).FillWidth().Height(24).AlignItems(ui.Center).Gap(12).Children(func() {
+			ui.Text(c, tr(c, "Context window")).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Text)
+			ui.Box(c).Grow(1)
+			ui.Text(c, footerContextSummary(usage, a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
+		})
+		ui.Box(c).Key("context-capacity-progress").Label("context-capacity-progress").FillWidth().Height(8).Radius(4).Background(a.palette.Faint.Alpha(.12)).Clip().Tooltip(footerContextDetails(usage, a.state.Settings.General.Language)).Draw(func(p *ui.Painter, bounds ui.Rect) {
+			if !known || fraction <= 0 {
+				return
+			}
+			bounds.W *= float32(min(1, max(0, fraction)))
+			p.FillGradient(bounds, ui.LinearGradient{Angle: 90, Stops: []ui.GradientStop{{At: 0, Color: a.palette.Accent}, {At: .72, Color: a.palette.Accent}, {At: 1, Color: a.palette.Accent.Alpha(.6)}}}, 4)
 		})
 	})
 }

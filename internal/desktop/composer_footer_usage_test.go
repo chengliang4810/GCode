@@ -130,17 +130,17 @@ func TestFooterUsageCardsUseSharedCacheAndOwnContext(t *testing.T) {
 	if _, ok := tt.Find("Account usage menu"); ok {
 		t.Fatal("two footer popovers stayed open")
 	}
-	if !tt.HasText("240,000 / 200,000 tokens\n0 tokens remaining") {
+	if !tt.HasText("240,000/200,000 (120.0%)") {
 		t.Fatal("context card borrowed billing token totals")
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Window: footerNumber(200000)}
 	tt.Frame()
-	if !tt.HasText("—") || !tt.HasText("Waiting for context usage") {
+	if !tt.HasText("—") || !tt.HasText("—/200,000") {
 		t.Fatal("capacity-only context was rendered as zero")
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Tokens: footerNumber(0), Window: footerNumber(200000)}
 	tt.Frame()
-	if !tt.HasText("0%") || !tt.HasText("0 / 200,000 tokens") {
+	if !tt.HasText("0%") || !tt.HasText("0/200,000 (0.0%)") {
 		t.Fatal("reported zero was rendered as unknown")
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{}
@@ -159,7 +159,7 @@ func TestFooterUsageIsIndependentAcrossMainAndSide(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Advance(time.Second)
-	if !tt.HasText("18,000 / 200,000 tokens") || tt.HasText("150,000 / 200,000 tokens") {
+	if !tt.HasText("18,000/200,000 (9.0%)") || tt.HasText("150,000/200,000 (75.0%)") {
 		t.Fatal("side card borrowed the main conversation's context")
 	}
 	if a.footerUsage.contextOpen || !a.sideComposer(child.ID).FooterUsage.contextOpen {
@@ -192,11 +192,11 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 			{"above-card-shifts-down-without-flipping", 840, 140, 357, 8},
 			{"tall-card-visible-region-starts-at-eight", 840, 80, 357, 8},
 		}},
-		{"context", "Context usage", "Context window menu", 196, 86, []windowCase{
-			{"ordinary", 840, 560, 620, 420},
-			{"three-and-four-pixel-gaps-are-not-overflow", 223, 144, 3, 4},
-			{"exact-window-edges-are-not-overflow", 220, 140, 0, 0},
-			{"one-pixel-overflow-snaps-both-axes", 219, 139, 8, 8},
+		{"context", "Context usage", "Context window menu", 360, 74, []windowCase{
+			{"ordinary", 840, 560, 456, 432},
+			{"three-and-four-pixel-gaps-are-not-overflow", 387, 132, 3, 4},
+			{"exact-window-edges-are-not-overflow", 384, 128, 0, 0},
+			{"one-pixel-overflow-snaps-both-axes", 383, 127, 8, 8},
 			{"oversized-card-aligns-top-left", 160, 80, 8, 8},
 		}},
 	} {
