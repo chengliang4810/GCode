@@ -283,11 +283,21 @@ func TestRealCoreSettingsAndTypedMessageProjection(t *testing.T) {
 	app.OpenRoute("settings/General")
 	tt.Frame()
 	target := filepath.Join(filepath.Dir(store.Directory()), "chosen-data")
-	app.runtimeUI.directory = target
+	// The directory field commits when it loses focus. Find returns the row's
+	// title, which sits directly above the input inside the same card.
+	row, ok := tt.Find("Data directory")
+	if !ok {
+		t.Fatal("data directory field is missing")
+	}
+	tt.ClickAt(row.X+row.W/2, row.Y+row.H+20)
 	tt.Frame()
-	if err = tt.Click("Apply"); err != nil {
+	tt.Key(ui.Cmd, ui.KeyA)
+	tt.Type(target)
+	tt.Frame()
+	if err = tt.Click("Browse…"); err != nil {
 		t.Fatal(err)
 	}
+	tt.Frame()
 	if app.state.Runtime.PendingDirectory != target {
 		t.Fatalf("directory setting did not reach core: %s", app.errorText)
 	}

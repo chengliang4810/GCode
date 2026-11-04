@@ -16,7 +16,8 @@ func TestSoftwareUpdatesUseDesktopCallback(t *testing.T) {
 			for _, width := range []int{900, 1320} {
 				t.Run(fmt.Sprintf("%s/dark=%v/width=%d", language, dark, width), func(t *testing.T) {
 					app, _ := settingsTestApp(t)
-					app.section = "General"
+					// General no longer holds the updater; About does.
+					app.section = "About"
 					app.palette = design.Palette("rcode-light", false)
 					if dark {
 						app.palette = design.Palette("rcode-dark", true)
