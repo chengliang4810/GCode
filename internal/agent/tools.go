@@ -59,7 +59,7 @@ func shellExecutionDescription() string {
 	if runtime.GOOS == "windows" {
 		shell += " On Windows, Git Bash is required; Windows paths may be passed to file tools, while scripts use Git Bash paths such as /c/work. RCODE_GIT_BASH_PATH selects its executable."
 	}
-	return shell + " Each invocation starts a fresh shell in the configured working directory; profiles, directory changes and variables do not persist between calls. Prefer the dedicated file tools for file operations. Timeout is in milliseconds (default 120000, maximum 600000). Cancellation terminates the command process tree. Nonzero exit codes and command errors are returned to the model."
+	return shell + " Commands run in the configured working directory by default. Use cd only when the command needs to run in a different directory. Each invocation starts a fresh shell in the configured working directory; profiles, directory changes and variables do not persist between calls. Prefer the dedicated file tools for file operations. Timeout is in milliseconds (default 120000, maximum 600000). Cancellation terminates the command process tree. Nonzero exit codes and command errors are returned to the model."
 }
 
 // EnvironmentInstructions describes the actual host shell independently of its tool name.
