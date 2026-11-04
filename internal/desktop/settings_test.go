@@ -29,6 +29,32 @@ func settingsTestApp(t *testing.T) (*App, *mock.Server) {
 	return app, backend
 }
 
+func TestThreadNamingDefaultsAndResetsToCurrentConversationModel(t *testing.T) {
+	app, backend := settingsTestApp(t)
+	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.generalSettings(c) }, 900, 1000)
+	if app.state.Settings.General.ThreadNamingModel != "current-model" || !tt.HasText("Current conversation model") {
+		t.Fatal("thread naming does not show the current conversation model by default")
+	}
+	if err := tt.Click("Current conversation model"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("First message"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if app.state.Settings.General.ThreadNamingModel != "first-message" {
+		t.Fatal("first-message opt-out was lost")
+	}
+	if err := tt.Click("Reset thread naming"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	snapshot, err := backend.Snapshot(context.Background())
+	if err != nil || snapshot.Settings.General.ThreadNamingModel != "current-model" {
+		t.Fatalf("reset did not persist current-model naming: %q, %v", snapshot.Settings.General.ThreadNamingModel, err)
+	}
+}
+
 func TestSettingsPagesRenderWithoutVoiceOrHorizontalOverflow(t *testing.T) {
 	app, _ := settingsTestApp(t)
 	for _, section := range app.sections() {

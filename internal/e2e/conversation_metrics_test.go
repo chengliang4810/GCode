@@ -67,7 +67,7 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			core, err := engine.Open(engine.Options{Storage: store})
+			core, err := openExecutionFixture(t, engine.Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -295,7 +295,7 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			core, err := engine.Open(engine.Options{Storage: store})
+			core, err := openExecutionFixture(t, engine.Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}

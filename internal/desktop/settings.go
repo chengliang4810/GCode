@@ -489,10 +489,10 @@ func (a *App) generalSettings(c *ui.Context) {
 			description = "Use the first message without an additional model request."
 		}
 		a.settingsRow(c, "Thread naming", description, func() {
-			if g.ThreadNamingModel != "first-message" {
-				textButton(c, tr(c, "Reset")).Label(tr(c, "Reset thread naming")).OnClick(func() { g.ThreadNamingModel = "first-message"; a.saveSettings() })
+			if g.ThreadNamingModel != "current-model" {
+				textButton(c, tr(c, "Reset")).Label(tr(c, "Reset thread naming")).OnClick(func() { g.ThreadNamingModel = "current-model"; a.saveSettings() })
 			}
-			options := []settingOption{{"first-message", "First message"}}
+			options := []settingOption{{"current-model", "Current conversation model"}, {"first-message", "First message"}}
 			for _, model := range a.state.Models {
 				options = append(options, settingOption{model.ID, model.Label})
 			}

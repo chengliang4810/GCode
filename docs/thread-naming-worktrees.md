@@ -4,7 +4,10 @@ The real Go core owns thread naming and checkout preparation for both the local
 desktop and the headless host. The desktop dispatches typed commands from its
 service worker; Git and model requests run outside the core state mutex.
 
-`General.ThreadNamingModel = "first-message"` uses up to 48 characters from the
+`General.ThreadNamingModel = "current-model"` is the default and asks the new
+conversation's selected model to summarize its first message into a short title.
+Reset restores this mode; a later model switch does not change a naming request
+already in flight. `"first-message"` uses up to 48 characters from the
 first message without another model request. Selecting a configured model key
 (`provider-id/model-id`) asks that model for a title separately from Agent
 execution. This adds a provider request and its associated usage cost. The

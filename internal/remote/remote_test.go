@@ -37,6 +37,15 @@ func TestDisconnectDoesNotCancelHostTaskAndReconnectRestoresState(t *testing.T) 
 		t.Fatal(err)
 	}
 	defer core.Close()
+	snapshot, err := core.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings := snapshot.Settings
+	settings.General.ThreadNamingModel = "first-message"
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
+		t.Fatal(err)
+	}
 	config := model.Provider{ID: "test", Name: "Test", Protocol: model.Chat, BaseURL: provider.URL, Models: []model.Model{{ID: "model"}}}
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: config}}); err != nil {
 		t.Fatal(err)

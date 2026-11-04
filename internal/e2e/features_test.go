@@ -104,7 +104,9 @@ func TestDesktopLocalNamingAndWorktree(t *testing.T) {
 		t.Fatal(err)
 	}
 	settings := snapshot.Settings
-	settings.General.ThreadNamingModel = "native-test/test-model"
+	if settings.General.ThreadNamingModel != "current-model" {
+		t.Fatalf("fresh desktop does not default to current-model naming: %q", settings.General.ThreadNamingModel)
+	}
 	worktrees := filepath.Join(data, "worktrees")
 	// Test delivery separately through injected sinks; avoid OS notifications
 	// or sounds from this real-window fixture.

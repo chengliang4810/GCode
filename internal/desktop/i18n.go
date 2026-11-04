@@ -25,7 +25,7 @@ func (a *App) settingOptionText(c *ui.Context, label, value, text string) string
 	case "Interface font", "Terminal font", "Code & diff font", "Math font", "Light theme", "Dark theme":
 		return text
 	case "Thread naming model":
-		if value != "first-message" {
+		if value != "first-message" && value != "current-model" {
 			return text
 		}
 	}

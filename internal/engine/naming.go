@@ -22,6 +22,9 @@ func (e *Engine) startNamingLocked(session contracts.Session, text string) {
 	if key == "" || key == "first-message" || strings.TrimSpace(text) == "" {
 		return
 	}
+	if key == "current-model" {
+		key = session.ModelID
+	}
 	provider, selected, err := e.resolveModel(key)
 	if err != nil {
 		e.publishLocked(contracts.Event{Kind: "session.naming.failed", SessionID: session.ID, Text: "The configured thread naming model is unavailable; the initial title was kept."})

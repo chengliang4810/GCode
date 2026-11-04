@@ -12,7 +12,7 @@ import (
 func DefaultSettings() contracts.Settings {
 	settings := contracts.Settings{
 		Appearance:    contracts.AppearanceSettings{RenderMath: true, MathFont: "Fira Math", MathScale: 100, Mode: "dark", ThemeID: "rcode-dark", LightThemeID: "rcode-light", DarkThemeID: "rcode-dark", Accent: "theme", EffortTheme: contracts.EffortThemePurple, Surface: "theme", Font: "Geist", FontSize: 14, CodeFont: "Geist Mono", CodeFontSize: 12, TerminalFont: "Geist Mono", TerminalFontSize: 13, TranscriptWidth: 736, BackgroundEffect: "none"},
-		General:       contracts.GeneralSettings{Language: i18n.Chinese, SendBehavior: "enter", ActiveTurnSendBehavior: "steer", StopWithEscape: true, ThreadNamingModel: "first-message"},
+		General:       contracts.GeneralSettings{Language: i18n.Chinese, SendBehavior: "enter", ActiveTurnSendBehavior: "steer", StopWithEscape: true, ThreadNamingModel: "current-model"},
 		Notifications: contracts.NotificationSettings{Errors: true, Enabled: true, Completion: true, Questions: true, Sound: false},
 		Files:         contracts.FileSettings{Autosave: true, AutosaveDelay: 900, LineNumbers: true, FontSize: 12},
 		Appshots:      contracts.AppshotSettings{Destination: "lastSession", Shortcut: "Cmd+Shift+2", IncludeCursor: false},

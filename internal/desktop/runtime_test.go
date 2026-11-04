@@ -128,6 +128,15 @@ func TestChatSendSurvivesDesktopAndEngineRestart(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				snapshot, err := core.Snapshot(context.Background())
+				if err != nil {
+					t.Fatal(err)
+				}
+				settings := snapshot.Settings
+				settings.General.ThreadNamingModel = "first-message"
+				if err := core.Execute(context.Background(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
+					t.Fatal(err)
+				}
 				app, err := New(core)
 				if err != nil {
 					t.Fatal(err)
