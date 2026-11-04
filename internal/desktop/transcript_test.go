@@ -195,8 +195,8 @@ func TestTranscriptCompactNarrationAndWorkedDuration(t *testing.T) {
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
-	if !tt.HasText("Wrote") || !tt.HasText("I found the layout contract.") {
-		t.Fatal("compact narration is not a Wrote activity")
+	if !tt.HasText("Progress update") || !tt.HasText("I found the layout contract.") {
+		t.Fatal("compact narration is not a progress update activity")
 	}
 	m.Streaming = true
 	tt.Frame()

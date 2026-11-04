@@ -69,7 +69,7 @@ func (a *App) activitySummary(summary contracts.ActivitySummary) string {
 		count int
 		key   string
 	}{
-		{summary.Thoughts, "Thought %d times"}, {summary.Notes, "Wrote %d notes"},
+		{summary.Thoughts, "Thought %d times"}, {summary.Notes, "%d progress updates"},
 		{summary.Commands, "Ran %d commands"}, {summary.EditedFiles, "Edited %d files"},
 		{summary.Reads, "Read %d files"}, {summary.Searches, "Searched %d times"},
 		{summary.Fetches, "Fetched %d pages"}, {summary.Todos, "Updated %d todos"},

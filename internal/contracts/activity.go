@@ -203,9 +203,9 @@ func (s ActivitySummary) Label() string {
 		segments = append(segments, fmt.Sprintf("thought %d times", s.Thoughts))
 	}
 	if s.Notes == 1 {
-		segments = append(segments, "wrote a note")
+		segments = append(segments, "1 progress update")
 	} else if s.Notes > 1 {
-		segments = append(segments, fmt.Sprintf("wrote %d notes", s.Notes))
+		segments = append(segments, fmt.Sprintf("%d progress updates", s.Notes))
 	}
 	baseStart := len(segments)
 	if s.Commands > 0 {

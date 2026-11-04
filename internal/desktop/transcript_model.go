@@ -9,7 +9,7 @@ import (
 
 // transcriptRows is the presentation projection of one continuation-joined
 // message. It follows rows_for_entry in the pinned GPUI source: ordinary work
-// forms a tree; compact mode moves narration into that same tree as Wrote rows.
+// forms a tree; compact mode moves narration into that tree as progress updates.
 // DTO order is authoritative, including input/error rows interleaved with work.
 type transcriptRow struct {
 	ID       string
@@ -362,10 +362,10 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 		lines := thoughtLines(block.Text, false)
 		for _, line := range lines {
 			if text := strings.TrimSpace(thoughtPlain(line)); text != "" {
-				return "Wrote", text, "pen"
+				return "Progress update", text, "pen"
 			}
 		}
-		return "Wrote", "", "pen"
+		return "Progress update", "", "pen"
 	}
 	if block.Subagent != nil {
 		return "Agent", block.Subagent.Name, "bot"

@@ -36,7 +36,7 @@ func TestTurnActivityExcludesFinalReplyAndOtherTurns(t *testing.T) {
 	if summary.Notes != 1 || summary.Commands != 0 || summary.Reads != 1 {
 		t.Fatal("summary incorporated final reply or another turn")
 	}
-	if (ActivitySummary{Thoughts: 1}).Label() != "Thought process" || (ActivitySummary{Notes: 2}).Label() != "Wrote 2 notes" || (ActivitySummary{}).Label() != "" {
+	if (ActivitySummary{Thoughts: 1}).Label() != "Thought process" || (ActivitySummary{Notes: 2}).Label() != "2 progress updates" || (ActivitySummary{}).Label() != "" {
 		t.Fatal("thought/note-only labels diverged from source")
 	}
 }
