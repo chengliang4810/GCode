@@ -76,6 +76,7 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | 用例 | 实际路径 |
 | --- | --- |
 | `TestDesktopLocalMessageRail` | 原生窗口 + 私有 `--local` 真实核心重开持久化历史夹具；深浅主题、中英文、1320/900 宽度；刻度几何、悬停预览、点击和键盘定位、当前刻度、单轮/窄区隐藏、会话切换与草稿保留；不请求模型。运行状态与证据见 `message-rail.md` |
+| `TestDesktopLocalTranscriptScrollbarEdge` | 原生窗口 + 私有 `--local` 核心与持久化历史；深浅主题 1500×800，信息卡开关及右侧工作区打开时滚动视口贴对话面板右缘，右缘滚轮、返回最新与草稿保留；不请求模型 |
 | `TestDesktopLocalProjectCreationWithIgnoredArtifacts` | 原生项目选择器添加实际 GCode checkout；独立进程、配置和 socket；验证登记成功、后台文件列表完成、未跟踪验收缓存被忽略及重启后项目仍可见；无模型调用。最新证据 `output/project-create-async-native/20261030-200639-2897047696/evidence.json` |
 | `TestDesktopLocalTranscriptActivity` | 深浅主题原生窗口 + `--local` 真实核心；实际读取 80 行文件、持久化恢复、思考折叠预览、思考与输出最多 24 行可视高度及内部滚到底、外层位置不变、完整参数、提问去重与回答后续执行；模型为本地 HTTP 夹具 |
 | `TestDesktopLocalQuestionComposer` | 独立原生窗口 + `--local` 真实核心；英文浅色 1320×880、中文深色 900×600；提问替换底部输入框、单选自动前进、分页返回修改、多选及自定义文字优先、整组答案落盘和模型续执行、普通草稿恢复、历史无交互选项；模型为本地 HTTP 夹具 |

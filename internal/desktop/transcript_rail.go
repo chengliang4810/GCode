@@ -118,7 +118,8 @@ func (cache *transcriptCache) bindMessageRailRow(row ui.Element, index int) {
 
 func (a *App) messageRail(c *ui.Context, ticks []messageRailTick) {
 	s, viewport := design.MessageRail(), a.messages.Bounds(c)
-	if len(ticks) < 2 || viewport.W < s.MinContainerWidth || viewport.H <= 0 {
+	reserve, _ := a.infoVisibility()
+	if len(ticks) < 2 || viewport.W-reserve < s.MinContainerWidth || viewport.H <= 0 {
 		return
 	}
 	first, _ := a.messages.Visible()

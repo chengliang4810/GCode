@@ -59,27 +59,29 @@ func (a *App) chatView(c *ui.Context) {
 	}
 	a.composerFrame = frame
 
-	root := ui.Column(c).Bind(&a.conversationViewport).Grow(1).FillHeight().AlignItems(ui.Stretch).Padding(0, reserve, 0, 0).Clip()
+	root := ui.Column(c).Bind(&a.conversationViewport).Grow(1).FillHeight().AlignItems(ui.Stretch).Clip()
 	a.paintConversationBackground(c, root, 1-frame.Dissolve)
 	a.transcriptListScope(c, root, &a.messages, a.sessionID, func() {
-		a.goalBanner(c, a.currentSession())
-		a.sessionStorageNotice(c, a.currentSession())
-		if a.expanded["conversation-find"] {
-			ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
-				ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)
-				matches := a.conversationMatches(&a.transcriptCache, messages, rows, a.conversationQuery)
-				ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-				move := func(delta int) {
-					if len(matches) > 0 {
-						a.findIndex = (a.findIndex + delta + len(matches)) % len(matches)
-						a.messages.ScrollIntoView(matches[a.findIndex])
+		ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
+			a.goalBanner(c, a.currentSession())
+			a.sessionStorageNotice(c, a.currentSession())
+			if a.expanded["conversation-find"] {
+				ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
+					ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)
+					matches := a.conversationMatches(&a.transcriptCache, messages, rows, a.conversationQuery)
+					ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					move := func(delta int) {
+						if len(matches) > 0 {
+							a.findIndex = (a.findIndex + delta + len(matches)) % len(matches)
+							a.messages.ScrollIntoView(matches[a.findIndex])
+						}
 					}
-				}
-				iconButton(c, "alt-arrow-up", tr(c, "Previous match")).OnClick(func() { move(-1) })
-				iconButton(c, "alt-arrow-down", tr(c, "Next match")).OnClick(func() { move(1) })
-				iconButton(c, "close", tr(c, "Close find")).OnClick(func() { a.expanded["conversation-find"] = false })
-			})
-		}
+					iconButton(c, "alt-arrow-up", tr(c, "Previous match")).OnClick(func() { move(-1) })
+					iconButton(c, "alt-arrow-down", tr(c, "Next match")).OnClick(func() { move(1) })
+					iconButton(c, "close", tr(c, "Close find")).OnClick(func() { a.expanded["conversation-find"] = false })
+				})
+			}
+		})
 		if docked {
 			transcript := ui.Column(c).Key("chat-transcript").Grow(1).FillWidth().MinHeight(0)
 			if frame.Transcript < .999 {
@@ -99,17 +101,21 @@ func (a *App) chatView(c *ui.Context) {
 				}
 				pane := transcriptPane{cache: &a.transcriptCache, scope: a.sessionID, session: a.sessionID}
 				a.transcriptScope(c, a.sessionID, func() {
+					// Reserve the card inside the content; the scroll viewport
+					// and its scrollbar still reach the conversation pane edge.
 					ui.List(c.Key("chat-transcript-list"), &a.messages, len(rows), func(i int) {
 						a.transcriptRowView(c, pane, messages, rows, i, transcriptRowLayout{width: width, padding: 24})
-					}).Grow(1).FillWidth().Gap(0).Padding(transcriptListTopPadding, 0, 24, 0)
+					}).Grow(1).FillWidth().Gap(0).Padding(transcriptListTopPadding, reserve, 24, 0)
 				})
 				a.messageRail(c, a.transcriptCache.rail)
 				if !a.messages.AtEnd() {
-					ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
+					ui.Row(c).FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
 						iconButton(c.Key("transcript-latest"), "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
 					})
 				}
-				a.queueRows(c, a.sessionID)
+				ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
+					a.queueRows(c, a.sessionID)
+				})
 			})
 		} else {
 			ui.Spacer(c).Grow(1)
@@ -187,7 +193,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	heroWidth := composerOuterWidth(a.chatWidth-reserve, width, true)
 	threadWidth := composerOuterWidth(a.chatWidth-reserve, width, false)
 	outerWidth := threadWidth + (heroWidth-threadWidth)*frame.Amount
-	ui.Row(c).Key("main-composer").FillWidth().Justify(ui.Center).Children(func() {
+	ui.Row(c).Key("main-composer").FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
 		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
 		block.Children(func() {
 			if a.questionComposer(c, a.sessionID, "main:"+a.sessionID) {
