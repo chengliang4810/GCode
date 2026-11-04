@@ -18,7 +18,7 @@ Windows ClearType quarter 定位、链接 hover 点状下划线、点定位 tool
 UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同帧生效。
 
 上游明确建议以轮询替代回调的两项也已按其意见改写：应用改用上游的 `Hovered()` 与
-`DroppedFiles()` 查询（第 13、14 节），本地 `OnHover`、`OnFilesDrop` 两个补丁随之删除，
+`DroppedFiles()` 查询，本地 `OnHover`、`OnFilesDrop` 两个补丁随之删除，
 补丁链再减两项。
 
 升级在 v0.7.4 原版上按序重放全部 19 个补丁：框架 `go build ./...`、应用
@@ -50,7 +50,7 @@ UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同
 18. [`mygo-v0.7.4-18-split-drag.patch`](../patches/mygo-v0.7.4-18-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告；含 `TestSplitDragAppliesBeforeThePanesBuild` 回归测试。
 19. [`mygo-v0.7.4-19-patch-identity.patch`](../patches/mygo-v0.7.4-19-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.23` 身份。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.22` 的
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.23` 的
 2,050 个文件的 SHA-256 树指纹为
 `c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。
 补丁按上述顺序在 v0.7.4 原版上重放得到与锁定树逐字节一致的结果；
@@ -59,13 +59,57 @@ UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同
 记录做 SHA-256。`.gitattributes` 禁止框架文件换行转换，确保跨平台字节一致。
 
 > 注：上游 v0.7.4 的 `UIAutomationCore` provider 取值仍为 `0x1 | 0x20`
-> （`ClientSideProvider | UseComThreading`）。本仓库第 7 项补丁把取值改为
+> （`ClientSideProvider | UseComThreading`）。本仓库第 5 项补丁把取值改为
 > `ServerSideProvider | UseComThreading` = `0x22`，依据
 > [Microsoft ProviderOptions](https://learn.microsoft.com/en-us/windows/win32/api/uiautomationcore/ne-uiautomationcore-provideroptions)
 > 与本机 Windows SDK 的 `UIAutomationCore.h`（`ProviderOptions_ServerSideProvider = 0x2`）。
 
 此文档记录框架能力与验证。设置及 annotation chip 在 Desktop 的实际接线由主任务完成，
 原生操作与视觉一致性仍需单独验收。
+
+## 2026-11-05 上游追新审计
+
+上游没有新的正式版本，本次只做审计，**不改动** `third_party/mygo`、`patches/`、
+源码锁和 `scripts/frameworkpin` 的固定值（仍是 v0.7.4 + `rcode-native-ui.23`）。
+
+| 项目 | 结果 |
+| --- | --- |
+| 上游 tag / release | 最新为 **v0.7.4**（2026-11-01 发布），即当前固定版本 |
+| 上游 `main` | 比 v0.7.4 领先 **145 个提交**（`compare` 的文件清单在 300 项截断）；HEAD `fbcd4311`（2026-11-04） |
+| 本仓库策略 | 只固定官方发布版本；未发版的 `main` 不作为升级目标 |
+
+复现性与可移植性核实：
+
+- 从 `h1:0qkDpDRo7C9g8PM8eu4V6FVouhLiTrUdqKD6I31Lv3Q=` 的 v0.7.4 模块归档解压后按序
+  重放 19 个补丁，目录内容与当前 `third_party/mygo` 完全一致（仅 `core.autocrlf`
+  造成的 CRLF 差异，`diff -r --strip-trailing-cr` 为 0 项）。说明锁定树仍可从官方归档复现。
+- 把同一补丁链用 `git apply --3way` 试重放到 `main` HEAD：01、02、04、08、09、15、19
+  可应用；**03、05、06、07、10、11、12、13、14、16、17、18 共 12 个冲突**。
+
+`main` 已吸收、下次升级应删除或重估的补丁：
+
+| 补丁 | `main` 现状 |
+| --- | --- |
+| `05-windows-uia-provider` | 已由 #1007 实现同样的 `ServerSideProvider\|UseComThreading`（`internal/windows/surface_access.go` 的 `0x2\|0x20`）；整条可删。 |
+| `07-richtext-usejustify` | 上游 `ui/text_layout.go` 的 `shapeTextAligned` 已在 `shape.Justify` 时调用 `text.Shared().UseJustify()`；整条可删。 |
+| `12-rendering-parity` | 链接 hover 上游改为整条实现下划线（`e.Underline()` 加 `e.ts.solid`），与本仓库点状下划线的取向不同；升级时要么接受上游行为删除该处，要么重写为独立冲突补丁。quarter 定位的 `dotted` 装饰仍需配合 11 号补丁重放。 |
+
+`main` 仍未提供、升级后必须继续保留的 API：`Context.SetMotionPreferences`、
+`markdown.Theme.FixedLineHeight`/`CodeFixedLineHeight`/`HeadingStyle.FixedLineHeight`、
+`SnapToWindow`、`InputDisplayText`、`Application.SetWebViewDataDirectory`、
+`ui.WithGlyphPlacement`、`CollapsibleBaseWithAnimation`（上游只有倍数行高
+`LineHeight`/`CodeLineHeight`，无 DIP 精确行高）。
+
+下次升级（上游发布下一 tag 时）的顺序：
+
+1. 解压新 tag 的模块归档，按上表先删 05、07，重估 12。
+2. 逐个重放余下补丁并解决冲突，重点核对 03、06、10、11、13、16、17、18 所在的
+   `ui/element.go`、`ui/input.go`、`ui/richtext/*`、`ui/api_gen.go`。
+3. `go generate ./ui` 重新生成 API 包装（17 号补丁应随之重做或删除）。
+4. 更新补丁文件名中的版本前缀、`mygo.lock.json`、`scripts/frameworkpin/pin.go` 的
+   `UpstreamVersion`/`Revision`/`UpstreamSum`/`patchChain`/`ExpectedTreeSHA256` 与本文件。
+5. 跑 `go build ./...`、框架与应用测试、`go tool mygo vet .`、`go run ./scripts/check-framework.go`
+   与 `go test ./scripts/frameworkpin`；原生窗口与视觉验收另列。
 
 ## 已被上游收录而删除的本地补丁
 
@@ -185,10 +229,10 @@ if paths := composer.DroppedFiles(); len(paths) > 0 {
 ## 文件拖放与 Markdown 行高 API
 
 ```go
-ui.Box(c).OnFilesDrop(func(paths []string) {
-    // 此处已离开 View 构建，可启动附件导入工作。
+// 拖放同样由框架轮询：drop 会请求一帧，路径在下一次构建里读取。
+if paths := composer.DroppedFiles(); len(paths) > 0 {
     importer.Import(paths)
-})
+}
 ```
 
 Markdown 新增可选字段：`markdown.Theme.FixedLineHeight`、`CodeFixedLineHeight` 和
@@ -232,7 +276,7 @@ go tool mygo vet .
 
 重新构造源码副本时，应从校验和为
 `h1:0qkDpDRo7C9g8PM8eu4V6FVouhLiTrUdqKD6I31Lv3Q=` 的 v0.7.4 Go 模块归档解压，
-按顺序应用上述二十个补丁，并执行 `go generate ./ui`。补丁已包含生成结果，再次生成
+按顺序应用上述十九个补丁，并执行 `go generate ./ui`。补丁已包含生成结果，再次生成
 不应有差异。
 
 由应用根视图把保存的 MotionPreference 与 SmoothScrolling 设置映射到上述 API。
@@ -265,23 +309,19 @@ Go 的 `-trimpath` 产物省略 build settings 中的 `-ldflags`，因此校验�
 中文输入、嵌套列表、聊天跟随输出、编辑器、终端，以及设置切换/重启后的行为。
 原生运行、视觉一致性、性能和用户验收均仍待单独完成。
 
-```
-
-`Element.OnHover(func(bool)) Element` 的回调在主线程处理输入之后或帧提交之后执行，
-
 ## R14 fixture observations
 
 R14 does not change the `.6` vendor tree or add a patch. Production TabStrip only
 binds additional Handles through a tagged observer; the normal build's observer
-is empty.36 native reference/Go pairs, actual before/after Win32 foreground checks
-and69 comparison guards are application fixture evidence, not framework pixel
+is empty. 36 native reference/Go pairs, actual before/after Win32 foreground checks
+and 69 comparison guards are application fixture evidence, not framework pixel
 acceptance. The last release packages remain R13. See `audit-tabstrip-fixture.md`.
 
 ## R15 follow-up
 
 R15 changes application tab drawing through the existing shader API; the `.6`
 framework tree and eleven patches are unchanged. Four package targets and a
-separate exact Windows EXE tab interaction smoke pass.36 original/Go baseline
+separate exact Windows EXE tab interaction smoke pass. 36 original/Go baseline
 pairs plus four supplemental states do not establish full visual acceptance;
 see `audit-tabstrip-style.md`. Earlier evidence above retains its phase identity.
 
