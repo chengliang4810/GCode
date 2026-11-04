@@ -165,8 +165,8 @@ func metricDuration(duration time.Duration, known bool) string {
 }
 
 type metricPanelState struct {
-	open, timing, suppressed, keyboard bool
-	leaveAt                            time.Time
+	hoverPanelState
+	timing bool
 }
 
 func (a *App) conversationMetricsView(c *ui.Context, sessionID string) {
@@ -260,23 +260,7 @@ func (a *App) metricsGroup(c *ui.Context, scope string, stats conversationMetric
 			button(false)
 		}
 	})
-	if hovered || state.keyboard {
-		state.leaveAt = time.Time{}
-	} else {
-		state.suppressed = false
-		if state.open {
-			if state.leaveAt.IsZero() {
-				// Allow the pointer to cross the gap into the panel.
-				state.leaveAt = c.Now().Add(180 * time.Millisecond)
-			}
-			if delay := state.leaveAt.Sub(c.Now()); delay > 0 {
-				c.After(delay)
-			} else {
-				state.open = false
-				c.Invalidate()
-			}
-		}
-	}
+	state.finish(c, hovered)
 	return state.open
 }
 

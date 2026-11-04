@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -22,7 +23,8 @@ const (
 
 type composerUsageState struct {
 	session, target, provider string
-	accountsOpen, contextOpen bool
+	accountsOpen              bool
+	context                   hoverPanelState
 	loaded                    bool
 	lastForced, nextPoll      time.Time
 	errorText                 string
@@ -71,8 +73,6 @@ func footerAccountFraction(accounts []contracts.ProviderAccount, target, provide
 	}
 	return 0, false
 }
-
-func footerPercent(fraction float64) string { return fmt.Sprintf("%.0f%%", fraction*100) }
 
 // Agent usage uses Rust f32::round; context labels use formatted precision.
 func footerAccountPercent(fraction float64) string {
@@ -137,7 +137,7 @@ func (a *App) trackFooterUsage(c *ui.Context, state *composerUsageState, session
 		provider = ""
 	}
 	if state.session != session.ID || state.target != target || state.provider != provider {
-		state.accountsOpen, state.contextOpen = false, false
+		state.accountsOpen, state.context = false, hoverPanelState{}
 		state.errorText = ""
 	}
 	if state.target != target {
@@ -282,7 +282,7 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 			trigger := a.footerRing(c, "Account usage", footerAccountPercent(fraction), fraction, color, textColor, state.accountsOpen)
 			trigger.OnClick(func() {
 				state.accountsOpen = !state.accountsOpen
-				state.contextOpen = false
+				state.context = hoverPanelState{}
 				if state.accountsOpen {
 					a.refreshFooterUsage(state, now)
 				}
@@ -292,24 +292,43 @@ func (a *App) composerUsage(c *ui.Context, session contracts.Session, state *com
 			state.accountsOpen = false
 		}
 		usage := a.state.ContextUsage[session.ID]
-		if !usage.HasWindow() {
-			state.contextOpen = false
+		started := slices.ContainsFunc(a.state.Messages[session.ID], func(message contracts.Message) bool {
+			return message.Role == "user"
+		})
+		if !usage.HasWindow() && !started {
+			state.context = hoverPanelState{}
 			return
 		}
 		fraction, known := usage.Fraction()
-		label, color := "—", a.palette.Faint
+		color := a.palette.Faint
 		if known {
-			label, color = footerPercent(fraction), footerUsageColor(a.palette, fraction, false)
+			color = footerUsageColor(a.palette, fraction, false)
 		}
 		contextLabel := tr(c, "Context usage")
 		if side {
 			contextLabel += tr(c, " in ") + session.Title
 		}
-		trigger := a.footerRing(c, contextLabel, label, fraction, color, color, state.contextOpen)
-		trigger.OnClick(func() { state.contextOpen = !state.contextOpen; state.accountsOpen = false })
-		a.footerPopover(c, trigger, &state.contextOpen, "Context window menu", 360, false, func() {
-			a.footerContextCard(c, usage)
+		trigger := a.footerRing(c.Key("context-usage:"+session.ID), contextLabel, "", fraction, color, color, state.context.open)
+		pointer := trigger.Hovered()
+		hovered := pointer
+		if pointer && !state.context.suppressed && !state.context.open {
+			state.context.open, state.context.keyboard, state.accountsOpen = true, false, false
+			c.Invalidate()
+		}
+		trigger.OnClick(func() {
+			state.context.open, state.context.suppressed, state.context.keyboard = true, false, !pointer
+			state.accountsOpen = false
 		})
+		if state.context.open {
+			panel := a.footerPopover(c, trigger, &state.context.open, "Context window menu", 360, false, func() {
+				a.footerContextCard(c, usage)
+			})
+			hovered = panel.Hovered() || hovered
+			if !state.context.open {
+				state.context.suppressed, state.context.keyboard = true, false
+			}
+		}
+		state.context.finish(c, hovered)
 	})
 }
 
@@ -350,7 +369,10 @@ func (a *App) footerContextCard(c *ui.Context, usage contracts.ContextUsage) {
 }
 
 func (a *App) footerRing(c *ui.Context, label, value string, fraction float64, arc, text ui.Color, open bool) ui.Element {
-	button := ui.ButtonBase(c).Height(24).Padding(0, 6).Radius(6).Gap(5).AlignItems(ui.Center).Label(tr(c, label)).Tooltip(tr(c, label) + ": " + tr(c, value)).TextColor(text)
+	button := ui.ButtonBase(c).Height(24).Padding(0, 6).Radius(6).Gap(5).AlignItems(ui.Center).Label(tr(c, label)).TextColor(text)
+	if value != "" {
+		button.Tooltip(tr(c, label) + ": " + tr(c, value))
+	}
 	if open || button.Hovered() {
 		ink := ui.Hex("#000000")
 		if a.palette.Dark {
@@ -364,7 +386,9 @@ func (a *App) footerRing(c *ui.Context, label, value string, fraction float64, a
 			paintFooterArc(p, bounds, 1, track)
 			paintFooterArc(p, bounds, max(0, min(1, fraction)), arc)
 		})
-		ui.Text(c, value).Width(footerTextWidth(c, value, design.TextSize(c, design.TextSmall), 400)).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+		if value != "" {
+			ui.Text(c, value).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+		}
 	})
 	return button
 }

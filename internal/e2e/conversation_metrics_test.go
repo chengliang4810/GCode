@@ -305,7 +305,7 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 			for _, command := range []contracts.Command{
 				{Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: model.Provider{
 					ID: "metrics", Name: "Local fixture", Protocol: model.Chat, BaseURL: provider.URL,
-					Models: []model.Model{{ID: "model"}},
+					Models: []model.Model{{ID: "model", ContextWindow: 200000}},
 				}}},
 				{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{Path: workspace, Name: "Metrics visibility"}},
 			} {
@@ -364,6 +364,8 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 				return nil
 			}
 			app.await("failed run retains transcript detail with no redundant footer or unknown metrics", assertHidden)
+			contextKey := "context-usage:" + sessionID
+			unknownContext := app.waitKey(contextKey)
 			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
 				t.Fatal(err)
 			}
@@ -377,6 +379,9 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 			}
 			if err := assertHidden(); err != nil {
 				t.Fatal(err)
+			}
+			if waitingContext := app.waitKey(contextKey); waitingContext.Bounds.X != unknownContext.Bounds.X || waitingContext.Bounds.Width != unknownContext.Bounds.Width {
+				t.Fatalf("waiting request shifted context usage: before=%+v waiting=%+v", unknownContext.Bounds, waitingContext.Bounds)
 			}
 			app.capture("waiting-without-metrics")
 			release <- struct{}{}
@@ -398,10 +403,70 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 				}
 				return nil
 			})
+			if reportedContext := app.waitKey(contextKey); reportedContext.Bounds.X != unknownContext.Bounds.X || reportedContext.Bounds.Width != unknownContext.Bounds.Width {
+				t.Fatalf("reported metrics shifted context usage: before=%+v reported=%+v", unknownContext.Bounds, reportedContext.Bounds)
+			}
 			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
 				t.Fatal(err)
 			}
 			app.capture("first-useful-metrics")
+			scope := "conversation-metrics:" + sessionID
+			app.hoverMetric(scope + ":usage")
+			app.waitKey(scope + ":usage-panel")
+			app.assertNoMetricCoverage()
+			app.capture("partial-usage-panel")
+			if contextRing := app.waitKey(contextKey); contextRing.Bounds.Width != 28 {
+				t.Fatalf("context entry still reserves visible percentage text: %+v", contextRing.Bounds)
+			}
+			app.hoverMetric(contextKey)
+			var contextPanel accessNode
+			contextPanelVisible := func(want bool) error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				visible := false
+				for _, node := range tree.Nodes {
+					if node.Label == "Context window menu" {
+						contextPanel, visible = node, true
+					}
+					if node.Role == "tooltip" && strings.HasPrefix(node.Label, "Context usage:") {
+						return fmt.Errorf("old percentage tooltip remains")
+					}
+				}
+				if visible != want {
+					return fmt.Errorf("context panel visible=%v want=%v", visible, want)
+				}
+				if want && !activityTreeContains(tree, "100/200,000 (0.1%)") {
+					return fmt.Errorf("full context details missing")
+				}
+				return nil
+			}
+			app.await("ring hover opens full context details", func() error { return contextPanelVisible(true) })
+			app.await("previous usage card closes after leaving its trigger", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				if _, err := tree.findKey(scope + ":usage-panel"); err == nil {
+					return fmt.Errorf("previous usage card still open")
+				}
+				return nil
+			})
+			app.capture("context-details-on-hover")
+			if err := app.client.call("input", map[string]any{"events": []map[string]any{{
+				"type": "pointerMove", "x": contextPanel.Bounds.X + 8, "y": contextPanel.Bounds.Y + 8,
+			}}}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.await("pointer can enter the context card", func() error { return contextPanelVisible(true) })
+			app.hoverMetric(contextKey)
+			if err := app.client.call("input", map[string]any{"events": []map[string]any{{
+				"type": "key", "key": "Escape",
+			}}}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.await("Escape dismisses the hovered context card", func() error { return contextPanelVisible(false) })
 		})
 	}
 }

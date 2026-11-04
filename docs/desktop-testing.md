@@ -95,6 +95,7 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | `TestDesktopLocalCallTrajectory` | 原生窗口 + `--local` 真实核心、本地 HTTP 模型与真实 Read 工具；重启读取请求/响应/工具结果/HTTP 错误，验证右侧 Tab、搜索与刷新。系统右键菜单由 `ui.Tester` 验证，原生通过生产路由打开；见 `call-trajectory.md` |
 | `TestDesktopLocalApplicationUsage` | 原生窗口 + `--local` 真实核心；本地 HTTP 模型夹具实际请求两个模型、切换模型、分叉并重启，悬停对话与回复用量/用时入口打开面板，验证累计用量、缓存命中率、持久化计时、历史供应商/模型及窄窗几何，省略缓存字段的请求不稀释命中率，面板不显示计数覆盖；同时覆盖用量页去重、模型各占 50%、7/30 天、热力图与刷新；英文浅色和中文深色窄窗，不访问真实供应商，统计口径见 `conversation-metrics.md` |
 | `TestDesktopLocalConversationMetricsPanels` | 原生窗口 + `--local` 真实核心；七次本地 HTTP 模型请求、六次真实 Read，重开后检查完整用量与用时面板、34.0% 缓存命中、实测生成用时和“复制 → 用量 → 用时 → 日期”顺序、首字计时、面板边界与 Escape；真实指针悬停打开、移入保持、切换与移出关闭；确认计数覆盖行及速度口径说明已移除；中文深浅主题，不请求真实供应商 |
+| `TestDesktopLocalConversationMetricsVisibility` | 原生窗口 + `--local` 真实核心；失败无用量时隐藏统计，首次有效数据出现后按已上报数值显示、不加 `≥` 或说明文字；上下文入口从首条用户消息起只显示固定宽度圆环，实际指针悬停打开完整容量/计数/百分比面板，移入保持且 Escape 关闭；深浅主题，本地 HTTP 夹具 |
 | `TestDesktopLocalProjectNewConversation` | 原生窗口 + `--local` 真实核心；深浅主题、264/350px 侧栏，悬停项目行并通过指针事件点击独立新建按钮，核对画布项目和折叠隔离；悬停画布项目名显示圆形关闭按钮，指针点击后显示不使用项目并保留草稿，再选项目后发送，真实 Read 目标项目文件、核对持久化归属及工作目录，返回旧对话保留草稿；模型为本地 HTTP 夹具 |
 | `TestDesktopLocalRepositoryRefsRefresh` | 原生窗口 + `--local` 真实核心与私有真实 Git 仓库；旧 Ready 缓存重开刷新、打开列表保留已有分支并异步显示外部新增分支、新建草稿刷新、刷新完成后再次外部切换分支仍能发送；核对会话实际分支、source context 和真实 Read 结果；深浅主题，模型为本地 HTTP 夹具；队列等待/加载/失败期间缓存显示、搜索、游标按名称保持及延后选择由组件回归确定性验证 |
 | `TestDesktopLocalPromptReferences` | 原生窗口 + `--local` 真实核心；深浅主题窄窗的命令/技能候选、原子引用、展开发送、持久化及重启恢复；模型为本地 HTTP 夹具 |

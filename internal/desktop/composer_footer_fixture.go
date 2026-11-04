@@ -98,7 +98,9 @@ func (f *FooterUsageFixture) SetScene(appearance, scene string) error {
 	}
 	f.appearance, f.scene = appearance, scene
 	f.app.state.ContextUsage[f.app.sessionID] = usage
-	f.app.footerUsage = composerUsageState{session: f.app.sessionID, target: "local", provider: "codex", loaded: true, accountsOpen: strings.HasSuffix(scene, "-accounts"), contextOpen: strings.HasSuffix(scene, "-context")}
+	contextOpen := strings.HasSuffix(scene, "-context")
+	f.app.footerUsage = composerUsageState{session: f.app.sessionID, target: "local", provider: "codex", loaded: true,
+		accountsOpen: strings.HasSuffix(scene, "-accounts"), context: hoverPanelState{open: contextOpen, keyboard: contextOpen}}
 	f.settlePasses = 0
 	return nil
 }
@@ -132,7 +134,7 @@ func (f *FooterUsageFixture) View(c *ui.Context) {
 	f.rendered = FooterUsageFixtureState{
 		Appearance: f.appearance, Scene: f.scene, Width: width, Height: height,
 		Context: a.state.ContextUsage[a.sessionID].Clone(), Accounts: a.state.Integrations.Accounts,
-		Row: row, AccountsOpen: a.footerUsage.accountsOpen, ContextOpen: a.footerUsage.contextOpen,
+		Row: row, AccountsOpen: a.footerUsage.accountsOpen, ContextOpen: a.footerUsage.context.open,
 		GeometryStable: stable,
 		NativeWindow:   a.win != nil,
 	}

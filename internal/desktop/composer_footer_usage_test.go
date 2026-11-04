@@ -38,8 +38,8 @@ func TestFooterAccountLimitUsesFirstActiveAndAllWindows(t *testing.T) {
 			t.Fatalf("ineligible harness %s exposed an account ring", provider)
 		}
 	}
-	if footerAccountPercent(.125) != "13%" || footerPercent(.125) != "12%" {
-		t.Fatal("account round() and context precision formatting lost their distinct tie rules")
+	if footerAccountPercent(.125) != "13%" {
+		t.Fatal("account round() lost its tie rule")
 	}
 }
 
@@ -100,8 +100,8 @@ func footerUsageTester(t *testing.T, usage contracts.ContextUsage) (*App, *ui.Te
 
 func TestFooterUsageCardsUseSharedCacheAndOwnContext(t *testing.T) {
 	a, tt := footerUsageTester(t, contracts.ContextUsage{Tokens: footerNumber(240000), Window: footerNumber(200000)})
-	if !tt.HasText("90%") || !tt.HasText("120%") {
-		t.Fatal("account binding window or unclamped context label missing")
+	if !tt.HasText("90%") || tt.HasText("120%") {
+		t.Fatal("account percentage missing or context percentage remains outside its panel")
 	}
 	if err := tt.Click("Account usage"); err != nil {
 		t.Fatal(err)
@@ -135,18 +135,18 @@ func TestFooterUsageCardsUseSharedCacheAndOwnContext(t *testing.T) {
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Window: footerNumber(200000)}
 	tt.Frame()
-	if !tt.HasText("—") || !tt.HasText("—/200,000") {
+	if !tt.HasText("—/200,000") {
 		t.Fatal("capacity-only context was rendered as zero")
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Tokens: footerNumber(0), Window: footerNumber(200000)}
 	tt.Frame()
-	if !tt.HasText("0%") || !tt.HasText("0/200,000 (0.0%)") {
+	if !tt.HasText("0/200,000 (0.0%)") {
 		t.Fatal("reported zero was rendered as unknown")
 	}
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{}
 	tt.Frame()
-	if _, ok := tt.Find("Context usage"); ok || a.footerUsage.contextOpen {
-		t.Fatal("unknown capacity retained the chip or orphaned popover")
+	if _, ok := tt.Find("Context usage"); !ok || !a.footerUsage.context.open || !tt.HasText("—") {
+		t.Fatal("an existing conversation must retain the unknown-context chip and panel")
 	}
 }
 
@@ -155,20 +155,89 @@ func TestFooterUsageIsIndependentAcrossMainAndSide(t *testing.T) {
 	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Tokens: footerNumber(150000), Window: footerNumber(200000)}
 	a.state.ContextUsage[child.ID] = contracts.ContextUsage{Tokens: footerNumber(18000), Window: footerNumber(200000)}
 	tt.Frame()
-	if err := tt.Click("Context usage in " + child.Title); err != nil {
-		t.Fatal(err)
+	ring, ok := tt.Find("Context usage in " + child.Title)
+	if !ok || ring.W != 28 {
+		t.Fatalf("side context ring missing or includes text: %+v", ring)
 	}
+	tt.Move(ring.X+ring.W/2, ring.Y+ring.H/2)
 	tt.Advance(time.Second)
 	if !tt.HasText("18,000/200,000 (9.0%)") || tt.HasText("150,000/200,000 (75.0%)") {
 		t.Fatal("side card borrowed the main conversation's context")
 	}
-	if a.footerUsage.contextOpen || !a.sideComposer(child.ID).FooterUsage.contextOpen {
+	if a.footerUsage.context.open || !a.sideComposer(child.ID).FooterUsage.context.open {
 		t.Fatal("side popup changed main popup state")
 	}
 	a.state.ContextUsage[child.ID] = contracts.ContextUsage{}
 	tt.Frame()
-	if _, ok := tt.Find("Context usage in " + child.Title); ok {
-		t.Fatal("side ring fell back to parent when its snapshot disappeared")
+	if _, ok := tt.Find("Context usage in " + child.Title); !ok ||
+		!tt.HasText("—") || tt.HasText("18,000/200,000 (9.0%)") || tt.HasText("150,000/200,000 (75.0%)") {
+		t.Fatal("side ring must retain its own unknown placeholder without borrowing the parent context")
+	}
+}
+
+func TestFooterContextAppearsAfterFirstUserMessageAndKeepsItsWidth(t *testing.T) {
+	a, tt := footerUsageTester(t, contracts.ContextUsage{})
+	a.state.Messages[a.sessionID] = nil
+	tt.Frame()
+	if _, ok := tt.Find("Context usage"); ok {
+		t.Fatal("an empty conversation exposed the context ring")
+	}
+	a.state.Messages[a.sessionID] = []contracts.Message{{ID: "first-user-message", Role: "user", SessionID: a.sessionID}}
+	tt.Frame()
+	unknown, ok := tt.Find("Context usage")
+	if !ok || unknown.W != 28 || tt.HasText("—") {
+		t.Fatal("the first user message did not reveal an icon-only context ring immediately")
+	}
+	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Window: footerNumber(200000)}
+	tt.Frame()
+	capacityOnly, ok := tt.Find("Context usage")
+	if !ok || capacityOnly.X != unknown.X || capacityOnly.W != unknown.W {
+		t.Fatalf("capacity arrival shifted the context ring: before=%+v after=%+v", unknown, capacityOnly)
+	}
+	a.state.ContextUsage[a.sessionID] = contracts.ContextUsage{Tokens: footerNumber(12000), Window: footerNumber(200000)}
+	tt.Frame()
+	reported, ok := tt.Find("Context usage")
+	if !ok || tt.HasText("6%") || reported.X != unknown.X || reported.W != unknown.W {
+		t.Fatalf("reported usage shifted the context ring: before=%+v after=%+v", unknown, reported)
+	}
+}
+
+func TestFooterContextHoverShowsDetailsAndDismisses(t *testing.T) {
+	a, tt := footerUsageTester(t, contracts.ContextUsage{Tokens: footerNumber(18000), Window: footerNumber(200000)})
+	ring, ok := tt.Find("Context usage")
+	if !ok || ring.W != 28 || ring.H != 24 || tt.HasText("9%") || tt.HasText("Context window") {
+		t.Fatalf("context entry must be only a ring: bounds=%+v texts=%v", ring, tt.Texts())
+	}
+	enter := func() {
+		tt.Move(ring.X+ring.W/2, ring.Y+ring.H/2)
+		tt.Advance(time.Second)
+	}
+	enter()
+	panel, ok := tt.Find("Context window menu")
+	if !ok || !tt.HasText("18,000/200,000 (9.0%)") || tt.HasText("Context usage: 9%") {
+		t.Fatalf("hover did not replace the tooltip with full details: %v", tt.Texts())
+	}
+	tt.Move(panel.X+4, panel.Y+4)
+	tt.Advance(time.Second)
+	if !a.footerUsage.context.open {
+		t.Fatal("entering the details panel closed it")
+	}
+	enter()
+	tt.Key(0, ui.KeyEscape)
+	tt.Advance(time.Second)
+	if _, ok := tt.Find("Context window menu"); ok {
+		t.Fatal("Escape reopened the panel under the stationary pointer")
+	}
+	tt.Move(2, 2)
+	tt.Advance(time.Second)
+	enter()
+	if _, ok := tt.Find("Context window menu"); !ok {
+		t.Fatal("leaving and reentering did not restore hover")
+	}
+	tt.Move(2, 2)
+	tt.Advance(time.Second)
+	if _, ok := tt.Find("Context window menu"); ok {
+		t.Fatal("leaving the ring and details panel did not dismiss it")
 	}
 }
 
@@ -184,13 +253,13 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 		cases                []windowCase
 	}{
 		{"accounts", "Account usage", "Account usage menu", 400, 128, []windowCase{
-			{"ordinary", 840, 560, 357, 378},
-			{"three-pixel-gap-is-not-overflow", 486, 560, 3, 378},
-			{"exact-left-edge-is-not-overflow", 483, 560, 0, 378},
-			{"one-pixel-overflow-snaps", 482, 560, 8, 378},
+			{"ordinary", 840, 560, 384, 378},
+			{"three-pixel-gap-is-not-overflow", 459, 560, 3, 378},
+			{"exact-left-edge-is-not-overflow", 456, 560, 0, 378},
+			{"one-pixel-overflow-snaps", 455, 560, 8, 378},
 			{"wide-card-visible-region-starts-at-eight", 360, 560, 8, 378},
-			{"above-card-shifts-down-without-flipping", 840, 140, 357, 8},
-			{"tall-card-visible-region-starts-at-eight", 840, 80, 357, 8},
+			{"above-card-shifts-down-without-flipping", 840, 140, 384, 8},
+			{"tall-card-visible-region-starts-at-eight", 840, 80, 384, 8},
 		}},
 		{"context", "Context usage", "Context window menu", 360, 74, []windowCase{
 			{"ordinary", 840, 560, 456, 432},
@@ -202,9 +271,18 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 	} {
 		t.Run(card.name, func(t *testing.T) {
 			_, tt := footerUsageTester(t, contracts.ContextUsage{Tokens: footerNumber(42000), Window: footerNumber(200000)})
-			if err := tt.Click(card.trigger); err != nil {
-				t.Fatal(err)
+			activate := func() {
+				t.Helper()
+				tt.Move(1, 1)
+				for tries := 0; tries < 10 && !tt.Focused(card.trigger); tries++ {
+					tt.Key(0, ui.KeyTab)
+				}
+				if !tt.Focused(card.trigger) {
+					t.Fatal("footer trigger is not keyboard accessible")
+				}
+				tt.Key(0, ui.KeyEnter)
 			}
+			activate()
 			for _, tc := range card.cases {
 				t.Run(tc.name, func(t *testing.T) {
 					tt.SetSize(tc.width, tc.height)
@@ -225,9 +303,7 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 			// the earlier card box or a retained UI Element.
 			tt.Key(0, ui.KeyEscape)
 			tt.SetSize(840, 560)
-			if err := tt.Click(card.trigger); err != nil {
-				t.Fatal(err)
-			}
+			activate()
 			tt.Advance(time.Second)
 			if panel, ok := tt.Find(card.panel); !ok || panel.W != card.width || panel.H != card.height {
 				t.Fatalf("reopened card lost production geometry: %+v, %v", panel, ok)
