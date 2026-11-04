@@ -58,8 +58,8 @@ func TestConversationMetricsUnknownAndZero(t *testing.T) {
 		{"unrecorded", contracts.ModelRequestTotals{}, "—"},
 		{"reported zero", contracts.ModelRequestTotals{Requests: 1}, "0 Token"},
 		{"unknown", contracts.ModelRequestTotals{Requests: 1, UnknownUsage: 1}, "—"},
-		{"partial", contracts.ModelRequestTotals{Requests: 2, UnknownUsage: 1, Input: 20, Output: 10}, "≥30 Token"},
-		{"unrecorded earlier reply", contracts.ModelRequestTotals{Requests: 1, Unrecorded: true, Input: 20, Output: 10}, "≥30 Token"},
+		{"partial", contracts.ModelRequestTotals{Requests: 2, UnknownUsage: 1, Input: 20, Output: 10}, "30 Token"},
+		{"unrecorded earlier reply", contracts.ModelRequestTotals{Requests: 1, Unrecorded: true, Input: 20, Output: 10}, "30 Token"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var got string
@@ -100,11 +100,11 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 	}{
 		{name: "unknown failed request"},
 		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: "0 Token"},
-		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "≥12 Token"},
+		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "12 Token"},
 		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: "0 rounds 1 steps · Time taken 1.00s"},
 		{name: "negative generation time", request: contracts.ModelRequest{DecodeDuration: -time.Second}},
 		{name: "cache without usable denominator", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true}}},
-		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "≥20 Token · Cache hit 50.0%"},
+		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "20 Token · Cache hit 50.0%"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := testApp(t, "default")

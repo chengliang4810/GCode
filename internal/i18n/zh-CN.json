@@ -1194,7 +1194,6 @@
   "Average first-token wait": "平均首字等待",
   "Decode time": "生成耗时",
   "Output speed": "输出速度",
-  "Only reported usage is counted; totals may be incomplete.": "仅统计已上报用量，总计可能不完整。",
   "Submit": "提交",
   "Plugin configuration": "插件配置",
   "Remove saved value": "清除已保存值",

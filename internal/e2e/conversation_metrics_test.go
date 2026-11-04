@@ -253,6 +253,7 @@ func (app *nativeApp) assertNoMetricCoverage() {
 			"缓存计数覆盖", "速度计数覆盖", "首字计数覆盖", "速度不包含首字等待和工具执行时间。",
 			"Cache count coverage", "Speed count coverage", "First-token count coverage",
 			"Speed excludes first-token wait and tool execution.",
+			"Only reported usage is counted; totals may be incomplete.", "仅统计已上报用量，总计可能不完整。",
 		} {
 			if strings.Contains(node.Label, removed) {
 				app.t.Fatalf("metrics still show removed detail: %s", node.Label)
@@ -394,7 +395,7 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if !strings.Contains(metric.Label, "≥120 Token") {
+				if !strings.Contains(metric.Label, "120 Token") || strings.Contains(metric.Label, "≥") {
 					return fmt.Errorf("first reported usage is missing: %s", metric.Label)
 				}
 				send, err := tree.findKey("send")

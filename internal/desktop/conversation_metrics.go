@@ -134,9 +134,6 @@ func (a *App) metricTokens(c *ui.Context, n int64, unknown bool) string {
 		return "—"
 	}
 	number := a.metricNumber(n)
-	if unknown {
-		number = "≥" + number
-	}
 	return fmt.Sprintf(tr(c, "%s Token"), number)
 }
 
@@ -286,10 +283,6 @@ func (a *App) metricsUsagePanel(c *ui.Context, scope string, stats conversationM
 			a.metricsUsageFields(c, modelScope, entry.totals)
 		}
 	}
-	if t.UnknownUsage > 0 || t.Unrecorded {
-		ui.Text(c, tr(c, "Only reported usage is counted; totals may be incomplete.")).
-			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-	}
 }
 
 func (a *App) metricsUsageFields(c *ui.Context, scope string, t contracts.ModelRequestTotals) {
@@ -298,12 +291,8 @@ func (a *App) metricsUsageFields(c *ui.Context, scope string, t contracts.ModelR
 	}
 	tokens := func(key, label string, count int64, unknown bool) {
 		exact := footerCount(uint64(count))
-		if unknown {
-			if count == 0 {
-				exact = "—"
-			} else {
-				exact = "≥" + exact
-			}
+		if unknown && count == 0 {
+			exact = "—"
 		}
 		controlMetricField(c.Key(scope+":"+key), tr(c, label), a.metricTokens(c, count, unknown)).Tooltip(exact)
 	}
