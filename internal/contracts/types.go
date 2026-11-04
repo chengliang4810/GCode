@@ -4,6 +4,8 @@ package contracts
 import (
 	"context"
 	"time"
+
+	"gcode/internal/model"
 )
 
 const SchemaVersion = 1
@@ -102,6 +104,7 @@ type Device struct {
 	LastSeen     time.Time `json:"lastSeen"`
 }
 type Session struct {
+	ModelRetry        *model.RetryStatus         `json:"modelRetry,omitempty"`
 	StorageRootID     string                     `json:"storageRootId"`
 	StorageError      string                     `json:"storageError,omitempty"`
 	Goal              *SessionGoal               `json:"goal,omitempty"`

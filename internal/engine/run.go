@@ -720,6 +720,9 @@ func (e *Engine) startRunLocked(
 				}
 			}
 		}
+		if index := e.sessionIndex(session.ID); index >= 0 {
+			e.state.Sessions[index].ModelRetry = nil
+		}
 		if runErr != nil && !errors.Is(runErr, context.Canceled) {
 			label := "Run failed: "
 			detail := runErr.Error()

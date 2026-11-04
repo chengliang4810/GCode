@@ -256,6 +256,7 @@ type Request struct {
 }
 
 type Delta struct {
+	Retry     *RetryStatus
 	Text      string
 	Reasoning string
 	// Output also marks tool argument fragments that have no visible text.

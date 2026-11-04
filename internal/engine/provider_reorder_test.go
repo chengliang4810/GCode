@@ -21,7 +21,7 @@ func TestProviderReorderPreservesConfigurationAndPersistsPickerOrder(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -105,7 +105,7 @@ func TestProviderReorderPreservesConfigurationAndPersistsPickerOrder(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = Open(Options{Storage: store})
+	core, err = openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

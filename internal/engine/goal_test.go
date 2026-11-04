@@ -276,7 +276,7 @@ func TestGoalRestartPausesAndSettlesToLastHeartbeat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +300,7 @@ func TestGoalRestartPausesAndSettlesToLastHeartbeat(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = Open(Options{Storage: store})
+	core, err = openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -494,7 +494,7 @@ func goalTestCore(t *testing.T, protocol model.Protocol, handler http.Handler) (
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

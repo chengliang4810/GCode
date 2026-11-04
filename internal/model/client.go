@@ -16,7 +16,8 @@ import (
 
 // Client owns the shared outbound HTTP transport, not Agent execution state.
 type Client struct {
-	HTTP *http.Client
+	HTTP        *http.Client
+	RetryPolicy *RetryPolicy
 }
 
 func NewClient() *Client {
@@ -52,6 +53,7 @@ type Gateway struct {
 	provider Provider
 	target   adapterTarget
 	adapter  adapter
+	retry    RetryPolicy
 }
 
 func (c *Client) Bind(provider Provider, selected Model) (*Gateway, error) {
@@ -83,9 +85,17 @@ func (c *Client) Bind(provider Provider, selected Model) (*Gateway, error) {
 	if err != nil {
 		return nil, err
 	}
+	retry := DefaultRetryPolicy()
+	if c.RetryPolicy != nil {
+		retry = *c.RetryPolicy
+	}
+	if retry.MaxRetries < 0 || retry.BaseDelay < 0 || retry.MaxDelay < 0 {
+		return nil, errors.New("retry limits and delays must be nonnegative")
+	}
 	return &Gateway{
 		http: c.HTTP, provider: provider, adapter: wire,
 		target: adapterTarget{model: selected, scope: continuationScope(provider, selected)},
+		retry:  retry,
 	}, nil
 }
 
@@ -188,6 +198,12 @@ func (c *Client) ListModels(ctx context.Context, provider Provider) ([]string, e
 }
 
 func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) error) (result Result, callErr error) {
+	return g.StreamWithAttempts(ctx, input, emit, nil)
+}
+
+// StreamWithAttempts observes each physical request for accounting. The retry
+// loop and request identity are the same as Stream; observers cannot add retries.
+func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit func(Delta) error, record func(Result) error) (result Result, callErr error) {
 	started := time.Now()
 	defer func() { result.RequestDuration = time.Since(started) }()
 	if err := ctx.Err(); err != nil {
@@ -206,22 +222,44 @@ func (g *Gateway) Stream(ctx context.Context, input Request, emit func(Delta) er
 		return Result{}, err
 	}
 	requestID := rand.Text()
-	// HTTP retries only precede a response stream; every attempt uses identical bytes.
+	// One budget covers transport, HTTP status and incomplete streams. Only a
+	// complete response is returned to the Agent, which owns tool execution.
 	for attempt := 0; ; attempt++ {
-		attemptStarted := time.Now()
-		result, status, err := g.streamAttempt(ctx, input, emit, endpoint, body, requestID, attempt+1)
-		if result.FirstTokenObserved {
-			result.FirstTokenLatency += attemptStarted.Sub(started)
+		if err := ctx.Err(); err != nil {
+			return result, err
 		}
-		if (status == 429 || status >= 500) && attempt < 2 {
-			select {
-			case <-ctx.Done():
-				return Result{}, ctx.Err()
-			case <-time.After(time.Second * time.Duration(1<<attempt)):
+		var consumerErr error
+		deliver := func(delta Delta) error {
+			if emit != nil {
+				consumerErr = emit(delta)
 			}
-			continue
+			return consumerErr
 		}
-		return result, err
+		result, _, err = g.streamAttempt(ctx, input, deliver, endpoint, body, requestID, attempt+1)
+		if record != nil {
+			if recordErr := record(result); recordErr != nil {
+				return result, errors.Join(err, recordErr)
+			}
+		}
+		if ctx.Err() != nil {
+			return result, ctx.Err()
+		}
+		if consumerErr != nil {
+			return result, consumerErr
+		}
+		failure := ClassifyFailure(err)
+		if err == nil || !failure.Retryable || attempt >= g.retry.MaxRetries {
+			return result, err
+		}
+		if emit != nil {
+			state := &RetryStatus{Attempt: attempt + 1, MaxRetries: g.retry.MaxRetries, Reason: failure.Reason, HTTPStatus: failure.HTTPStatus}
+			if emitErr := emit(Delta{Retry: state}); emitErr != nil {
+				return result, emitErr
+			}
+		}
+		if waitErr := g.retry.wait(ctx, g.retry.delay(attempt+1, failure.RetryAfter)); waitErr != nil {
+			return result, waitErr
+		}
 	}
 }
 
@@ -276,7 +314,15 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 	var providerErr *streamProviderError
 	if errors.As(callErr, &providerErr) {
 		detail, truncated := providerErrorDetail(providerErr.payload, g.provider.APIKey)
-		callErr = &ProviderError{HTTPStatus: status, operation: "model reported a streaming error", detail: detail, truncated: truncated}
+		callErr = &ProviderError{HTTPStatus: status, operation: "model reported a streaming error", detail: detail, truncated: truncated,
+			retryAfter: parseRetryAfter(response.Header.Get("Retry-After"), time.Now())}
+	} else if callErr != nil && !errors.Is(callErr, ErrStreamInterrupted) {
+		// Preserve transport error identity without treating protocol validation
+		// or consumer callback failures as connection failures.
+		var read *streamReadError
+		if errors.As(callErr, &read) {
+			callErr = providerConnectionError("model stream connection failed", callErr, g.provider.APIKey)
+		}
 	}
 	if callErr == nil && result.Message.Continuation != nil {
 		result.Message.Continuation.scope = g.target.scope

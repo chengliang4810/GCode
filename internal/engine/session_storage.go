@@ -188,6 +188,7 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 			ContextUsage: e.state.ContextUsage[session.ID],
 		}
 		disk.Session.StorageError = ""
+		disk.Session.ModelRetry = nil
 		for _, request := range e.state.ModelRequests {
 			if request.SessionID == session.ID {
 				disk.ModelRequests = append(disk.ModelRequests, request)
@@ -246,6 +247,7 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	snapshot.Sessions = slices.Clone(snapshot.Sessions)
 	for i := range snapshot.Sessions {
 		snapshot.Sessions[i].StorageError = ""
+		snapshot.Sessions[i].ModelRetry = nil
 		snapshot.Sessions[i].Goal = nil
 	}
 	// Session-owned diffs and terminal output live with their conversation.

@@ -19,6 +19,11 @@ func TestContinuationPersistsAndOnlyReplaysToItsTarget(t *testing.T) {
 		sealed   string
 	}{
 		{
+			name: "chat", protocol: Chat, sealed: "preserved-chat-reasoning",
+			stream: `data: {"choices":[{"delta":{"reasoning_content":"preserved-chat-"} }]}` + "\n\n" +
+				`data: {"choices":[{"delta":{"reasoning_content":"reasoning","content":"visible","tool_calls":[{"index":0,"id":"call-1","function":{"name":"read","arguments":"{\"path\":\"proof.txt\"}"}}]},"finish_reason":"tool_calls"}]}` + "\n\ndata: [DONE]\n\n",
+		},
+		{
 			name: "responses", protocol: Responses, sealed: "sealed-reasoning",
 			stream: `data: {"type":"response.completed","response":{"status":"completed","output":[{"type":"reasoning","id":"reason-1","encrypted_content":"sealed-reasoning"},{"type":"message","role":"assistant","content":[{"type":"output_text","text":"visible"}]},{"type":"function_call","call_id":"call-1","name":"read","arguments":"{\"path\":\"proof.txt\"}"}]}}` + "\n\n",
 		},
@@ -44,8 +49,10 @@ func TestContinuationPersistsAndOnlyReplaysToItsTarget(t *testing.T) {
 					return
 				}
 				requests <- body
-				if strings.HasSuffix(r.URL.Path, "/chat/completions") {
+				if strings.HasSuffix(r.URL.Path, "/chat/completions") && fixture.protocol != Chat {
 					fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+				} else if fixture.protocol == Chat && strings.HasSuffix(r.URL.Path, "/responses") {
+					fmt.Fprint(w, "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}\n\n")
 				} else {
 					fmt.Fprint(w, fixture.stream)
 				}
@@ -55,7 +62,7 @@ func TestContinuationPersistsAndOnlyReplaysToItsTarget(t *testing.T) {
 				ID: "original", Name: "Custom", Protocol: fixture.protocol, BaseURL: server.URL,
 				APIKey: "channel-credential", Models: []Model{{ID: "model"}},
 			}
-			first, err := NewClient().Bind(provider, provider.Models[0])
+			first, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -83,12 +90,15 @@ func TestContinuationPersistsAndOnlyReplaysToItsTarget(t *testing.T) {
 						target.Models[0].ID = "other-model"
 					case "protocol":
 						target.Protocol = Chat
+						if fixture.protocol == Chat {
+							target.Protocol = Responses
+						}
 					case "endpoint":
 						target.BaseURL += "/another-endpoint"
 					case "credential":
 						target.APIKey = "another-credential"
 					}
-					gateway, err := NewClient().Bind(target, target.Models[0])
+					gateway, err := newTestClient().Bind(target, target.Models[0])
 					if err != nil {
 						t.Fatal(err)
 					}

@@ -55,7 +55,7 @@ func TestDesktopLocalModelFetchImport(t *testing.T) {
 			if err := storage.WriteJSON(filepath.Join(data, "cache", "gcode", "models-dev.json"), catalog); err != nil {
 				t.Fatal(err)
 			}
-			core, err := engine.Open(engine.Options{Storage: store})
+			core, err := openExecutionFixture(t, engine.Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}

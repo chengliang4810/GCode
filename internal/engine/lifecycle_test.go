@@ -25,7 +25,7 @@ func TestGeneratedConversationIDsAreLowercase(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 			}))
 			defer provider.Close()
 			store, _ := storage.Open(storage.Options{Home: t.TempDir()})
-			core, err := Open(Options{Storage: store})
+			core, err := openExecutionFixture(t, Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -169,7 +169,7 @@ func TestFailedSendDoesNotCreateConversation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestRemoveQueuedMessagePreventsExecutionAndStopCancels(t *testing.T) {
 	defer provider.Close()
 	defer close(release)
 	store, _ := storage.Open(storage.Options{Home: t.TempDir()})
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +244,7 @@ func TestRealProjectFileReadConflictAndSearch(t *testing.T) {
 		t.Fatal(err)
 	}
 	store, _ := storage.Open(storage.Options{Home: home})
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,7 +350,7 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -411,7 +411,7 @@ func TestSubscriberSnapshotsHaveIndependentOwnership(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -439,7 +439,7 @@ func TestDataDirectoryChangeKeepsExistingWorkspacesAtTheirRoots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -466,7 +466,7 @@ func TestDataDirectoryChangeKeepsExistingWorkspacesAtTheirRoots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = Open(Options{Storage: store})
+	core, err = openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -253,6 +253,7 @@
   "Off": "关闭",
   "Automatic": "自动",
   "First message": "首条消息",
+  "Reconnecting... %d/%d": "重新连接中... %d/%d",
   "Uses an additional model request for each new conversation.": "每个新对话会额外调用一次所选模型。",
   "Use the first message without an additional model request.": "使用首条消息命名，不额外调用模型。",
   "No models configured": "未配置模型",

@@ -19,6 +19,7 @@ func TestReconcileLoadedSessionInterruptsOnlyItsHistoricalWork(t *testing.T) {
 	lastSeen := began.Add(3 * time.Second)
 	core.state.Sessions[index].Status = contracts.AwaitingInput
 	core.state.Sessions[index].RunningSubagents = 2
+	core.state.Sessions[index].ModelRetry = &model.RetryStatus{Attempt: 8, MaxRetries: 10}
 	core.state.Sessions[index].Goal = &contracts.SessionGoal{
 		ID: "goal", Status: contracts.GoalVerifying, ActiveSince: &began,
 		LastSeenAt: lastSeen, TimeUsedMS: 100,
@@ -26,6 +27,7 @@ func TestReconcileLoadedSessionInterruptsOnlyItsHistoricalWork(t *testing.T) {
 	otherIndex := core.sessionIndex(other.ID)
 	core.state.Sessions[otherIndex].Status = contracts.Working
 	core.state.Sessions[otherIndex].RunningSubagents = 1
+	core.state.Sessions[otherIndex].ModelRetry = &model.RetryStatus{Attempt: 3, MaxRetries: 10}
 	core.state.Runs = []contracts.Run{
 		{ID: "target-running", SessionID: target.ID, Status: "running"},
 		{ID: "target-done", SessionID: target.ID, Status: "completed"},
@@ -53,6 +55,9 @@ func TestReconcileLoadedSessionInterruptsOnlyItsHistoricalWork(t *testing.T) {
 	core.history[other.ID] = model.CloneMessages(history)
 	core.context[other.ID] = model.CloneMessages(history)
 	core.reconcileSessionLocked(target.ID)
+	if core.state.Sessions[index].ModelRetry != nil || core.state.Sessions[otherIndex].ModelRetry.Attempt != 3 {
+		t.Fatal("recovered retry state was retained or cleared another live session")
+	}
 	session := core.state.Sessions[index]
 	if session.Status != contracts.Idle || session.LastOutcome != "interrupted" || session.RunningSubagents != 0 {
 		t.Fatalf("late-loaded session was not interrupted: %+v", session)

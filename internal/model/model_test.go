@@ -273,7 +273,7 @@ func TestThreeProtocolsBuildAndStream(t *testing.T) {
 				ID: "custom", Name: "Custom", Protocol: protocol, BaseURL: server.URL + "/v1",
 				APIKey: "local-test", Models: []Model{{ID: "custom-model"}},
 			}
-			gateway, err := NewClient().Bind(provider, provider.Models[0])
+			gateway, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -345,7 +345,7 @@ func TestRedirectDoesNotForwardCredentials(t *testing.T) {
 	}))
 	defer source.Close()
 	provider := Provider{ID: "p", Name: "P", Protocol: Messages, BaseURL: source.URL, APIKey: "test-secret", Models: []Model{{ID: "m"}}}
-	gateway, err := NewClient().Bind(provider, provider.Models[0])
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -378,7 +378,7 @@ func requestBody(t *testing.T, protocol Protocol, selected Model, request Reques
 		ID: "p", Name: "Custom", Protocol: protocol,
 		BaseURL: "https://model.example/v1", Models: []Model{selected},
 	}
-	gateway, err := NewClient().Bind(provider, selected)
+	gateway, err := newTestClient().Bind(provider, selected)
 	if err != nil {
 		t.Fatal(err)
 	}

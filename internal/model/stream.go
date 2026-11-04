@@ -16,6 +16,11 @@ var ErrStreamInterrupted = errors.New("model stream ended before completion")
 
 var errOutputLimit = errors.New("model output limit reached; incomplete tool calls were not executed")
 
+type streamReadError struct{ cause error }
+
+func (e *streamReadError) Error() string { return e.cause.Error() }
+func (e *streamReadError) Unwrap() error { return e.cause }
+
 type streamDecoder interface {
 	consume(string) (Delta, error)
 	completed() bool
@@ -134,7 +139,7 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		if firstOutput.IsZero() && (delta.Output || delta.Text != "" || delta.Reasoning != "") {
 			firstOutput = time.Now()
 		}
-		if emit != nil && (delta.Text != "" || delta.Reasoning != "") {
+		if emit != nil && (delta.Output || delta.Text != "" || delta.Reasoning != "") {
 			return emit(delta)
 		}
 		return nil
@@ -168,7 +173,7 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		if errors.Is(err, io.ErrUnexpectedEOF) {
 			return decoder.snapshot(), fmt.Errorf("%w: %v", ErrStreamInterrupted, err)
 		}
-		return decoder.snapshot(), err
+		return decoder.snapshot(), &streamReadError{cause: err}
 	}
 	if err := process(); err != nil {
 		return decoder.snapshot(), err

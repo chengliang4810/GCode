@@ -50,6 +50,13 @@ func (chatAdapter) encode(r Request, target adapterTarget) (map[string]any, erro
 			continue
 		}
 		item := map[string]any{"role": m.Role, "content": m.Text}
+		if raw := replayData(m, target.scope); len(raw) > 0 && m.Role == "assistant" {
+			var continuation chatContinuation
+			if err := json.Unmarshal(raw, &continuation); err != nil {
+				return nil, errors.New("invalid model continuation")
+			}
+			item["reasoning_content"] = continuation.Reasoning
+		}
 		if len(m.Images) > 0 {
 			parts := []any{map[string]any{"type": "text", "text": m.Text}}
 			for _, image := range m.Images {
@@ -103,6 +110,23 @@ func (chatAdapter) decoder() streamDecoder {
 
 type chatDecoder struct {
 	streamState
+	reasoningReported bool
+}
+
+type chatContinuation struct {
+	Reasoning string `json:"reasoning_content"`
+}
+
+func (d *chatDecoder) finish() (Result, error) {
+	result, err := d.streamState.finish()
+	if err == nil && d.reasoningReported {
+		data, marshalErr := json.Marshal(chatContinuation{Reasoning: result.Message.Reasoning})
+		if marshalErr != nil {
+			return result, marshalErr
+		}
+		result.Message.Continuation = &Continuation{data: data}
+	}
+	return result, err
 }
 
 func (d *chatDecoder) consume(payload string) (Delta, error) {
@@ -115,8 +139,8 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 		Error   json.RawMessage `json:"error"`
 		Choices []struct {
 			Delta struct {
-				Content   string `json:"content"`
-				Reasoning string `json:"reasoning_content"`
+				Content   string  `json:"content"`
+				Reasoning *string `json:"reasoning_content"`
 				Calls     []struct {
 					Index    int    `json:"index"`
 					ID       string `json:"id"`
@@ -151,7 +175,10 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 	delta := Delta{}
 	for _, choice := range event.Choices {
 		delta.Text += choice.Delta.Content
-		delta.Reasoning += choice.Delta.Reasoning
+		if choice.Delta.Reasoning != nil {
+			d.reasoningReported = true
+			delta.Reasoning += *choice.Delta.Reasoning
+		}
 		for _, change := range choice.Delta.Calls {
 			delta.Output = delta.Output || change.Function.Arguments != ""
 			call := d.calls[change.Index]

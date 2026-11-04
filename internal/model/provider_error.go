@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -20,6 +21,7 @@ type ProviderError struct {
 	detail     string
 	truncated  bool
 	cause      error
+	retryAfter *time.Duration
 }
 
 func (e *ProviderError) Unwrap() error { return e.cause }
@@ -58,7 +60,8 @@ func providerHTTPError(response *http.Response, operation, secret string) error 
 	if readErr != nil {
 		detail += "\n[provider error body could not be fully read]"
 	}
-	return &ProviderError{HTTPStatus: response.StatusCode, operation: operation, detail: detail, truncated: truncated}
+	return &ProviderError{HTTPStatus: response.StatusCode, operation: operation, detail: detail, truncated: truncated,
+		retryAfter: parseRetryAfter(response.Header.Get("Retry-After"), time.Now())}
 }
 
 func providerConnectionError(operation string, err error, secret string) error {

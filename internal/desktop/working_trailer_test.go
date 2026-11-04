@@ -2,12 +2,86 @@ package desktop
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/model"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestWorkingRetryVisibilityThresholdAndReset(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		t.Run(appearance, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.selectSession("chat-0")
+			a.state.Settings.Appearance.Mode = appearance
+			a.state.Settings.Appearance.ReduceMotion = true
+			a.state.Settings.General.Language = "zh-CN"
+			var index int
+			for i := range a.state.Sessions {
+				if a.state.Sessions[i].ID == "chat-0" {
+					index = i
+				}
+			}
+			session := &a.state.Sessions[index]
+			session.Status = contracts.Working
+			tt := ui.NewTester(func(c *ui.Context) { a.View(c) }, 900, 600)
+			for _, attempt := range []int{1, 2, 3, 10} {
+				session.ModelRetry = &model.RetryStatus{Attempt: attempt, MaxRetries: 10, HTTPStatus: 503}
+				tt.Frame()
+				caption := fmt.Sprintf("重新连接中... %d/10", attempt)
+				if tt.HasText(caption) != (attempt >= 3) {
+					t.Fatalf("attempt %d has wrong loading status", attempt)
+				}
+				tt.Advance(2 * time.Second)
+				if attempt >= 3 && !tt.HasText(caption) {
+					t.Fatal("retry label changed without a new attempt")
+				}
+			}
+			session.ModelRetry = nil
+			tt.Frame()
+			if tt.HasText("重新连接中... 10/10") {
+				t.Fatal("successful stream retained retry status")
+			}
+			session.ModelRetry = &model.RetryStatus{Attempt: 3, MaxRetries: 10}
+			session.Status = contracts.Idle
+			tt.Frame()
+			if tt.HasText("重新连接中... 3/10") {
+				t.Fatal("idle session displayed a stale retry")
+			}
+		})
+	}
+}
+
+func TestSideRetryStatusIsIndependent(t *testing.T) {
+	a, tt, child := sideViewTester(t)
+	for i := range a.state.Sessions {
+		session := &a.state.Sessions[i]
+		if session.ID == a.sessionID {
+			session.Status = contracts.Working
+			session.ModelRetry = &model.RetryStatus{Attempt: 4, MaxRetries: 10}
+		}
+		if session.ID == child.ID {
+			session.Status = contracts.Working
+			session.ModelRetry = &model.RetryStatus{Attempt: 8, MaxRetries: 10}
+		}
+	}
+	tt.Frame()
+	if !tt.HasText("Reconnecting... 4/10") || !tt.HasText("Reconnecting... 8/10") {
+		t.Fatal("main and side chat lost independent retry status")
+	}
+	for i := range a.state.Sessions {
+		if a.state.Sessions[i].ID == child.ID {
+			a.state.Sessions[i].ModelRetry = nil
+		}
+	}
+	tt.Frame()
+	if !tt.HasText("Reconnecting... 4/10") || tt.HasText("Reconnecting... 8/10") {
+		t.Fatal("settling child retry affected its parent")
+	}
+}
 
 func TestWorkingTrailerFollowsSessionAndParksAfterCompletion(t *testing.T) {
 	a := testApp(t, "default")

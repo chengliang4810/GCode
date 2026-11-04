@@ -61,6 +61,27 @@ func TestModelRequestsCloneAndWireRoundTrip(t *testing.T) {
 	}
 }
 
+func TestModelRetryCloneAndWireRoundTrip(t *testing.T) {
+	snapshot := Snapshot{Sessions: []Session{{ID: "session", Status: Working,
+		ModelRetry: &model.RetryStatus{Attempt: 3, MaxRetries: 10, Reason: "server", HTTPStatus: 503}}}}
+	cloned := CloneSnapshot(snapshot)
+	cloned.Sessions[0].ModelRetry.Attempt = 10
+	if snapshot.Sessions[0].ModelRetry.Attempt != 3 {
+		t.Fatal("retry state aliases its snapshot")
+	}
+	data, err := json.Marshal(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored Snapshot
+	if err := json.Unmarshal(data, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if *restored.Sessions[0].ModelRetry != *snapshot.Sessions[0].ModelRetry {
+		t.Fatal("remote snapshot lost request retry progress")
+	}
+}
+
 func TestModelRequestCacheHitExcludesUnreportedInput(t *testing.T) {
 	var totals ModelRequestTotals
 	for _, usage := range []model.Usage{

@@ -12,23 +12,51 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/engine"
+	"gcode/internal/model"
 	"gcode/internal/storage"
 )
 
+// Non-naming fixtures keep model request counts deterministic.
+func openExecutionFixture(t *testing.T, options engine.Options) (*engine.Engine, error) {
+	t.Helper()
+	if options.Client == nil {
+		options.Client = model.NewClient()
+		retry := model.DefaultRetryPolicy()
+		retry.Wait = func(ctx context.Context, _ time.Duration) error { return ctx.Err() }
+		options.Client.RetryPolicy = &retry
+	}
+	core, err := engine.Open(options)
+	if err != nil {
+		return nil, err
+	}
+	snapshot, err := core.Snapshot(context.Background())
+	if err == nil {
+		settings := snapshot.Settings
+		settings.General.ThreadNamingModel = "first-message"
+		err = core.Execute(context.Background(), contracts.Command{Kind: "settings.update", Settings: &settings})
+	}
+	if err != nil {
+		_ = core.Close()
+	}
+	return core, err
+}
+
 type fixtureSessionRecord struct {
-	Format       int                       `json:"format"`
-	SessionID    string                    `json:"sessionId"`
-	RootID       string                    `json:"rootId"`
-	Session      contracts.Session         `json:"session"`
-	Messages     []contracts.Message       `json:"messages"`
-	Runs         []contracts.Run           `json:"runs"`
-	Queue        []contracts.QueuedMessage `json:"queue"`
-	ContextUsage contracts.ContextUsage    `json:"contextUsage"`
-	Changes      []contracts.Change        `json:"changes"`
-	Terminals    []contracts.Terminal      `json:"terminals"`
+	Format        int                       `json:"format"`
+	SessionID     string                    `json:"sessionId"`
+	RootID        string                    `json:"rootId"`
+	Session       contracts.Session         `json:"session"`
+	Messages      []contracts.Message       `json:"messages"`
+	Runs          []contracts.Run           `json:"runs"`
+	ModelRequests []contracts.ModelRequest  `json:"modelRequests"`
+	Queue         []contracts.QueuedMessage `json:"queue"`
+	ContextUsage  contracts.ContextUsage    `json:"contextUsage"`
+	Changes       []contracts.Change        `json:"changes"`
+	Terminals     []contracts.Terminal      `json:"terminals"`
 }
 
 func readFixtureIndex(configDirectory string) (map[string]json.RawMessage, contracts.Snapshot, map[string]string, error) {
@@ -111,6 +139,7 @@ func readFixtureSnapshot(configDirectory string) (contracts.Snapshot, error) {
 		snapshot.Messages[session.ID] = disk.Messages
 		snapshot.ContextUsage[session.ID] = disk.ContextUsage
 		snapshot.Runs = append(snapshot.Runs, disk.Runs...)
+		snapshot.ModelRequests = append(snapshot.ModelRequests, disk.ModelRequests...)
 		snapshot.Queue = append(snapshot.Queue, disk.Queue...)
 		snapshot.Changes = append(snapshot.Changes, disk.Changes...)
 		snapshot.Terminals = append(snapshot.Terminals, disk.Terminals...)
@@ -177,7 +206,7 @@ func TestFixtureConversationRecordRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := engine.Open(engine.Options{Storage: store})
+	core, err := openExecutionFixture(t, engine.Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -234,7 +263,7 @@ func TestFixtureConversationRecordRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = engine.Open(engine.Options{Storage: store})
+	core, err = openExecutionFixture(t, engine.Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,7 +285,7 @@ func TestFixtureSnapshotReadsRegisteredHistoricalRoots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := engine.Open(engine.Options{Storage: store})
+	core, err := openExecutionFixture(t, engine.Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +305,7 @@ func TestFixtureSnapshotReadsRegisteredHistoricalRoots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = engine.Open(engine.Options{Storage: store})
+	core, err = openExecutionFixture(t, engine.Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

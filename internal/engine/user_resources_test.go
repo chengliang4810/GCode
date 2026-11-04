@@ -25,7 +25,7 @@ func resourceCore(t *testing.T) (*Engine, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		_ = store.Close()
 		t.Fatal(err)
@@ -478,7 +478,7 @@ func TestUserResourcesSurviveRestartWithSecretsKeptPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -504,7 +504,7 @@ func TestUserResourcesSurviveRestartWithSecretsKeptPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := Open(Options{Storage: store})
+	reopened, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

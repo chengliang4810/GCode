@@ -14,7 +14,7 @@ func TestSessionGroupCommandsCreateMoveAndPersist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestSessionGroupCommandsCreateMoveAndPersist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err = Open(Options{Storage: store})
+	core, err = openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestGroupAndSessionReorderPersistDenseOrder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

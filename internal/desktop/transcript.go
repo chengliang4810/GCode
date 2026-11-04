@@ -351,13 +351,16 @@ func (a *App) activityRevealStarts(rowID string, blocks []contracts.Block, strea
 // time, so the label stays one run of text to shaping and to assistive
 // technology.
 func (a *App) activityShimmerTitle(c *ui.Context, el ui.Element, title string, phase float32) {
+	a.activityShimmerInk(c, el, title, phase, 0, a.palette.Muted, a.palette.Text)
+}
+
+func (a *App) activityShimmerInk(c *ui.Context, el ui.Element, title string, phase float32, weight int, base, peak ui.Color) {
 	family, size := c.Theme().Font, design.TextSize(c, design.TextBase)
-	span := ui.Span{Text: title, Font: family, Size: size}
+	span := ui.Span{Text: title, Font: family, Size: size, Weight: weight}
 	advance, _ := c.MeasureText(0, span)
 	if advance <= 0 {
 		return
 	}
-	base, peak := a.palette.Muted, a.palette.Text
 	el.DrawOver(func(p *ui.Painter, r ui.Rect) {
 		width := min(advance, r.W)
 		_, height := p.MeasureText(0, span)
@@ -369,7 +372,9 @@ func (a *App) activityShimmerTitle(c *ui.Context, el ui.Element, title string, p
 			}
 			left, right := r.X+x, min(r.X+x+activityShimmerStrip, r.X+width)
 			p.Clip(ui.Rect{X: left, Y: r.Y, W: right - left, H: r.H}, 0, func() {
-				p.RichText(r.X, y, 0, ui.Span{Text: title, Font: family, Size: size, Color: base.Mix(peak, amount)})
+				ink := span
+				ink.Color = base.Mix(peak, amount)
+				p.RichText(r.X, y, 0, ink)
 			})
 		}
 	})

@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"fmt"
 	"hash/fnv"
 	"math"
 	"strings"
@@ -76,6 +77,31 @@ func (a *App) workingState(sessionID string) (word, elapsed string, visible bool
 func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 	word, elapsed, visible := a.workingState(sessionID)
 	if !visible {
+		return
+	}
+	// ZCode's turn loading slot keeps the first two retries as ordinary
+	// loading. From retry three it shows a stable counter, never a countdown.
+	for _, session := range a.state.Sessions {
+		if session.ID != sessionID || session.Status != contracts.Working || session.ModelRetry == nil || session.ModelRetry.Attempt < 3 {
+			continue
+		}
+		retry := session.ModelRetry
+		caption := fmt.Sprintf(tr(c, "Reconnecting... %d/%d"), retry.Attempt, retry.MaxRetries)
+		tooltip := caption
+		if retry.HTTPStatus > 0 {
+			tooltip += fmt.Sprintf(" · HTTP %d", retry.HTTPStatus)
+		}
+		row := ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0)
+		row.Children(func() {
+			label := ui.Text(c, caption).Key("model-retry:" + sessionID).Tooltip(tooltip).
+				FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Muted)
+			if !a.reduceMotion(c) {
+				now := c.Now()
+				started := ui.Local(row, "retry-shimmer-start", func() time.Time { return now })
+				a.activityShimmerInk(c, label, caption, activityShimmerPhase(*started, now), 500, a.palette.Faint, a.palette.Muted)
+				c.After(time.Second / 30)
+			}
+		})
 		return
 	}
 	caption := tr(c, word)

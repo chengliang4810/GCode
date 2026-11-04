@@ -33,7 +33,7 @@ func TestListModelsReadsProviderEndpointPerProtocol(t *testing.T) {
 				fmt.Fprint(w, `{"data":[{"id":"gamma"},{"id":"beta"},{"id":"beta"},{"id":" "},{"note":"ignored"}]}`)
 			}))
 			t.Cleanup(server.Close)
-			client := NewClient()
+			client := newTestClient()
 			ids, err := client.ListModels(context.Background(), Provider{
 				ID: "p", Name: "Fixture", Protocol: tc.protocol, BaseURL: server.URL + "/v1", APIKey: "list-secret",
 				Models: []Model{{ID: "seed"}},
@@ -52,7 +52,7 @@ func TestListModelsReadsProviderEndpointPerProtocol(t *testing.T) {
 }
 
 func TestListModelsRejectsInvalidConfiguration(t *testing.T) {
-	client := NewClient()
+	client := newTestClient()
 	calls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls++ }))
 	t.Cleanup(server.Close)
@@ -77,7 +77,7 @@ func TestListModelsSurfacesHTTPAndPayloadFailures(t *testing.T) {
 			fmt.Fprint(w, `denied`)
 		}))
 		t.Cleanup(server.Close)
-		_, err := NewClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1", Models: []Model{{ID: "m"}}})
+		_, err := newTestClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1", Models: []Model{{ID: "m"}}})
 		if err == nil || err.Error() != "model list request failed (HTTP 403)\ndenied" {
 			t.Fatalf("unexpected status error: %v", err)
 		}
@@ -87,7 +87,7 @@ func TestListModelsSurfacesHTTPAndPayloadFailures(t *testing.T) {
 			fmt.Fprint(w, `<html>not json</html>`)
 		}))
 		t.Cleanup(server.Close)
-		if _, err := NewClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1", Models: []Model{{ID: "m"}}}); err == nil {
+		if _, err := newTestClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1", Models: []Model{{ID: "m"}}}); err == nil {
 			t.Fatal("invalid payload listing was accepted")
 		}
 	})
@@ -98,7 +98,7 @@ func TestListModelsSurfacesHTTPAndPayloadFailures(t *testing.T) {
 			fmt.Fprint(w, `{"data":[]}`)
 		}))
 		t.Cleanup(server.Close)
-		ids, err := NewClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1/", Models: []Model{{ID: "m"}}})
+		ids, err := newTestClient().ListModels(context.Background(), Provider{ID: "p", Name: "Fixture", Protocol: Chat, BaseURL: server.URL + "/v1/", Models: []Model{{ID: "m"}}})
 		if err != nil || len(ids) != 0 {
 			t.Fatalf("empty listing failed: %v %v", ids, err)
 		}

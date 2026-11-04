@@ -36,7 +36,7 @@ func TestInterruptedStepRecoveryIsBoundedAndCancelable(t *testing.T) {
 				ID: "p", Name: "P", Protocol: model.Chat, BaseURL: server.URL,
 				Models: []model.Model{{ID: "m"}},
 			}
-			gateway, err := model.NewClient().Bind(provider, provider.Models[0])
+			gateway, err := newAgentTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -61,7 +61,7 @@ func TestInterruptedStepRecoveryIsBoundedAndCancelable(t *testing.T) {
 				if !errors.Is(err, context.Canceled) || requests.Load() != 1 || retries != 1 {
 					t.Fatalf("cancellation restarted the model: %v, requests=%d, retries=%d", err, requests.Load(), retries)
 				}
-			} else if !errors.Is(err, model.ErrStreamInterrupted) || requests.Load() != 3 || retries != 2 {
+			} else if !errors.Is(err, model.ErrStreamInterrupted) || requests.Load() != model.DefaultMaxRetries+1 || retries != model.DefaultMaxRetries {
 				t.Fatalf("retry limit was not honored: %v, requests=%d, retries=%d", err, requests.Load(), retries)
 			}
 		})

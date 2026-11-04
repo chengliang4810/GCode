@@ -146,7 +146,7 @@ func TestToolGuardOptionsCoverRootChildHookAgentAndDynamicSkill(t *testing.T) {
 				t.Fatal(err)
 			}
 			workspace := t.TempDir()
-			core, err := Open(Options{Storage: store, ToolGuard: func(_ context.Context, cwd, name string, _ json.RawMessage) error {
+			core, err := openExecutionFixture(t, Options{Storage: store, ToolGuard: func(_ context.Context, cwd, name string, _ json.RawMessage) error {
 				guardMu.Lock()
 				guardCalls = append(guardCalls, name)
 				guardMu.Unlock()

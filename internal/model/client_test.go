@@ -29,7 +29,7 @@ func TestGatewayRecordsRequestAndFirstTokenTiming(t *testing.T) {
 			}))
 			defer server.Close()
 			provider := Provider{ID: "timing", Name: "Timing", Protocol: Chat, BaseURL: server.URL, Models: []Model{{ID: "model"}}}
-			gateway, err := NewClient().Bind(provider, provider.Models[0])
+			gateway, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -99,7 +99,7 @@ func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 				BaseURL: server.URL + "/custom/v1/", APIKey: "configured-key",
 				Models: []Model{{ID: "user-model", ReasoningLevels: []string{"high"}, MaxOutput: 8192}},
 			}
-			gateway, err := NewClient().Bind(provider, provider.Models[0])
+			gateway, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -166,7 +166,7 @@ func TestClientResolvesProviderBaseURL(t *testing.T) {
 					defer server.Close()
 					provider := Provider{ID: "custom", Name: "Custom", Protocol: protocol.name,
 						BaseURL: server.URL + base.input, Models: []Model{{ID: "model"}}}
-					client := NewClient()
+					client := newTestClient()
 					models, err := client.ListModels(t.Context(), provider)
 					if err != nil || len(models) != 1 || models[0] != "model" {
 						t.Errorf("model list failed: models=%v err=%v", models, err)
@@ -204,7 +204,7 @@ func TestBindRejectsDisabledConfiguration(t *testing.T) {
 					selected = provider.Models[0]
 				}
 			}
-			if _, err := NewClient().Bind(provider, selected); err == nil {
+			if _, err := newTestClient().Bind(provider, selected); err == nil {
 				t.Fatal("disabled configuration was accepted")
 			}
 		})
@@ -233,7 +233,7 @@ func TestBindRejectsInvalidConfigurationWithoutDefaultFallback(t *testing.T) {
 			case "different capabilities":
 				selected.ReasoningLevels = []string{"high"}
 			}
-			if _, err := NewClient().Bind(provider, selected); err == nil {
+			if _, err := newTestClient().Bind(provider, selected); err == nil {
 				t.Fatal("invalid configuration silently selected a default")
 			}
 		})
@@ -251,7 +251,7 @@ func TestGatewayCancelsAnInFlightStream(t *testing.T) {
 	provider := Provider{
 		ID: "p", Name: "Custom", Protocol: Chat, BaseURL: server.URL, Models: []Model{{ID: "m"}},
 	}
-	gateway, err := NewClient().Bind(provider, provider.Models[0])
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
 	if err != nil {
 		t.Fatal(err)
 	}

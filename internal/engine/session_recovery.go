@@ -10,6 +10,7 @@ func (e *Engine) reconcileSessionLocked(sessionID string) {
 		return
 	}
 	session := &e.state.Sessions[index]
+	session.ModelRetry = nil
 	session.RunningSubagents = 0
 	if goal := session.Goal; goal != nil {
 		if goal.ActiveSince != nil {

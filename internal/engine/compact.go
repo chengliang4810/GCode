@@ -106,6 +106,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		}
 		if index := e.sessionIndex(sessionID); index >= 0 {
 			e.state.Sessions[index].Status = contracts.Idle
+			e.state.Sessions[index].ModelRetry = nil
 		}
 		for i := range e.state.Runs {
 			r := &e.state.Runs[i]

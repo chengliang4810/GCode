@@ -29,7 +29,7 @@ func openStorageTestCore(t *testing.T, home string) *Engine {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		_ = store.Close()
 		t.Fatal(err)

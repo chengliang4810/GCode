@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -432,20 +431,10 @@ func hookUUID() string {
 // Retry only the incomplete model step. No assistant tool call from this step
 // is committed or executed until a complete response has been validated.
 func streamResponse(ctx context.Context, options Options, request model.Request) (model.Result, error) {
-	for attempt := 0; ; attempt++ {
-		result, err := options.Model.Stream(ctx, request, func(delta model.Delta) error {
-			return options.Emit(Event{Kind: "message.delta", Text: delta.Text, Reasoning: delta.Reasoning})
-		})
-		if !errors.Is(err, model.ErrStreamInterrupted) || attempt >= 2 {
-			return result, err
+	return options.Model.Stream(ctx, request, func(delta model.Delta) error {
+		if delta.Retry != nil {
+			return options.Emit(Event{Kind: "message.retry"})
 		}
-		if err = options.Emit(Event{Kind: "message.retry"}); err != nil {
-			return result, err
-		}
-		select {
-		case <-ctx.Done():
-			return result, ctx.Err()
-		case <-time.After(time.Duration(attempt+1) * 500 * time.Millisecond):
-		}
-	}
+		return options.Emit(Event{Kind: "message.delta", Text: delta.Text, Reasoning: delta.Reasoning})
+	})
 }

@@ -43,6 +43,10 @@ func CloneSnapshot(v Snapshot) Snapshot {
 	v.SessionGroups = slices.Clone(v.SessionGroups)
 	for i := range v.Sessions {
 		v.Sessions[i].Goal = v.Sessions[i].Goal.Clone()
+		if v.Sessions[i].ModelRetry != nil {
+			retry := *v.Sessions[i].ModelRetry
+			v.Sessions[i].ModelRetry = &retry
+		}
 	}
 	cloneComposerFooterGitSnapshots(&v)
 	messages := make(map[string][]Message, len(v.Messages))

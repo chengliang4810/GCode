@@ -19,7 +19,7 @@ func projectFilesTestCore(t *testing.T) *Engine {
 	if err != nil {
 		t.Fatal(err)
 	}
-	core, err := Open(Options{Storage: store})
+	core, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestProjectFileLoadingFailureDoesNotRollbackRegistration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := Open(Options{Storage: store})
+	reopened, err := openExecutionFixture(t, Options{Storage: store})
 	if err != nil {
 		t.Fatal(err)
 	}

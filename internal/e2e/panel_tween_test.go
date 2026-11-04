@@ -30,7 +30,7 @@ func TestDesktopLocalPanelToggleHeight(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			core, err := engine.Open(engine.Options{Storage: store})
+			core, err := openExecutionFixture(t, engine.Options{Storage: store})
 			if err != nil {
 				_ = store.Close()
 				t.Fatal(err)

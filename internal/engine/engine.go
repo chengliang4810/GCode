@@ -136,6 +136,9 @@ func Open(options Options) (*Engine, error) {
 	if err := e.loadPersistence(); err != nil {
 		return nil, err
 	}
+	for i := range e.state.Sessions {
+		e.state.Sessions[i].ModelRetry = nil
+	}
 	e.loadStandaloneTerminals()
 	hostname, _ := os.Hostname()
 	e.state.Devices = []contracts.Device{{ID: "local", Name: hostname, Platform: runtime.GOOS, Architecture: runtime.GOARCH, Current: true, Status: "connected", LastSeen: time.Now()}}

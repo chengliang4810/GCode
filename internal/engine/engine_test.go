@@ -18,6 +18,32 @@ import (
 	"gcode/internal/storage"
 )
 
+// Execution fixtures count model/tool steps exactly; naming is covered separately.
+func openExecutionFixture(t *testing.T, options Options) (*Engine, error) {
+	t.Helper()
+	if options.Client == nil {
+		options.Client = model.NewClient()
+		retry := model.DefaultRetryPolicy()
+		retry.Wait = func(ctx context.Context, _ time.Duration) error { return ctx.Err() }
+		options.Client.RetryPolicy = &retry
+	}
+	core, err := Open(options)
+	if err == nil {
+		snapshot, snapshotErr := core.Snapshot(context.Background())
+		if snapshotErr != nil {
+			_ = core.Close()
+			return nil, snapshotErr
+		}
+		settings := snapshot.Settings
+		settings.General.ThreadNamingModel = "first-message"
+		err = core.Execute(context.Background(), contracts.Command{Kind: "settings.update", Settings: &settings})
+		if err != nil {
+			_ = core.Close()
+		}
+	}
+	return core, err
+}
+
 func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
 		t.Run(string(protocol), func(t *testing.T) {
@@ -33,7 +59,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 					arguments := `{"file_path":"answer.txt","content":"真实 Go 工具写入"}`
 					switch protocol {
 					case model.Chat:
-						sendSSE(w, map[string]any{"choices": []any{map[string]any{"delta": map[string]any{"tool_calls": []any{map[string]any{"index": 0, "id": "write-1", "function": map[string]any{"name": "Write", "arguments": arguments}}}}, "finish_reason": "tool_calls"}}})
+						sendSSE(w, map[string]any{"choices": []any{map[string]any{"delta": map[string]any{"reasoning_content": "tool-round-reasoning", "tool_calls": []any{map[string]any{"index": 0, "id": "write-1", "function": map[string]any{"name": "Write", "arguments": arguments}}}}, "finish_reason": "tool_calls"}}})
 						fmt.Fprint(w, "data: [DONE]\n\n")
 					case model.Responses:
 						sendSSE(w, map[string]any{"type": "response.completed", "response": map[string]any{"status": "completed", "output": []any{map[string]any{"type": "function_call", "call_id": "write-1", "name": "Write", "arguments": arguments}}}})
@@ -48,6 +74,9 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 				data, _ := json.Marshal(request)
 				if !strings.Contains(string(data), "write-1") || !strings.Contains(string(data), "Wrote") {
 					t.Error("second request lost tool result")
+				}
+				if protocol == model.Chat && !strings.Contains(string(data), `"reasoning_content":"tool-round-reasoning"`) {
+					t.Error("second request lost the reasoning from the tool-call round")
 				}
 				switch protocol {
 				case model.Chat:
@@ -69,7 +98,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			core, err := Open(Options{Storage: store})
+			core, err := openExecutionFixture(t, Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -124,7 +153,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			core, err = Open(Options{Storage: store})
+			core, err = openExecutionFixture(t, Options{Storage: store})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -147,7 +176,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 }
 
 func TestRestartAndModelSwitchPreserveScopedContinuation(t *testing.T) {
-	for _, protocol := range []model.Protocol{model.Responses, model.Messages} {
+	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
 		t.Run(string(protocol), func(t *testing.T) {
 			var calls atomic.Int32
 			requests := make(chan string, 1)
@@ -160,7 +189,14 @@ func TestRestartAndModelSwitchPreserveScopedContinuation(t *testing.T) {
 				requests <- string(body)
 				first := calls.Add(1) == 1
 				w.Header().Set("Content-Type", "text/event-stream")
-				if protocol == model.Responses {
+				if protocol == model.Chat {
+					delta := map[string]any{"content": "done"}
+					if first {
+						delta["reasoning_content"] = "private-replay"
+					}
+					sendSSE(w, map[string]any{"choices": []any{map[string]any{"delta": delta, "finish_reason": "stop"}}})
+					fmt.Fprint(w, "data: [DONE]\n\n")
+				} else if protocol == model.Responses {
 					output := []any{}
 					if first {
 						output = append(output, map[string]any{
@@ -199,7 +235,7 @@ func TestRestartAndModelSwitchPreserveScopedContinuation(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				core, err := Open(Options{Storage: store})
+				core, err := openExecutionFixture(t, Options{Storage: store})
 				if err != nil {
 					_ = store.Close()
 					t.Fatal(err)

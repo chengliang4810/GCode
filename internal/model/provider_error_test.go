@@ -28,7 +28,7 @@ func TestProviderHTTPErrorPreservesOriginalBody(t *testing.T) {
 				defer server.Close()
 				provider := Provider{ID: "errors", Name: "Errors", Protocol: protocol, BaseURL: server.URL, APIKey: "secret-key",
 					Models: []Model{{ID: "model"}}}
-				gateway, err := NewClient().Bind(provider, provider.Models[0])
+				gateway, err := newTestClient().Bind(provider, provider.Models[0])
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -50,7 +50,7 @@ func TestProviderHTTPErrorPreservesOriginalBody(t *testing.T) {
 				if err.Error() != want || completed.Error != want {
 					t.Fatalf("original body lost: error=%v trajectory=%q want=%q", err, completed.Error, want)
 				}
-				_, err = NewClient().ListModels(t.Context(), provider)
+				_, err = newTestClient().ListModels(t.Context(), provider)
 				if !errors.As(err, &providerErr) || strings.Contains(err.Error(), "secret-key") ||
 					!strings.Contains(err.Error(), strings.ReplaceAll(body, "secret-key", "[redacted]")) {
 					t.Fatalf("model list lost safe provider error: %v", err)
@@ -77,7 +77,7 @@ func TestProviderStreamingErrorsPreserveDetailsAndPartialText(t *testing.T) {
 			defer server.Close()
 			provider := Provider{ID: "errors", Name: "Errors", Protocol: fixture.protocol, BaseURL: server.URL, APIKey: "secret-key",
 				Models: []Model{{ID: "model"}}}
-			gateway, err := NewClient().Bind(provider, provider.Models[0])
+			gateway, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -130,7 +130,8 @@ func (t providerErrorTransport) RoundTrip(*http.Request) (*http.Response, error)
 
 func TestProviderConnectionErrorsPreserveRedactedCause(t *testing.T) {
 	cause := errors.New("TLS fixture failure reflecting secret-key")
-	client := &Client{HTTP: &http.Client{Transport: providerErrorTransport{failure: cause}}}
+	client := newTestClient()
+	client.HTTP = &http.Client{Transport: providerErrorTransport{failure: cause}}
 	provider := Provider{ID: "errors", Name: "Errors", Protocol: Chat, BaseURL: "https://fixture.invalid",
 		APIKey: "secret-key", Models: []Model{{ID: "model"}}}
 	gateway, err := client.Bind(provider, provider.Models[0])
@@ -158,7 +159,7 @@ func TestProviderRetryRecordsEachOriginalError(t *testing.T) {
 	}))
 	defer server.Close()
 	provider := Provider{ID: "errors", Name: "Errors", Protocol: Chat, BaseURL: server.URL, Models: []Model{{ID: "model"}}}
-	gateway, err := NewClient().Bind(provider, provider.Models[0])
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -169,7 +170,7 @@ func TestProviderRetryRecordsEachOriginalError(t *testing.T) {
 		}
 	}
 	_, err = gateway.Stream(context.Background(), Request{}, nil)
-	if len(calls) != 3 || err == nil || !strings.Contains(err.Error(), `"attempt":3`) {
+	if len(calls) != DefaultMaxRetries+1 || err == nil || !strings.Contains(err.Error(), `"attempt":11`) {
 		t.Fatalf("retry details lost: calls=%d error=%v", len(calls), err)
 	}
 	for i, call := range calls {

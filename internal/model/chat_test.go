@@ -1,9 +1,44 @@
 package model
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
+
+func TestChatReasoningContinuationWithoutToolCalls(t *testing.T) {
+	for _, reasoning := range []string{"ordinary reply reasoning", ""} {
+		name := "nonempty"
+		if reasoning == "" {
+			name = "explicit empty"
+		}
+		t.Run(name, func(t *testing.T) {
+			payload, _ := json.Marshal(map[string]any{"choices": []any{map[string]any{
+				"delta": map[string]any{"content": "answer", "reasoning_content": reasoning}, "finish_reason": "stop",
+			}}})
+			result, err := decodeStream(strings.NewReader("data: "+string(payload)+"\n\ndata: [DONE]\n\n"), chatAdapter{}.decoder(), nil)
+			if err != nil || result.Message.Continuation == nil {
+				t.Fatalf("missing reasoning continuation: %+v, %v", result, err)
+			}
+			result.Message.Continuation.scope = "target"
+			result.Message.Reasoning = "display text must not replace adapter-owned reasoning"
+			body, err := (chatAdapter{}).encode(Request{History: []Message{result.Message}}, adapterTarget{scope: "target"})
+			if err != nil {
+				t.Fatal(err)
+			}
+			message := body["messages"].([]any)[0].(map[string]any)
+			if got, ok := message["reasoning_content"]; !ok || got != reasoning {
+				t.Fatalf("reasoning replay = %q, %t; want %q", got, ok, reasoning)
+			}
+		})
+	}
+	t.Run("not reported", func(t *testing.T) {
+		result, err := decodeStream(strings.NewReader("data: {\"choices\":[{\"delta\":{\"content\":\"answer\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"), chatAdapter{}.decoder(), nil)
+		if err != nil || result.Message.Continuation != nil {
+			t.Fatalf("unreported reasoning invented continuation: %+v, %v", result, err)
+		}
+	})
+}
 
 func TestChatUsageAccumulatesPresenceAndDoesNotAddCachedTokens(t *testing.T) {
 	t.Parallel()

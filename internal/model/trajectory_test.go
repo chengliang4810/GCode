@@ -26,7 +26,7 @@ func TestInvocationRecordsHTTPRetriesAndRedactsCredentials(t *testing.T) {
 	}))
 	defer server.Close()
 	provider := Provider{ID: "custom", Name: "Custom", Protocol: Chat, APIKey: secret, BaseURL: server.URL, Models: []Model{{ID: "model"}}}
-	gateway, err := NewClient().Bind(provider, provider.Models[0])
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestInvocationPreservesPartialInterruptedResponse(t *testing.T) {
 	}))
 	defer server.Close()
 	provider := Provider{ID: "p", Name: "P", Protocol: Chat, BaseURL: server.URL, Models: []Model{{ID: "m"}}}
-	gateway, err := NewClient().Bind(provider, provider.Models[0])
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
 	if err != nil {
 		t.Fatal(err)
 	}
