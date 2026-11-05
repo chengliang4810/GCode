@@ -10,6 +10,11 @@
 `output/shutdown-5s-native-complete/20261105-105234-2600549520/evidence.json`。
 
 真实原生窗口的端到端测试统一使用 MyGo `plugins/automation`。
+测试二进制通过 `internal/testenv.Main` 使用物理临时目录，保留业务存储对符号链接的
+拒绝规则。POSIX 终端夹具使用 `/bin/sh`，macOS 使用系统支持的 `en_US.UTF-8`
+语言环境，避免继承开发者启动脚本或不受支持的 Linux locale。真实终端测试在
+提示符出现后才发送输入；这不替代 PTY 输出、中文、输入中断和断线续接断言。
+
 Go 业务核心测试和 `ui.Tester` 组件测试继续保留；端到端测试覆盖真实启动、
 跨页面操作及持久化流程，不重复每个组件的全部边界组合。
 

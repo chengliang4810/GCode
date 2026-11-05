@@ -48,6 +48,7 @@ func TestRealShellInputResizeInterruptDetachAndExit(t *testing.T) {
 	}
 	first := attach()
 	t.Cleanup(func() { _ = first.Close() })
+	waitShellReady(t, host)
 	write := func(command string) {
 		if _, writeErr := host.Write([]byte(command + "\r")); writeErr != nil {
 			t.Fatal(writeErr)

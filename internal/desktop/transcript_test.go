@@ -447,7 +447,7 @@ func TestTranscriptOutputSelectionSpansNativeLines(t *testing.T) {
 	tt.Press(first.X, first.Y+first.H/2)
 	tt.Move(last.X+40, last.Y+last.H/2)
 	tt.Release(last.X+40, last.Y+last.H/2)
-	tt.Key(ui.Ctrl, ui.KeyC)
+	tt.Key(ui.Cmd, ui.KeyC)
 	if !strings.Contains(tt.Clipboard(), "--- FAIL: TestPanelGeometry") || !strings.Contains(tt.Clipboard(), "sidebar width changed") || !strings.Contains(tt.Clipboard(), "FAIL") {
 		t.Fatalf("multi-line output selection copied %q", tt.Clipboard())
 	}

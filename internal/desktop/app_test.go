@@ -6,6 +6,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/mock"
 	"github.com/egoist/mygo/ui"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -184,4 +185,10 @@ func useEnglishSettings(t *testing.T, backend *mock.Server) {
 	if err := backend.UpdateSettings(context.Background(), snapshot.Settings); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// nearRect allows subpixel floating point rounding while catching pixel shifts.
+func nearRect(a, b ui.Rect) bool {
+	return math.Abs(float64(a.X-b.X)) <= .001 && math.Abs(float64(a.Y-b.Y)) <= .001 &&
+		math.Abs(float64(a.W-b.W)) <= .001 && math.Abs(float64(a.H-b.H)) <= .001
 }

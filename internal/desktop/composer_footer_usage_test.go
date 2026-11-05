@@ -294,7 +294,7 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 					// framework's attachment tests; this checks the visible card.
 					want.W = min(want.W, float32(tc.width)-want.X)
 					want.H = min(want.H, float32(tc.height)-want.Y)
-					if !ok || panel != want {
+					if !ok || !nearRect(panel, want) {
 						t.Fatalf("source overflow-only placement = %+v, %v; want %+v", panel, ok, want)
 					}
 				})

@@ -14,6 +14,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/engine"
 	"gcode/internal/storage"
+	"gcode/internal/testenv"
 )
 
 func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
@@ -71,12 +72,18 @@ func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
 			t.Fatal(attachErr)
 		}
 		t.Cleanup(func() { _ = stream.Close() })
+		ready := make(chan struct{})
 		go func() {
+			announced := false
 			buf := make([]byte, 4096)
 			var tail []byte
 			for {
 				n, readErr := stream.Read(buf)
 				tail = append(tail, buf[:n]...)
+				if !announced && bytes.Contains(tail, []byte(testenv.ShellPrompt())) {
+					close(ready)
+					announced = true
+				}
 				if bytes.Contains(tail, []byte("\x1b[6n")) {
 					_, _ = stream.Write([]byte("\x1b[1;1R"))
 					tail = nil
@@ -89,6 +96,11 @@ func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
 				}
 			}
 		}()
+		select {
+		case <-ready:
+		case <-ctx.Done():
+			t.Fatalf("remote shell did not become ready: %v", ctx.Err())
+		}
 		return stream
 	}
 	stream := attach(first)

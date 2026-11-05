@@ -231,7 +231,7 @@ func TestQuestionComposerNumberShortcutSelectsOnlyVisiblePage(t *testing.T) {
 	}
 	tt.Key(0, ui.Key1)
 	tt.Key(0, ui.Key2)
-	tt.Key(ui.Ctrl, ui.KeyEnter)
+	tt.Key(ui.Cmd, ui.KeyEnter)
 	if len(service.commands) != 1 || !slices.Equal(service.commands[0].QuestionAnswers[0].Options, []string{"Approach B"}) ||
 		!slices.Equal(service.commands[0].QuestionAnswers[1].Options, []string{"Skills", "Hooks"}) {
 		t.Fatalf("question keyboard submission lost choices: %+v", service.commands)

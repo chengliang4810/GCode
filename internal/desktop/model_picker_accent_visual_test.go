@@ -89,7 +89,7 @@ func TestModelAccentOverlayKeepsSliderHitFocusAndKeyboard(t *testing.T) {
 		x := slider.X + 22 + (slider.W-44)*float32(i)/float32(len(levels)-1)
 		tt.ClickAt(x, y)
 		current, present := tt.Find("Reasoning effort")
-		if a.reasoning != want || !present || current != slider || !tt.Focused("Reasoning effort") {
+		if a.reasoning != want || !present || !nearRect(current, slider) || !tt.Focused("Reasoning effort") {
 			t.Fatalf("paint overlay intercepted stop %d: reasoning=%s want=%s slider=%+v focused=%v", i, a.reasoning, want, current, tt.Focused("Reasoning effort"))
 		}
 	}

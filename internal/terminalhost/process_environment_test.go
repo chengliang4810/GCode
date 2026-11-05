@@ -53,6 +53,7 @@ func TestRealTerminalChildTemporaryEnvironment(t *testing.T) {
 			t.Error("terminal reader did not stop")
 		}
 	}()
+	waitShellReady(t, host)
 	command := `printf '%s\n%s\n%s' "$TEMP" "$TMP" "$TMPDIR" > environment.txt`
 	if runtime.GOOS == "windows" {
 		command = "[IO.File]::WriteAllText((Join-Path (Get-Location) 'environment.txt'), ($env:TEMP+\"`n\"+$env:TMP+\"`n\"+$env:TMPDIR))"

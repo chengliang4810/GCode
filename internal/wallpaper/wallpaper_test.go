@@ -44,7 +44,8 @@ func TestWatchPublishesImageChangeAndStopsOnCancellation(t *testing.T) {
 		for i := 0; i < len(image.Pix); i += 4 {
 			image.Pix[i], image.Pix[i+1], image.Pix[i+2], image.Pix[i+3] = pixel.R, pixel.G, pixel.B, pixel.A
 		}
-		file, err := os.Create(path)
+		temporary := filepath.Join(directory, "next.png")
+		file, err := os.Create(temporary)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -56,7 +57,12 @@ func TestWatchPublishesImageChangeAndStopsOnCancellation(t *testing.T) {
 		}
 		// Ensure a changed timestamp even on filesystems with coarse clocks.
 		stamp := time.Now().Add(time.Duration(pixel.R) * time.Second)
-		if err := os.Chtimes(path, stamp, stamp); err != nil {
+		if err := os.Chtimes(temporary, stamp, stamp); err != nil {
+			t.Fatal(err)
+		}
+		// The watcher must see a complete PNG, rather than a truncated file
+		// while the fixture encoder is still writing it.
+		if err := os.Rename(temporary, path); err != nil {
 			t.Fatal(err)
 		}
 	}

@@ -22,7 +22,7 @@ func TestBashUsesOwnedTemporaryDirectory(t *testing.T) {
 		"TEMP": temporary, "TMP": temporary, "TMPDIR": temporary,
 	}})
 	defer cleanup()
-	raw := json.RawMessage(`{"command":"test \"$TEMP\" = \"$TMP\" && test \"$TMP\" = \"$TMPDIR\" && mktemp"}`)
+	raw := json.RawMessage(`{"command":"test \"$TEMP\" = \"$TMP\" && test \"$TMP\" = \"$TMPDIR\" && mktemp \"$TMPDIR/owned.XXXXXXXX\""}`)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	out, err := ownedTool(t, tools, "Bash").Execute(ctx, "", raw)
