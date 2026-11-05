@@ -57,7 +57,7 @@ func TestDirectoryLocationsLeadWithHomeThenHostRoots(t *testing.T) {
 }
 
 func TestWindowsVolumeName(t *testing.T) {
-	for root, want := range map[string]string{"C:\\": "C:", "D:\\": "D:", "/": "/", "/mnt/data": "/mnt/data"} {
+	for root, want := range map[string]string{"C:\\": "C:", "D:\\": "D:", "C:/": "C:", "/": "/", "/mnt/data": "/mnt/data"} {
 		if got := volumeName(root); got != want {
 			t.Errorf("volumeName(%q) = %q, want %q", root, got, want)
 		}

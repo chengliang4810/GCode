@@ -42,6 +42,9 @@ func (e *Engine) ListDirectoryLocations(ctx context.Context, request contracts.D
 // volumeName is the label the picker shows for a root. A Windows drive reads as
 // "C:"; other systems show the mount point.
 func volumeName(root string) string {
+	if len(root) == 3 && root[1] == ':' && (root[2] == '/' || root[2] == '\\') {
+		return root[:2]
+	}
 	trimmed := strings.TrimSuffix(filepath.ToSlash(root), "/")
 	if trimmed == "" {
 		return "/"
