@@ -101,9 +101,14 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 		caption = titlebarCaptionWidth() + titlebarControlGap + titlebarEdgeInset
 	}
 	height := titlebarLayoutHeight(bar)
-	navigation := float32(0)
+	navigation, left := float32(0), float32(0)
+	navigationWidth := titlebarNavigationLeft(bar) + design.Controls().IconButtonSize*2 + 5
 	if !a.fit.Sidebar {
-		navigation = titlebarNavigationLeft(bar) + design.Controls().IconButtonSize*2 + 5
+		navigation = navigationWidth
+	} else if bar.Left > 0 {
+		// While the sidebar moves, keep the title clear of the native buttons
+		// and meet the collapsed navigation without a jump at the last frame.
+		left = max(0, navigationWidth-columns.Sidebar)
 	}
 	takeover := !onCanvas && a.workspaceTakeover()
 	gapBudget := float32(24)
@@ -115,8 +120,8 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 			gapBudget = 8
 		}
 	}
-	surface, controls := titlebarWidths(columns.Right, columns.Files, viewport-columns.Sidebar-navigation-caption-gapBudget, caption)
-	row := ui.Row(c).Key("main-titlebar").Height(height).Shrink(0).FillWidth().Padding(0, caption, 0, 0).AlignItems(ui.Center).DragWindow()
+	surface, controls := titlebarWidths(columns.Right, columns.Files, viewport-columns.Sidebar-left-navigation-caption-gapBudget, caption)
+	row := ui.Row(c).Key("main-titlebar").Height(height).Shrink(0).FillWidth().Padding(0, caption, 0, left).AlignItems(ui.Center).DragWindow()
 	if overlay {
 		row.Absolute().Left(0).Right(0).Top(0)
 	}
@@ -135,7 +140,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 		}
 		identity.Children(func() {
 			if a.route == "settings" {
-				ui.Text(c, tr(c, a.section)).FontWeight(600).SingleLine()
+				ui.Text(c.Key("settings-title"), tr(c, a.section)).FontWeight(600).SingleLine()
 				return
 			}
 			if takeover {

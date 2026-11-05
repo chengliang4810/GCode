@@ -92,6 +92,12 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 
 ## 当前覆盖
 
+macOS 设置标题栏侧栏动效修复的原生记录位于
+`output/settings-titlebar-motion/20261105-164958-4280240792/`：深浅主题 900×600
+连续开合侧栏的标题坐标采样、设置页导航和截图检查通过。避让空间随侧栏宽度连续补齐，
+不再等动画结束才恢复；组件回归另按 16ms 推进验证中间位置与最终位置连续。
+自动化截图仅记录应用绘制内容，不将系统红绿灯像素或完整视觉一致性记为已验收。
+
 `TestDesktopLocalTodoWrite` 覆盖真实 TodoWrite、底部默认折叠、长列表前后折叠、
 失败保留、完成隐藏、重启恢复与关闭状态；空列表边界另由核心及组件测试覆盖。
 `TestDesktopLocalGoalTodoStack` 覆盖真实目标和待办的层叠几何、右侧编辑保存、
@@ -108,6 +114,7 @@ Linux/macOS 支持相同入口和客户端，但尚未完成对应平台的实�
 | `TestDesktopLocalQuestionComposer` | 独立原生窗口 + `--local` 真实核心；英文浅色 1320×880、中文深色 900×600；提问替换底部输入框、单选自动前进、分页返回修改、多选及自定义文字优先、整组答案落盘和模型续执行、普通草稿恢复、历史无交互选项；模型为本地 HTTP 夹具 |
 | `TestDesktopLocalTranscriptFoldMotion` | 深浅主题原生窗口 + 真实本机核心；工具组、思考及读取详情开闭和快速反向点击的连续几何采样、24 行内部滚动、减少动态效果、草稿及核心重开保持；模型为本地 HTTP 夹具 |
 | `TestDesktopScenarioSettings` | 原生窗口 + 确定性场景；设置导航、搜索输入、开关状态、外观页面 |
+| `TestDesktopSettingsTitlebarSidebarMotion` | 原生窗口 + 私有 `--local` 核心；深浅主题 900×600，在设置页连续收起/展开侧栏，采样标题栏标题坐标，验证动画中始终避让平台窗口按钮并保存几何及截图；不请求模型，不代表视觉一致性验收 |
 | `TestDesktopLocalSettingsPersistence` | 原生窗口 + `--local` 真实核心；修改设置、检查落盘、独立进程重启后验证 |
 | `TestDesktopLocalStorageSwitchAndContinuation` | 原生窗口 + `--local` 真实核心；目录切换不复制、重启启用、旧上下文进入续聊请求且正文仍写旧根、新会话独立工作区与日志写新根；模型为本地 HTTP 夹具 |
 | `TestDesktopLocalMarkdownTables` | 原生窗口 + 私有 `--local` 真实核心；预置两张表，深浅主题/中英文、900×600/1320×880，独立工具栏、可见区滚动、预览固定表头、横向滚动、展开宽度和输入框避让；无供应商请求；CSV 内容及文件写入另由组件回归验证 |

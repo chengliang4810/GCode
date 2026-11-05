@@ -11,14 +11,16 @@ import (
 )
 
 type pluginSettingsState struct {
-	query, marketplace         string
-	sourcesOpen, sourceOpen    bool
-	source                     contracts.PluginMarketplaceInput
-	sourcePending, sourceError string
-	sourceEpoch                uint64
-	configID                   string
-	config                     map[string]*string
-	removeConfig               []string
+	query, marketplace          string
+	catalogQuery, catalogSource string
+	catalogPage                 int
+	sourcesOpen, sourceOpen     bool
+	source                      contracts.PluginMarketplaceInput
+	sourcePending, sourceError  string
+	sourceEpoch                 uint64
+	configID                    string
+	config                      map[string]*string
+	removeConfig                []string
 }
 
 func (a *App) pluginSettings(c *ui.Context) {
@@ -108,21 +110,46 @@ func (a *App) pluginCatalog(c *ui.Context) {
 				Children(func() { ui.Text(c, source.Name).SingleLine() }).OnClick(func() { s.marketplace = source.ID })
 		}
 	})
-	found := false
+	query := strings.ToLower(strings.TrimSpace(s.query))
+	if query != s.catalogQuery || s.marketplace != s.catalogSource {
+		s.catalogPage = 0
+		s.catalogQuery, s.catalogSource = query, s.marketplace
+	}
 	filterName := s.marketplace
 	for _, source := range a.state.Plugins.Marketplaces {
 		if source.ID == s.marketplace {
 			filterName = source.Name
 		}
 	}
+	var items []contracts.PluginCatalogItem
 	for _, item := range a.state.Plugins.Catalog {
 		if s.marketplace != "" && item.Marketplace != s.marketplace && item.Marketplace != filterName {
 			continue
 		}
-		if !matchesResource(strings.ToLower(strings.TrimSpace(s.query)), item.Name, item.Description, item.Author, item.Category) {
-			continue
+		if matchesResource(query, item.Name, item.Description, item.Author, item.Category) {
+			items = append(items, item)
 		}
-		found = true
+	}
+	if len(items) == 0 {
+		s.catalogPage = 0
+		ui.Text(c, tr(c, "No plugins. Refresh a marketplace source to load its catalog.")).TextColor(a.palette.Muted)
+		return
+	}
+	// Bound the native tree even when a marketplace contains thousands of plugins.
+	const pageSize = 30
+	s.catalogPage = min(s.catalogPage, (len(items)-1)/pageSize)
+	start := s.catalogPage * pageSize
+	end := min(start+pageSize, len(items))
+	if len(items) > pageSize {
+		ui.Row(c.Key("plugin-catalog-pagination")).FillWidth().Wrap().Gap(8).AlignItems(ui.Center).Children(func() {
+			textButton(c.Key("plugin-catalog-previous"), tr(c, "Previous page")).Disabled(start == 0).
+				OnClick(func() { s.catalogPage-- })
+			ui.Text(c, fmt.Sprintf(tr(c, "%d–%d of %d plugins"), start+1, end, len(items)))
+			textButton(c.Key("plugin-catalog-next"), tr(c, "Next page")).Disabled(end == len(items)).
+				OnClick(func() { s.catalogPage++ })
+		})
+	}
+	for _, item := range items[start:end] {
 		ui.Column(c.Key("plugin-catalog-"+item.ID)).FillWidth().Gap(8).Padding(12, 0).
 			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 			ui.Text(c, item.Name).FontWeight(600)
@@ -143,9 +170,6 @@ func (a *App) pluginCatalog(c *ui.Context) {
 					a.dispatch(contracts.Command{Kind: "plugins.install", Plugin: &contracts.PluginInput{Install: &input}})
 				})
 		})
-	}
-	if !found {
-		ui.Text(c, tr(c, "No plugins. Refresh a marketplace source to load its catalog.")).TextColor(a.palette.Muted)
 	}
 }
 

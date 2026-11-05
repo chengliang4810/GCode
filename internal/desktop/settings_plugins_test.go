@@ -3,6 +3,7 @@ package desktop
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -187,6 +188,139 @@ func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	tt.Frame()
 	if app.capabilityUI.plugins.sourcesOpen {
 		t.Fatal("leaving marketplace retained source dialog")
+	}
+}
+
+func TestPluginSettingsLargeCatalogBuildIsBounded(t *testing.T) {
+	app, _ := pluginUIFixture(t)
+	app.section = "Marketplace"
+	app.state.Plugins.Catalog = nil
+	for i := range 2300 {
+		name := fmt.Sprintf("large-plugin-%04d", i)
+		app.state.Plugins.Catalog = append(app.state.Plugins.Catalog, contracts.PluginCatalogItem{
+			ID: name + "@official", Name: name, Marketplace: "official",
+			Description: "A marketplace plugin with instructions, tools and a descriptive summary.",
+		})
+	}
+	tt := pluginUITester(app)
+	built := 0
+	for _, text := range tt.Texts() {
+		if strings.HasPrefix(text, "Install large-plugin-") {
+			built++
+		}
+	}
+	if built != 30 {
+		t.Fatalf("marketplace built %d install controls for a 2300-entry catalog; expected one page (30)", built)
+	}
+	if err := tt.Click("Next page"); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := tt.Find("Install large-plugin-0030"); !ok {
+		t.Fatal("next page did not show its first plugin")
+	}
+	if _, ok := tt.Find("Install large-plugin-0000"); ok {
+		t.Fatal("previous page remains in the native tree")
+	}
+	if err := tt.Click("Previous page"); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("1–30 of 2300 plugins") {
+		t.Fatal("previous page did not restore the first page")
+	}
+	app.capabilityUI.plugins.catalogPage = 76
+	tt.Frame()
+	if !tt.HasText("2281–2300 of 2300 plugins") {
+		t.Fatal("last partial page omitted plugins")
+	}
+	if err := tt.Click("Next page"); err != nil {
+		t.Fatal(err)
+	}
+	if app.capabilityUI.plugins.catalogPage != 76 {
+		t.Fatal("disabled next-page action changed the page")
+	}
+	app.capabilityUI.plugins.query = "large-plugin-2299"
+	tt.Frame()
+	if _, ok := tt.Find("Install large-plugin-2299"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
+		t.Fatal("search did not find a plugin beyond the initial page or reset pagination")
+	}
+	if _, ok := tt.Find("Next page"); ok {
+		t.Fatal("one result retained pagination controls")
+	}
+	app.capabilityUI.plugins.query = ""
+	tt.Frame()
+	if err := tt.Click("Next page"); err != nil {
+		t.Fatal(err)
+	}
+	app.capabilityUI.plugins.marketplace = "community"
+	tt.Frame()
+	if app.capabilityUI.plugins.catalogPage != 0 || !tt.HasText("No plugins.") {
+		t.Fatal("empty source did not reset pagination")
+	}
+	app.capabilityUI.plugins.marketplace = ""
+	tt.Frame()
+	if err := tt.Click("Next page"); err != nil {
+		t.Fatal(err)
+	}
+	app.state.Plugins.Catalog = app.state.Plugins.Catalog[:1]
+	tt.Frame()
+	if _, ok := tt.Find("Install large-plugin-0000"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
+		t.Fatal("catalog shrink left the active page out of range")
+	}
+}
+
+func TestPluginSettingsPaginationThemesAndNarrowWindows(t *testing.T) {
+	for _, test := range []struct {
+		name, language, next, previous string
+		width                          int
+		dark                           bool
+	}{
+		{"light", "en", "Next page", "Previous page", 1320, false},
+		{"dark", "en", "Next page", "Previous page", 1320, true},
+		{"narrow-chinese", "zh-CN", "下一页", "上一页", 700, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			app, service := pluginUIFixture(t)
+			app.section = "Marketplace"
+			app.state.Settings.General.Language = test.language
+			app.palette = design.Palette("rcode-light", false)
+			if test.dark {
+				app.palette = design.Palette("rcode-dark", true)
+			}
+			for i := range 31 {
+				name := fmt.Sprintf("page-plugin-%02d", i)
+				app.state.Plugins.Catalog = append(app.state.Plugins.Catalog, contracts.PluginCatalogItem{
+					ID: name + "@official", Name: name, Marketplace: "official",
+				})
+			}
+			service.state = app.state.Plugins.Clone()
+			tt := ui.NewTester(func(c *ui.Context) {
+				localize.Set(c, test.language)
+				c.SetTheme(app.palette.UI())
+				app.settingsView(c)
+			}, test.width, 1100)
+			for _, label := range []string{test.next, test.previous} {
+				r, ok := tt.Find(label)
+				if !ok || r.X < 0 || r.X+r.W > float32(test.width) {
+					t.Fatalf("pagination control %q overflows shared page: %+v", label, r)
+				}
+			}
+			if err := tt.Click(test.next); err != nil {
+				t.Fatal(err)
+			}
+			if !tt.HasText("page-plugin-30") {
+				t.Fatal("last plugin missing on the second page")
+			}
+			label := "Install page-plugin-30"
+			if test.language == "zh-CN" {
+				label = "安装 page-plugin-30"
+			}
+			if err := tt.Click(label); err != nil {
+				t.Fatal(err)
+			}
+			if len(service.commands) != 1 || service.commands[0].Plugin.Install.Name != "page-plugin-30" {
+				t.Fatal("paged installation targeted the wrong plugin")
+			}
+		})
 	}
 }
 

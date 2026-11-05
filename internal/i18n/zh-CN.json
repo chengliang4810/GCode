@@ -1237,5 +1237,8 @@
   "Awaiting your answer…": "等待你的回答…",
   "Your answer": "你的回答",
   "Type your own answer…": "输入其他回答…",
-  "Next": "下一步"
+  "Next": "下一步",
+  "Previous page": "上一页",
+  "Next page": "下一页",
+  "%d–%d of %d plugins": "第 %d–%d 项，共 %d 个插件"
 }

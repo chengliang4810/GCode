@@ -252,6 +252,84 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 	pluginCapture(restarted, "simple-add-marketplace-dark-chinese")
 }
 
+func TestDesktopLocalPluginLargeCatalog(t *testing.T) {
+	binary, artifacts := testPaths(t)
+	data := filepath.Join(artifacts, "data")
+	store, err := storage.Open(storage.Options{Directory: data})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err := openExecutionFixture(t, engine.Options{Storage: store})
+	if err != nil {
+		store.Close()
+		t.Fatal(err)
+	}
+	if err := core.Close(); err != nil {
+		t.Fatal(err)
+	}
+	manager, err := plugins.NewManager(filepath.Join(data, "plugins"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	market := plugins.Marketplace{Name: "large-market", Owner: plugins.Author{Name: "Local fixture"}}
+	for i := range 2300 {
+		market.Plugins = append(market.Plugins, plugins.MarketplaceEntry{
+			Manifest: plugins.Manifest{Name: fmt.Sprintf("large-plugin-%04d", i), Description: "Local catalog fixture; no remote plugin is fetched."},
+			Source:   plugins.Source{Source: "github", Repo: "fixture/not-fetched"},
+		})
+	}
+	payload, err := json.Marshal(market)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(artifacts, "marketplace.json")
+	if err := os.WriteFile(manifest, payload, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.AddSource(context.Background(), manifest); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct{ name, language, appearance, width string }{
+		{"light", "en", "light", "1320"}, {"narrow-dark", "zh-CN", "dark", "900"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			app := startApp(t, binary, artifacts, test.name, data, "--local", "--language", test.language,
+				"--appearance", test.appearance, "--width", test.width, "--height", "700")
+			for range 3 {
+				app.act("settings-nav-Marketplace", "press", "")
+				app.waitKey("plugin-search")
+				tree, err := app.client.tree()
+				if err != nil {
+					t.Fatal(err)
+				}
+				built := 0
+				for _, node := range tree.Nodes {
+					var key string
+					if json.Unmarshal(node.Key, &key) == nil && strings.HasPrefix(key, "plugin-install-") {
+						built++
+					}
+				}
+				if built != 30 {
+					t.Fatalf("2300-entry native catalog built %d install controls, want 30", built)
+				}
+				app.act("plugin-catalog-next", "press", "")
+				app.waitKey("plugin-install-large-plugin-0030@large-market")
+				app.act("plugin-search", "setValue", "large-plugin-2299")
+				app.waitKey("plugin-install-large-plugin-2299@large-market")
+				pluginWaitNoKey(app, "plugin-catalog-next")
+				app.act("plugin-search", "setValue", "")
+				app.waitKey("plugin-install-large-plugin-0000@large-market")
+				app.act("settings-nav-General", "press", "")
+				app.waitKey("Compact mode")
+			}
+			app.act("settings-nav-Marketplace", "press", "")
+			app.waitKey("plugin-catalog-next")
+			pluginCapture(app, "large-catalog")
+			app.stop()
+		})
+	}
+}
+
 func pluginActLabel(app *nativeApp, label string) {
 	app.t.Helper()
 	var node accessNode

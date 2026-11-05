@@ -15,6 +15,41 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+func TestTitlebarSettingsClearsNativeButtonsDuringSidebarMotion(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		t.Run(fmt.Sprintf("dark-%t", dark), func(t *testing.T) {
+			a := testApp(t, "default")
+			a.route, a.section, a.sidebar = "settings", "General", true
+			a.state.Settings.Appearance.MotionPreference = "full"
+			bar := ui.TitleBar{Height: 52, Left: 80}
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(design.Palette("", dark).UI())
+				width, _ := c.Size()
+				a.fit = fitPanels(width, a.sidebarWidth, [3]bool{a.sidebar}, a.panelOpened, false)
+				a.layoutPanels(c, width, [3]bool{a.sidebar}, false)
+				ui.Row(c).Fill().AlignItems(ui.Stretch).Children(func() {
+					ui.Box(c).Width(a.frameColumns.Sidebar).Shrink(0)
+					ui.Column(c).Grow(1).FillHeight().Children(func() { a.titlebar(c) })
+				})
+			}, 900, 600)
+			tt.SetTitleBar(bar)
+			for _, open := range []bool{false, true, false} {
+				a.setPanel(0, open)
+				tt.Frame()
+				for frame := 0; frame < 20; frame++ {
+					tt.Advance(panelTweenFrame)
+					title, ok := tt.Find("General")
+					wantX := max(a.frameColumns.Sidebar, titlebarNavigationLeft(bar)+design.Controls().IconButtonSize*2+5) + 10
+					if !ok || !titlebarNear(title.X, wantX) || title.Y+title.H > bar.Height {
+						t.Fatalf("open=%t frame=%d sidebar=%g title=%+v: want x=%g clear of native buttons",
+							open, frame, a.frameColumns.Sidebar, title, wantX)
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestTitlebarPrimaryToggleAndSecondaryMenu(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession(a.state.Sessions[0].ID)
