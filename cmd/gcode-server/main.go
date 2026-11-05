@@ -116,6 +116,7 @@ func run() (result error) {
 	if (*certificate == "") != (*privateKey == "") {
 		return errors.New("provide both --tls-cert and --tls-key")
 	}
+	warnInsecureHTTP(listener.Addr(), *certificate != "")
 	if *certificate != "" {
 		err = server.ServeTLS(listener, *certificate, *privateKey)
 	} else {
@@ -125,4 +126,14 @@ func run() (result error) {
 		return nil
 	}
 	return err
+}
+
+func warnInsecureHTTP(address net.Addr, tlsEnabled bool) {
+	if tlsEnabled {
+		return
+	}
+	if tcp, ok := address.(*net.TCPAddr); ok && tcp.IP.IsLoopback() {
+		return
+	}
+	log.Printf("WARNING: GCode server listening on %s without TLS; Bearer tokens, API keys and session data are transmitted in plaintext; protect this listener with TLS or a secure tunnel/reverse proxy", address)
 }

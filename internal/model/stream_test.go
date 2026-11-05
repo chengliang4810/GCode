@@ -9,6 +9,110 @@ import (
 	"time"
 )
 
+func TestStreamSnapshotsAndDeltasRemainImmutable(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct {
+		name    string
+		adapter adapter
+		first   string
+		second  string
+		end     []string
+	}{
+		{"chat", chatAdapter{},
+			`{"choices":[{"delta":{"content":"first","reasoning_content":"think"}}]}`,
+			`{"choices":[{"delta":{"content":" second","reasoning_content":" more"}}]}`,
+			[]string{`{"choices":[{"delta":{},"finish_reason":"stop"}]}`, `[DONE]`}},
+		{"responses", responsesAdapter{},
+			`{"type":"response.output_text.delta","delta":"first"}`,
+			`{"type":"response.output_text.delta","delta":" second"}`,
+			[]string{`{"type":"response.completed","response":{"status":"completed","output":[{"type":"message","content":[{"type":"output_text","text":"first second final"}]}]}}`}},
+		{"messages", messagesAdapter{},
+			`{"type":"content_block_delta","index":0,"delta":{"text":"first"}}`,
+			`{"type":"content_block_delta","index":0,"delta":{"text":" second"}}`,
+			[]string{`{"type":"message_delta","delta":{"stop_reason":"end_turn"}}`, `{"type":"message_stop"}`}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			decoder := tc.adapter.decoder()
+			first, err := decoder.consume(tc.first)
+			if err != nil || first.Text != "first" {
+				t.Fatalf("first live delta: %+v, %v", first, err)
+			}
+			snapshot := decoder.snapshot()
+			second, err := decoder.consume(tc.second)
+			if err != nil || second.Text != " second" {
+				t.Fatalf("second live delta: %+v, %v", second, err)
+			}
+			for _, payload := range tc.end {
+				if _, err := decoder.consume(payload); err != nil {
+					t.Fatal(err)
+				}
+			}
+			result, err := decoder.finish()
+			if err != nil || !strings.HasPrefix(result.Message.Text, "first second") {
+				t.Fatalf("finished text: %+v, %v", result, err)
+			}
+			if first.Text != "first" || snapshot.Message.Text != "first" {
+				t.Fatalf("later appends changed a retained delta/snapshot: %+v, %+v", first, snapshot)
+			}
+			if tc.name == "chat" && (snapshot.Message.Reasoning != "think" || result.Message.Reasoning != "think more") {
+				t.Fatalf("reasoning changed across snapshots: %+v, %+v", snapshot, result)
+			}
+		})
+	}
+}
+
+func TestChatFragmentedToolNameAndArguments(t *testing.T) {
+	t.Parallel()
+	fixture := `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call","function":{"name":"Re","arguments":"{\"path\":"}}]}}]}` + "\n\n" +
+		`data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"name":"ad","arguments":"\"中文.txt\"}"}}]},"finish_reason":"tool_calls"}]}` + "\n\ndata: [DONE]\n\n"
+	var outputDeltas int
+	result, err := decodeStream(strings.NewReader(fixture), chatAdapter{}.decoder(), func(delta Delta) error {
+		if delta.Output {
+			outputDeltas++
+		}
+		return nil
+	})
+	if err != nil || len(result.Message.Calls) != 1 || result.Message.Calls[0].Name != "Read" ||
+		result.Message.Calls[0].Arguments != `{"path":"中文.txt"}` || outputDeltas != 2 {
+		t.Fatalf("fragmented tool call changed: %+v, %v, output deltas=%d", result, err, outputDeltas)
+	}
+}
+
+func TestDecodeStreamEmitsBeforeReadingNextEvent(t *testing.T) {
+	t.Parallel()
+	first := `data: {"choices":[{"delta":{"content":"first"}}]}` + "\n\n"
+	second := `data: {"choices":[{"delta":{"content":" second"},"finish_reason":"stop"}]}` + "\n\ndata: [DONE]\n\n"
+	var emitted []string
+	reader := io.MultiReader(strings.NewReader(first), &afterEmissionReader{
+		reader: strings.NewReader(second),
+		beforeRead: func() {
+			if len(emitted) != 1 || emitted[0] != "first" {
+				t.Fatal("decoder read ahead without emitting the first delta")
+			}
+		},
+	})
+	result, err := decodeStream(reader, chatAdapter{}.decoder(), func(delta Delta) error {
+		emitted = append(emitted, delta.Text)
+		return nil
+	})
+	if err != nil || result.Message.Text != "first second" || len(emitted) != 2 {
+		t.Fatalf("live stream changed: %+v, %v, %v", result, err, emitted)
+	}
+}
+
+type afterEmissionReader struct {
+	reader     io.Reader
+	beforeRead func()
+}
+
+func (r *afterEmissionReader) Read(data []byte) (int, error) {
+	if r.beforeRead != nil {
+		r.beforeRead()
+		r.beforeRead = nil
+	}
+	return r.reader.Read(data)
+}
+
 func TestDecodeTimingUsesFirstActualOutput(t *testing.T) {
 	for _, tc := range []struct {
 		name                string

@@ -183,14 +183,13 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 			delta.Output = delta.Output || change.Function.Arguments != ""
 			call := d.calls[change.Index]
 			if call == nil {
-				call = &Call{}
+				call = newStreamCall(Call{})
 				d.calls[change.Index] = call
 			}
 			if change.ID != "" {
 				call.ID = change.ID
 			}
-			call.Name += change.Function.Name
-			call.Arguments += change.Function.Arguments
+			call.append(change.Function.Name, change.Function.Arguments)
 		}
 		if choice.Finish != "" {
 			switch choice.Finish {

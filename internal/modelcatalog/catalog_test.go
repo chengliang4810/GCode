@@ -1,9 +1,11 @@
 package modelcatalog
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -30,6 +32,88 @@ func fixtureCache(t *testing.T, source string) *Cache {
 		t.Fatal(err)
 	}
 	return cache
+}
+
+func TestOpenRecoversDamagedCacheAndRefreshState(t *testing.T) {
+	var diagnostics bytes.Buffer
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&diagnostics, nil)))
+	defer slog.SetDefault(previousLogger)
+	for _, test := range []struct {
+		name, catalog, state string
+		seed                 bool
+	}{
+		{"truncated catalog", `{"broken"`, `{"etag":"stale","checkedAt":"2099-01-01T00:00:00Z"}`, true},
+		{"zero-byte catalog", "", `{"etag":"stale","checkedAt":"2099-01-01T00:00:00Z"}`, true},
+		{"empty catalog", `{}`, `{}`, true},
+		{"invalid model", `{"p":{"models":{"m":{"id":""}}}}`, `{}`, true},
+		{"damaged state", fixture, `{"checkedAt":`, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			diagnostics.Reset()
+			dir := t.TempDir()
+			path := filepath.Join(dir, "models-dev.json")
+			if err := os.WriteFile(path, []byte(test.catalog), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(dir, "models-dev-state.json"), []byte(test.state), 0600); err != nil {
+				t.Fatal(err)
+			}
+			cache, err := Open(Options{Directory: dir, URL: "http://127.0.0.1:1"})
+			if err != nil {
+				t.Fatalf("recover local cache: %v", err)
+			}
+			if !strings.Contains(diagnostics.String(), "level=WARN") || !strings.Contains(diagnostics.String(), dir) {
+				t.Fatalf("cache recovery was not diagnosed: %s", &diagnostics)
+			}
+			query := Query{ID: "shared"}
+			if test.seed {
+				query.ID = "deepseek-v4-pro"
+			}
+			result, err := cache.Lookup(t.Context(), query)
+			if err != nil || !result.Found {
+				t.Fatalf("recovered lookup = %+v, %v", result, err)
+			}
+			if !cache.state.CheckedAt.IsZero() || cache.state.ETag != "" || cache.state.LastModified != "" {
+				t.Fatalf("recovery reused stale refresh validators: %+v", cache.state)
+			}
+			payload, err := os.ReadFile(path)
+			if err != nil || !json.Valid(payload) || !test.seed && string(payload) != fixture {
+				t.Fatalf("recovered catalog changed valid data or retained corruption: %v", err)
+			}
+			diagnostics.Reset()
+			reopened, err := Open(Options{Directory: dir})
+			if err != nil || !reopened.state.CheckedAt.IsZero() {
+				t.Fatalf("recovery was not persisted: %v", err)
+			}
+			if diagnostics.Len() != 0 {
+				t.Fatalf("healthy restart repeated a recovery warning: %s", &diagnostics)
+			}
+		})
+	}
+}
+
+func TestOpenDoesNotReplaceUnreadableCacheFiles(t *testing.T) {
+	for _, name := range []string{"models-dev.json", "models-dev-state.json"} {
+		t.Run(name, func(t *testing.T) {
+			dir := t.TempDir()
+			if name != "models-dev.json" {
+				if err := os.WriteFile(filepath.Join(dir, "models-dev.json"), []byte(fixture), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			path := filepath.Join(dir, name)
+			if err := os.Mkdir(path, 0700); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := Open(Options{Directory: dir}); err == nil {
+				t.Fatal("unreadable cache path was silently replaced")
+			}
+			if info, err := os.Stat(path); err != nil || !info.IsDir() {
+				t.Fatal("unreadable cache path was changed")
+			}
+		})
+	}
 }
 
 func TestLookupUsesLocalFileAndSelectsStableFirstMatch(t *testing.T) {

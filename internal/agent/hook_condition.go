@@ -63,8 +63,37 @@ func substituteHookInput(raw json.RawMessage, input HookInput) (json.RawMessage,
 	return json.Marshal(visit(arguments))
 }
 
-func hookConditionMatches(condition string, input HookInput) bool {
-	if condition == "" {
+type hookCondition struct {
+	source   string
+	wildcard *regexp.Regexp
+}
+
+func compileHookCondition(condition string) hookCondition {
+	result := hookCondition{source: condition}
+	_, pattern, ok := strings.Cut(condition, "(")
+	if ok && strings.HasSuffix(pattern, ")") {
+		pattern = strings.TrimSuffix(pattern, ")")
+		expression := "^" + strings.ReplaceAll(regexp.QuoteMeta(pattern), `\*`, ".*") + "$"
+		result.wildcard, _ = regexp.Compile(expression)
+	}
+	return result
+}
+
+// The table belongs to a runner's current rules. Replacing it on rule changes
+// keeps active Run snapshots immutable and releases patterns of popped skills.
+func compileHookConditions(rules []contracts.HookRule) map[string]hookCondition {
+	result := make(map[string]hookCondition, len(rules))
+	for _, rule := range rules {
+		if _, exists := result[rule.If]; !exists {
+			result[rule.If] = compileHookCondition(rule.If)
+		}
+	}
+	return result
+}
+
+func (condition hookCondition) matches(input HookInput) bool {
+	source := condition.source
+	if source == "" {
 		return true
 	}
 	switch input.Event {
@@ -73,9 +102,9 @@ func hookConditionMatches(condition string, input HookInput) bool {
 	default:
 		return false
 	}
-	name, pattern, hasPattern := strings.Cut(condition, "(")
+	name, pattern, hasPattern := strings.Cut(source, "(")
 	if !hasPattern {
-		return strings.TrimSpace(condition) == input.ToolName || condition == "*"
+		return strings.TrimSpace(source) == input.ToolName || source == "*"
 	}
 	if !strings.HasSuffix(pattern, ")") || strings.TrimSpace(name) != input.ToolName {
 		return false
@@ -103,13 +132,13 @@ func hookConditionMatches(condition string, input HookInput) bool {
 				if part == prefix || strings.HasPrefix(part, prefix+" ") {
 					return true
 				}
-			} else if hookWildcardMatches(pattern, part) {
+			} else if condition.wildcard != nil && condition.wildcard.MatchString(part) {
 				return true
 			}
 		}
 	default:
 		for _, key := range []string{"file_path", "path", "url", "query"} {
-			if value, ok := args[key].(string); ok && hookWildcardMatches(pattern, strings.ReplaceAll(value, `\`, "/")) {
+			if value, ok := args[key].(string); ok && condition.wildcard != nil && condition.wildcard.MatchString(strings.ReplaceAll(value, `\`, "/")) {
 				return true
 			}
 		}
@@ -184,12 +213,6 @@ func hookShellExpansion(command string) bool {
 		}
 	}
 	return false
-}
-
-func hookWildcardMatches(pattern, value string) bool {
-	expression := "^" + strings.ReplaceAll(regexp.QuoteMeta(pattern), `\*`, ".*") + "$"
-	re, err := regexp.Compile(expression)
-	return err == nil && re.MatchString(value)
 }
 
 // Split only syntactic shell separators, retaining quoted literal text. Command

@@ -2,8 +2,18 @@
 
 package storage
 
-import "os"
+import (
+	"errors"
+	"os"
+)
 
 func replaceJSONRoot(root *os.Root, source, target string) error {
-	return root.Rename(source, target)
+	parent, err := root.Open(".")
+	if err != nil {
+		return err
+	}
+	if err := root.Rename(source, target); err != nil {
+		return errors.Join(err, parent.Close())
+	}
+	return errors.Join(parent.Sync(), parent.Close())
 }

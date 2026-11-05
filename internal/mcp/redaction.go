@@ -24,6 +24,24 @@ func sanitizeError(err error, config Config) error {
 // SanitizeText removes configured credentials before diagnostics leave the MCP
 // boundary. It also covers URL query values repeated in HTTP/client errors.
 func SanitizeText(text string, config Config) string {
+	return sanitizeSecrets(text, configuredSecrets(config))
+}
+
+func sanitizeSecrets(text string, secrets []string) string {
+	// Replace long values first so a short value cannot leave a suffix exposed.
+	slices.SortFunc(secrets, func(a, b string) int { return len(b) - len(a) })
+	for _, secret := range secrets {
+		if secret == "" {
+			continue
+		}
+		for _, encoded := range []string{secret, url.QueryEscape(secret), url.PathEscape(secret)} {
+			text = strings.ReplaceAll(text, encoded, "[redacted]")
+		}
+	}
+	return text
+}
+
+func configuredSecrets(config Config) []string {
 	secrets := append(argumentSecrets(config.Args), config.SensitiveValues...)
 	for _, values := range []map[string]string{config.Env, config.Headers} {
 		for _, value := range values {
@@ -46,17 +64,7 @@ func SanitizeText(text string, config Config) string {
 			}
 		}
 	}
-	// Replace long values first so a short value cannot leave a suffix exposed.
-	slices.SortFunc(secrets, func(a, b string) int { return len(b) - len(a) })
-	for _, secret := range secrets {
-		if secret == "" {
-			continue
-		}
-		for _, encoded := range []string{secret, url.QueryEscape(secret), url.PathEscape(secret)} {
-			text = strings.ReplaceAll(text, encoded, "[redacted]")
-		}
-	}
-	return text
+	return secrets
 }
 
 func schemaContainsCredentials(value any, config Config) bool {

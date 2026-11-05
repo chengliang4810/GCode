@@ -12,6 +12,16 @@ import (
 // WriteJSONRoot atomically replaces one file directly within an already opened
 // directory. The root keeps both staging and replacement within that directory.
 func WriteJSONRoot(root *os.Root, name string, value any) error {
+	data, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	return WriteJSONBytesRoot(root, name, data)
+}
+
+// WriteJSONBytesRoot atomically replaces one file directly within an opened
+// directory using already encoded JSON, without marshaling the value again.
+func WriteJSONBytesRoot(root *os.Root, name string, data []byte) error {
 	if root == nil {
 		return errors.New("JSON storage root is required")
 	}
@@ -19,12 +29,12 @@ func WriteJSONRoot(root *os.Root, name string, value any) error {
 		filepath.IsAbs(name) || filepath.VolumeName(name) != "" || strings.ContainsAny(name, `\/:`) {
 		return errors.New("JSON storage name must be a single filename")
 	}
-	data, err := json.MarshalIndent(value, "", "  ")
-	if err != nil {
-		return err
+	if !json.Valid(data) {
+		return errors.New("invalid encoded JSON")
 	}
 	var file *os.File
 	var temp string
+	var err error
 	for {
 		temp = ".write-" + strings.ToLower(rand.Text()) + ".tmp"
 		file, err = root.OpenFile(temp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)

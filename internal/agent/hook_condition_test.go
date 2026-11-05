@@ -22,16 +22,71 @@ func TestHookConditionMatchesToolArguments(t *testing.T) {
 		{"quoted literal expansion", "Bash(git push *)", "Bash", `{"command":"echo '$USER'"}`, false},
 		{"wrong tool", "Bash(*)", "Read", `{"file_path":"a"}`, false},
 		{"path", "Write(*.go)", "Write", `{"file_path":"src/main.go"}`, true},
+		{"literal metacharacters", "Write(src/[x].go)", "Write", `{"file_path":"src/[x].go"}`, true},
+		{"wildcard excludes newline", "Write(*.go)", "Write", `{"file_path":"src/\nmain.go"}`, false},
+		{"normalized path", "Write(src/*.go)", "Write", `{"file_path":"src\\main.go"}`, true},
 		{"search path", "Glob(*src*)", "Glob", `{"path":"src","pattern":"*.go"}`, true},
 		{"prefix", "Bash(git:*)", "Bash", `{"command":"git status"}`, true},
 		{"prefix boundary", "Bash(git:*)", "Bash", `{"command":"github status"}`, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			input := HookInput{Event: contracts.HookPreToolUse, ToolName: test.tool, ToolInput: json.RawMessage(test.args)}
-			if got := hookConditionMatches(test.condition, input); got != test.match {
+			if got := compileHookCondition(test.condition).matches(input); got != test.match {
 				t.Fatalf("got %v", got)
 			}
+			runner := NewHookRunner([]contracts.HookRule{{If: test.condition}}, nil)
+			if got := runner.conditions[test.condition].matches(input); got != test.match {
+				t.Fatalf("runner condition got %v", got)
+			}
 		})
+	}
+}
+
+func TestHookConditionFollowsPushedAndReplacementRules(t *testing.T) {
+	t.Parallel()
+	executions := 0
+	runner := NewHookRunner(nil, func(HookExecution) error {
+		executions++
+		return nil
+	})
+	rule := testHookRule(t, contracts.HookPreToolUse, "output", "{}")
+	rule.If = "Write(*.go)"
+	pop, err := runner.PushRules([]contracts.HookRule{rule})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := HookInput{Event: contracts.HookPreToolUse, CWD: t.TempDir(),
+		ToolName: "Write", ToolInput: json.RawMessage(`{"file_path":"main.go"}`)}
+	run := func() {
+		t.Helper()
+		if _, err := runner.Run(t.Context(), input); err != nil {
+			t.Fatal(err)
+		}
+	}
+	run()
+	if executions != 1 {
+		t.Fatal("pushed condition did not execute")
+	}
+	pop()
+	run()
+	if executions != 1 {
+		t.Fatal("popped condition still executed")
+	}
+	rule.If = "Write(*.txt)"
+	if err := runner.AddRules([]contracts.HookRule{rule}); err != nil {
+		t.Fatal(err)
+	}
+	run()
+	if executions != 1 {
+		t.Fatal("replacement rule retained the previous condition")
+	}
+	input.ToolInput = json.RawMessage(`{"file_path":"notes.txt"}`)
+	run()
+	if executions != 2 {
+		t.Fatal("replacement condition did not execute")
+	}
+	if len(runner.conditions) != 1 {
+		t.Fatal("popped rule patterns were retained")
 	}
 }
 

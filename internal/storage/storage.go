@@ -558,7 +558,16 @@ func writeJSON(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+	return WriteJSONBytes(path, data)
+}
+
+// WriteJSONBytes atomically replaces an application-owned file with already
+// encoded JSON. It validates the bytes without encoding the value again.
+func WriteJSONBytes(path string, data []byte) error {
+	if !json.Valid(data) {
+		return errors.New("invalid encoded JSON")
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err
 	}
 	f, err := os.CreateTemp(filepath.Dir(path), ".write-*")

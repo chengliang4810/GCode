@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"strings"
@@ -136,6 +137,7 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 				return true
 			}
 		}
+		var reconnect reconnectBackoff
 		for {
 			scanner := bufio.NewScanner(response.Body)
 			scanner.Buffer(make([]byte, 4096), 64<<20)
@@ -148,6 +150,7 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 				if err := json.Unmarshal([]byte(strings.TrimPrefix(line, "data: ")), &event); err != nil {
 					break
 				}
+				reconnect.reset()
 				select {
 				case events <- event:
 				case <-streamCtx.Done():
@@ -159,21 +162,14 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 			if streamCtx.Err() != nil || !publishConnection("connection.disconnected") {
 				return
 			}
-			select {
-			case <-streamCtx.Done():
-				return
-			case <-time.After(time.Second):
-			}
 			for {
+				if !waitReconnect(streamCtx, reconnect.next()) {
+					return
+				}
 				var err error
 				response, err = c.request(streamCtx, http.MethodGet, "/v1/events", nil)
 				if err == nil {
 					break
-				}
-				select {
-				case <-streamCtx.Done():
-					return
-				case <-time.After(2 * time.Second):
 				}
 			}
 			if !publishConnection("connection.connected") {
@@ -186,6 +182,36 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 	}()
 	return events, nil
 }
+
+type reconnectBackoff struct {
+	delay time.Duration
+}
+
+func (b *reconnectBackoff) reset() { b.delay = 0 }
+
+func (b *reconnectBackoff) next() time.Duration {
+	if b.delay == 0 {
+		b.delay = time.Second
+		return b.delay
+	}
+	b.delay = min(b.delay*2, 30*time.Second)
+	// Equal jitter spreads clients across the upper half of each growing
+	// interval. The maximum delay stays bounded even during a long outage.
+	half := b.delay / 2
+	return half + time.Duration(rand.Int64N(int64(b.delay-half)+1))
+}
+
+func waitReconnect(ctx context.Context, delay time.Duration) bool {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
+}
+
 func (c *Client) Close() error {
 	c.once.Do(func() { close(c.done); c.http.CloseIdleConnections() })
 	return nil

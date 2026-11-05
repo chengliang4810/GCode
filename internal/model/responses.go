@@ -185,7 +185,7 @@ func (d *responsesDecoder) finish() (Result, error) {
 		}
 		output = append(output, raw)
 		if item.Type == "function_call" {
-			d.calls[index] = &Call{ID: item.CallID, Name: item.Name, Arguments: item.Arguments}
+			d.calls[index] = newStreamCall(Call{ID: item.CallID, Name: item.Name, Arguments: item.Arguments})
 		}
 		if item.Type == "message" {
 			hasFinalMessage = true

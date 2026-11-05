@@ -102,7 +102,12 @@ func Open(options Options) (*Cache, error) {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
+	seeded := len(payload) == 0
+	recovered := seeded && err == nil
 	if len(payload) == 0 {
+		if recovered {
+			slog.Warn("model catalog cache is empty; restoring bundled catalog", "path", c.path)
+		}
 		payload = seed
 		if err := storage.WriteJSON(c.path, json.RawMessage(payload)); err != nil {
 			return nil, err
@@ -110,7 +115,15 @@ func Open(options Options) (*Cache, error) {
 	}
 	c.data, err = decode(payload)
 	if err != nil {
-		return nil, fmt.Errorf("read model catalog cache: %w", err)
+		slog.Warn("model catalog cache is damaged; restoring bundled catalog", "path", c.path, "error", err)
+		c.data, err = decode(seed)
+		if err != nil {
+			return nil, fmt.Errorf("read bundled model catalog: %w", err)
+		}
+		if err := storage.WriteJSON(c.path, json.RawMessage(seed)); err != nil {
+			return nil, fmt.Errorf("restore model catalog cache: %w", err)
+		}
+		recovered = true
 	}
 	info, err := os.Stat(c.path)
 	if err != nil {
@@ -119,11 +132,24 @@ func Open(options Options) (*Cache, error) {
 	c.state.CheckedAt = info.ModTime()
 	payload, err = os.ReadFile(c.statePath())
 	if err == nil {
+		if seeded {
+			// A missing/empty catalog cannot use another file's validators.
+			recovered = true
+		}
 		if err := json.Unmarshal(payload, &c.state); err != nil {
-			return nil, fmt.Errorf("read model catalog refresh state: %w", err)
+			slog.Warn("model catalog refresh state is damaged; scheduling a fresh download", "path", c.statePath(), "error", err)
+			recovered = true
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return nil, err
+	}
+	if recovered {
+		// Validators from a different catalog must not produce a 304 against
+		// the bundled seed. A zero check time also retries promptly when online.
+		c.state = cacheState{}
+		if err := storage.WriteJSON(c.statePath(), c.state); err != nil {
+			return nil, fmt.Errorf("restore model catalog refresh state: %w", err)
+		}
 	}
 	return c, nil
 }

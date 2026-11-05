@@ -38,6 +38,51 @@ func TestWriteJSONRootReplacesInsideOpenDirectory(t *testing.T) {
 	}
 }
 
+func TestWriteJSONBytesRootPreservesEncodedJSONAndRejectsInvalidData(t *testing.T) {
+	directory := t.TempDir()
+	root, err := os.OpenRoot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	payload := []byte("{ \"text\": \"正文\", \"values\": [1, 2] }\n")
+	if err := WriteJSONBytesRoot(root, "state.json", payload); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := root.ReadFile("state.json"); err != nil || !bytes.Equal(data, payload) {
+		t.Fatalf("encoded JSON was rewritten: %q, %v", data, err)
+	}
+	if err := WriteJSONBytesRoot(root, "state.json", []byte(`{"broken"`)); err == nil {
+		t.Fatal("invalid encoded JSON was accepted")
+	}
+	if data, err := root.ReadFile("state.json"); err != nil || !bytes.Equal(data, payload) {
+		t.Fatal("invalid encoded JSON replaced saved content")
+	}
+	if err := WriteJSONBytesRoot(root, "../outside.json", payload); err == nil {
+		t.Fatal("encoded JSON escaped its storage root")
+	}
+	if err := WriteJSONBytesRoot(nil, "state.json", payload); err == nil {
+		t.Fatal("encoded JSON accepted a nil root")
+	}
+}
+
+func TestWriteJSONBytesPreservesEncodedJSONAndRejectsInvalidData(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "state.json")
+	payload := []byte("{ \"text\": \"正文\", \"values\": [1, 2] }\n")
+	if err := WriteJSONBytes(path, payload); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(path); err != nil || !bytes.Equal(data, payload) {
+		t.Fatalf("encoded JSON was rewritten: %q, %v", data, err)
+	}
+	if err := WriteJSONBytes(path, []byte(`{"broken"`)); err == nil {
+		t.Fatal("invalid encoded JSON was accepted")
+	}
+	if data, err := os.ReadFile(path); err != nil || !bytes.Equal(data, payload) {
+		t.Fatal("invalid encoded JSON replaced saved content")
+	}
+}
+
 func TestWriteJSONRootRejectsNonlocalNames(t *testing.T) {
 	directory := t.TempDir()
 	root, err := os.OpenRoot(directory)

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +13,32 @@ import (
 
 	"gcode/internal/storage"
 )
+
+func TestWarnInsecureHTTPOnlyForNonLoopbackPlaintext(t *testing.T) {
+	var output bytes.Buffer
+	previous := log.Writer()
+	log.SetOutput(&output)
+	defer log.SetOutput(previous)
+	for _, test := range []struct {
+		name, address string
+		tls, warning  bool
+	}{
+		{"IPv4 loopback", "127.0.0.1", false, false},
+		{"IPv6 loopback", "::1", false, false},
+		{"IPv4 all interfaces", "0.0.0.0", false, true},
+		{"IPv6 all interfaces", "::", false, true},
+		{"LAN plaintext", "192.168.1.2", false, true},
+		{"LAN TLS", "192.168.1.2", true, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			output.Reset()
+			warnInsecureHTTP(&net.TCPAddr{IP: net.ParseIP(test.address), Port: 27655}, test.tls)
+			if got := strings.Contains(output.String(), "without TLS"); got != test.warning {
+				t.Fatalf("warning = %q, wanted warning %v", output.String(), test.warning)
+			}
+		})
+	}
+}
 
 func TestServerStartupFailurePersistsAndReleasesRuntimeLog(t *testing.T) {
 	// This owns an ephemeral listener and profile, never an existing service.

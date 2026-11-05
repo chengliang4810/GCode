@@ -203,6 +203,7 @@ func WithHookOnceState(state *HookOnceState) HookRunnerOption {
 // call Wait at teardown. Report and injected callbacks must be concurrency safe.
 type HookRunner struct {
 	rules       []contracts.HookRule
+	conditions  map[string]hookCondition
 	report      func(HookExecution) error
 	evaluate    HookEvaluator
 	http        *http.Client
@@ -218,7 +219,7 @@ type HookRunner struct {
 
 func NewHookRunner(rules []contracts.HookRule, report func(HookExecution) error, options ...HookRunnerOption) *HookRunner {
 	h := &HookRunner{rules: contracts.CloneHookRules(rules), report: report, http: &http.Client{},
-		onceState: &HookOnceState{}, llm: make(chan struct{}, 12)}
+		conditions: compileHookConditions(rules), onceState: &HookOnceState{}, llm: make(chan struct{}, 12)}
 	for _, option := range options {
 		if option != nil {
 			option(h)
@@ -237,6 +238,7 @@ func (h *HookRunner) AddRules(rules []contracts.HookRule) error {
 		return err
 	}
 	h.rules = combined
+	h.conditions = compileHookConditions(combined)
 	return nil
 }
 
@@ -254,6 +256,7 @@ func (h *HookRunner) PushRules(rules []contracts.HookRule) (func(), error) {
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			h.rules = slices.DeleteFunc(h.rules, func(rule contracts.HookRule) bool { return ids[rule.ID] })
+			h.conditions = compileHookConditions(h.rules)
 		})
 	}, nil
 }
@@ -276,13 +279,14 @@ func (h *HookRunner) Run(ctx context.Context, input HookInput) (HookResult, erro
 	}
 	h.mu.Lock()
 	rules := contracts.CloneHookRules(h.rules)
+	conditions := h.conditions
 	h.mu.Unlock()
 	outcomes := make([]outcome, len(rules))
 	var foreground sync.WaitGroup
 	seenHandlers := make(map[string]bool)
 	for index, rule := range rules {
 		if !rule.Enabled || rule.Event != input.Event || !contracts.HookTypeSupported(rule.Event, rule.Type) ||
-			!contracts.HookMatches(input.Event, rule.Matcher, hookMatchValue(input)) || !hookConditionMatches(rule.If, input) {
+			!contracts.HookMatches(input.Event, rule.Matcher, hookMatchValue(input)) || !conditions[rule.If].matches(input) {
 			continue
 		}
 		key := hookHandlerIdentity(rule, input)

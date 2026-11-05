@@ -117,6 +117,9 @@ type messageBlock struct {
 	Thinking  string          `json:"thinking,omitempty"`
 	Signature string          `json:"signature,omitempty"`
 	Data      string          `json:"data,omitempty"`
+	text      strings.Builder
+	thinking  strings.Builder
+	signature strings.Builder
 }
 
 type messagesDecoder struct {
@@ -178,14 +181,17 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 		}
 	case "content_block_start":
 		block := event.ContentBlock
+		block.text.WriteString(block.Text)
+		block.thinking.WriteString(block.Thinking)
+		block.signature.WriteString(block.Signature)
 		d.blocks[event.Index] = &block
 		delta.Text, delta.Reasoning = block.Text, block.Thinking
 		if block.Type == "tool_use" {
-			call := &Call{ID: block.ID, Name: block.Name}
+			call := Call{ID: block.ID, Name: block.Name}
 			if input := string(block.Input); input != "" && input != "{}" {
 				call.Arguments = input
 			}
-			d.calls[event.Index] = call
+			d.calls[event.Index] = newStreamCall(call)
 		}
 	case "content_block_delta":
 		change := event.Delta
@@ -200,11 +206,20 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 			}
 			d.blocks[event.Index] = block
 		}
-		block.Text += change.Text
-		block.Thinking += change.Thinking
-		block.Signature += change.Signature
+		if change.Text != "" {
+			block.text.WriteString(change.Text)
+			block.Text = block.text.String()
+		}
+		if change.Thinking != "" {
+			block.thinking.WriteString(change.Thinking)
+			block.Thinking = block.thinking.String()
+		}
+		if change.Signature != "" {
+			block.signature.WriteString(change.Signature)
+			block.Signature = block.signature.String()
+		}
 		if call := d.calls[event.Index]; call != nil {
-			call.Arguments += change.Partial
+			call.append("", change.Partial)
 		}
 	case "message_delta":
 		switch event.Delta.Stop {

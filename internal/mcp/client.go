@@ -86,6 +86,7 @@ type Client struct {
 	writeMu             sync.Mutex
 	pending             map[uint64]chan envelope
 	input               io.WriteCloser
+	stderr              *stderrCapture
 	processDone         chan struct{}
 	http                *http.Client
 	session             string
@@ -192,7 +193,7 @@ func ConnectWithOptions(ctx context.Context, config Config, cwd string, options 
 			_ = c.Close()
 		}
 		if resultErr != nil {
-			resultErr = c.sanitizeError(resultErr)
+			resultErr = c.sanitizeError(c.withStderr(resultErr))
 		}
 	}()
 	if config.Command != "" {
@@ -208,7 +209,8 @@ func ConnectWithOptions(ctx context.Context, config Config, cwd string, options 
 		if err != nil {
 			return nil, err
 		}
-		command.Stderr = io.Discard
+		c.stderr = &stderrCapture{}
+		command.Stderr = c.stderr
 		prepareCommand(command)
 		if err = command.Start(); err != nil {
 			return nil, err
@@ -336,7 +338,14 @@ func (c *Client) DroppedNotifications() uint64       { return c.dropped.Load() }
 func (c *Client) Done() <-chan struct{}              { return c.done }
 
 func (c *Client) call(ctx context.Context, method string, params any, result any) (resultErr error) {
-	defer func() { resultErr = c.sanitizeError(resultErr) }()
+	defer func() {
+		select {
+		case <-c.done:
+			resultErr = c.withStderr(resultErr)
+		default:
+		}
+		resultErr = c.sanitizeError(resultErr)
+	}()
 	var stop context.CancelFunc
 	if long, _ := ctx.Value(longLivedRequestKey{}).(bool); long {
 		ctx, stop = context.WithCancel(ctx)
@@ -562,15 +571,7 @@ func (c *Client) scrub(text string) string {
 	c.mu.Lock()
 	extra := append([]string(nil), c.secrets...)
 	c.mu.Unlock()
-	text = SanitizeText(text, c.config)
-	for _, secret := range extra {
-		if secret != "" {
-			for _, encoded := range []string{secret, url.QueryEscape(secret), url.PathEscape(secret)} {
-				text = strings.ReplaceAll(text, encoded, "[redacted]")
-			}
-		}
-	}
-	return text
+	return sanitizeSecrets(text, append(configuredSecrets(c.config), extra...))
 }
 func (c *Client) sanitizeError(err error) error {
 	if err == nil {

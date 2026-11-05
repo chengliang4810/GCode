@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -284,7 +285,7 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		}()
 	}
 	defer func() { result.RequestDuration = time.Since(started) }()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(string(body)))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return result, 0, err
 	}

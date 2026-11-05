@@ -6,6 +6,37 @@ import (
 	"testing"
 )
 
+func TestMessagesFragmentedCallsAndSignaturesReplayExactly(t *testing.T) {
+	t.Parallel()
+	events := []string{
+		`{"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"a","signature":"sig"}}`,
+		`{"type":"content_block_delta","index":0,"delta":{"thinking":"b","signature":"-part"}}`,
+		`{"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"call","name":"Read","input":{}}}`,
+		`{"type":"content_block_delta","index":1,"delta":{"partial_json":"{\"path\":"}}`,
+		`{"type":"content_block_delta","index":1,"delta":{"partial_json":"\"中文.txt\"}"}}`,
+		`{"type":"message_delta","delta":{"stop_reason":"tool_use"}}`,
+		`{"type":"message_stop"}`,
+	}
+	decoder := messagesAdapter{}.decoder()
+	for _, payload := range events {
+		if _, err := decoder.consume(payload); err != nil {
+			t.Fatal(err)
+		}
+	}
+	result, err := decoder.finish()
+	if err != nil || len(result.Message.Calls) != 1 || result.Message.Calls[0].Arguments != `{"path":"中文.txt"}` {
+		t.Fatalf("fragmented call: %+v, %v", result, err)
+	}
+	var blocks []messageBlock
+	if err := json.Unmarshal(result.Message.Continuation.data, &blocks); err != nil {
+		t.Fatal(err)
+	}
+	if len(blocks) != 2 || blocks[0].Thinking != "ab" || blocks[0].Signature != "sig-part" ||
+		string(blocks[1].Input) != `{"path":"中文.txt"}` {
+		t.Fatalf("provider replay changed: %s", result.Message.Continuation.data)
+	}
+}
+
 func TestMessagesReplayPreservesSeparateSignaturesAndBlockOrder(t *testing.T) {
 	fixture := `data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"first"}}` + "\n\n" +
 		`data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"sig-1"}}` + "\n\n" +

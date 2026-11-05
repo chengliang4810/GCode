@@ -30,7 +30,9 @@ type streamDecoder interface {
 
 type streamState struct {
 	result         Result
-	calls          map[int]*Call
+	calls          map[int]*streamCall
+	text           strings.Builder
+	reasoning      strings.Builder
 	complete       bool
 	stop           StopReason
 	stopErr        error
@@ -42,7 +44,7 @@ type streamState struct {
 func newStreamState() streamState {
 	return streamState{
 		result: Result{Message: Message{Role: "assistant"}},
-		calls:  make(map[int]*Call),
+		calls:  make(map[int]*streamCall),
 	}
 }
 
@@ -50,8 +52,43 @@ func (s *streamState) completed() bool  { return s.complete }
 func (s *streamState) snapshot() Result { return s.result }
 
 func (s *streamState) add(delta Delta) {
-	s.result.Message.Text += delta.Text
-	s.result.Message.Reasoning += delta.Reasoning
+	// Builders only append: strings already returned by snapshot remain
+	// immutable, while each delta still reaches emit immediately.
+	if delta.Text != "" {
+		s.text.WriteString(delta.Text)
+		s.result.Message.Text = s.text.String()
+	}
+	if delta.Reasoning != "" {
+		s.reasoning.WriteString(delta.Reasoning)
+		s.result.Message.Reasoning = s.reasoning.String()
+	}
+}
+
+type streamCall struct {
+	Call
+	name      strings.Builder
+	arguments strings.Builder
+}
+
+func newStreamCall(call Call) *streamCall {
+	return &streamCall{Call: call}
+}
+
+func (c *streamCall) append(name, arguments string) {
+	if name != "" {
+		if c.name.Len() == 0 {
+			c.name.WriteString(c.Name)
+		}
+		c.name.WriteString(name)
+		c.Name = c.name.String()
+	}
+	if arguments != "" {
+		if c.arguments.Len() == 0 {
+			c.arguments.WriteString(c.Arguments)
+		}
+		c.arguments.WriteString(arguments)
+		c.Arguments = c.arguments.String()
+	}
 }
 
 func (s *streamState) recordUsage(input, output, cached *int) {
@@ -86,7 +123,7 @@ func (s *streamState) finish() (Result, error) {
 	calls := make([]Call, 0, len(s.calls))
 	seen := make(map[string]bool, len(s.calls))
 	for _, index := range sortedKeys(s.calls) {
-		call := *s.calls[index]
+		call := s.calls[index].Call
 		if call.Arguments == "" {
 			call.Arguments = "{}"
 		}
