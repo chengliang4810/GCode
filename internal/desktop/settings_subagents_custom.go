@@ -122,7 +122,7 @@ func (a *App) customSubagentRow(c *ui.Context, profile contracts.SubagentProfile
 
 func (a *App) customSubagentField(c *ui.Context, label, key string, draw func()) {
 	ui.Column(c).FillWidth().MinWidth(0).Gap(6).Children(func() {
-		ui.Text(c, tr(c, label)).FontWeight(500).FontSize(design.TextSize(c, design.TextBase))
+		ui.Text(c, tr(c, label)).FontWeight(500).FontSize(design.TextSize(c, design.TextBase)).FixedLineHeight(design.TextSize(c, design.TextBase) * 1.5)
 		draw()
 		message := a.runtimeUI.subagentFieldErrors[key]
 		if key == "model" && !a.subagentSelectionValid() {

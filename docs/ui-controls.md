@@ -201,3 +201,9 @@ Windows 窗口通过 `mygo.WindowOptions.HideWindowButtons` 隐藏系统标题�
 边缘内缩、悬停配色、深浅主题与全屏/最大化状态；原生实窗检查见
 `TestDesktopWindowCaptionControls`，证据位于
 `output/native-tests/20261101-023437-2195741834/`。
+
+## 表单字段标签
+
+自定义子代理表单的字段标签使用与字号成比例的固定行高（1.5 倍），避免 macOS
+中文字体的字形度量使同一行的姓名输入框、模型选择器和推理选择器错位。
+控件高度、字体与内边距仍由共享控件定义，不在页面覆盖。
