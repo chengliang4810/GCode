@@ -190,17 +190,12 @@ func TestDesktopLocalTranscriptFoldMotion(t *testing.T) {
 			app.proveFoldConversationOverflow()
 			group := "activity-toggle:" + groupID
 			thoughtToggle := "activity-item-toggle:" + groupID + ":" + thoughtID
-			readToggle := "activity-item-toggle:" + groupID + ":" + readID
 			samples := map[string][]foldMotionSample{}
 			samples["group-open"] = app.sampleFoldMotion(group, group, true, false, nil)
 			samples["thought-open"] = app.sampleFoldMotion(thoughtToggle, group, true, false, nil)
 			app.assertFoldInternalScroll("activity-detail-viewport:"+groupID+":"+thoughtID, "FOLD THOUGHT 099", 24*14*1.5)
 			app.capture("thought-tail-full-motion")
 			samples["thought-close"] = app.sampleFoldMotion(thoughtToggle, group, false, false, nil)
-			samples["read-open"] = app.sampleFoldMotion(readToggle, group, true, false, nil)
-			app.assertFoldInternalScroll("activity-detail-viewport:"+groupID+":"+readID, "FOLD FILE OUTPUT 099", 24*12*1.5)
-			app.capture("read-tail-full-motion")
-			samples["read-close"] = app.sampleFoldMotion(readToggle, group, false, false, nil)
 			samples["group-close"] = app.sampleFoldMotion(group, group, false, false, nil)
 			samples["rapid-group-reversal"] = app.sampleFoldMotion(group, group, true, false, []time.Duration{45 * time.Millisecond, 90 * time.Millisecond})
 			app.capture("rapid-reversal-settled")

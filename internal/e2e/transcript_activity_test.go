@@ -180,8 +180,23 @@ func TestDesktopLocalTranscriptActivity(t *testing.T) {
 			app.act("sidebar-session:"+sessionID, "press", "")
 			app.act("activity-toggle:"+groupID, "press", "")
 			thoughtToggle := "activity-item-toggle:" + groupID + ":" + thoughtID
-			readToggle := "activity-item-toggle:" + groupID + ":" + readID
 			app.waitKey(thoughtToggle)
+			app.await("read row stays flat and states its line window", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				if _, err := tree.findKey("activity-item-toggle:" + groupID + ":" + readID); err == nil {
+					return fmt.Errorf("read row still exposes a disclosure")
+				}
+				if !activityTreeContains(tree, "Open file: "+filePath) {
+					return fmt.Errorf("read file name is missing")
+				}
+				if !activityTreeContains(tree, "80 lines") {
+					return fmt.Errorf("read row does not state how many lines it returned")
+				}
+				return nil
+			})
 			app.await("completed thought shows its first line while details stay closed", func() error {
 				tree, err := app.client.tree()
 				if err != nil {
@@ -195,33 +210,39 @@ func TestDesktopLocalTranscriptActivity(t *testing.T) {
 						return fmt.Errorf("thought details expanded without a click")
 					}
 				}
-				read, err := tree.findKey(readToggle)
-				if err != nil || read.Label != "Read: "+filePath {
-					return fmt.Errorf("read title is not the typed path: %q (%v)", read.Label, err)
-				}
 				return nil
 			})
-			app.capture("collapsed-thought-and-read")
+			app.capture("collapsed-thought-and-flat-read")
 			app.act(thoughtToggle, "press", "")
 			thoughtViewport := "activity-detail-viewport:" + groupID + ":" + thoughtID
 			app.assertActivityScroll(thoughtViewport, thoughtToggle, "THOUGHT 079", 24*14*1.5)
 			app.capture("thought-full-tail")
 			app.act(thoughtToggle, "press", "")
-			app.act(readToggle, "press", "")
-			app.await("read invocation preserves structured arguments", func() error {
+			// The file name in the read row opens the file beside the
+			// conversation instead of expanding anything.
+			app.act("activity-file:"+groupID+":"+readID, "press", "")
+			app.await("read file name opens the file in a workspace tab", func() error {
 				tree, err := app.client.tree()
 				if err != nil {
 					return err
 				}
-				if !activityTreeContains(tree, `"path": "activity-fixture.txt"`) {
-					return fmt.Errorf("original read arguments are missing")
+				// The editor exposes the file through a textField's value, not
+				// its label, so a label search would never find the tail.
+				editorOpened := false
+				for _, node := range tree.Nodes {
+					if node.Role == "textField" && node.Label == "activity-fixture.txt" && strings.Contains(node.Value, "READ OUTPUT 079") {
+						editorOpened = true
+					}
+				}
+				if !editorOpened {
+					return fmt.Errorf("opened file tab does not show the file's last line")
+				}
+				if _, err := tree.findKey("activity-detail-viewport:" + groupID + ":" + readID); err == nil {
+					return fmt.Errorf("read row expanded a detail viewport")
 				}
 				return nil
 			})
-			readViewport := "activity-detail-viewport:" + groupID + ":" + readID
-			app.assertActivityScroll(readViewport, readToggle, "READ OUTPUT 079", 24*12*1.5)
-			app.capture("read-full-output-tail")
-			app.act(readToggle, "press", "")
+			app.capture("read-file-tab")
 
 			app.act("input", "setValue", "Ask for an activity choice.")
 			app.act("send", "press", "")
