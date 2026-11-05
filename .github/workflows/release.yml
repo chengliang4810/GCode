@@ -77,6 +77,11 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
+      - name: Platform regressions
+        run: >-
+          go test ./internal/agent ./internal/workbench ./scripts/plugin-acceptance/acceptance
+          -run 'Test(HookProcessReceivesTypedEnvironmentWithoutJSONLeak|TabTooltipUsesDetachedSystemFontAndSnappedLineBox|ArtifactDigest)'
+          -count=1 -timeout 2m
       - name: Race checks
         env:
           CGO_ENABLED: "1"
