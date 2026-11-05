@@ -7,8 +7,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 // The ioctls of grantpt, unlockpt and ptsname on macOS (sys/ttycom.h).
@@ -19,10 +20,14 @@ const (
 )
 
 func openMaster() (*os.File, string, error) {
-	master, err := os.OpenFile("/dev/ptmx", os.O_RDWR|syscall.O_NOCTTY|syscall.O_CLOEXEC, 0)
+	fd, err := unix.Open("/dev/ptmx", unix.O_RDWR|unix.O_NOCTTY|unix.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, "", fmt.Errorf("pty: %w", err)
 	}
+	// Registering an unopened Darwin PTY with Go's netpoller enables
+	// nonblocking reads before grant/unlock. Keep this character device in
+	// blocking mode; session shutdown kills its child before waiting on EOF.
+	master := os.NewFile(uintptr(fd), "/dev/ptmx")
 	var name [128]byte
 	for _, step := range []struct {
 		req uintptr
