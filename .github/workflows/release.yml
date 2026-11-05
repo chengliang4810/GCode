@@ -79,8 +79,8 @@ jobs:
           go-version-file: go.mod
       - name: Platform regressions
         run: >-
-          go test ./internal/agent ./internal/workbench ./scripts/plugin-acceptance/acceptance
-          -run 'Test(HookProcessReceivesTypedEnvironmentWithoutJSONLeak|TabTooltipUsesDetachedSystemFontAndSnappedLineBox|ArtifactDigest)'
+          go test ./internal/agent ./internal/engine ./internal/workbench ./scripts/plugin-acceptance/acceptance
+          -run 'Test(HookProcessReceivesTypedEnvironmentWithoutJSONLeak|ReadImagesReachEveryProtocolAndSurviveRestart|TabTooltipUsesDetachedSystemFontAndSnappedLineBox|ArtifactDigest)'
           -count=1 -timeout 2m
       - name: Race checks
         env:

@@ -40,7 +40,7 @@ func TestReadImagesReachEveryProtocolAndSurviveRestart(t *testing.T) {
 					sendImageReadAnswer(w, protocol)
 				}
 			}))
-			defer fixture.Close()
+			t.Cleanup(fixture.Close)
 			home, workspace := t.TempDir(), t.TempDir()
 			var encoded bytes.Buffer
 			pixels := image.NewNRGBA(image.Rect(0, 0, 3, 2))

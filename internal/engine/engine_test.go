@@ -291,19 +291,37 @@ func sendSSE(w http.ResponseWriter, value any) {
 }
 func waitIdle(t *testing.T, core *Engine) contracts.Snapshot {
 	t.Helper()
-	deadline := time.After(10 * time.Second)
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	events, err := core.Subscribe(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var last contracts.Snapshot
 	for {
-		state, err := core.Snapshot(context.Background())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(state.Runs) > 0 && state.Runs[len(state.Runs)-1].Status != "running" {
-			return state
-		}
 		select {
-		case <-deadline:
-			t.Fatal("run did not finish")
-		case <-time.After(10 * time.Millisecond):
+		case event, ok := <-events:
+			if !ok {
+				t.Fatalf("engine subscription closed before the run settled: %+v", last.Runs)
+			}
+			if event.Snapshot == nil {
+				continue
+			}
+			last = *event.Snapshot
+			if len(last.Runs) == 0 || last.Runs[len(last.Runs)-1].Status == "running" {
+				continue
+			}
+			// Re-read once after the completion event to synchronize with the producer
+			// and preserve the latest state if it started a queued turn under the lock.
+			last, err = core.Snapshot(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(last.Runs) > 0 && last.Runs[len(last.Runs)-1].Status != "running" {
+				return last
+			}
+		case <-ctx.Done():
+			t.Fatalf("run did not finish: %v; runs=%+v sessions=%+v", ctx.Err(), last.Runs, last.Sessions)
 		}
 	}
 }
