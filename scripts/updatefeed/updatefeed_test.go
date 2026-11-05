@@ -19,7 +19,7 @@ func signedFixture(t *testing.T) (Config, ed25519.PrivateKey, string, manifest) 
 		t.Fatal(err)
 	}
 	var c Config
-	c.Version = "0.1.0"
+	c.Version = "0.0.1-beta"
 	c.Updates.PublicKey = base64.StdEncoding.EncodeToString(pub)
 	c.Updates.GitHub = "example/releases"
 	root := t.TempDir()
@@ -29,12 +29,12 @@ func signedFixture(t *testing.T) (Config, ed25519.PrivateKey, string, manifest) 
 	}
 	body := []byte("signed update archive")
 	sum := sha256.Sum256(body)
-	if err := os.WriteFile(filepath.Join(dir, "rcode-0.1.0-windows-amd64.tar.gz"), body, 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "rcode-0.0.1-beta-windows-amd64.tar.gz"), body, 0644); err != nil {
 		t.Fatal(err)
 	}
 	m := manifest{Version: c.Version, Notes: "Release notes", Date: time.Now().UTC().Format(time.RFC3339),
 		archive: archive{
-			URL:       "https://github.com/example/releases/releases/download/v0.1.0/rcode-0.1.0-windows-amd64.tar.gz",
+			URL:       "https://github.com/example/releases/releases/download/v0.0.1-beta/rcode-0.0.1-beta-windows-amd64.tar.gz",
 			Size:      int64(len(body)),
 			Signature: base64.StdEncoding.EncodeToString(ed25519.Sign(key, sum[:])),
 		}}
@@ -72,7 +72,7 @@ func TestRejectUnsafeRelease(t *testing.T) {
 			c, _, root, m := signedFixture(t)
 			switch kind {
 			case "tampered archive":
-				if err := os.WriteFile(filepath.Join(root, "windows-amd64", "rcode-0.1.0-windows-amd64.tar.gz"),
+				if err := os.WriteFile(filepath.Join(root, "windows-amd64", "rcode-0.0.1-beta-windows-amd64.tar.gz"),
 					[]byte("tamper update archive"), 0644); err != nil {
 					t.Fatal(err)
 				}
@@ -85,7 +85,7 @@ func TestRejectUnsafeRelease(t *testing.T) {
 			case "wrong version":
 				m.Version = "0.2.0"
 			case "wrong repository":
-				m.URL = "https://github.com/other/releases/releases/download/v0.1.0/rcode-0.1.0-windows-amd64.tar.gz"
+				m.URL = "https://github.com/other/releases/releases/download/v0.0.1-beta/rcode-0.0.1-beta-windows-amd64.tar.gz"
 			case "missing notes":
 				m.Notes = ""
 			case "unsigned delta":

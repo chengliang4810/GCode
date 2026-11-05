@@ -34,8 +34,10 @@ are targets.
 
 Desktop updates use MyGo's native updater and signed GitHub Releases from
 `chengliang4810/GCode`. Open **设置 → 关于 → 软件更新** to check.
-Release builds require the signing key; see [update and release setup](docs/updates.md).
-The GitHub repository must be public before distributing these builds.
+Versions start at `0.0.1-beta`; beta identifies the rapid iteration stage and uses
+ordinary latest Releases. Push a new version on `main` to run Windows/macOS
+checks, signed packaging and publication through GitHub Actions.
+Local release builds require the signing key; see [update and release setup](docs/updates.md).
 
 The historical R17 `.9` phase includes the reviewed V5 glyph-placement opt-in on the existing native
 tooltip leaf, preserving its actual AX content names. The isolated V5 cost matrix

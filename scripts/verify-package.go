@@ -299,7 +299,7 @@ func verify(root, target string, lock frameworkpin.Lock, config distribution.Con
 				r.MyGoVersion = dep.Version
 			}
 		}
-		if r.GoVersion != "go1.27.3" || r.MyGoVersion != "v0.7.3" {
+		if r.GoVersion != "go1.27.3" || r.MyGoVersion != lock.UpstreamVersion {
 			return r, fmt.Errorf("unexpected toolchain/framework: %s / %s", r.GoVersion, r.MyGoVersion)
 		}
 	}

@@ -24,10 +24,10 @@ GCode 使用仓库内 MyGo v0.7.4 的 `plugins/updater/native`。
 `update-darwin-arm64.json` 或 `update-darwin-universal.json`。
 草稿及 GitHub prerelease 不进入这个正式更新通道。
 
-2026-10-29 核实仓库仍为私有；用户选择将现有仓库公开作为分发方案。
-本轮不修改仓库可见性。在分发可更新版本前，仓库必须已公开，且正式 Release
-必须包含对应平台清单和下载文件。当前未给客户端嵌入 GitHub token，
-也没有私有仓库下载分支；私有状态下检查会失败。
+发布仓库为公开的 `chengliang4810/GCode`。更新器使用无需凭据的正式 Release
+下载地址，不向客户端嵌入 GitHub token。版本从 `0.0.1-beta` 开始；`beta`
+仅标记快速迭代阶段，Release 始终使用 `prerelease=false`，并设为 latest。
+后续按 `0.0.2-beta`、`0.0.3-beta` 递增，继续走同一个正式更新通道。
 
 ## 更新签名
 
@@ -71,17 +71,27 @@ MyGo 生成安装包、签名 `.tar.gz` 更新包、每平台 `update-*.json`，
 
 ## 发布流程
 
-1. 更新 `mygo.json` 的 `version`，并在 `CHANGELOG.md` 添加对应 `## <version>` 段落。
-2. 提交待发布源码并推送对应 `v<version>` 标签。
-3. `.github/workflows/release.yml` 在 Windows/macOS runner 上执行 race 测试、
-   构建与签名校验；所有目标通过后统一上传到 GitHub **草稿 Release**。
-   手动触发也必须选择与配置版本相符的标签。
-4. 检查四个平台的更新包、清单和安装包，完成实际安装更新验证。
-5. 确认仓库公开后，手动发布草稿并设为 latest。流程不会自动公开仓库或发布草稿。
+`main` 是唯一发布分支，GitHub Actions 同时负责测试、签名打包和发布。
+PR 的 Windows/macOS 全仓 race 测试、静态检查和共享控件门禁必须通过；PR 不获取
+更新私钥，也不发布产物。合并后的 PR 分支由仓库自动删除。
 
-工作流只覆盖桌面发布；不部署或更新 Linux 无桌面宿主。
-本地构建也不会上传文件、创建标签或发布 Release。
-开发运行 `go run ./cmd/rcode` 不携带发布构建元数据，手动检查会显示无法自更新。
+1. 在 `main` 更新 `mygo.json` 的 `version`，并在 `CHANGELOG.md` 添加同版本段落。
+2. 推送到 `main`；也可以在 `main` 手动运行 `Desktop release`。
+3. 工作流运行 Windows/macOS 全仓 race、Go/MyGo vet 和共享控件门禁。
+   尚未发布的版本继续构建 Windows amd64 与 macOS amd64、arm64、universal。
+4. 所有目标的安装包、更新包及签名校验通过后，工作流创建指向本次 `main` 提交的
+   `v<version>` 标签和一个草稿 Release，统一上传完整产物，再发布并设为 latest。
+   `beta` 版本也按正式 Release 处理，不标为 GitHub prerelease。
+5. 已经发布的同版本只运行检查，不覆盖产物；发布新代码必须递增版本号。
+   构建失败时不会创建版本标签或发布半成品；上传失败保留草稿，可重跑同一提交。
+
+不再依赖标签推送触发另一个工作流：Actions 自带令牌创建的标签不会触发新的
+push 工作流，因此创建标签和发布都在同一次 `main` 工作流内完成。
+
+工作流只覆盖桌面发布，不部署 Linux 无桌面宿主。本地构建不会创建标签或发布 Release。
+开发运行 `go run ./cmd/rcode` 不携带发布元数据，不能自更新。
+此前本机构建的 `0.1.0` 是开发阶段包，语义版本高于新的起始版本；首次切换到
+`0.0.1-beta` 需要安装本次 Release，之后再按递增版本正常更新。
 
 ## 验证范围
 

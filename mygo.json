@@ -1,7 +1,7 @@
 {
   "name": "GCode",
   "identifier": "dev.gcode.rcode",
-  "version": "0.1.0",
+  "version": "0.0.1-beta",
   "main": "./cmd/rcode",
   "out": "build",
   "icon": "internal/assets/branding/app-icon.png",

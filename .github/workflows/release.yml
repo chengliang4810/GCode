@@ -2,7 +2,9 @@ name: Desktop release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +15,52 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate version and release state
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(jq -er '.version' mygo.json)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] ||
+            { echo "Invalid version: $version" >&2; exit 1; }
+          grep -Fqx "## $version" CHANGELOG.md
+          tag="v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [[ "$GITHUB_REF" == refs/heads/main ]] ||
+            { echo 'Releases must run from main.' >&2; exit 1; }
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" > release.json 2> release-error.txt; then
+            if jq -e '.draft == true' release.json > /dev/null; then
+              echo "release=true" >> "$GITHUB_OUTPUT"
+            else
+              jq -e '.prerelease == false' release.json > /dev/null
+              echo "release=false" >> "$GITHUB_OUTPUT"
+            fi
+          elif grep -q 'HTTP 404' release-error.txt; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            cat release-error.txt >&2
+            exit 1
+          fi
+
   build:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -30,31 +77,31 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Verify release tag
-        shell: pwsh
-        run: |
-          $config = Get-Content -Raw mygo.json | ConvertFrom-Json
-          if ($env:GITHUB_REF -ne "refs/tags/v$($config.version)") {
-            throw 'Run this workflow on the version tag matching mygo.json.'
-          }
       - name: Race checks
         env:
           CGO_ENABLED: "1"
-        run: go test -race ./...
+        run: go test -race ./... -count=1 -timeout 15m
+      - name: Static checks
+        run: |
+          go vet ./...
+          go tool mygo vet .
+      - name: Shared controls boundary
+        run: go test ./internal/desktop -run 'Test(SettingsControls|InspectSettingsControls)'
       - name: Build Windows
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && needs.prepare.outputs.release == 'true'
         shell: pwsh
         env:
           MYGO_UPDATER_PRIVATE_KEY: ${{ secrets.MYGO_UPDATER_PRIVATE_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/build.ps1 -Targets windows/amd64
       - name: Build macOS
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && needs.prepare.outputs.release == 'true'
         env:
           MYGO_UPDATER_PRIVATE_KEY: ${{ secrets.MYGO_UPDATER_PRIVATE_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: sh ./scripts/build-macos.sh
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - if: needs.prepare.outputs.release == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: desktop-${{ matrix.name }}
           if-no-files-found: error
@@ -62,13 +109,14 @@ jobs:
             build/*/update-*.json
             build/*/*.tar.gz
             build/*/*.delta
-            build/*/* Setup *.exe
+            build/*/gcode-setup-*.exe
             build/*/*.dmg
             build/GCode-*.zip
             build/release-manifest-*.json
 
-  draft:
-    needs: build
+  publish:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.release == 'true' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -81,19 +129,43 @@ jobs:
           pattern: desktop-*
           path: release-assets
           merge-multiple: true
-      - name: Upload complete draft
+      - name: Publish complete stable release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
         shell: bash
         run: |
           set -euo pipefail
-          tag="$GITHUB_REF_NAME"
+          tag="$RELEASE_TAG"
+          # Every target must contain a signed archive and update manifest.
+          for platform in windows-amd64 darwin-amd64 darwin-arm64 darwin-universal; do
+            [[ $(find release-assets -name "update-$platform.json" | wc -l) -eq 1 ]]
+            [[ $(find release-assets -name "gcode-$RELEASE_VERSION-$platform.tar.gz" | wc -l) -eq 1 ]]
+          done
+          [[ $(find release-assets -name 'gcode-setup-*.exe' | wc -l) -eq 1 ]]
+          [[ $(find release-assets -name '*.dmg' | wc -l) -eq 3 ]]
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > tag.json 2> tag-error.txt; then
+            [[ $(jq -r '.object.sha' tag.json) == "$GITHUB_SHA" ]] ||
+              { echo 'Version tag points to another commit; bump the version.' >&2; exit 1; }
+          elif grep -q 'HTTP 404' tag-error.txt; then
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+              -f "ref=refs/tags/$tag" -f "sha=$GITHUB_SHA" > /dev/null
+          else
+            cat tag-error.txt >&2
+            exit 1
+          fi
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft > release-state.json; then
             jq -e '.isDraft == true' release-state.json > /dev/null ||
-              { echo "Refusing to replace a published release." >&2; exit 1; }
+              { echo 'Refusing to replace a published release.' >&2; exit 1; }
           else
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --draft --verify-tag --title "GCode $tag" --notes-file CHANGELOG.md
+              --draft --verify-tag --title "GCode $RELEASE_VERSION" --notes-file CHANGELOG.md
           fi
           mapfile -d '' assets < <(find release-assets -type f -print0)
           gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
+          # beta is the product stage; this is the ordinary latest update channel.
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" \
+            --draft=false --prerelease=false --latest
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" \
+            --jq '.tag_name' | grep -Fx "$tag"
