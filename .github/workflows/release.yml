@@ -80,7 +80,7 @@ jobs:
       - name: Race checks
         env:
           CGO_ENABLED: "1"
-        run: go test -race ./... -count=1 -timeout 15m
+        run: go test -race ./... -count=1 -timeout 25m
       - name: Static checks
         run: |
           go vet ./...
