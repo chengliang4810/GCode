@@ -195,9 +195,12 @@ type transcriptCache struct {
 	stamp    uint64
 	compact  bool
 	entries  []contracts.Message
-	rows     map[string]transcriptProjection
-	flat     []conversationRow
-	rail     []messageRailTick
+	// Only the newest model round's trailing text can still receive deltas.
+	// Streaming on the joined entry instead describes the entire active turn.
+	streamingText string
+	rows          map[string]transcriptProjection
+	flat          []conversationRow
+	rail          []messageRailTick
 }
 
 // transcriptProjection is an entry's block rows and the fingerprint of the
@@ -281,6 +284,20 @@ func (cache *transcriptCache) entriesFor(revision uint64, session string, messag
 	}
 	cache.revision, cache.session, cache.stamp, cache.compact = revision, session, stamp, compact
 	cache.entries, cache.flat, cache.rail = transcriptEntries(messages), nil, nil
+	cache.streamingText = ""
+	for i := len(messages) - 1; i >= 0; i-- {
+		message := &messages[i]
+		if message.Role != "assistant" {
+			continue
+		}
+		if message.Streaming && len(message.Blocks) > 0 {
+			last := &message.Blocks[len(message.Blocks)-1]
+			if last.Kind == "text" {
+				cache.streamingText = last.ID
+			}
+		}
+		break
+	}
 	if cache.rows == nil {
 		cache.rows = map[string]transcriptProjection{}
 	}

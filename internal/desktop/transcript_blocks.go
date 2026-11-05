@@ -15,11 +15,23 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 	case "text":
 		source := linktarget.NormalizeMarkdown(b.Text)
 		options := a.transcriptOptions(m.SessionID, false)
-		if m.Streaming {
-			markdown.Stream(c, source, options)
-		} else {
-			markdown.View(c, source, options)
-		}
+		root := ui.Column(c).FillWidth()
+		mounted := ui.Local(root, "stream-mounted", func() bool { return false })
+		root.Children(func() {
+			if m.Streaming && *mounted {
+				markdown.Stream(c, source, options)
+			} else {
+				// Virtual rows mount again while scrolling. Prime the existing
+				// prefix without replaying it, then reveal only future deltas.
+				// Completed blocks also settle any reveal left in flight.
+				// Options own the image cache, so retain their identity.
+				reveal := options.Reveal
+				options.Reveal = &markdown.Reveal{Unit: markdown.AtOnce, Fade: -1}
+				markdown.View(c, source, options)
+				options.Reveal = reveal
+			}
+		})
+		*mounted = true
 	case "code":
 		fence := strings.Repeat(string(rune(96)), 3)
 		markdown.View(c, fence+b.Language+"\n"+b.Text+"\n"+fence, &a.md)

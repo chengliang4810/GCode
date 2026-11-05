@@ -105,7 +105,9 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 					a.activityGroup(c, block, message)
 				} else {
 					c.Key(block.ID)
-					a.transcriptBlock(c, message, block.Block)
+					body := message
+					body.Streaming = message.Streaming && block.Block.ID == pane.cache.streamingText
+					a.transcriptBlock(c, body, block.Block)
 				}
 			}
 			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {
