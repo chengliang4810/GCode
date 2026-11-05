@@ -29,7 +29,8 @@ func TestTabTooltipUsesDetachedSystemFontAndSnappedLineBox(t *testing.T) {
 						c.SetTheme(s.palette().UI())
 						c.Root().Font(rootFont).FontSize(25).FontWeight(700).LineHeight(3)
 						ui.Text(c, text).Label("independent typography control").Absolute().Left(20).Top(100).
-							Font(tabTooltipFontFamily()).FontSize(size).FontWeight(400).FixedLineHeight(wantHeight)
+							Font(tabTooltipFontFamily()).FontFeatures(tabTooltipLeafFeatures()).Lang(c.Locale()).
+							FontSize(size).FontWeight(400).FixedLineHeight(wantHeight)
 						s.renderTabTooltip(c, tabTooltipPass{visible: owner})
 					}, 500, 200)
 					tt.SetScale(scale)
