@@ -264,6 +264,49 @@ func TestLinkTooltipFocusHoverAndScroll(t *testing.T) {
 	}
 }
 
+func TestLinkTooltipThemeFontAndNarrowWindow(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{260, 420} {
+			var previousHeight float32
+			for _, fontSize := range []float32{14, 20} {
+				theme := design.Palette("rcode", dark).UI()
+				theme.FontSize = fontSize
+				d := Destination{Raw: "https://example.com/guide", Kind: linktarget.Web}
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(theme)
+					c.Root().FontSize(fontSize).Background(theme.Background)
+					ui.Column(c).Fill().Padding(24).Children(func() {
+						Link(c.Key("guide-link"), []ui.Span{{Text: "Guide"}}, d, Config{Internal: true})
+					})
+				}, width, 320)
+				r, ok := tt.Find("Guide")
+				if !ok {
+					t.Fatal("link missing")
+				}
+				tt.Move(r.X+r.W/2, r.Y+r.H/2)
+				tt.Advance(600 * time.Millisecond)
+				tip, ok := tt.Find(d.Raw)
+				if !ok || tip.W > float32(width)-40 || tip.X < 0 || tip.X+tip.W > float32(width) || tip.Y+tip.H > 320 {
+					t.Fatalf("dark=%v font=%v width=%v tooltip=%+v shown=%v", dark, fontSize, width, tip, ok)
+				}
+				if previousHeight > 0 && tip.H <= previousHeight {
+					t.Fatalf("tooltip did not follow larger interface text: old=%v new=%v", previousHeight, tip.H)
+				}
+				previousHeight = tip.H
+				pixel := tt.Image().RGBAAt(int(tip.X+12), int(tip.Y+3))
+				expected := theme.Surface.Over(theme.Background)
+				if pixel.R != expected.R || pixel.G != expected.G || pixel.B != expected.B {
+					t.Fatalf("tooltip background does not follow theme (dark=%v): got=%v want=%v", dark, pixel, expected)
+				}
+				tt.Key(0, ui.KeyEscape)
+				if _, shown := tt.Find(d.Raw); shown {
+					t.Fatal("Escape did not dismiss themed tooltip")
+				}
+			}
+		}
+	}
+}
+
 func writeEvidence(t *testing.T, tt *ui.Tester, name string) {
 	t.Helper()
 	directory := os.Getenv("RCODE_LINK_EVIDENCE")

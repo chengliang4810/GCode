@@ -25,6 +25,18 @@ type GoalInput struct {
 	TokenBudget *int64            `json:"tokenBudget,omitempty"`
 }
 
+type GoalEditInput struct {
+	Objective        string `json:"objective"`
+	ExpectedRevision uint64 `json:"expectedRevision"`
+}
+
+func (g GoalEditInput) Validate() error {
+	if err := (GoalInput{Objective: g.Objective}).Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (g GoalInput) Validate() error {
 	objective := strings.TrimSpace(g.Objective)
 	if objective == "" || utf8.RuneCountInString(objective) > 4000 {
@@ -50,6 +62,7 @@ type SessionGoal struct {
 	ID                string             `json:"id"`
 	InitialInputID    string             `json:"initialInputId"`
 	Objective         string             `json:"objective"`
+	Revision          uint64             `json:"revision"`
 	Status            GoalStatus         `json:"status"`
 	Iteration         int                `json:"iteration"`
 	TokenBudget       *int64             `json:"tokenBudget,omitempty"`

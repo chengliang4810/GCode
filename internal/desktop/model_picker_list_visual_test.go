@@ -56,7 +56,7 @@ func TestModelSearchFontAndLineHeightFollowPreference(t *testing.T) {
 func modelListSurfaceTestApp(t *testing.T, appearance string) *App {
 	t.Helper()
 	a := modelSurfaceTestApp(t, appearance)
-	a.state.Providers = []contracts.Provider{{ID: "openai", Name: "OpenAI"}}
+	a.state.Providers = []contracts.Provider{{ID: "openai", Name: "OpenAI", Enabled: true}}
 	a.state.Models = []contracts.Model{
 		{ID: "gpt-5.4", ProviderID: "openai", Label: "GPT-5.4", ReasoningLevels: []string{"Low", "Medium", "High", "Extra High"}},
 		{ID: "gpt-5.3-codex", ProviderID: "openai", Label: "GPT-5.3 Codex"},
@@ -177,7 +177,7 @@ func TestModelMenuTracksButtonAcrossComposerLayouts(t *testing.T) {
 			model, _ := tt.Find("Select model GPT-5.4")
 			trigger, triggerOK := tt.Find("Select model")
 			if !ok || !triggerOK || math.Abs(float64(trigger.Y-panel.Y-panel.H-6)) > 1 ||
-				math.Abs(float64(model.Y+model.H/2-provider.Y-provider.H/2)) > 2 {
+				math.Abs(float64(model.Y-provider.Y)) > 1 {
 				t.Fatalf("hero=%t draft=%d: menu=%+v trigger=%+v provider=%+v model=%+v", hero, len(draft), panel, trigger, provider, model)
 			}
 		}
@@ -206,6 +206,87 @@ func TestModelSubmenuUsesAvailableSideAndKeepsSupplierCentered(t *testing.T) {
 		}
 		if math.Abs(float64(providerCenter-trigger.X-trigger.W/2)) > 1 {
 			t.Fatalf("supplier menu is not centered on trigger at x=%g: panel=%+v trigger=%+v", x, panel, trigger)
+		}
+	}
+}
+
+func TestModelSubmenuHeightDoesNotMoveProviders(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		for _, x := range []float32{40, 680} {
+			t.Run(fmt.Sprintf("%s/x-%g", appearance, x), func(t *testing.T) {
+				a := modelListSurfaceTestApp(t, appearance)
+				a.state.Providers = nil
+				a.state.Models = nil
+				for index, count := range []int{1, 2, 20} {
+					id := fmt.Sprintf("provider-%d", index)
+					a.state.Providers = append(a.state.Providers, contracts.Provider{ID: id, Name: id, Enabled: true})
+					a.state.Integrations.Providers = append(a.state.Integrations.Providers, contracts.ProviderDetails{ProviderID: id, TargetID: "local", Installed: true, Enabled: true})
+					for model := 0; model < count; model++ {
+						name := fmt.Sprintf("%s/model-%02d", id, model)
+						a.state.Models = append(a.state.Models, contracts.Model{ID: name, ProviderID: id, Label: name})
+					}
+				}
+				a = modelSnapshotApp(t, a.state)
+				a.modelID = "provider-0/model-00"
+				a.modelMenu = true
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(a.palette.UI())
+					c.DisableAnimations()
+					c.Root().Background(a.palette.Shell)
+					ui.Row(c).Absolute().Left(x).Top(300).Children(func() {
+						a.centralControls().modelTrigger(c)
+					})
+				}, 900, 380)
+				tt.Advance(time.Second)
+				first, _ := tt.Find("provider-0")
+				settings, _ := tt.Find("Model management")
+				for _, index := range []int{2, 1, 0, 2} {
+					label := fmt.Sprintf("provider-%d", index)
+					row, ok := tt.Find(label)
+					if !ok {
+						t.Fatalf("missing provider %s", label)
+					}
+					tt.Move(row.X+row.W/2, row.Y+row.H/2)
+					tt.Advance(100 * time.Millisecond)
+					if got, _ := tt.Find("provider-0"); got != first {
+						t.Fatalf("browsing %s moved providers: before=%+v after=%+v", label, first, got)
+					}
+					if got, _ := tt.Find("Model management"); got != settings {
+						t.Fatalf("browsing %s moved management: before=%+v after=%+v", label, settings, got)
+					}
+					model, ok := tt.Find("Select model " + label + "/model-00")
+					trigger, _ := tt.Find("Select model")
+					if !ok || model.Y < 8 || model.Y+model.H > trigger.Y-6 || !(model.X > row.X+row.W || model.X+model.W < row.X) {
+						t.Fatalf("invalid independent submenu: model=%+v provider=%+v trigger=%+v", model, row, trigger)
+					}
+					if index == 1 && math.Abs(float64(model.Y-row.Y)) > 1 {
+						t.Fatalf("submenu did not align to browsed provider: model=%+v provider=%+v", model, row)
+					}
+					if index == 2 {
+						writeModelSurfaceEvidence(t, fmt.Sprintf("independent-submenu-%s-x-%g", appearance, x), tt, map[string]any{"provider": first, "settings": settings, "firstModel": model, "trigger": trigger})
+					}
+				}
+				tt.Key(0, ui.KeyTab)
+				tt.Key(0, ui.KeyEnd)
+				tt.Key(0, ui.KeyEnter)
+				if a.modelID != "provider-2/model-19" || a.modelMenu {
+					t.Fatal("scrolled submenu keyboard selection failed")
+				}
+				a.modelMenu = true
+				a.modelList.ScrollIntoView(0)
+				tt.Frame()
+				tt.Advance(100 * time.Millisecond)
+				model, ok := tt.Find("Select model provider-2/model-00")
+				panel, _ := tt.Find("Model picker")
+				if !ok || model.Y >= panel.Y {
+					t.Fatalf("fixture must exercise the submenu outside the provider overlay bounds: model=%+v overlay=%+v", model, panel)
+				}
+				tt.Move(model.X+model.W/2, model.Y+model.H/2)
+				tt.ClickAt(model.X+model.W/2, model.Y+model.H/2)
+				if a.modelID != "provider-2/model-00" || a.modelMenu {
+					t.Fatal("pointer click outside the provider overlay bounds did not select the submenu model")
+				}
+			})
 		}
 	}
 }

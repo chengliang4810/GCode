@@ -15,6 +15,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/mcp"
 	"gcode/internal/model"
+	"gcode/internal/streamtext"
 )
 
 func (e *Engine) sendLocked(send contracts.SendRequest) error {
@@ -573,13 +574,17 @@ func (e *Engine) startRunLocked(
 			}
 		}
 		if memoryEnabled && runErr == nil {
-			if index := loadMemoryIndex(memoryDir); index != "" && !hasMemoryIndex(e.history[session.ID]) {
-				contextMessages := []model.Message{memoryContextMessage(index)}
-				history = append(model.CloneMessages(contextMessages), history...)
+			if index := loadMemoryIndex(memoryDir); index != "" {
 				e.mu.Lock()
-				e.history[session.ID] = append(model.CloneMessages(contextMessages), e.history[session.ID]...)
-				e.context[session.ID] = append(model.CloneMessages(contextMessages), e.context[session.ID]...)
-				runErr = errors.Join(runErr, e.persistLocked(session.ID))
+				// The map is shared by all sessions, even when this run is
+				// the only writer of its own conversation.
+				if !hasMemoryIndex(e.history[session.ID]) {
+					contextMessages := []model.Message{memoryContextMessage(index)}
+					history = append(model.CloneMessages(contextMessages), history...)
+					e.history[session.ID] = append(model.CloneMessages(contextMessages), e.history[session.ID]...)
+					e.context[session.ID] = append(model.CloneMessages(contextMessages), e.context[session.ID]...)
+					runErr = errors.Join(runErr, e.persistLocked(session.ID))
+				}
 				e.mu.Unlock()
 			}
 		}
@@ -648,6 +653,7 @@ func (e *Engine) startRunLocked(
 					}
 					return e.goalIdle(ctx, run, bound, request)
 				},
+				OwnsCompletion: run.goal.id != "" && child == nil,
 				Emit: func(event agent.Event) error {
 					e.mu.Lock()
 					defer e.mu.Unlock()
@@ -823,15 +829,24 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 			message.ModelID = run.selection.ModelID
 		}
 		*current = message.ID
+		if run := e.runs[sessionID]; run != nil {
+			run.messageID, run.messageIndex = message.ID, len(messages)
+			run.textBlocks = [2]streamtext.Buffer{}
+		}
 		e.state.Messages[sessionID] = append(messages, message)
 		e.publishLocked(contracts.Event{Kind: "message.changed", SessionID: sessionID, RunID: runID, Message: &message})
 		return nil
 	}
 	index := -1
-	for i := range messages {
-		if messages[i].ID == *current {
-			index = i
-			break
+	run := e.runs[sessionID]
+	if run != nil && run.messageID == *current && run.messageIndex < len(messages) && messages[run.messageIndex].ID == *current {
+		index = run.messageIndex
+	} else {
+		for i := range messages {
+			if messages[i].ID == *current {
+				index = i
+				break
+			}
 		}
 	}
 	if index < 0 {
@@ -858,7 +873,7 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 		message.Blocks = nil
 		message.Streaming = true
 	case "message.delta":
-		for _, part := range []struct{ kind, text string }{{"reasoning", event.Reasoning}, {"text", event.Text}} {
+		for partIndex, part := range []struct{ kind, text string }{{"reasoning", event.Reasoning}, {"text", event.Text}} {
 			if part.text == "" {
 				continue
 			}
@@ -873,7 +888,11 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				message.Blocks = append(message.Blocks, contracts.Block{ID: id("block"), Kind: part.kind})
 				block = len(message.Blocks) - 1
 			}
-			message.Blocks[block].Text += part.text
+			if run != nil {
+				message.Blocks[block].Text = run.textBlocks[partIndex].Append(message.Blocks[block].Text, part.text)
+			} else {
+				message.Blocks[block].Text += part.text
+			}
 			e.publishLocked(contracts.Event{Kind: "message.delta", SessionID: sessionID, RunID: runID, MessageID: message.ID, BlockKind: part.kind, Text: part.text})
 		}
 		return nil
@@ -926,7 +945,8 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 		}
 	}
 	changed := *message
-	changed.Blocks = contracts.CloneBlocks(message.Blocks)
+	// publishLocked synchronously projects and gives each subscriber its own
+	// block payload before releasing the engine lock.
 	e.publishLocked(contracts.Event{Kind: "message.changed", SessionID: sessionID, RunID: runID, Message: &changed})
 	return nil
 }

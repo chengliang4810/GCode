@@ -6,6 +6,28 @@ import (
 	"time"
 )
 
+func TestGoalEditValidationAndClone(t *testing.T) {
+	command := Command{Kind: "goal.edit", SessionID: "session", ID: "goal",
+		GoalEdit: &GoalEditInput{Objective: "Edited objective", ExpectedRevision: 7}}
+	if err := command.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	cloned := command.Clone()
+	cloned.GoalEdit.Objective = "changed by worker"
+	if command.GoalEdit.Objective != "Edited objective" {
+		t.Fatal("goal edit clone shares worker state")
+	}
+	for _, input := range []GoalEditInput{
+		{Objective: " ", ExpectedRevision: 7}, {Objective: ""},
+		{Objective: strings.Repeat("x", 4001), ExpectedRevision: 7},
+	} {
+		command.GoalEdit = &input
+		if command.Validate() == nil {
+			t.Fatal("invalid goal edit accepted:", input)
+		}
+	}
+}
+
 func TestGoalValidationAndCloneOwnership(t *testing.T) {
 	zero, negative, positive := int64(0), int64(-1), int64(100)
 	for _, input := range []GoalInput{

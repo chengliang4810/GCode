@@ -58,17 +58,6 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 				}
 			})
 		}
-	case "todo", "todos":
-		for _, todo := range b.Todos {
-			ui.Row(c).Gap(8).Children(func() {
-				if todo.Status == "completed" {
-					icon(c, "check", 14)
-				} else {
-					icon(c, "clock-circle", 14)
-				}
-				ui.Text(c, todo.Text).FontSize(design.TextSize(c, design.TextBase))
-			})
-		}
 	case "subagent":
 		if b.Subagent != nil {
 			a.transcriptSubagent(c, *b.Subagent)

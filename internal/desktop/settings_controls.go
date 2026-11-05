@@ -3,11 +3,13 @@ package desktop
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/shader"
 )
 
 type buttonVariant uint8
@@ -78,6 +80,12 @@ func textButton(c *ui.Context, label string) ui.Element {
 	return controlButton(c, label, buttonPlain).Children(func() { ui.Text(c, label).SingleLine() })
 }
 
+func compactTextButton(c *ui.Context, label string) ui.Element {
+	s := design.Controls()
+	return controlButton(c, label, buttonPlain).Padding(s.ButtonPaddingY, s.CompactButtonPaddingX).
+		Children(func() { ui.Text(c, label).SingleLine() })
+}
+
 func primaryButton(c *ui.Context, label string) ui.Element {
 	return controlButton(c, label, buttonPrimary).Children(func() { ui.Text(c, label).SingleLine() })
 }
@@ -127,6 +135,122 @@ func inlineIconButton(c *ui.Context, name, label string) ui.Element {
 	size := design.Controls().InlineIconButtonSize
 	return controlIconButton(c, label).Size(size, size).
 		Children(func() { icon(c, name, design.Controls().IconSize) })
+}
+
+func chipDismissButton(c *ui.Context, label string) ui.Element {
+	size := design.Controls().ChipDismissSize
+	return controlIconButton(c, label).Size(size, size).
+		Children(func() { icon(c, "close", design.Controls().IconSize) })
+}
+
+func attachmentDismissButton(c *ui.Context, label string) ui.Element {
+	size := design.Controls().AttachmentDismissSize
+	return controlIconButton(c, label).Size(size, size).
+		Children(func() { icon(c, "close", design.Controls().IconSize) })
+}
+
+func disclosureIconButton(c *ui.Context, name, label string) ui.Element {
+	s := design.Controls()
+	return controlIconButton(c, label).Size(s.DisclosureWidth, s.DisclosureHeight).
+		Children(func() { icon(c, name, s.IconSize) })
+}
+
+// Attached trays use the existing shared toolbar buttons and theme. Only the
+// wide disclosure and task rows need their own shared layout definitions.
+func controlAttachedToggle(c *ui.Context, label string) ui.Element {
+	s, t := design.AttachedPanels(), c.Theme()
+	button := ui.ButtonBase(c).Label(label).Tooltip(label).Height(max(s.Height-s.Overlap-2, design.TextSize(c, design.TextSmall)*1.5)).
+		Padding(0, s.RowPaddingX).Radius(design.Controls().ButtonRadius).Gap(8).AlignItems(ui.Center).Justify(ui.Start).
+		TextColor(t.Text).FontSize(design.TextSize(c, design.TextSmall))
+	if button.Hovered() || button.FocusVisible() {
+		button.Background(t.SurfaceHover)
+	}
+	return button
+}
+
+func controlTodoRow(c *ui.Context, status string) ui.Element {
+	s, t := design.AttachedPanels(), c.Theme()
+	row := ui.Row(c).FillWidth().MinHeight(s.RowMinHeight).Padding(s.RowPaddingY, s.RowPaddingX).
+		Gap(8).AlignItems(ui.Start).FontSize(design.TextSize(c, design.TextBase)).TextColor(t.TextMuted)
+	if status == "completed" {
+		row.TextColor(t.TextMuted.Alpha(.65))
+	} else if status == "in_progress" {
+		row.TextColor(t.Text).FontWeight(500)
+	}
+	return row
+}
+
+// The native effect fades the actual subtree pixels, preserving transparent
+// surfaces, hit testing and accessibility. A background gradient cannot do so.
+var scrollFadeShader = sync.OnceValue(func() *shader.Shader {
+	return shader.MustCompile(`package main
+var Bands vec2
+func ColorEffect(pos vec2, color vec4) vec4 {
+ alpha:=float(1)
+ if Bands.x>0 { alpha*=clamp(pos.y/Bands.x,0,1) }
+ if Bands.y>0 { alpha*=clamp((rectSize().y-pos.y)/Bands.y,0,1) }
+ return color*alpha
+}`)
+})
+
+type scrollEdgeFade struct {
+	scroll *ui.ScrollState
+	band   float32
+}
+
+func (scrollEdgeFade) EffectMargin() ui.Point { return ui.Point{} }
+
+func (f scrollEdgeFade) PaintEffect(p *ui.Painter, box ui.Rect, content *ui.Bitmap, inset ui.Point) {
+	bands := [2]float32{min(max(f.scroll.Y, 0), f.band), min(max(f.scroll.MaxY-f.scroll.Y, 0), f.band)}
+	scrollFadeShader().Effect(shader.Options{Uniforms: map[string]any{"Bands": bands}}).PaintEffect(p, box, content, inset)
+}
+
+func controlTodoScroll(c *ui.Context, scroll *ui.ScrollState, maxHeight float32) ui.Element {
+	return ui.Scroll(c).TrackScroll(scroll).FillWidth().MaxHeight(maxHeight).
+		Effect(scrollEdgeFade{scroll: scroll, band: design.AttachedPanels().FadeBand})
+}
+
+func controlTodoGlyph(c *ui.Context, status string, live, animate bool, colors [3]ui.Color) {
+	t := c.Theme()
+	ui.Box(c).Width(design.AttachedPanels().GlyphSize).Height(design.TextSize(c, design.TextBase) * 1.5).Shrink(0).Center().Children(func() {
+		switch {
+		case status == "completed":
+			ui.Row(c).TextColor(t.Success).Children(func() { icon(c, "check", 12) })
+		case status == "in_progress" && live:
+			cell := design.AttachedPanels().MiniCellSize
+			phase := float32(c.Now().UnixNano()%int64(750*time.Millisecond)) / float32(750*time.Millisecond)
+			ui.Column(c).Gap(cell / 2).Children(func() {
+				ring := [3][2]int{{0, 1}, {5, 2}, {4, 3}}
+				for row := range 3 {
+					ui.Row(c).Gap(cell / 2).Children(func() {
+						for col := range 2 {
+							opacity := float32(.6)
+							if animate {
+								t := effortFract(phase + float32(ring[row][col])/6)
+								switch {
+								case t < .45:
+									opacity = 1 - .9*t/.45
+								case t < .92:
+									opacity = .1
+								default:
+									opacity = .1 + .9*(t-.92)/.08
+								}
+							}
+							ui.Box(c).Size(cell, cell).Radius(cell / 2).Background(colors[row]).Opacity(opacity)
+						}
+					})
+				}
+			})
+			if animate {
+				c.After(time.Second / 30)
+			}
+		default:
+			ring := ui.Box(c).Size(10, 10).Radius(5).Border(1, t.TextMuted.Alpha(.7)).Center()
+			if status == "in_progress" {
+				ring.BorderColor(t.Accent).Children(func() { ui.Box(c).Size(4, 4).Radius(2).Background(t.Accent) })
+			}
+		}
+	})
 }
 
 // The canvas target keeps a compact glyph slot beside an independent picker.

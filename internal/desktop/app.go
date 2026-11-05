@@ -17,6 +17,7 @@ import (
 	"gcode/internal/i18n"
 	localize "gcode/internal/i18n/view"
 	"gcode/internal/linkui"
+	"gcode/internal/streamtext"
 	"gcode/internal/workbench"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
@@ -28,6 +29,7 @@ type App struct {
 	notifications   *desktopNotifications
 	wallpaper       wallpaperState
 	checkForUpdates func()
+	onCloseStart    func()
 	connections     contracts.ConnectionSettingsService
 	runtimeUI       runtimeSettingsState
 	modelsUI        modelSettingsState
@@ -48,6 +50,9 @@ type App struct {
 	footerGit           composerFooterGitState
 	sideComposers       map[string]*sideComposerState
 	questionForms       map[string]*questionFormState
+	todoPanels          map[string]*todoPanelState
+	goalEditors         map[string]*goalEditorState
+	goalActions         map[string]bool
 	background          backgroundSettingsState
 	pickAttachmentFiles func() ([]string, error)
 	attachmentImports   map[string]int
@@ -105,6 +110,8 @@ type App struct {
 	jobs                                                    chan contracts.Command
 	closed                                                  bool
 	closeOnce                                               sync.Once
+	closeDone                                               chan struct{}
+	streamText                                              map[string]*transcriptStreamText
 	workspace                                               *workbench.State
 	route, section, sessionID, projectID, deviceID          string
 	history                                                 []string
@@ -164,6 +171,8 @@ type Options struct {
 	Now             func() time.Time
 	Connections     contracts.ConnectionSettingsService
 	CheckForUpdates func()
+	// OnCloseStart runs once before any UI or backend cleanup can block.
+	OnCloseStart func()
 }
 
 func New(service contracts.Service) (*App, error) { return NewWithOptions(service, Options{}) }
@@ -181,7 +190,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	if snapshot.Settings.General.ActiveTurnSendBehavior == "" {
 		snapshot.Settings.General.ActiveTurnSendBehavior = "steer"
 	}
-	a := &App{service: service, ctx: ctx, cancel: cancel, state: snapshot, jobs: make(chan contracts.Command, 128), panelOpened: [3]uint64{1, 2, 3},
+	a := &App{service: service, ctx: ctx, cancel: cancel, state: snapshot, jobs: make(chan contracts.Command, 128), panelOpened: [3]uint64{1, 2, 3}, closeDone: make(chan struct{}),
 		sidebar: true, route: "chat", section: "General", checkout: "Current checkout",
 		drafts: make(map[string]string), expanded: make(map[string]bool), history: []string{"chat"}}
 	if snapshot.Runtime == nil {
@@ -190,6 +199,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	a.connections = options.Connections
 	a.notifications = newDesktopNotifications(snapshot)
 	a.checkForUpdates = options.CheckForUpdates
+	a.onCloseStart = options.OnCloseStart
 	if a.connections != nil {
 		info, infoErr := a.connections.ConnectionInfo(ctx)
 		if infoErr != nil {
@@ -229,6 +239,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	a.workspace.OnOpenSession = a.selectSession
 	a.workspace.RenderSession = a.sideTranscript
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
+	a.workspace.RenderGoal = a.goalEditorView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
 	a.workspace.CanNewSideChat = a.canNewSideChat
@@ -282,6 +293,7 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.OnOpenSession = a.selectSession
 	a.workspace.RenderSession = a.sideTranscript
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
+	a.workspace.RenderGoal = a.goalEditorView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
 	a.workspace.CanNewSideChat = a.canNewSideChat
@@ -334,33 +346,54 @@ func (a *App) Attach(win *mygo.Window) error {
 			}
 		}
 	}()
-	win.OnClosed(func() { a.Close() })
+	win.OnClosed(a.startClose)
 	a.prefetchMedia(snapshotMediaRefs(a.state))
 	return nil
 }
 
 func (a *App) Close() {
+	a.startClose()
+	// main joins after MyGo's event loop stops, before leaving the process.
+	<-a.closeDone
+}
+
+func (a *App) startClose() {
 	a.closeOnce.Do(func() {
-		if !a.paneSaveAt.IsZero() {
+		if a.onCloseStart != nil {
+			a.onCloseStart()
+		}
+		savePane := !a.paneSaveAt.IsZero()
+		if savePane {
 			// A drag changed a width and the debounce has not run yet: the
 			// window is closing, so write it now, before the worker stops.
 			// A remote host that does not answer must not hold the window
 			// open, so the write has its own short deadline.
 			a.paneSaveAt = time.Time{}
 			a.applyPaneWidths()
-			settings := a.state.Settings
-			ctx, cancel := context.WithTimeout(context.WithoutCancel(a.ctx), time.Second)
-			_ = a.service.Execute(ctx, contracts.Command{Kind: "settings.update", Settings: &settings})
-			cancel()
 		}
+		settings := a.state.Settings
 		a.closed = true
 		a.cancel()
 		a.notifications.Close()
 		_ = a.workspace.Close()
 		_ = a.bottom.Close()
-		_ = a.service.Close()
+		go func() {
+			defer close(a.closeDone)
+			if savePane {
+				ctx, cancel := context.WithTimeout(context.WithoutCancel(a.ctx), time.Second)
+				_ = a.service.Execute(ctx, contracts.Command{Kind: "settings.update", Settings: &settings})
+				cancel()
+			}
+			_ = a.service.Close()
+		}()
 	})
 }
+
+type transcriptStreamText struct {
+	messageID string
+	blocks    [2]streamtext.Buffer
+}
+
 func (a *App) apply(s contracts.Snapshot) {
 	if s.Revision > a.state.Revision {
 		a.authoritativeSettings = copySettings(s.Settings)
@@ -425,6 +458,7 @@ func (a *App) applyEvent(event contracts.Event) {
 		}
 	}
 	if event.Snapshot != nil {
+		a.streamText = nil
 		a.apply(*event.Snapshot)
 	} else if event.Revision > a.state.Revision && (event.Message != nil || event.Kind == "message.delta") {
 		// Streaming updates copy only the affected message, never serialize or
@@ -433,6 +467,7 @@ func (a *App) applyEvent(event contracts.Event) {
 		s.Messages = maps.Clone(s.Messages)
 		messages := slices.Clone(s.Messages[event.SessionID])
 		if event.Message != nil {
+			delete(a.streamText, event.SessionID)
 			message := *event.Message
 			message.Blocks = contracts.CloneBlocks(message.Blocks)
 			index := slices.IndexFunc(messages, func(m contracts.Message) bool { return m.ID == message.ID })
@@ -446,13 +481,26 @@ func (a *App) applyEvent(event contracts.Event) {
 				if messages[i].ID != event.MessageID {
 					continue
 				}
-				messages[i].Blocks = contracts.CloneBlocks(messages[i].Blocks)
+				// Text is the only changed field; nested payloads stay immutable.
+				messages[i].Blocks = slices.Clone(messages[i].Blocks)
 				index := slices.IndexFunc(messages[i].Blocks, func(b contracts.Block) bool { return b.Kind == event.BlockKind })
 				if index < 0 {
 					messages[i].Blocks = append(messages[i].Blocks, contracts.Block{ID: event.MessageID + "-" + event.BlockKind, Kind: event.BlockKind})
 					index = len(messages[i].Blocks) - 1
 				}
-				messages[i].Blocks[index].Text += event.Text
+				if a.streamText == nil {
+					a.streamText = make(map[string]*transcriptStreamText)
+				}
+				stream := a.streamText[event.SessionID]
+				if stream == nil || stream.messageID != event.MessageID {
+					stream = &transcriptStreamText{messageID: event.MessageID}
+					a.streamText[event.SessionID] = stream
+				}
+				part := 0
+				if event.BlockKind == "reasoning" {
+					part = 1
+				}
+				messages[i].Blocks[index].Text = stream.blocks[part].Append(messages[i].Blocks[index].Text, event.Text)
 			}
 		}
 		s.Messages[event.SessionID] = messages
@@ -461,8 +509,13 @@ func (a *App) applyEvent(event contracts.Event) {
 		if event.Kind != "message.delta" {
 			a.refreshVisibleAppUsage()
 		}
-		a.workspace.Update(s)
-		a.bottom.Update(s)
+		if event.Kind == "message.delta" {
+			a.workspace.UpdateTranscript(s)
+			a.bottom.UpdateTranscript(s)
+		} else {
+			a.workspace.Update(s)
+			a.bottom.Update(s)
+		}
 	}
 	if !a.pendingNew || event.RequestID == "" || event.RequestID != a.pendingNewRequestID || a.pendingNewEpoch != a.draftEpoch || a.pendingNewRuns[event.RunID] || event.Kind != "run.started" && event.Kind != "request.created" && event.Kind != "queue.changed" {
 		return

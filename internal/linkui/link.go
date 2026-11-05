@@ -7,6 +7,7 @@ import (
 	"time"
 	"unicode/utf16"
 
+	"gcode/internal/design"
 	i18nview "gcode/internal/i18n/view"
 	"gcode/internal/linktarget"
 	"github.com/egoist/mygo/ui"
@@ -207,12 +208,16 @@ func tooltip(c *ui.Context, anchor ui.Element, st *linkState, text string) {
 	if !st.shown {
 		return
 	}
-	maxHeight := min(float32(24*18), max(float32(36), c.Root().Bounds().H-40))
+	size := design.TextSize(c, design.TextSmall)
+	lineHeight := size * 1.5
+	maxWidth := min(float32(360), max(float32(40), c.Root().Bounds().W-40))
+	maxHeight := min(24*lineHeight, max(2*lineHeight, c.Root().Bounds().H-40))
 	ui.Overlay(c, func() {
 		tip := ui.Box(c).Bind(&st.card).Absolute().Role(ui.RoleTooltip).
-			Label(text).MaxWidth(360).Padding(8, 10).Radius(6).
-			Background(ui.Hex("#242428")).TextColor(ui.Hex("#fafafa")).
-			FontSize(12).FixedLineHeight(18).
+			Label(text).MaxWidth(maxWidth).Padding(8, 10).Radius(6).
+			Border(design.Controls().BorderWidth, c.Theme().Border).
+			Background(c.Theme().Surface.Over(c.Theme().Background)).TextColor(c.Theme().TextMuted).
+			FontSize(size).FixedLineHeight(lineHeight).
 			AttachTo(anchor, ui.AnchorTop, ui.AnchorBottom).Margin(0, 0, 6, 0)
 		if tip.OverlayShortcut(0, ui.KeyEscape) {
 			st.shown, st.dismissed = false, true
@@ -220,7 +225,7 @@ func tooltip(c *ui.Context, anchor ui.Element, st *linkState, text string) {
 		tip.Children(func() {
 			// An interactive card lets the pointer leave the label to scroll
 			// the full destination. It never truncates the target string.
-			ui.Scroll(c).MaxHeight(maxHeight).MaxWidth(340).Children(func() {
+			ui.Scroll(c).MaxHeight(maxHeight).MaxWidth(maxWidth - 20).Children(func() {
 				ui.Text(c, text)
 			})
 		})

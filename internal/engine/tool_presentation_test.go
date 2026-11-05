@@ -16,6 +16,7 @@ func TestToolPresentationDecodesReadableFieldsAndPreservesArguments(t *testing.T
 		{"Glob", "Glob", `{"pattern":"**/*.go"}`, "", "**/*.go"},
 		{"directory", "ListDirectory", `{"path":"src"}`, "", "src"},
 		{"invalid", "Bash", `{"command":`, "", "Bash"},
+		{"todo", "TodoWrite", `{"todos":[{"text":"one","status":"completed"},{"text":"two","status":"in_progress"}]}`, "", "1/2"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			started := time.Now()

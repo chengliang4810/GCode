@@ -118,6 +118,11 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 		}
 	}
 	for i, block := range blocks {
+		// Checklists belong to the selected chat's composer tray. The tool
+		// record remains in the activity tree, including its historical output.
+		if block.Kind == "todo" || block.Kind == "todos" {
+			continue
+		}
 		if block.Tool != nil && block.Tool.IsQuestion() {
 			if !block.Tool.Failed() {
 				continue

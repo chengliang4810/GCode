@@ -27,7 +27,7 @@ func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bo
 	case contracts.CatalogError:
 		ui.Column(c).FillWidth().Padding(16).Gap(6).Children(func() {
 			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
-			textButton(c, tr(c, "Retry")).Border(1, a.palette.Border).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
+			secondaryButton(c, tr(c, "Retry")).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
 		})
 	case contracts.CatalogNoAgents:
 		ui.Column(c).FillWidth().Padding(16).Gap(8).AlignItems(ui.Center).Children(func() {

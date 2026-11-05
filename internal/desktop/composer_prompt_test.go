@@ -186,7 +186,9 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 			}
 			session := a.currentSession()
 			session.Goal = &contracts.SessionGoal{ID: "overlap", Objective: "Goal behind completions", Status: contracts.GoalPaused, Iteration: 1}
-			todos := contracts.Block{Kind: "todos", Todos: []contracts.Todo{{Text: "Todo behind completions", Status: "pending"}}}
+			a.state.Messages[session.ID] = []contracts.Message{{ID: "todo-message", Role: "assistant",
+				Blocks: []contracts.Block{{ID: "todos", Kind: "todos", Todos: []contracts.Todo{{Text: "Todo behind completions", Status: "pending"}}}}}}
+			a.state.Revision++
 			controller := a.centralControls()
 			draft, input, surface := &a.draft, &a.composer, &a.composerSurface
 			if test.side {
@@ -211,7 +213,7 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 					})
 					ui.Column(c).Absolute().Top(max(20, test.top-220)).Left(20).Width(test.width).Children(func() {
 						a.goalBanner(c, session)
-						a.transcriptBlock(c, contracts.Message{}, todos)
+						a.todoTray(c, session, "overlay")
 					})
 				})
 				panel = controller.prompt.panel.Bounds(c)
@@ -226,7 +228,7 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 			if panel.H <= 0 || panel.Y < 0 || panel.Y+panel.H > composer.Y {
 				t.Fatalf("completion list did not stay above input: panel=%+v input=%+v", panel, composer)
 			}
-			goal, _ := tt.Find("Show goal details")
+			goal, _ := tt.Find("Goal")
 			todo, _ := tt.Find("Todo behind completions")
 			overlap := func(a, b ui.Rect) bool { return a.X < b.X+b.W && b.X < a.X+a.W && a.Y < b.Y+b.H && b.Y < a.Y+a.H }
 			if !overlap(panel, goal) || !overlap(panel, todo) {
@@ -234,6 +236,11 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 			}
 			var selected *promptChoice
 			for _, choice := range controller.prompt.choices {
+				// "Goal" also names the underlying attached accessibility
+				// group; use a uniquely named fixture candidate for pointer input.
+				if choice.ref.Kind == "command" && choice.ref.ID == "goal" {
+					continue
+				}
 				bounds, ok := tt.Find(choice.ref.Label)
 				if ok && overlap(bounds, goal) {
 					value := choice
@@ -244,11 +251,12 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 			if selected == nil {
 				t.Fatal("no candidate overlaps the goal control")
 			}
+			editorsBefore := len(a.goalEditors)
 			if err := tt.Click(selected.ref.Label); err != nil {
 				t.Fatal(err)
 			}
-			if !strings.Contains(*draft, selected.ref.Markdown()) || tt.HasText("Clear goal") {
-				t.Fatalf("popup click was clipped or reached the underlying goal: draft=%q", *draft)
+			if !strings.Contains(*draft, selected.ref.Markdown()) || len(a.goalEditors) != editorsBefore {
+				t.Fatalf("popup click was clipped or reached the underlying goal: draft=%q want=%q editors=%d->%d", *draft, selected.ref.Markdown(), editorsBefore, len(a.goalEditors))
 			}
 		})
 	}

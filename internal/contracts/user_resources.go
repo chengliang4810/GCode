@@ -122,7 +122,7 @@ func (c Command) validateResource() error {
 		return errors.New("resource payload does not match command")
 	}
 	if strings.HasPrefix(c.Kind, "resource.") &&
-		(c.Goal != nil || c.Provider != nil || c.Git != nil || c.Send != nil || c.Settings != nil ||
+		(c.Goal != nil || c.GoalEdit != nil || c.Provider != nil || c.Git != nil || c.Send != nil || c.Settings != nil ||
 			c.Session != nil || c.Attachment != nil || c.Integration != nil || c.ProjectCreate != nil ||
 			c.Adjustment != nil || c.TerminalSize != nil) {
 		return errors.New("resource commands accept only their resource payload")

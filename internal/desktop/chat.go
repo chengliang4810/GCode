@@ -63,7 +63,6 @@ func (a *App) chatView(c *ui.Context) {
 	a.paintConversationBackground(c, root, 1-frame.Dissolve)
 	a.transcriptListScope(c, root, &a.messages, a.sessionID, func() {
 		ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
-			a.goalBanner(c, a.currentSession())
 			a.sessionStorageNotice(c, a.currentSession())
 			if a.expanded["conversation-find"] {
 				ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
@@ -164,7 +163,7 @@ func (a *App) userMessage(c *ui.Context, m contracts.Message) {
 						if expanded {
 							name, label = "alt-arrow-up", "Collapse message"
 						}
-						iconButton(c, name, tr(c, label)).Size(20, 16).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
+						disclosureIconButton(c, name, tr(c, label)).OnClick(func() { a.expanded["user:"+m.ID] = !a.expanded["user:"+m.ID] })
 					}
 				}
 				if b.Attachment != nil {
@@ -223,6 +222,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 			case running:
 				mode = composerSteer
 			}
+			a.composerAttachedPanels(c, a.currentSession(), "main")
 			a.nativeComposerSurface(c, composerSurfaceProps{
 				draft: &a.draft, input: &a.composer, surface: &a.composerSurface, controls: a.centralControls(),
 				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: "Stop response",
@@ -311,7 +311,7 @@ func (a *App) attachmentChip(c *ui.Context, item contracts.Attachment, removable
 			ui.Spinner(c).Size(12, 12)
 		}
 		if removable {
-			iconButton(c, "close", tr(c, "Remove ")+item.Name).Size(16, 16).OnClick(func() {
+			chipDismissButton(c, tr(c, "Remove ")+item.Name).OnClick(func() {
 				for i, x := range a.attachments {
 					if x.ID == item.ID {
 						a.attachments = append(a.attachments[:i], a.attachments[i+1:]...)

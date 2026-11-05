@@ -99,7 +99,7 @@ func (s *tabTooltipState) begin(c *ui.Context, scope string, count int) tabToolt
 	return pass
 }
 
-func (s *tabTooltipState) observe(c *ui.Context, pass *tabTooltipPass, index int, close bool, text string, anchor ui.Element) {
+func (s *tabTooltipState) observe(c *ui.Context, pass *tabTooltipPass, index int, close bool, text string, anchor ui.Element, hovered bool) {
 	ownerIndex := index * 2
 	if close {
 		ownerIndex++
@@ -129,7 +129,6 @@ func (s *tabTooltipState) observe(c *ui.Context, pass *tabTooltipPass, index int
 		owner.clear()
 		return
 	}
-	hovered := anchor.Hovered()
 	keyboard := pass.activity.Modality == ui.InputModalityKeyboard
 	if owner.phase == tabTooltipWaiting && pass.moved && (!hovered || keyboard || owner.primaryDown) {
 		owner.clear()

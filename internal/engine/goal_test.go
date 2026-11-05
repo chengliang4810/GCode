@@ -79,6 +79,64 @@ func TestGoalExecutesVerifiesAndContinuesAcrossProtocols(t *testing.T) {
 	}
 }
 
+func TestGoalEditRejectsStaleDraftAndStaleVerification(t *testing.T) {
+	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
+		t.Run(string(protocol), func(t *testing.T) {
+			var work, checks atomic.Int32
+			verifying := make(chan struct{}, 1)
+			release := make(chan struct{})
+			core, _ := goalTestCore(t, protocol, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body := subagentRequest(t, r)
+				if isGoalVerification(body) {
+					if checks.Add(1) == 1 {
+						verifying <- struct{}{}
+						select {
+						case <-release:
+						case <-r.Context().Done():
+							return
+						}
+					}
+					goalResponse(w, protocol, `{"passed":true,"reason":"Evidence checked."}`, nil, true)
+					return
+				}
+				if work.Add(1) == 2 {
+					raw, _ := json.Marshal(body)
+					if !strings.Contains(string(raw), "Edited objective") {
+						t.Error("the edited objective did not reach the next real model request")
+					}
+				}
+				goalResponse(w, protocol, "Work is ready for verification.", nil, true)
+			}))
+			sendGoal(t, core, "/goal Original objective")
+			select {
+			case <-verifying:
+			case <-time.After(10 * time.Second):
+				t.Fatal("goal did not reach verification")
+			}
+			snapshot, _ := core.Snapshot(t.Context())
+			session := snapshot.Sessions[0]
+			command := contracts.Command{Kind: "goal.edit", SessionID: session.ID, ID: session.Goal.ID,
+				GoalEdit: &contracts.GoalEditInput{Objective: "Edited objective", ExpectedRevision: session.Goal.Revision}}
+			if err := core.Execute(t.Context(), command); err != nil {
+				t.Fatal(err)
+			}
+			command.GoalEdit.Objective = "Stale overwrite"
+			if err := core.Execute(t.Context(), command); err == nil {
+				t.Fatal("stale editor overwrote the current objective")
+			}
+			close(release)
+			state := waitSubagentState(t, core, func(s contracts.Snapshot) bool {
+				return runsFinished(s) && s.Sessions[0].Goal.Status == contracts.GoalComplete
+			})
+			goal := state.Sessions[0].Goal
+			if goal.ID != session.Goal.ID || goal.Objective != "Edited objective" ||
+				len(goal.Verifications) != 1 || work.Load() != 2 || checks.Load() != 2 {
+				t.Fatalf("edited goal accepted a stale verdict or replaced execution ownership: %+v work=%d checks=%d", goal, work.Load(), checks.Load())
+			}
+		})
+	}
+}
+
 func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
 	for _, kind := range []string{"invalid-json", "incomplete-verdict", "trailing", "tool-call", "http-error"} {
 		t.Run(kind, func(t *testing.T) {

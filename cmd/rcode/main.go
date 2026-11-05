@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"context"
@@ -66,6 +67,10 @@ func main() {
 	height := flag.Int("height", 880, "Window client height in logical pixels")
 	scale := flag.Float64("scale", 1, "Scale for headless captures")
 	flag.Parse()
+	shutdown := newShutdownDeadline(desktopShutdownTimeout, forceDesktopShutdown)
+	// Registered before the other defers: the deadline also covers teardown
+	// after MyGo's OnQuit callbacks, and is disarmed only as main returns.
+	defer shutdown.Stop()
 	if !validScenario(*scenario) {
 		log.Fatalf("unknown scenario %q", *scenario)
 	}
@@ -205,7 +210,7 @@ func main() {
 		fmt.Println(*dump)
 		return
 	}
-	desktopOptions := desktop.Options{Now: opts.Now, Connections: connections}
+	desktopOptions := desktop.Options{Now: opts.Now, Connections: connections, OnCloseStart: shutdown.Start}
 	if *scenario == "" && !*headless {
 		mygo.Use(native.Plugin)
 		desktopOptions.CheckForUpdates = updater.CheckForUpdates
@@ -214,7 +219,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer app.Close()
+	finishClose := sync.OnceFunc(func() {
+		app.Close()
+		if stopClientMaintenance != nil {
+			stopClientMaintenance()
+		}
+		if stopLogging != nil {
+			stopLogging()
+		}
+		if store != nil {
+			_ = store.Close()
+		}
+	})
+	defer finishClose()
 	if *headless {
 		app.OpenRoute(*route)
 		tester := ui.NewTester(app.View, *width, *height)
@@ -259,18 +276,7 @@ func main() {
 	mygo.Theme.SetSource(mygo.ThemeSource(app.Snapshot().Settings.Appearance.Mode))
 	// MyGo starts the replacement process after OnQuit, before Run returns.
 	// Release the local profile lock before that process opens the same data.
-	mygo.App.OnQuit(func() {
-		app.Close()
-		if stopClientMaintenance != nil {
-			stopClientMaintenance()
-		}
-		if stopLogging != nil {
-			stopLogging()
-		}
-		if store != nil {
-			_ = store.Close()
-		}
-	})
+	mygo.App.OnQuit(finishClose)
 	mygo.App.WhenReady(func() {
 		// Startup allocates window buffers, catalogs and the first transcript
 		// in bursts; once the first frames settle, hand the free spans back to
@@ -307,6 +313,9 @@ func main() {
 		window := mygo.NewWindow(mygo.WindowOptions{Title: "GCode", Width: *width, Height: *height, MinWidth: 900, MinHeight: 600, UseContentSize: true,
 			TitleBarStyle: mygo.TitleBarHidden, TitleBarHeight: 38, HideWindowButtons: desktop.HideNativeWindowButtons, TrafficLightPosition: &mygo.Point{X: 14, Y: 14}, Vibrancy: app.NativeVibrancy(),
 			Content: ui.View(app.View), StateKey: stateKey})
+		// Start before native window/WebView destruction as well as backend
+		// cleanup. OnCloseStart is also used by headless/direct Close paths.
+		window.OnClose(func(*mygo.CloseEvent) { shutdown.Start() })
 		if err := app.Attach(window); err != nil {
 			log.Print(err)
 			window.Close()

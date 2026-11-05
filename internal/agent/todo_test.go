@@ -21,27 +21,37 @@ func todoUpdateJSON(t *testing.T, update TodoUpdate) json.RawMessage {
 
 func TestParseTodoUpdateValidation(t *testing.T) {
 	valid := TodoUpdate{Todos: []TodoItem{{Text: "ship", Status: TodoPending}}}
-	if _, err := parseTodoUpdate(todoUpdateJSON(t, valid)); err != nil {
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, valid)); err != nil {
 		t.Fatalf("valid update rejected: %v", err)
+	}
+	for _, raw := range []string{`{}`, `{"todos":null}`} {
+		if _, err := ParseTodoUpdate(json.RawMessage(raw)); err == nil {
+			t.Fatalf("missing checklist cleared valid work: %s", raw)
+		}
 	}
 	tooMany := TodoUpdate{}
 	for i := 0; i <= TodoMaxItems; i++ {
 		tooMany.Todos = append(tooMany.Todos, TodoItem{Text: fmt.Sprintf("item %d", i), Status: TodoPending})
 	}
-	if _, err := parseTodoUpdate(todoUpdateJSON(t, tooMany)); err == nil {
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, tooMany)); err == nil {
 		t.Fatal("over-long list accepted")
 	}
 	empty := TodoUpdate{Todos: []TodoItem{{Text: "  ", Status: TodoPending}}}
-	if _, err := parseTodoUpdate(todoUpdateJSON(t, empty)); err == nil {
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, empty)); err == nil {
 		t.Fatal("empty item text accepted")
 	}
 	badStatus := TodoUpdate{Todos: []TodoItem{{Text: "x", Status: "done"}}}
-	if _, err := parseTodoUpdate(todoUpdateJSON(t, badStatus)); err == nil {
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, badStatus)); err == nil {
 		t.Fatal("unknown status accepted")
 	}
 	noReason := TodoUpdate{Todos: valid.Todos, Resolution: &TodoResolution{Kind: "blocked"}}
-	if _, err := parseTodoUpdate(todoUpdateJSON(t, noReason)); err == nil {
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, noReason)); err == nil {
 		t.Fatal("resolution without reason accepted")
+	}
+	if _, err := ParseTodoUpdate(todoUpdateJSON(t, TodoUpdate{
+		Todos: valid.Todos, Resolution: &TodoResolution{Kind: "made_up", Reason: "not a resolution"},
+	})); err == nil {
+		t.Fatal("unknown resolution kind accepted")
 	}
 }
 

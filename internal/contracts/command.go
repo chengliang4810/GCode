@@ -16,6 +16,7 @@ func (c Command) Clone() Command {
 	c.Plugin = c.Plugin.Clone()
 	c.Resource = c.Resource.Clone()
 	c.Goal = copyPointer(c.Goal)
+	c.GoalEdit = copyPointer(c.GoalEdit)
 	if c.Goal != nil {
 		c.Goal.TokenBudget = copyPointer(c.Goal.TokenBudget)
 		c.Goal.References = slices.Clone(c.Goal.References)
@@ -95,7 +96,7 @@ func (c Command) Validate() error {
 		if c.Reorder == nil {
 			return errors.New("reorder payload is required")
 		}
-		if c.Resource != nil || c.Goal != nil || c.Provider != nil || c.ProjectCreate != nil ||
+		if c.Resource != nil || c.Goal != nil || c.GoalEdit != nil || c.Provider != nil || c.ProjectCreate != nil ||
 			c.Integration != nil || c.Git != nil || c.Adjustment != nil ||
 			c.Settings != nil || c.Send != nil || c.Session != nil || c.Attachment != nil ||
 			c.TerminalSize != nil {
@@ -109,11 +110,19 @@ func (c Command) Validate() error {
 	if strings.HasPrefix(c.Kind, "resource.") {
 		return nil
 	}
-	if c.Goal != nil && c.Kind != "goal.set" {
+	if c.Goal != nil && c.Kind != "goal.set" && c.Kind != "goal.replace" {
 		return errors.New("goal payload does not match command")
 	}
+	if c.GoalEdit != nil && c.Kind != "goal.edit" {
+		return errors.New("goal edit payload does not match command")
+	}
 	switch c.Kind {
-	case "goal.set":
+	case "goal.edit":
+		if c.SessionID == "" || c.ID == "" || c.GoalEdit == nil {
+			return errors.New("a session, goal ID and edit payload are required")
+		}
+		return c.GoalEdit.Validate()
+	case "goal.set", "goal.replace":
 		if c.SessionID == "" || c.Goal == nil {
 			return errors.New("a session and goal payload are required")
 		}

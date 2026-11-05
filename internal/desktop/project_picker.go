@@ -49,7 +49,7 @@ func (a *App) projectCrumbs(c *ui.Context) {
 		if folder == current {
 			ui.Text(c, title).Label(tr(c, "Project folder trail")).SingleLine().Padding(4, 6).FontSize(design.TextSize(c, design.TextBase))
 		} else {
-			textButton(c, title).Padding(4, 6).OnClick(func() { a.projectBrowse(folder) })
+			compactTextButton(c, title).OnClick(func() { a.projectBrowse(folder) })
 		}
 	}
 	crumb("Home", home)
@@ -370,7 +370,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				})
 			})
 			ui.Row(c).Height(38).Padding(4, 10).Gap(2).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
-				textButton(c, tr(c, "New project")).Padding(4, 6).OnClick(func() {
+				compactTextButton(c, tr(c, "New project")).OnClick(func() {
 					a.stopProjectBrowse()
 					p.step = 0
 					p.deviceID = ""
@@ -380,7 +380,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				})
 				if p.deviceID != "" {
 					icon(c, "alt-arrow-right", 12)
-					textButton(c, a.deviceNameFor(p.deviceID)).Padding(4, 6).OnClick(func() {
+					compactTextButton(c, a.deviceNameFor(p.deviceID)).OnClick(func() {
 						if p.step == 2 {
 							a.stopProjectBrowse()
 							p.step = 1
@@ -400,7 +400,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 							ui.Row(c).Gap(2).Children(func() { a.projectCrumbs(c) })
 						})
 					}
-					iconButton(c.Key("project-edit-path"), "pen", tr(c, "Edit path")).Size(24, 24).OnClick(func() { p.pathEdit = !p.pathEdit; p.typedPath = p.listing.Path })
+					inlineIconButton(c.Key("project-edit-path"), "pen", tr(c, "Edit path")).OnClick(func() { p.pathEdit = !p.pathEdit; p.typedPath = p.listing.Path })
 				}
 			})
 			rows := a.projectPickerRows()

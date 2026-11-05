@@ -300,10 +300,36 @@ func TestDesktopPromptPickerOverGoalTodos(t *testing.T) {
 			app := startApp(t, binary, artifacts, "overlay", data, "--local", "--appearance", appearance, "--width", "900", "--height", "600")
 			app.act("back-to-conversations", "press", "")
 			app.act("sidebar-session:"+session.ID, "press", "")
-			app.act("goal-details:"+session.ID, "press", "")
+			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+				t.Fatal(err)
+			}
+			app.await("attached panels stay inside composer controls", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				attach, err := tree.findKey("attach")
+				if err != nil {
+					return err
+				}
+				send, err := tree.findKey("send")
+				if err != nil {
+					return err
+				}
+				for _, key := range []string{"composer-goal:" + session.ID, "todo-panel:main:" + session.ID} {
+					panel, err := tree.findKey(key)
+					if err != nil {
+						return err
+					}
+					if panel.Bounds.X < attach.Bounds.X-2 || panel.Bounds.X+panel.Bounds.Width > send.Bounds.X+send.Bounds.Width+2 {
+						return fmt.Errorf("attached panel exceeds composer controls: panel=%+v attach=%+v send=%+v", panel.Bounds, attach.Bounds, send.Bounds)
+					}
+				}
+				return nil
+			})
 			app.capture("goal-and-todos")
-			app.act("input", "setValue", "/")
 			app.act("input", "focus", "")
+			app.act("input", "setValue", "/")
 			app.waitKey("prompt-choice:command:init")
 			app.assertPromptAbove()
 			app.await("popup overlaps goal details and todos", func() error {
@@ -319,11 +345,9 @@ func TestDesktopPromptPickerOverGoalTodos(t *testing.T) {
 					a, b := panel.Bounds, node.Bounds
 					return a.X < b.X+b.Width && b.X < a.X+a.Width && a.Y < b.Y+b.Height && b.Y < a.Y+a.Height
 				}
-				goal, todo := false, false
-				for _, node := range tree.Nodes {
-					goal = goal || node.Label == session.Goal.Reason && overlaps(node)
-					todo = todo || node.Label == "Todo behind popup 1" && overlaps(node)
-				}
+				goalNode, goalErr := tree.findKey("composer-goal:" + session.ID)
+				todoNode, todoErr := tree.findKey("todo-panel:main:" + session.ID)
+				goal, todo := goalErr == nil && overlaps(goalNode), todoErr == nil && overlaps(todoNode)
 				if !goal || !todo {
 					return fmt.Errorf("popup does not overlap both regions: goal=%t todo=%t, panel=%+v", goal, todo, panel.Bounds)
 				}

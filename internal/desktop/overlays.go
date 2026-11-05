@@ -113,8 +113,8 @@ func (a *App) artifactView(c *ui.Context, artifact contracts.Artifact, kind stri
 			if a.expanded[key] {
 				glyph, label = "eye", "Show diagram"
 			}
-			iconButton(c, glyph, tr(c, label)).Size(24, 24).OnClick(func() { a.expanded[key] = !a.expanded[key] })
-			iconButton(c, "copy", tr(c, "Copy diagram source")).Size(24, 24).OnClick(func() { services.WriteClipboard(artifact.Source) })
+			inlineIconButton(c, glyph, tr(c, label)).OnClick(func() { a.expanded[key] = !a.expanded[key] })
+			inlineIconButton(c, "copy", tr(c, "Copy diagram source")).OnClick(func() { services.WriteClipboard(artifact.Source) })
 		})
 		ui.Column(c).FillWidth().Padding(12).Children(func() {
 			if a.expanded[key] {

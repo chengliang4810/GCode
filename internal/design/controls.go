@@ -1,5 +1,20 @@
 package design
 
+// AttachedPanels keeps the goal and todo trays in one composer surface stack.
+type AttachedPanelTokens struct {
+	Inset, Overlap, Height, Radius, HeaderPadding, Gap float32
+	RowPaddingX, RowPaddingY, RowMinHeight, GlyphSize  float32
+	FadeBand, MiniCellSize                             float32
+}
+
+func AttachedPanels() AttachedPanelTokens {
+	return AttachedPanelTokens{
+		Inset: 12, Overlap: 12, Height: 38, Radius: 16, HeaderPadding: 10, Gap: 6,
+		RowPaddingX: 8, RowPaddingY: 4, RowMinHeight: 28, GlyphSize: 14,
+		FadeBand: 24, MiniCellSize: 2.5,
+	}
+}
+
 // ControlTokens is the single source of dimensions for shared desktop controls.
 // Width belongs to the page layout; single-line height and internal spacing do
 // not. Geometry stays in logical pixels; text uses the interface font tokens.
@@ -9,6 +24,8 @@ type ControlTokens struct {
 	ButtonHeight, ButtonRadius, ButtonPaddingX, ButtonPaddingY float32
 	ButtonGap, IconButtonSize, IconSize                        float32
 	InlineIconButtonSize                                       float32
+	ChipDismissSize, AttachmentDismissSize                     float32
+	DisclosureWidth, DisclosureHeight, CompactButtonPaddingX   float32
 	ComposerTargetIconSize, ComposerTargetGap                  float32
 	ComposerTargetPaddingX, ComposerTargetPaddingY             float32
 	ComposerTargetRadius                                       float32
@@ -33,7 +50,9 @@ func Controls() ControlTokens {
 		FontSize: TextBase, BorderWidth: 1,
 		ButtonHeight: 28.8, ButtonRadius: 6, ButtonPaddingX: 8, ButtonPaddingY: 4,
 		ButtonGap: 6, IconButtonSize: 28, IconSize: 16,
-		InlineIconButtonSize:   24,
+		InlineIconButtonSize: 24,
+		ChipDismissSize:      16, AttachmentDismissSize: 20,
+		DisclosureWidth: 20, DisclosureHeight: 16, CompactButtonPaddingX: 6,
 		ComposerTargetIconSize: 12, ComposerTargetGap: 5,
 		ComposerTargetPaddingX: 4, ComposerTargetPaddingY: 3, ComposerTargetRadius: 5,
 		InputHeight: 32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,

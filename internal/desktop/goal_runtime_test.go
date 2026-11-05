@@ -158,10 +158,15 @@ func TestGoalRealCoreComposerCreationPauseResumeAndStop(t *testing.T) {
 		t.Fatal(err)
 	}
 	second := waitVerifier()
-	if len(second.Runs) != 2 || second.Runs[1].SessionID != sessionID || second.Sessions[0].Goal.ID != goalID ||
+	if len(second.Runs) != 2 || second.Runs[1].SessionID != sessionID || second.Sessions[0].Goal.ID == goalID ||
+		second.Sessions[0].Goal.Objective != objective ||
 		second.Sessions[0].Goal.TokensUsed < 28 || workCalls.Load() != 2 || verificationCalls.Load() != 2 {
-		t.Fatal("resume did not continue the same goal through the actual model adapter")
+		t.Fatal("resume lost the objective/accounting or reused the cancelled execution identity")
 	}
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "goal.pause", SessionID: sessionID, ID: goalID}); err == nil {
+		t.Fatal("a stale control paused the resumed execution")
+	}
+	goalID = second.Sessions[0].Goal.ID
 	if err := tt.Click("Stop response"); err != nil {
 		t.Fatal(err)
 	}

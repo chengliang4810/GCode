@@ -10,10 +10,6 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-type goalViewState struct {
-	Expanded bool
-}
-
 func goalStatusLabel(status contracts.GoalStatus) string {
 	switch status {
 	case contracts.GoalActive:
@@ -28,6 +24,37 @@ func goalStatusLabel(status contracts.GoalStatus) string {
 		return "Complete"
 	default:
 		return string(status)
+	}
+}
+
+func goalHeaderLabel(status contracts.GoalStatus) string {
+	switch status {
+	case contracts.GoalActive:
+		return "Active goal"
+	case contracts.GoalVerifying:
+		return "Verifying goal"
+	case contracts.GoalPaused:
+		return "Paused goal"
+	case contracts.GoalBudgetLimited:
+		return "Goal budget reached"
+	case contracts.GoalComplete:
+		return "Completed goal"
+	default:
+		return string(status)
+	}
+}
+
+func goalDuration(language string, milliseconds int64) string {
+	seconds := max(milliseconds/1000, 0)
+	switch {
+	case seconds < 60:
+		return i18n.In(language, "%ds", seconds)
+	case seconds < 3600:
+		return i18n.In(language, "%dm", seconds/60)
+	case seconds < 86400:
+		return i18n.In(language, "%dh", seconds/3600)
+	default:
+		return i18n.In(language, "%dd", seconds/86400)
 	}
 }
 
@@ -53,80 +80,64 @@ func (a *App) goalUsageText(goal *contracts.SessionGoal) string {
 	return i18n.In(a.state.Settings.General.Language, "%s tokens used", used)
 }
 
+func (a *App) updateGoal(command contracts.Command) {
+	if a.closed || a.goalActions[command.SessionID] {
+		return
+	}
+	if a.goalActions == nil {
+		a.goalActions = make(map[string]bool)
+	}
+	a.goalActions[command.SessionID] = true
+	a.backgroundTask(func() func() {
+		err := a.service.Execute(a.ctx, command)
+		snapshot, snapshotErr := a.service.Snapshot(a.ctx)
+		return func() {
+			delete(a.goalActions, command.SessionID)
+			if snapshotErr == nil {
+				a.apply(snapshot)
+			} else if err == nil {
+				err = snapshotErr
+			}
+			if err != nil {
+				if a.sessionID == command.SessionID {
+					a.errorText = err.Error()
+				}
+				if side := a.sideComposers[command.SessionID]; side != nil {
+					side.Failure = err.Error()
+				}
+			}
+		}
+	})
+}
+
 func (a *App) goalBanner(c *ui.Context, session contracts.Session) {
 	goal := session.Goal
 	if goal == nil || session.SubagentType != "" {
 		return
 	}
-	c.Key("goal:" + session.ID + ":" + goal.ID)
-	panel := ui.Column(c).FillWidth().Shrink(0).Padding(8, 16).Gap(8).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border)
-	view := ui.Local(panel, "details", func() goalViewState { return goalViewState{} })
-	panel.Children(func() {
-		ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
-			label, glyph := "Show goal details", "alt-arrow-down"
-			if view.Expanded {
-				label, glyph = "Hide goal details", "alt-arrow-up"
-			}
-			ui.ButtonBase(c.Key("goal-details:"+session.ID)).Label(tr(c, label)).Grow(1).MinWidth(0).Padding(4, 0).Gap(8).AlignItems(ui.Center).Children(func() {
-				icon(c, glyph, 12)
-				ui.Text(c, goal.Objective).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextBase))
-			}).OnClick(func() { view.Expanded = !view.Expanded })
-			ui.Text(c, tr(c, goalStatusLabel(goal.Status))).Shrink(0).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			ui.Text(c, fmt.Sprintf(tr(c, "Round %d"), goal.Iteration)).Shrink(0).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+	s := design.AttachedPanels()
+	a.attachedComposerPanel(c, "composer-goal:"+session.ID, tr(c, "Goal"), s.Inset, false, func(c *ui.Context) {
+		row := ui.Row(c).FillWidth().MinHeight(s.Height-s.Overlap-2).Padding(0, s.HeaderPadding).Gap(s.Gap).AlignItems(ui.Center)
+		if goal.Status == contracts.GoalPaused && goal.Reason != "" {
+			row.Tooltip(goal.Reason)
+		}
+		row.Children(func() {
+			icon(c, "goal", 13)
+			ui.Text(c, tr(c, goalHeaderLabel(goal.Status))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500)
+			ui.Text(c.Key("goal-objective:"+session.ID), goal.Objective).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).Tooltip(goal.Objective + " · " + fmt.Sprintf(tr(c, "Round %d"), goal.Iteration))
+			ui.Text(c.Key("goal-duration:"+session.ID), "· "+goalDuration(a.state.Settings.General.Language, goalElapsed(goal, a.now()))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			pending := a.goalActions[session.ID]
+			inlineIconButton(c.Key("goal-clear:"+session.ID), "trash-bin-minimalistic", tr(c, "Clear goal")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.clear", SessionID: session.ID, ID: goal.ID}) })
 			switch goal.Status {
 			case contracts.GoalActive, contracts.GoalVerifying:
-				ui.ButtonBase(c).Label(tr(c, "Pause goal")).Tooltip(tr(c, "Pause goal")).Size(24, 24).Center().Children(func() {
-					ui.Row(c).Gap(3).Children(func() {
-						ui.Box(c).Size(3, 12).Background(a.palette.Text)
-						ui.Box(c).Size(3, 12).Background(a.palette.Text)
-					})
-				}).OnClick(func() {
-					a.dispatch(contracts.Command{Kind: "goal.pause", SessionID: session.ID, ID: goal.ID})
-				})
+				inlineIconButton(c.Key("goal-toggle:"+session.ID), "stop", tr(c, "Pause goal")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.pause", SessionID: session.ID, ID: goal.ID}) })
 			case contracts.GoalPaused:
-				iconButton(c, "action-play", tr(c, "Resume goal")).Size(24, 24).Disabled(session.Status == contracts.Working || session.Status == contracts.AwaitingInput).OnClick(func() {
-					a.dispatch(contracts.Command{Kind: "goal.resume", SessionID: session.ID, ID: goal.ID})
-				})
+				inlineIconButton(c.Key("goal-toggle:"+session.ID), "action-play", tr(c, "Resume goal")).Disabled(pending || session.Status == contracts.Working || session.Status == contracts.AwaitingInput).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.resume", SessionID: session.ID, ID: goal.ID}) })
 			}
+			inlineIconButton(c.Key("goal-edit:"+session.ID), "expand-arrows", tr(c, "Edit goal")).OnClick(func() { a.openGoalEditor(session.ID) })
 		})
-		if !view.Expanded {
-			return
+		if goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying {
+			c.After(time.Second)
 		}
-		ui.Scroll(c).FillWidth().MaxHeight(240).Gap(8).Children(func() {
-			ui.Text(c, goal.Objective).FillWidth().FontSize(design.TextSize(c, design.TextBase))
-			ui.Row(c).FillWidth().Wrap().Gap(12).Children(func() {
-				ui.Text(c, a.goalUsageText(goal)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-				elapsed := goalElapsed(goal, a.now())
-				ui.Text(c, a.t("Worked for ")+i18n.Duration(a.state.Settings.General.Language, elapsed)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			})
-			if goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying {
-				c.After(time.Second)
-			}
-			if goal.Reason != "" {
-				ui.Text(c, goal.Reason).FillWidth().FontSize(design.TextSize(c, design.TextBase))
-			}
-			if goal.NextAction != "" {
-				ui.Text(c, a.t("Next: ")+goal.NextAction).FillWidth().FontSize(design.TextSize(c, design.TextBase))
-			}
-			if len(goal.Verifications) > 0 {
-				last := goal.Verifications[len(goal.Verifications)-1]
-				result := "Needs more work"
-				if last.Passed {
-					result = "Passed"
-				}
-				ui.Text(c, fmt.Sprintf(tr(c, "Verification · Round %d · %s"), last.Iteration, tr(c, result))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-				if last.Reason != "" && last.Reason != goal.Reason {
-					ui.Text(c, last.Reason).FillWidth().FontSize(design.TextSize(c, design.TextBase))
-				}
-				if last.NextAction != "" && last.NextAction != goal.NextAction {
-					ui.Text(c, a.t("Next: ")+last.NextAction).FillWidth().FontSize(design.TextSize(c, design.TextBase))
-				}
-			}
-			if goal.Status != contracts.GoalActive && goal.Status != contracts.GoalVerifying {
-				textButton(c, tr(c, "Clear goal")).OnClick(func() {
-					a.dispatch(contracts.Command{Kind: "goal.clear", SessionID: session.ID, ID: goal.ID})
-				})
-			}
-		})
 	})
 }

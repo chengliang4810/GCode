@@ -146,7 +146,7 @@ func (c Command) validatePlugins() error {
 	if !strings.HasPrefix(c.Kind, "plugins.") {
 		return nil
 	}
-	if c.Resource != nil || c.Goal != nil || c.Provider != nil || c.Reorder != nil ||
+	if c.Resource != nil || c.Goal != nil || c.GoalEdit != nil || c.Provider != nil || c.Reorder != nil ||
 		c.ProjectCreate != nil || c.Integration != nil || c.Git != nil ||
 		c.Adjustment != nil || c.Settings != nil || c.Send != nil ||
 		c.Session != nil || c.Attachment != nil || c.TerminalSize != nil {

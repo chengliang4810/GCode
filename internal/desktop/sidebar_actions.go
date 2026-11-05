@@ -122,7 +122,7 @@ func (a *App) sessionDeleteDialog(c *ui.Context) {
 			ui.Text(c, tr(c, "Once deleted, this conversation cannot be recovered. To hide it from the list instead, use Archive.")).FillWidth().TextColor(a.palette.Muted)
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
 				textButton(c.Key("session-delete-cancel"), tr(c, "Cancel")).OnClick(func() { a.sidebarUI.deleteOpen = false })
-				textButton(c.Key("session-delete-confirm"), tr(c, "Delete")).TextColor(a.palette.Danger).OnClick(func() {
+				dangerButton(c.Key("session-delete-confirm"), tr(c, "Delete")).OnClick(func() {
 					id := a.sidebarUI.deleteID
 					a.sidebarUI.deleteOpen = false
 					a.dispatch(contracts.Command{Kind: "session.delete", ID: id})

@@ -66,6 +66,15 @@ func (a *App) frostedComposer(c *ui.Context, el ui.Element, radius float32) ui.E
 		design.ComposerBorder(a.palette, surface, c.Vibrancy()))
 }
 
+// Reference attached headers use the input glass tint with rounded top corners,
+// rather than adding a second independently blurred pill behind the composer.
+func (a *App) attachedComposerSurface(c *ui.Context, el ui.Element) ui.Element {
+	s := design.AttachedPanels()
+	return el.Radius(s.Radius, s.Radius, 0, 0).
+		Background(design.ComposerSurface(a.palette, a.state.Settings.Appearance.Surface, c.Vibrancy())).
+		Border(1, design.ComposerBorder(a.palette, a.state.Settings.Appearance.Surface, c.Vibrancy()))
+}
+
 // floatingSurface is a popover's or dialog's frosted card: the shared popover
 // tint over the backdrop blur, with the theme border.
 func (a *App) floatingSurface(c *ui.Context, el ui.Element, radius float32) ui.Element {

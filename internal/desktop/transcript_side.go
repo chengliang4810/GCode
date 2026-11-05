@@ -174,7 +174,6 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 	list := ui.Local(root, "messages", func() ui.ListState { return ui.ListState{FollowEnd: true} })
 	list.Key = func(i int) any { return conversation[i].Key }
 	a.transcriptListScope(c, root, list, sessionID, func() {
-		a.goalBanner(c, session)
 		a.sessionStorageNotice(c, session)
 		pane := transcriptPane{cache: cache, scope: "side:" + sessionID, session: sessionID}
 		a.transcriptScope(c, pane.scope, func() {
@@ -218,7 +217,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 	}
 	outerWidth := composerOuterWidth(columns.Right, transcriptWidth, false)
 	ui.Column(c).FillWidth().Children(func() {
-		ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Gap(8).Children(func() {
+		ui.Column(c).FillWidth().MaxWidth(outerWidth).AlignSelf(ui.Center).Padding(0, 16, 16, 16).Children(func() {
 			if a.questionComposer(c, session.ID, "side:"+session.ID) {
 				return
 			}
@@ -233,6 +232,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 			case running:
 				mode = composerSteer
 			}
+			a.composerAttachedPanels(c, session, "side")
 			a.nativeComposerSurface(c, composerSurfaceProps{
 				keyPrefix: "side:" + session.ID + ":",
 				draft:     &state.Draft, input: &state.Input, surface: &state.Surface, controls: controls,
@@ -250,7 +250,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 								c.Key(item.ID)
 								ui.Row(c).AlignItems(ui.Center).Children(func() {
 									a.attachmentChip(c, item, false)
-									iconButton(c, "close", tr(c, "Remove side attachment: ")+item.Name).Size(20, 20).OnClick(func() {
+									attachmentDismissButton(c, tr(c, "Remove side attachment: ")+item.Name).OnClick(func() {
 										for i, candidate := range state.Attachments {
 											if candidate.ID == item.ID {
 												state.Attachments = append(state.Attachments[:i], state.Attachments[i+1:]...)
@@ -271,6 +271,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 				},
 				onMention: func(file workbench.FileDrag) { state.Draft += " @" + file.Path },
 			})
+			ui.Box(c).Height(8).Shrink(0)
 			ui.Row(c).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Justify(ui.End).Padding(0, 10, 0, 4).Children(func() {
 				a.conversationMetricsView(c, session.ID)
 				a.composerUsage(c, session, &state.FooterUsage, true)

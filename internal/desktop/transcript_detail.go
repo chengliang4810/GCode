@@ -13,6 +13,7 @@ import (
 type activityDetailSource struct {
 	kind, text, command, args, path, output string
 	live                                    bool
+	todo                                    bool
 }
 
 type activityDetailState struct {
@@ -25,6 +26,21 @@ func detailSource(block contracts.Block, live bool) activityDetailSource {
 	source := activityDetailSource{kind: block.Kind, text: block.Text, live: live}
 	if t := block.Tool; t != nil {
 		source.command, source.args, source.path, source.output = t.Command, t.Args, t.Path, t.Output
+		if t.Kind == contracts.ToolTodo && t.Status == "completed" && !t.IsError {
+			source.todo, source.args = true, ""
+			var lines []string
+			for _, item := range block.Todos {
+				mark := "[ ]"
+				switch item.Status {
+				case "completed":
+					mark = "[x]"
+				case "in_progress":
+					mark = "[~]"
+				}
+				lines = append(lines, mark+" "+item.Text)
+			}
+			source.command, source.path = strings.Join(lines, "\n"), ""
+		}
 	}
 	return source
 }
@@ -41,13 +57,18 @@ func detailLines(source activityDetailSource) []thoughtLine {
 		return thoughtLines(source.text, source.live)
 	}
 	invocation := source.args
-	if invocation != "" {
+	if invocation != "" && !source.todo {
 		var pretty bytes.Buffer
 		if json.Indent(&pretty, []byte(invocation), "", "  ") == nil {
 			invocation = pretty.String()
 		}
 	} else {
 		invocation = firstNonempty(source.command, source.path)
+	}
+	// TodoWrite's result already contains this checklist followed by counts.
+	// Keep it once, while retaining distinct result text and failed inputs.
+	if source.todo && invocation != "" && strings.HasPrefix(source.output, invocation+"\n\n") {
+		invocation = ""
 	}
 	lines := []thoughtLine{}
 	appendText := func(text string) {

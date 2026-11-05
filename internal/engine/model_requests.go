@@ -23,12 +23,19 @@ func (m meteredModel) Stream(ctx context.Context, request model.Request, emit fu
 	if err := ctx.Err(); err != nil {
 		return model.Result{}, err
 	}
-	defer m.updateRetry(nil)
+	retrying := false
+	defer func() {
+		if retrying {
+			m.updateRetry(nil)
+		}
+	}()
 	project := func(delta model.Delta) error {
 		if delta.Retry != nil {
 			m.updateRetry(delta.Retry)
-		} else if delta.Text != "" || delta.Reasoning != "" || delta.Output {
+			retrying = true
+		} else if retrying && (delta.Text != "" || delta.Reasoning != "" || delta.Output) {
 			m.updateRetry(nil)
+			retrying = false
 		}
 		if emit != nil {
 			return emit(delta)

@@ -65,6 +65,9 @@ func TestModelSettingsReferenceLayout(t *testing.T) {
 				c.Root().Font("Geist").FontSize(13).Background(app.palette.Background).TextColor(app.palette.Text)
 				app.settingsView(c)
 			}, test.width, test.height)
+			if !tt.HasText("接口基础地址") || !tt.HasText("API 密钥") {
+				t.Fatal("provider connection field headings are not localized")
+			}
 
 			labels := []string{"Model settings", "Add provider", "Base URL", "API format", "API key", "Add model"}
 			bounds := map[string]ui.Rect{}

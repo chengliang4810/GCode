@@ -30,6 +30,9 @@ func (e *Engine) Execute(ctx context.Context, command contracts.Command) (result
 	if command.Kind == "git.refs.load" || command.Kind == "git.ref.switch" {
 		return e.gitCommand(ctx, command)
 	}
+	if command.Kind == "terminal.input" || command.Kind == "terminal.resize" || command.Kind == "terminal.clear" {
+		return e.terminalCommand(ctx, command, true)
+	}
 	if command.Kind == "message.send" && command.Send != nil && command.Send.SessionID == "" && command.Send.Checkout != nil {
 		return e.checkoutSend(ctx, command)
 	}
@@ -129,16 +132,20 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		"resource.command.save", "resource.command.delete", "resource.command.toggle",
 		"resource.mcp.save", "resource.mcp.delete", "resource.mcp.toggle", "resource.mcp.test":
 		return e.resourceCommandLocked(command)
-	case "goal.set", "goal.pause", "goal.resume", "goal.clear":
+	case "goal.set", "goal.replace", "goal.edit", "goal.pause", "goal.resume", "goal.clear":
 		return e.goalCommandLocked(command)
 	case "terminal.create":
 		return e.createTerminalLocked(command)
 	case "terminal.close":
-		return e.closeTerminalLocked(command.ID)
-	case "terminal.input", "terminal.resize", "terminal.clear":
-		if err := e.terminalCommandLocked(command); err != nil {
-			return err
+		cleanup, err := e.closeTerminalLocked(command.ID)
+		if cleanup != nil {
+			e.wg.Add(1)
+			outsideLock = append(outsideLock, func() {
+				defer e.wg.Done()
+				cleanup()
+			})
 		}
+		return err
 	case "message.send":
 		if command.Send == nil {
 			return errors.New("send payload is required")

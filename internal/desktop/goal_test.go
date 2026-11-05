@@ -98,15 +98,16 @@ func TestGoalBannerUsesAuthoritativeStateAndRoutesCommands(t *testing.T) {
 	}
 	setGoalFixture(a, a.sessionID, goal)
 	tt := ui.NewTester(a.View, 1320, 880)
-	if !tt.HasText(goal.Objective) || !tt.HasText("In progress") || !tt.HasText("Round 3") {
+	if !tt.HasText(goal.Objective) || !tt.HasText("Active goal") {
 		t.Fatal("banner omitted authoritative goal state")
 	}
 	if _, ok := tt.Find("Start a goal"); ok {
 		t.Fatal("an existing goal exposed a new-goal shortcut")
 	}
-	if err := tt.Click("Show goal details"); err != nil {
+	if err := tt.Click("Edit goal"); err != nil {
 		t.Fatal(err)
 	}
+	tt.Advance(time.Second)
 	for _, text := range []string{"1,200 / 5,000 tokens", "The integration test still fails", "Next: Fix event ordering", "Verification · Round 2 · Needs more work"} {
 		if !tt.HasText(text) {
 			t.Fatalf("goal details omitted %q", text)
@@ -142,7 +143,7 @@ func TestGoalBannerUsesAuthoritativeStateAndRoutesCommands(t *testing.T) {
 	tt.Frame()
 	setGoalFixture(a, a.sessionID, goal)
 	tt.Frame()
-	if err := tt.Click("Show goal details"); err != nil {
+	if err := tt.Click("Edit goal"); err != nil {
 		t.Fatal("goal did not survive removal and remount:", err)
 	}
 }
@@ -157,9 +158,10 @@ func TestGoalBudgetAndIncompleteUsage(t *testing.T) {
 	}
 	setGoalFixture(a, a.sessionID, goal)
 	tt := ui.NewTester(a.View, 1320, 880)
-	if err := tt.Click("Show goal details"); err != nil {
+	if err := tt.Click("Edit goal"); err != nil {
 		t.Fatal(err)
 	}
+	tt.Advance(time.Second)
 	if !tt.HasText("At least 0 / 3,000 tokens · Usage incomplete") || !tt.HasText("Budget reached") || !tt.HasText(goal.Reason) {
 		t.Fatal("budget state hid missing usage or its stopping reason")
 	}
@@ -223,7 +225,7 @@ func TestGoalSideChatIsolationAndSubagentReadOnly(t *testing.T) {
 		}
 	}
 	tt.Frame()
-	for _, label := range []string{"Pause goal", "Resume goal", "Show goal details", "Start a goal"} {
+	for _, label := range []string{"Pause goal", "Resume goal", "Edit goal", "Start a goal"} {
 		if _, ok := tt.Find(label); ok {
 			t.Fatalf("read-only child exposed %q", label)
 		}
@@ -252,6 +254,66 @@ func TestGoalElapsedOnlyAccruesWhileRunning(t *testing.T) {
 	}
 }
 
+func TestGoalHeaderDurationUsesSingleUnit(t *testing.T) {
+	for _, test := range []struct {
+		seconds int64
+		want    string
+	}{{0, "0s"}, {59, "59s"}, {60, "1m"}, {3599, "59m"}, {3600, "1h"}, {86399, "23h"}, {86400, "1d"}} {
+		t.Run(test.want, func(t *testing.T) {
+			if got := goalDuration("en", test.seconds*1000); got != test.want {
+				t.Fatalf("duration=%q want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestGoalEditorOwnsDraftByConversationAndGoal(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	setGoalFixture(a, "chat-0", &contracts.SessionGoal{ID: "first", Objective: "Original objective", Status: contracts.GoalPaused})
+	state := a.goalEditor("chat-0")
+	state.draft = "Keep this unsaved edit"
+	setGoalFixture(a, "chat-0", &contracts.SessionGoal{ID: "second", Objective: "Replacement goal", Status: contracts.GoalPaused})
+	a.goalEditor("chat-0")
+	if state.goalID != "first" || state.draft != "Keep this unsaved edit" || state.original != "Original objective" {
+		t.Fatal("a replacement goal overwrote an unsaved draft")
+	}
+	service := &goalUIService{Service: a.service}
+	a.service = service
+	a.saveGoalEditor("chat-0", state)
+	if len(service.commands) != 1 || service.commands[0].Kind != "goal.edit" ||
+		service.commands[0].ID != "first" ||
+		service.commands[0].GoalEdit.ExpectedRevision != 0 ||
+		service.commands[0].GoalEdit.Objective != "Keep this unsaved edit" {
+		t.Fatal("editor save lost optimistic ownership:", service.commands)
+	}
+}
+
+func TestGoalEditorFocusAndSaveShortcut(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	a.draft = "Keep the message draft"
+	setGoalFixture(a, "chat-0", &contracts.SessionGoal{ID: "goal", Objective: "Original objective", Status: contracts.GoalPaused})
+	service := &goalUIService{Service: a.service}
+	a.service = service
+	state := a.goalEditor("chat-0")
+	state.focusPending = true
+	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(a.palette.UI()); a.goalEditorView(c, "chat-0") }, 640, 600)
+	tt.Frame()
+	if !tt.Focused("Goal objective") {
+		t.Fatal("opening the editor did not focus its objective")
+	}
+	tt.Type("Edited ")
+	submitted := strings.TrimSpace(state.draft)
+	tt.Key(ui.Cmd, ui.KeyS)
+	if len(service.commands) != 1 || service.commands[0].Kind != "goal.edit" ||
+		service.commands[0].GoalEdit.Objective != submitted ||
+		service.commands[0].GoalEdit.ExpectedRevision != 0 ||
+		a.draft != "Keep the message draft" {
+		t.Fatal("save shortcut crossed ownership or did not save the draft")
+	}
+}
+
 func TestGoalBannerRenderEvidence(t *testing.T) {
 	for _, language := range []string{i18n.English, i18n.Chinese} {
 		t.Run(language, func(t *testing.T) {
@@ -272,10 +334,9 @@ func TestGoalBannerRenderEvidence(t *testing.T) {
 				c.Root().Font("Geist").FontSize(13).Background(a.palette.Background).TextColor(a.palette.Text)
 				ui.Column(c).Fill().Children(func() { a.goalBanner(c, session) })
 			}, 460, 400)
-			if err := tt.Click(a.t("Show goal details")); err != nil {
-				t.Fatal(err)
-			}
-			for _, label := range []string{a.t("Hide goal details"), a.t("Resume goal"), a.t("Clear goal")} {
+			tt.Frame()
+			tt.Frame()
+			for _, label := range []string{a.t("Edit goal"), a.t("Resume goal"), a.t("Clear goal")} {
 				bounds, ok := tt.Find(label)
 				if !ok || bounds.X < 0 || bounds.X+bounds.W > 460 || bounds.H <= 0 {
 					t.Fatalf("narrow goal control is missing or clipped: %s %+v", label, bounds)

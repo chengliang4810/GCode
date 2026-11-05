@@ -53,6 +53,9 @@ type Options struct {
 	// introducing application state or goal semantics into the Agent loop.
 	BeforeStep func(context.Context) (bool, error)
 	Idle       func(context.Context, model.Request) ([]model.Message, error)
+	// OwnsCompletion lets an owner such as a goal runtime make the sole idle
+	// continuation decision, including its unfinished-todo policy.
+	OwnsCompletion bool
 	// Hook runs user-configured lifecycle policies outside the model protocol.
 	Hook             func(context.Context, HookInput) (HookResult, error)
 	HookSource       string
@@ -375,7 +378,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				// A stop with unfinished todos and no resolution continues the
 				// run once more: finish the work or record a resolution. After
 				// the bound, a model that keeps ignoring the reminder stops.
-				if _, hasTodos := tools["TodoWrite"]; hasTodos && todoClosures < todoClosureLimit {
+				if _, hasTodos := tools["TodoWrite"]; !options.OwnsCompletion && hasTodos && todoClosures < todoClosureLimit {
 					if state := todoStateFromHistory(request.History); state.unfinished() && state.Current.Resolution == nil {
 						if err := record(todoMessage(state, "closure")); err != nil {
 							return err

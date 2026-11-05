@@ -19,6 +19,7 @@ import (
 	"gcode/internal/modelcatalog"
 	"gcode/internal/plugins"
 	"gcode/internal/storage"
+	"gcode/internal/streamtext"
 	"gcode/internal/terminalhost"
 )
 
@@ -30,25 +31,29 @@ type Options struct {
 }
 
 type activeRun struct {
-	toolAllowed func(string) bool
-	plugins     []plugins.Bundle
-	hook        func(context.Context, agent.HookInput) (agent.HookResult, error)
-	cancel      context.CancelFunc
-	id          string
-	answers     map[string]chan []contracts.QuestionAnswer
-	edits       map[string]editBefore
-	compacting  bool
-	done        chan struct{}
-	err         error
-	output      string
-	subagent    *subagentExecution
-	selection   contracts.ModelSelection
-	profiles    []contracts.SubagentProfile
-	providers   []model.Provider
-	model       model.Model
-	goal        goalScope
-	pending     map[string]contracts.QueuedMessage
-	wake        chan struct{}
+	messageID    string
+	messageIndex int
+	textBlocks   [2]streamtext.Buffer
+	goalRevision uint64 // revision delivered to the latest admitted model request; guarded by Engine.mu
+	toolAllowed  func(string) bool
+	plugins      []plugins.Bundle
+	hook         func(context.Context, agent.HookInput) (agent.HookResult, error)
+	cancel       context.CancelFunc
+	id           string
+	answers      map[string]chan []contracts.QuestionAnswer
+	edits        map[string]editBefore
+	compacting   bool
+	done         chan struct{}
+	err          error
+	output       string
+	subagent     *subagentExecution
+	selection    contracts.ModelSelection
+	profiles     []contracts.SubagentProfile
+	providers    []model.Provider
+	model        model.Model
+	goal         goalScope
+	pending      map[string]contracts.QueuedMessage
+	wake         chan struct{}
 	// afterStop is a queue row whose Send now stopped this run: it opens
 	// the next turn once the run has settled.
 	afterStop *contracts.QueuedMessage
@@ -65,6 +70,8 @@ type Engine struct {
 	mu                sync.Mutex
 	storage           *storage.Store
 	sessionHashes     map[string][32]byte
+	indexHash         [32]byte
+	indexHashKnown    bool
 	sessionRecords    map[string]string
 	persistErrors     []error
 	loadedSessions    map[string]bool
@@ -85,6 +92,7 @@ type Engine struct {
 	done              chan struct{}
 	wg                sync.WaitGroup
 	terminals         map[string]*terminalhost.Session
+	terminalOps       map[string]*sync.Mutex
 	resources         userResourceCatalog
 	modelChecks       map[string]*modelCheckRun
 	modelCheckResults map[string]contracts.ModelCheck
@@ -216,7 +224,7 @@ func (e *Engine) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
 	if err := e.checkLocked(ctx); err != nil {
 		return contracts.Snapshot{}, err
 	}
-	return contracts.CloneSnapshot(e.state), nil
+	return e.snapshotLocked(), nil
 }
 func (e *Engine) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
 	e.mu.Lock()
@@ -228,7 +236,7 @@ func (e *Engine) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 	id := e.subNext
 	ch := make(chan contracts.Event, 256)
 	e.subs[id] = ch
-	snapshot := contracts.CloneSnapshot(e.state)
+	snapshot := e.snapshotLocked()
 	ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 	go func() {
 		select {
@@ -356,17 +364,28 @@ func (e *Engine) publishLocked(event contracts.Event) {
 	event.Revision = e.state.Revision
 	event.Sequence = e.sequence
 	event.EventID = id("event")
+	if len(e.subs) == 0 {
+		return
+	}
+	if event.Message != nil {
+		message := projectMessageTodos(*event.Message)
+		event.Message = &message
+	}
 	if event.Message == nil && event.Kind != "message.delta" {
-		snapshot := contracts.CloneSnapshot(e.state)
+		snapshot := e.snapshotLocked()
 		event.Snapshot = &snapshot
 	}
+	remaining := len(e.subs)
 	for _, ch := range e.subs {
+		remaining--
 		owned := event
 		if event.ExitCode != nil {
 			value := *event.ExitCode
 			owned.ExitCode = &value
 		}
-		if event.Snapshot != nil {
+		// snapshotLocked already owns its data. Transfer that original only to
+		// the last subscriber, after all other independent copies are made.
+		if event.Snapshot != nil && remaining != 0 {
 			snapshot := contracts.CloneSnapshot(*event.Snapshot)
 			owned.Snapshot = &snapshot
 		}
@@ -382,7 +401,7 @@ func (e *Engine) publishLocked(event contracts.Event) {
 			for len(ch) > 0 {
 				<-ch
 			}
-			snapshot := contracts.CloneSnapshot(e.state)
+			snapshot := e.snapshotLocked()
 			ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 		}
 	}

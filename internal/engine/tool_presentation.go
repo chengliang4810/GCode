@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
@@ -34,6 +35,12 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		tool.Path = args.FilePath
 	}
 	switch tool.Kind {
+	case contracts.ToolTodo:
+		if update, err := agent.ParseTodoUpdate(json.RawMessage(call.Arguments)); err == nil {
+			tool.Summary = todoProgress(update)
+		} else {
+			tool.Summary = call.Name
+		}
 	case contracts.ToolSearch:
 		tool.Summary = args.Pattern
 		if args.Path != "" {

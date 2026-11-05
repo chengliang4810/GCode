@@ -23,7 +23,7 @@ func (a *App) annotationChips(c *ui.Context) {
 		chip.Children(func() {
 			icon(c, "cursor-square", 13)
 			ui.Text(c, a.annotationLabel(item.Index)).FontSize(design.TextSize(c, design.TextSmall))
-			iconButton(c, "close", tr(c, "Remove ")+a.annotationLabel(item.Index)).Size(16, 16).OnClick(func() { a.removeAnnotation(index) })
+			chipDismissButton(c, tr(c, "Remove ")+a.annotationLabel(item.Index)).OnClick(func() { a.removeAnnotation(index) })
 		})
 	}
 	// The framework polls for the pointer, so the chip under it is read each

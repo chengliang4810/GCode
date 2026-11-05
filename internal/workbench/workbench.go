@@ -86,6 +86,7 @@ type State struct {
 	OnCloseSession    func(string)
 	RenderSession     func(*ui.Context, string)
 	RenderTrajectory  func(*ui.Context, string)
+	RenderGoal        func(*ui.Context, string)
 	OnNewSideChat     func()
 	CanNewSideChat    func() bool
 	OnOpenSurface     func()
@@ -120,6 +121,14 @@ func New(win *mygo.Window, backend contracts.Service) *State {
 		browsers: map[string]*browser{}, terminals: map[string]*terminalView{}, folders: map[string]*bool{}, scopes: map[string]workspaceScope{}}
 }
 
+// UpdateTranscript accepts a message-only projection without reconciling files,
+// tabs and terminals that this event cannot change.
+func (s *State) UpdateTranscript(snapshot contracts.Snapshot) {
+	if !s.closed.Load() {
+		s.snapshot = snapshot
+	}
+}
+
 // Update never overwrites an unsaved local edit with an unrelated server edit.
 func (s *State) Update(snapshot contracts.Snapshot) {
 	if s.closed.Load() {
@@ -127,7 +136,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 	}
 	s.snapshot = snapshot
 	for i := len(s.tabs) - 1; i >= 0; i-- {
-		if s.tabs[i].kind != "trajectory" {
+		if s.tabs[i].kind != "trajectory" && s.tabs[i].kind != "goal" {
 			continue
 		}
 		found := false
@@ -576,6 +585,10 @@ func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 		case "trajectory":
 			if s.RenderTrajectory != nil {
 				s.RenderTrajectory(c, t.id)
+			}
+		case "goal":
+			if s.RenderGoal != nil {
+				s.RenderGoal(c, t.id)
 			}
 		default:
 			s.picker(c)

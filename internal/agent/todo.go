@@ -52,10 +52,14 @@ type TodoUpdate struct {
 // todoStateFromHistory can restore it after compaction dropped the calls.
 const todoStateMarker = "gcode:todo-state "
 
-func parseTodoUpdate(raw json.RawMessage) (TodoUpdate, error) {
+// ParseTodoUpdate shares the tool's input validation with host presentation.
+func ParseTodoUpdate(raw json.RawMessage) (TodoUpdate, error) {
 	var update TodoUpdate
 	if err := json.Unmarshal(raw, &update); err != nil {
 		return TodoUpdate{}, fmt.Errorf("invalid TodoWrite input: %w", err)
+	}
+	if update.Todos == nil {
+		return TodoUpdate{}, fmt.Errorf("TodoWrite requires a todos array; use [] to clear it")
 	}
 	if len(update.Todos) > TodoMaxItems {
 		return TodoUpdate{}, fmt.Errorf("TodoWrite accepts at most %d items", TodoMaxItems)
@@ -73,7 +77,20 @@ func parseTodoUpdate(raw json.RawMessage) (TodoUpdate, error) {
 	if update.Resolution != nil && strings.TrimSpace(update.Resolution.Reason) == "" {
 		return TodoUpdate{}, fmt.Errorf("a todo resolution needs a non-empty reason")
 	}
+	if update.Resolution != nil {
+		switch update.Resolution.Kind {
+		case "blocked", "cancelled", "scope_changed":
+		default:
+			return TodoUpdate{}, fmt.Errorf("todo resolution kind must be blocked, cancelled or scope_changed")
+		}
+	}
 	return update, nil
+}
+
+// CurrentTodos replays the same successful writes and compaction checkpoints as
+// the execution loop. Goal verification must not infer task state from prose.
+func CurrentTodos(history []model.Message) *TodoUpdate {
+	return todoStateFromHistory(history).Current
 }
 
 // todoState is the checklist plus the turn counters the reminders derive from.
@@ -134,7 +151,7 @@ func todoStateFromHistory(history []model.Message) todoState {
 		if call.order <= latestSuccess {
 			continue
 		}
-		update, err := parseTodoUpdate(call.raw)
+		update, err := ParseTodoUpdate(call.raw)
 		if err != nil {
 			continue
 		}
@@ -255,7 +272,7 @@ func (todoWriteTool) Definition() model.Tool {
 func (todoWriteTool) Concurrent() bool { return true }
 
 func (todoWriteTool) Execute(_ context.Context, _ string, raw json.RawMessage) (model.ToolOutput, error) {
-	update, err := parseTodoUpdate(raw)
+	update, err := ParseTodoUpdate(raw)
 	if err != nil {
 		return model.ToolOutput{}, err
 	}
@@ -263,8 +280,8 @@ func (todoWriteTool) Execute(_ context.Context, _ string, raw json.RawMessage) (
 	return model.ToolOutput{Text: fmt.Sprintf("%s\n\n%d completed · %d in progress · %d pending", rendered, counts[0], counts[1], counts[2])}, nil
 }
 
-// renderTodos draws the checklist the transcript shows and the model reads
-// back, in the order the list states.
+// renderTodos formats the tool result the model reads back, in list order.
+// The host projects the validated arguments into a typed native checklist.
 func renderTodos(items []TodoItem) (string, [3]int) {
 	var lines []string
 	counts := [3]int{}

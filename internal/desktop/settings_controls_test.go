@@ -98,6 +98,70 @@ func TestSettingsControlsKeyboardAndDisabledState(t *testing.T) {
 	}
 }
 
+func TestSettingsControlsCompactButtonGeometryAndInput(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, fontSize := range []float32{14, 20} {
+			for _, width := range []int{240, 800} {
+				theme := design.Palette("rcode", dark).UI()
+				theme.FontSize = fontSize
+				clicks, disabled := 0, false
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(theme)
+					c.Root().Font(theme.Font).FontSize(fontSize)
+					ui.Column(c).Fill().Padding(12).Gap(8).Children(func() {
+						ui.Row(c).Gap(4).Children(func() {
+							chipDismissButton(c.Key("chip"), "Dismiss chip").Disabled(disabled).OnClick(func() { clicks++ })
+							attachmentDismissButton(c.Key("attachment"), "Dismiss attachment").Disabled(disabled).OnClick(func() { clicks++ })
+							disclosureIconButton(c.Key("disclosure"), "alt-arrow-up", "Fold message").Disabled(disabled).OnClick(func() { clicks++ })
+							inlineIconButton(c.Key("inline"), "pen", "Edit path").Disabled(disabled).OnClick(func() { clicks++ })
+						})
+						compactTextButton(c.Key("compact"), "Folder").AlignSelf(ui.Start).Label("Compact folder")
+						textButton(c.Key("regular"), "Folder").AlignSelf(ui.Start).Label("Regular folder")
+					})
+				}, width, 240)
+				s := design.Controls()
+				for _, expected := range []struct {
+					label string
+					w, h  float32
+				}{
+					{"Dismiss chip", s.ChipDismissSize, s.ChipDismissSize},
+					{"Dismiss attachment", s.AttachmentDismissSize, s.AttachmentDismissSize},
+					{"Fold message", s.DisclosureWidth, s.DisclosureHeight},
+					{"Edit path", s.InlineIconButtonSize, s.InlineIconButtonSize},
+				} {
+					r, ok := tt.Find(expected.label)
+					if !ok || r.W != expected.w || r.H != expected.h || r.X+r.W > float32(width) {
+						t.Fatalf("dark=%v font=%v width=%v %s geometry=%+v", dark, fontSize, width, expected.label, r)
+					}
+					before := clicks
+					if err := tt.Click(expected.label); err != nil {
+						t.Fatal(err)
+					}
+					tt.Key(0, ui.KeySpace)
+					if clicks != before+2 {
+						t.Fatalf("%s pointer/keyboard actions=%d", expected.label, clicks-before)
+					}
+				}
+				compact, _ := tt.Find("Compact folder")
+				regular, _ := tt.Find("Regular folder")
+				if math.Abs(float64(regular.W-compact.W-2*(s.ButtonPaddingX-s.CompactButtonPaddingX))) > .1 || compact.H != regular.H {
+					t.Fatalf("compact padding changed height or width: compact=%+v regular=%+v", compact, regular)
+				}
+				disabled = true
+				tt.Frame()
+				before := clicks
+				if err := tt.Click("Dismiss chip"); err != nil {
+					t.Fatal(err)
+				}
+				tt.Key(0, ui.KeySpace)
+				if clicks != before {
+					t.Fatal("disabled compact button handled input")
+				}
+			}
+		}
+	}
+}
+
 func TestSettingsControlsGallery(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		app, _ := runtimeSettingsTestApp(t)

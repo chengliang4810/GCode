@@ -26,7 +26,6 @@ type Annotation struct {
 	Viewport [2]int      `json:"viewport"`
 	Styles   [][2]string `json:"styles"`
 }
-type BrowserAnnotation = Annotation
 
 func (a Annotation) Label() string { return fmt.Sprintf("Annotation %d", a.Index) }
 

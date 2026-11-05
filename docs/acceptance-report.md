@@ -94,6 +94,11 @@ observations and comparison with the reference.
   composer, virtualized transcript, streaming, tool/thinking disclosures,
   questions, PermissionRequest hook prompts, todos, subagent cards, attachments
   and queue actions. The separate multi-permission mode was removed on 2026-10-30.
+  Todo lists initially covered display fixtures only; successful builtin
+  `TodoWrite` records now feed a single latest-list tray attached above the
+  composer, stacked above the compact goal header. Goal editing opens a
+  conversation-owned workspace tab. See [Todo and goal panels](todos.md) for
+  behavior, reference sources and verification boundaries.
 - Typed in-process service, deterministic scenes, isolated persisted state,
   cancellable/coalescing events, file version conflicts and scripted terminal IO.
 - Native settings pages, theme/font/palette controls, original fonts/icons and

@@ -226,7 +226,10 @@ func TestStandaloneTerminalCloseRemovesOnlyCommittedUnreferencedOutput(t *testin
 					t.Fatal(err)
 				}
 			}
-			err := core.closeTerminalLocked(item.ID)
+			cleanup, err := core.closeTerminalLocked(item.ID)
+			if cleanup != nil {
+				cleanup()
+			}
 			if failIndex {
 				if err == nil {
 					t.Fatal("failed index was accepted")

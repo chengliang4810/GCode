@@ -510,6 +510,7 @@ type Command struct {
 	Plugin          *PluginInput          `json:"plugin,omitempty"`
 	Resource        *ResourceInput        `json:"resource,omitempty"`
 	Goal            *GoalInput            `json:"goal,omitempty"`
+	GoalEdit        *GoalEditInput        `json:"goalEdit,omitempty"`
 	Provider        *ProviderInput        `json:"provider,omitempty"`
 	Reorder         *ReorderInput         `json:"reorder,omitempty"`
 	RequestID       string                `json:"requestId,omitempty"`

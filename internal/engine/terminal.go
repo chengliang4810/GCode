@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"gcode/internal/contracts"
 	"gcode/internal/terminalhost"
@@ -98,10 +99,38 @@ func (e *Engine) createTerminalLocked(command contracts.Command) error {
 	return nil
 }
 
-func (e *Engine) terminalCommandLocked(command contracts.Command) error {
+func (e *Engine) terminalCommand(ctx context.Context, command contracts.Command, persist bool) error {
+	e.mu.Lock()
+	if err := e.checkLocked(ctx); err != nil {
+		e.mu.Unlock()
+		return err
+	}
 	host := e.terminals[command.ID]
 	if host == nil {
+		e.mu.Unlock()
 		return errors.New("terminal process is not running")
+	}
+	if e.terminalOps == nil {
+		e.terminalOps = make(map[string]*sync.Mutex)
+	}
+	op := e.terminalOps[command.ID]
+	if op == nil {
+		op = &sync.Mutex{}
+		e.terminalOps[command.ID] = op
+	}
+	e.mu.Unlock()
+	// Serialize a terminal's commands and metadata commits, without preventing
+	// unrelated sessions, snapshots or Close from acquiring the engine lock.
+	op.Lock()
+	defer op.Unlock()
+	e.mu.Lock()
+	err := e.checkLocked(ctx)
+	if err == nil && e.terminals[command.ID] != host {
+		err = errors.New("terminal is closed")
+	}
+	e.mu.Unlock()
+	if err != nil {
+		return err
 	}
 	switch command.Kind {
 	case "terminal.input":
@@ -109,7 +138,9 @@ func (e *Engine) terminalCommandLocked(command contracts.Command) error {
 			return errors.New("terminal input exceeds 64 KiB")
 		}
 		_, err := host.Write([]byte(command.Text))
-		return err
+		if err != nil {
+			return err
+		}
 	case "terminal.resize":
 		if command.TerminalSize == nil {
 			return errors.New("terminal size is required")
@@ -118,40 +149,66 @@ func (e *Engine) terminalCommandLocked(command contracts.Command) error {
 		if err := host.Resize(size.Columns, size.Rows); err != nil {
 			return err
 		}
-		for i := range e.state.Terminals {
-			if e.state.Terminals[i].ID == command.ID {
-				e.state.Terminals[i].Columns, e.state.Terminals[i].Rows = size.Columns, size.Rows
-			}
-		}
 	case "terminal.clear":
-		return host.Clear()
+		if err := host.Clear(); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unknown terminal command %s", command.Kind)
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if err := e.checkLocked(ctx); err != nil {
+		return err
+	}
+	if e.terminals[command.ID] != host {
+		return errors.New("terminal is closed")
+	}
+	for i := range e.state.Terminals {
+		meta := &e.state.Terminals[i]
+		if meta.ID != command.ID {
+			continue
+		}
+		before := *meta
+		if command.Kind == "terminal.resize" {
+			meta.Columns, meta.Rows = command.TerminalSize.Columns, command.TerminalSize.Rows
+		}
+		if persist {
+			if err := e.persistLocked(meta.SessionID); err != nil {
+				*meta = before
+				return err
+			}
+			e.publishLocked(contracts.Event{Kind: "state.changed"})
+		} else if meta.Columns != before.Columns || meta.Rows != before.Rows {
+			e.publishLocked(contracts.Event{Kind: "terminal.resized"})
+		}
+		break
 	}
 	return nil
 }
 
-func (e *Engine) closeTerminalLocked(id string) error {
+func (e *Engine) closeTerminalLocked(id string) (func(), error) {
 	index := slices.IndexFunc(e.state.Terminals, func(t contracts.Terminal) bool { return t.ID == id })
 	if index < 0 {
-		return errors.New("terminal not found")
+		return nil, errors.New("terminal not found")
 	}
 	removed := e.state.Terminals[index]
 	sessionID := removed.SessionID
 	e.state.Terminals = slices.Delete(e.state.Terminals, index, index+1)
 	if err := e.persistLocked(sessionID); err != nil {
-		return err
+		return nil, err
 	}
 	if removed.SessionID == "" && removed.OutputRef != "" && !e.terminalRefInUse(removed.StorageRootID, removed.OutputRef) {
 		e.removeTerminalOutput(removed.StorageRootID, removed.OutputRef)
 	}
 	host := e.terminals[id]
 	delete(e.terminals, id)
-	if host != nil {
-		_ = host.Close()
-	}
+	delete(e.terminalOps, id)
 	e.publishLocked(contracts.Event{Kind: "terminal.closed"})
-	return nil
+	if host != nil {
+		return func() { _ = host.Close() }, nil
+	}
+	return nil, nil
 }
 
 func (e *Engine) OpenTerminal(ctx context.Context, id string) (contracts.TerminalStream, error) {
@@ -194,31 +251,10 @@ type engineTerminalStream struct {
 }
 
 func (s *engineTerminalStream) Resize(columns, rows int) error {
-	e := s.engine
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if e.closed {
-		return errors.New("engine is closed")
-	}
-	host := e.terminals[s.id]
-	if host == nil {
-		return errors.New("terminal is closed")
-	}
-	if err := host.Resize(columns, rows); err != nil {
-		return err
-	}
-	for i := range e.state.Terminals {
-		meta := &e.state.Terminals[i]
-		if meta.ID == s.id {
-			if meta.Columns == columns && meta.Rows == rows {
-				return nil
-			}
-			meta.Columns, meta.Rows = columns, rows
-			e.publishLocked(contracts.Event{Kind: "terminal.resized"})
-			break
-		}
-	}
-	return nil
+	return s.engine.terminalCommand(context.Background(), contracts.Command{
+		Kind: "terminal.resize", ID: s.id,
+		TerminalSize: &contracts.TerminalSize{Columns: columns, Rows: rows},
+	}, false)
 }
 
 func terminalHistoryText(history []byte) string {

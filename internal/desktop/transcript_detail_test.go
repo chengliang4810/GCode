@@ -32,6 +32,41 @@ func TestTranscriptErrorPreservesOriginalProviderText(t *testing.T) {
 	}
 }
 
+func TestTodoToolDetailShowsCurrentStatusInsteadOfJSON(t *testing.T) {
+	block := contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{
+		Kind: contracts.ToolTodo, Status: "completed", Args: `{"todos":[]}`, Output: "Updated task list",
+	}, Todos: []contracts.Todo{
+		{Text: "Build", Status: "completed"}, {Text: "Verify", Status: "in_progress"}, {Text: "Deliver", Status: "pending"},
+	}}
+	var lines []string
+	for _, line := range detailLines(detailSource(block, false)) {
+		var text strings.Builder
+		for _, run := range line {
+			text.WriteString(run.text)
+		}
+		lines = append(lines, text.String())
+	}
+	if got := strings.Join(lines, "\n"); got != "[x] Build\n[~] Verify\n[ ] Deliver\n\nUpdated task list" {
+		t.Fatalf("todo tool detail lost status or output: %q", got)
+	}
+	block.Tool.Output = "[x] Build\n[~] Verify\n[ ] Deliver\n\n1 completed · 1 in progress · 1 pending"
+	lines = nil
+	for _, line := range detailLines(detailSource(block, false)) {
+		var text strings.Builder
+		for _, run := range line {
+			text.WriteString(run.text)
+		}
+		lines = append(lines, text.String())
+	}
+	if got := strings.Join(lines, "\n"); strings.Count(got, "[~] Verify") != 1 || !strings.Contains(got, "1 completed") {
+		t.Fatal("todo detail duplicated the checklist or dropped its result:", got)
+	}
+	block.Tool.IsError = true
+	if source := detailSource(block, false); source.todo || source.args != block.Tool.Args {
+		t.Fatal("failed todo write concealed its original parameters")
+	}
+}
+
 func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.T) {
 	a := testApp(t, "default")
 	m := contracts.Message{ID: "preview", Role: "assistant", Streaming: true, Blocks: []contracts.Block{

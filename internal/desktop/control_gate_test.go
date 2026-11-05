@@ -41,6 +41,31 @@ func TestSettingsControlsUseSharedDefinitions(t *testing.T) {
 	}
 }
 
+// Outside settings, existing specialized native controls retain their own
+// implementation. Shared buttons still own their appearance in every caller.
+func TestSettingsControlsSharedButtonsAcrossDesktop(t *testing.T) {
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, filename := range files {
+		if strings.HasSuffix(filename, "_test.go") || filename == "settings_controls.go" {
+			continue
+		}
+		source, err := os.ReadFile(filename)
+		if err != nil {
+			t.Fatal(err)
+		}
+		violations, err := inspectSettingsControlsScope(filename, source, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, violation := range violations {
+			t.Errorf("%s: %s", violation.position, violation.message)
+		}
+	}
+}
+
 type settingsControlViolation struct {
 	position token.Position
 	message  string
@@ -55,19 +80,25 @@ type settingsControlOrigin struct {
 }
 
 type settingsControlInspector struct {
-	uiPackages map[string]bool
-	bindings   map[*ast.Object]settingsControlOrigin
+	uiPackages        map[string]bool
+	bindings          map[*ast.Object]settingsControlOrigin
+	sharedButtonsOnly bool
 }
 
 func inspectSettingsControls(filename string, source []byte) ([]settingsControlViolation, error) {
+	return inspectSettingsControlsScope(filename, source, false)
+}
+
+func inspectSettingsControlsScope(filename string, source []byte, sharedButtonsOnly bool) ([]settingsControlViolation, error) {
 	files := token.NewFileSet()
 	file, err := parser.ParseFile(files, filename, source, 0)
 	if err != nil {
 		return nil, err
 	}
 	inspector := settingsControlInspector{
-		uiPackages: map[string]bool{},
-		bindings:   map[*ast.Object]settingsControlOrigin{},
+		uiPackages:        map[string]bool{},
+		bindings:          map[*ast.Object]settingsControlOrigin{},
+		sharedButtonsOnly: sharedButtonsOnly,
 	}
 	violations := []settingsControlViolation{}
 	for _, imported := range file.Imports {
@@ -79,7 +110,7 @@ func inspectSettingsControls(filename string, source []byte) ([]settingsControlV
 		if imported.Name != nil {
 			name = imported.Name.Name
 		}
-		if name == "." {
+		if name == "." && !sharedButtonsOnly {
 			violations = append(violations, settingsControlViolation{
 				position: files.Position(imported.Pos()),
 				message:  "dot-importing MyGo UI bypasses the shared-control boundary",
@@ -227,10 +258,10 @@ func (inspector *settingsControlInspector) origin(expression ast.Expr) settingsC
 		if expression.Obj != nil {
 			return inspector.bindings[expression.Obj]
 		}
-		return settingsSharedControlOrigin(expression.Name)
+		return inspector.sharedOrigin(expression.Name)
 	case *ast.SelectorExpr:
 		if namespace, ok := expression.X.(*ast.Ident); ok &&
-			namespace.Obj == nil && inspector.uiPackages[namespace.Name] {
+			namespace.Obj == nil && inspector.uiPackages[namespace.Name] && !inspector.sharedButtonsOnly {
 			switch expression.Sel.Name {
 			case "ButtonBase", "Button", "PrimaryButton", "TextInput", "TextInputBase",
 				"TextArea", "TextAreaBase", "Checkbox", "CheckboxBase",
@@ -244,7 +275,7 @@ func (inspector *settingsControlInspector) origin(expression ast.Expr) settingsC
 				}
 			}
 		}
-		if shared := settingsSharedControlOrigin(expression.Sel.Name); shared.control {
+		if shared := inspector.sharedOrigin(expression.Sel.Name); shared.control {
 			return shared
 		}
 		result := inspector.origin(expression.X)
@@ -259,12 +290,12 @@ func (inspector *settingsControlInspector) origin(expression ast.Expr) settingsC
 }
 
 func settingsSharedControlOrigin(name string) settingsControlOrigin {
+	if sharedButtonConstructor(name) {
+		return settingsControlOrigin{control: true}
+	}
 	switch name {
 	case "settingsPageViewport", "settingsPageContent", "settingsPageHeading":
 		return settingsControlOrigin{control: true, pageFrame: true}
-	case "textButton", "iconButton", "updateIconButton", "usageIconButton", "primaryButton", "secondaryButton",
-		"dangerButton", "buttonWithIcon":
-		return settingsControlOrigin{control: true}
 	}
 	if strings.HasPrefix(name, "control") {
 		return settingsControlOrigin{
@@ -274,6 +305,24 @@ func settingsSharedControlOrigin(name string) settingsControlOrigin {
 		}
 	}
 	return settingsControlOrigin{}
+}
+
+func sharedButtonConstructor(name string) bool {
+	switch name {
+	case "textButton", "compactTextButton", "iconButton", "inlineIconButton",
+		"chipDismissButton", "attachmentDismissButton", "disclosureIconButton",
+		"windowCloseButton", "updateIconButton", "usageIconButton",
+		"primaryButton", "secondaryButton", "dangerButton", "buttonWithIcon":
+		return true
+	}
+	return false
+}
+
+func (inspector *settingsControlInspector) sharedOrigin(name string) settingsControlOrigin {
+	if inspector.sharedButtonsOnly && !sharedButtonConstructor(name) {
+		return settingsControlOrigin{}
+	}
+	return settingsSharedControlOrigin(name)
 }
 
 func settingsControlFunctionName(expression ast.Expr) string {
@@ -511,6 +560,33 @@ func TestInspectSettingsControls(t *testing.T) {
 			}
 			if len(violations) != test.violations {
 				t.Fatalf("got %d violations, want %d: %+v", len(violations), test.violations, violations)
+			}
+		})
+	}
+}
+
+func TestInspectSettingsControlsSharedButtonsScope(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		source string
+		want   int
+	}{
+		{"specialized native control", `native.ButtonBase(c).Height(24).Padding(4)`, 0},
+		{"shared icon alias", `b := iconButton(c, "close", "Close"); alias := b; alias.Size(20, 20)`, 1},
+		{"shared text constructor alias", `makeButton := textButton; makeButton(c, "Retry").Border(1, red)`, 1},
+		{"compact shared control", `compactTextButton(c, "Folder").Padding(4, 6)`, 1},
+		{"chip shared control", `chipDismissButton(c, "Close").Size(16, 16)`, 1},
+		{"inline shared control", `inlineIconButton(c, "pen", "Edit").TextColor(red)`, 1},
+		{"layout and behavior", `attachmentDismissButton(c, "Close").Margin(4).Disabled(true).OnClick(close)`, 0},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			source := []byte("package example\nimport native \"github.com/egoist/mygo/ui\"\nfunc page() {" + test.source + "}")
+			got, err := inspectSettingsControlsScope("chat.go", source, true)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(got) != test.want {
+				t.Fatalf("violations=%v want=%d", got, test.want)
 			}
 		})
 	}

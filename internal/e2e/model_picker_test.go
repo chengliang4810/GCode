@@ -95,7 +95,7 @@ func TestDesktopLocalModelPickerLayout(t *testing.T) {
 				app.act("model-provider:beta", "press", "")
 				homeInput := app.waitKey("input")
 				var homeGap float64
-				app.await("home menu follows model button and aligns card tops", func() error {
+				app.await("home provider menu follows model button", func() error {
 					tree, err := app.client.tree()
 					if err != nil {
 						return err
@@ -104,8 +104,28 @@ func TestDesktopLocalModelPickerLayout(t *testing.T) {
 					return err
 				})
 				app.capture("single-model-position")
+				stationaryProvider := app.waitKey("model-provider:alpha")
+				stationarySettings := app.waitKey("model-settings")
 
 				app.act("model-provider:alpha", "press", "")
+				app.await("model count does not move the provider rail", func() error {
+					tree, err := app.client.tree()
+					if err != nil {
+						return err
+					}
+					provider, err := tree.findKey("model-provider:alpha")
+					if err != nil {
+						return err
+					}
+					settings, err := tree.findKey("model-settings")
+					if err != nil {
+						return err
+					}
+					if provider.Bounds != stationaryProvider.Bounds || settings.Bounds != stationarySettings.Bounds {
+						return fmt.Errorf("model count moved provider rail: provider=%+v want=%+v settings=%+v want=%+v", provider.Bounds, stationaryProvider.Bounds, settings.Bounds, stationarySettings.Bounds)
+					}
+					return nil
+				})
 				settingsEntry := app.waitKey("model-settings")
 				provider := app.waitKey("model-provider:alpha")
 				modelRow := app.waitKey("model-choice:alpha/m0")
@@ -365,8 +385,12 @@ func modelMenuButtonGap(tree accessTree) (float64, error) {
 				var key string
 				_ = json.Unmarshal(row.Key, &key)
 				if key == "model-choice:beta/m0" {
-					if math.Abs(row.Bounds.Y-provider.Bounds.Y) > 1 {
-						return gap, fmt.Errorf("card tops differ: provider=%+v model=%+v", provider.Bounds, row.Bounds)
+					browsed, err := tree.findKey("model-provider:beta")
+					if err != nil {
+						return gap, err
+					}
+					if math.Abs(row.Bounds.Y-browsed.Bounds.Y) > 1 {
+						return gap, fmt.Errorf("submenu is not aligned to browsed provider: provider=%+v model=%+v", browsed.Bounds, row.Bounds)
 					}
 					return gap, nil
 				}

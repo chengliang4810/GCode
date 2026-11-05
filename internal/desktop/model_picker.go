@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -588,7 +589,8 @@ func (a *composerController) activateModelRow(rows []modelRow, index int) {
 	a.modelMenu = false
 }
 
-// The two cards share one overlay so crossing the gap does not dismiss either menu.
+// The provider rail owns the overlay's height. The attached model card remains
+// in the same overlay for focus/dismissal, but cannot move the provider rail.
 func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth, modelWidth float32, modelsOnLeft bool) {
 	palette := a.modelPopupPalette(c)
 	rows := a.modelRows()
@@ -620,12 +622,21 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		}
 		return a.floatingSurface(c, element, 12)
 	}
+	providerID := a.modelProvider
+	if providerID == "" {
+		providerID = a.selectedProvider().ID
+	}
+	var providerCard, activeProvider ui.Element
 	providers := func() {
-		card(ui.Column(c.Key("model-provider-menu"))).Width(providerWidth).Height(leftHeight).Shrink(0).Children(func() {
+		providerCard = card(ui.Column(c.Key("model-provider-menu"))).Width(providerWidth).Height(leftHeight).Shrink(0)
+		providerCard.Children(func() {
 			ui.Scroll(c).Grow(1).MinHeight(0).FillWidth().Gap(2).Children(func() {
 				for _, provider := range a.state.Providers {
 					if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
-						a.modelGroupButton(c, provider.ID, provider.Name)
+						row := a.modelGroupButton(c, provider.ID, provider.Name)
+						if provider.ID == providerID {
+							activeProvider = row
+						}
 					}
 				}
 			})
@@ -637,7 +648,23 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		})
 	}
 	models := func() {
-		card(ui.Column(c.Key("model-list-menu"))).Width(modelWidth).Height(height).Children(func() {
+		modelCard := card(ui.Column(c.Key("model-list-menu"))).Width(modelWidth).Height(height)
+		// Measure only scalar geometry across frames. The browsed row may move
+		// inside its scroll rail; clamp the submenu above the trigger independently.
+		providerBounds, rowBounds := providerCard.Bounds(), activeProvider.Bounds()
+		measurement := ui.Local(modelCard, "provider-row-geometry", func() [2]ui.Rect { return [2]ui.Rect{} })
+		next := [2]ui.Rect{providerBounds, rowBounds}
+		if *measurement != next {
+			*measurement = next
+			c.After(time.Millisecond)
+		}
+		offset := min(max(float32(0), rowBounds.Y-providerBounds.Y-4), leftHeight-height)
+		if modelsOnLeft {
+			modelCard.AttachTo(providerCard, ui.AnchorTopStart, ui.AnchorTopEnd).Left(-modelPickerGap)
+		} else {
+			modelCard.AttachTo(providerCard, ui.AnchorTopEnd, ui.AnchorTopStart).Left(modelPickerGap)
+		}
+		modelCard.Top(offset).SnapToWindow(8).Children(func() {
 			if a.modelCatalogState(c, max(float32(0), height-10)) {
 				return
 			}
@@ -708,14 +735,13 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 			list.OnShortcut(0, ui.KeyEnter, func() { a.activateModelRow(rows, a.modelCursor) })
 		})
 	}
-	ui.Row(c).FillWidth().Gap(modelPickerGap).AlignItems(ui.Start).Children(func() {
-		if modelsOnLeft {
-			models()
-			providers()
-		} else {
-			providers()
-			models()
-		}
+	row := ui.Row(c).FillWidth().Height(leftHeight).AlignItems(ui.Start)
+	if modelsOnLeft {
+		row.Justify(ui.End)
+	}
+	row.Children(func() {
+		providers()
+		models()
 	})
 }
 
@@ -819,7 +845,7 @@ func (a *composerController) modelRows() []modelRow {
 	return rows
 }
 
-func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
+func (a *composerController) modelGroupButton(c *ui.Context, id, label string) ui.Element {
 	current := a.modelProvider
 	if current == "" {
 		current = a.selectedProvider().ID
@@ -852,6 +878,7 @@ func (a *composerController) modelGroupButton(c *ui.Context, id, label string) {
 			a.modelSearch.Focus(c)
 		}
 	})
+	return b
 }
 
 func (a *composerController) browseModelProvider(id string) {

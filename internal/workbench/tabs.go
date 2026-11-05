@@ -49,53 +49,59 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 			move := false
 			parts.List.Gap(4).Children(func() {
 				for i, tab := range s.tabs {
-					c.Key(tab.kind + ":" + tab.id)
-					detail := s.tabDetail(tab)
-					chip := parts.Tab(i).Label(s.tabTitle(tab)).Description(detail).Width(112).Height(24).Padding(0, 4).Gap(3).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
-					s.tabObserver.bind("chip", tab.id, chip)
-					s.tabTooltip.observe(c, &tips, i, false, detail, chip)
-					selected := i == s.active
-					if selected || chip.Hovered() {
-						dark := p.Dark
-						chip.Draw(func(painter *ui.Painter, r ui.Rect) {
-							paintTabChipWash(painter, r, dark, selected)
-						})
-					}
-					if selected && reveal {
-						chip.ScrollIntoView()
-					}
-					if dragged, ok := ui.Drop[tabDrag](chip); ok {
-						moveFrom, moveTo, move = dragged, tabDrag{tab.kind, tab.id}, true
-					}
-					chip.ContextMenu(func(menu *ui.Menu) {
-						if menu.Item(tr(c, "Close tab")).Chosen() {
-							s.closeTab(i)
+					// Keep close beside the semantic tab: MyGo treats tabs as
+					// accessibility leaves and would hide a nested button.
+					slot := ui.Box(c.Key("workspace-tab-slot:"+tab.kind+":"+tab.id)).Size(112, 24).Shrink(0)
+					slot.Children(func() {
+						c.Key(tab.kind + ":" + tab.id)
+						detail := s.tabDetail(tab)
+						chip := parts.Tab(i).Label(s.tabTitle(tab)).Description(detail).Width(112).Height(24).Padding(0, 4).Gap(3).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
+						s.tabObserver.bind("chip", tab.id, chip)
+						s.tabTooltip.observe(c, &tips, i, false, detail, chip, slot.Hovered())
+						selected := i == s.active
+						if selected || slot.Hovered() {
+							dark := p.Dark
+							chip.Draw(func(painter *ui.Painter, r ui.Rect) {
+								paintTabChipWash(painter, r, dark, selected)
+							})
 						}
-						if menu.Item(tr(c, "Close other tabs")).Disabled(len(s.tabs) < 2).Chosen() {
-							s.closeOtherTabs(tab)
+						if selected && reveal {
+							chip.ScrollIntoView()
 						}
-					})
-					chip.Children(func() {
-						ui.Box(c).Size(18, 18).Shrink(0).Center().Children(func() {
-							if tab.kind == "file" && s.documents[tab.id] != nil {
-								icon := ui.Image(c, sourceFileIcon(s.documents[tab.id].file, false, p.Dark)).Size(14, 14)
-								if !selected {
-									icon.Opacity(.78)
-								}
-							} else {
-								icon := ui.Icon(c, assets.Icon(tabIcon(tab.kind))).Size(12, 12).TextColor(p.Muted)
-								if !selected {
-									icon.Opacity(.7)
-								}
+						if dragged, ok := ui.Drop[tabDrag](chip); ok {
+							moveFrom, moveTo, move = dragged, tabDrag{tab.kind, tab.id}, true
+						}
+						chip.ContextMenu(func(menu *ui.Menu) {
+							if menu.Item(tr(c, "Close tab")).Chosen() {
+								s.closeTab(i)
+							}
+							if menu.Item(tr(c, "Close other tabs")).Disabled(len(s.tabs) < 2).Chosen() {
+								s.closeOtherTabs(tab)
 							}
 						})
-						color := p.Muted
-						if selected {
-							color = p.Text
-						}
-						ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
-						close := ui.ButtonBase(c).Label(tr(c, "Close tab ")+s.tabTitle(tab)).Description(tr(c, "Close tab")).Size(18, 18).Shrink(0).Radius(4).OnClick(func() { s.closeTab(i) })
-						s.tabTooltip.observe(c, &tips, i, true, tr(c, "Close tab"), close)
+						chip.Children(func() {
+							ui.Box(c).Size(18, 18).Shrink(0).Center().Children(func() {
+								if tab.kind == "file" && s.documents[tab.id] != nil {
+									icon := ui.Image(c, sourceFileIcon(s.documents[tab.id].file, false, p.Dark)).Size(14, 14)
+									if !selected {
+										icon.Opacity(.78)
+									}
+								} else {
+									icon := ui.Icon(c, assets.Icon(tabIcon(tab.kind))).Size(12, 12).TextColor(p.Muted)
+									if !selected {
+										icon.Opacity(.7)
+									}
+								}
+							})
+							color := p.Muted
+							if selected {
+								color = p.Text
+							}
+							ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
+							ui.Spacer(c).Width(18).Shrink(0)
+						})
+						close := ui.ButtonBase(c.Key("workspace-close:"+tab.kind+":"+tab.id)).Label(tr(c, "Close tab ")+s.tabTitle(tab)).Description(tr(c, "Close tab")).Absolute().Right(4).Top(3).Size(18, 18).Radius(4).OnClick(func() { s.closeTab(i) })
+						s.tabTooltip.observe(c, &tips, i, true, tr(c, "Close tab"), close, close.Hovered())
 						close.Children(func() {
 							if chip.Hovered() || close.Hovered() || close.FocusVisible() {
 								ui.Icon(c, assets.Icon("close")).Size(12, 12).TextColor(p.Muted)
@@ -192,6 +198,8 @@ func tabIcon(kind string) string {
 		return "chat-round-line"
 	case "trajectory":
 		return "list"
+	case "goal":
+		return "checklist"
 	case "history":
 		return "git-branch"
 	case "diff", "changes":

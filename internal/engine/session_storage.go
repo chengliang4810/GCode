@@ -62,6 +62,7 @@ func (e *Engine) loadPersistence() error {
 	if disk.Format != engineDiskFormat || disk.Snapshot.SchemaVersion != contracts.SchemaVersion {
 		return errors.New("unsupported engine storage format; existing data was not changed")
 	}
+	e.indexHash, e.indexHashKnown = sha256.Sum256(data), true
 	e.state, e.providers = disk.Snapshot, disk.Providers
 	e.sessionRecords = disk.Records
 	if e.sessionRecords == nil {
@@ -223,7 +224,7 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 			continue
 		}
 		record := hex.EncodeToString(hash[:])
-		err = e.writeSessionRecord(session, record, disk)
+		err = e.writeSessionRecord(session, record, data)
 		if err != nil {
 			e.state.Sessions[e.sessionIndex(session.ID)].StorageError = err.Error()
 			e.persistErrors = append(e.persistErrors, fmt.Errorf("save conversation %s: %w", session.ID, err))
@@ -271,9 +272,22 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	if err := e.persistStandaloneTerminals(&snapshot); err != nil {
 		return err
 	}
-	if err := storage.WriteJSON(filepath.Join(e.storage.ConfigDirectory(), "engine.json"),
-		diskState{Format: engineDiskFormat, Snapshot: snapshot, Providers: e.providers, Records: records}); err != nil {
+	index, err := json.MarshalIndent(diskState{Format: engineDiskFormat, Snapshot: snapshot, Providers: e.providers, Records: records}, "", "  ")
+	if err != nil {
 		return err
+	}
+	indexHash := sha256.Sum256(index)
+	indexPath := filepath.Join(e.storage.ConfigDirectory(), "engine.json")
+	unchanged := e.indexHashKnown && indexHash == e.indexHash
+	if unchanged {
+		info, statErr := os.Stat(indexPath)
+		unchanged = statErr == nil && info.Mode().IsRegular()
+	}
+	if !unchanged {
+		if err := storage.WriteJSONBytes(indexPath, index); err != nil {
+			return err
+		}
+		e.indexHash, e.indexHashKnown = indexHash, true
 	}
 	e.sessionRecords, e.sessionHashes = records, hashes
 	e.commitStandaloneTerminals(&snapshot)
@@ -295,7 +309,7 @@ func validRecordHash(value string) bool {
 	return true
 }
 
-func (e *Engine) writeSessionRecord(session contracts.Session, record string, disk sessionDisk) error {
+func (e *Engine) writeSessionRecord(session contracts.Session, record string, data []byte) error {
 	directory, err := e.storage.Resolve(session.StorageRootID)
 	if err != nil {
 		return err
@@ -310,7 +324,7 @@ func (e *Engine) writeSessionRecord(session contracts.Session, record string, di
 		return err
 	}
 	defer folder.Close()
-	return storage.WriteJSONRoot(folder, record+".json", disk)
+	return storage.WriteJSONBytesRoot(folder, record+".json", data)
 }
 
 func (e *Engine) removeSessionRecord(rootID, sessionID, record string) {

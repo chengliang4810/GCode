@@ -33,6 +33,8 @@ func toolKind(name string) contracts.ToolKind {
 		return contracts.ToolGlob
 	case "Bash":
 		return contracts.ToolExec
+	case "TodoWrite":
+		return contracts.ToolTodo
 	default:
 		if strings.HasPrefix(name, "mcp__") {
 			return contracts.ToolMCP
