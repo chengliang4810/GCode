@@ -74,7 +74,7 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 			output := result.output
 			if result.err != nil {
 				output.Text = strings.TrimSpace(output.Text + "\n" + result.err.Error())
-				output.Images = nil
+				output.Images, output.Data = nil, nil
 			}
 			var response any = output.Text
 			if len(output.Images) > 0 {
@@ -90,7 +90,7 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 			}); err != nil && firstError == nil {
 				firstError = err
 			}
-			if err := options.Emit(Event{Kind: "tool.end", Call: call, Output: output.Text, Error: result.err != nil}); err != nil && firstError == nil {
+			if err := options.Emit(Event{Kind: "tool.end", Call: call, Output: output.Text, Data: output.Data, Error: result.err != nil}); err != nil && firstError == nil {
 				firstError = err
 			}
 		}

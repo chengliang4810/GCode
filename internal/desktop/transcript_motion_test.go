@@ -51,7 +51,7 @@ func TestActivityManualFoldsKeepTailStableAndRestoreStreamFollowing(t *testing.T
 				t.Fatal("tail is missing")
 			}
 			summary := "Activity: " + contracts.SummarizeActivity(message.Blocks[:len(message.Blocks)-1]).Label()
-			for _, control := range []string{summary, "Read: README.md", "Read: README.md", summary} {
+			for _, control := range []string{summary, "Thought process: thought-1", "Thought process: thought-1", summary} {
 				if err := tt.Click(control); err != nil {
 					t.Fatal(err)
 				}

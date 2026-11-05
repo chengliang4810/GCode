@@ -941,6 +941,9 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				}
 				block.Tool.FinishedAt = &now
 				block.Tool.Diff = e.finishEditLocked(sessionID, event.Call)
+				if block.Tool.Kind == contracts.ToolReadFile {
+					block.Tool.ReadLines = readLineCount(event.Data)
+				}
 			}
 		}
 	}

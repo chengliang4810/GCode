@@ -63,3 +63,24 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 	}
 	return tool
 }
+
+// readLineCount reads the text window a Read actually returned. Image reads
+// and rewrites that replaced the typed result report none.
+func readLineCount(data any) int {
+	result, ok := data.(map[string]any)
+	if !ok || result["type"] != "text" {
+		return 0
+	}
+	file, ok := result["file"].(map[string]any)
+	if !ok {
+		return 0
+	}
+	// A hook rewrite arrives as decoded JSON, where every number is float64.
+	switch lines := file["numLines"].(type) {
+	case int:
+		return max(lines, 0)
+	case float64:
+		return max(int(lines), 0)
+	}
+	return 0
+}

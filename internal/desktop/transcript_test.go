@@ -19,7 +19,7 @@ func activityFixture() contracts.Message {
 	bad, good := 1, 0
 	return contracts.Message{ID: "audit-turn", SessionID: "chat-0", TurnID: "audit-run", Role: "assistant", DurationMS: 147000, CreatedAt: time.Date(2026, 10, 28, 8, 0, 0, 0, time.UTC), Blocks: []contracts.Block{
 		{ID: "thought-1", Kind: "reasoning", Text: "I’ll read the layout contract, then run the regression check.\n\n**Keep the existing geometry.** The sidebar width and editor focus should survive the change."},
-		{ID: "read", Kind: "tool", Tool: &contracts.ToolCall{ID: "read", Kind: contracts.ToolReadFile, Path: "README.md", Status: "completed", Output: "# Fieldnotes\nA native desktop workspace."}},
+		{ID: "read", Kind: "tool", Tool: &contracts.ToolCall{ID: "read", Kind: contracts.ToolReadFile, Path: "README.md", Status: "completed", Output: "# Fieldnotes\nA native desktop workspace.", ReadLines: 80}},
 		{ID: "run-failed", Kind: "tool", Tool: &contracts.ToolCall{ID: "run-failed", Kind: contracts.ToolExec, Command: "go test ./internal/layout -run TestPanelGeometry -count=1", Status: "failed", ExitCode: &bad, IsError: true, Output: "--- FAIL: TestPanelGeometry\n    layout_test.go:42: sidebar width changed\nFAIL"}},
 		{ID: "thought-2", Kind: "reasoning", Text: "The saved sidebar width is being replaced during resize. I’ll preserve the preferred width and clamp only the visible allocation."},
 		{ID: "edit", Kind: "tool", Tool: &contracts.ToolCall{ID: "edit", Kind: contracts.ToolEditFile, Path: "src/layout.go", Status: "completed", Output: "Updated src/layout.go"}},
@@ -61,15 +61,18 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 			t.Fatalf("missing activity %q: %v", label, tt.Texts())
 		}
 	}
+	if read, found := tt.Find("Read: README.md"); !found || read.H != 32 {
+		t.Fatalf("read row geometry: %+v", read)
+	}
 	read, _ := tt.Find("Read: README.md")
 	edit, _ := tt.Find("Edit: src/layout.go")
 	write, _ := tt.Find("Write: src/layout_test.go")
 	if read.H != 32 || edit.H != 32 || write.H != 32 || write.Y-edit.Y != 32 {
 		t.Fatalf("tree row drift: read=%+v edit=%+v write=%+v", read, edit, write)
 	}
-	label, _ := tt.Find("Read")
-	if label.X-header.X != 56 {
-		t.Fatalf("activity text starts at %v, want source 48+8 gutter", label.X-header.X)
+	// A read keeps the shared tree gutter without a disclosure of its own.
+	if badge, _ := tt.Find("Open file: README.md"); badge.X-header.X != 56 {
+		t.Fatalf("read file name starts at %v, want source 48+8 gutter", badge.X-header.X)
 	}
 	if err := tt.Click("Thought process: thought-1"); err != nil {
 		t.Fatal(err)
@@ -303,6 +306,65 @@ func TestTranscriptFileBadgeOpensNativeEditorWithoutTogglingRow(t *testing.T) {
 	}
 }
 
+// A read names the file it opened and how much of it it returned; it never
+// expands into the file's text, and the file name opens the tab instead.
+func TestTranscriptReadRowStaysFlatAndSummarizesItsLines(t *testing.T) {
+	a := testApp(t, "default")
+	m := activityFixture()
+	groupID := m.ID + ":activity:" + m.Blocks[0].ID
+	a.rememberActivityFold(groupID, true)
+	tt := transcriptTester(t, a, &m, 760, 900, false)
+	row, ok := tt.Find("Read: README.md")
+	if !ok || row.H != 32 {
+		t.Fatalf("read row geometry: %+v", row)
+	}
+	if !tt.HasText("80 lines") {
+		t.Fatalf("read row does not state its line window: %v", tt.Texts())
+	}
+	if tt.HasText("A native desktop workspace.") {
+		t.Fatal("read row rendered its file content while collapsed")
+	}
+	if err := tt.Click("Read: README.md"); err != nil {
+		t.Fatal(err)
+	}
+	if tt.HasText("A native desktop workspace.") || tt.HasText("Activity detail") {
+		t.Fatal("clicking the read row expanded its output")
+	}
+	if a.workspace.TabCount() != 0 {
+		t.Fatal("clicking the row body opened a file the row does not name")
+	}
+	if err := tt.Click("Open file: README.md"); err != nil {
+		t.Fatal(err)
+	}
+	if a.workspace.ActiveKind() != "file" || a.workspace.TabCount() != 1 {
+		t.Fatal("read file name did not open the file in a tab")
+	}
+	if tt.HasText("# Fieldnotes") {
+		t.Fatal("opening the read file also changed the transcript row")
+	}
+}
+
+// A read whose file is not in the index still opens the file through the
+// source conversation, which is how remote and outside-project paths work.
+func TestTranscriptReadRowOpensLinkedFileOutsideTheIndex(t *testing.T) {
+	a := testApp(t, "default")
+	m := activityFixture()
+	m.Blocks[1].Tool.Path = "docs/absent-from-index.md"
+	m.Blocks[1].Tool.ReadLines = 3
+	groupID := m.ID + ":activity:" + m.Blocks[0].ID
+	a.rememberActivityFold(groupID, true)
+	tt := transcriptTester(t, a, &m, 760, 900, false)
+	if err := tt.Click("Open file: docs/absent-from-index.md"); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("80 lines") && !tt.HasText("3 lines") {
+		t.Fatalf("read row lost its line window: %v", tt.Texts())
+	}
+	if a.workspace.TabCount() != 0 {
+		t.Fatal("an unavailable linked file opened a tab")
+	}
+}
+
 func TestTranscriptCopyContainsReplyOnlyAndNoDefaultRetry(t *testing.T) {
 	a := testApp(t, "default")
 	m := activityFixture()
@@ -355,7 +417,7 @@ func TestTranscriptSideFoldDoesNotChangeCentralFold(t *testing.T) {
 	count := func() int {
 		n := 0
 		for _, text := range tt.Texts() {
-			if text == "Read" {
+			if text == "Open file: README.md" {
 				n++
 			}
 		}
@@ -465,15 +527,15 @@ func TestTranscriptLogicalGeometryAtDesktopScales(t *testing.T) {
 			if !ok || row.H != 32 {
 				t.Fatalf("scaled row %+v", row)
 			}
-			label, _ := tt.Find("Read")
+			label, _ := tt.Find("Open file: README.md")
 			if label.X-row.X != 56 {
 				t.Fatalf("scaled native gutter: %v", label.X-row.X)
 			}
 			if err := tt.Click("Read: README.md"); err != nil {
 				t.Fatal(err)
 			}
-			if !tt.HasText("A native desktop workspace.") {
-				t.Fatal("scaled detail did not open")
+			if tt.HasText("A native desktop workspace.") {
+				t.Fatal("read row opened its output instead of staying flat")
 			}
 		})
 	}

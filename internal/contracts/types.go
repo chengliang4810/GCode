@@ -184,6 +184,9 @@ type ToolCall struct {
 	Output     string     `json:"output"`
 	StartedAt  time.Time  `json:"startedAt"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
+	// ReadLines is how many text lines a Read returned. It stays zero for
+	// image reads and failed reads, which have no line window.
+	ReadLines int `json:"readLines,omitempty"`
 }
 type Question struct {
 	ID       string           `json:"id"`

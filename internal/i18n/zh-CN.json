@@ -693,6 +693,7 @@
   "Previous match": "上一个匹配",
   "Next match": "下一个匹配",
   "%d matches": "%d 个匹配",
+  "%d lines": "%d 行",
   "… %d more lines": "… 另有 %d 行",
   "an operation is still pending; please try again": "仍有操作正在处理，请稍后重试",
   "just now": "刚刚",

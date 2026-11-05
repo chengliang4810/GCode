@@ -1,12 +1,14 @@
 package desktop
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/linktarget"
 	"gcode/internal/workbench"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/editor"
@@ -382,7 +384,80 @@ func (a *App) activityShimmerInk(c *ui.Context, el ui.Element, title string, pha
 	})
 }
 
+// A read is a record of which file the agent opened, not something to inspect:
+// the row stays flat and the file name opens the file itself. No disclosure
+// key, chevron or detail viewport belongs to it.
+func (a *App) activityReadItem(c *ui.Context, id string, block contracts.Block, continues bool, motion activityRowMotion) {
+	tool := block.Tool
+	color := a.palette.Muted
+	if tool.Failed() {
+		color = a.palette.Danger
+	}
+	root := ui.Column(c).FillWidth().Key(id)
+	root.Draw(func(p *ui.Painter, r ui.Rect) { a.activityRail(p, r, continues, motion) })
+	root.Children(func() {
+		row := ui.Row(c).FillWidth().Justify(ui.Start).Label(tr(c, "Read") + ": " + tool.Path)
+		if motion.settled {
+			row.Height(activityRowHeight).AlignItems(ui.Center)
+		} else {
+			row.Height(activityRowHeight*motion.progress).ClipY().AlignItems(ui.Start).
+				Opacity(motion.content).Margin(activityRevealLift*(1-motion.content), 0, 0, 0)
+		}
+		row.Children(func() {
+			a.activityRowIcon(c, "document", color)
+			ui.Row(c).Grow(1).MinWidth(0).Height(30).Margin(0, 0, 0, activityTextGap).AlignItems(ui.Center).Gap(8).TextColor(color).Children(func() {
+				a.activityFileBadge(c, "activity-file:"+id, tool.Path, color)
+				if summary := activityReadSummary(c, *tool); summary != "" {
+					ui.Text(c, summary).MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color).SingleLine()
+				}
+			})
+		})
+	})
+}
+
+// activityRail fills one activity row's share of the tree, settled or growing.
+func (a *App) activityRail(p *ui.Painter, r ui.Rect, continues bool, motion activityRowMotion) {
+	if motion.settled {
+		p.FillPath(activityRailPath(r.X, r.Y, r.H, continues), a.activityInk(.12))
+		return
+	}
+	p.FillPath(activityRailRevealPath(r.X, r.Y, r.H, continues, motion.incoming, motion.content, motion.continuation), a.activityInk(.12))
+}
+
+// activityRowIcon places a row's icon in the shared tree gutter.
+func (a *App) activityRowIcon(c *ui.Context, glyph string, color ui.Color) {
+	ui.Box(c).Width(activityGutter).Height(activityRowHeight).Shrink(0).Children(func() {
+		ui.Row(c).Absolute().Left(activityIconLeft).Top(8).Size(activityIconSize, activityIconSize).TextColor(color).Children(func() { icon(c, glyph, activityIconSize) })
+	})
+}
+
+// activityReadSummary states how much of the file the read returned. The core
+// reports that window for text reads; a failed read shows why instead.
+func activityReadSummary(c *ui.Context, tool contracts.ToolCall) string {
+	if tool.Failed() {
+		return firstLine(tool.Output)
+	}
+	if tool.ReadLines > 0 {
+		return "· " + fmt.Sprintf(tr(c, "%d lines"), tool.ReadLines)
+	}
+	return ""
+}
+
+// firstLine keeps a failure visible on the flat row instead of a disclosure.
+func firstLine(text string) string {
+	for _, line := range strings.Split(text, "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			return line
+		}
+	}
+	return ""
+}
+
 func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, continues, live bool, motion activityRowMotion) {
+	if block.Tool != nil && block.Tool.Category() == contracts.ToolReadFile {
+		a.activityReadItem(c, id, block, continues, motion)
+		return
+	}
 	root := ui.Column(c).FillWidth().Key(id)
 	open := ui.Local(root, "open", func() bool { return false })
 	a.activityFold(id, open, false)
@@ -428,7 +503,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 				}
 				ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine().Shrink(0)
 				if activityFile(block) {
-					a.activityFileBadge(c, block.Tool.Path, color)
+					a.activityFileBadge(c, "", block.Tool.Path, color)
 				} else if detail != "" {
 					ui.Text(c, detail).MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine()
 				}
@@ -450,22 +525,77 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	})
 }
 
-func (a *App) activityFileBadge(c *ui.Context, path string, color ui.Color) {
-	file := contracts.File{Path: path, Name: activityBasename(path), Kind: "file"}
-	for _, candidate := range a.state.Files {
-		if candidate.ProjectID == a.projectID && strings.EqualFold(strings.ReplaceAll(candidate.Path, "\\", "/"), strings.ReplaceAll(path, "\\", "/")) {
-			file = candidate
-			break
-		}
-	}
+func (a *App) activityFileBadge(c *ui.Context, key, path string, color ui.Color) {
+	file, open := a.activityFileContext(path)
 	badge := ui.ButtonBase(c).Height(22).MinWidth(0).Shrink(1).Padding(0, 6, 0, 1).Gap(2).Radius(5).Background(a.activityInk(.06)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Tooltip(path).Label(tr(c, "Open file: ") + path)
-	if file.ID != "" {
-		badge.OnClick(func() { a.workspace.OpenFile(file.ID) })
+	if key != "" {
+		badge.Key(key)
 	}
+	badge.OnClick(open)
 	badge.Children(func() {
 		ui.Row(c).Size(20, 20).Shrink(0).AlignItems(ui.Center).Justify(ui.Center).Children(func() { ui.Icon(c, workbench.FileIcon(file, a.palette.Dark)).Size(14, 14) })
 		ui.Text(c, activityBasename(path)).SingleLine().FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color)
 	})
+}
+
+// activityFileContext resolves a tool path against the file index of the
+// project that rendered this row, and returns the action that opens it. The
+// engine reports absolute tool paths while the index holds project-relative
+// ones, so the lookup also tries the path relative to the source conversation.
+func (a *App) activityFileContext(path string) (contracts.File, func()) {
+	file := contracts.File{Path: path, Name: activityBasename(path), Kind: "file"}
+	projectID, projectPath := a.projectID, ""
+	for _, project := range a.state.Projects {
+		if project.ID == projectID {
+			projectPath = project.Path
+			break
+		}
+	}
+	lookup := func(candidate string) (contracts.File, bool) {
+		normalized := strings.ReplaceAll(strings.TrimPrefix(candidate, "./"), "\\", "/")
+		for _, file := range a.state.Files {
+			if file.ProjectID != projectID || file.Kind == "directory" {
+				continue
+			}
+			if strings.EqualFold(strings.ReplaceAll(file.Path, "\\", "/"), normalized) {
+				return file, true
+			}
+		}
+		return contracts.File{}, false
+	}
+	for _, candidate := range []string{path, a.activityRelativePath(path, projectPath)} {
+		if candidate == "" {
+			continue
+		}
+		if found, ok := lookup(candidate); ok {
+			file = found
+			break
+		}
+	}
+	sessionID := firstNonempty(a.linkSource, a.sessionID)
+	if file.ID != "" {
+		id := file.ID
+		return file, func() { a.workspace.OpenFile(id) }
+	}
+	return file, func() {
+		if err := a.workspace.OpenLink(sessionID, path); err != nil {
+			a.errorText = err.Error()
+		}
+	}
+}
+
+// activityRelativePath turns an absolute tool path into the project-relative
+// path the file index uses. Paths already relative, or outside the project,
+// yield no candidate; the caller then falls back to a linked open.
+func (a *App) activityRelativePath(path, projectPath string) string {
+	if projectPath == "" {
+		return ""
+	}
+	_, relative, inside, err := linktarget.ResolveFile(path, projectPath)
+	if err != nil || !inside {
+		return ""
+	}
+	return relative
 }
 
 func (a *App) activityDetail(c *ui.Context, block contracts.Block, live bool) {

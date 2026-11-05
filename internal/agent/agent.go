@@ -32,8 +32,11 @@ type Event struct {
 	Reasoning string
 	Call      model.Call
 	Output    string
-	Error     bool
-	Usage     model.Usage
+	// Data is the same typed result the tool returned, for hosts that project
+	// structured fields. It is in-process only and never serialized here.
+	Data  any
+	Error bool
+	Usage model.Usage
 }
 
 type Options struct {

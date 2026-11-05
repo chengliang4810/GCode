@@ -38,6 +38,36 @@ when argument validation prevented creation of a question card.
 Readable command/search fields are decoded by the core at `tool.start`, with
 the original arguments retained for inspection.
 
+2026-11-06 read rows: a `Read` is a record of which file the agent opened, not
+something to inspect. It renders as a flat 32px row carrying the file badge and
+the line window the tool actually returned (`README.md · 80 lines`), with no
+disclosure key, chevron or detail viewport at all — the invocation JSON and the
+file text never enter the conversation. The core projects that window from the
+tool's own typed result: `agent.Event.Data` carries the `tool.end` payload and
+`engine` stores its `file.numLines` as `contracts.ToolCall.ReadLines`, so the
+count is what was read rather than the requested `limit`. Image reads, failed
+reads and records written before this field existed show the file name alone;
+a failed read shows its first output line in the danger color. Clicking the file
+name opens the file in a right workspace tab. The lookup resolves the tool's
+absolute path against the row's project (`linktarget.ResolveFile`), and an
+unresolved path falls back to `workbench.OpenLink` for the source conversation,
+which is how remote and outside-project files open.
+`TestTranscriptReadRowStaysFlatAndSummarizesItsLines`,
+`TestTranscriptReadRowOpensLinkedFileOutsideTheIndex`,
+`TestReadLineCountFollowsTheTypedResult`, e2e `TestDesktopLocalTranscriptActivity`.
+
+Native evidence for that change (2026-11-06): run
+`go run ./scripts/desktop-e2e -run TestDesktopLocalTranscriptActivity` on macOS.
+The Read assertions pass in light and dark — the row exposes no
+`activity-item-toggle`, shows `Open file: <path>` plus `· 80 lines`, and pressing
+`activity-file:<group>:<block>` opens the file tab whose editor value contains
+the file's last line. Those runs still fail the separate
+"completed thought shows its first line" step, which the same test fails on a
+clean `git worktree` at HEAD `33830a5`; the collapse preview of a settled
+reasoning block is a pre-existing defect in this checkout, independent of the
+read row. The read row was therefore verified by temporarily skipping only that
+step, and the full run is expected to stay red until it is fixed.
+
 2026-11-01 activity-summary tip: the header keeps its native
 `Activity: <summary>` accessible name, but the visible summary tooltip is
 attached only when the header shows the worked duration instead (compact
@@ -115,7 +145,7 @@ and historical screenshots remain unchanged.
 | TR-13 | Connector uses x=12.5, 6px elbow, 28px branch and 24-step source curve | Literal source port; rail seam pixel regression | Tested in implementation render |
 | TR-14 | Connector intersections and row seams receive one alpha contribution | `TestTranscriptTreeRailHasNoDoubleAlphaSeams` samples header, pad, bend and row seams | Tested |
 | TR-15 | Tools use original Solar icons and file badges use original Symbols file icons | `activityTitle`, `workbench.FileIcon`, inspected light/dark PNGs | Implementation inspected |
-| TR-16 | Read/Write/Edit/Patch show basename, retain full path in tooltip/invocation | `TestActivityTypedLabelsAndPaths`; inspected PNGs | Tested |
+| TR-16 | Write/Edit/Patch show basename, retain full path in tooltip/invocation; Read shows the basename with the full path in its tooltip only (TR-47) | `TestActivityTypedLabelsAndPaths`; inspected PNGs | Tested |
 | TR-17 | A resolvable file badge opens the native editor and does not toggle its row | `TestTranscriptFileBadgeOpensNativeEditorWithoutTogglingRow` | Tested |
 | TR-18 | Failed tools tint their own label/detail/icon, while group summary stays quiet | All 30 palettes have danger-foreground pixel assertions; dark/light implementation PNGs | Tested and inspected |
 | TR-19 | Complete groups start collapsed | `TestTranscriptNativeDisclosureAndFixedTreeGeometry` | Tested |
@@ -158,6 +188,9 @@ The reference-link investigation is separate: see
 | TR-44 | Long history, long output and selection remain within performance gates | Official outer virtualized List retained; this audit does not supply P95/native stress measurements | Pending performance acceptance |
 | TR-45 | Conversation rows follow the reference `rows_for_entry` block split; the copy/timestamp footer sits on the entry's last row; a selection keeps rows the List stopped building and copies their text | `TestConversationRowsSplitAMessageIntoBlockRows`, `TestTranscriptFooterFollowsTheMessageRows`, `TestTranscriptSelectionCopiesAfterItsRowsScrollOut`; framework `TestListTextSelectionSurvivesRowsLeavingTheBuild`; native e2e `output/desktop-e2e/20261101-173322-3584585105` (links, fold motion, Markdown tables, side chat) | Component and native-window interaction pass; frame timing and visual comparison pending |
 | TR-46 | Fenced code blocks show tab indentation at the editor's tab stops of their language (Go 4, JS/TS/JSON 2, unknown 4); the source and Copy code keep tabs, and a selection copies the source offset | `TestCodeBlockTabsShowAndCopy`, `TestCodeBlockTabsUseTheLanguageSize`, `TestReviewCopyMarkdownCodeTabs`, `TestTranscriptCodeBlockShowsTabs` | Component-level pass; native window visual check pending |
+| TR-47 | A read row never discloses its output: no `activity-item-toggle`, chevron or `activity-detail-viewport` is built for it | `TestTranscriptReadRowStaysFlatAndSummarizesItsLines`; e2e `TestDesktopLocalTranscriptActivity` asserts the missing key | Tested in Tester and native e2e (light, dark) |
+| TR-48 | A read row shows the file name plus the line window the core recorded (`ReadLines`, from the tool's typed `numLines`), falling back to nothing for image, failed and older records; a failed read shows its first output line in the danger color | `TestReadLineCountFollowsTheTypedResult`, `TestTranscriptReadRowStaysFlatAndSummarizesItsLines`; e2e asserts `· 80 lines` | Tested in Tester and native e2e (light, dark) |
+| TR-49 | Clicking a read row's file name opens the file in a right workspace tab; the row keeps its 32px geometry and gutter, and only an unresolvable path falls back to `OpenLink` from the source conversation | `TestTranscriptFileBadgeOpensNativeEditorWithoutTogglingRow`, `TestTranscriptReadRowOpensLinkedFileOutsideTheIndex`; e2e `TestDesktopLocalTranscriptActivity` (`activity-file:<group>:<block>`, editor value) | Tested in Tester and native e2e (light, dark) |
 
 ## Captured implementation evidence
 

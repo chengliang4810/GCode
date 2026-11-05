@@ -15,7 +15,11 @@ func toolBlock(kind contracts.ToolKind, name, summary, command, file, output str
 	if args == "" {
 		args = file
 	}
-	return contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{Kind: kind, Name: name, Summary: summary, Command: command, Path: file, Args: args, Output: output, Status: "completed", Language: "text"}}
+	tool := &contracts.ToolCall{Kind: kind, Name: name, Summary: summary, Command: command, Path: file, Args: args, Output: output, Status: "completed", Language: "text"}
+	if kind == contracts.ToolReadFile {
+		tool.ReadLines = strings.Count(strings.TrimSuffix(output, "\n"), "\n") + 1
+	}
+	return contracts.Block{Kind: "tool", Tool: tool}
 }
 
 func taskBlocks(task agentTask, project, before, after string) []contracts.Block {
