@@ -342,6 +342,23 @@ func safePath(root, name string) (string, error) {
 }
 
 func treeDigest(root string) (string, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return "", err
+	}
+	info, err := os.Lstat(root)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return "", errors.New("artifact root must be a real directory")
+	}
+	// Resolve caller-owned parent aliases once. Descendant link targets use
+	// EvalSymlinks too, so containment compares the same physical namespace.
+	root, err = filepath.EvalSymlinks(root)
+	if err != nil {
+		return "", err
+	}
 	var paths []string
 	if err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {

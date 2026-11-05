@@ -168,3 +168,48 @@ func TestArtifactDigestBindsContainedSymlinksAndRejectsEscapes(t *testing.T) {
 		t.Fatal("artifact digest traversed an external symbolic link")
 	}
 }
+
+func TestArtifactDigestResolvesParentAliasesWithoutAllowingEscapes(t *testing.T) {
+	t.Parallel()
+	parent := t.TempDir()
+	root := filepath.Join(parent, "bundle")
+	if err := os.Mkdir(root, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "actual.txt"), []byte("fixture"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "linked.txt")
+	if err := os.Symlink("actual.txt", link); err != nil {
+		t.Skip("host cannot create symbolic links:", err)
+	}
+	alias := filepath.Join(t.TempDir(), "parent")
+	if err := os.Symlink(parent, alias); err != nil {
+		t.Fatal(err)
+	}
+	direct, err := treeDigest(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootAlias := filepath.Join(t.TempDir(), "root-link")
+	if err := os.Symlink(root, rootAlias); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := treeDigest(rootAlias); err == nil {
+		t.Fatal("artifact root itself may not be a symbolic link")
+	}
+	aliasedRoot := filepath.Join(alias, "bundle")
+	throughAlias, err := treeDigest(aliasedRoot)
+	if err != nil || throughAlias != direct {
+		t.Fatalf("parent alias changed the contained artifact: direct=%s alias=%s err=%v", direct, throughAlias, err)
+	}
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(t.TempDir(), link); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := treeDigest(aliasedRoot); err == nil {
+		t.Fatal("parent normalization allowed an escaping artifact link")
+	}
+}
