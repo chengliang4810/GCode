@@ -141,23 +141,7 @@ func (a *App) linkConfig(sessionID, documentPath string, services ui.Services) l
 			if project.ID != source.ProjectID {
 				continue
 			}
-			var matches []string
-			for _, file := range a.state.Files {
-				if file.ProjectID != project.ID || file.Kind == "directory" {
-					continue
-				}
-				candidate, _, _, candidateErr := linktarget.ResolveFile(file.Path, project.Path)
-				if candidateErr != nil {
-					continue
-				}
-				if sameLinkPath(candidate, absolute) {
-					destination.KnownFile = true
-				}
-				if strings.EqualFold(path.Base(candidate), path.Base(absolute)) {
-					matches = append(matches, candidate)
-				}
-			}
-			destination.Label = disambiguatedLinkLabel(absolute, matches)
+			destination.KnownFile, destination.Label = a.transcriptFiles(project).lookup(absolute)
 		}
 		return destination, true
 	}

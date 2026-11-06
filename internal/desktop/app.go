@@ -134,6 +134,7 @@ type App struct {
 	md                                                      markdown.Options
 	userMD                                                  markdown.Options
 	linkOptions                                             map[string]*markdown.Options
+	linkFiles                                               map[string]*transcriptFileIndex
 	linkSource                                              string
 	linkSelection                                           *linkui.Selection
 	// transcriptSelections are the selection scopes of the open transcripts
@@ -402,6 +403,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.linkFiles = nil
 		a.clearSessionDetailsLoading(s)
 		for sessionID := range a.trajectoryViews {
 			if !a.hasSession(sessionID) {
