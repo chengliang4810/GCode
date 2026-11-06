@@ -71,7 +71,7 @@ func assertTurnReferences(t *testing.T, snapshot contracts.Snapshot) {
 
 func TestDefaultAgentTasksHaveDistinctTracesAndTruthfulSummaries(t *testing.T) {
 	s := newTestServer(t, Options{})
-	snapshot, _ := s.Snapshot(context.Background())
+	snapshot := snapshotWithAllSessions(t, s)
 	assertTurnReferences(t, snapshot)
 	finals := make(map[string]bool)
 	traces := make(map[string]bool)
@@ -121,7 +121,7 @@ func TestAgentScenesAndForkKeepTurnOwnership(t *testing.T) {
 	for _, scenario := range []string{"default", "transcript", "showcase", "loading", "questions", "permissions", "error", "stress"} {
 		t.Run(scenario, func(t *testing.T) {
 			s := newTestServer(t, Options{Scenario: scenario})
-			snapshot, _ := s.Snapshot(context.Background())
+			snapshot := snapshotWithAllSessions(t, s)
 			assertTurnReferences(t, snapshot)
 		})
 	}
@@ -130,7 +130,7 @@ func TestAgentScenesAndForkKeepTurnOwnership(t *testing.T) {
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
-	snapshot, _ := s.Snapshot(ctx)
+	snapshot := snapshotWithAllSessions(t, s)
 	assertTurnReferences(t, snapshot)
 }
 
@@ -147,7 +147,7 @@ func TestNewSendStreamsTypedActivityAndFinalReply(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	snapshot := await(t, events, func(v contracts.Snapshot) bool {
+	_ = await(t, events, func(v contracts.Snapshot) bool {
 		for _, r := range v.Runs {
 			if r.ID == run.ID {
 				return r.Status == "completed"
@@ -155,6 +155,7 @@ func TestNewSendStreamsTypedActivityAndFinalReply(t *testing.T) {
 		}
 		return false
 	})
+	snapshot := snapshotWithAllSessions(t, s)
 	assertTurnReferences(t, snapshot)
 	messages := snapshot.Messages[run.SessionID]
 	reply := messages[len(messages)-1]
@@ -175,14 +176,15 @@ func TestNewSendStreamsTypedActivityAndFinalReply(t *testing.T) {
 func TestPendingAnswerContinuesSameTurn(t *testing.T) {
 	s := newTestServer(t, Options{Scenario: "questions", Instant: true})
 	ctx := context.Background()
-	before, _ := s.Snapshot(ctx)
+	before := snapshotForSessions(t, s, "chat-0")
 	pending := before.Messages["chat-0"][len(before.Messages["chat-0"])-1]
 	events, _ := s.Subscribe(ctx)
 	<-events
 	if err := s.Execute(ctx, contracts.Command{Kind: "request.answer", ID: "question-layout", QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"Keep the current layout"}}}}); err != nil {
 		t.Fatal(err)
 	}
-	after := await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })
+	_ = await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })
+	after := snapshotForSessions(t, s, "chat-0")
 	if len(after.Runs) != len(before.Runs) {
 		t.Fatal("answer split one turn into a second run")
 	}
@@ -199,11 +201,11 @@ func TestLiveTraceStopsWithoutLateActivity(t *testing.T) {
 	if err := s.Stop(ctx, "chat-0"); err != nil {
 		t.Fatal(err)
 	}
-	before, _ := s.Snapshot(ctx)
+	before := snapshotForSessions(t, s, "chat-0")
 	if s.applyActivity("chat-0", "live-turn", contracts.Block{ID: "late", Kind: "reasoning", Text: "late"}, true, 9000) {
 		t.Fatal("stopped live run accepted activity")
 	}
-	after, _ := s.Snapshot(ctx)
+	after := snapshotForSessions(t, s, "chat-0")
 	if !reflect.DeepEqual(before, after) {
 		t.Fatal("stale step mutated stopped state")
 	}
@@ -215,10 +217,9 @@ func TestLiveTraceStopsWithoutLateActivity(t *testing.T) {
 }
 
 func TestActivityMetadataIsOwnedAndPersists(t *testing.T) {
-	ctx := context.Background()
 	statePath := filepath.Join(t.TempDir(), "state.json")
 	s := newTestServer(t, Options{StatePath: statePath})
-	copy1, _ := s.Snapshot(ctx)
+	copy1 := snapshotWithAllSessions(t, s)
 	changedDiff, changedExit := false, false
 	for _, messages := range copy1.Messages {
 		for _, message := range messages {
@@ -240,7 +241,7 @@ func TestActivityMetadataIsOwnedAndPersists(t *testing.T) {
 	if !changedDiff || !changedExit {
 		t.Fatal("ownership fixture omitted diff or exit code")
 	}
-	original, _ := s.Snapshot(ctx)
+	original := snapshotWithAllSessions(t, s)
 	for _, messages := range original.Messages {
 		for _, message := range messages {
 			for _, block := range message.Blocks {
@@ -263,7 +264,7 @@ func TestActivityMetadataIsOwnedAndPersists(t *testing.T) {
 		t.Fatal(err)
 	}
 	restored := newTestServer(t, Options{StatePath: statePath})
-	after, _ := restored.Snapshot(ctx)
+	after := snapshotWithAllSessions(t, restored)
 	assertTurnReferences(t, after)
 	if !reflect.DeepEqual(original.Messages, after.Messages) || !reflect.DeepEqual(original.Runs, after.Runs) {
 		t.Fatal("recorded activities changed during persistence round trip")
@@ -296,7 +297,7 @@ func TestActiveToolCancellationAndForkHaveSettledTiming(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			snapshot, _ := s.Snapshot(ctx)
+			snapshot := snapshotWithAllSessions(t, s)
 			assertTurnReferences(t, snapshot)
 		})
 	}

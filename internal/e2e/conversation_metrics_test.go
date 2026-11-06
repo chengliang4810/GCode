@@ -82,16 +82,40 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 				}
 			}
 			snapshot, _ := core.Snapshot(ctx)
-			if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{ProjectID: snapshot.Projects[0].ID, ModelID: "metrics/model", Text: "Show full metrics"}}); err != nil {
+			requestID := "metrics-full"
+			if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{RequestID: requestID, ProjectID: snapshot.Projects[0].ID, ModelID: "metrics/model", Text: "Show full metrics"}}); err != nil {
 				t.Fatal(err)
 			}
+			snapshot, err = core.Snapshot(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(snapshot.Sessions) != 1 {
+				t.Fatalf("metrics fixture created %d sessions, want 1", len(snapshot.Sessions))
+			}
+			sessionID := snapshot.Sessions[0].ID
+			var session contracts.Session
 			deadline := time.Now().Add(stateTimeout)
 			for {
-				snapshot, err = core.Snapshot(ctx)
+				snapshot, err = core.Snapshot(ctx, sessionID)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if len(snapshot.Runs) > 0 && snapshot.Runs[0].Status != "running" {
+				session = contracts.Session{}
+				for _, candidate := range snapshot.Sessions {
+					if candidate.ID == sessionID {
+						session = candidate
+						break
+					}
+				}
+				turnCompleted := false
+				for _, run := range snapshot.Runs {
+					if run.SessionID == sessionID && run.RequestID == requestID {
+						turnCompleted = run.Status == "completed"
+						break
+					}
+				}
+				if session.Status == contracts.Idle && session.LastOutcome == "completed" && turnCompleted {
 					break
 				}
 				if time.Now().After(deadline) {
@@ -99,10 +123,14 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 				}
 				time.Sleep(15 * time.Millisecond)
 			}
-			if calls.Load() != 7 || snapshot.Runs[0].Status != "completed" {
-				t.Fatalf("tool loop failed: %+v", snapshot.Runs)
+			if calls.Load() != 7 || session.LastOutcome != "completed" {
+				t.Fatalf("tool loop failed: outcome=%s calls=%d runs=%+v", session.LastOutcome, calls.Load(), snapshot.Runs)
 			}
-			sessionID, replyID := snapshot.Sessions[0].ID, ""
+			replyID := ""
+			snapshot, err = core.Snapshot(ctx, sessionID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			for _, message := range snapshot.Messages[sessionID] {
 				if message.Role == "assistant" {
 					replyID = message.ID
@@ -318,19 +346,41 @@ func TestDesktopLocalConversationMetricsVisibility(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			requestID := "metrics-failure"
 			if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
-				ProjectID: snapshot.Projects[0].ID, ModelID: "metrics/model", Text: "Fail without usage",
+				RequestID: requestID, ProjectID: snapshot.Projects[0].ID, ModelID: "metrics/model", Text: "Fail without usage",
 			}}); err != nil {
 				t.Fatal(err)
 			}
-			var sessionID string
+			snapshot, err = core.Snapshot(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(snapshot.Sessions) != 1 {
+				t.Fatalf("metrics visibility fixture created %d sessions, want 1", len(snapshot.Sessions))
+			}
+			sessionID := snapshot.Sessions[0].ID
+			var session contracts.Session
 			for {
-				snapshot, err = core.Snapshot(ctx)
+				snapshot, err = core.Snapshot(ctx, sessionID)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if len(snapshot.Runs) == 1 && snapshot.Runs[0].Status == "failed" {
-					sessionID = snapshot.Runs[0].SessionID
+				session = contracts.Session{}
+				for _, candidate := range snapshot.Sessions {
+					if candidate.ID == sessionID {
+						session = candidate
+						break
+					}
+				}
+				turnFailed := false
+				for _, run := range snapshot.Runs {
+					if run.SessionID == sessionID && run.RequestID == requestID {
+						turnFailed = run.Status == "failed"
+						break
+					}
+				}
+				if session.Status == contracts.Errored && session.LastOutcome == "failed" && turnFailed {
 					break
 				}
 				select {

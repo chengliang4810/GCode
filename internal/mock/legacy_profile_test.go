@@ -2,7 +2,6 @@ package mock
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -13,7 +12,6 @@ import (
 )
 
 func TestLegacyProfileHistoryAndEditsStayIsolatedFromFreshReviewScenario(t *testing.T) {
-	ctx := context.Background()
 	clock := func() time.Time { return time.Date(2026, 10, 28, 8, 0, 0, 0, time.UTC) }
 	legacy := seed(Options{Scenario: "default", Platform: "windows", Architecture: "amd64", Now: clock})
 	legacyReply := "I'll keep the implementation consistent with the existing workspace.\n\nThe layout is organized around three independent regions: sidebar, conversation, and workspace."
@@ -58,7 +56,7 @@ func TestLegacyProfileHistoryAndEditsStayIsolatedFromFreshReviewScenario(t *test
 		t.Fatal(err)
 	}
 	normal := newTestServer(t, Options{StatePath: statePath, Now: clock})
-	loaded, _ := normal.Snapshot(ctx)
+	loaded := snapshotForSessions(t, normal, "chat-0")
 	if loaded.Sessions[0].Title != "My renamed conversation" || len(loaded.Messages["chat-0"]) != 4 || loaded.Messages["chat-0"][1].Blocks[0].Text != legacyReply || loaded.Messages["chat-0"][3].Blocks[0].Text != "This is stored user history." {
 		t.Fatal("old fixture identification rewrote or removed user history")
 	}
@@ -78,7 +76,7 @@ func TestLegacyProfileHistoryAndEditsStayIsolatedFromFreshReviewScenario(t *test
 		t.Fatal(err)
 	}
 	review := newTestServer(t, Options{Scenario: "default", Now: clock})
-	fresh, _ := review.Snapshot(ctx)
+	fresh := snapshotForSessions(t, review, "chat-0")
 	if fresh.Messages["chat-0"][1].Blocks[0].Kind != "reasoning" || fresh.Messages["chat-0"][len(fresh.Messages["chat-0"])-1].Blocks[0].Text == legacyReply {
 		t.Fatal("fresh review scenario inherited stale persisted fixture text")
 	}

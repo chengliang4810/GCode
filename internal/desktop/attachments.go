@@ -37,6 +37,7 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 	}
 	a.attachmentOpen = pick
 	scope, epoch := a.attachmentScope(), a.draftEpoch
+	sessionScope, sessionGeneration := a.captureSessionScope()
 	if a.attachmentImports == nil {
 		a.attachmentImports = make(map[string]int)
 	}
@@ -58,7 +59,7 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 		if err == nil && (len(request.Paths) > 0 || request.Clipboard != nil) {
 			items, err = importer.ImportAttachments(ctx, request)
 		}
-		snapshot, snapshotErr := a.service.Snapshot(ctx)
+		snapshot, snapshotErr := a.service.Snapshot(ctx, sessionScope...)
 		return func() {
 			if a.closed {
 				return
@@ -75,7 +76,7 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 				a.errorText = err.Error()
 				return
 			}
-			if snapshotErr == nil {
+			if snapshotErr == nil && a.sessionGenerationCurrent(sessionGeneration, sessionScope) {
 				a.apply(snapshot)
 			}
 			if origin != "" && !a.hasSession(origin) {

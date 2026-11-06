@@ -41,33 +41,40 @@ func Midnight(t time.Time) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
 }
 
-// Build counts each execution step once. Forks mint new message IDs but retain
-// execution IDs and the sequence of steps within them. It never
-// attributes old requests to a session's currently selected model.
+// Build projects resident messages to usage records before building the
+// report. It never attributes old requests to a session's currently selected
+// model.
 func Build(messages map[string][]contracts.Message, runs []contracts.Run, now time.Time) Report {
+	return BuildWithRecords(nil, messages, runs, now)
+}
+
+// BuildRecords counts each execution step once from compact usage records.
+// Forks mint new message IDs but retain execution IDs and the sequence of
+// steps within them.
+func BuildRecords(records map[string][]contracts.UsageRecord, runs []contracts.Run, now time.Time) Report {
 	report := Report{Days: make(map[string]Day)}
 	type stepKey struct {
 		execution, message, role string
 		step                     int
 	}
-	unique := make(map[stepKey]contracts.Message)
-	for _, list := range messages {
+	unique := make(map[stepKey]contracts.UsageRecord)
+	for _, list := range records {
 		steps := make(map[string]int)
-		for _, message := range list {
-			key := stepKey{message: message.ID}
-			if message.TurnID != "" {
-				key = stepKey{execution: message.TurnID, role: message.Role, step: steps[message.TurnID]}
-				steps[message.TurnID]++
+		for _, record := range list {
+			key := stepKey{message: record.ID}
+			if record.TurnID != "" {
+				key = stepKey{execution: record.TurnID, role: record.Role, step: steps[record.TurnID]}
+				steps[record.TurnID]++
 			}
-			if old, exists := unique[key]; !exists || messageTokens(message) > messageTokens(old) ||
-				(messageTokens(message) == messageTokens(old) && len(message.Blocks) > len(old.Blocks)) {
-				unique[key] = message
+			if old, exists := unique[key]; !exists || recordTokens(record) > recordTokens(old) ||
+				(recordTokens(record) == recordTokens(old) && record.BlockCount > old.BlockCount) {
+				unique[key] = record
 			}
 		}
 	}
-	ordered := make([]contracts.Message, 0, len(unique))
-	for _, message := range unique {
-		ordered = append(ordered, message)
+	ordered := make([]contracts.UsageRecord, 0, len(unique))
+	for _, record := range unique {
+		ordered = append(ordered, record)
 	}
 	sort.Slice(ordered, func(i, j int) bool {
 		if ordered[i].CreatedAt.Equal(ordered[j].CreatedAt) {
@@ -76,40 +83,36 @@ func Build(messages map[string][]contracts.Message, runs []contracts.Run, now ti
 		return ordered[i].CreatedAt.Before(ordered[j].CreatedAt)
 	})
 	turns := make(map[string]bool)
-	for _, message := range ordered {
-		if message.CreatedAt.After(now) {
+	for _, record := range ordered {
+		if record.CreatedAt.After(now) {
 			continue
 		}
-		input, output := int64(max(0, message.Usage.InputTokens)), int64(max(0, message.Usage.OutputTokens))
+		input, output := int64(max(0, record.Usage.InputTokens)), int64(max(0, record.Usage.OutputTokens))
 		tokens := input + output
 		report.Summary.Input += input
 		report.Summary.Output += output
-		report.Summary.Cached += int64(max(0, message.Usage.CachedTokens))
+		report.Summary.Cached += int64(max(0, record.Usage.CachedTokens))
 		report.Summary.Total += tokens
-		if message.ModelID == "" {
+		if record.ModelID == "" {
 			report.Summary.UnknownModelTokens += tokens
 		}
 		// Undated records remain in the lifetime total, without inventing a day.
-		if message.CreatedAt.IsZero() {
+		if record.CreatedAt.IsZero() {
 			continue
 		}
-		date := Midnight(message.CreatedAt.In(now.Location()))
+		date := Midnight(record.CreatedAt.In(now.Location()))
 		key := Date(date)
 		day := report.Days[key]
 		if day.Models == nil {
 			day = Day{Date: date, Models: make(map[string]int64)}
 		}
 		day.Tokens += tokens
-		day.Models[message.ModelID] += tokens
-		if message.Role == "assistant" && message.TurnID != "" && !turns[message.TurnID] {
+		day.Models[record.ModelID] += tokens
+		if record.Role == "assistant" && record.TurnID != "" && !turns[record.TurnID] {
 			day.Turns++
-			turns[message.TurnID] = true
+			turns[record.TurnID] = true
 		}
-		for _, block := range message.Blocks {
-			if block.Tool != nil {
-				day.Tools++
-			}
-		}
+		day.Tools += max(0, record.ToolCount)
 		report.Days[key] = day
 	}
 	// Completed execution time, summed per original session, excludes idle
@@ -144,8 +147,30 @@ func Build(messages map[string][]contracts.Message, runs []contracts.Run, now ti
 	return report
 }
 
-func messageTokens(message contracts.Message) int64 {
-	return int64(max(0, message.Usage.InputTokens)) + int64(max(0, message.Usage.OutputTokens))
+// BuildWithRecords uses compact records as the history source and replaces a
+// session's records with resident messages when that session is present. This
+// lets streaming detail update usage immediately without loading old bodies.
+func BuildWithRecords(
+	records map[string][]contracts.UsageRecord,
+	messages map[string][]contracts.Message,
+	runs []contracts.Run,
+	now time.Time,
+) Report {
+	if len(messages) == 0 {
+		return BuildRecords(records, runs, now)
+	}
+	merged := make(map[string][]contracts.UsageRecord, len(records)+len(messages))
+	for sessionID, list := range records {
+		merged[sessionID] = list
+	}
+	for sessionID, list := range messages {
+		merged[sessionID] = contracts.UsageRecordsFromMessages(list)
+	}
+	return BuildRecords(merged, runs, now)
+}
+
+func recordTokens(record contracts.UsageRecord) int64 {
+	return int64(max(0, record.Usage.InputTokens)) + int64(max(0, record.Usage.OutputTokens))
 }
 
 // Window fills calendar days rather than elapsed 24-hour intervals (DST safe).

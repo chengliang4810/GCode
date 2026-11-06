@@ -70,20 +70,41 @@ func testDesktopSameNameProviderSwitch(t *testing.T, appearance string) {
 			t.Fatal(err)
 		}
 	}
+	requestID := "provider-failure"
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
-		ModelID: "provider-0/same-name", Text: "First provider failure",
+		RequestID: requestID, ModelID: "provider-0/same-name", Text: "First provider failure",
 	}}); err != nil {
 		t.Fatal(err)
 	}
-	var sessionID string
+	state, err := core.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Sessions) != 1 {
+		t.Fatalf("provider fixture created %d sessions, want 1", len(state.Sessions))
+	}
+	sessionID := state.Sessions[0].ID
 	deadline := time.Now().Add(stateTimeout)
 	for {
-		state, err := core.Snapshot(context.Background())
+		state, err = core.Snapshot(context.Background(), sessionID)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(state.Runs) == 1 && state.Runs[0].Status == "failed" {
-			sessionID = state.Sessions[0].ID
+		var session contracts.Session
+		for _, candidate := range state.Sessions {
+			if candidate.ID == sessionID {
+				session = candidate
+				break
+			}
+		}
+		turnFailed := false
+		for _, run := range state.Runs {
+			if run.SessionID == sessionID && run.RequestID == requestID {
+				turnFailed = run.Status == "failed"
+				break
+			}
+		}
+		if session.Status == contracts.Errored && session.LastOutcome == "failed" && turnFailed {
 			messages := state.Messages[sessionID]
 			if last := messages[len(messages)-1]; len(last.Blocks) != 1 || last.Blocks[0].Kind != "error" {
 				t.Fatalf("provider error entered the markdown text path: %+v", last)
@@ -91,7 +112,7 @@ func testDesktopSameNameProviderSwitch(t *testing.T, appearance string) {
 			break
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("first provider did not fail: %+v", state.Runs)
+			t.Fatalf("first provider did not fail: session=%+v runs=%+v", session, state.Runs)
 		}
 		time.Sleep(20 * time.Millisecond)
 	}

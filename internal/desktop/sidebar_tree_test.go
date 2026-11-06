@@ -133,6 +133,7 @@ func TestSidebarExcludesArchivedConversations(t *testing.T) {
 			UpdatedAt: time.Date(2026, 10, 30, 0, i, 0, 0, time.UTC),
 		})
 	}
+	stabilizeFixtureSnapshot(t, a)
 	a.selectSession("archive-00")
 	for _, row := range a.sidebarRows() {
 		if row.Key == "group:archived" || row.Session.Archived {
@@ -243,6 +244,7 @@ func TestSidebarOrganizationRevealWaitsForDestinationAndKeepsOlderPage(t *testin
 		a := sidebarLayoutApp(t)
 		target := a.state.Sessions[6]
 		a.state.Sessions[6].Pinned = true
+		stabilizeFixtureSnapshot(t, a)
 		a.selectSession("extra-0")
 		tt := ui.NewTester(a.View, 900, 600)
 		a.draft = "Keep the other conversation draft"

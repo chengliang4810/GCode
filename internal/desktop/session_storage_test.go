@@ -17,7 +17,7 @@ type sessionStorageNoticeService struct {
 	err      error
 }
 
-func (s *sessionStorageNoticeService) Snapshot(context.Context) (contracts.Snapshot, error) {
+func (s *sessionStorageNoticeService) Snapshot(context.Context, ...string) (contracts.Snapshot, error) {
 	return contracts.CloneSnapshot(s.snapshot), nil
 }
 

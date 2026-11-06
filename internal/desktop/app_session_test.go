@@ -225,8 +225,8 @@ func queueCanvasSend(t *testing.T, a *App) contracts.Command {
 		t.Fatal("canvas send was rejected")
 	}
 	select {
-	case command := <-a.jobs:
-		return command
+	case job := <-a.jobs:
+		return job.Command
 	default:
 		t.Fatal("send did not enqueue a command")
 		return contracts.Command{}

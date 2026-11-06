@@ -42,11 +42,11 @@ func TestModelSettingsAutomaticSaveRetainsNewerKeyAndFailedDraft(t *testing.T) {
 		t.Fatal("a second save started before the first completed")
 	default:
 	}
-	err := core.Execute(context.Background(), first)
+	err := core.Execute(context.Background(), first.Command)
 	if err != nil {
 		t.Fatal(err)
 	}
-	app.commandFinished(first, nil)
+	app.commandFinished(first.Command, nil)
 	snapshot, err := core.Snapshot(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestModelSettingsAutomaticSaveRetainsNewerKeyAndFailedDraft(t *testing.T) {
 	if next.Provider.Provider.APIKey != "first-second" {
 		t.Fatal("automatic save discarded the newer key")
 	}
-	app.commandFinished(next, errors.New("credential write failed"))
+	app.commandFinished(next.Command, errors.New("credential write failed"))
 	tt.Frame()
 	tt.Advance(time.Second)
 	if app.runtimeUI.key != "first-second" || !app.modelsUI.inlineDirty || !tt.HasText("credential write failed") {
@@ -99,7 +99,7 @@ func TestModelSettingsQueuedSaveKeepsNewerInputAndWaitsBeforeNavigation(t *testi
 		app.apply(snapshot)
 		tt.Frame()
 	}
-	complete(<-app.jobs)
+	complete((<-app.jobs).Command)
 	if app.modelsUI.selected != id || !tt.HasText("Base URL") {
 		t.Fatal("completed empty provider creation did not display its editor")
 	}
@@ -114,13 +114,13 @@ func TestModelSettingsQueuedSaveKeepsNewerInputAndWaitsBeforeNavigation(t *testi
 	app.runtimeUI.key = "second-test-key"
 	app.markInlineProviderDirty()
 	app.selectSettingsSection("Skills")
-	complete(firstSave)
+	complete(firstSave.Command)
 	if app.section != "Model settings" || !app.modelsUI.inlineDirty ||
 		app.runtimeUI.key != "second-test-key" || app.runtimeUI.provider.BaseURL != "https://second.example.com/v1" {
 		t.Fatal("an older save discarded newer input or navigated before saving it")
 	}
 	app.saveInlineProvider()
-	complete(<-app.jobs)
+	complete((<-app.jobs).Command)
 	if app.section != "Skills" || app.runtimeUI.key != "" {
 		t.Fatal("navigation did not resume after the current draft was saved")
 	}
@@ -137,7 +137,7 @@ func TestModelSettingsQueuedSaveKeepsNewerInputAndWaitsBeforeNavigation(t *testi
 	if app.route != "settings" {
 		t.Fatal("left settings before the key was saved")
 	}
-	complete(<-app.jobs)
+	complete((<-app.jobs).Command)
 	if app.route != "chat" {
 		t.Fatal("did not leave settings after saving")
 	}

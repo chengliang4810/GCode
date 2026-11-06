@@ -53,7 +53,12 @@ func TestGoalUsesAuthoritativeTodosAndPausesOnResolution(t *testing.T) {
 					}
 				}))
 				sendGoal(t, core, "/goal Verify and deliver")
-				state := waitSubagentState(t, core, runsFinished)
+				summary, err := core.Snapshot(t.Context())
+				if err != nil || len(summary.Sessions) != 1 {
+					t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+				}
+				sessionID := summary.Sessions[0].ID
+				state := waitSubagentState(t, core, runsFinished, sessionID)
 				goal := state.Sessions[0].Goal
 				if resolution != "" {
 					if goal.Status != contracts.GoalPaused || goal.Reason != "Waiting for required access." ||
@@ -94,7 +99,14 @@ func TestGoalRevisionRejectsEditsAndVerdictsAfterObjectiveChangesBack(t *testing
 	case <-time.After(10 * time.Second):
 		t.Fatal("goal never reached verification")
 	}
-	state, _ := core.Snapshot(t.Context())
+	summary, err := core.Snapshot(t.Context())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session disappeared: %+v, %v", summary.Sessions, err)
+	}
+	state, err := core.Snapshot(t.Context(), summary.Sessions[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	session := state.Sessions[0]
 	edit := func(objective string, revision uint64) error {
 		return core.Execute(t.Context(), contracts.Command{Kind: "goal.edit", SessionID: session.ID, ID: session.Goal.ID,
@@ -110,7 +122,7 @@ func TestGoalRevisionRejectsEditsAndVerdictsAfterObjectiveChangesBack(t *testing
 		t.Fatal("changing back to identical text allowed a stale editor to overwrite")
 	}
 	close(release)
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, session.ID)
 	goal := state.Sessions[0].Goal
 	if goal.Revision != 2 || goal.Objective != "Original" || goal.Status != contracts.GoalComplete ||
 		checks.Load() != 2 || work.Load() != 2 || len(goal.Verifications) != 1 {
@@ -136,7 +148,12 @@ func TestGoalCommandsReadAndExplicitReplacePreserveUserIntent(t *testing.T) {
 		}
 	}))
 	sendGoal(t, core, "/goal First goal")
-	state := waitSubagentState(t, core, runsFinished)
+	summary, err := core.Snapshot(t.Context())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+	}
+	sessionID := summary.Sessions[0].ID
+	state := waitSubagentState(t, core, runsFinished, sessionID)
 	session := state.Sessions[0]
 	send := func(text string) error {
 		return core.Execute(t.Context(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
@@ -155,7 +172,7 @@ func TestGoalCommandsReadAndExplicitReplacePreserveUserIntent(t *testing.T) {
 	if err := send("/goal replace"); err == nil {
 		t.Fatal("empty replacement objective was accepted")
 	}
-	unchanged, _ := core.Snapshot(t.Context())
+	unchanged, _ := core.Snapshot(t.Context(), session.ID)
 	if unchanged.Sessions[0].Goal.ID != session.Goal.ID ||
 		len(unchanged.Messages[session.ID]) != len(state.Messages[session.ID]) {
 		t.Fatal("reading or rejecting a replacement changed the goal or transcript")
@@ -163,7 +180,7 @@ func TestGoalCommandsReadAndExplicitReplacePreserveUserIntent(t *testing.T) {
 	if err := send("/goal replace Replacement goal"); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, session.ID)
 	goal := state.Sessions[0].Goal
 	if goal.ID == session.Goal.ID || goal.Objective != "Replacement goal" || goal.Status != contracts.GoalComplete {
 		t.Fatalf("explicit replacement did not start a new goal: %+v", goal)
@@ -206,14 +223,21 @@ func TestGoalEditedDuringWorkReachesExecutorBeforeVerification(t *testing.T) {
 			case <-time.After(10 * time.Second):
 				t.Fatal("initial work request did not start")
 			}
-			state, _ := core.Snapshot(t.Context())
+			summary, err := core.Snapshot(t.Context())
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+			}
+			state, err := core.Snapshot(t.Context(), summary.Sessions[0].ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			session := state.Sessions[0]
 			if err := core.Execute(t.Context(), contracts.Command{Kind: "goal.edit", SessionID: session.ID, ID: session.Goal.ID,
 				GoalEdit: &contracts.GoalEditInput{Objective: "New requirements", ExpectedRevision: 0}}); err != nil {
 				t.Fatal(err)
 			}
 			close(release)
-			state = waitSubagentState(t, core, runsFinished)
+			state = waitSubagentState(t, core, runsFinished, session.ID)
 			if state.Sessions[0].Goal.Status != contracts.GoalComplete || work.Load() != 2 || checks.Load() != 1 {
 				t.Fatalf("edit bypassed the work boundary: goal=%+v work=%d checks=%d", state.Sessions[0].Goal, work.Load(), checks.Load())
 			}

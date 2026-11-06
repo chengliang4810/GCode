@@ -10,6 +10,45 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+// fixtureSnapshotService keeps direct fixture edits authoritative for the
+// scoped loads triggered by navigation. The production service remains the
+// delegate for commands and shutdown.
+type fixtureSnapshotService struct {
+	contracts.Service
+	snapshot contracts.Snapshot
+}
+
+func (s fixtureSnapshotService) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.Snapshot{}, err
+	}
+	return contracts.CloneSnapshot(contracts.SessionProjection(s.snapshot, sessionIDs)), nil
+}
+
+func stabilizeFixtureSnapshot(t *testing.T, app *App, sessionIDs ...string) {
+	t.Helper()
+	snapshot := contracts.CloneSnapshot(app.state)
+	service := app.service
+	if len(sessionIDs) > 0 {
+		loaded, err := service.Snapshot(context.Background(), sessionIDs...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snapshot.Messages == nil {
+			snapshot.Messages = make(map[string][]contracts.Message)
+		}
+		for _, id := range sessionIDs {
+			if _, present := snapshot.Messages[id]; present {
+				continue
+			}
+			if messages, present := loaded.Messages[id]; present {
+				snapshot.Messages[id] = messages
+			}
+		}
+	}
+	app.service = fixtureSnapshotService{Service: service, snapshot: snapshot}
+}
+
 func TestComposerProjectHoverClearKeepsDraftAndRemovesTarget(t *testing.T) {
 	a := testApp(t, "default")
 	project := a.state.Projects[0]
@@ -75,6 +114,7 @@ func TestCreatedProjectSelectsNewConversationWithoutChangingExistingSession(t *t
 			request := contracts.ProjectCreate{DeviceID: "remote", Path: "/created", Name: "Created"}
 			project := contracts.Project{ID: "created", DeviceID: request.DeviceID, Path: request.Path, Name: request.Name, Branch: "feature"}
 			a.state.Projects = append(a.state.Projects, project)
+			stabilizeFixtureSnapshot(t, a)
 			a.newProject.submission, a.newProject.submissionID = &request, "create"
 			a.projectOpen = true
 			var err error

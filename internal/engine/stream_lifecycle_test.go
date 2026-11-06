@@ -68,7 +68,7 @@ func TestTurnStaysStreamingAcrossToolRounds(t *testing.T) {
 	for {
 		select {
 		case event := <-events:
-			state, err := core.Snapshot(ctx)
+			state, err := core.Snapshot(ctx, event.SessionID)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -81,8 +81,8 @@ func TestTurnStaysStreamingAcrossToolRounds(t *testing.T) {
 				}
 			}
 			close(toolStarted)
-			waitIdle(t, core)
-			state, _ = core.Snapshot(ctx)
+			waitIdle(t, core, event.SessionID)
+			state, _ = core.Snapshot(ctx, event.SessionID)
 			for _, message := range state.Messages[event.SessionID] {
 				if message.Role == "assistant" && message.Streaming {
 					t.Fatalf("settled message %q still streams", message.ID)

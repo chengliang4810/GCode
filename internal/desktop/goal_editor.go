@@ -67,9 +67,10 @@ func (a *App) saveGoalEditor(sessionID string, state *goalEditorState) {
 	command := contracts.Command{Kind: "goal.edit", SessionID: sessionID, ID: state.goalID, GoalEdit: &edit}
 	submitted := state.draft
 	state.busy, state.failure = true, ""
+	scope, generation := a.captureSessionScope()
 	a.backgroundTask(func() func() {
 		err := a.service.Execute(a.ctx, command)
-		snapshot, snapshotErr := a.service.Snapshot(a.ctx)
+		snapshot, snapshotErr := a.service.Snapshot(a.ctx, scope...)
 		return func() {
 			state.busy = false
 			if err != nil {
@@ -85,7 +86,9 @@ func (a *App) saveGoalEditor(sessionID string, state *goalEditorState) {
 			if state.draft == submitted {
 				state.draft = edit.Objective
 			}
-			a.apply(snapshot)
+			if a.sessionGenerationCurrent(generation, scope) {
+				a.apply(snapshot)
+			}
 		}
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -261,6 +262,7 @@ func (e *Engine) startRunLocked(
 	priorSession := e.state.Sessions[index]
 	priorSession.Goal = priorSession.Goal.Clone()
 	priorHistory, priorContext := e.history[session.ID], e.context[session.ID]
+	priorDirty := maps.Clone(e.sessionDirty)
 	priorRunCount := len(e.state.Runs)
 	e.state.Sessions[index].ReasoningLevel = session.ReasoningLevel
 	e.state.Sessions[index].Status = contracts.Working
@@ -281,6 +283,7 @@ func (e *Engine) startRunLocked(
 		e.state.Sessions[index] = priorSession
 		e.state.Runs = e.state.Runs[:priorRunCount]
 		e.history[session.ID], e.context[session.ID] = priorHistory, priorContext
+		e.sessionDirty = priorDirty
 		cancel()
 		return err
 	}
@@ -670,6 +673,7 @@ func (e *Engine) startRunLocked(
 		}
 		e.mu.Lock()
 		defer e.mu.Unlock()
+		defer e.evictIdleSessionsLocked()
 		if run.goal.id != "" && child == nil {
 			e.restoreGoalInputsLocked(session.ID, run)
 			if goal := e.goalLocked(run.goal); goal != nil {

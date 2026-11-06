@@ -27,16 +27,25 @@ func (e *Engine) reorderSessionLocked(command contracts.Command) error {
 		return errors.New("session group not found")
 	}
 	members := e.groupMembersLocked(input.GroupID)
+	sourceFound := slices.ContainsFunc(members, func(session contracts.Session) bool { return session.ID == source.ID })
+	if input.TargetID != "" && !slices.ContainsFunc(members, func(session contracts.Session) bool { return session.ID == input.TargetID }) {
+		return errors.New("reorder target is not in the destination group")
+	}
+	// The index contains the visible ordering even when the conversation body
+	// is unloaded. Load every affected record before writing its per-session
+	// ordering, while retaining the index projection captured above as the
+	// ordering source of truth.
+	toLoad := slices.Clone(members)
+	if !sourceFound {
+		toLoad = append(toLoad, source)
+	}
+	for _, member := range toLoad {
+		if err := e.ensureSessionDataLocked(member.ID); err != nil {
+			return err
+		}
+	}
 	var err error
 	if input.TargetID != "" {
-		targetFound, sourceFound := false, false
-		for _, session := range members {
-			targetFound = targetFound || session.ID == input.TargetID
-			sourceFound = sourceFound || session.ID == source.ID
-		}
-		if !targetFound {
-			return errors.New("reorder target is not in the destination group")
-		}
 		if !sourceFound {
 			// A cross-group move joins the destination list before the
 			// relative move, so both endpoints exist in it.
@@ -56,6 +65,7 @@ func (e *Engine) reorderSessionLocked(command contracts.Command) error {
 		member := &e.state.Sessions[e.sessionIndex(session.ID)]
 		member.GroupID = input.GroupID
 		member.GroupOrder = rank
+		e.markSessionDirtyLocked(member.ID)
 	}
 	return nil
 }

@@ -272,6 +272,11 @@ func TestFixtureConversationRecordRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	sessionID := restored.Sessions[0].ID
+	restored, err = core.Snapshot(context.Background(), sessionID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	got := restored.Sessions[0]
 	if got.StorageError != "" || got.Goal == nil || got.Goal.Reason != "DISPLAY-ONLY GOAL REASON" ||
 		len(restored.Messages[got.ID]) != 1 || restored.Messages[got.ID][0].Blocks[0].Todos[0].Text != "DISPLAY-ONLY TODO" {

@@ -35,8 +35,8 @@ func (s *pluginUIService) Execute(_ context.Context, command contracts.Command) 
 	return nil
 }
 
-func (s *pluginUIService) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
-	snapshot, err := s.Service.Snapshot(ctx)
+func (s *pluginUIService) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
+	snapshot, err := s.Service.Snapshot(ctx, sessionIDs...)
 	snapshot.Plugins = s.state.Clone()
 	return snapshot, err
 }

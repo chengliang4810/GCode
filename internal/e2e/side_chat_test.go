@@ -81,6 +81,10 @@ func TestDesktopLocalSideChat(t *testing.T) {
 				}
 				time.Sleep(20 * time.Millisecond)
 			}
+			snapshot, err = core.Snapshot(ctx, parent.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if err := core.Close(); err != nil {
 				t.Fatal(err)
 			}
@@ -124,6 +128,9 @@ func TestDesktopLocalSideChat(t *testing.T) {
 			})
 			app.act("titlebar-right-pane", "press", "")
 			app.waitKey("side-chat-launcher")
+			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
+				t.Fatal(err)
+			}
 			app.capture("launcher")
 			app.act("side-chat-launcher", "press", "")
 			var child string

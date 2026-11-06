@@ -74,7 +74,11 @@ func TestHooksExecuteFromUserSettingsInRealEngineLifecycle(t *testing.T) {
 	// Mutating the caller's slice must not change the accepted configuration.
 	settings.Hooks[0].Args[0] = "caller mutation"
 	sendGoal(t, core, "Write proof.txt, then inspect missing.txt")
-	state = waitSubagentState(t, core, runsFinished)
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+	}
+	state = waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
 	if state.Runs[0].Status != "completed" || requests.Load() != 3 {
 		t.Fatalf("run failed: %+v requests=%d", state.Runs, requests.Load())
 	}
@@ -147,18 +151,24 @@ func TestUserPromptHookDenialStopsBeforeModelRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	sendGoal(t, core, "blocked request")
-	state = waitSubagentState(t, core, runsFinished)
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("denied conversation was not created: %+v, %v", summary.Sessions, err)
+	}
+	sessionID := summary.Sessions[0].ID
+	releaseView := pinSessionView(t, core, sessionID)
+	defer releaseView()
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	if requests.Load() != 0 || state.Runs[0].Status != "failed" ||
 		!strings.Contains(state.Runs[0].Error, "local policy") {
 		t.Fatalf("hook denial was accepted as success: requests=%d runs=%+v", requests.Load(), state.Runs)
 	}
-	sessionID := state.Sessions[0].ID
 	if err := core.Execute(context.Background(), contracts.Command{
 		Kind: "message.send", Send: &contracts.SendRequest{SessionID: sessionID, Text: "allowed request"},
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 2 && runsFinished(snapshot) })
+	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 2 && runsFinished(snapshot) }, sessionID)
 	if leaked.Load() || requests.Load() != 1 || state.Runs[1].Status != "completed" {
 		t.Fatalf("denied input leaked into a later model call: leaked=%v requests=%d runs=%+v", leaked.Load(), requests.Load(), state.Runs)
 	}
@@ -206,6 +216,8 @@ func TestQueuedHookDenialsDoNotLeakUncheckedBatchInputs(t *testing.T) {
 	}
 	state, _ = core.Snapshot(context.Background())
 	sessionID := state.Sessions[0].ID
+	releaseView := pinSessionView(t, core, sessionID)
+	defer releaseView()
 	for _, text := range []string{"DENIED QUEUED", "APPROVED QUEUED"} {
 		if err := core.Execute(context.Background(), contracts.Command{
 			Kind: "message.send", Send: &contracts.SendRequest{SessionID: sessionID, Text: text},
@@ -214,7 +226,7 @@ func TestQueuedHookDenialsDoNotLeakUncheckedBatchInputs(t *testing.T) {
 		}
 	}
 	close(release)
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	if state.Runs[0].Status != "failed" {
 		t.Fatal("queued denial did not stop the run")
 	}
@@ -225,7 +237,7 @@ func TestQueuedHookDenialsDoNotLeakUncheckedBatchInputs(t *testing.T) {
 	}
 	// The queue hands over one row per turn: the denial fails the run and the
 	// accepted row waits for the next send instead of riding along with it.
-	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 2 && runsFinished(snapshot) })
+	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 2 && runsFinished(snapshot) }, sessionID)
 	if leaked.Load() || requests.Load() != 3 || state.Runs[1].Status != "completed" {
 		t.Fatalf("queued denial leaked into future execution: leaked=%v requests=%d runs=%+v", leaked.Load(), requests.Load(), state.Runs)
 	}
@@ -290,7 +302,11 @@ func TestGoalHookRejectionClearsOnlyTheInitialGoalInput(t *testing.T) {
 					if event.Kind != "run.started" || event.Snapshot == nil {
 						continue
 					}
-					goal := event.Snapshot.Sessions[0].Goal
+					scoped, err := core.Snapshot(context.Background(), event.SessionID)
+					if err != nil || len(scoped.Sessions) == 0 {
+						t.Fatalf("goal session was not available: %+v, %v", scoped.Sessions, err)
+					}
+					goal := scoped.Sessions[0].Goal
 					if goal == nil || goal.InitialInputID == "" {
 						t.Fatal("goal initial input has no explicit identity")
 					}
@@ -312,7 +328,7 @@ func TestGoalHookRejectionClearsOnlyTheInitialGoalInput(t *testing.T) {
 				}
 				close(release)
 			}
-			state = waitSubagentState(t, core, runsFinished)
+			state = waitSubagentState(t, core, runsFinished, sessionID)
 			goal := state.Sessions[0].Goal
 			if initial {
 				if goal != nil || requests.Load() != 0 {

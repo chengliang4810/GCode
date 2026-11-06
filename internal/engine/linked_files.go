@@ -70,6 +70,7 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 		rootID = session.StorageRootID
 	}
 	dataRoot, err := e.storage.Resolve(rootID)
+	e.evictIdleSessionsLocked()
 	e.mu.Unlock()
 	if err != nil {
 		return result, err

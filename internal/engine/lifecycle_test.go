@@ -126,8 +126,16 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 			if err = core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{Text: "Write once then confirm", ModelID: "p/m"}}); err != nil {
 				t.Fatal(err)
 			}
-			snapshot := waitIdle(t, core)
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			snapshot := waitIdle(t, core, summary.Sessions[0].ID)
 			run := snapshot.Runs[0]
+			snapshot, err = core.Snapshot(ctx, run.SessionID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if run.Status != "completed" || requests.Load() != 3 {
 				t.Fatalf("interrupted response was not recovered: %+v, requests=%d", run, requests.Load())
 			}
@@ -145,8 +153,12 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 				t.Fatal("incomplete tool call was executed")
 			}
 			calls := 0
-			for _, message := range core.history[run.SessionID] {
-				calls += len(message.Calls)
+			for _, message := range snapshot.Messages[run.SessionID] {
+				for _, block := range message.Blocks {
+					if block.Tool != nil && block.Tool.Name == "Write" {
+						calls++
+					}
+				}
 			}
 			if calls != 1 {
 				t.Fatal("recovery repeated a completed tool call")
@@ -221,7 +233,7 @@ func TestRemoveQueuedMessagePreventsExecutionAndStopCancels(t *testing.T) {
 	if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{Text: "must not execute", SessionID: sid}}); err != nil {
 		t.Fatal(err)
 	}
-	state, _ = core.Snapshot(ctx)
+	state, _ = core.Snapshot(ctx, sid)
 	if len(state.Queue) != 1 {
 		t.Fatal("missing queued message")
 	}
@@ -231,7 +243,7 @@ func TestRemoveQueuedMessagePreventsExecutionAndStopCancels(t *testing.T) {
 	if err := core.Execute(ctx, contracts.Command{Kind: "message.stop", SessionID: sid}); err != nil {
 		t.Fatal(err)
 	}
-	state = waitIdle(t, core)
+	state = waitIdle(t, core, sid)
 	if requests.Load() != 1 || state.Runs[0].Status != "interrupted" || len(state.Queue) != 0 {
 		t.Fatalf("stop/queue: %+v", state.Runs)
 	}
@@ -363,10 +375,18 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 	if err = core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{Text: "Ask", ModelID: "p/m"}}); err != nil {
 		t.Fatal(err)
 	}
-	var questionID string
+	var questionID, sessionID string
 	deadline := time.Now().Add(5 * time.Second)
 	for questionID == "" && time.Now().Before(deadline) {
-		state, _ := core.Snapshot(ctx)
+		summary, _ := core.Snapshot(ctx)
+		if len(summary.Sessions) > 0 {
+			sessionID = summary.Sessions[0].ID
+		}
+		if sessionID == "" {
+			time.Sleep(10 * time.Millisecond)
+			continue
+		}
+		state, _ := core.Snapshot(ctx, sessionID)
 		for _, messages := range state.Messages {
 			for _, message := range messages {
 				for _, block := range message.Blocks {
@@ -400,7 +420,7 @@ func TestQuestionAnswerIsRecordedOnceBeforeContinuing(t *testing.T) {
 	if err = core.Execute(ctx, answer); err == nil {
 		t.Fatal("question accepted two answers")
 	}
-	state := waitIdle(t, core)
+	state := waitIdle(t, core, sessionID)
 	if state.Runs[0].Status != "completed" || calls.Load() != 2 {
 		t.Fatalf("%+v", state.Runs)
 	}

@@ -26,6 +26,7 @@ func (a *App) sideAttachmentWork(sessionID string, state *sideComposerState, req
 	state.Importing++
 	request = request.Clone()
 	request.SessionID = sessionID
+	scope, generation := a.captureSessionScope()
 	window, ctx, picker := a.win, a.ctx, a.pickAttachmentFiles
 	work := func() func() {
 		var err error
@@ -43,7 +44,7 @@ func (a *App) sideAttachmentWork(sessionID string, state *sideComposerState, req
 		if err == nil && (len(request.Paths) > 0 || request.Clipboard != nil) {
 			items, err = importer.ImportAttachments(ctx, request)
 		}
-		snapshot, snapshotErr := a.service.Snapshot(ctx)
+		snapshot, snapshotErr := a.service.Snapshot(ctx, scope...)
 		return func() {
 			if a.closed {
 				return
@@ -56,7 +57,7 @@ func (a *App) sideAttachmentWork(sessionID string, state *sideComposerState, req
 				state.Failure = err.Error()
 				return
 			}
-			if snapshotErr == nil {
+			if snapshotErr == nil && a.sessionGenerationCurrent(generation, scope) {
 				a.apply(snapshot)
 			}
 			exists := false

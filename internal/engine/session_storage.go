@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"os"
 	"path/filepath"
@@ -22,10 +23,10 @@ const engineDiskFormat = 2
 
 // 配置与小型索引固定在入口；完整对话必须留在创建时绑定的运行根。
 type diskState struct {
-	Format    int                `json:"format"`
-	Snapshot  contracts.Snapshot `json:"snapshot"`
-	Providers []model.Provider   `json:"providers"`
-	Records   map[string]string  `json:"records"`
+	Format    int               `json:"format"`
+	Snapshot  persistedSnapshot `json:"snapshot"`
+	Providers []model.Provider  `json:"providers"`
+	Records   map[string]string `json:"records"`
 }
 
 type sessionDisk struct {
@@ -63,14 +64,14 @@ func (e *Engine) loadPersistence() error {
 		return errors.New("unsupported engine storage format; existing data was not changed")
 	}
 	e.indexHash, e.indexHashKnown = sha256.Sum256(data), true
-	e.state, e.providers = disk.Snapshot, disk.Providers
+	e.state, e.providers = disk.Snapshot.restore(e.state), disk.Providers
 	e.sessionRecords = disk.Records
 	if e.sessionRecords == nil {
 		return errors.New("engine index is missing conversation records")
 	}
 	e.state.Messages = make(map[string][]contracts.Message)
 	e.state.ContextUsage = make(map[string]contracts.ContextUsage)
-	e.state.Runs, e.state.Queue = nil, nil
+	e.state.Queue = nil
 	e.state.ModelRequests = nil
 	seen := make(map[string]bool, len(e.state.Sessions))
 	for i := range e.state.Sessions {
@@ -79,8 +80,12 @@ func (e *Engine) loadPersistence() error {
 			return errors.New("session index has invalid storage identity")
 		}
 		seen[session.ID] = true
-		if err := e.loadSessionLocked(*session); err != nil {
-			// 历史盘离线只影响所属对话，不能伪造空历史或阻止新盘上的对话。
+		session.ModelRetry = nil
+		session.RunningSubagents = 0
+		if session.Status == contracts.Working || session.Status == contracts.AwaitingInput {
+			session.Status, session.LastOutcome = contracts.Idle, "interrupted"
+		}
+		if _, err := e.storage.Resolve(session.StorageRootID); err != nil {
 			session.StorageError = err.Error()
 		}
 	}
@@ -88,42 +93,57 @@ func (e *Engine) loadPersistence() error {
 }
 
 func (e *Engine) loadSessionLocked(session contracts.Session) error {
-	root, err := e.storage.Resolve(session.StorageRootID)
+	record := e.sessionRecords[session.ID]
+	disk, err := e.readSessionDisk(session, record)
 	if err != nil {
 		return err
+	}
+	e.installSessionDiskLocked(disk, record)
+	return nil
+}
+
+func (e *Engine) readSessionDisk(session contracts.Session, record string) (sessionDisk, error) {
+	var disk sessionDisk
+	root, err := e.storage.Resolve(session.StorageRootID)
+	if err != nil {
+		return disk, err
 	}
 	handle, err := os.OpenRoot(root)
 	if err != nil {
-		return err
+		return disk, err
 	}
 	defer handle.Close()
-	record := e.sessionRecords[session.ID]
 	if !validRecordHash(record) {
-		return errors.New("conversation record is missing from the index")
+		return disk, errors.New("conversation record is missing from the index")
 	}
 	folder, err := openSessionDirectory(handle, session.ID)
 	if err != nil {
-		return err
+		return disk, err
 	}
 	defer folder.Close()
 	data, err := folder.ReadFile(record + ".json")
 	if err != nil {
-		return fmt.Errorf("read conversation %s: %w", session.ID, err)
-	}
-	var disk sessionDisk
-	if err := json.Unmarshal(data, &disk); err != nil {
-		return fmt.Errorf("read conversation %s: %w", session.ID, err)
+		return disk, fmt.Errorf("read conversation %s: %w", session.ID, err)
 	}
 	hash := sha256.Sum256(data)
 	if hex.EncodeToString(hash[:]) != record {
-		return errors.New("conversation record checksum does not match its index")
+		return disk, errors.New("conversation record checksum does not match its index")
+	}
+	if err := json.Unmarshal(data, &disk); err != nil {
+		return disk, fmt.Errorf("read conversation %s: %w", session.ID, err)
 	}
 	if disk.Format != engineDiskFormat || disk.SessionID != session.ID || disk.RootID != session.StorageRootID ||
 		disk.Session.ID != session.ID || disk.Session.StorageRootID != session.StorageRootID {
-		return errors.New("conversation storage identity does not match its index")
+		return disk, errors.New("conversation storage identity does not match its index")
 	}
+	return disk, nil
+}
+
+func (e *Engine) installSessionDiskLocked(disk sessionDisk, record string) {
+	session := disk.Session
 	e.state.Messages[session.ID] = disk.Messages
 	e.history[session.ID], e.context[session.ID] = disk.History, disk.Context
+	e.state.Runs = slices.DeleteFunc(e.state.Runs, func(run contracts.Run) bool { return run.SessionID == session.ID })
 	e.state.Runs = append(e.state.Runs, disk.Runs...)
 	e.state.ModelRequests = append(e.state.ModelRequests, disk.ModelRequests...)
 	e.state.Queue = append(e.state.Queue, disk.Queue...)
@@ -133,9 +153,11 @@ func (e *Engine) loadSessionLocked(session contracts.Session) error {
 	e.state.Sessions[e.sessionIndex(session.ID)] = disk.Session
 	e.loadedSessions[session.ID] = true
 	// Record the committed bytes before recovery changes any shared slices.
+	var hash [32]byte
+	decoded, _ := hex.DecodeString(record)
+	copy(hash[:], decoded)
 	e.sessionHashes[session.ID] = hash
 	e.reconcileSessionLocked(session.ID)
-	return nil
 }
 
 func (e *Engine) ensureSessionDataLocked(sessionID string) error {
@@ -158,18 +180,38 @@ func (e *Engine) ensureSessionDataLocked(sessionID string) error {
 	return nil
 }
 
+// markSessionDirtyLocked records conversation-owned state that must be included
+// in the next persistence attempt. The caller holds Engine.mu.
+func (e *Engine) markSessionDirtyLocked(sessionIDs ...string) {
+	if len(sessionIDs) == 0 {
+		return
+	}
+	if e.sessionDirty == nil {
+		e.sessionDirty = make(map[string]struct{}, len(sessionIDs))
+	}
+	for _, sessionID := range sessionIDs {
+		if sessionID != "" {
+			e.sessionDirty[sessionID] = struct{}{}
+		}
+	}
+}
+
 func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	e.persistErrors = nil
+	e.markSessionDirtyLocked(required...)
 	records := maps.Clone(e.sessionRecords)
 	hashes := maps.Clone(e.sessionHashes)
+	dirty := maps.Clone(e.sessionDirty)
 	if records == nil {
 		records = map[string]string{}
 	}
 	if hashes == nil {
 		hashes = map[string][32]byte{}
 	}
-	type pendingRecord struct{ rootID, sessionID, name string }
+	type pendingRecord struct{ rootID, sessionID, previous, name string }
 	var written []pendingRecord
+	var unavailable []string
+	saved := make(map[string]struct{}, len(dirty))
 	defer func() {
 		if resultErr == nil {
 			return
@@ -180,6 +222,9 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	}()
 	for _, session := range e.state.Sessions {
 		if !e.loadedSessions[session.ID] {
+			continue
+		}
+		if _, ok := dirty[session.ID]; !ok {
 			continue
 		}
 		disk := sessionDisk{
@@ -221,9 +266,11 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 		}
 		hash := sha256.Sum256(data)
 		if previous, ok := e.sessionHashes[session.ID]; ok && previous == hash {
+			saved[session.ID] = struct{}{}
 			continue
 		}
 		record := hex.EncodeToString(hash[:])
+		previous := records[session.ID]
 		err = e.writeSessionRecord(session, record, data)
 		if err != nil {
 			e.state.Sessions[e.sessionIndex(session.ID)].StorageError = err.Error()
@@ -232,36 +279,15 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 				return fmt.Errorf("save conversation %s: %w", session.ID, err)
 			}
 			// An unavailable historical root must not prevent commits on other roots.
+			unavailable = append(unavailable, session.ID)
 			continue
 		}
-		written = append(written, pendingRecord{session.StorageRootID, session.ID, record})
+		written = append(written, pendingRecord{session.StorageRootID, session.ID, previous, record})
 		records[session.ID], hashes[session.ID] = record, hash
+		saved[session.ID] = struct{}{}
 	}
-	snapshot := e.state
-	snapshot.Runtime = nil
-	snapshot.CustomProviders = nil
-	snapshot.UserResources = contracts.UserResourceState{}
-	snapshot.Plugins = contracts.PluginState{}
-	snapshot.Messages, snapshot.ContextUsage = nil, nil
-	snapshot.Runs, snapshot.Queue = nil, nil
-	snapshot.ModelRequests = nil
-	snapshot.Sessions = slices.Clone(snapshot.Sessions)
-	for i := range snapshot.Sessions {
-		snapshot.Sessions[i].StorageError = ""
-		snapshot.Sessions[i].ModelRetry = nil
-		snapshot.Sessions[i].Goal = nil
-	}
-	// Session-owned diffs and terminal output live with their conversation.
-	// Unowned Git diffs are a refreshable projection of the repository.
-	snapshot.Changes = slices.DeleteFunc(slices.Clone(snapshot.Changes), func(change contracts.Change) bool { return change.SessionID != "" })
-	for i := range snapshot.Changes {
-		snapshot.Changes[i].OldContent, snapshot.Changes[i].NewContent, snapshot.Changes[i].Hunks = "", "", nil
-	}
-	snapshot.Terminals = slices.DeleteFunc(slices.Clone(snapshot.Terminals), func(terminal contracts.Terminal) bool { return terminal.SessionID != "" })
-	// 文件正文只是展示缓存，不得跟随小型配置索引长期增长。
-	snapshot.Files = slices.Clone(snapshot.Files)
-	for i := range snapshot.Files {
-		snapshot.Files[i].Content, snapshot.Files[i].Loaded = "", false
+	snapshot := contracts.Snapshot{
+		Terminals: slices.DeleteFunc(slices.Clone(e.state.Terminals), func(terminal contracts.Terminal) bool { return terminal.SessionID != "" }),
 	}
 	for sessionID := range records {
 		if e.sessionIndex(sessionID) < 0 {
@@ -272,12 +298,43 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	if err := e.persistStandaloneTerminals(&snapshot); err != nil {
 		return err
 	}
-	index, err := json.MarshalIndent(diskState{Format: engineDiskFormat, Snapshot: snapshot, Providers: e.providers, Records: records}, "", "  ")
+	durable := persistenceIndex(e.state)
+	durable.Terminals = snapshot.Terminals
+	indexPath := filepath.Join(e.storage.ConfigDirectory(), "engine.json")
+	if len(unavailable) > 0 {
+		// A record and its index summary commit together. An unrelated online
+		// save must not publish metadata for a historical record we could not
+		// update. This exceptional path reads only the small committed index.
+		data, err := os.ReadFile(indexPath)
+		if err != nil {
+			return err
+		}
+		var committed diskState
+		if err := json.Unmarshal(data, &committed); err != nil {
+			return err
+		}
+		for i, session := range durable.Sessions {
+			if !slices.Contains(unavailable, session.ID) {
+				continue
+			}
+			index := slices.IndexFunc(committed.Snapshot.Sessions, func(old contracts.Session) bool { return old.ID == session.ID })
+			if index < 0 {
+				return fmt.Errorf("committed index is missing conversation %s", session.ID)
+			}
+			durable.Sessions[i] = committed.Snapshot.Sessions[index]
+		}
+		durable.Runs = slices.DeleteFunc(durable.Runs, func(run contracts.Run) bool { return slices.Contains(unavailable, run.SessionID) })
+		for _, run := range committed.Snapshot.Runs {
+			if slices.Contains(unavailable, run.SessionID) {
+				durable.Runs = append(durable.Runs, run)
+			}
+		}
+	}
+	index, err := json.MarshalIndent(diskState{Format: engineDiskFormat, Snapshot: durable, Providers: e.providers, Records: records}, "", "  ")
 	if err != nil {
 		return err
 	}
 	indexHash := sha256.Sum256(index)
-	indexPath := filepath.Join(e.storage.ConfigDirectory(), "engine.json")
 	unchanged := e.indexHashKnown && indexHash == e.indexHash
 	if unchanged {
 		info, statErr := os.Stat(indexPath)
@@ -291,8 +348,16 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	}
 	e.sessionRecords, e.sessionHashes = records, hashes
 	e.commitStandaloneTerminals(&snapshot)
+	for sessionID := range saved {
+		delete(e.sessionDirty, sessionID)
+	}
+	for sessionID := range e.sessionDirty {
+		if e.sessionIndex(sessionID) < 0 {
+			delete(e.sessionDirty, sessionID)
+		}
+	}
 	for _, record := range written {
-		e.cleanSessionRecords(record.rootID, record.sessionID, record.name)
+		e.cleanSessionRecords(record.rootID, record.sessionID, record.previous, record.name)
 	}
 	return nil
 }
@@ -345,7 +410,10 @@ func (e *Engine) removeSessionRecord(rootID, sessionID, record string) {
 	_ = folder.Remove(record + ".json")
 }
 
-func (e *Engine) cleanSessionRecords(rootID, sessionID, current string) {
+func (e *Engine) cleanSessionRecords(rootID, sessionID, previous, current string) {
+	if previous == "" || previous == current || !validRecordHash(previous) {
+		return
+	}
 	directory, err := e.storage.Resolve(rootID)
 	if err != nil {
 		return
@@ -360,28 +428,23 @@ func (e *Engine) cleanSessionRecords(rootID, sessionID, current string) {
 		return
 	}
 	defer folder.Close()
-	dir, err := folder.Open(".")
+	// Only the indexed predecessor may be collected; a hash-shaped filename
+	// found during a directory scan does not grant the application ownership.
+	name := previous + ".json"
+	file, err := folder.Open(name)
 	if err != nil {
 		return
 	}
-	defer dir.Close()
-	names, _ := dir.Readdirnames(-1)
-	for _, name := range names {
-		value := strings.TrimSuffix(name, ".json")
-		if name == value+".json" && validRecordHash(value) && value != current {
-			// Only the application's matching conversation records may be
-			// collected; a hash-shaped filename alone does not grant ownership.
-			data, err := folder.ReadFile(name)
-			if err != nil {
-				continue
-			}
-			hash := sha256.Sum256(data)
-			var record sessionDisk
-			if hex.EncodeToString(hash[:]) == value && json.Unmarshal(data, &record) == nil &&
-				record.Format == engineDiskFormat && record.SessionID == sessionID && record.RootID == rootID {
-				_ = folder.Remove(name)
-			}
-		}
+	digest := sha256.New()
+	if _, err := io.Copy(digest, file); err != nil {
+		_ = file.Close()
+		return
+	}
+	if err := file.Close(); err != nil {
+		return
+	}
+	if hex.EncodeToString(digest.Sum(nil)) == previous {
+		_ = folder.Remove(name)
 	}
 }
 

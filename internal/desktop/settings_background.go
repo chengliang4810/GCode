@@ -53,10 +53,11 @@ func (a *App) backgroundTask(work func() func()) {
 
 func (a *App) backgroundCommand(state *backgroundSettingsState, command contracts.Command, after func()) {
 	command = command.Clone()
+	scope, generation := a.captureSessionScope()
 	state.Error = ""
 	a.backgroundTask(func() func() {
 		err := a.service.Execute(a.ctx, command)
-		snapshot, snapshotErr := a.service.Snapshot(a.ctx)
+		snapshot, snapshotErr := a.service.Snapshot(a.ctx, scope...)
 		return func() {
 			if err != nil {
 				state.Error = err.Error()
@@ -66,7 +67,9 @@ func (a *App) backgroundCommand(state *backgroundSettingsState, command contract
 				state.Error = snapshotErr.Error()
 				return
 			}
-			a.apply(snapshot)
+			if a.sessionGenerationCurrent(generation, scope) {
+				a.apply(snapshot)
+			}
 			if after != nil {
 				after()
 			}

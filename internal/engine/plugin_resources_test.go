@@ -345,6 +345,14 @@ func TestInstalledPluginExecutesSkillHookMCPAndConfiguredSubagent(t *testing.T) 
 	if parentCalls.Load() != 5 || childCalls.Load() != 1 {
 		t.Fatalf("actual calls parent=%d child=%d runs=%+v", parentCalls.Load(), childCalls.Load(), state.Runs)
 	}
+	sessionIDs := make([]string, 0, len(state.Sessions))
+	for _, session := range state.Sessions {
+		sessionIDs = append(sessionIDs, session.ID)
+	}
+	state, err = core.Snapshot(context.Background(), sessionIDs...)
+	if err != nil {
+		t.Fatal(err)
+	}
 	data, err := os.ReadFile(filepath.Join(workspace, "actual.txt"))
 	if err != nil || string(data) != "WRITTEN AFTER HOOK" {
 		t.Fatalf("hook parameter rewrite did not execute: %q %v", data, err)

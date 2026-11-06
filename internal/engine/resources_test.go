@@ -106,12 +106,21 @@ func TestGoalPreservesInlineReferencesAndExecutionInstructions(t *testing.T) {
 	raw := "/goal 比较" + (contracts.PromptReference{Kind: "skill", ID: "A", Label: "A"}).Markdown() +
 		"和" + (contracts.PromptReference{Kind: "skill", ID: "B", Label: "B"}).Markdown() + "的结果"
 	sendGoal(t, core, raw)
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+	}
+	sessionID := summary.Sessions[0].ID
 	state := waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 		return runsFinished(s) && len(s.Sessions) == 1 && s.Sessions[0].Goal != nil && s.Sessions[0].Goal.Status == contracts.GoalComplete
-	})
+	}, sessionID)
 	session := state.Sessions[0]
 	if session.Goal.Objective != "比较A和B的结果" || !strings.Contains(session.Goal.Instructions, "DOC_A") {
 		t.Fatalf("goal semantics changed: %+v", session.Goal)
+	}
+	state, err = core.Snapshot(context.Background(), sessionID)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if got := state.Messages[session.ID][0].Blocks[0].Text; got != raw {
 		t.Fatalf("goal moved inline references: %q", got)

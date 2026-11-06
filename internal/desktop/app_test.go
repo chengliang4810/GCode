@@ -121,7 +121,7 @@ func TestQuestionAndPermissionAnswers(t *testing.T) {
 								t.Fatal(err)
 							}
 							tt.Advance(questionAutoAdvance)
-							state, _ := a.service.Snapshot(context.Background())
+							state, _ := a.service.Snapshot(context.Background(), a.sessionID)
 							answer := ""
 							for _, message := range state.Messages[a.sessionID] {
 								for _, block := range message.Blocks {
@@ -144,7 +144,7 @@ func TestQuestionAndPermissionAnswers(t *testing.T) {
 				if err := tt.Click("Allow once"); err != nil {
 					t.Fatal(err)
 				}
-				state, _ := a.service.Snapshot(context.Background())
+				state, _ := a.service.Snapshot(context.Background(), a.sessionID)
 				for _, message := range state.Messages[a.sessionID] {
 					for _, block := range message.Blocks {
 						if block.Permission != nil && block.Permission.Answer == "Allow once" {

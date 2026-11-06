@@ -20,7 +20,7 @@ type questionUIService struct {
 	failNext bool
 }
 
-func (s *questionUIService) Snapshot(context.Context) (contracts.Snapshot, error) {
+func (s *questionUIService) Snapshot(context.Context, ...string) (contracts.Snapshot, error) {
 	return contracts.CloneSnapshot(s.state), nil
 }
 

@@ -153,19 +153,19 @@ func TestSendQueuedNowStopsTheRunAndOpensTheNextTurn(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	state, _ = core.Snapshot(ctx)
+	state, _ = core.Snapshot(ctx, sessionID)
 	if len(state.Queue) != 2 || state.Queue[0].Text != "queued one" || state.Queue[1].Text != "queued two" {
 		t.Fatalf("queue = %+v", state.Queue)
 	}
 	if err := core.Execute(ctx, contracts.Command{Kind: "queue.send", ID: state.Queue[1].ID}); err != nil {
 		t.Fatal(err)
 	}
-	state, _ = core.Snapshot(ctx)
+	state, _ = core.Snapshot(ctx, sessionID)
 	if len(state.Queue) != 1 || state.Queue[0].Text != "queued one" {
 		t.Fatalf("Send now left %+v, want the earlier row only", state.Queue)
 	}
 	close(release)
-	state = waitQueueDone(t, core)
+	state = waitQueueDone(t, core, sessionID)
 	if len(asked) != 3 {
 		t.Fatalf("model requests = %q, want three turns", asked)
 	}
@@ -193,11 +193,11 @@ func TestSendQueuedNowStopsTheRunAndOpensTheNextTurn(t *testing.T) {
 	}
 }
 
-func waitQueueDone(t *testing.T, core *Engine) contracts.Snapshot {
+func waitQueueDone(t *testing.T, core *Engine, sessionID string) contracts.Snapshot {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for {
-		state, err := core.Snapshot(context.Background())
+		state, err := core.Snapshot(context.Background(), sessionID)
 		if err != nil {
 			t.Fatal(err)
 		}

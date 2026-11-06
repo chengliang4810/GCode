@@ -39,11 +39,11 @@ func (s *cloudNavigationService) Execute(ctx context.Context, command contracts.
 	return s.Service.Execute(ctx, command)
 }
 
-func (s *cloudNavigationService) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (s *cloudNavigationService) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
 	if s.snapshotErr != nil {
 		return contracts.Snapshot{}, s.snapshotErr
 	}
-	snapshot, err := s.Service.Snapshot(ctx)
+	snapshot, err := s.Service.Snapshot(ctx, sessionIDs...)
 	if err == nil && s.adjustSnapshot != nil {
 		s.adjustSnapshot(&snapshot)
 	}

@@ -273,6 +273,7 @@ func (e *Engine) gitCommand(ctx context.Context, command contracts.Command) erro
 				if session.ProjectID == project.ID && (sameRecordedPath(session.CWD, project.Path) || sameRoot) {
 					session.Branch = repo.branch
 					session.SourceContext = sourceContext(repo, session.CWD, session.WorktreeID)
+					e.markSessionDirtyLocked(session.ID)
 				}
 			}
 		}

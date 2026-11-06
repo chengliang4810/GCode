@@ -177,9 +177,15 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 		a.sessionStorageNotice(c, session)
 		pane := transcriptPane{cache: cache, scope: "side:" + sessionID, session: sessionID}
 		a.transcriptScope(c, pane.scope, func() {
-			ui.List(c, list, len(conversation), func(i int) {
-				a.transcriptRowView(c, pane, messages, conversation, i, transcriptRowLayout{padding: 16, nested: true})
-			}).Grow(1).FillWidth().Gap(0).Padding(20, 0)
+			if a.sessionDetailsAreLoading(sessionID) {
+				ui.Column(c).Grow(1).FillWidth().AlignItems(ui.Center).Justify(ui.Center).Children(func() {
+					ui.Text(c, tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
+				})
+			} else {
+				ui.List(c, list, len(conversation), func(i int) {
+					a.transcriptRowView(c, pane, messages, conversation, i, transcriptRowLayout{padding: 16, nested: true})
+				}).Grow(1).FillWidth().Gap(0).Padding(20, 0)
+			}
 		})
 		if session.SubagentType != "" {
 			ui.Row(c).FillWidth().Padding(12, 16).Gap(10).AlignItems(ui.Center).Children(func() {

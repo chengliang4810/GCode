@@ -102,6 +102,10 @@ func (e *Engine) sessionTaskTool(parentID string, inner agent.Tool) agent.Tool {
 		if index < 0 {
 			return model.ToolOutput{}, errors.New("subagent task is no longer available")
 		}
+		if err := e.ensureSessionDataLocked(input.TaskID); err != nil {
+			return model.ToolOutput{}, err
+		}
+		defer e.evictIdleSessionsLocked()
 		session := e.state.Sessions[index]
 		status := "running"
 		if e.runs[input.TaskID] == nil {

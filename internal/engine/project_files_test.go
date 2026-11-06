@@ -31,11 +31,11 @@ func projectFilesTestCore(t *testing.T) *Engine {
 	return core
 }
 
-func waitForProjectFiles(t *testing.T, core *Engine) contracts.Snapshot {
+func waitForProjectFiles(t *testing.T, core *Engine, sessionIDs ...string) contracts.Snapshot {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		state, err := core.Snapshot(t.Context())
+		state, err := core.Snapshot(t.Context(), sessionIDs...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -108,7 +108,8 @@ func TestProjectFileLoadingFailureDoesNotRollbackRegistration(t *testing.T) {
 	core.projectScanner = func(ctx context.Context, project contracts.Project) ([]contracts.File, error) {
 		return []contracts.File{{ID: project.ID + ":partial", ProjectID: project.ID, Path: "partial", Kind: "file"}}, errors.New("fixture file enumeration limit")
 	}
-	if err := core.Execute(t.Context(), contracts.Command{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{Path: t.TempDir()}}); err != nil {
+	projectPath := t.TempDir()
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{Path: projectPath}}); err != nil {
 		t.Fatal(err)
 	}
 	state := waitForProjectFiles(t, core)
@@ -128,7 +129,7 @@ func TestProjectFileLoadingFailureDoesNotRollbackRegistration(t *testing.T) {
 	}
 	defer reopened.Close()
 	restored, err := reopened.Snapshot(t.Context())
-	if err != nil || len(restored.Projects) != 1 || restored.Projects[0].FilesState != contracts.LoadError {
+	if err != nil || len(restored.Projects) != 1 || restored.Projects[0].Path != projectPath {
 		t.Fatalf("scan failure registration did not survive restart: %+v %v", restored.Projects, err)
 	}
 }

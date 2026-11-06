@@ -58,7 +58,7 @@ func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
 	if err = first.Execute(ctx, contracts.Command{Kind: "terminal.create", ProjectID: project, SessionID: session}); err != nil {
 		t.Fatal(err)
 	}
-	state, err = first.Snapshot(ctx)
+	state, err = first.Snapshot(ctx, session)
 	if err != nil || len(state.Terminals) != 1 {
 		t.Fatalf("terminal creation failed: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
 	if err = stream.Resize(111, 39); err != nil {
 		t.Fatal(err)
 	}
-	state, _ = first.Snapshot(ctx)
+	state, _ = first.Snapshot(ctx, session)
 	if state.Terminals[0].Columns != 111 || state.Terminals[0].Rows != 39 {
 		t.Fatal("resize did not reach the host")
 	}
@@ -154,7 +154,7 @@ func TestRealRemoteTerminalSurvivesDisconnect(t *testing.T) {
 	if err = second.Execute(ctx, contracts.Command{Kind: "terminal.close", ID: meta.ID}); err != nil {
 		t.Fatal(err)
 	}
-	state, _ = second.Snapshot(ctx)
+	state, _ = second.Snapshot(ctx, session)
 	if len(state.Terminals) != 0 {
 		t.Fatal("closed terminal remained in snapshot")
 	}

@@ -69,8 +69,12 @@ func TestLiveUnifiedShellUsesHostRuntime(t *testing.T) {
 		select {
 		case <-ctx.Done():
 			last := snapshot.Runs[len(snapshot.Runs)-1]
+			detail, detailErr := core.Snapshot(ctx, last.SessionID)
+			if detailErr != nil {
+				t.Fatal(detailErr)
+			}
 			toolCalls, outputChars := 0, 0
-			for _, message := range snapshot.Messages[last.SessionID] {
+			for _, message := range detail.Messages[last.SessionID] {
 				for _, block := range message.Blocks {
 					outputChars += len(block.Text)
 					if block.Tool != nil {
@@ -171,6 +175,10 @@ func TestLiveModelToolRoundTrip(t *testing.T) {
 	run := state.Runs[len(state.Runs)-1]
 	if run.Status != "completed" {
 		t.Fatalf("live run did not complete: %s: %s", run.Status, run.Error)
+	}
+	state, err = core.Snapshot(ctx, run.SessionID)
+	if err != nil {
+		t.Fatal(err)
 	}
 	proof, err := os.ReadFile(filepath.Join(workspace, "gcode-live-proof.txt"))
 	if err != nil || string(proof) != "GCODE_REAL_MODEL_OK\n" {

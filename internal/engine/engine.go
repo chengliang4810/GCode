@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -70,6 +71,7 @@ type Engine struct {
 	mu                sync.Mutex
 	storage           *storage.Store
 	sessionHashes     map[string][32]byte
+	sessionDirty      map[string]struct{}
 	indexHash         [32]byte
 	indexHashKnown    bool
 	sessionRecords    map[string]string
@@ -86,6 +88,10 @@ type Engine struct {
 	checkoutProjects  map[string]int
 	checkoutRequests  map[string]bool
 	subs              map[uint64]chan contracts.Event
+	subSessions       map[uint64][]string
+	sessionRefs       map[string]int
+	sessionReads      map[string]*sessionRead
+	usageCache        map[string]sessionUsage
 	subNext           uint64
 	sequence          uint64
 	closed            bool
@@ -218,25 +224,39 @@ func Open(options Options) (*Engine, error) {
 }
 
 func (e *Engine) Bootstrap(ctx context.Context) (contracts.Snapshot, error) { return e.Snapshot(ctx) }
-func (e *Engine) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (e *Engine) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
+	sessionIDs = uniqueSessionIDs(sessionIDs)
+	if err := e.prepareSessionView(ctx, sessionIDs); err != nil {
+		return contracts.Snapshot{}, err
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	defer e.releaseSessionDataLocked(sessionIDs)
 	if err := e.checkLocked(ctx); err != nil {
 		return contracts.Snapshot{}, err
 	}
-	return e.snapshotLocked(), nil
+	return e.snapshotLocked(sessionIDs...), nil
 }
-func (e *Engine) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
+func (e *Engine) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
+	sessionIDs = uniqueSessionIDs(sessionIDs)
+	if err := e.prepareSessionView(ctx, sessionIDs); err != nil {
+		return nil, err
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if err := e.checkLocked(ctx); err != nil {
+		e.releaseSessionDataLocked(sessionIDs)
 		return nil, err
 	}
 	e.subNext++
 	id := e.subNext
 	ch := make(chan contracts.Event, 256)
 	e.subs[id] = ch
-	snapshot := e.snapshotLocked()
+	if e.subSessions == nil {
+		e.subSessions = make(map[uint64][]string)
+	}
+	e.subSessions[id] = sessionIDs
+	snapshot := e.snapshotLocked(sessionIDs...)
 	ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 	go func() {
 		select {
@@ -247,7 +267,9 @@ func (e *Engine) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 		defer e.mu.Unlock()
 		if current, ok := e.subs[id]; ok {
 			delete(e.subs, id)
+			delete(e.subSessions, id)
 			close(current)
+			e.releaseSessionDataLocked(sessionIDs)
 		}
 	}()
 	return ch, nil
@@ -371,28 +393,28 @@ func (e *Engine) publishLocked(event contracts.Event) {
 		message := projectMessageTodos(*event.Message)
 		event.Message = &message
 	}
-	if event.Message == nil && event.Kind != "message.delta" {
-		snapshot := e.snapshotLocked()
-		event.Snapshot = &snapshot
-	}
-	remaining := len(e.subs)
-	for _, ch := range e.subs {
-		remaining--
+	for subID, ch := range e.subs {
+		scope := e.subSessions[subID]
 		owned := event
 		if event.ExitCode != nil {
 			value := *event.ExitCode
 			owned.ExitCode = &value
 		}
-		// snapshotLocked already owns its data. Transfer that original only to
-		// the last subscriber, after all other independent copies are made.
-		if event.Snapshot != nil && remaining != 0 {
-			snapshot := contracts.CloneSnapshot(*event.Snapshot)
+		if event.Message == nil && event.Kind != "message.delta" {
+			snapshot := e.snapshotLocked(scope...)
 			owned.Snapshot = &snapshot
 		}
 		if event.Message != nil {
-			message := *event.Message
-			message.Blocks = contracts.CloneBlocks(message.Blocks)
-			owned.Message = &message
+			if slices.Contains(scope, event.SessionID) {
+				message := *event.Message
+				message.Blocks = contracts.CloneBlocks(message.Blocks)
+				owned.Message = &message
+			} else {
+				owned.Message = nil
+			}
+		}
+		if event.Kind == "message.delta" && !slices.Contains(scope, event.SessionID) {
+			owned.Text = ""
 		}
 		select {
 		case ch <- owned:
@@ -401,7 +423,7 @@ func (e *Engine) publishLocked(event contracts.Event) {
 			for len(ch) > 0 {
 				<-ch
 			}
-			snapshot := e.snapshotLocked()
+			snapshot := e.snapshotLocked(scope...)
 			ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 		}
 	}

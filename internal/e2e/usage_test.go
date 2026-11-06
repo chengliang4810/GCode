@@ -75,18 +75,42 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			snapshot, _ := core.Snapshot(ctx)
 			var sessionID string
 			for _, modelID := range []string{"usage/alpha", "usage/beta"} {
+				requestID := "usage-" + strings.ReplaceAll(modelID, "/", "-")
 				if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
-					SessionID: sessionID, ProjectID: snapshot.Projects[0].ID, ModelID: modelID, Text: "Record usage",
+					RequestID: requestID, SessionID: sessionID, ProjectID: snapshot.Projects[0].ID, ModelID: modelID, Text: "Record usage",
 				}}); err != nil {
 					t.Fatal(err)
 				}
-				for {
+				if sessionID == "" {
 					snapshot, err = core.Snapshot(ctx)
 					if err != nil {
 						t.Fatal(err)
 					}
-					if len(snapshot.Runs) > 0 && snapshot.Runs[len(snapshot.Runs)-1].Status == "completed" {
-						sessionID = snapshot.Sessions[0].ID
+					if len(snapshot.Sessions) != 1 {
+						t.Fatalf("usage fixture created %d sessions, want 1", len(snapshot.Sessions))
+					}
+					sessionID = snapshot.Sessions[0].ID
+				}
+				for {
+					snapshot, err = core.Snapshot(ctx, sessionID)
+					if err != nil {
+						t.Fatal(err)
+					}
+					var session contracts.Session
+					for _, candidate := range snapshot.Sessions {
+						if candidate.ID == sessionID {
+							session = candidate
+							break
+						}
+					}
+					turnCompleted := false
+					for _, run := range snapshot.Runs {
+						if run.SessionID == sessionID && run.RequestID == requestID {
+							turnCompleted = run.Status == "completed"
+							break
+						}
+					}
+					if session.ID != "" && session.Status == contracts.Idle && session.LastOutcome == "completed" && turnCompleted {
 						break
 					}
 					if ctx.Err() != nil {
@@ -94,6 +118,10 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 					}
 					time.Sleep(20 * time.Millisecond)
 				}
+			}
+			snapshot, err = core.Snapshot(ctx, sessionID)
+			if err != nil {
+				t.Fatal(err)
 			}
 			if err := core.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: sessionID}); err != nil {
 				t.Fatal(err)

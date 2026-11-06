@@ -85,14 +85,20 @@ func TestReadImagesReachEveryProtocolAndSurviveRestart(t *testing.T) {
 			}}); err != nil {
 				t.Fatal(err)
 			}
-			state := waitIdle(t, core)
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			sid := summary.Sessions[0].ID
+			releaseView := pinSessionView(t, core, sid)
+			defer releaseView()
+			state := waitIdle(t, core, sid)
 			if state.Sessions[0].LastOutcome != "completed" || requests.Load() != 2 {
 				t.Fatalf("image tool loop did not complete: %+v", state.Runs)
 			}
 			<-bodies
 			body := <-bodies
 			assertImageToolRequest(t, protocol, body, encoded.Bytes())
-			sid := state.Sessions[0].ID
 			if len(core.history[sid]) != 5 || len(core.history[sid][2].Images) != 1 ||
 				core.history[sid][2].CallID != "photo-call" || core.history[sid][3].CallID != "text-call" {
 				t.Fatalf("typed image result or paired tool identity was lost: %+v", core.history[sid])
@@ -121,7 +127,7 @@ func TestReadImagesReachEveryProtocolAndSurviveRestart(t *testing.T) {
 			}}); err != nil {
 				t.Fatal(err)
 			}
-			state = waitIdle(t, core)
+			state = waitIdle(t, core, sid)
 			if state.Sessions[0].LastOutcome != "completed" {
 				t.Fatalf("restarted image history did not continue: %+v", state.Runs)
 			}

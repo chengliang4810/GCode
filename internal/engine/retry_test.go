@@ -91,12 +91,13 @@ func TestModelRetryProjectionPreservesCompletedToolAndClearsOnSettlement(t *test
 			}
 			state, _ = core.Snapshot(ctx)
 			session := state.Sessions[0]
+			state, _ = core.Snapshot(ctx, session.ID)
 			if session.Status != contracts.Working || session.ModelRetry == nil || session.ModelRetry.Attempt != 3 ||
 				session.ModelRetry.MaxRetries != 10 || session.ModelRetry.HTTPStatus != 503 || calls.Load() != 4 {
 				t.Fatalf("wrong retry projection: %+v calls=%d", session, calls.Load())
 			}
 			session.ModelRetry.Attempt = 999
-			fresh, _ := core.Snapshot(ctx)
+			fresh, _ := core.Snapshot(ctx, session.ID)
 			if fresh.Sessions[0].ModelRetry.Attempt != 3 {
 				t.Fatal("snapshot consumer mutated active retry")
 			}
@@ -112,7 +113,7 @@ func TestModelRetryProjectionPreservesCompletedToolAndClearsOnSettlement(t *test
 			} else {
 				close(release)
 			}
-			state = waitIdle(t, core)
+			state = waitIdle(t, core, session.ID)
 			wantCalls, wantOutcome := int32(5), "completed"
 			if cancelRun {
 				wantCalls, wantOutcome = 4, "interrupted"

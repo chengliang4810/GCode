@@ -103,6 +103,10 @@ func TestSubagentUsesConfiguredProviderAndReasoningAcrossProtocols(t *testing.T)
 					parentSession = session
 				}
 			}
+			state, err = core.Snapshot(context.Background(), parentSession.ID, childSession.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if childSession.ModelID != "child/child-model" || childSession.ReasoningLevel != "Max" ||
 				childSession.ParentSessionID != parentSession.ID || childSession.CWD != workspace {
 				t.Fatalf("child selection or ownership lost: %+v", childSession)
@@ -211,12 +215,13 @@ func TestBackgroundSubagentNotifiesParentAfterItsTurnEnds(t *testing.T) {
 		t.Fatal(err)
 	}
 	startSubagentParent(t, core)
-	waitSubagentState(t, core, func(s contracts.Snapshot) bool {
+	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 		return len(s.Runs) == 2 && s.Runs[0].Status == "completed"
 	})
+	parentID := state.Runs[0].SessionID
 	state, _ = core.Snapshot(context.Background())
 	if err := core.Execute(context.Background(), contracts.Command{
-		Kind: "session.delete", ID: state.Runs[0].SessionID,
+		Kind: "session.delete", ID: parentID,
 	}); err == nil {
 		t.Fatal("deleting the parent orphaned its running background task")
 	}
@@ -228,7 +233,7 @@ func TestBackgroundSubagentNotifiesParentAfterItsTurnEnds(t *testing.T) {
 	close(releaseChild)
 	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 		return len(s.Runs) == 3 && runsFinished(s)
-	})
+	}, parentID)
 	if parentCalls.Load() != 3 || len(state.Queue) != 0 {
 		t.Fatalf("background completion was lost or duplicated: calls=%d queue=%+v", parentCalls.Load(), state.Queue)
 	}
@@ -353,7 +358,7 @@ func TestBackgroundSubagentRetainsResultWhenParentModelIsRemoved(t *testing.T) {
 	close(releaseChild)
 	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 		return len(s.Runs) == 2 && runsFinished(s)
-	})
+	}, parentID)
 	for _, session := range state.Sessions {
 		if session.ID == parentID && (session.Status != contracts.Errored || session.LastOutcome != "failed") {
 			t.Fatalf("failed automatic continuation was hidden: %+v", session)
@@ -375,7 +380,7 @@ func TestBackgroundSubagentRetainsResultWhenParentModelIsRemoved(t *testing.T) {
 	}
 	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 		return len(s.Runs) == 3 && runsFinished(s)
-	})
+	}, parentID)
 	if parentCalls.Load() != 3 || len(state.Queue) != 0 {
 		t.Fatal("restored parent did not consume exactly one saved completion")
 	}
@@ -415,6 +420,7 @@ func TestSubagentRestartAndForkRebuildExecutionState(t *testing.T) {
 		}},
 	}}
 	core.state.Runs = append(core.state.Runs, contracts.Run{ID: "saved-run", SessionID: child.ID, Status: "running"})
+	core.markSessionDirtyLocked(parent.ID, child.ID)
 	if err = core.persistLocked(); err != nil {
 		t.Fatal(err)
 	}
@@ -431,7 +437,10 @@ func TestSubagentRestartAndForkRebuildExecutionState(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer core.Close()
-	state, _ := core.Snapshot(context.Background())
+	state, err := core.Snapshot(context.Background(), parent.ID, child.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, session := range state.Sessions {
 		if session.RunningSubagents != 0 || session.Status == contracts.Working {
 			t.Fatalf("restart kept nonexistent child execution: %+v", session)
@@ -703,11 +712,12 @@ func waitSubagentState(
 	t *testing.T,
 	core *Engine,
 	ready func(contracts.Snapshot) bool,
+	sessionIDs ...string,
 ) contracts.Snapshot {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		state, err := core.Snapshot(context.Background())
+		state, err := core.Snapshot(context.Background(), sessionIDs...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -716,7 +726,7 @@ func waitSubagentState(
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
-	state, _ := core.Snapshot(context.Background())
+	state, _ := core.Snapshot(context.Background(), sessionIDs...)
 	t.Fatalf("subagent execution did not settle: %+v", state.Runs)
 	return state
 }

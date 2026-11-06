@@ -44,6 +44,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	var outsideLock []func()
 	defer func() {
 		// Joined workers may call back into the Engine.
+		e.evictIdleSessionsLocked()
 		e.mu.Unlock()
 		for _, cleanup := range outsideLock {
 			cleanup()
@@ -96,8 +97,10 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	providers := slices.Clone(e.providers)
 	history, executionContext := maps.Clone(e.history), maps.Clone(e.context)
 	hashes, records, loaded := maps.Clone(e.sessionHashes), maps.Clone(e.sessionRecords), maps.Clone(e.loadedSessions)
+	dirty := maps.Clone(e.sessionDirty)
 	var answerChannel chan []contracts.QuestionAnswer
 	var answerOwner *activeRun
+	requiredSessions := []string{affectedSession}
 	defer func() {
 		if resultErr != nil {
 			for _, session := range e.state.Sessions {
@@ -113,6 +116,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			}
 			e.state, e.providers, e.history, e.context = before, providers, history, executionContext
 			e.sessionHashes, e.sessionRecords, e.loadedSessions = hashes, records, loaded
+			e.sessionDirty = dirty
 			for i := range e.state.Sessions {
 				if message := storageErrors[e.state.Sessions[i].ID]; message != "" {
 					e.state.Sessions[i].StorageError = message
@@ -270,6 +274,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if err := e.reorderSessionLocked(command); err != nil {
 			return err
 		}
+		for _, session := range e.groupMembersLocked(command.Reorder.GroupID) {
+			requiredSessions = append(requiredSessions, session.ID)
+		}
 	case "provider.delete":
 		for _, session := range e.state.Sessions {
 			if strings.HasPrefix(session.ModelID, command.ID+"/") && e.runs[session.ID] != nil {
@@ -393,6 +400,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			}
 			e.state.Messages[session.ID] = messages
 		}
+		e.markSessionDirtyLocked(session.ID)
 	case "session.update":
 		index := e.sessionIndex(command.Session.ID)
 		if index < 0 {
@@ -484,11 +492,26 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			return errors.New("session group not found")
 		}
 		removed := e.state.SessionGroups[index].ID
+		memberIDs := make([]string, 0)
+		for _, session := range e.state.Sessions {
+			if session.GroupID == removed {
+				memberIDs = append(memberIDs, session.ID)
+			}
+		}
+		memberSet := make(map[string]struct{}, len(memberIDs))
+		for _, sessionID := range memberIDs {
+			memberSet[sessionID] = struct{}{}
+			if err := e.ensureSessionDataLocked(sessionID); err != nil {
+				return err
+			}
+		}
+		requiredSessions = append(requiredSessions, memberIDs...)
 		e.state.SessionGroups = slices.Delete(e.state.SessionGroups, index, index+1)
 		for i := range e.state.Sessions {
-			if e.state.Sessions[i].GroupID == removed {
+			if _, ok := memberSet[e.state.Sessions[i].ID]; ok {
 				e.state.Sessions[i].GroupID = ""
 				e.state.Sessions[i].GroupOrder = 0
+				e.markSessionDirtyLocked(e.state.Sessions[i].ID)
 			}
 		}
 	case "session.delete":
@@ -538,7 +561,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	default:
 		return fmt.Errorf("operation %q is not implemented by the real backend", command.Kind)
 	}
-	if err := e.persistLocked(affectedSession); err != nil {
+	if err := e.persistLocked(requiredSessions...); err != nil {
 		return err
 	}
 	if command.Kind == "project.create" {
@@ -658,6 +681,7 @@ func (e *Engine) newSessionLocked(projectID, title, rootID string) (contracts.Se
 	e.loadedSessions[session.ID] = true
 	e.state.Messages[session.ID] = []contracts.Message{}
 	e.history[session.ID], e.context[session.ID] = []model.Message{}, []model.Message{}
+	e.markSessionDirtyLocked(session.ID)
 	attached = true
 	return session, nil
 }

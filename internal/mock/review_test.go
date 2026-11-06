@@ -163,12 +163,13 @@ func TestThemeImportLifecycleAndSnapshotOwnership(t *testing.T) {
 func TestRelatedSessionsPreserveContextAndParent(t *testing.T) {
 	s := newTestServer(t, Options{})
 	ctx := context.Background()
-	created, _ := s.Snapshot(ctx)
+	created := snapshotForSessions(t, s, "chat-0")
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
-	forked, _ := s.Snapshot(ctx)
-	fork := forked.Sessions[0]
+	summary, _ := s.Snapshot(ctx)
+	fork := summary.Sessions[0]
+	forked := snapshotForSessions(t, s, "chat-0", fork.ID)
 	if fork.ParentSessionID != "chat-0" || fork.SideChat || len(forked.Messages[fork.ID]) != len(created.Messages["chat-0"]) {
 		t.Fatal("fork lost context or parent association")
 	}
@@ -180,8 +181,9 @@ func TestRelatedSessionsPreserveContextAndParent(t *testing.T) {
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.sidechat", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
-	side, _ := s.Snapshot(ctx)
-	child := side.Sessions[0]
+	summary, _ = s.Snapshot(ctx)
+	child := summary.Sessions[0]
+	side := snapshotForSessions(t, s, "chat-0", child.ID)
 	if child.ParentSessionID != "chat-0" || !child.SideChat || len(side.Messages[child.ID]) != 0 {
 		t.Fatal("side chat is not an empty related session")
 	}

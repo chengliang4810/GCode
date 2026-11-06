@@ -88,14 +88,15 @@ func (a *App) updateGoal(command contracts.Command) {
 		a.goalActions = make(map[string]bool)
 	}
 	a.goalActions[command.SessionID] = true
+	scope, generation := a.captureSessionScope()
 	a.backgroundTask(func() func() {
 		err := a.service.Execute(a.ctx, command)
-		snapshot, snapshotErr := a.service.Snapshot(a.ctx)
+		snapshot, snapshotErr := a.service.Snapshot(a.ctx, scope...)
 		return func() {
 			delete(a.goalActions, command.SessionID)
-			if snapshotErr == nil {
+			if snapshotErr == nil && a.sessionGenerationCurrent(generation, scope) {
 				a.apply(snapshot)
-			} else if err == nil {
+			} else if snapshotErr != nil && err == nil {
 				err = snapshotErr
 			}
 			if err != nil {

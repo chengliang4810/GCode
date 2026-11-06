@@ -87,6 +87,12 @@ func (a *App) chatView(c *ui.Context) {
 				transcript.Opacity(frame.Transcript)
 			}
 			transcript.Children(func() {
+				if a.sessionDetailsAreLoading(a.sessionID) {
+					ui.Spacer(c).Grow(1)
+					ui.Text(c, tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
+					ui.Spacer(c).Grow(1)
+					return
+				}
 				if len(messages) == 0 {
 					ui.Spacer(c).Grow(1)
 					return

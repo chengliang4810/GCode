@@ -83,6 +83,8 @@ type State struct {
 	ProjectID         string
 	Dispatch          func(contracts.Command)
 	OnOpenSession     func(string)
+	OnSessionVisible  func(string)
+	OnSessionHidden   func(string)
 	OnCloseSession    func(string)
 	RenderSession     func(*ui.Context, string)
 	RenderTrajectory  func(*ui.Context, string)
@@ -294,11 +296,17 @@ func (s *State) choose(kind, id, title string) {
 	for i, t := range s.tabs {
 		if t.kind == kind && t.id == id {
 			s.selectTab(i)
+			if (kind == "session" || kind == "trajectory" || kind == "goal") && s.OnSessionVisible != nil {
+				s.OnSessionVisible(id)
+			}
 			return
 		}
 	}
 	s.tabs = append(s.tabs, surface{kind, id, title})
 	s.selectTab(len(s.tabs) - 1)
+	if (kind == "session" || kind == "trajectory" || kind == "goal") && s.OnSessionVisible != nil {
+		s.OnSessionVisible(id)
+	}
 }
 
 func (s *State) selectTab(index int) {
@@ -423,6 +431,28 @@ func (s *State) NewTerminal() {
 	s.command(contracts.Command{Kind: "terminal.create", ProjectID: s.ProjectID, SessionID: s.scopeID})
 }
 
+// VisibleSessionIDs returns the conversation IDs whose details may be rendered
+// by this workspace. The current workspace scope is included even when no
+// session tab is open, followed by session, trajectory, and goal tabs.
+func (s *State) VisibleSessionIDs() []string {
+	if s.closed.Load() {
+		return nil
+	}
+	ids := make([]string, 0, 1+len(s.tabs))
+	if s.scopeID != "" {
+		ids = append(ids, s.scopeID)
+	}
+	for _, tab := range s.tabs {
+		switch tab.kind {
+		case "session", "trajectory", "goal":
+			if tab.id != "" {
+				ids = append(ids, tab.id)
+			}
+		}
+	}
+	return ids
+}
+
 func (s *State) ActiveKind() string {
 	if len(s.tabs) == 0 {
 		return "picker"
@@ -508,6 +538,9 @@ func (s *State) closeTab(index int) {
 		s.command(contracts.Command{Kind: "terminal.close", ID: t.id})
 	}
 	s.removeTab(index)
+	if (t.kind == "session" || t.kind == "trajectory" || t.kind == "goal") && s.OnSessionHidden != nil {
+		s.OnSessionHidden(t.id)
+	}
 }
 func (s *State) removeTab(index int) {
 	if index < 0 || index >= len(s.tabs) {

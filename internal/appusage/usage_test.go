@@ -1,6 +1,7 @@
 package appusage
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -46,6 +47,58 @@ func TestBuildRecordedUsageAcrossModelsAndForks(t *testing.T) {
 	models := Models(days)
 	if len(models) != 2 || models[0].ID != "one/a" || models[0].Tokens != 200 || models[1].Tokens != 15 {
 		t.Fatalf("actual request models were lost: %+v", models)
+	}
+}
+
+func TestBuildRecordsMatchesResidentMessageUsage(t *testing.T) {
+	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.FixedZone("Shanghai", 8*3600))
+	messages := map[string][]contracts.Message{
+		"history": {
+			{ID: "first", TurnID: "turn", Role: "assistant", ModelID: "provider/model", CreatedAt: now,
+				Usage:  contracts.Usage{InputTokens: 20, OutputTokens: 5},
+				Blocks: []contracts.Block{{Kind: "tool", Tool: &contracts.ToolCall{ID: "tool"}}}},
+		},
+	}
+	fromMessages := Build(messages, nil, now)
+	fromRecords := BuildRecords(map[string][]contracts.UsageRecord{
+		"history": contracts.UsageRecordsFromMessages(messages["history"]),
+	}, nil, now)
+	if !reflect.DeepEqual(fromMessages, fromRecords) {
+		t.Fatalf("records changed usage report:\nmessages=%+v\nrecords=%+v", fromMessages, fromRecords)
+	}
+}
+
+func TestBuildWithRecordsResidentMessagesReplaceSessionSummary(t *testing.T) {
+	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.FixedZone("Shanghai", 8*3600))
+	resident := contracts.Message{
+		ID: "message", TurnID: "turn", Role: "assistant", ModelID: "provider/model", CreatedAt: now,
+		Usage: contracts.Usage{InputTokens: 40, OutputTokens: 10},
+	}
+	report := BuildWithRecords(map[string][]contracts.UsageRecord{
+		"history": {{
+			ID: "message", TurnID: "turn", Role: "assistant", ModelID: "provider/model",
+			CreatedAt: now, Usage: contracts.Usage{InputTokens: 1, OutputTokens: 1},
+		}},
+	}, map[string][]contracts.Message{"history": {resident}}, nil, now)
+	want := Build(map[string][]contracts.Message{"history": {resident}}, nil, now)
+	if !reflect.DeepEqual(report, want) {
+		t.Fatalf("resident messages did not replace stale summary:\nmerged=%+v\nresident=%+v", report, want)
+	}
+}
+
+func TestBuildRecordsDeduplicatesForks(t *testing.T) {
+	now := time.Date(2026, 11, 5, 12, 0, 0, 0, time.FixedZone("Shanghai", 8*3600))
+	record := contracts.UsageRecord{
+		ID: "parent-message", TurnID: "turn", Role: "assistant", ModelID: "provider/model", CreatedAt: now,
+		Usage: contracts.Usage{InputTokens: 20, OutputTokens: 5}, BlockCount: 1,
+	}
+	fork := record
+	fork.ID = "fork-message"
+	if got := BuildRecords(map[string][]contracts.UsageRecord{
+		"parent": {record},
+		"fork":   {fork},
+	}, nil, now).Summary.Total; got != 25 {
+		t.Fatalf("fork records were counted twice: total=%d", got)
 	}
 }
 

@@ -65,11 +65,35 @@ func (c *Client) request(ctx context.Context, method, path string, body any) (*h
 	}
 	return response, nil
 }
+
+const maxSessionScopeIDs = 128
+
+func scopedPath(path string, sessionIDs ...string) (string, error) {
+	if len(sessionIDs) > maxSessionScopeIDs {
+		return "", fmt.Errorf("session scope contains too many IDs (maximum %d)", maxSessionScopeIDs)
+	}
+	query := make(url.Values)
+	for _, id := range sessionIDs {
+		if id == "" {
+			return "", errors.New("session scope contains an empty ID")
+		}
+		query.Add("sessionId", id)
+	}
+	if encoded := query.Encode(); encoded != "" {
+		return path + "?" + encoded, nil
+	}
+	return path, nil
+}
+
 func (c *Client) Bootstrap(ctx context.Context) (contracts.Snapshot, error) { return c.Snapshot(ctx) }
-func (c *Client) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (c *Client) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
+	path, err := scopedPath("/v1/snapshot", sessionIDs...)
+	if err != nil {
+		return contracts.Snapshot{}, err
+	}
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	response, err := c.request(ctx, http.MethodGet, "/v1/snapshot", nil)
+	response, err := c.request(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		return contracts.Snapshot{}, err
 	}
@@ -111,7 +135,11 @@ func (c *Client) ListDirectoryLocations(ctx context.Context, request contracts.D
 	err = json.NewDecoder(response.Body).Decode(&result)
 	return result, err
 }
-func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
+func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
+	path, err := scopedPath("/v1/events", sessionIDs...)
+	if err != nil {
+		return nil, err
+	}
 	streamCtx, cancel := context.WithCancel(ctx)
 	go func() {
 		select {
@@ -120,7 +148,7 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 		case <-streamCtx.Done():
 		}
 	}()
-	response, err := c.request(streamCtx, http.MethodGet, "/v1/events", nil)
+	response, err := c.request(streamCtx, http.MethodGet, path, nil)
 	if err != nil {
 		cancel()
 		return nil, err
@@ -167,7 +195,7 @@ func (c *Client) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 					return
 				}
 				var err error
-				response, err = c.request(streamCtx, http.MethodGet, "/v1/events", nil)
+				response, err = c.request(streamCtx, http.MethodGet, path, nil)
 				if err == nil {
 					break
 				}

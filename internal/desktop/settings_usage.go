@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gcode/internal/appusage"
+	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
@@ -12,6 +13,7 @@ import (
 type appUsageState struct {
 	report    appusage.Report
 	generated time.Time
+	errorText string
 	loading   bool
 	rangeDays int
 	heatMode  string
@@ -28,14 +30,25 @@ func (a *App) refreshAppUsage() {
 	if state.loading {
 		return
 	}
+	reader, ok := a.service.(contracts.ApplicationUsageService)
+	if !ok {
+		state.errorText = "Application usage is unavailable: service does not support usage statistics."
+		return
+	}
 	state.loading = true
+	state.errorText = ""
 	// Snapshots are immutable projections; event application copies changed
 	// slices. The worker owns only that projection, never UI contexts/elements.
-	messages, runs, revision, now := a.state.Messages, a.state.Runs, a.state.Revision, a.now()
+	messages, revision, now := a.state.Messages, a.state.Revision, a.now()
 	a.backgroundTask(func() func() {
-		report := appusage.Build(messages, runs, now)
+		usage, err := reader.ReadApplicationUsage(a.ctx)
 		return func() {
-			state.report, state.generated, state.loading = report, now, false
+			state.loading = false
+			if err != nil {
+				state.errorText = err.Error()
+				return
+			}
+			state.report, state.generated, state.errorText = appusage.BuildWithRecords(usage.Records, messages, usage.Runs, now), now, ""
 			if a.state.Revision != revision {
 				a.refreshVisibleAppUsage()
 			}
@@ -45,6 +58,13 @@ func (a *App) refreshAppUsage() {
 
 func (a *App) appUsageSettings(c *ui.Context) {
 	state := &a.appUsage
+	if state.errorText != "" {
+		ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Danger)
+		ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+			secondaryButton(c.Key("usage-refresh"), tr(c, "Refresh")).Disabled(state.loading).OnClick(a.refreshAppUsage)
+		})
+		return
+	}
 	if state.generated.IsZero() {
 		ui.Text(c, tr(c, "Loading usage…")).TextColor(a.palette.Muted)
 		return

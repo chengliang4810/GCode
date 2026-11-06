@@ -56,7 +56,7 @@ func TestArchiveFrozenLoadingScenarioSettlesState(t *testing.T) {
 	if err := s.UpdateSession(context.Background(), contracts.SessionUpdate{ID: "chat-0", Archived: &archived}); err != nil {
 		t.Fatal(err)
 	}
-	v, _ := s.Snapshot(context.Background())
+	v := snapshotForSessions(t, s, "chat-0")
 	if v.Sessions[0].Status != contracts.Idle || v.Messages["chat-0"][0].Streaming {
 		t.Fatal("archiving frozen loading state retained an infinite spinner")
 	}
@@ -69,7 +69,7 @@ func TestSavedFileUpdatesChangesData(t *testing.T) {
 	if _, err := s.SaveFile(ctx, "file-layout", content, 1); err != nil {
 		t.Fatal(err)
 	}
-	v, _ := s.Snapshot(ctx)
+	v := snapshotForSessions(t, s, "chat-0")
 	found := false
 	for _, c := range v.Changes {
 		if c.Path == "internal/layout.go" {
@@ -87,8 +87,9 @@ func TestForkCannotAnswerParentsPendingRequest(t *testing.T) {
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
-	v, _ := s.Snapshot(ctx)
-	child := v.Sessions[0]
+	summary, _ := s.Snapshot(ctx)
+	child := summary.Sessions[0]
+	v := snapshotForSessions(t, s, "chat-0", child.ID)
 	found := false
 	for _, m := range v.Messages[child.ID] {
 		for _, b := range m.Blocks {

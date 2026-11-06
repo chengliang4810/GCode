@@ -36,7 +36,7 @@ func TestReferenceArtifactsPresentAndRethemed(t *testing.T) {
 		}
 	}
 	s := newTestServer(t, Options{Scenario: "showcase"})
-	v, _ := s.Snapshot(context.Background())
+	v := snapshotForSessions(t, s, "chat-0")
 	kinds := make(map[string]bool)
 	for _, m := range v.Messages["chat-0"] {
 		for _, b := range m.Blocks {
@@ -57,7 +57,7 @@ func TestReferenceArtifactsPresentAndRethemed(t *testing.T) {
 	if err := s.UpdateSettings(context.Background(), v.Settings); err != nil {
 		t.Fatal(err)
 	}
-	updated, _ := s.Snapshot(context.Background())
+	updated := snapshotForSessions(t, s, "chat-0")
 	for _, m := range updated.Messages["chat-0"] {
 		for _, b := range m.Blocks {
 			if b.Kind == "math" && !strings.Contains(b.Artifact.AssetRef, "math-euler-rcode-light.svg") {

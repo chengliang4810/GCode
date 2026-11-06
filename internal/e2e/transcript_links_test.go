@@ -152,6 +152,10 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 				time.Sleep(20 * time.Millisecond)
 			}
 			sessionID := snapshot.Sessions[0].ID
+			snapshot, err = core.Snapshot(t.Context(), sessionID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			messageCount := len(snapshot.Messages[sessionID])
 			if modelRequests.Load() != 1 {
 				t.Fatalf("model fixture received %d requests, want 1", modelRequests.Load())

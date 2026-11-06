@@ -13,10 +13,8 @@ import (
 // does: as its projected rows inside one selection scope.
 func (a *App) transcriptMessageForTest(c *ui.Context, message contracts.Message) {
 	cache := &transcriptCache{}
-	messages := []contracts.Message{message}
-	rows := conversationRows(messages, func(entry contracts.Message) []transcriptRow {
-		return cache.rowsFor(entry, a.state.Settings.General.CompactMode)
-	})
+	messages := cache.entriesFor(0, message.SessionID, []contracts.Message{message}, a.state.Settings.General.CompactMode)
+	rows := cache.conversationFor(messages, a.state.Settings.General.CompactMode)
 	pane := transcriptPane{cache: cache, scope: "test", session: message.SessionID}
 	root := ui.Column(c).FillWidth().Selectable()
 	selection := linkui.BeginSelection(root)

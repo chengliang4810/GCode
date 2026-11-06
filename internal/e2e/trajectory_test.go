@@ -78,19 +78,48 @@ func TestDesktopLocalCallTrajectory(t *testing.T) {
 			snapshot, _ := core.Snapshot(ctx)
 			sessionID := ""
 			for count, prompt := range []string{"TRACE_PROMPT", "FAILURE_PROMPT"} {
+				requestID := fmt.Sprintf("trajectory-%d", count)
 				if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
-					SessionID: sessionID, ProjectID: snapshot.Projects[0].ID, ModelID: "trace/model", Text: prompt,
+					RequestID: requestID, SessionID: sessionID, ProjectID: snapshot.Projects[0].ID, ModelID: "trace/model", Text: prompt,
 				}}); err != nil {
 					t.Fatal(err)
 				}
-				deadline := time.Now().Add(stateTimeout)
-				for {
+				if sessionID == "" {
 					snapshot, err = core.Snapshot(ctx)
 					if err != nil {
 						t.Fatal(err)
 					}
-					if len(snapshot.Runs) == count+1 && snapshot.Runs[count].Status != "running" {
-						sessionID = snapshot.Sessions[0].ID
+					if len(snapshot.Sessions) != 1 {
+						t.Fatalf("trajectory fixture created %d sessions, want 1", len(snapshot.Sessions))
+					}
+					sessionID = snapshot.Sessions[0].ID
+				}
+				wantOutcome := "completed"
+				if count == 1 {
+					wantOutcome = "failed"
+				}
+				var session contracts.Session
+				deadline := time.Now().Add(stateTimeout)
+				for {
+					snapshot, err = core.Snapshot(ctx, sessionID)
+					if err != nil {
+						t.Fatal(err)
+					}
+					session = contracts.Session{}
+					for _, candidate := range snapshot.Sessions {
+						if candidate.ID == sessionID {
+							session = candidate
+							break
+						}
+					}
+					turnFinished := false
+					for _, run := range snapshot.Runs {
+						if run.SessionID == sessionID && run.RequestID == requestID {
+							turnFinished = run.Status == wantOutcome
+							break
+						}
+					}
+					if session.Status == contracts.Idle && session.LastOutcome == wantOutcome && turnFinished {
 						break
 					}
 					if time.Now().After(deadline) {

@@ -4,7 +4,6 @@ package desktop
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -249,12 +248,13 @@ type modelPickerFixtureService struct {
 }
 
 var _ contracts.Service = (*modelPickerFixtureService)(nil)
+var _ contracts.ApplicationUsageService = (*modelPickerFixtureService)(nil)
 
 func (s *modelPickerFixtureService) Bootstrap(ctx context.Context) (contracts.Snapshot, error) {
 	return s.Snapshot(ctx)
 }
 
-func (s *modelPickerFixtureService) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (s *modelPickerFixtureService) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := ctx.Err(); err != nil {
@@ -263,13 +263,27 @@ func (s *modelPickerFixtureService) Snapshot(ctx context.Context) (contracts.Sna
 	if s.closed {
 		return contracts.Snapshot{}, errors.New("fixture backend is closed")
 	}
-	data, err := json.Marshal(s.state)
-	if err != nil {
-		return contracts.Snapshot{}, err
+	return contracts.CloneSnapshot(contracts.SessionProjection(s.state, sessionIDs)), nil
+}
+
+func (s *modelPickerFixtureService) ReadApplicationUsage(ctx context.Context) (contracts.ApplicationUsage, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.ApplicationUsage{}, err
 	}
-	var snapshot contracts.Snapshot
-	err = json.Unmarshal(data, &snapshot)
-	return snapshot, err
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.ApplicationUsage{}, errors.New("fixture backend is closed")
+	}
+	usage := contracts.ApplicationUsage{Records: make(map[string][]contracts.UsageRecord, len(s.state.Messages))}
+	for sessionID, messages := range s.state.Messages {
+		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(messages)
+	}
+	usage.Runs = make([]contracts.Run, 0, len(s.state.Runs))
+	for _, run := range s.state.Runs {
+		usage.Runs = append(usage.Runs, contracts.Run{ID: run.ID, SessionID: run.SessionID, Status: run.Status, DurationMS: run.DurationMS})
+	}
+	return usage, nil
 }
 
 func (s *modelPickerFixtureService) Execute(ctx context.Context, command contracts.Command) error {
@@ -289,11 +303,16 @@ func (s *modelPickerFixtureService) Execute(ctx context.Context, command contrac
 	return nil
 }
 
-func (s *modelPickerFixtureService) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
+func (s *modelPickerFixtureService) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	events := make(chan contracts.Event)
+	snapshot, err := s.Snapshot(ctx, sessionIDs...)
+	if err != nil {
+		return nil, err
+	}
+	events := make(chan contracts.Event, 1)
+	events <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Snapshot: &snapshot}
 	close(events)
 	return events, nil
 }

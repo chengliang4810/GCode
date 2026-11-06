@@ -27,6 +27,28 @@ func newTestServer(t *testing.T, opts Options) *Server {
 	return s
 }
 
+func snapshotForSessions(t *testing.T, s *Server, sessionIDs ...string) contracts.Snapshot {
+	t.Helper()
+	snapshot, err := s.Snapshot(context.Background(), sessionIDs...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return snapshot
+}
+
+func snapshotWithAllSessions(t *testing.T, s *Server) contracts.Snapshot {
+	t.Helper()
+	summary, err := s.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := make([]string, 0, len(summary.Sessions))
+	for _, session := range summary.Sessions {
+		ids = append(ids, session.ID)
+	}
+	return snapshotForSessions(t, s, ids...)
+}
+
 func await(t *testing.T, events <-chan contracts.Event, predicate func(contracts.Snapshot) bool) contracts.Snapshot {
 	t.Helper()
 	timer := time.NewTimer(4 * time.Second)
@@ -48,15 +70,8 @@ func await(t *testing.T, events <-chan contracts.Event, predicate func(contracts
 
 func TestSnapshotIsolation(t *testing.T) {
 	s := newTestServer(t, Options{Scenario: "questions"})
-	ctx := context.Background()
-	before, err := s.Snapshot(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	copy1, err := s.Snapshot(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	before := snapshotForSessions(t, s, "chat-0")
+	copy1 := snapshotForSessions(t, s, "chat-0")
 	copy1.Projects[0].Branches[0] = "mutated"
 	copy1.Messages["chat-0"][0].Blocks[0].Text = "mutated"
 	copy1.Models[0].ReasoningLevels[0] = "mutated"
@@ -68,10 +83,7 @@ func TestSnapshotIsolation(t *testing.T) {
 	q := ms[len(ms)-1].Blocks[0].Question
 	q.Pages[0].Options[0].Label = "mutated"
 	copy1.Messages["chat-0"] = nil
-	after, err := s.Snapshot(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
+	after := snapshotForSessions(t, s, "chat-0")
 	if !reflect.DeepEqual(before, after) {
 		t.Fatal("caller mutation escaped into backend state")
 	}
@@ -119,6 +131,89 @@ func TestSubscriptionCancellationAndIsolation(t *testing.T) {
 	}
 }
 
+func TestSessionScopedSnapshotsAndSubscriptionsProjectBodies(t *testing.T) {
+	s := newTestServer(t, Options{Instant: true})
+	ctx := context.Background()
+	summary, err := s.Snapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(summary.Messages) != 0 {
+		t.Fatalf("summary snapshot retained message bodies: %d sessions", len(summary.Messages))
+	}
+	detail := snapshotForSessions(t, s, "chat-0")
+	if len(detail.Messages["chat-0"]) == 0 {
+		t.Fatal("scoped snapshot omitted the requested transcript")
+	}
+	if _, ok := detail.Messages["chat-1"]; ok {
+		t.Fatal("scoped snapshot included an unrequested transcript")
+	}
+
+	chat0, err := s.Subscribe(ctx, "chat-0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	chat1, err := s.Subscribe(ctx, "chat-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	global, err := s.Subscribe(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial0, initial1, initialGlobal := <-chat0, <-chat1, <-global
+	if len(initial0.Snapshot.Messages["chat-0"]) == 0 || len(initial0.Snapshot.Messages) != 1 {
+		t.Fatalf("chat-0 subscription initial scope was not applied: %+v", initial0.Snapshot.Messages)
+	}
+	if len(initial1.Snapshot.Messages["chat-1"]) == 0 || len(initial1.Snapshot.Messages) != 1 {
+		t.Fatalf("chat-1 subscription initial scope was not applied: %+v", initial1.Snapshot.Messages)
+	}
+	if len(initialGlobal.Snapshot.Messages) != 0 {
+		t.Fatalf("global subscription retained message bodies: %d sessions", len(initialGlobal.Snapshot.Messages))
+	}
+
+	s.mu.Lock()
+	if len(s.subSessions) != 3 {
+		s.mu.Unlock()
+		t.Fatalf("subscription scopes were not recorded: %+v", s.subSessions)
+	}
+	s.mu.Unlock()
+	if err := s.Execute(ctx, contracts.Command{Kind: "message.send", SessionID: "chat-0", Send: &contracts.SendRequest{SessionID: "chat-0", Text: "scoped update"}}); err != nil {
+		t.Fatal(err)
+	}
+	updated0 := await(t, chat0, func(snapshot contracts.Snapshot) bool {
+		return len(snapshot.Messages["chat-0"]) > len(detail.Messages["chat-0"])
+	})
+	updated1 := await(t, chat1, func(snapshot contracts.Snapshot) bool { return snapshot.Revision > detail.Revision })
+	if len(updated0.Messages["chat-0"]) == 0 || len(updated0.Messages) != 1 {
+		t.Fatalf("chat-0 subscription lost its requested body after an update: %+v", updated0.Messages)
+	}
+	if len(updated1.Messages) != 1 || len(updated1.Messages["chat-1"]) == 0 {
+		t.Fatalf("chat-1 subscription did not retain its own scoped body: %+v", updated1.Messages)
+	}
+}
+
+func TestReadApplicationUsageReturnsMetadataWithoutTranscriptBodies(t *testing.T) {
+	s := newTestServer(t, Options{})
+	usage, err := s.ReadApplicationUsage(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(usage.Records) == 0 || len(usage.Records["chat-0"]) == 0 {
+		t.Fatal("usage metadata omitted resident message records")
+	}
+	detail := snapshotForSessions(t, s, "chat-0")
+	want := contracts.UsageRecordsFromMessages(detail.Messages["chat-0"])
+	if !reflect.DeepEqual(usage.Records["chat-0"], want) {
+		t.Fatalf("usage metadata differs from resident message projection:\ngot=%+v\nwant=%+v", usage.Records["chat-0"], want)
+	}
+	for _, run := range usage.Runs {
+		if run.Summary != (contracts.ActivitySummary{}) || run.FinishReason != "" || run.Error != "" || !run.StartedAt.IsZero() || run.FinishedAt != nil {
+			t.Fatalf("usage exposed non-metadata run fields: %+v", run)
+		}
+	}
+}
+
 func TestAtomicCreateAndSend(t *testing.T) {
 	s := newTestServer(t, Options{Instant: true})
 	ctx := context.Background()
@@ -137,7 +232,8 @@ func TestAtomicCreateAndSend(t *testing.T) {
 	if newSession.ProjectID != "fieldnotes" {
 		t.Fatal("new session lost project")
 	}
-	messages := got.Messages[newSession.ID]
+	detail := snapshotForSessions(t, s, newSession.ID)
+	messages := detail.Messages[newSession.ID]
 	if len(messages) != 2 || messages[0].Role != "user" || messages[1].Role != "assistant" || messages[1].Streaming {
 		t.Fatalf("unexpected turn: %#v", messages)
 	}
@@ -156,11 +252,11 @@ func TestStopRejectsStaleUpdates(t *testing.T) {
 	if err = s.Stop(ctx, "chat-0"); err != nil {
 		t.Fatal(err)
 	}
-	before, _ := s.Snapshot(ctx)
+	before := snapshotForSessions(t, s, "chat-0")
 	if s.advanceRun("chat-0", run.ID, "late result", true) {
 		t.Fatal("stale run accepted an update")
 	}
-	after, _ := s.Snapshot(ctx)
+	after := snapshotForSessions(t, s, "chat-0")
 	if !reflect.DeepEqual(before, after) {
 		t.Fatal("cancelled run changed state")
 	}
@@ -186,13 +282,13 @@ func TestQueueDrainsAndRetryDoesNotRepeatUserMessage(t *testing.T) {
 		t.Fatal("busy session did not queue")
 	}
 	s.advanceRun("chat-0", first.ID, "finished first", true)
-	v, _ := s.Snapshot(ctx)
+	v := snapshotForSessions(t, s, "chat-0")
 	if len(v.Queue) != 0 {
 		t.Fatal("completed run did not drain queue")
 	}
 	active := s.runs["chat-0"].id
 	s.advanceRun("chat-0", active, "finished second", true)
-	before, _ := s.Snapshot(ctx)
+	before := snapshotForSessions(t, s, "chat-0")
 	countUser := func(v contracts.Snapshot) int {
 		n := 0
 		for _, m := range v.Messages["chat-0"] {
@@ -208,7 +304,7 @@ func TestQueueDrainsAndRetryDoesNotRepeatUserMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.advanceRun("chat-0", run.ID, "regenerated", true)
-	after, _ := s.Snapshot(ctx)
+	after := snapshotForSessions(t, s, "chat-0")
 	if countUser(after) != n {
 		t.Fatal("retry duplicated the user's message")
 	}
@@ -230,7 +326,7 @@ func TestFileSaveConflictAndReadOnly(t *testing.T) {
 	if _, err = s.SaveFile(ctx, "file-lock", "new", 1); !errors.Is(err, ErrReadOnly) {
 		t.Fatalf("expected read-only: %v", err)
 	}
-	v, _ := s.Snapshot(ctx)
+	v := snapshotForSessions(t, s, "chat-0")
 	for _, f := range v.Files {
 		if f.ID == "file-layout" && f.Content != "package layout\n" {
 			t.Fatal("stale save overwrote content")
@@ -284,7 +380,8 @@ func TestAnswersAndSettingsNormalization(t *testing.T) {
 		if err := s.Execute(context.Background(), contracts.Command{Kind: "request.answer", ID: "question-layout", QuestionAnswers: []contracts.QuestionAnswer{{Options: []string{"Keep the current layout"}}}}); err != nil {
 			t.Fatal(err)
 		}
-		got := await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })
+		_ = await(t, events, func(v contracts.Snapshot) bool { return v.Sessions[0].Status == contracts.Idle })
+		got := snapshotForSessions(t, s, "chat-0")
 		found := false
 		for _, m := range got.Messages["chat-0"] {
 			for _, b := range m.Blocks {
@@ -342,11 +439,11 @@ func TestStoppedRequestsCannotResumeAndDenyDoesNotRun(t *testing.T) {
 	t.Run("denied", func(t *testing.T) {
 		s := newTestServer(t, Options{Scenario: "permissions"})
 		ctx := context.Background()
-		before, _ := s.Snapshot(ctx)
+		before := snapshotForSessions(t, s, "chat-0")
 		if err := s.Answer(ctx, "permission-tests", "Deny"); err != nil {
 			t.Fatal(err)
 		}
-		v, _ := s.Snapshot(ctx)
+		v := snapshotForSessions(t, s, "chat-0")
 		if v.Sessions[0].Status != contracts.Idle || len(v.Runs) != len(before.Runs) {
 			t.Fatal("denying a command started work")
 		}

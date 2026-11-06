@@ -221,7 +221,7 @@ func TestDesktopLocalTranscriptFoldMotion(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer core.Close()
-			persisted, err := core.Snapshot(t.Context())
+			persisted, err := core.Snapshot(t.Context(), sessionID)
 			if err != nil || len(persisted.Sessions) != 1 || persisted.Sessions[0].ID != sessionID ||
 				len(persisted.Messages[sessionID]) != messageCount || requests.Load() != 3 {
 				t.Fatalf("fold actions changed canonical conversation state after reopening the real core: requests=%d err=%v", requests.Load(), err)
@@ -257,7 +257,11 @@ func awaitFoldSeed(t *testing.T, core *engine.Engine) contracts.Snapshot {
 			t.Fatal(err)
 		}
 		if len(state.Sessions) == 1 && state.Sessions[0].Status == contracts.Idle && state.Sessions[0].LastOutcome == "completed" {
-			return state
+			scoped, err := core.Snapshot(t.Context(), state.Sessions[0].ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			return scoped
 		}
 		if time.Now().After(deadline) {
 			t.Fatal("real core fold fixture did not complete")

@@ -80,6 +80,8 @@ func TestSideChatSnapshotIsHiddenIndependentAndPersistent(t *testing.T) {
 		t.Fatal(err)
 	}
 	parent := core.state.Sessions[0]
+	releaseParentView := pinSessionView(t, core, parent.ID)
+	defer releaseParentView()
 	parent.Pinned, parent.Archived, parent.Unread, parent.PinOrder = true, true, true, 4
 	parent.Goal = &contracts.SessionGoal{ID: "parent-goal", Status: contracts.GoalPaused}
 	parent.SubagentType, parent.RunningSubagents, parent.LastOutcome = "Explore", 2, "completed"
@@ -97,6 +99,12 @@ func TestSideChatSnapshotIsHiddenIndependentAndPersistent(t *testing.T) {
 	}
 	snapshot, _ := core.Snapshot(ctx)
 	side := snapshot.Sessions[0]
+	releaseSideView := pinSessionView(t, core, side.ID)
+	defer releaseSideView()
+	snapshot, err = core.Snapshot(ctx, side.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if side.ID == parent.ID || side.ParentSessionID != parent.ID || !side.SideChat || side.CWD != parent.CWD ||
 		side.ProjectID != parent.ProjectID || side.ModelID != parent.ModelID {
 		t.Fatalf("side chat did not inherit its workspace and model: %+v", side)
@@ -146,7 +154,12 @@ func TestSideChatSnapshotIsHiddenIndependentAndPersistent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	snapshot, _ = core.Snapshot(ctx)
+	releaseReopenedSideView := pinSessionView(t, core, side.ID)
+	defer releaseReopenedSideView()
+	snapshot, err = core.Snapshot(ctx, side.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(snapshot.Messages[side.ID]) != 0 || !reflect.DeepEqual(core.context[side.ID], beforeContext) ||
 		len(core.history[side.ID]) != 4 {
 		t.Fatal("restart lost hidden inherited history or exposed it in the transcript")
@@ -192,6 +205,8 @@ func TestSideChatRunningParentBoundaryAndProtocolRequests(t *testing.T) {
 				t.Fatal(err)
 			}
 			parent := core.state.Sessions[0]
+			releaseParentView := pinSessionView(t, core, parent.ID)
+			defer releaseParentView()
 			core.history[parent.ID] = []model.Message{
 				{Role: "user", Text: "STABLE_USER", UserInput: true},
 				{Role: "assistant", Calls: []model.Call{{ID: "Stable_Call", Name: "Read", Arguments: `{"file_path":"proof.txt"}`}}},
@@ -210,6 +225,12 @@ func TestSideChatRunningParentBoundaryAndProtocolRequests(t *testing.T) {
 			}
 			snapshot, _ := core.Snapshot(ctx)
 			side := snapshot.Sessions[0]
+			releaseSideView := pinSessionView(t, core, side.ID)
+			defer releaseSideView()
+			snapshot, err = core.Snapshot(ctx, side.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if len(snapshot.Messages[side.ID]) != 0 || len(core.context[side.ID]) != 5 {
 				t.Fatalf("running parent boundary was not copied as hidden context: %+v", core.context[side.ID])
 			}
@@ -256,7 +277,10 @@ func TestSideChatRunningParentBoundaryAndProtocolRequests(t *testing.T) {
 			default:
 				t.Fatal("side chat did not issue a model request")
 			}
-			snapshot, _ = core.Snapshot(ctx)
+			snapshot, err = core.Snapshot(ctx, side.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if len(snapshot.Messages[side.ID]) != 2 || snapshot.Messages[side.ID][0].Blocks[0].Text != "SIDE_QUESTION" ||
 				snapshot.Sessions[0].LastOutcome != "completed" {
 				t.Fatalf("side chat transcript is not independent: %+v", snapshot.Messages[side.ID])
@@ -291,6 +315,8 @@ func TestSideChatRetryRequiresOwnHumanInputAfterCompaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	parent := core.state.Sessions[0]
+	releaseParentView := pinSessionView(t, core, parent.ID)
+	defer releaseParentView()
 	core.state.Sessions[0].ModelID = "p/m"
 	for i := range 6 {
 		core.history[parent.ID] = append(core.history[parent.ID],
@@ -304,13 +330,18 @@ func TestSideChatRetryRequiresOwnHumanInputAfterCompaction(t *testing.T) {
 	}
 	snapshot, _ := core.Snapshot(ctx)
 	sideID := snapshot.Sessions[0].ID
+	releaseSideView := pinSessionView(t, core, sideID)
+	defer releaseSideView()
 	if err = core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
 		SessionID: sideID, Text: "/compact",
 	}}); err != nil {
 		t.Fatal(err)
 	}
 	waitSideChatSession(t, core, sideID, contracts.Idle)
-	snapshot, _ = core.Snapshot(ctx)
+	snapshot, err = core.Snapshot(ctx, sideID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(snapshot.Messages[sideID]) != 1 || snapshot.Messages[sideID][0].Role != "assistant" || requests.Load() != 1 {
 		t.Fatal("compaction did not produce the expected assistant-only status message")
 	}

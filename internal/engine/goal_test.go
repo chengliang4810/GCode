@@ -51,10 +51,15 @@ func TestGoalExecutesVerifiesAndContinuesAcrossProtocols(t *testing.T) {
 				}
 			}))
 			sendGoal(t, core, "/goal Create first.txt and second.txt")
+			summary, err := core.Snapshot(t.Context())
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+			}
+			sessionID := summary.Sessions[0].ID
 			state := waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 				return runsFinished(s) && len(s.Sessions) == 1 && s.Sessions[0].Goal != nil &&
 					s.Sessions[0].Goal.Status == contracts.GoalComplete
-			})
+			}, sessionID)
 			goal := state.Sessions[0].Goal
 			if workCalls.Load() != 4 || checks.Load() != 2 || goal.Iteration != 2 ||
 				goal.TokensUsed != 48 || goal.UnknownUsageCount != 0 || len(goal.Verifications) != 2 ||
@@ -113,7 +118,14 @@ func TestGoalEditRejectsStaleDraftAndStaleVerification(t *testing.T) {
 			case <-time.After(10 * time.Second):
 				t.Fatal("goal did not reach verification")
 			}
-			snapshot, _ := core.Snapshot(t.Context())
+			summary, err := core.Snapshot(t.Context())
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("goal session disappeared: %+v, %v", summary.Sessions, err)
+			}
+			snapshot, err := core.Snapshot(t.Context(), summary.Sessions[0].ID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			session := snapshot.Sessions[0]
 			command := contracts.Command{Kind: "goal.edit", SessionID: session.ID, ID: session.Goal.ID,
 				GoalEdit: &contracts.GoalEditInput{Objective: "Edited objective", ExpectedRevision: session.Goal.Revision}}
@@ -127,7 +139,7 @@ func TestGoalEditRejectsStaleDraftAndStaleVerification(t *testing.T) {
 			close(release)
 			state := waitSubagentState(t, core, func(s contracts.Snapshot) bool {
 				return runsFinished(s) && s.Sessions[0].Goal.Status == contracts.GoalComplete
-			})
+			}, session.ID)
 			goal := state.Sessions[0].Goal
 			if goal.ID != session.Goal.ID || goal.Objective != "Edited objective" ||
 				len(goal.Verifications) != 1 || work.Load() != 2 || checks.Load() != 2 {
@@ -160,7 +172,11 @@ func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
 				}
 			}))
 			sendGoal(t, core, "/goal Verify the implementation")
-			state := waitSubagentState(t, core, runsFinished)
+			summary, err := core.Snapshot(t.Context())
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+			}
+			state := waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
 			goal := state.Sessions[0].Goal
 			if goal == nil || goal.Status != contracts.GoalPaused || !strings.Contains(goal.Reason, "verification failed") {
 				t.Fatalf("unreliable verification was accepted: %+v", goal)
@@ -187,6 +203,7 @@ func TestGoalBudgetIncludesVerificationAndRejectsBypassResume(t *testing.T) {
 		t.Fatal(err)
 	}
 	state, _ := core.Snapshot(context.Background())
+	sessionID := state.Sessions[0].ID
 	budget := int64(16)
 	if err := core.Execute(context.Background(), contracts.Command{
 		Kind: "goal.set", SessionID: state.Sessions[0].ID,
@@ -194,7 +211,7 @@ func TestGoalBudgetIncludesVerificationAndRejectsBypassResume(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	goal := state.Sessions[0].Goal
 	if calls.Load() != 2 || goal.TokensUsed != 16 || goal.Status != contracts.GoalBudgetLimited {
 		t.Fatalf("verifier did not consume the goal budget: calls=%d goal=%+v", calls.Load(), goal)
@@ -223,6 +240,7 @@ func TestGoalUnknownUsageDoesNotBecomeZeroBudgetCost(t *testing.T) {
 				t.Fatal(err)
 			}
 			state, _ := core.Snapshot(context.Background())
+			sessionID := state.Sessions[0].ID
 			input := &contracts.GoalInput{Objective: "Inspect a task"}
 			budget := int64(100)
 			if budgeted {
@@ -233,7 +251,7 @@ func TestGoalUnknownUsageDoesNotBecomeZeroBudgetCost(t *testing.T) {
 			}); err != nil {
 				t.Fatal(err)
 			}
-			state = waitSubagentState(t, core, runsFinished)
+			state = waitSubagentState(t, core, runsFinished, sessionID)
 			goal := state.Sessions[0].Goal
 			if budgeted && (goal.Status != contracts.GoalBudgetLimited || calls.Load() != 1) {
 				t.Fatalf("unknown usage allowed additional budgeted calls: %+v calls=%d", goal, calls.Load())
@@ -288,7 +306,7 @@ func TestGoalNewInputDuringVerificationTakesPriority(t *testing.T) {
 		t.Fatal(err)
 	}
 	close(releaseVerify)
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, state.Sessions[0].ID)
 	if checks.Load() != 2 || work.Load() != 2 || state.Sessions[0].Goal.Status != contracts.GoalComplete {
 		t.Fatalf("stale completion verdict took priority: work=%d verify=%d %+v", work.Load(), checks.Load(), state.Sessions[0].Goal)
 	}
@@ -310,14 +328,21 @@ func TestGoalClearCannotBeCompletedByAnInFlightVerifier(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("verification never started")
 	}
-	state, _ := core.Snapshot(context.Background())
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+	}
+	state, err := core.Snapshot(context.Background(), summary.Sessions[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	session := state.Sessions[0]
 	if err := core.Execute(context.Background(), contracts.Command{
 		Kind: "goal.clear", SessionID: session.ID, ID: session.Goal.ID,
 	}); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, session.ID)
 	if state.Sessions[0].Goal != nil {
 		t.Fatal("cancelled verifier recreated or completed the cleared goal")
 	}
@@ -363,7 +388,7 @@ func TestGoalRestartPausesAndSettlesToLastHeartbeat(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer core.Close()
-	state, _ := core.Snapshot(context.Background())
+	state, _ := core.Snapshot(context.Background(), session.ID)
 	goal := state.Sessions[0].Goal
 	if goal.Status != contracts.GoalPaused || goal.ActiveSince != nil ||
 		goal.TimeUsedMS != 16000 || goal.TokensUsed != 27 || goal.Iteration != 2 || len(state.Runs) != 0 {
@@ -372,7 +397,7 @@ func TestGoalRestartPausesAndSettlesToLastHeartbeat(t *testing.T) {
 	if err = core.Execute(context.Background(), contracts.Command{Kind: "session.fork", SessionID: session.ID}); err != nil {
 		t.Fatal(err)
 	}
-	state, _ = core.Snapshot(context.Background())
+	state, _ = core.Snapshot(context.Background(), session.ID)
 	if state.Sessions[0].Goal != nil {
 		t.Fatal("fork inherited authoritative goal state")
 	}
@@ -413,7 +438,7 @@ func TestGoalBudgetPreservesUnexecutedUserInput(t *testing.T) {
 		t.Fatal(err)
 	}
 	close(release)
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	if state.Sessions[0].Goal.Status != contracts.GoalBudgetLimited ||
 		len(state.Queue) != 1 || state.Queue[0].Text != "UNEXECUTED FOLLOWUP" || len(state.Runs) != 1 {
 		t.Fatalf("budget stop lost input or started an unauthorized continuation: %+v", state.Queue)
@@ -536,7 +561,11 @@ func TestGoalWaitsForChildAndAcceptsNewInputBeforeChildFinishes(t *testing.T) {
 		t.Fatal("goal was verified before the accepted child finished")
 	}
 	close(releaseChild)
-	state = waitSubagentState(t, core, runsFinished)
+	sessionIDs := make([]string, 0, len(state.Sessions))
+	for _, session := range state.Sessions {
+		sessionIDs = append(sessionIDs, session.ID)
+	}
+	state = waitSubagentState(t, core, runsFinished, sessionIDs...)
 	for _, session := range state.Sessions {
 		if session.ID == parentID && (session.Goal.Status != contracts.GoalComplete || session.Goal.TokensUsed != 48) {
 			t.Fatalf("child/verifier requests were not included in the goal: %+v, parent calls=%d checks=%d", session.Goal, parentCalls.Load(), checks.Load())

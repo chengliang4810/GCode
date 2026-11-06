@@ -55,7 +55,18 @@ func TestWorktreeDataDirectoryRealGitAndRestart(t *testing.T) {
 	if err := core.Execute(context.Background(), send); err != nil {
 		t.Fatal(err)
 	}
-	after := waitIdle(t, core)
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+	}
+	viewCtx, viewCancel := context.WithCancel(context.Background())
+	defer viewCancel()
+	view, err := core.Subscribe(viewCtx, summary.Sessions[0].ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-view
+	after := waitIdle(t, core, summary.Sessions[0].ID)
 	session := after.Sessions[0]
 	if filepath.Dir(session.CWD) != filepath.Join(store.Directory(), "worktrees") || session.CWD == repository ||
 		!strings.HasPrefix(session.Branch, "feat/") || session.WorktreeID == "" || session.SourceContext == nil ||
@@ -84,7 +95,7 @@ func TestWorktreeDataDirectoryRealGitAndRestart(t *testing.T) {
 	if err := core.Execute(context.Background(), send); err != nil {
 		t.Fatal(err)
 	}
-	deduped, _ := core.Snapshot(context.Background())
+	deduped, _ := core.Snapshot(context.Background(), session.ID)
 	if len(deduped.Projects[0].Worktrees) != 2 || len(deduped.Sessions) != 1 {
 		t.Fatal("duplicate accepted request created another worktree")
 	}
@@ -111,8 +122,29 @@ func TestWorktreeDataDirectoryRealGitAndRestart(t *testing.T) {
 	}}); err != nil {
 		t.Fatal(err)
 	}
-	reused := waitIdle(t, reopened)
-	if !sameCheckoutPath(reused.Sessions[0].CWD, session.CWD) || len(reused.Projects[0].Worktrees) != 2 {
+	reopenedSummary, err := reopened.Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("reopened conversation was not found: %+v, %v", reopenedSummary.Sessions, err)
+	}
+	var reusedSessionID string
+	for _, candidate := range reopenedSummary.Sessions {
+		if candidate.ID != session.ID {
+			reusedSessionID = candidate.ID
+			break
+		}
+	}
+	if reusedSessionID == "" {
+		t.Fatalf("reused conversation was not created: %+v", reopenedSummary.Sessions)
+	}
+	reused := waitIdle(t, reopened, reusedSessionID)
+	var reusedSession contracts.Session
+	for _, candidate := range reused.Sessions {
+		if candidate.ID == reusedSessionID {
+			reusedSession = candidate
+			break
+		}
+	}
+	if reusedSession.ID == "" || !sameCheckoutPath(reusedSession.CWD, session.CWD) || len(reused.Projects[0].Worktrees) != 2 {
 		t.Fatal("reuse created another checkout or selected wrong directory")
 	}
 }
@@ -202,7 +234,11 @@ func TestWorktreeDefaultCurrentFollowsActualBranchAfterExternalSwitch(t *testing
 	if err := core.Execute(t.Context(), send); err != nil {
 		t.Fatal(err)
 	}
-	state := waitIdle(t, core)
+	summary, err := core.Snapshot(t.Context())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+	}
+	state := waitIdle(t, core, summary.Sessions[0].ID)
 	session := state.Sessions[0]
 	if session.Branch != "external-branch" || session.CWD != repository || session.SourceContext == nil ||
 		session.SourceContext.Branch != "external-branch" || state.Projects[0].Branch != "external-branch" {
@@ -478,8 +514,25 @@ func TestWorktreeGoalAcceptsPreparedCheckout(t *testing.T) {
 	}}); err != nil {
 		t.Fatal(err)
 	}
-	after, _ := core.Snapshot(context.Background())
-	session := after.Sessions[0]
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
+	}
+	sessionID := summary.Sessions[0].ID
+	after, err := core.Snapshot(context.Background(), sessionID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var session contracts.Session
+	for _, candidate := range after.Sessions {
+		if candidate.ID == sessionID {
+			session = candidate
+			break
+		}
+	}
+	if session.ID == "" {
+		t.Fatalf("goal session was not returned: %+v", after.Sessions)
+	}
 	if session.Goal == nil || session.CWD == repository || session.WorktreeID == "" ||
 		session.SourceContext == nil || !strings.HasPrefix(session.Branch, "feat/") {
 		t.Fatalf("goal ignored the prepared checkout: %+v", session)

@@ -417,7 +417,10 @@ func TestComposerFooterExistingSendLocksTargetButUpdatesRunConfiguration(t *test
 	if err != nil || queued.Status != "queued" {
 		t.Fatalf("queued send = %+v, %v", queued, err)
 	}
-	after = footerGitSnapshot(t, s)
+	after, err = s.Snapshot(context.Background(), owned.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(after.Queue) != 1 {
 		t.Fatalf("queue = %+v", after.Queue)
 	}

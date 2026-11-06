@@ -139,7 +139,7 @@ func TestModelSettingsReorderQueuePreservesDraftAndReportsFailure(t *testing.T) 
 		if app.submitProviderSettings(app.runtimeUI.provider) {
 			t.Fatal("a provider save can overwrite an in-flight reorder")
 		}
-		app.commandFinished(command, errors.New("reorder failed"))
+		app.commandFinished(command.Command, errors.New("reorder failed"))
 		tt.Frame()
 		if app.modelSettingsBusy() || !tt.HasText("reorder failed") || app.runtimeUI.key != "unsubmitted-key" {
 			t.Fatal("failed reorder did not restore interaction and retain the draft")
@@ -171,7 +171,7 @@ func TestModelSettingsReorderQueuePreservesDraftAndReportsFailure(t *testing.T) 
 	}
 	select {
 	case command := <-app.jobs:
-		complete(command)
+		complete(command.Command)
 	default:
 		t.Fatal("failed reorder could not be retried")
 	}
@@ -180,7 +180,7 @@ func TestModelSettingsReorderQueuePreservesDraftAndReportsFailure(t *testing.T) 
 	}
 	select {
 	case command := <-app.jobs:
-		complete(command)
+		complete(command.Command)
 	default:
 		t.Fatal("draft save did not queue")
 	}

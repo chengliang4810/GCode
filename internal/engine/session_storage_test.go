@@ -3,11 +3,15 @@ package engine
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -47,6 +51,7 @@ func storeTestMessage(t *testing.T, core *Engine, sessionID, text string) {
 	core.appendUserLocked(sessionID, text)
 	core.history[sessionID] = append(core.history[sessionID], model.Message{Role: "user", Text: text})
 	core.context[sessionID] = model.CloneMessages(core.history[sessionID])
+	core.markSessionDirtyLocked(sessionID)
 	if err := core.persistLocked(); err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +86,11 @@ func TestConversationStorageSwitchKeepsHistoryAndWorkspaceAtOrigin(t *testing.T)
 	if core.state.Sessions[index].CWD != old.CWD || core.state.Sessions[index].StorageRootID != old.StorageRootID {
 		t.Fatal("old conversation changed storage identity")
 	}
-	if len(core.history[old.ID]) != 1 || core.history[old.ID][0].Text != "historical-private-body" {
+	core.mu.Lock()
+	err := core.ensureSessionDataLocked(old.ID)
+	history := model.CloneMessages(core.history[old.ID])
+	core.mu.Unlock()
+	if err != nil || len(history) != 1 || history[0].Text != "historical-private-body" {
 		t.Fatal("history was not reconstructed across roots")
 	}
 	storeTestMessage(t, core, old.ID, "continued-in-original-root")
@@ -228,7 +237,12 @@ func TestConversationCommitFailureKeepsPreviousRecord(t *testing.T) {
 	}
 	core = openStorageTestCore(t, home)
 	defer core.Close()
-	if core.state.Sessions[0].Title != session.Title || len(core.history[session.ID]) != 1 {
+	core.mu.Lock()
+	err = core.ensureSessionDataLocked(session.ID)
+	titleAfterRestart := core.state.Sessions[core.sessionIndex(session.ID)].Title
+	historyAfterRestart := model.CloneMessages(core.history[session.ID])
+	core.mu.Unlock()
+	if err != nil || titleAfterRestart != session.Title || len(historyAfterRestart) != 1 {
 		t.Fatal("a rejected operation changed the restarted conversation")
 	}
 }
@@ -251,6 +265,8 @@ func TestLateLoadFailedCommandDoesNotLoseHistory(t *testing.T) {
 	if err == nil {
 		t.Fatal("missing provider accepted")
 	}
+	releaseView := pinSessionView(t, core, session.ID)
+	defer releaseView()
 	if len(core.history[session.ID]) != 1 || core.history[session.ID][0].Text != "late-loaded-body" {
 		t.Fatal("failed validation erased lazily restored history")
 	}
@@ -292,6 +308,69 @@ func TestLargeConversationDataStaysOutsideConfigurationIndex(t *testing.T) {
 	}
 	if len(entries) != 1 {
 		t.Fatalf("full transcript versions accumulated: %d files", len(entries))
+	}
+}
+
+func TestDirtyPersistenceSkipsUnchangedConversationThatCannotEncode(t *testing.T) {
+	core := openStorageTestCore(t, t.TempDir())
+	defer core.Close()
+	for range 2 {
+		if err := core.Execute(t.Context(), contracts.Command{Kind: "session.create"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	target, unchanged := core.state.Sessions[0], core.state.Sessions[1]
+	releaseTarget := pinSessionView(t, core, target.ID)
+	defer releaseTarget()
+	releaseUnchanged := pinSessionView(t, core, unchanged.ID)
+	defer releaseUnchanged()
+	core.mu.Lock()
+	// A year outside JSON's supported RFC 3339 range makes the historical
+	// execution record unencodable. It is intentionally left unchanged so a
+	// targeted save must not inspect it.
+	core.state.Messages[unchanged.ID] = []contracts.Message{{SessionID: unchanged.ID, Role: "user", CreatedAt: time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC), Blocks: []contracts.Block{{Kind: "text", Text: "corrupt in-memory history"}}}}
+	title := "targeted update"
+	core.state.Sessions[core.sessionIndex(target.ID)].Title = title
+	err := core.persistLocked(target.ID)
+	core.mu.Unlock()
+	if err != nil {
+		t.Fatalf("targeted save was blocked by unchanged history: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(core.storage.Directory(), "sessions", target.ID, core.sessionRecords[target.ID]+".json"))
+	if err != nil || !bytes.Contains(data, []byte(title)) {
+		t.Fatalf("target conversation was not saved: %v", err)
+	}
+}
+
+func TestSessionRecordCleanupLeavesUnknownRecords(t *testing.T) {
+	core := openStorageTestCore(t, t.TempDir())
+	defer core.Close()
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "session.create"}); err != nil {
+		t.Fatal(err)
+	}
+	session := core.state.Sessions[0]
+	oldRecord := core.sessionRecords[session.ID]
+	oldPath := filepath.Join(core.storage.Directory(), "sessions", session.ID, oldRecord+".json")
+	data, err := os.ReadFile(oldPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	unknownData := append(append([]byte(nil), data...), '\n')
+	unknownHash := sha256.Sum256(unknownData)
+	unknownRecord := hex.EncodeToString(unknownHash[:])
+	if err := os.WriteFile(filepath.Join(core.storage.Directory(), "sessions", session.ID, unknownRecord+".json"), unknownData, 0600); err != nil {
+		t.Fatal(err)
+	}
+	var disk sessionDisk
+	if err := json.Unmarshal(unknownData, &disk); err != nil || disk.SessionID != session.ID {
+		t.Fatalf("unknown fixture is not a valid session record: %v", err)
+	}
+	title := "replacement record"
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: session.ID, Title: &title}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(core.storage.Directory(), "sessions", session.ID, unknownRecord+".json")); err != nil {
+		t.Fatalf("unknown session record was removed: %v", err)
 	}
 }
 
@@ -389,11 +468,20 @@ func TestCloseFlushesOnlineConversationWhenHistoricalRootIsOffline(t *testing.T)
 	}
 	fresh := core.state.Sessions[0]
 	core.mu.Lock()
+	var ensureErr error
 	for _, session := range []contracts.Session{old, fresh} {
+		if ensureErr = core.ensureSessionDataLocked(session.ID); ensureErr != nil {
+			break
+		}
 		core.appendUserLocked(session.ID, "pending final flush")
 		core.history[session.ID] = append(core.history[session.ID], model.Message{Role: "user", Text: "pending final flush"})
+		core.state.Sessions[core.sessionIndex(session.ID)].Title = "Uncommitted title"
+		core.markSessionDirtyLocked(session.ID)
 	}
 	core.mu.Unlock()
+	if ensureErr != nil {
+		t.Fatal(ensureErr)
+	}
 	// Windows deliberately holds the registered root lock open. Hiding its
 	// identity marker makes Resolve unavailable without renaming an open root.
 	marker := filepath.Join(firstRoot, ".gcode-root.json")
@@ -410,10 +498,84 @@ func TestCloseFlushesOnlineConversationWhenHistoricalRootIsOffline(t *testing.T)
 	}
 	core = openStorageTestCore(t, home)
 	defer core.Close()
-	if len(core.history[fresh.ID]) != 1 || core.history[fresh.ID][0].Text != "pending final flush" {
+	if core.state.Sessions[core.sessionIndex(old.ID)].Title != old.Title {
+		t.Fatal("the index committed metadata for a conversation whose record could not be saved")
+	}
+	core.mu.Lock()
+	ensureErr = core.ensureSessionDataLocked(fresh.ID)
+	if ensureErr == nil {
+		ensureErr = core.ensureSessionDataLocked(old.ID)
+	}
+	freshHistory := model.CloneMessages(core.history[fresh.ID])
+	oldHistory := model.CloneMessages(core.history[old.ID])
+	core.mu.Unlock()
+	if ensureErr != nil {
+		t.Fatal(ensureErr)
+	}
+	if len(freshHistory) != 1 || freshHistory[0].Text != "pending final flush" {
 		t.Fatal("an offline historical root prevented the online conversation's final flush")
 	}
-	if len(core.history[old.ID]) != 1 || core.history[old.ID][0].Text != "committed old history" {
+	if len(oldHistory) != 1 || oldHistory[0].Text != "committed old history" {
 		t.Fatal("an offline save overwrote previously committed history")
+	}
+}
+
+func TestCompoundSessionChangesRollBackIfAnyRecordCannotCommit(t *testing.T) {
+	for _, kind := range []string{"group.delete", "session.reorder"} {
+		t.Run(kind, func(t *testing.T) {
+			core := openStorageTestCore(t, t.TempDir())
+			defer core.Close()
+			first := newTestSession(t, core, "", "First")
+			second := newTestSession(t, core, "", "Second")
+			core.mu.Lock()
+			core.state.SessionGroups = []contracts.SessionGroup{{ID: "group", Title: "Group"}}
+			for rank, session := range []contracts.Session{first, second} {
+				index := core.sessionIndex(session.ID)
+				core.state.Sessions[index].GroupID, core.state.Sessions[index].GroupOrder = "group", rank
+			}
+			err := core.persistLocked(first.ID, second.ID)
+			before := contracts.CloneSnapshot(core.state)
+			beforeRecord := core.sessionRecords[first.ID]
+			core.mu.Unlock()
+			if err != nil {
+				t.Fatal(err)
+			}
+			folder := filepath.Join(core.storage.Directory(), "sessions", first.ID)
+			backup := folder + ".blocked"
+			if err := os.Rename(folder, backup); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(folder, []byte("unavailable conversation directory"), 0600); err != nil {
+				_ = os.Rename(backup, folder)
+				t.Fatal(err)
+			}
+			defer func() {
+				_ = os.Remove(folder)
+				_ = os.Rename(backup, folder)
+			}()
+			command := contracts.Command{Kind: kind, ID: "group"}
+			if kind == "session.reorder" {
+				command = contracts.Command{Kind: kind, Reorder: &contracts.ReorderInput{
+					SourceID: first.ID, TargetID: second.ID, GroupID: "group", After: true,
+				}}
+			}
+			if err := core.Execute(t.Context(), command); err == nil {
+				t.Fatal("a compound change succeeded without saving every affected conversation")
+			}
+			state, err := core.Snapshot(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(state.SessionGroups) != len(before.SessionGroups) || core.sessionRecords[first.ID] != beforeRecord {
+				t.Fatal("failed compound change replaced its committed group or record")
+			}
+			for _, session := range state.Sessions {
+				for _, previous := range before.Sessions {
+					if session.ID == previous.ID && (session.GroupID != previous.GroupID || session.GroupOrder != previous.GroupOrder) {
+						t.Fatal("failed compound change left partially updated session ordering")
+					}
+				}
+			}
+		})
 	}
 }

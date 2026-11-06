@@ -59,6 +59,7 @@ func (a *App) refreshModelTrajectory(sessionID string) {
 		return
 	}
 	state.loading, state.dirty = true, false
+	scope, generation := a.captureSessionScope()
 	a.backgroundTask(func() func() {
 		ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
 		defer cancel()
@@ -77,6 +78,10 @@ func (a *App) refreshModelTrajectory(sessionID string) {
 			toolText[i] = string(tools)
 		}
 		return func() {
+			if !a.sessionGenerationCurrent(generation, scope) {
+				state.loading = false
+				return
+			}
 			state.loading, state.loaded = false, true
 			state.error = ""
 			if err != nil {

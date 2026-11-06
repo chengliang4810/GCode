@@ -31,8 +31,14 @@ func (s Server) Handler() (http.Handler, error) {
 	s.providerLogoHandlers(mux)
 	s.modelMetadataHandlers(mux)
 	s.trajectoryHandlers(mux)
+	s.applicationUsageHandlers(mux)
 	mux.HandleFunc("GET /v1/snapshot", func(w http.ResponseWriter, r *http.Request) {
-		snapshot, err := s.Core.Snapshot(r.Context())
+		sessionIDs, err := sessionScopeFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		snapshot, err := s.Core.Snapshot(r.Context(), sessionIDs...)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -93,7 +99,12 @@ func (s Server) Handler() (http.Handler, error) {
 		writeJSON(w, result)
 	})
 	mux.HandleFunc("GET /v1/events", func(w http.ResponseWriter, r *http.Request) {
-		stream, err := s.Core.Subscribe(r.Context())
+		sessionIDs, err := sessionScopeFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		stream, err := s.Core.Subscribe(r.Context(), sessionIDs...)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -147,6 +158,22 @@ func (s Server) Handler() (http.Handler, error) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		mux.ServeHTTP(w, r)
 	}), nil
+}
+
+func sessionScopeFromRequest(r *http.Request) ([]string, error) {
+	values, present := r.URL.Query()["sessionId"]
+	if !present {
+		return nil, nil
+	}
+	if len(values) > maxSessionScopeIDs {
+		return nil, fmt.Errorf("session scope contains too many IDs (maximum %d)", maxSessionScopeIDs)
+	}
+	for _, id := range values {
+		if id == "" {
+			return nil, errors.New("session scope contains an empty ID")
+		}
+	}
+	return values, nil
 }
 
 func remoteSnapshot(snapshot *contracts.Snapshot) {

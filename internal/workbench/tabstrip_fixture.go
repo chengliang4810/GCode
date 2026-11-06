@@ -4,7 +4,6 @@ package workbench
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -445,6 +444,7 @@ type tabStripFixtureService struct {
 }
 
 var _ contracts.Service = (*tabStripFixtureService)(nil)
+var _ contracts.ApplicationUsageService = (*tabStripFixtureService)(nil)
 
 func (s *tabStripFixtureService) setScene(scene TabStripFixtureScene, styleCase string) {
 	settings := mock.DefaultSettings()
@@ -477,7 +477,7 @@ func (s *tabStripFixtureService) Bootstrap(ctx context.Context) (contracts.Snaps
 	return s.Snapshot(ctx)
 }
 
-func (s *tabStripFixtureService) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (s *tabStripFixtureService) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := ctx.Err(); err != nil {
@@ -486,13 +486,27 @@ func (s *tabStripFixtureService) Snapshot(ctx context.Context) (contracts.Snapsh
 	if s.closed {
 		return contracts.Snapshot{}, errors.New("fixture service is closed")
 	}
-	data, err := json.Marshal(s.state)
-	if err != nil {
-		return contracts.Snapshot{}, err
+	return contracts.CloneSnapshot(contracts.SessionProjection(s.state, sessionIDs)), nil
+}
+
+func (s *tabStripFixtureService) ReadApplicationUsage(ctx context.Context) (contracts.ApplicationUsage, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.ApplicationUsage{}, err
 	}
-	var state contracts.Snapshot
-	err = json.Unmarshal(data, &state)
-	return state, err
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.ApplicationUsage{}, errors.New("fixture service is closed")
+	}
+	usage := contracts.ApplicationUsage{Records: make(map[string][]contracts.UsageRecord, len(s.state.Messages))}
+	for sessionID, messages := range s.state.Messages {
+		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(messages)
+	}
+	usage.Runs = make([]contracts.Run, 0, len(s.state.Runs))
+	for _, run := range s.state.Runs {
+		usage.Runs = append(usage.Runs, contracts.Run{ID: run.ID, SessionID: run.SessionID, Status: run.Status, DurationMS: run.DurationMS})
+	}
+	return usage, nil
 }
 
 func (s *tabStripFixtureService) Execute(ctx context.Context, command contracts.Command) error {
@@ -502,11 +516,16 @@ func (s *tabStripFixtureService) Execute(ctx context.Context, command contracts.
 	return fmt.Errorf("tabstrip fixture has no mutating backend command: %s", command.Kind)
 }
 
-func (s *tabStripFixtureService) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
+func (s *tabStripFixtureService) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	ch := make(chan contracts.Event)
+	snapshot, err := s.Snapshot(ctx, sessionIDs...)
+	if err != nil {
+		return nil, err
+	}
+	ch := make(chan contracts.Event, 1)
+	ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Snapshot: &snapshot}
 	close(ch)
 	return ch, nil
 }

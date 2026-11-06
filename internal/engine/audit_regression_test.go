@@ -27,9 +27,9 @@ func TestStreamTextRetainsSnapshotsAndResetsAfterRetry(t *testing.T) {
 	}
 	apply(agent.Event{Kind: "message.start"})
 	apply(agent.Event{Kind: "message.delta", Text: "first"})
-	first := core.snapshotLocked()
+	first := core.snapshotLocked("session")
 	apply(agent.Event{Kind: "message.delta", Text: " second", Reasoning: "thinking"})
-	second := core.snapshotLocked()
+	second := core.snapshotLocked("session")
 	apply(agent.Event{Kind: "message.retry"})
 	apply(agent.Event{Kind: "message.delta", Text: "retry"})
 	if first.Messages["session"][0].Blocks[0].Text != "first" ||
@@ -46,7 +46,8 @@ func TestPublishedSnapshotsRetainIndependentSubscriberOwnership(t *testing.T) {
 			Sessions: []contracts.Session{{ID: "session", Title: "original"}},
 			Messages: map[string][]contracts.Message{"session": {{ID: "message", Blocks: []contracts.Block{{Kind: "text", Text: "original"}}}}},
 		},
-		subs: map[uint64]chan contracts.Event{1: a, 2: b},
+		subs:        map[uint64]chan contracts.Event{1: a, 2: b},
+		subSessions: map[uint64][]string{1: {"session"}, 2: {"session"}},
 	}
 	core.publishLocked(contracts.Event{Kind: "state.changed"})
 	first, second := <-a, <-b

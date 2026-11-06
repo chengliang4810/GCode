@@ -61,8 +61,8 @@ func todoProgress(update agent.TodoUpdate) string {
 
 // All snapshot paths (initial, reconnect and slow-subscriber recovery) share
 // the same projection used by incremental message events.
-func (e *Engine) snapshotLocked() contracts.Snapshot {
-	snapshot := contracts.CloneSnapshot(e.state)
+func (e *Engine) snapshotLocked(sessionIDs ...string) contracts.Snapshot {
+	snapshot := contracts.CloneSnapshot(contracts.SessionProjection(e.state, sessionIDs))
 	for sessionID, messages := range snapshot.Messages {
 		for i := range messages {
 			messages[i] = projectMessageTodos(messages[i])

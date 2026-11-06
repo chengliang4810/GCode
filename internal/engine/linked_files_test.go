@@ -20,6 +20,8 @@ import (
 
 func TestReadLinkedFileSourceOwnershipAndRealSave(t *testing.T) {
 	core, workspace, session := linkedFileTestCore(t)
+	releaseView := pinSessionView(t, core, session.ID)
+	defer releaseView()
 	path := filepath.Join(workspace, "子目录", "文件 空格.md")
 	content := "# 真实内容\n\n源会话文件。"
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {

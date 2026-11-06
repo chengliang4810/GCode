@@ -156,7 +156,17 @@ func TestDesktopLocalStorageSwitchAndContinuation(t *testing.T) {
 	})
 	app.capture("historical-continuation")
 	app.act("sidebar-new-conversation", "press", "")
-	app.waitKey("input")
+	app.await("new blank conversation is rendered", func() error {
+		tree, err := app.client.tree()
+		if err != nil {
+			return err
+		}
+		if _, err := tree.findKey("titlebar-session-info"); err == nil {
+			return fmt.Errorf("historical session title is still rendered")
+		}
+		_, err = tree.findKey("input")
+		return err
+	})
 	app.act("input", "setValue", "STORAGE_NEW_ROOT")
 	app.act("send", "press", "")
 	app.await("new independent conversation uses its own workspace in the new root", func() error {

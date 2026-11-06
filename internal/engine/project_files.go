@@ -64,7 +64,7 @@ func (e *Engine) startProjectFilesLocked(project contracts.Project) {
 		}
 		if err := e.persistLocked(); err != nil {
 			e.state.Projects[index].FilesState = contracts.LoadError
-			e.state.Projects[index].FilesError = "Cannot save loaded file list: " + err.Error()
+			e.state.Projects[index].FilesError = "Cannot save project metadata: " + err.Error()
 			log.Printf("project file loading persistence failed: project=%s: %v", project.ID, err)
 		}
 		e.publishLocked(contracts.Event{Kind: "project.files.changed", ResourceID: project.ID})

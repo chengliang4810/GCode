@@ -40,7 +40,7 @@ func TestTodoSnapshotProjectsOnlySuccessfulValidatedCalls(t *testing.T) {
 			core := &Engine{state: contracts.Snapshot{Messages: map[string][]contracts.Message{
 				"session": {{ID: "message", Role: "assistant", Blocks: []contracts.Block{{ID: "call", Kind: "tool", Tool: &tool}}}},
 			}}}
-			snapshot, err := core.Snapshot(context.Background())
+			snapshot, err := core.Snapshot(context.Background(), "session")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -54,7 +54,7 @@ func TestTodoSnapshotProjectsOnlySuccessfulValidatedCalls(t *testing.T) {
 					t.Fatalf("lost typed todo content or stable identity: %+v", lists[0])
 				}
 				lists[0].Todos[0].Text = "subscriber mutation"
-				again, _ := core.Snapshot(context.Background())
+				again, _ := core.Snapshot(context.Background(), "session")
 				if todoLists(again.Messages["session"])[0].Todos[0].Text != "Verify native UI" {
 					t.Fatal("snapshot mutation leaked into core")
 				}
@@ -73,7 +73,7 @@ func TestTodoEventsAndResynchronizationCarryLists(t *testing.T) {
 		state: contracts.Snapshot{Messages: map[string][]contracts.Message{}},
 		subs:  map[uint64]chan contracts.Event{}, done: make(chan struct{}),
 	}
-	events, err := core.Subscribe(ctx)
+	events, err := core.Subscribe(ctx, "session")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func TestTodoEventsAndResynchronizationCarryLists(t *testing.T) {
 		}
 	}
 	assertLatest(changed[4:5])
-	reconnected, err := core.Subscribe(ctx)
+	reconnected, err := core.Subscribe(ctx, "session")
 	if err != nil {
 		t.Fatal(err)
 	}

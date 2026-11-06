@@ -61,9 +61,13 @@ func TestNamingUsesSelectedModeAcrossProtocols(t *testing.T) {
 				}}); err != nil {
 					t.Fatal(err)
 				}
+				summary, err := core.Snapshot(context.Background())
+				if err != nil || len(summary.Sessions) != 1 {
+					t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+				}
 				after := waitSubagentState(t, core, func(state contracts.Snapshot) bool {
 					return len(state.Sessions) == 1 && state.Sessions[0].Title == "真实模型标题"
-				})
+				}, summary.Sessions[0].ID)
 				if namingCalls.Load() != 1 || after.Sessions[0].ModelID != "checks/unselected" {
 					t.Fatalf("naming changed execution model or repeated: %+v", after.Sessions[0])
 				}
@@ -140,7 +144,11 @@ func TestNamingFirstMessageDoesNotCallNamingModel(t *testing.T) {
 	}}); err != nil {
 		t.Fatal(err)
 	}
-	state := waitIdle(t, core)
+	summary, err := core.Snapshot(context.Background())
+	if err != nil || len(summary.Sessions) != 1 {
+		t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+	}
+	state := waitIdle(t, core, summary.Sessions[0].ID)
 	if state.Sessions[0].Title != "首条消息作为标题" || requests.Load() != 1 {
 		t.Fatalf("default naming made extra requests: %d %+v", requests.Load(), state.Sessions[0])
 	}

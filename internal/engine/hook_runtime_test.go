@@ -173,7 +173,7 @@ func TestHookRuntimeQueueIsInternalAndSurvivesObserverDisconnect(t *testing.T) {
 	state := waitSubagentState(t, core, runsFinished)
 	sessionID := state.Sessions[0].ID
 	observerCtx, cancel := context.WithCancel(context.Background())
-	_, err := core.Subscribe(observerCtx)
+	_, err := core.Subscribe(observerCtx, sessionID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,10 +190,12 @@ func TestHookRuntimeQueueIsInternalAndSurvivesObserverDisconnect(t *testing.T) {
 	if err := core.queueHookResult(sessionID, agent.HookExecution{Rule: contracts.HookRule{ID: "rewake"}, ExitCode: 2, Stderr: "verify the background result"}, true); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	if requests.Load() != 2 || state.Sessions[0].LastOutcome != "completed" {
 		t.Fatalf("observer cancellation stopped continuation: requests=%d state=%+v", requests.Load(), state.Sessions[0])
 	}
+	releaseView := pinSessionView(t, core, sessionID)
+	defer releaseView()
 	core.mu.Lock()
 	defer core.mu.Unlock()
 	found := false
@@ -218,6 +220,8 @@ func TestHookRuntimeRedactsSensitiveOutputAndExportsBoundTranscript(t *testing.T
 	sendGoal(t, core, "Initial task")
 	state := waitSubagentState(t, core, runsFinished)
 	session := state.Sessions[0]
+	releaseView := pinSessionView(t, core, session.ID)
+	defer releaseView()
 	secret := "private-hook-credential"
 	program, err := os.Executable()
 	if err != nil {
@@ -238,7 +242,7 @@ func TestHookRuntimeRedactsSensitiveOutputAndExportsBoundTranscript(t *testing.T
 	if strings.Contains(result.Context, secret) || !strings.Contains(result.Context, "[REDACTED]") {
 		t.Fatalf("model-facing secret leak: %+v", result)
 	}
-	state, _ = core.Snapshot(context.Background())
+	state, _ = core.Snapshot(context.Background(), session.ID)
 	public, _ := json.Marshal(state)
 	if strings.Contains(string(public), secret) {
 		t.Fatal("secret leaked into public diagnostics")
@@ -360,6 +364,8 @@ func TestHookRuntimeManualCompactionTriggersActualLifecycle(t *testing.T) {
 	sendGoal(t, core, "Initial task")
 	state := waitSubagentState(t, core, runsFinished)
 	sessionID := state.Sessions[0].ID
+	releaseView := pinSessionView(t, core, sessionID)
+	defer releaseView()
 	core.mu.Lock()
 	for i := 0; i < 4; i++ {
 		message := model.Message{Role: "user", Text: "fixture history"}
@@ -382,7 +388,7 @@ func TestHookRuntimeManualCompactionTriggersActualLifecycle(t *testing.T) {
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: sessionID, Text: "/compact"}}); err != nil {
 		t.Fatal(err)
 	}
-	state = waitSubagentState(t, core, runsFinished)
+	state = waitSubagentState(t, core, runsFinished, sessionID)
 	if summaries.Load() != 1 {
 		t.Fatalf("compaction did not call actual configured provider: %d runs=%+v", summaries.Load(), state.Runs)
 	}

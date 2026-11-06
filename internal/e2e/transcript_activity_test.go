@@ -150,6 +150,10 @@ func TestDesktopLocalTranscriptActivity(t *testing.T) {
 				time.Sleep(20 * time.Millisecond)
 			}
 			sessionID := snapshot.Sessions[0].ID
+			snapshot, err = core.Snapshot(ctx, sessionID)
+			if err != nil {
+				t.Fatal(err)
+			}
 			var groupID, thoughtID, readID string
 			for _, message := range snapshot.Messages[sessionID] {
 				for _, block := range message.Blocks {

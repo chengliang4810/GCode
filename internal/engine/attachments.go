@@ -80,6 +80,7 @@ func (e *Engine) ImportAttachments(ctx context.Context, request contracts.Attach
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	defer e.evictIdleSessionsLocked()
 	if err := e.checkLocked(ctx); err != nil {
 		return nil, err
 	}

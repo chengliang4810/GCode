@@ -75,7 +75,11 @@ func TestProviderDraftPersistsAndBecomesRunnableAcrossProtocols(t *testing.T) {
 			}}); err != nil {
 				t.Fatal(err)
 			}
-			state = waitIdle(t, core)
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			state = waitIdle(t, core, summary.Sessions[0].ID)
 			if requests.Load() != 1 || state.Sessions[0].LastOutcome != "completed" {
 				t.Fatalf("completed provider failed execution: requests=%d, runs=%+v", requests.Load(), state.Runs)
 			}

@@ -293,7 +293,7 @@ func TestComposerFooterRefreshWaitsForQueuedRequestSnapshot(t *testing.T) {
 	if len(a.jobs) != 0 {
 		t.Fatal("menu open duplicated a refresh still waiting in the service queue")
 	}
-	a.composerFooterGitCommandFinished(command, nil)
+	a.composerFooterGitCommandFinished(command.Command, nil)
 	a.ensureComposerFooterRefs(true)
 	if len(a.jobs) != 0 {
 		t.Fatal("command receipt was mistaken for an updated repository snapshot")

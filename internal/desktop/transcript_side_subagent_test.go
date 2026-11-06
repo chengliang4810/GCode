@@ -27,6 +27,7 @@ func TestSubagentSideTranscriptIsReadOnlyAndPreservesMainDraft(t *testing.T) {
 	app.state.Messages["chat-0"] = []contracts.Message{{ID: "parent", SessionID: "chat-0", Role: "assistant", Blocks: []contracts.Block{
 		{ID: "child", Kind: "subagent", Subagent: &contracts.Subagent{ID: "child", SessionID: child.ID, Name: "Schema reviewer", Status: "completed"}},
 	}}}
+	stabilizeFixtureSnapshot(t, app, child.ID)
 	app.workspace.Update(app.state)
 	tt := ui.NewTester(app.View, 1320, 880)
 	if err := tt.Click("Open agent: Schema reviewer"); err != nil {

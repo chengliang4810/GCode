@@ -306,6 +306,9 @@ func TestRealCoreSettingsAndTypedMessageProjection(t *testing.T) {
 	if _, ok := tt.Find("Remote host"); !ok {
 		t.Fatal("remote connection form missing")
 	}
+	// Fine-grained events are delivered only for the active detail scope.
+	app.sessionSubscriptionGeneration++
+	app.sessionSubscriptionScope = []string{"stream-test"}
 	app.applyEvent(contracts.Event{Kind: "message.changed", Revision: app.state.Revision + 1, SessionID: "stream-test", Message: &contracts.Message{ID: "m", Role: "assistant", Streaming: true}})
 	app.applyEvent(contracts.Event{Kind: "message.delta", Revision: app.state.Revision + 1, SessionID: "stream-test", MessageID: "m", BlockKind: "text", Text: "原生 Go 增量"})
 	if app.state.Messages["stream-test"][0].Blocks[0].Text != "原生 Go 增量" {

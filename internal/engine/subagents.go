@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -272,8 +273,10 @@ func (e *Engine) spawnSubagentLocked(
 			hooks: contracts.CloneHookRules(scope.hooks), disallowed: slices.Clone(scope.disallowed),
 		}
 	}
+	priorDirty := maps.Clone(e.sessionDirty)
 	e.state.Sessions = append([]contracts.Session{child}, e.state.Sessions...)
 	e.loadedSessions[child.ID] = true
+	e.markSessionDirtyLocked(child.ID, parentID)
 	e.history[child.ID] = []model.Message{{Role: "user", Text: prompt}}
 	e.context[child.ID] = model.CloneMessages(e.history[child.ID])
 	e.appendUserLocked(child.ID, prompt)
@@ -298,6 +301,7 @@ func (e *Engine) spawnSubagentLocked(
 		delete(e.loadedSessions, child.ID)
 		delete(e.sessionHashes, child.ID)
 		delete(e.sessionRecords, child.ID)
+		e.sessionDirty = priorDirty
 		e.releaseEmptySessionDirectories(child)
 		return contracts.Session{}, nil, err
 	}
@@ -351,6 +355,7 @@ func (e *Engine) updateRunningSubagentsLocked(parentID string) {
 
 func (e *Engine) finishSubagentLocked(session contracts.Session, run *activeRun, runErr error) {
 	child := run.subagent
+	e.markSessionDirtyLocked(child.parentSessionID)
 	status, summary := "completed", run.output
 	if runErr != nil {
 		status, summary = "failed", runErr.Error()

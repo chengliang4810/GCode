@@ -132,8 +132,8 @@ func queueBranchCreation(t *testing.T, a *App) contracts.Command {
 	a.createRelatedSession(a.sessionID, true)
 	a.win = nil
 	select {
-	case command := <-a.jobs:
-		return command
+	case job := <-a.jobs:
+		return job.Command
 	default:
 		t.Fatal("branch command was not queued")
 		return contracts.Command{}
@@ -260,7 +260,7 @@ func TestForkEntryOpensCopiedConversationAndRestoresParentDraft(t *testing.T) {
 
 type failedBranchSnapshotService struct{ contracts.Service }
 
-func (s failedBranchSnapshotService) Snapshot(context.Context) (contracts.Snapshot, error) {
+func (s failedBranchSnapshotService) Snapshot(context.Context, ...string) (contracts.Snapshot, error) {
 	return contracts.Snapshot{}, errors.New("snapshot unavailable")
 }
 

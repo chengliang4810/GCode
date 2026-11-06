@@ -152,3 +152,95 @@ func TestGroupAndSessionReorderPersistDenseOrder(t *testing.T) {
 		}
 	}
 }
+
+func TestLazySessionReorderPersistsAllAffectedRecords(t *testing.T) {
+	home := t.TempDir()
+	store, err := storage.Open(storage.Options{Home: home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err := openExecutionFixture(t, Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if err = core.Execute(ctx, contracts.Command{Kind: "group.create", Text: "Research"}); err != nil {
+		t.Fatal(err)
+	}
+	state, _ := core.Snapshot(ctx)
+	groupID := state.SessionGroups[0].ID
+	for _, name := range []string{"A", "B", "C"} {
+		if err = core.Execute(ctx, contracts.Command{Kind: "session.create", Name: name}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	state, _ = core.Snapshot(ctx)
+	byTitle := make(map[string]contracts.Session, len(state.Sessions))
+	for _, session := range state.Sessions {
+		byTitle[session.Title] = session
+	}
+	for _, name := range []string{"A", "B"} {
+		group := groupID
+		if err = core.Execute(ctx, contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: byTitle[name].ID, GroupID: &group}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err = core.Execute(ctx, contracts.Command{Kind: "session.reorder", Reorder: &contracts.ReorderInput{GroupID: groupID, SourceID: byTitle["B"].ID, TargetID: byTitle["A"].ID}}); err != nil {
+		t.Fatal(err)
+	}
+	if err = core.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err = storage.Open(storage.Options{Home: home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err = openExecutionFixture(t, Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state, _ = core.Snapshot(ctx)
+	if len(core.loadedSessions) != 0 {
+		t.Fatalf("restart eagerly loaded session bodies: %d", len(core.loadedSessions))
+	}
+	byTitle = make(map[string]contracts.Session, len(state.Sessions))
+	for _, session := range state.Sessions {
+		byTitle[session.Title] = session
+	}
+	if err = core.Execute(ctx, contracts.Command{Kind: "session.reorder", Reorder: &contracts.ReorderInput{GroupID: groupID, SourceID: byTitle["C"].ID, TargetID: byTitle["A"].ID}}); err != nil {
+		t.Fatal(err)
+	}
+	state, _ = core.Snapshot(ctx)
+	want := make(map[string]contracts.Session, len(state.Sessions))
+	for _, session := range state.Sessions {
+		want[session.ID] = session
+	}
+	if err = core.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err = storage.Open(storage.Options{Home: home})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err = openExecutionFixture(t, Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer core.Close()
+	for id, expected := range want {
+		view, viewErr := core.Snapshot(ctx, id)
+		if viewErr != nil {
+			t.Fatal(viewErr)
+		}
+		index := core.sessionIndex(id)
+		if index < 0 {
+			t.Fatalf("lazy reorder lost session %s", id)
+		}
+		got := view.Sessions[index]
+		if got.GroupID != expected.GroupID || got.GroupOrder != expected.GroupOrder {
+			t.Fatalf("lazy reorder was not written to %s: got=%+v want=%+v", id, got, expected)
+		}
+	}
+}

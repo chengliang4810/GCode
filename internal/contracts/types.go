@@ -543,8 +543,8 @@ type TerminalSize struct {
 }
 type Service interface {
 	Bootstrap(context.Context) (Snapshot, error)
-	Snapshot(context.Context) (Snapshot, error)
+	Snapshot(context.Context, ...string) (Snapshot, error)
 	Execute(context.Context, Command) error
-	Subscribe(context.Context) (<-chan Event, error)
+	Subscribe(context.Context, ...string) (<-chan Event, error)
 	Close() error
 }

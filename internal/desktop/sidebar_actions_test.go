@@ -13,10 +13,10 @@ func TestSessionDeleteDialogDimsSessionInfo(t *testing.T) {
 		for _, width := range []int{900, 1700} {
 			t.Run(fmt.Sprintf("%s-%d", mode, width), func(t *testing.T) {
 				a := testApp(t, "default")
+				a.selectSession("chat-0")
 				a.state.Settings.Appearance.Mode = mode
 				a.state.Settings.Appearance.ThemeID = "rcode-" + mode
 				a.state.Settings.General.Language = "zh-CN"
-				a.selectSession("chat-0")
 				a.right, a.files = false, false
 				a.expanded["session-info-user"], a.expanded["session-info"] = true, true
 				tt := ui.NewTester(a.View, width, 880)

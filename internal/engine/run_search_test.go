@@ -96,8 +96,16 @@ func TestSearchToolsRoundTripThroughThreeProtocols(t *testing.T) {
 			}); err != nil {
 				t.Fatal(err)
 			}
-			after := waitIdle(t, core)
-			sid := after.Sessions[0].ID
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			sid := summary.Sessions[0].ID
+			after := waitIdle(t, core, sid)
+			after, err = core.Snapshot(ctx, sid)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if requests.Load() != 3 || after.Sessions[0].LastOutcome != "completed" ||
 				len(core.history[sid]) != 6 {
 				t.Fatalf("search round trip failed: %+v", after.Runs)

@@ -390,6 +390,14 @@ func TestDynamicSkillRespectsEffectiveRunPolicy(t *testing.T) {
 			if _, err := os.Stat(filepath.Join(cwd, "bypass.txt")); !os.IsNotExist(err) {
 				t.Fatalf("dynamic context bypassed the effective run policy: %v", err)
 			}
+			sessionIDs := make([]string, 0, len(state.Sessions))
+			for _, session := range state.Sessions {
+				sessionIDs = append(sessionIDs, session.ID)
+			}
+			state, err := core.Snapshot(context.Background(), sessionIDs...)
+			if err != nil {
+				t.Fatal(err)
+			}
 			messages, _ := json.Marshal(state.Messages)
 			if !strings.Contains(string(messages), tc.wantBlocked) {
 				t.Fatalf("execution was not explicitly blocked: %s", messages)

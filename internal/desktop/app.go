@@ -81,33 +81,37 @@ type App struct {
 	// painted is the width drawn this frame, content the width each moving
 	// pane lays itself out at, motion the toggles waiting for this frame's
 	// targets, and frameColumns the allocation the frame draws.
-	panelTween            [3]panelWidthTween
-	panelPainted          [3]float32
-	panelContent          [3]float32
-	panelMotion           [3]bool
-	panelReady            bool
-	frameColumns          panelWidths
-	sessionStates         map[string]sessionViewState
-	canvasTarget          *canvasTarget
-	chatWorkspacePending  bool
-	desiredSettings       *contracts.Settings
-	authoritativeSettings contracts.Settings
-	settingsPending       int
-	bottom                *workbench.State
-	pendingNew            bool
-	pendingNewRequestID   string
-	pendingNewEpoch       uint64
-	pendingNewRuns        map[string]bool
-	service               contracts.Service
-	ctx                   context.Context
-	cancel                context.CancelFunc
-	win                   *mygo.Window
+	panelTween                    [3]panelWidthTween
+	panelPainted                  [3]float32
+	panelContent                  [3]float32
+	panelMotion                   [3]bool
+	panelReady                    bool
+	frameColumns                  panelWidths
+	sessionStates                 map[string]sessionViewState
+	canvasTarget                  *canvasTarget
+	chatWorkspacePending          bool
+	desiredSettings               *contracts.Settings
+	authoritativeSettings         contracts.Settings
+	settingsPending               int
+	bottom                        *workbench.State
+	pendingNew                    bool
+	pendingNewRequestID           string
+	pendingNewEpoch               uint64
+	pendingNewRuns                map[string]bool
+	service                       contracts.Service
+	ctx                           context.Context
+	cancel                        context.CancelFunc
+	win                           *mygo.Window
+	sessionSubscriptionCancel     context.CancelFunc
+	sessionSubscriptionGeneration uint64
+	sessionSubscriptionScope      []string
+	sessionDetailsLoading         map[string]bool
 	// captionButtons reports that the window hides its native caption
 	// controls, so the title bar draws the shared SVG ones instead.
 	captionButtons                                          bool
 	systemDark                                              bool
 	state                                                   contracts.Snapshot
-	jobs                                                    chan contracts.Command
+	jobs                                                    chan appJob
 	closed                                                  bool
 	closeOnce                                               sync.Once
 	closeDone                                               chan struct{}
@@ -190,7 +194,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	if snapshot.Settings.General.ActiveTurnSendBehavior == "" {
 		snapshot.Settings.General.ActiveTurnSendBehavior = "steer"
 	}
-	a := &App{service: service, ctx: ctx, cancel: cancel, state: snapshot, jobs: make(chan contracts.Command, 128), panelOpened: [3]uint64{1, 2, 3}, closeDone: make(chan struct{}),
+	a := &App{service: service, ctx: ctx, cancel: cancel, state: snapshot, jobs: make(chan appJob, 128), panelOpened: [3]uint64{1, 2, 3}, closeDone: make(chan struct{}),
 		sidebar: true, route: "chat", section: "General", checkout: "Current checkout",
 		drafts: make(map[string]string), expanded: make(map[string]bool), history: []string{"chat"}}
 	if snapshot.Runtime == nil {
@@ -237,6 +241,8 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	a.workspace.OnOpenSurface = func() { a.setPanel(1, true) }
 	a.workspace.OnCloseSurface = func() { a.setPanel(1, false) }
 	a.workspace.OnOpenSession = a.selectSession
+	a.workspace.OnSessionVisible = func(string) { a.refreshSessionSubscription() }
+	a.workspace.OnSessionHidden = func(string) { a.refreshSessionSubscription() }
 	a.workspace.RenderSession = a.sideTranscript
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.RenderGoal = a.goalEditorView
@@ -291,6 +297,8 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.OnOpenSurface = func() { a.setPanel(1, true) }
 	a.workspace.OnCloseSurface = func() { a.setPanel(1, false) }
 	a.workspace.OnOpenSession = a.selectSession
+	a.workspace.OnSessionVisible = func(string) { a.refreshSessionSubscription() }
+	a.workspace.OnSessionHidden = func(string) { a.refreshSessionSubscription() }
 	a.workspace.RenderSession = a.sideTranscript
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.RenderGoal = a.goalEditorView
@@ -302,46 +310,29 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.OnToggleExpand = a.toggleWorkspaceExpanded
 	a.workspace.OnAnnotation = a.attachAnnotation
 	a.configureWorkspaceLinks()
-	events, err := a.service.Subscribe(a.ctx)
-	if err != nil {
-		return err
-	}
+	a.refreshSessionSubscription()
 	a.notifications.Start(a.ctx, nativeNotificationSink{})
 	go func() {
 		for {
 			select {
 			case <-a.ctx.Done():
 				return
-			case command := <-a.jobs:
-				err := a.service.Execute(a.ctx, command)
-				snapshot, snapshotErr := a.service.Snapshot(a.ctx)
+			case job := <-a.jobs:
+				err := a.service.Execute(a.ctx, job.Command)
+				snapshot, snapshotErr := a.service.Snapshot(a.ctx, job.scope...)
 				win.Update(func() {
 					if a.closed {
 						return
 					}
-					a.commandFinished(command, err)
+					a.commandFinished(job.Command, err)
+					if !a.sessionGenerationCurrent(job.generation, job.scope) {
+						return
+					}
 					if snapshotErr == nil {
 						a.apply(snapshot)
-						a.creationCommandApplied(command, err)
+						a.creationCommandApplied(job.Command, err)
 					}
-					a.branchSnapshotFailed(command, snapshotErr)
-				})
-			}
-		}
-	}()
-	go func() {
-		for {
-			select {
-			case <-a.ctx.Done():
-				return
-			case event, ok := <-events:
-				if !ok {
-					return
-				}
-				win.Update(func() {
-					if !a.closed {
-						a.applyEvent(event)
-					}
+					a.branchSnapshotFailed(job.Command, snapshotErr)
 				})
 			}
 		}
@@ -373,8 +364,13 @@ func (a *App) startClose() {
 		}
 		settings := a.state.Settings
 		a.closed = true
+		if a.sessionSubscriptionCancel != nil {
+			a.sessionSubscriptionCancel()
+			a.sessionSubscriptionCancel = nil
+		}
 		a.cancel()
 		a.notifications.Close()
+		a.releaseUnrequestedSessionProjections(nil)
 		_ = a.workspace.Close()
 		_ = a.bottom.Close()
 		go func() {
@@ -395,7 +391,8 @@ type transcriptStreamText struct {
 }
 
 func (a *App) apply(s contracts.Snapshot) {
-	if s.Revision > a.state.Revision {
+	applySnapshot := s.Revision > a.state.Revision || s.Revision == a.state.Revision && a.snapshotAddsDetails(s)
+	if applySnapshot {
 		a.authoritativeSettings = copySettings(s.Settings)
 		if a.settingsPending > 0 && a.desiredSettings != nil {
 			s.Settings = *a.desiredSettings
@@ -405,6 +402,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.clearSessionDetailsLoading(s)
 		for sessionID := range a.trajectoryViews {
 			if !a.hasSession(sessionID) {
 				delete(a.trajectoryViews, sessionID)
@@ -445,10 +443,17 @@ func (a *App) apply(s contracts.Snapshot) {
 	}
 	a.reconcileBranchCreation()
 	a.selectCreatedProject()
+	a.refreshSessionSubscription()
 }
 
 func (a *App) applyEvent(event contracts.Event) {
 	a.notifications.ObserveEvent(event, a.state.Settings, a.notificationWindowFocused())
+	if event.Kind == "message.delta" && !a.sessionScopeContains(event.SessionID) {
+		return
+	}
+	if event.Message != nil && !a.sessionScopeContains(event.SessionID) {
+		event.Message = nil
+	}
 	if event.Kind == "session.naming.failed" {
 		a.notification(event.Text)
 	}
@@ -461,6 +466,7 @@ func (a *App) applyEvent(event contracts.Event) {
 		a.streamText = nil
 		a.apply(*event.Snapshot)
 	} else if event.Revision > a.state.Revision && (event.Message != nil || event.Kind == "message.delta") {
+		delete(a.sessionDetailsLoading, event.SessionID)
 		// Streaming updates copy only the affected message, never serialize or
 		// clone the entire conversation history between the Go core and UI.
 		s := a.state
@@ -566,19 +572,21 @@ func (a *App) dispatch(cmd contracts.Command) {
 	if a.closed {
 		return
 	}
+	scope, generation := a.captureSessionScope()
 	if a.win == nil {
 		err := a.service.Execute(a.ctx, cmd)
 		a.commandFinished(cmd, err)
-		if s, snapshotErr := a.service.Snapshot(a.ctx); snapshotErr == nil {
+		if s, snapshotErr := a.service.Snapshot(a.ctx, scope...); snapshotErr == nil && a.sessionGenerationCurrent(generation, scope) {
 			a.apply(s)
 			a.creationCommandApplied(cmd, err)
-		} else {
+		} else if snapshotErr != nil && a.sessionGenerationCurrent(generation, scope) {
 			a.branchSnapshotFailed(cmd, snapshotErr)
 		}
 		return
 	}
+	job := appJob{Command: cmd, sessionScopeCapture: sessionScopeCapture{scope: scope, generation: generation}}
 	select {
-	case a.jobs <- cmd:
+	case a.jobs <- job:
 	default:
 		a.commandFinished(cmd, fmt.Errorf("an operation is still pending; please try again"))
 	}
@@ -832,12 +840,14 @@ func (a *App) setSelectedSession(id string, preserveWorkspace bool) {
 		a.syncChatWorkspace()
 	}
 	a.restoreSessionView(id)
+	a.refreshSessionSubscription()
 }
 
 func (a *App) syncChatWorkspace() {
 	a.workspace.ProjectID = a.projectID
 	a.workspace.SwitchSession(a.sessionID)
 	a.chatWorkspacePending = false
+	a.refreshSessionSubscription()
 }
 
 func (a *App) hasSession(id string) bool {

@@ -62,10 +62,10 @@ func TestProviderModelFetchDialogAddsSelectedModels(t *testing.T) {
 	if command.Kind != "provider.models.fetch" || command.ID != "fetcher" {
 		t.Fatalf("unexpected fetch command: %+v", command)
 	}
-	if err := core.Execute(context.Background(), command); err != nil {
+	if err := core.Execute(context.Background(), command.Command); err != nil {
 		t.Fatal(err)
 	}
-	app.commandFinished(command, nil)
+	app.commandFinished(command.Command, nil)
 	deadline := time.Now().Add(5 * time.Second)
 	for {
 		snapshot, _ = core.Snapshot(context.Background())
@@ -104,7 +104,7 @@ func TestProviderModelFetchDialogAddsSelectedModels(t *testing.T) {
 	if save.Kind != "provider.save" {
 		t.Fatalf("confirmation did not save the provider: %+v", save)
 	}
-	if err := core.Execute(context.Background(), save); err != nil {
+	if err := core.Execute(context.Background(), save.Command); err != nil {
 		t.Fatal(err)
 	}
 	snapshot, _ = core.Snapshot(context.Background())

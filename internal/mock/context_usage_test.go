@@ -49,6 +49,7 @@ func reportContext(s *Server, sessionID, runID string, generation uint64, report
 func TestContextUsageSeedAndSideSessionIsolation(t *testing.T) {
 	s := newTestServer(t, Options{Scenario: "transcript", Instant: true})
 	before := contextSnapshot(t, s)
+	beforeDetail := snapshotForSessions(t, s, "chat-0")
 	for _, tc := range []struct {
 		name, id string
 		known    bool
@@ -90,7 +91,8 @@ func TestContextUsageSeedAndSideSessionIsolation(t *testing.T) {
 		}
 		return false
 	})
-	if !reflect.DeepEqual(before.ContextUsage["chat-0"], after.ContextUsage["chat-0"]) || !reflect.DeepEqual(before.Messages["chat-0"], after.Messages["chat-0"]) {
+	afterDetail := snapshotForSessions(t, s, "chat-0")
+	if !reflect.DeepEqual(before.ContextUsage["chat-0"], after.ContextUsage["chat-0"]) || !reflect.DeepEqual(beforeDetail.Messages["chat-0"], afterDetail.Messages["chat-0"]) {
 		t.Fatal("side host activity changed the main context or transcript")
 	}
 }
@@ -99,17 +101,18 @@ func TestContextUsageReportsAndSnapshotOwnership(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
 	run := heldContextRun(t, s, "chat-0", "claude-opus-4-6")
 	generation := contextGeneration(s, "chat-0")
-	before := contextSnapshot(t, s)
+	beforeDetail := snapshotForSessions(t, s, "chat-0")
 	tokens, window := uint64(23100), uint64(180000)
 	if !reportContext(s, "chat-0", run.ID, generation, contracts.ContextUsage{Tokens: &tokens, Window: &window}) {
 		t.Fatal("current host report rejected")
 	}
 	tokens, window = 99, 1
 	a := contextSnapshot(t, s)
+	aDetail := snapshotForSessions(t, s, "chat-0")
 	if *a.ContextUsage["chat-0"].Tokens != 23100 || *a.ContextUsage["chat-0"].Window != 180000 {
 		t.Fatal("backend retained caller-owned report pointers")
 	}
-	if !reflect.DeepEqual(before.Messages, a.Messages) {
+	if !reflect.DeepEqual(beforeDetail.Messages, aDetail.Messages) {
 		t.Fatal("host occupancy changed legacy message billing usage")
 	}
 	first, err := s.Subscribe(context.Background())
@@ -197,6 +200,7 @@ func TestContextUsageLateDoneDoesNotReopenTurn(t *testing.T) {
 	generation := contextGeneration(s, "chat-0")
 	s.advanceRun("chat-0", run.ID, "Finished", true)
 	before := contextSnapshot(t, s)
+	beforeDetail := snapshotForSessions(t, s, "chat-0")
 	events, err := s.Subscribe(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -210,7 +214,8 @@ func TestContextUsageLateDoneDoesNotReopenTurn(t *testing.T) {
 		t.Fatalf("late usage event %+v", event)
 	}
 	after := *event.Snapshot
-	if !reflect.DeepEqual(before.Runs, after.Runs) || !reflect.DeepEqual(before.Sessions, after.Sessions) || !reflect.DeepEqual(before.Messages, after.Messages) {
+	afterDetail := snapshotForSessions(t, s, "chat-0")
+	if !reflect.DeepEqual(before.Runs, after.Runs) || !reflect.DeepEqual(before.Sessions, after.Sessions) || !reflect.DeepEqual(beforeDetail.Messages, afterDetail.Messages) {
 		t.Fatal("late context report changed a completed turn or its transcript")
 	}
 	if *after.ContextUsage["chat-0"].Tokens != 7000 || after.Revision <= before.Revision {
@@ -248,7 +253,7 @@ func TestContextUsagePermissionContinuationKeepsProviderSession(t *testing.T) {
 	if !reportContext(s, "chat-0", run.ID, generation, contracts.ContextUsage{Tokens: contextCount(17000)}) {
 		t.Fatal("waiting provider report rejected")
 	}
-	snapshot := contextSnapshot(t, s)
+	snapshot := snapshotForSessions(t, s, "chat-0")
 	permissionID := ""
 	for _, message := range snapshot.Messages["chat-0"] {
 		for _, block := range message.Blocks {
@@ -299,7 +304,7 @@ func TestContextUsageHostCompactionKeepsMessageAccounting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	before := contextSnapshot(t, s)
+	before := snapshotForSessions(t, s, "chat-4")
 	run, err := s.Send(context.Background(), contracts.SendRequest{SessionID: "chat-4", Text: "Inspect keyboard navigation", ModelID: "claude-opus-4-6"})
 	if err != nil {
 		t.Fatal(err)
@@ -312,15 +317,16 @@ func TestContextUsageHostCompactionKeepsMessageAccounting(t *testing.T) {
 		}
 		return false
 	})
+	afterDetail := snapshotForSessions(t, s, "chat-4")
 	if *after.ContextUsage["chat-4"].Tokens >= *before.ContextUsage["chat-4"].Tokens {
 		t.Fatal("host compaction did not publish a decreased absolute occupancy")
 	}
 	for i, message := range before.Messages["chat-4"] {
-		if !reflect.DeepEqual(message.Usage, after.Messages["chat-4"][i].Usage) {
+		if !reflect.DeepEqual(message.Usage, afterDetail.Messages["chat-4"][i].Usage) {
 			t.Fatal("compaction rewrote historical token accounting")
 		}
 	}
-	last := after.Messages["chat-4"][len(after.Messages["chat-4"])-1]
+	last := afterDetail.Messages["chat-4"][len(afterDetail.Messages["chat-4"])-1]
 	if last.Usage.InputTokens != max(1, len([]rune("Inspect keyboard navigation"))/4)+128 || last.Usage.ContextLimit != 200000 || uint64(last.Usage.ContextTokens) == *after.ContextUsage["chat-4"].Tokens {
 		t.Fatalf("legacy message accounting was replaced by host context: %+v", last.Usage)
 	}

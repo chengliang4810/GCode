@@ -101,7 +101,7 @@ func TestGoalRealCoreComposerCreationPauseResumeAndStop(t *testing.T) {
 		deadline := time.Now().Add(5 * time.Second)
 		var latest contracts.Snapshot
 		for time.Now().Before(deadline) {
-			current, snapshotErr := core.Snapshot(ctx)
+			current, snapshotErr := core.Snapshot(ctx, sessionID)
 			if snapshotErr != nil {
 				t.Fatal(snapshotErr)
 			}
@@ -121,7 +121,7 @@ func TestGoalRealCoreComposerCreationPauseResumeAndStop(t *testing.T) {
 		select {
 		case <-verifying:
 		case <-time.After(5 * time.Second):
-			current, snapshotErr := core.Snapshot(ctx)
+			current, snapshotErr := core.Snapshot(ctx, sessionID)
 			t.Fatalf("the core did not send a verifier request: work=%d verification=%d error=%v state=%+v", workCalls.Load(), verificationCalls.Load(), snapshotErr, current)
 		}
 		return waitFor("the verifying goal projection", func(current contracts.Snapshot) bool {

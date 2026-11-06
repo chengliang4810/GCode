@@ -117,17 +117,25 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			if err := core.Execute(ctx, contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{RequestID: "one", ProjectID: before.Projects[0].ID, ModelID: "custom/model", Text: "写文件并确认"}}); err != nil {
 				t.Fatal(err)
 			}
-			state := waitIdle(t, core)
-			state = waitForProjectFiles(t, core)
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			sid := summary.Sessions[0].ID
+			state := waitIdle(t, core, sid)
+			state = waitForProjectFiles(t, core, sid)
 			if calls.Load() != 2 || len(state.Sessions) != 1 || state.Sessions[0].LastOutcome != "completed" {
 				t.Fatalf("unfinished run: %+v", state.Runs)
 			}
-			sid := state.Sessions[0].ID
+			state, err = core.Snapshot(ctx, sid)
+			if err != nil {
+				t.Fatal(err)
+			}
 			trajectory, trajectoryErr := core.ReadModelTrajectory(ctx, sid)
 			if trajectoryErr != nil || len(trajectory.Records) != 2 {
 				t.Fatalf("real tool-loop trajectory missing: records=%d error=%v", len(trajectory.Records), trajectoryErr)
 			}
-			if len(trajectory.Records[0].Response.Message.Calls) != 1 || trajectory.Records[0].CompletedAt == nil ||
+			if len(trajectory.Records[0].Response.Message.Calls) != 1 || trajectory.Records[0].Response.Message.Calls[0].ID != "write-1" || trajectory.Records[0].CompletedAt == nil ||
 				len(trajectory.Records[1].Messages) < 3 || trajectory.Records[1].Response.Message.Text != "完成" {
 				t.Fatal("trajectory lost the actual request context, tool call or response")
 			}
@@ -139,9 +147,6 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join(workspace, "answer.txt"))
 			if err != nil || string(data) != "真实 Go 工具写入" {
 				t.Fatalf("file write failed %s %v", data, err)
-			}
-			if len(core.history[sid]) != 4 || core.history[sid][2].CallID != "write-1" {
-				t.Fatal("incomplete execution history")
 			}
 			if len(state.Changes) != 1 || state.Changes[0].NewContent != string(data) || len(state.Files) != 1 || state.Files[0].Path != "answer.txt" {
 				t.Fatal("tool changes did not reach the real diff and file tree")
@@ -158,7 +163,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer core.Close()
-			restored, _ := core.Snapshot(ctx)
+			restored, _ := core.Snapshot(ctx, sid)
 			restoredTrajectory, trajectoryErr := core.ReadModelTrajectory(ctx, sid)
 			if trajectoryErr != nil || len(restoredTrajectory.Records) != 2 {
 				t.Fatal("restart lost the separately persisted model trajectory")
@@ -168,7 +173,7 @@ func TestRealProtocolToolLoopAndPersistentHistory(t *testing.T) {
 					t.Fatal("restart lost the recorded request model")
 				}
 			}
-			if len(restored.Sessions) != 1 || len(core.history[sid]) != 4 || len(restored.Providers) != 1 {
+			if len(restored.Sessions) != 1 || len(restored.Messages[sid]) != len(state.Messages[sid]) || len(restored.Providers) != 1 {
 				t.Fatal("restart lost runtime data")
 			}
 		})
@@ -267,7 +272,7 @@ func TestRestartAndModelSwitchPreserveScopedContinuation(t *testing.T) {
 				}); err != nil {
 					t.Fatal(err)
 				}
-				state := waitIdle(t, core)
+				state := waitIdle(t, core, sid)
 				if state.Sessions[0].LastOutcome != "completed" {
 					t.Fatalf("step %d failed: %+v", step, state.Runs)
 				}
@@ -289,11 +294,27 @@ func sendSSE(w http.ResponseWriter, value any) {
 	data, _ := json.Marshal(value)
 	_, _ = fmt.Fprintf(w, "data: %s\n\n", data)
 }
-func waitIdle(t *testing.T, core *Engine) contracts.Snapshot {
+func pinSessionView(t *testing.T, core *Engine, sessionID string) func() {
+	t.Helper()
+	ctx, cancel := context.WithCancel(t.Context())
+	events, err := core.Subscribe(ctx, sessionID)
+	if err != nil {
+		cancel()
+		t.Fatal(err)
+	}
+	event, ok := <-events
+	if !ok || event.Snapshot == nil {
+		cancel()
+		t.Fatal("session subscription closed before its initial snapshot")
+	}
+	return cancel
+}
+
+func waitIdle(t *testing.T, core *Engine, sessionIDs ...string) contracts.Snapshot {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
-	events, err := core.Subscribe(ctx)
+	events, err := core.Subscribe(ctx, sessionIDs...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,7 +334,7 @@ func waitIdle(t *testing.T, core *Engine) contracts.Snapshot {
 			}
 			// Re-read once after the completion event to synchronize with the producer
 			// and preserve the latest state if it started a queued turn under the lock.
-			last, err = core.Snapshot(ctx)
+			last, err = core.Snapshot(ctx, sessionIDs...)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -63,11 +63,22 @@ func TestModelRequestsAccountRetriesToolsModelsAndRestart(t *testing.T) {
 		}}); err != nil {
 			t.Fatal(err)
 		}
-		state = waitIdle(t, core)
+		if sessionID == "" {
+			summary, err := core.Snapshot(ctx)
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
+			}
+			sessionID = summary.Sessions[0].ID
+		}
+		state = waitIdle(t, core, sessionID)
 		if state.Runs[len(state.Runs)-1].Status != "completed" {
 			t.Fatalf("actual request failed: %+v", state.Runs)
 		}
 		sessionID = state.Sessions[0].ID
+	}
+	state, err := core.Snapshot(ctx, sessionID)
+	if err != nil {
+		t.Fatal(err)
 	}
 	if len(state.ModelRequests) != 4 {
 		t.Fatalf("lost retry or tool round: %+v", state.ModelRequests)
@@ -110,12 +121,12 @@ func TestModelRequestsAccountRetriesToolsModelsAndRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	restored := open()
-	reloaded, err := restored.Snapshot(ctx)
+	reloaded, err := restored.Snapshot(ctx, sessionID)
 	if err != nil || !reflect.DeepEqual(reloaded.ModelRequests, state.ModelRequests) {
 		t.Fatalf("accounting changed on fork or restart: %v %+v", err, reloaded.ModelRequests)
 	}
 	reloaded.ModelRequests[0].Usage.Input = 99999
-	fresh, _ := restored.Snapshot(ctx)
+	fresh, _ := restored.Snapshot(ctx, sessionID)
 	if fresh.ModelRequests[0].Usage.Input != 1 {
 		t.Fatal("consumer mutated engine accounting")
 	}
@@ -144,10 +155,11 @@ func TestModelRequestsRetainPartialUsageOnCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	state, _ := core.Snapshot(t.Context())
-	meter := meteredModel{inner: metricsFailureModel{}, core: core, sessionID: state.Sessions[0].ID,
+	sessionID := state.Sessions[0].ID
+	meter := meteredModel{inner: metricsFailureModel{}, core: core, sessionID: sessionID,
 		turnID: "cancelled", provider: model.Provider{ID: "P", Name: "Original"}, modelID: "M"}
 	_, _ = meter.Stream(t.Context(), model.Request{}, nil)
-	state, _ = core.Snapshot(t.Context())
+	state, _ = core.Snapshot(t.Context(), sessionID)
 	if len(state.ModelRequests) != 1 || state.ModelRequests[0].Usage.Known || state.ModelRequests[0].Usage.Output != 7 ||
 		state.ModelRequests[0].ProviderName != "Original" || state.ModelRequests[0].DecodeDuration != time.Second {
 		t.Fatalf("cancellation lost partial request accounting: %+v", state.ModelRequests)

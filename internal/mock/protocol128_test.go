@@ -20,14 +20,14 @@ func TestAnnotationsPersistAcrossQueue(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.advanceRun("chat-0", first.ID, "done", true)
-	v, _ := s.Snapshot(ctx)
+	v := snapshotForSessions(t, s, "chat-0")
 	messages := v.Messages["chat-0"]
 	user := messages[len(messages)-2]
 	if len(user.Blocks) != 1 || user.Blocks[0].Kind != "annotation" || user.Blocks[0].Annotation == nil {
 		t.Fatal("annotation-only message missing structured content")
 	}
 	user.Blocks[0].Annotation.Path[0] = "changed"
-	again, _ := s.Snapshot(ctx)
+	again := snapshotForSessions(t, s, "chat-0")
 	if again.Messages["chat-0"][len(messages)-2].Blocks[0].Annotation.Path[0] == "changed" {
 		t.Fatal("annotation snapshot payload shares backend state")
 	}

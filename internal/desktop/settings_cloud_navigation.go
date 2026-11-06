@@ -54,11 +54,12 @@ func (a *App) runCloudSettingsCommand(kind string) {
 	page.busy, page.error = kind, ""
 	page.waitingStatus = false
 	generation := page.generation
+	sessionScope, sessionGeneration := a.captureSessionScope()
 	service := a.service
 	command := contracts.Command{Kind: kind}
 	finish := func(snapshot contracts.Snapshot, err error) {
 		defer cancel()
-		if a.closed || ctx.Err() != nil || !a.cloudSettingsVisible() || !a.cloudPage.active || a.cloudPage.generation != generation {
+		if a.closed || ctx.Err() != nil || !a.cloudSettingsVisible() || !a.cloudPage.active || a.cloudPage.generation != generation || !a.sessionGenerationCurrent(sessionGeneration, sessionScope) {
 			return
 		}
 		page.busy, page.cancel = "", nil
@@ -84,13 +85,13 @@ func (a *App) runCloudSettingsCommand(kind string) {
 		}
 	}
 	if a.win == nil {
-		snapshot, err := cloudSettingsRequest(ctx, service, command)
+		snapshot, err := cloudSettingsRequest(ctx, service, command, sessionScope...)
 		finish(snapshot, err)
 		return
 	}
 	win := a.win
 	go func() {
-		snapshot, err := cloudSettingsRequest(ctx, service, command)
+		snapshot, err := cloudSettingsRequest(ctx, service, command, sessionScope...)
 		if ctx.Err() != nil {
 			cancel()
 			return
@@ -116,11 +117,11 @@ func (a *App) continueCloudSettingsLoad() {
 	}
 }
 
-func cloudSettingsRequest(ctx context.Context, service contracts.Service, command contracts.Command) (contracts.Snapshot, error) {
+func cloudSettingsRequest(ctx context.Context, service contracts.Service, command contracts.Command, sessionIDs ...string) (contracts.Snapshot, error) {
 	if err := service.Execute(ctx, command); err != nil {
 		return contracts.Snapshot{}, err
 	}
-	return service.Snapshot(ctx)
+	return service.Snapshot(ctx, sessionIDs...)
 }
 
 func (a *App) cloudSettingsError(c *ui.Context, message, kind string) {

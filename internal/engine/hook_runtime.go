@@ -176,6 +176,9 @@ func (e *Engine) queueHookResult(sessionID string, execution agent.HookExecution
 	if index < 0 || e.closed || e.state.Sessions[index].Archived {
 		return nil
 	}
+	if err := e.ensureSessionDataLocked(sessionID); err != nil {
+		return err
+	}
 	idPrefix := "hook"
 	if wakeIdle {
 		idPrefix = "hook-rewake"

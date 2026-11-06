@@ -21,6 +21,7 @@ func TestSidebarProjectNewConversationHoverAndTarget(t *testing.T) {
 				}
 				target := &a.state.Projects[1]
 				target.DeviceID, target.Branch = "macbook", "project-branch"
+				stabilizeFixtureSnapshot(t, a)
 				// Opening the old conversation bookmarks another canvas target.
 				a.projectID = "2"
 				a.selectSession("layout-0")

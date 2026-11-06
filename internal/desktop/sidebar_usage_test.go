@@ -17,6 +17,11 @@ func TestSidebarUsageOpensApplicationStatisticsSettings(t *testing.T) {
 	}
 	a.state.Messages = messages
 	a.state.Runs = nil
+	usage := contracts.ApplicationUsage{Records: make(map[string][]contracts.UsageRecord, len(messages))}
+	for sessionID, sessionMessages := range messages {
+		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(sessionMessages)
+	}
+	a.service = applicationUsageTestService{Service: a.service, usage: usage}
 	tt := ui.NewTester(a.View, 1320, 1200)
 	if err := tt.Click(a.t("Usage statistics")); err != nil {
 		t.Fatal(err)

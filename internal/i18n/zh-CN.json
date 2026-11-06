@@ -828,6 +828,7 @@
   "The new conversation is no longer available.": "新对话已不可用，请重试。",
   "Data directory": "数据保存目录",
   "Conversation data is unavailable": "会话数据暂不可用",
+  "Loading conversation…": "正在加载会话…",
   "Restore access to the original data directory, then retry.": "请恢复原数据目录的访问后重试。",
   "Retry loading conversation": "重试加载会话",
   "Browse…": "选择目录…",

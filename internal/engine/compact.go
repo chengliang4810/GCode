@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"time"
@@ -44,6 +45,9 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	configSnapshot := clonePluginConfig(e.pluginConfig)
 	profileSnapshot := contracts.CloneSubagentProfiles(e.state.Settings.Subagents)
 	root := e.storage.ConfigDirectory()
+	priorSession := e.state.Sessions[index]
+	priorRunCount := len(e.state.Runs)
+	priorDirty := maps.Clone(e.sessionDirty)
 	if e.sessionHookOnce == nil {
 		e.sessionHookOnce = map[string]*agent.HookOnceState{}
 	}
@@ -56,6 +60,9 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	e.state.Runs = append(e.state.Runs, contracts.Run{ID: run.id, SessionID: sessionID, RequestID: requestID, Status: "running", StartedAt: time.Now()})
 	if err = e.persistLocked(sessionID); err != nil {
 		delete(e.runs, sessionID)
+		e.state.Sessions[index] = priorSession
+		e.state.Runs = e.state.Runs[:priorRunCount]
+		e.sessionDirty = priorDirty
 		cancel()
 		return err
 	}
@@ -100,6 +107,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		err = errors.Join(err, hooks.Wait())
 		e.mu.Lock()
 		defer e.mu.Unlock()
+		defer e.evictIdleSessionsLocked()
 		if err == nil {
 			e.context[sessionID] = append(model.CloneMessages(compacted), model.CloneMessages(startupContext)...)
 			e.history[sessionID] = append(e.history[sessionID], model.CloneMessages(startupContext)...)

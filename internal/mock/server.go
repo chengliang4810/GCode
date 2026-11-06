@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -53,6 +54,7 @@ type Server struct {
 	sequence        uint64
 	subNext         uint64
 	subs            map[uint64]chan contracts.Event
+	subSessions     map[uint64][]string
 	runs            map[string]activeRun
 	closed          bool
 	done            chan struct{}
@@ -65,6 +67,7 @@ type Server struct {
 }
 
 var _ contracts.Service = (*Server)(nil)
+var _ contracts.ApplicationUsageService = (*Server)(nil)
 
 func New(opts Options) (*Server, error) {
 	if opts.Platform == "" {
@@ -79,7 +82,7 @@ func New(opts Options) (*Server, error) {
 	if opts.TokenInterval <= 0 {
 		opts.TokenInterval = 30 * time.Millisecond
 	}
-	s := &Server{opts: opts, subs: make(map[uint64]chan contracts.Event), runs: make(map[string]activeRun), resources: make(map[string][]byte), done: make(chan struct{}), next: 1000}
+	s := &Server{opts: opts, subs: make(map[uint64]chan contracts.Event), subSessions: make(map[uint64][]string), runs: make(map[string]activeRun), resources: make(map[string][]byte), done: make(chan struct{}), next: 1000}
 	s.state = seed(opts)
 	restored := false
 	if opts.StatePath != "" {
@@ -173,7 +176,7 @@ func New(opts Options) (*Server, error) {
 }
 
 func (s *Server) Bootstrap(ctx context.Context) (contracts.Snapshot, error) { return s.Snapshot(ctx) }
-func (s *Server) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
+func (s *Server) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
 	if err := ctx.Err(); err != nil {
 		return contracts.Snapshot{}, err
 	}
@@ -182,12 +185,40 @@ func (s *Server) Snapshot(ctx context.Context) (contracts.Snapshot, error) {
 	if s.closed {
 		return contracts.Snapshot{}, ErrClosed
 	}
-	return cloneSnapshot(s.state), nil
+	return cloneSnapshot(contracts.SessionProjection(s.state, uniqueSessionIDs(sessionIDs))), nil
 }
 
-// Subscribe sends the current state immediately. A slow reader receives the
-// newest full snapshot instead of an unbounded backlog of obsolete deltas.
-func (s *Server) Subscribe(ctx context.Context) (<-chan contracts.Event, error) {
+// ReadApplicationUsage returns compact usage metadata without exposing
+// transcript bodies. Resident messages are projected while the backend lock is
+// held, so callers never need a full scoped snapshot to build usage reports.
+func (s *Server) ReadApplicationUsage(ctx context.Context) (contracts.ApplicationUsage, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.ApplicationUsage{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.ApplicationUsage{}, ErrClosed
+	}
+	usage := contracts.ApplicationUsage{Records: make(map[string][]contracts.UsageRecord, len(s.state.Messages))}
+	for sessionID, messages := range s.state.Messages {
+		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(messages)
+	}
+	usage.Runs = make([]contracts.Run, 0, len(s.state.Runs))
+	for _, run := range s.state.Runs {
+		usage.Runs = append(usage.Runs, contracts.Run{
+			ID:         run.ID,
+			SessionID:  run.SessionID,
+			Status:     run.Status,
+			DurationMS: run.DurationMS,
+		})
+	}
+	return usage, nil
+}
+
+// Subscribe sends the current scoped state immediately. A slow reader receives
+// the newest scoped snapshot instead of an unbounded backlog of obsolete deltas.
+func (s *Server) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -200,7 +231,9 @@ func (s *Server) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 	id := s.subNext
 	ch := make(chan contracts.Event, 1)
 	s.subs[id] = ch
-	snap := cloneSnapshot(s.state)
+	sessionIDs = uniqueSessionIDs(sessionIDs)
+	s.subSessions[id] = slices.Clone(sessionIDs)
+	snap := cloneSnapshot(contracts.SessionProjection(s.state, sessionIDs))
 	ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, EventID: fmt.Sprintf("snapshot-%d", id), Sequence: s.sequence, Revision: snap.Revision, Kind: "snapshot", Snapshot: &snap}
 	s.wg.Add(1)
 	go func() {
@@ -213,6 +246,7 @@ func (s *Server) Subscribe(ctx context.Context) (<-chan contracts.Event, error) 
 		defer s.mu.Unlock()
 		if existing, ok := s.subs[id]; ok {
 			delete(s.subs, id)
+			delete(s.subSessions, id)
 			close(existing)
 		}
 	}()
@@ -235,8 +269,8 @@ func (s *Server) publishLocked(kind, sessionID, runID, requestID, text string) {
 
 func (s *Server) deliverLocked(kind, sessionID, runID, requestID, text string) {
 	s.sequence++
-	for _, ch := range s.subs {
-		snap := cloneSnapshot(s.state)
+	for id, ch := range s.subs {
+		snap := cloneSnapshot(contracts.SessionProjection(s.state, s.subSessions[id]))
 		ev := contracts.Event{SchemaVersion: contracts.SchemaVersion, EventID: fmt.Sprintf("event-%d", s.sequence), Sequence: s.sequence, Revision: s.state.Revision, Kind: kind, SessionID: sessionID, RunID: runID, RequestID: requestID, Text: text, Snapshot: &snap}
 		select {
 		case ch <- ev:
@@ -260,6 +294,16 @@ func clone[T any](v T) T {
 		panic(err)
 	}
 	return out
+}
+
+func uniqueSessionIDs(ids []string) []string {
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id != "" && !slices.Contains(result, id) {
+			result = append(result, id)
+		}
+	}
+	return result
 }
 
 type persisted struct {
