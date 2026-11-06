@@ -123,6 +123,9 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 	pluginWaitNoKey(app, "plugin-refresh-native-market")
 	app.act("plugin-marketplace-native-market", "press", "")
 	pluginCapture(app, "marketplace-source-tab")
+	app.act("plugin-catalog-fixture@native-market", "press", "")
+	app.waitKey("plugin-description")
+	pluginCapture(app, "plugin-details")
 	app.act("plugin-install-fixture@native-market", "press", "")
 	app.await("user plugin installed on the real host", func() error {
 		installed, err := readInstalled()
@@ -136,6 +139,7 @@ func TestDesktopLocalPluginManagement(t *testing.T) {
 		return err
 	})
 	id := "fixture@native-market"
+	app.act("dialog-close", "press", "")
 	app.act("settings-nav-Plugins", "press", "")
 	app.waitKey("plugin-enabled-" + id)
 	pluginCapture(app, "installed-user")
@@ -274,8 +278,11 @@ func TestDesktopLocalPluginLargeCatalog(t *testing.T) {
 	market := plugins.Marketplace{Name: "large-market", Owner: plugins.Author{Name: "Local fixture"}}
 	for i := range 2300 {
 		market.Plugins = append(market.Plugins, plugins.MarketplaceEntry{
-			Manifest: plugins.Manifest{Name: fmt.Sprintf("large-plugin-%04d", i), Description: "Local catalog fixture; no remote plugin is fetched."},
-			Source:   plugins.Source{Source: "github", Repo: "fixture/not-fetched"},
+			Manifest: plugins.Manifest{
+				Name: fmt.Sprintf("large-plugin-%04d", i), Version: "1.2.3", Author: &plugins.Author{Name: "Local fixture author"},
+				Description: strings.Repeat("完整的插件描述用于检查卡片省略和弹窗换行。 Local catalog fixture; no remote plugin is fetched. ", 8),
+			},
+			Source: plugins.Source{Source: "github", Repo: "fixture/not-fetched"}, Category: "Development",
 		})
 	}
 	payload, err := json.Marshal(market)
@@ -289,8 +296,11 @@ func TestDesktopLocalPluginLargeCatalog(t *testing.T) {
 	if _, err := manager.AddSource(context.Background(), manifest); err != nil {
 		t.Fatal(err)
 	}
-	for _, test := range []struct{ name, language, appearance, width string }{
-		{"light", "en", "light", "1320"}, {"narrow-dark", "zh-CN", "dark", "900"},
+	for _, test := range []struct {
+		name, language, appearance, width string
+		columns                           int
+	}{
+		{"light", "en", "light", "1320", 3}, {"narrow-dark", "zh-CN", "dark", "900", 1},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			app := startApp(t, binary, artifacts, test.name, data, "--local", "--language", test.language,
@@ -302,29 +312,47 @@ func TestDesktopLocalPluginLargeCatalog(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				built := 0
+				built, columns, firstY := 0, 0, float64(-1)
 				for _, node := range tree.Nodes {
 					var key string
-					if json.Unmarshal(node.Key, &key) == nil && strings.HasPrefix(key, "plugin-install-") {
+					if json.Unmarshal(node.Key, &key) == nil && strings.HasPrefix(key, "plugin-catalog-large-plugin-") {
+						if firstY < 0 {
+							firstY = node.Bounds.Y
+						}
+						if node.Bounds.Y == firstY {
+							columns++
+						}
 						built++
 					}
 				}
-				if built != 30 {
-					t.Fatalf("2300-entry native catalog built %d install controls, want 30", built)
+				if built != 30 || columns != test.columns {
+					t.Fatalf("2300-entry native catalog built %d cards in %d columns, want 30 in %d", built, columns, test.columns)
 				}
 				app.act("plugin-catalog-next", "press", "")
-				app.waitKey("plugin-install-large-plugin-0030@large-market")
+				app.waitKey("plugin-catalog-large-plugin-0030@large-market")
 				app.act("plugin-search", "setValue", "large-plugin-2299")
-				app.waitKey("plugin-install-large-plugin-2299@large-market")
+				app.waitKey("plugin-catalog-large-plugin-2299@large-market")
 				pluginWaitNoKey(app, "plugin-catalog-next")
+				card := app.waitKey("plugin-catalog-large-plugin-2299@large-market")
+				app.act("plugin-catalog-large-plugin-2299@large-market", "press", "")
+				description := app.waitKey("plugin-description")
+				if !strings.Contains(description.Label, market.Plugins[2299].Description) || description.Bounds.Height <= card.Bounds.Height {
+					t.Fatal("native details omitted or truncated the complete description")
+				}
+				app.waitKey("plugin-install-large-plugin-2299@large-market")
+				app.act("dialog-close", "press", "")
+				pluginWaitNoKey(app, "plugin-description")
 				app.act("plugin-search", "setValue", "")
-				app.waitKey("plugin-install-large-plugin-0000@large-market")
+				app.waitKey("plugin-catalog-large-plugin-0000@large-market")
 				app.act("settings-nav-General", "press", "")
 				app.waitKey("Compact mode")
 			}
 			app.act("settings-nav-Marketplace", "press", "")
 			app.waitKey("plugin-catalog-next")
 			pluginCapture(app, "large-catalog")
+			app.act("plugin-catalog-large-plugin-0000@large-market", "press", "")
+			app.waitKey("plugin-description")
+			pluginCapture(app, "large-catalog-details")
 			app.stop()
 		})
 	}

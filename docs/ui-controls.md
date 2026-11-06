@@ -91,6 +91,8 @@ a.controlSwitch(c.Key("enabled"), &enabled, label, saving, func(value bool) {
 `GradientSwatchHeight` 统一维护，下拉触发器和每一行共用同一实现。
 资源列表使用 `controlRowButton`，
 导航、预览、色板和选择卡片也有对应的共享变体，不能用普通操作按钮强行拼装。
+插件市场卡片复用 `controlTileButton`，页面只配置自适应宽度、内容和点击回调；
+描述使用原生 `SingleLine` 省略，完整信息复用设置页详情弹窗与共享安装按钮。
 密钥使用 `controlSecretInput`，保留输入焦点的显示按钮不会抢先触发失焦保存。
 调用方根据草稿或已保存密钥决定显示按钮是否可用，并在点击后通过类型化接口
 按需读取已保存密钥；隐藏、保存或离开编辑器时清除明文展示缓存。

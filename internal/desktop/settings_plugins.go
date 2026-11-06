@@ -14,6 +14,8 @@ type pluginSettingsState struct {
 	query, marketplace          string
 	catalogQuery, catalogSource string
 	catalogPage                 int
+	detailsID                   string
+	detailsOpen                 bool
 	sourcesOpen, sourceOpen     bool
 	source                      contracts.PluginMarketplaceInput
 	sourcePending, sourceError  string
@@ -149,28 +151,62 @@ func (a *App) pluginCatalog(c *ui.Context) {
 				OnClick(func() { s.catalogPage++ })
 		})
 	}
-	for _, item := range items[start:end] {
-		ui.Column(c.Key("plugin-catalog-"+item.ID)).FillWidth().Gap(8).Padding(12, 0).
-			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
-			ui.Text(c, item.Name).FontWeight(600)
-			ui.Text(c, item.Description).TextColor(a.palette.Muted)
-			ui.Text(c, pluginSummary(item.Marketplace, item.Version)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			a.pluginDetails(c, item.Components, item.Issues)
-			already := false
-			for _, installed := range a.state.Plugins.Installed {
-				if installed.CatalogID == item.ID {
-					already = true
-				}
-			}
-			primaryButton(c.Key("plugin-install-"+item.ID), tr(c, "Install")).
-				Label(tr(c, "Install") + " " + item.Name).
-				Disabled(already || pluginBusy(a.state.Plugins, item.ID)).
-				OnClick(func() {
-					input := contracts.PluginInstallInput{Marketplace: item.Marketplace, Name: item.Name}
-					a.dispatch(contracts.Command{Kind: "plugins.install", Plugin: &contracts.PluginInput{Install: &input}})
+	ui.Row(c.Key("plugin-catalog-grid")).FillWidth().Wrap().Gap(12).AlignItems(ui.Stretch).Children(func() {
+		for _, item := range items[start:end] {
+			controlTileButton(c.Key("plugin-catalog-"+item.ID), false).Basis(280).Grow(1).MinWidth(0).
+				Label(tr(c, "Plugin details") + " " + item.Name).Children(func() {
+				ui.Column(c).FillWidth().MinWidth(0).Gap(8).Children(func() {
+					ui.Text(c, item.Name).FillWidth().SingleLine().FontWeight(600)
+					ui.Text(c, item.Description).FillWidth().SingleLine().TextColor(a.palette.Muted)
+					ui.Text(c, pluginSummary(item.Marketplace, item.Version)).FillWidth().SingleLine().
+						FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				})
-		})
+			}).OnClick(func() { s.detailsID, s.detailsOpen = item.ID, true })
+		}
+	})
+}
+
+func (a *App) pluginCatalogDialog(c *ui.Context) {
+	s := &a.capabilityUI.plugins
+	if !s.detailsOpen {
+		s.detailsID = ""
+		return
 	}
+	index := slices.IndexFunc(a.state.Plugins.Catalog, func(item contracts.PluginCatalogItem) bool { return item.ID == s.detailsID })
+	if index < 0 {
+		s.detailsID, s.detailsOpen = "", false
+		return
+	}
+	item := a.state.Plugins.Catalog[index]
+	a.settingsDialogWithFooter(c, "plugin-details-dialog", "Plugin details", &s.detailsOpen, 680, func() {
+		ui.Text(c, item.Name).FillWidth().FontWeight(600).Selectable()
+		ui.Text(c.Key("plugin-description"), item.Description).Label(tr(c, "Description") + ": " + item.Description).FillWidth().Selectable()
+		for _, field := range []struct{ label, value string }{
+			{"Marketplace", item.Marketplace}, {"Version", item.Version}, {"Author", item.Author},
+			{"Category", item.Category}, {"Homepage", item.Homepage},
+		} {
+			if field.value != "" {
+				ui.Column(c).FillWidth().Gap(4).Children(func() {
+					ui.Text(c, tr(c, field.label)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					ui.Text(c, field.value).FillWidth().Selectable()
+				})
+			}
+		}
+		a.pluginDetails(c, item.Components, item.Issues)
+	}, func() {
+		already := slices.ContainsFunc(a.state.Plugins.Installed, func(installed contracts.InstalledPlugin) bool {
+			return installed.CatalogID == item.ID
+		})
+		label := "Install"
+		if already {
+			label = "Installed"
+		}
+		primaryButton(c.Key("plugin-install-"+item.ID), tr(c, label)).Label(tr(c, label) + " " + item.Name).
+			Disabled(already || pluginBusy(a.state.Plugins, item.ID)).OnClick(func() {
+			input := contracts.PluginInstallInput{Marketplace: item.Marketplace, Name: item.Name}
+			a.dispatch(contracts.Command{Kind: "plugins.install", Plugin: &contracts.PluginInput{Install: &input}})
+		})
+	})
 }
 
 func (a *App) pluginDetails(c *ui.Context, components, issues []string) {

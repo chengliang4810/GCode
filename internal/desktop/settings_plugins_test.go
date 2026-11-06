@@ -110,6 +110,9 @@ func TestPluginSettingsInstallUsesUserRegistry(t *testing.T) {
 			t.Fatalf("obsolete selector present: %s", removed)
 		}
 	}
+	if err := tt.Click("Plugin details fixture"); err != nil {
+		t.Fatal(err)
+	}
 	if err := tt.Click("Install fixture"); err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +134,7 @@ func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	}
 	app.capabilityUI.plugins.query = "missing"
 	tt.Frame()
-	if _, ok := tt.Find("Install fixture"); ok {
+	if _, ok := tt.Find("Plugin details fixture"); ok {
 		t.Fatal("search did not filter catalog")
 	}
 	app.capabilityUI.plugins.query = "fixture"
@@ -139,13 +142,13 @@ func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	if err := tt.Click("Community"); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := tt.Find("Install fixture"); ok {
+	if _, ok := tt.Find("Plugin details fixture"); ok {
 		t.Fatal("market tab did not filter catalog")
 	}
 	if err := tt.Click("All marketplaces"); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := tt.Find("Install fixture"); !ok {
+	if _, ok := tt.Find("Plugin details fixture"); !ok {
 		t.Fatal("All did not restore catalog")
 	}
 	if err := tt.Click("Manage marketplace sources"); err != nil {
@@ -205,20 +208,20 @@ func TestPluginSettingsLargeCatalogBuildIsBounded(t *testing.T) {
 	tt := pluginUITester(app)
 	built := 0
 	for _, text := range tt.Texts() {
-		if strings.HasPrefix(text, "Install large-plugin-") {
+		if strings.HasPrefix(text, "Plugin details large-plugin-") {
 			built++
 		}
 	}
 	if built != 30 {
-		t.Fatalf("marketplace built %d install controls for a 2300-entry catalog; expected one page (30)", built)
+		t.Fatalf("marketplace built %d cards for a 2300-entry catalog; expected one page (30)", built)
 	}
 	if err := tt.Click("Next page"); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := tt.Find("Install large-plugin-0030"); !ok {
+	if _, ok := tt.Find("Plugin details large-plugin-0030"); !ok {
 		t.Fatal("next page did not show its first plugin")
 	}
-	if _, ok := tt.Find("Install large-plugin-0000"); ok {
+	if _, ok := tt.Find("Plugin details large-plugin-0000"); ok {
 		t.Fatal("previous page remains in the native tree")
 	}
 	if err := tt.Click("Previous page"); err != nil {
@@ -240,7 +243,7 @@ func TestPluginSettingsLargeCatalogBuildIsBounded(t *testing.T) {
 	}
 	app.capabilityUI.plugins.query = "large-plugin-2299"
 	tt.Frame()
-	if _, ok := tt.Find("Install large-plugin-2299"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
+	if _, ok := tt.Find("Plugin details large-plugin-2299"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
 		t.Fatal("search did not find a plugin beyond the initial page or reset pagination")
 	}
 	if _, ok := tt.Find("Next page"); ok {
@@ -263,7 +266,7 @@ func TestPluginSettingsLargeCatalogBuildIsBounded(t *testing.T) {
 	}
 	app.state.Plugins.Catalog = app.state.Plugins.Catalog[:1]
 	tt.Frame()
-	if _, ok := tt.Find("Install large-plugin-0000"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
+	if _, ok := tt.Find("Plugin details large-plugin-0000"); !ok || app.capabilityUI.plugins.catalogPage != 0 {
 		t.Fatal("catalog shrink left the active page out of range")
 	}
 }
@@ -310,9 +313,12 @@ func TestPluginSettingsPaginationThemesAndNarrowWindows(t *testing.T) {
 			if !tt.HasText("page-plugin-30") {
 				t.Fatal("last plugin missing on the second page")
 			}
-			label := "Install page-plugin-30"
+			details, label := "Plugin details page-plugin-30", "Install page-plugin-30"
 			if test.language == "zh-CN" {
-				label = "安装 page-plugin-30"
+				details, label = "插件详情 page-plugin-30", "安装 page-plugin-30"
+			}
+			if err := tt.Click(details); err != nil {
+				t.Fatal(err)
 			}
 			if err := tt.Click(label); err != nil {
 				t.Fatal(err)
@@ -354,7 +360,12 @@ func TestPluginSettingsRecognizesInstalledEntryWithDifferentRuntimeName(t *testi
 	app.section = "Marketplace"
 	app.state.Plugins.Installed[0].Name = "runtime-namespace"
 	tt := pluginUITester(app)
-	_ = tt.Click("Install fixture")
+	if err := tt.Click("Plugin details fixture"); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.Click("Installed fixture"); err != nil {
+		t.Fatal(err)
+	}
 	if len(service.commands) != 0 {
 		t.Fatal("runtime name difference allowed a duplicate catalog installation")
 	}
@@ -515,8 +526,14 @@ func TestPluginSettingsThemesNarrowAndOperationState(t *testing.T) {
 					t.Fatalf("%s control overflows the shared narrow page: %+v", page.section, rect)
 				}
 				if page.section == "Marketplace" {
+					if err := tt.Click("Plugin details fixture"); err != nil {
+						t.Fatal(err)
+					}
 					if !tt.HasText("Fixture dependency issue") {
-						t.Fatal("catalog component issue omitted")
+						t.Fatal("catalog component issue omitted from details")
+					}
+					if err := tt.Click("Close dialog"); err != nil {
+						t.Fatal(err)
 					}
 					manage, ok := tt.Find("Manage marketplace sources")
 					add, found := tt.Find("Add marketplace source")

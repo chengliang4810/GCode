@@ -1242,5 +1242,9 @@
   "Next": "下一步",
   "Previous page": "上一页",
   "Next page": "下一页",
-  "%d–%d of %d plugins": "第 %d–%d 项，共 %d 个插件"
+  "%d–%d of %d plugins": "第 %d–%d 项，共 %d 个插件",
+  "Plugin details": "插件详情",
+  "Version": "版本",
+  "Category": "分类",
+  "Homepage": "主页"
 }

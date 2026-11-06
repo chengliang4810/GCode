@@ -178,6 +178,7 @@ func (a *App) settingsView(c *ui.Context) {
 			}
 		})
 	})
+	a.pluginCatalogDialog(c)
 	a.pluginSourcesDialog(c)
 	a.integrationDialogs(c)
 	a.settingsImportDialog(c)

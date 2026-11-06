@@ -113,6 +113,7 @@ func (a *App) selectSettingsSection(section string) {
 	a.modelsUI.keyRequest++
 	state := &a.capabilityUI
 	state.plugins.configID, state.plugins.config, state.plugins.removeConfig = "", nil, nil
+	state.plugins.detailsID, state.plugins.detailsOpen = "", false
 	state.plugins.sourcesOpen, state.plugins.sourceOpen = false, false
 	state.plugins.source = contracts.PluginMarketplaceInput{}
 	state.plugins.sourcePending, state.plugins.sourceError = "", ""
