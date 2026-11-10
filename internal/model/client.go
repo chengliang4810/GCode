@@ -23,7 +23,7 @@ type Client struct {
 
 func NewClient() *Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.ResponseHeaderTimeout = 45 * time.Second
+	transport.ResponseHeaderTimeout = 300 * time.Second
 	return &Client{HTTP: &http.Client{
 		Transport: transport,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
