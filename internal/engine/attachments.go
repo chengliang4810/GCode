@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"unicode/utf8"
 
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -114,6 +113,10 @@ func (e *Engine) ImportAttachments(ctx context.Context, request contracts.Attach
 	}
 	for _, file := range staged {
 		key := id("attachment")
+		// Keep common file extensions so agent tools can select the right reader.
+		if ext := filepath.Ext(file.name); managedResourceComponent(ext) {
+			key += ext
+		}
 		mime := http.DetectContentType(file.data)
 		item := contracts.Attachment{ID: key, StorageRootID: rootID, Name: file.name, MIME: mime, Size: int64(len(file.data)), Status: "ready", AssetRef: managedResourceRef(rootID, key)}
 		if strings.HasPrefix(mime, "image/") {
@@ -127,9 +130,6 @@ func (e *Engine) ImportAttachments(ctx context.Context, request contracts.Attach
 				return nil, errors.New("image dimensions are too large")
 			}
 			item.Width, item.Height = config.Width, config.Height
-		} else if !utf8.Valid(file.data) || bytes.ContainsRune(file.data, '\x00') {
-			cleanup()
-			return nil, errors.New("only images and UTF-8 text attachments are supported")
 		}
 		target, err := uploads.OpenFile(key, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 		if err != nil {
@@ -165,6 +165,21 @@ func (e *Engine) ReadResource(ctx context.Context, ref string) ([]byte, error) {
 	return e.resourceLocked(ref)
 }
 func (e *Engine) resourceLocked(ref string) ([]byte, error) {
+	file, err := e.openResourceLocked(ref)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	data, err := io.ReadAll(io.LimitReader(file, contracts.MaxAttachmentBytes+1))
+	if len(data) > contracts.MaxAttachmentBytes {
+		return nil, errors.New("managed resource exceeds size limit")
+	}
+	return data, err
+}
+
+// Open through os.Root before exposing a host path, preserving the same
+// registered-root and symlink boundary used by resource reads.
+func (e *Engine) openResourceLocked(ref string) (*os.File, error) {
 	if !strings.HasPrefix(ref, resourcePrefix) {
 		return nil, errors.New("unknown resource")
 	}
@@ -185,19 +200,20 @@ func (e *Engine) resourceLocked(ref string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
 	info, err := file.Stat()
 	if err != nil {
+		_ = file.Close()
 		return nil, err
 	}
 	if !info.Mode().IsRegular() {
+		_ = file.Close()
 		return nil, errors.New("managed resource must be a regular file")
 	}
-	data, err := io.ReadAll(io.LimitReader(file, contracts.MaxAttachmentBytes+1))
-	if len(data) > contracts.MaxAttachmentBytes {
+	if info.Size() > contracts.MaxAttachmentBytes {
+		_ = file.Close()
 		return nil, errors.New("managed resource exceeds size limit")
 	}
-	return data, err
+	return file, nil
 }
 
 func managedResourceRef(rootID, key string) string { return resourcePrefix + rootID + "/" + key }
@@ -243,17 +259,25 @@ func (e *Engine) inputMessageLocked(text string, attachments []contracts.Attachm
 		if stored == nil {
 			return message, errors.New("attachment not found")
 		}
-		data, err := e.resourceLocked(stored.AssetRef)
-		if err != nil {
-			return message, err
-		}
 		if strings.HasPrefix(stored.MIME, "image/") {
+			data, err := e.resourceLocked(stored.AssetRef)
+			if err != nil {
+				return message, err
+			}
 			message.Images = append(message.Images, model.Image{
 				MIME: stored.MIME, Data: base64.StdEncoding.EncodeToString(data),
 				Width: stored.Width, Height: stored.Height,
 			})
 		} else {
-			message.Text += fmt.Sprintf("\n\n<attachment name=%q>\n%s\n</attachment>", stored.Name, data)
+			file, err := e.openResourceLocked(stored.AssetRef)
+			if err != nil {
+				return message, err
+			}
+			path := file.Name()
+			if err := file.Close(); err != nil {
+				return message, err
+			}
+			message.Text += fmt.Sprintf("\n\n<attachment name=%q path=%q />", stored.Name, path)
 		}
 	}
 	return message, nil

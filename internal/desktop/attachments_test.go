@@ -2,15 +2,151 @@ package desktop
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
+	"gcode/internal/engine"
+	"gcode/internal/model"
+	"gcode/internal/storage"
 	"github.com/egoist/mygo/transfer"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestClipboardFilesReachModelThroughRealCore(t *testing.T) {
+	for _, surface := range []string{"canvas", "primary", "side"} {
+		t.Run(surface, func(t *testing.T) {
+			requests := make(chan string, 4)
+			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var request struct {
+					Messages []struct {
+						Role    string `json:"role"`
+						Content string `json:"content"`
+					} `json:"messages"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+					t.Error(err)
+				}
+				for _, message := range request.Messages {
+					if message.Role == "user" {
+						requests <- message.Content
+					}
+				}
+				w.Header().Set("Content-Type", "text/event-stream")
+				fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"Files received.\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+			}))
+			defer provider.Close()
+			store, err := storage.Open(storage.Options{Home: t.TempDir()})
+			if err != nil {
+				t.Fatal(err)
+			}
+			core, err := engine.Open(engine.Options{Storage: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer core.Close()
+			snapshot, _ := core.Snapshot(t.Context())
+			settings := snapshot.Settings
+			settings.General.Language = "en"
+			settings.General.ThreadNamingModel = "first-message"
+			config := model.Provider{ID: "files", Name: "Files fixture", Protocol: model.Chat, BaseURL: provider.URL, Models: []model.Model{{ID: "test"}}}
+			for _, command := range []contracts.Command{
+				{Kind: "settings.update", Settings: &settings},
+				{Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: config}},
+				{Kind: "session.create", Name: "Attachment conversation"},
+			} {
+				if err := core.Execute(t.Context(), command); err != nil {
+					t.Fatal(err)
+				}
+			}
+			snapshot, _ = core.Snapshot(t.Context())
+			mainID := snapshot.Sessions[0].ID
+			if surface == "side" {
+				if err := core.Execute(t.Context(), contracts.Command{Kind: "session.sidechat", SessionID: mainID}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			a, err := New(core)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer a.Close()
+			a.modelID = "files/test"
+			label := "Message"
+			if surface != "canvas" {
+				a.selectSession(mainID)
+			}
+			var side *sideComposerState
+			if surface == "side" {
+				child := a.state.Sessions[0]
+				a.workspace.OpenSession(child.ID)
+				side = a.sideComposer(child.ID)
+				side.modelID = "files/test"
+				label = "Message to " + child.Title
+				a.draft = "Keep the central draft"
+			}
+			tt := ui.NewTester(a.View, 1320, 880)
+			if err := tt.Click(label); err != nil {
+				t.Fatal(err)
+			}
+			tt.Type("Inspect the files")
+			directory := t.TempDir()
+			var sources []string
+			for _, name := range []string{"报告 空格.pdf", "sheet.xlsx", "archive.zip"} {
+				path := filepath.Join(directory, name)
+				if err := os.WriteFile(path, []byte("BINARY_PAYLOAD\x00\xff"), 0600); err != nil {
+					t.Fatal(err)
+				}
+				sources = append(sources, path)
+			}
+			data, err := transfer.FileData(sources...)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tt.SetClipboardData(data)
+			tt.Command("paste")
+			items, draft := a.attachments, a.draft
+			if side != nil {
+				items, draft = side.Attachments, side.Draft
+				if len(a.attachments) != 0 || a.draft != "Keep the central draft" {
+					t.Fatal("side paste changed the central composer")
+				}
+			}
+			if len(items) != 3 || draft != "Inspect the files" {
+				t.Fatalf("file paste lost attachments or draft: %+v, %q, %s", items, draft, a.errorText)
+			}
+			if err := os.RemoveAll(directory); err != nil {
+				t.Fatal(err)
+			}
+			tt.Key(0, ui.KeyEnter)
+			select {
+			case prompt := <-requests:
+				if !strings.HasPrefix(prompt, "Inspect the files") || strings.Contains(prompt, "BINARY_PAYLOAD") {
+					t.Fatalf("unexpected model prompt: %q", prompt)
+				}
+				for _, item := range items {
+					path := filepath.Join(store.Directory(), "uploads", item.ID)
+					if !strings.Contains(prompt, fmt.Sprintf("name=%q path=%q", item.Name, path)) {
+						t.Fatalf("model did not receive the host path for %q: %q", item.Name, prompt)
+					}
+					if payload, err := os.ReadFile(path); err != nil || string(payload) != "BINARY_PAYLOAD\x00\xff" {
+						t.Fatalf("model attachment path is unreadable: %q, %v", payload, err)
+					}
+				}
+			case <-time.After(5 * time.Second):
+				t.Fatalf("paste/send did not reach model: %s", a.errorText)
+			}
+		})
+	}
+}
 
 type completingAttachmentService struct {
 	contracts.Service
