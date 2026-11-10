@@ -96,18 +96,17 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		session.SourceContext = checkout.source
 		e.applyGitProjectLocked(session.ProjectID, checkout.repo)
 	}
+	var selectedModel, selectedReasoning *string
 	if send.ModelID != "" {
-		if e.runs[sessionID] != nil && send.ModelID != session.ModelID {
-			return errors.New("stop the current run before changing its model")
-		}
-		session.ModelID = send.ModelID
+		selectedModel = &send.ModelID
 	}
 	if send.ReasoningLevel != "" {
-		if run := e.runs[sessionID]; run != nil &&
-			model.EffortID(send.ReasoningLevel) != model.EffortID(run.selection.Reasoning) {
-			return errors.New("stop the current run before changing its reasoning level")
+		selectedReasoning = &send.ReasoningLevel
+	}
+	if selectedModel != nil || selectedReasoning != nil {
+		if err := e.setSessionModelLocked(&session, selectedModel, selectedReasoning); err != nil {
+			return err
 		}
-		session.ReasoningLevel = send.ReasoningLevel
 	}
 	e.state.Sessions[index] = session
 	prompt := ""
@@ -127,7 +126,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		if len(e.state.Queue) >= 100 {
 			return errors.New("session message queue is full")
 		}
-		e.state.Queue = append(e.state.Queue, contracts.QueuedMessage{ID: id("queue"), SessionID: sessionID, Text: send.Text, Prompt: prompt, Delivery: send.Delivery, Attachments: send.Attachments, CreatedAt: time.Now()})
+		e.state.Queue = append(e.state.Queue, contracts.QueuedMessage{ID: id("queue"), SessionID: sessionID, Text: send.Text, Prompt: prompt, Delivery: send.Delivery, Attachments: send.Attachments, ModelID: session.ModelID, ReasoningLevel: session.ReasoningLevel, CreatedAt: time.Now()})
 		if err := e.persistLocked(session.ID); err != nil {
 			return err
 		}
@@ -204,6 +203,16 @@ func (e *Engine) startRunLocked(
 	requestID string,
 	child *subagentExecution,
 ) error {
+	return e.startRunWithProvidersLocked(ctx, session, requestID, child, nil)
+}
+
+func (e *Engine) startRunWithProvidersLocked(
+	ctx context.Context,
+	session contracts.Session,
+	requestID string,
+	child *subagentExecution,
+	providers []model.Provider,
+) error {
 	if err := e.ensureSessionDataLocked(session.ID); err != nil {
 		return err
 	}
@@ -212,7 +221,9 @@ func (e *Engine) startRunLocked(
 			return errors.New("wait for the project's branch switch to finish")
 		}
 	}
-	providers := e.providers
+	if providers == nil {
+		providers = e.providers
+	}
 	if child != nil {
 		providers = child.providers
 	}
@@ -225,8 +236,7 @@ func (e *Engine) startRunLocked(
 		return err
 	}
 	session.ReasoningLevel = model.ReasoningLabel(effort)
-	gateway, err := e.client.Bind(provider, m)
-	if err != nil {
+	if _, err := e.client.Bind(provider, m); err != nil {
 		return err
 	}
 	if _, err := os.Stat(session.CWD); err != nil {
@@ -244,11 +254,6 @@ func (e *Engine) startRunLocked(
 		selection: contracts.ModelSelection{ModelID: session.ModelID, Reasoning: session.ReasoningLevel},
 		profiles:  contracts.EffectiveSubagentProfiles(e.state.Settings.Subagents), model: m,
 	}
-	source := "main"
-	if child != nil {
-		source = "subagent"
-	}
-	gateway.Observe = e.trajectoryRecorder(session, run.id, source)
 	if child != nil {
 		run.goal = child.goal
 	} else if session.Goal != nil && session.Goal.Status == contracts.GoalActive {
@@ -264,7 +269,6 @@ func (e *Engine) startRunLocked(
 	priorHistory, priorContext := e.history[session.ID], e.context[session.ID]
 	priorDirty := maps.Clone(e.sessionDirty)
 	priorRunCount := len(e.state.Runs)
-	e.state.Sessions[index].ReasoningLevel = session.ReasoningLevel
 	e.state.Sessions[index].Status = contracts.Working
 	e.state.Sessions[index].UpdatedAt = time.Now()
 	if run.goal.id != "" && child == nil {
@@ -286,6 +290,12 @@ func (e *Engine) startRunLocked(
 		e.sessionDirty = priorDirty
 		cancel()
 		return err
+	}
+	if child == nil {
+		if e.taskModels == nil {
+			e.taskModels = make(map[string]taskModel)
+		}
+		e.taskModels[session.ID] = taskModel{selection: run.selection, providers: run.providers}
 	}
 	e.publishLocked(contracts.Event{Kind: "run.started", SessionID: session.ID, RunID: run.id, RequestID: requestID})
 	root := e.storage.ConfigDirectory()
@@ -320,9 +330,12 @@ func (e *Engine) startRunLocked(
 		defer e.wg.Done()
 		defer cancel()
 		defer e.signalSubagentStarted(child)
-		var bound agent.Model = meteredModel{inner: gateway, core: e, sessionID: session.ID, turnID: run.id, provider: provider, modelID: m.ID}
+		liveModel := sessionModel{core: e, sessionID: session.ID, run: run, trackReply: true}
+		var bound agent.Model = liveModel
+		var auxiliary agent.Model = sessionModel{core: e, sessionID: session.ID, run: run}
 		if run.goal.id != "" {
 			bound = goalModel{inner: bound, core: e, scope: run.goal, sessionID: session.ID}
+			auxiliary = goalModel{inner: auxiliary, core: e, scope: run.goal, sessionID: session.ID}
 			if child == nil {
 				stopHeartbeat := e.startGoalHeartbeat(runCtx, run.goal)
 				defer stopHeartbeat()
@@ -424,9 +437,6 @@ func (e *Engine) startRunLocked(
 				}
 			}
 		}
-		var protocolWarnings []string
-		tools, protocolWarnings = filterMCPToolsForProtocol(tools, provider.Protocol)
-		mcpWarnings = append(mcpWarnings, protocolWarnings...)
 		if len(mcpWarnings) > 0 {
 			system += "\nMCP discovery and protocol limitations:\n" + strings.Join(mcpWarnings, "\n")
 		}
@@ -489,7 +499,7 @@ func (e *Engine) startRunLocked(
 		}
 		tools = e.guardTools(tools)
 		runErr := toolErr
-		hooks, invokeHook := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Protocol: provider.Protocol, Tools: tools, Warnings: mcpWarnings, EnvFile: resources.envFile, OnceState: onceState})
+		hooks, invokeHook := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: auxiliary, Tools: tools, Warnings: mcpWarnings, EnvFile: resources.envFile, OnceState: onceState})
 		e.mu.Lock()
 		run.hook = invokeHook
 		e.mu.Unlock()
@@ -640,21 +650,29 @@ func (e *Engine) startRunLocked(
 					defer e.mu.Unlock()
 					return e.drainPendingLocked(session.ID, idle)
 				},
-				BeforeStep: func(ctx context.Context) (bool, error) {
-					if run.goal.id == "" {
-						return true, nil
+				BeforeStep: func(ctx context.Context, idle bool) (bool, error) {
+					if run.goal.id != "" {
+						proceed, err := e.goalBeforeStep(ctx, run.goal)
+						if !proceed || err != nil {
+							if !proceed && err == nil && child != nil {
+								err = errGoalHalted
+							}
+							return proceed, err
+						}
 					}
-					proceed, err := e.goalBeforeStep(ctx, run.goal)
-					if !proceed && err == nil && child != nil {
-						err = errGoalHalted
+					e.mu.Lock()
+					handoff := e.handoffUserInputLocked(session.ID, run, idle)
+					e.mu.Unlock()
+					if handoff {
+						return false, ctx.Err()
 					}
-					return proceed, err
+					return true, nil
 				},
 				Idle: func(ctx context.Context, request model.Request) ([]model.Message, error) {
 					if run.goal.id == "" || child != nil {
 						return nil, nil
 					}
-					return e.goalIdle(ctx, run, bound, request)
+					return e.goalIdle(ctx, run, auxiliary, request)
 				},
 				OwnsCompletion: run.goal.id != "" && child == nil,
 				Emit: func(event agent.Event) error {
@@ -674,11 +692,14 @@ func (e *Engine) startRunLocked(
 		e.mu.Lock()
 		defer e.mu.Unlock()
 		defer e.evictIdleSessionsLocked()
+		if runErr == nil {
+			runErr = runCtx.Err()
+		}
 		if run.goal.id != "" && child == nil {
 			e.restoreGoalInputsLocked(session.ID, run)
 			if goal := e.goalLocked(run.goal); goal != nil {
 				settleGoalTime(goal, time.Now())
-				if goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying {
+				if run.nextInput == nil && (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying) {
 					goal.Status = contracts.GoalPaused
 					goal.Reason = "Execution stopped before completion was verified."
 					if runErr != nil {
@@ -788,16 +809,17 @@ func (e *Engine) startRunLocked(
 			goalHandoff = goal != nil && (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalComplete)
 			humanOnly = goal != nil && goal.Status == contracts.GoalComplete
 		}
-		// Send now takes the row out of the queue before stopping the run; it
-		// opens the next turn here, once this run has settled. Otherwise the
-		// queue's first row waits for the run to finish on its own.
-		afterStop := run.afterStop
-		run.afterStop = nil
-		if afterStop != nil {
-			if !e.closed && terminalSaved {
-				_ = e.handoffQueuedLocked(session.ID, *afterStop)
+		nextInput := run.nextInput
+		run.nextInput = nil
+		if nextInput != nil {
+			admitted := runErr == nil || run.inputInterrupt && errors.Is(runErr, context.Canceled)
+			if !e.closed && terminalSaved && goalHandoff && admitted {
+				e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.ID == nextInput.ID })
+				_ = e.handoffQueuedLocked(session.ID, *nextInput)
 			} else {
-				e.state.Queue = append([]contracts.QueuedMessage{*afterStop}, e.state.Queue...)
+				if !slices.ContainsFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.ID == nextInput.ID }) {
+					e.state.Queue = append([]contracts.QueuedMessage{*nextInput}, e.state.Queue...)
+				}
 			}
 		} else if runErr == nil && !e.closed && goalHandoff {
 			// A message can arrive after the final idle drain but before the

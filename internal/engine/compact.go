@@ -30,8 +30,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	if err != nil {
 		return err
 	}
-	gateway, err := e.client.Bind(provider, m)
-	if err != nil {
+	if _, err := e.client.Bind(provider, m); err != nil {
 		return err
 	}
 	history := model.CloneMessages(e.context[sessionID])
@@ -39,8 +38,11 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		return errors.New("not enough history to compact")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	run := &activeRun{id: id("run"), cancel: cancel, answers: map[string]chan []contracts.QuestionAnswer{}, compacting: true, pending: map[string]contracts.QueuedMessage{}, wake: make(chan struct{}, 1), model: m}
-	gateway.Observe = e.trajectoryRecorder(session, run.id, "compact")
+	run := &activeRun{id: id("run"), cancel: cancel, answers: map[string]chan []contracts.QuestionAnswer{}, compacting: true, pending: map[string]contracts.QueuedMessage{}, wake: make(chan struct{}, 1), model: m,
+		selection: contracts.ModelSelection{ModelID: session.ModelID, Reasoning: session.ReasoningLevel}}
+	for _, configured := range e.providers {
+		run.providers = append(run.providers, model.CloneProvider(configured))
+	}
 	hookRules := contracts.CloneHookRules(e.state.Settings.Hooks)
 	configSnapshot := clonePluginConfig(e.pluginConfig)
 	profileSnapshot := contracts.CloneSubagentProfiles(e.state.Settings.Subagents)
@@ -71,13 +73,11 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	go func() {
 		defer e.wg.Done()
 		defer cancel()
-		bound := meteredModel{inner: gateway, core: e, sessionID: session.ID, turnID: run.id, provider: provider, modelID: m.ID}
+		bound := sessionModel{core: e, sessionID: session.ID, run: run}
 		resources, tools, cleanup, err := e.compactHookResources(ctx, session, root, configSnapshot, profileSnapshot)
 		defer cleanup()
-		tools, protocolWarnings := filterMCPToolsForProtocol(tools, provider.Protocol)
-		resources.warnings = append(resources.warnings, protocolWarnings...)
 		hookRules = append(hookRules, resources.hooks...)
-		hooks, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Protocol: provider.Protocol, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
+		hooks, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
 		var compacted []model.Message
 		var startupContext []model.Message
 		if err == nil {
@@ -157,7 +157,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 			return message.SessionID == sessionID && message.Source == "hook" && strings.HasPrefix(message.ID, "hook-rewake-")
 		}) {
 			if index := e.sessionIndex(sessionID); index >= 0 && !e.state.Sessions[index].Archived {
-				_ = e.startLocked(e.state.Sessions[index], "")
+				_ = e.startAutomaticLocked(e.state.Sessions[index], "")
 			}
 		}
 	}()

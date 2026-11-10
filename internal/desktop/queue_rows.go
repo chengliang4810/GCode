@@ -15,8 +15,8 @@ type queueRowDrag struct {
 
 // queueRows draws the queued messages above the composer. A row can be
 // dragged before or after another row of the same session; Send now stops the
-// live run and sends the row at once, while steering joins the running turn at
-// its next step. Editing takes the row back into the composer.
+// live run and sends the row at once, while steering starts the row's task at
+// the next step boundary. Editing takes the row back into the composer.
 func (a *App) queueRows(c *ui.Context, sessionID string) {
 	real := a.state.Runtime != nil
 	for _, queued := range a.state.Queue {

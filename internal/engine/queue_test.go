@@ -31,8 +31,8 @@ func queuedRow(sessionID, id, text string, at time.Time) contracts.QueuedMessage
 	return contracts.QueuedMessage{ID: id, SessionID: sessionID, Text: text, Prompt: text, CreatedAt: at}
 }
 
-// The idle drain hands over one queued message per turn; the rest keep their
-// order for the turns that follow. A steer still joins the live turn.
+// Only internal inputs join a task. Each user input, including steering,
+// starts a separate task at its delivery boundary.
 func TestIdleDrainHandsOverOneQueuedMessage(t *testing.T) {
 	core, sessionID := queueCore(t)
 	base := time.Now()
@@ -43,18 +43,23 @@ func TestIdleDrainHandsOverOneQueuedMessage(t *testing.T) {
 		queuedRow(sessionID, "two", "TWO", base.Add(time.Second)),
 		queuedRow(sessionID, "three", "THREE", base.Add(2*time.Second)),
 	}
-	if messages := core.drainPendingLocked(sessionID, true); len(messages) != 1 || messages[0].Text != "ONE" {
-		t.Fatalf("idle drain = %+v, want only the first row", messages)
+	if messages := core.drainPendingLocked(sessionID, true); len(messages) != 0 {
+		t.Fatalf("idle drain folded user input into the current task: %+v", messages)
 	}
-	if len(core.state.Queue) != 2 || core.state.Queue[0].ID != "two" || core.state.Queue[1].ID != "three" {
+	run := &activeRun{messageID: "started"}
+	if core.handoffUserInputLocked(sessionID, run, false) {
+		t.Fatal("ordinary queued input preempted an active step")
+	}
+	if !core.handoffUserInputLocked(sessionID, run, true) || run.nextInput.ID != "one" {
+		t.Fatal("idle did not hand off the first input")
+	}
+	if len(core.state.Queue) != 3 {
 		t.Fatalf("drain left %+v, want the rest in order", core.state.Queue)
 	}
-	if messages := core.drainPendingLocked(sessionID, true); len(messages) != 1 || messages[0].Text != "TWO" {
-		t.Fatalf("second idle drain = %+v", messages)
-	}
-	core.state.Queue[0].Delivery = "steer"
-	if messages := core.drainPendingLocked(sessionID, false); len(messages) != 1 || messages[0].Text != "THREE" {
-		t.Fatalf("live drain = %+v, want the steer row", messages)
+	core.state.Queue[2].Delivery = "steer"
+	run = &activeRun{messageID: "started"}
+	if !core.handoffUserInputLocked(sessionID, run, false) || run.nextInput.ID != "three" {
+		t.Fatal("step boundary did not select the steering input")
 	}
 }
 

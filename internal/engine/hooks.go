@@ -153,10 +153,10 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		}
 		input.PermissionMode = "bypassPermissions"
 		if input.Event == contracts.HookSessionStart {
-			input.Model = run.model.ID
+			_, input.Model, _ = strings.Cut(run.selection.ModelID, "/")
 		}
-		if session.ReasoningLevel != "" {
-			input.Effort = &agent.HookEffort{Level: session.ReasoningLevel}
+		if run.selection.Reasoning != "" {
+			input.Effort = &agent.HookEffort{Level: run.selection.Reasoning}
 		}
 		if run.subagent != nil {
 			input.ParentSessionID = run.subagent.parentSessionID

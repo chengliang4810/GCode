@@ -57,16 +57,22 @@ func TestPromptBuiltinAndInlineCommandSemantics(t *testing.T) {
 }
 
 func TestQueueKeepsReferenceDisplaySeparateFromExecution(t *testing.T) {
-	core, _ := resourceCore(t)
+	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		goalResponse(w, model.Chat, "Done.", nil, true)
+	}))
 	raw := (contracts.PromptReference{Kind: "skill", ID: "docs", Label: "文档"}).Markdown()
 	core.mu.Lock()
 	defer core.mu.Unlock()
-	core.state.Queue = []contracts.QueuedMessage{{ID: "queued", SessionID: "session", Text: raw, Prompt: "RESOLVED SKILL CONTENT", CreatedAt: time.Now()}}
-	messages := core.drainPendingLocked("session", true)
+	session := newTestSession(t, core, "", "Reference task")
+	queued := contracts.QueuedMessage{ID: "queued", SessionID: session.ID, Text: raw, Prompt: "RESOLVED SKILL CONTENT", ModelID: "goal/model", CreatedAt: time.Now()}
+	if err := core.startQueuedUserLocked(session.ID, queued); err != nil {
+		t.Fatal(err)
+	}
+	messages := core.history[session.ID]
 	if len(messages) != 1 || messages[0].Text != "RESOLVED SKILL CONTENT" {
 		t.Fatalf("execution used canonical display: %+v", messages)
 	}
-	if got := core.state.Messages["session"][0].Blocks[0].Text; got != raw {
+	if got := core.state.Messages[session.ID][0].Blocks[0].Text; got != raw {
 		t.Fatalf("transcript lost original input: %q", got)
 	}
 }

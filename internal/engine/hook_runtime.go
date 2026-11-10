@@ -191,7 +191,7 @@ func (e *Engine) queueHookResult(sessionID string, execution agent.HookExecution
 	e.publishLocked(contracts.Event{Kind: "queue.changed", SessionID: sessionID})
 	e.wakeRunLocked(sessionID)
 	if wakeIdle && e.runs[sessionID] == nil {
-		if err := e.startLocked(e.state.Sessions[index], ""); err != nil {
+		if err := e.startAutomaticLocked(e.state.Sessions[index], ""); err != nil {
 			return fmt.Errorf("background hook result is queued but session cannot resume: %w", err)
 		}
 	}

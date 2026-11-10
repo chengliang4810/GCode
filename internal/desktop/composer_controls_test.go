@@ -3,11 +3,81 @@ package desktop
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestRunningComposersAllowSilentProviderAndReasoningChanges(t *testing.T) {
+	for _, side := range []bool{false, true} {
+		for _, status := range []contracts.SessionStatus{contracts.Working, contracts.AwaitingInput} {
+			for _, appearance := range []string{"light", "dark"} {
+				t.Run(fmt.Sprintf("side=%t/%s/%s", side, status, appearance), func(t *testing.T) {
+					var a *App
+					var child contracts.Session
+					if side {
+						a, _, child = sideViewTester(t)
+					} else {
+						a = testApp(t, "default")
+						a.selectSession("chat-0")
+					}
+					sid, suffix := a.sessionID, ""
+					width := 900
+					if side {
+						sid, suffix, width = child.ID, " in "+child.Title, 1600
+					}
+					for i := range a.state.Sessions {
+						if a.state.Sessions[i].ID == sid {
+							a.state.Sessions[i].Status = status
+						}
+					}
+					a.state.Settings.Appearance.Mode = appearance
+					recorder := &sideRecordingService{Service: a.service}
+					a.service = recorder
+					tt := ui.NewTester(a.View, width, 880)
+					if err := openTestModelList(tt, "Select model"+suffix); err != nil {
+						t.Fatal(err)
+					}
+					if err := tt.Click("Codex"); err != nil {
+						t.Fatal("running composer locked provider:", err)
+					}
+					if err := tt.Click("GPT-5.4"); err != nil {
+						t.Fatal(err)
+					}
+					if err := tt.Click("Select reasoning effort" + suffix); err != nil {
+						t.Fatal(err)
+					}
+					if err := tt.Click("Reasoning effort" + suffix); err != nil {
+						t.Fatal(err)
+					}
+					controls := a.centralControls()
+					if side {
+						controls = a.sideControls(sid, a.sideComposer(sid))
+					}
+					if controls.reasoningChoice().selected == 0 {
+						tt.Key(0, ui.KeyEnd)
+					} else {
+						tt.Key(0, ui.KeyHome)
+					}
+					updated := 0
+					for _, command := range recorder.commands {
+						if command.Kind == "session.update" && command.Session != nil && command.Session.ID == sid {
+							updated++
+						}
+						if command.Kind == "message.stop" {
+							t.Fatal("changing settings stopped the run")
+						}
+					}
+					if updated < 2 || a.errorText != "" || (side && a.sideComposer(sid).Failure != "") {
+						t.Fatalf("changes were not silently accepted: updates=%d error=%s", updated, a.errorText)
+					}
+				})
+			}
+		}
+	}
+}
 
 func TestSharedComposerSideModelKeepsConfigurationIndependent(t *testing.T) {
 	a, tt, child := sideViewTester(t)
@@ -88,7 +158,7 @@ func TestSharedComposerSideConfigFailureRestoresItsSnapshot(t *testing.T) {
 	}
 }
 
-func TestSharedComposerRunningSideLocksItsProviderOnly(t *testing.T) {
+func TestSharedComposerRunningSideChangesItsProviderIndependently(t *testing.T) {
 	a, tt, child := sideViewTester(t)
 	for i := range a.state.Sessions {
 		if a.state.Sessions[i].ID == child.ID {
@@ -98,18 +168,9 @@ func TestSharedComposerRunningSideLocksItsProviderOnly(t *testing.T) {
 	tt.Frame()
 	state := a.sideComposer(child.ID)
 	side := a.sideControls(child.ID, state)
-	if !side.modelProviderLocked() || a.modelProviderLocked() {
-		t.Fatal("provider lock used the other composer's session")
-	}
-	current := side.selectedModel().ProviderID
-	for _, row := range side.modelRows() {
-		if row.provider.ID != current {
-			t.Fatal("running side offered another provider")
-		}
-	}
-	old := state.modelID
+	mainModel := a.modelID
 	side.activateModelRow([]modelRow{{model: contracts.Model{ID: "gpt-5.4", ProviderID: "openai"}, provider: contracts.Provider{ID: "openai"}}}, 0)
-	if state.modelID != old {
-		t.Fatal("running side changed provider")
+	if state.modelID != "gpt-5.4" || a.modelID != mainModel || state.Failure != "" {
+		t.Fatal("running side failed to change provider independently")
 	}
 }

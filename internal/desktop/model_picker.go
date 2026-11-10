@@ -190,7 +190,7 @@ func (a *composerController) modelPickerColumns(c *ui.Context) (providerWidth, m
 	}
 	providerWidth = providerPanelMinWidth
 	for _, provider := range a.state.Providers {
-		if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
+		if a.modelProviderOffered(provider) {
 			providerWidth = max(providerWidth, measure(provider.Name, 400)+providerRowChrome)
 		}
 	}
@@ -578,9 +578,6 @@ func (a *composerController) activateModelRow(rows []modelRow, index int) {
 	if !a.modelProviderOffered(rows[index].provider) {
 		return
 	}
-	if a.modelProviderLocked() && rows[index].model.ProviderID != a.selectedModel().ProviderID {
-		return
-	}
 	if a.state.Runtime != nil && a.modelID != rows[index].model.ID {
 		a.reasoning = ""
 	}
@@ -596,7 +593,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	rows := a.modelRows()
 	providerCount := 0
 	for _, provider := range a.state.Providers {
-		if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
+		if a.modelProviderOffered(provider) {
 			providerCount++
 		}
 	}
@@ -632,7 +629,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		providerCard.Children(func() {
 			ui.Scroll(c).Grow(1).MinHeight(0).FillWidth().Gap(2).Children(func() {
 				for _, provider := range a.state.Providers {
-					if a.modelProviderOffered(provider) && (!a.modelProviderLocked() || provider.ID == a.selectedModel().ProviderID) {
+					if a.modelProviderOffered(provider) {
 						row := a.modelGroupButton(c, provider.ID, provider.Name)
 						if provider.ID == providerID {
 							activeProvider = row
@@ -820,7 +817,7 @@ func (a *composerController) modelRows() []modelRow {
 		providerID = a.selectedProvider().ID
 	}
 	for _, provider := range a.state.Providers {
-		if !a.modelProviderOffered(provider) || a.modelProviderLocked() && provider.ID != a.selectedModel().ProviderID {
+		if !a.modelProviderOffered(provider) {
 			continue
 		}
 		for _, model := range a.state.Models {
@@ -889,11 +886,6 @@ func (a *composerController) browseModelProvider(id string) {
 	a.modelQuery = ""
 	a.modelCursor = 0
 	a.modelList.ScrollIntoView(0)
-}
-
-func (a *composerController) modelProviderLocked() bool {
-	status := a.currentSession().Status
-	return a.sessionID != "" && (a.pendingNew || status == contracts.Working || status == contracts.AwaitingInput)
 }
 
 func (a *composerController) openModelSettings() {

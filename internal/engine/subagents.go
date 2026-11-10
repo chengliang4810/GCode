@@ -404,7 +404,7 @@ func (e *Engine) resumeSubagentParentLocked(run *activeRun) {
 			return
 		}
 	}
-	if err := e.startLocked(e.state.Sessions[index], ""); err != nil {
+	if err := e.startAutomaticLocked(e.state.Sessions[index], ""); err != nil {
 		e.failSubagentContinuationLocked(child.parentSessionID, err)
 	}
 }

@@ -302,7 +302,7 @@
   "Steer the running response": "纠正当前回复",
   "Queue for the next turn": "排队到下一轮",
   "While a response is running": "回复进行中时",
-  "Send as a steer into the running response.": "作为纠正并入正在运行的回复。",
+  "Start the next task at the next step boundary.": "在下一个执行步骤边界开始新任务。",
   "Keep the message in the queue until the running response ends.": "留在队列，等当前回复结束后发送。",
   "Brewing": "酝酿中",
   "Combobulating": "整理中",

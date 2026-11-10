@@ -311,7 +311,7 @@ func TestSynchronousSubagentInheritsAndCancelsWithParent(t *testing.T) {
 	}
 }
 
-func TestBackgroundSubagentRetainsResultWhenParentModelIsRemoved(t *testing.T) {
+func TestBackgroundSubagentRetainsAcceptedModelWhenConfigurationIsRemoved(t *testing.T) {
 	releaseChild := make(chan struct{})
 	var parentCalls atomic.Int32
 	parent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -357,15 +357,20 @@ func TestBackgroundSubagentRetainsResultWhenParentModelIsRemoved(t *testing.T) {
 	}
 	close(releaseChild)
 	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
-		return len(s.Runs) == 2 && runsFinished(s)
+		return len(s.Runs) == 3 && runsFinished(s)
 	}, parentID)
 	for _, session := range state.Sessions {
-		if session.ID == parentID && (session.Status != contracts.Errored || session.LastOutcome != "failed") {
-			t.Fatalf("failed automatic continuation was hidden: %+v", session)
+		if session.ID == parentID && (session.Status != contracts.Idle || session.LastOutcome != "completed") {
+			t.Fatalf("automatic continuation lost its accepted task configuration: %+v", session)
 		}
 	}
-	if len(state.Queue) != 1 || !strings.Contains(state.Queue[0].Text, "SAVED RESULT") || parentCalls.Load() != 2 {
-		t.Fatalf("missing parent model lost the result or selected another model: %+v", state.Queue)
+	if len(state.Queue) != 0 || parentCalls.Load() != 3 {
+		t.Fatalf("automatic continuation did not consume the saved result once: queue=%+v calls=%d", state.Queue, parentCalls.Load())
+	}
+	if err := core.Execute(context.Background(), contracts.Command{
+		Kind: "message.send", Send: &contracts.SendRequest{SessionID: parentID, Text: "New user task"},
+	}); err == nil {
+		t.Fatal("a new user task bypassed the removed provider configuration")
 	}
 	if err := core.Execute(context.Background(), contracts.Command{
 		Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: model.Provider{
@@ -375,14 +380,14 @@ func TestBackgroundSubagentRetainsResultWhenParentModelIsRemoved(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := core.Execute(context.Background(), contracts.Command{Kind: "message.retry", SessionID: parentID}); err != nil {
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: parentID, Text: "New user task"}}); err != nil {
 		t.Fatal(err)
 	}
 	state = waitSubagentState(t, core, func(s contracts.Snapshot) bool {
-		return len(s.Runs) == 3 && runsFinished(s)
+		return len(s.Runs) == 4 && runsFinished(s)
 	}, parentID)
-	if parentCalls.Load() != 3 || len(state.Queue) != 0 {
-		t.Fatal("restored parent did not consume exactly one saved completion")
+	if parentCalls.Load() != 4 || len(state.Queue) != 0 {
+		t.Fatal("new user task did not use the restored provider")
 	}
 }
 

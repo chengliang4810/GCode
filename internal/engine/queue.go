@@ -12,51 +12,57 @@ func (e *Engine) drainPendingLocked(sessionID string, idle bool) []model.Message
 	messages := []model.Message{}
 	remaining := make([]contracts.QueuedMessage, 0, len(e.state.Queue))
 	for _, queued := range e.state.Queue {
+		internal := queued.Source == "subagent" || queued.Source == "hook"
+		// Human inputs each open a new task. They are handed off at a safe
+		// boundary instead of being folded into this task's statistics.
+		if !internal {
+			remaining = append(remaining, queued)
+			continue
+		}
 		if queued.SessionID != sessionID || (!idle && queued.Delivery != "steer") {
 			remaining = append(remaining, queued)
 			continue
 		}
-		// The queue hands over one message per turn: the next row waits
-		// until the one it follows has run. A steer joins the live turn
-		// instead, at the loop's next step.
 		if idle && len(messages) > 0 {
 			remaining = append(remaining, queued)
 			continue
 		}
-		input := queued.Prompt
-		internal := queued.Source == "subagent" || queued.Source == "hook"
-		if internal {
-			input = queued.Text
-		}
+		input := queued.Text
 		message, err := e.inputMessageLocked(input, queued.Attachments)
 		if err != nil {
 			message = model.Message{Role: "user", Text: input + "\nAttachment error: " + err.Error()}
 		}
-		message.UserInput = !internal
-		if message.UserInput {
-			message.SourceText = queued.Text
-		}
+		message.UserInput = false
 		message.InputIDs = nil
-		if message.UserInput {
-			message.InputIDs = []string{queued.ID}
-		}
 		messages = append(messages, message)
-		if run := e.runs[sessionID]; run != nil && run.goal.id != "" && !internal {
-			run.pending[queued.ID] = queued
-		}
-		if !internal {
-			e.appendUserLocked(sessionID, queued.Text)
-			if run := e.runs[sessionID]; run != nil && run.goal.id != "" {
-				items := e.state.Messages[sessionID]
-				items[len(items)-1].ID = queued.ID
-			}
-		}
 	}
 	e.state.Queue = remaining
 	if len(messages) > 0 {
 		e.publishLocked(contracts.Event{Kind: "queue.changed", SessionID: sessionID})
 	}
 	return messages
+}
+
+// A steer takes the next model-step boundary, after the current tool batch.
+// Ordinary inputs wait for idle. Neither path cancels an accepted request.
+func (e *Engine) handoffUserInputLocked(sessionID string, run *activeRun, idle bool) bool {
+	if run.nextInput != nil {
+		return true
+	}
+	if !idle && run.messageID == "" {
+		// Every accepted user task gets its first request before a later
+		// steer can hand off again.
+		return false
+	}
+	for _, queued := range e.state.Queue {
+		if queued.SessionID != sessionID || queued.Source == "subagent" || queued.Source == "hook" ||
+			(!idle && queued.Delivery != "steer") {
+			continue
+		}
+		run.nextInput = &queued
+		return true
+	}
+	return false
 }
 
 // sendQueuedNowLocked carries out a queue row's Send now: the row leaves the
@@ -71,15 +77,17 @@ func (e *Engine) sendQueuedNowLocked(id string) error {
 	}
 	queued := e.state.Queue[index]
 	if run := e.runs[queued.SessionID]; run != nil && !e.closed {
-		if run.afterStop != nil {
-			// The response is already stopping for another row; this one stays
-			// queued so the next turn keeps it.
-			return errors.New("the running response is already stopping")
+		if run.nextInput != nil {
+			// A handoff already owns the next boundary; retain this accepted
+			// input in the queue without asking the user to wait or stop.
+			return nil
 		}
 		e.state.Queue = slices.Delete(e.state.Queue, index, index+1)
-		run.afterStop = &queued
+		run.nextInput = &queued
+		run.inputInterrupt = true
 		if err := e.persistLocked(queued.SessionID); err != nil {
-			run.afterStop = nil
+			run.nextInput = nil
+			run.inputInterrupt = false
 			e.state.Queue = slices.Insert(e.state.Queue, index, queued)
 			return err
 		}
@@ -110,13 +118,10 @@ func (e *Engine) handoffQueuedLocked(sessionID string, queued contracts.QueuedMe
 		if index < 0 {
 			err = errors.New("session not found")
 		} else {
-			err = e.startLocked(e.state.Sessions[index], "")
+			err = e.startAutomaticLocked(e.state.Sessions[index], "")
 		}
 	} else {
-		err = e.sendLocked(contracts.SendRequest{
-			SessionID: sessionID, Text: queued.Text, Attachments: queued.Attachments,
-			ModelID: queued.ModelID, ReasoningLevel: queued.ReasoningLevel,
-		})
+		err = e.startQueuedUserLocked(sessionID, queued)
 	}
 	if err != nil {
 		e.state = before
@@ -129,6 +134,53 @@ func (e *Engine) handoffQueuedLocked(sessionID string, queued contracts.QueuedMe
 		}
 	}
 	return err
+}
+
+func (e *Engine) startQueuedUserLocked(sessionID string, queued contracts.QueuedMessage) error {
+	index := e.sessionIndex(sessionID)
+	if index < 0 {
+		return errors.New("session not found")
+	}
+	session := e.state.Sessions[index]
+	var selected, reasoning *string
+	if queued.ModelID != "" {
+		selected = &queued.ModelID
+	}
+	if queued.ReasoningLevel != "" {
+		reasoning = &queued.ReasoningLevel
+	}
+	if err := e.setSessionModelLocked(&session, selected, reasoning); err != nil {
+		return err
+	}
+	prompt := queued.Prompt
+	if prompt == "" {
+		var err error
+		prompt, err = expandPrompt(e.storage.ConfigDirectory(), session.CWD, queued.Text)
+		if err != nil {
+			return err
+		}
+	}
+	message, err := e.inputMessageLocked(prompt, queued.Attachments)
+	if err != nil {
+		return err
+	}
+	message.SourceText, message.InputIDs = queued.Text, []string{queued.ID}
+	e.history[sessionID] = append(e.history[sessionID], message)
+	e.context[sessionID] = append(e.context[sessionID], message)
+	e.appendUserLocked(sessionID, queued.Text)
+	messages := e.state.Messages[sessionID]
+	messages[len(messages)-1].ID = queued.ID
+	for _, item := range queued.Attachments {
+		attachment := item
+		messages[len(messages)-1].Blocks = append(messages[len(messages)-1].Blocks, contracts.Block{ID: id("block"), Kind: "attachment", Attachment: &attachment})
+	}
+	if err := e.startLocked(session, queued.ID); err != nil {
+		return err
+	}
+	if run := e.runs[sessionID]; run != nil && run.goal.id != "" {
+		run.pending[queued.ID] = queued
+	}
+	return nil
 }
 
 // moveQueuedLocked reorders a queued row ahead of or behind another row of

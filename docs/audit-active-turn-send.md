@@ -4,6 +4,13 @@
 `ab189159f10cf8e63c0502be75a59bbc487e0eaf`，副本在
 `output/reference-sources/zeron`。本文件记录源码对照、实现与可执行检查。
 
+2026-11-10 更新：每条用户输入（含引导）现在各自开始独立任务，并保留发送时选择的模型
+和思考强度。引导在当前模型请求及工具批次完成后的步骤边界交接；普通排队消息在当前回答
+结束后交接。`handoffUserInputLocked` 选择下一输入，运行收尾通过 `run.nextInput` 开始
+下一任务；只有显式 Send now 会取消当前执行。当前规则与验证见 `model-adapters.md`、
+`backend-v1.md` 及 `output/user-input-task-boundaries-final/`。
+以下内容保留为 2026-11-01 的历史实现及验收记录。
+
 ## 参考的两个时期
 
 | Source | Connected behavior |

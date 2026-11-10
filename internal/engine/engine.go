@@ -55,9 +55,10 @@ type activeRun struct {
 	goal         goalScope
 	pending      map[string]contracts.QueuedMessage
 	wake         chan struct{}
-	// afterStop is a queue row whose Send now stopped this run: it opens
-	// the next turn once the run has settled.
-	afterStop *contracts.QueuedMessage
+	// nextInput opens a new task after this run settles. Steering waits for
+	// a step boundary; only the explicit Send now action cancels this run.
+	nextInput      *contracts.QueuedMessage
+	inputInterrupt bool
 	// Side chats inherit through the latest accepted human input, before the
 	// active reply and its tools. These snapshots also survive live compaction.
 	sideChatHistory []model.Message
@@ -83,6 +84,7 @@ type Engine struct {
 	history           map[string][]model.Message
 	context           map[string][]model.Message
 	runs              map[string]*activeRun
+	taskModels        map[string]taskModel
 	naming            map[string]*namingRun
 	gitOperations     map[string]context.CancelFunc
 	checkoutProjects  map[string]int

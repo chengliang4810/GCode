@@ -1189,8 +1189,8 @@ func (a *App) send(text string) bool {
 	cmd.Send.Annotations = append([]contracts.Annotation(nil), a.annotations...)
 	cmd.Send.RequestID = "primary:" + rand.Text()
 	busy := a.currentSession().Status == contracts.Working || a.currentSession().Status == contracts.AwaitingInput
-	// A steer joins the live response at its next step; otherwise the send
-	// waits in the queue until the turn ends (General.ActiveTurnSendBehavior).
+	// A steer starts its task at the next step boundary; otherwise the send
+	// waits until the current answer ends (General.ActiveTurnSendBehavior).
 	if busy && a.activeTurnSend() == "steer" {
 		cmd.Send.Delivery = "steer"
 	}
@@ -1221,7 +1221,7 @@ func (a *App) send(text string) bool {
 }
 
 // activeTurnSend is what a send does while the agent runs: the reference's
-// ActiveTurnSendBehavior, whose default steers the live response.
+// ActiveTurnSendBehavior, whose default starts the next task at a step boundary.
 func (a *App) activeTurnSend() string {
 	if a.state.Settings.General.ActiveTurnSendBehavior == "queue" {
 		return "queue"
@@ -1234,7 +1234,7 @@ func activeTurnSendDescription(behavior string) string {
 	if behavior == "queue" {
 		return "Keep the message in the queue until the running response ends."
 	}
-	return "Send as a steer into the running response."
+	return "Start the next task at the next step boundary."
 }
 
 func (a *App) syncNativeAppearance() {

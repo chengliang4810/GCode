@@ -52,9 +52,9 @@ type Options struct {
 	Emit           func(Event) error
 	// Pending drains steering at step boundaries, and follow-ups only at idle.
 	Pending func(idle bool) []model.Message
-	// BeforeStep and Idle let the owner control continued execution without
+	// BeforeStep (idle after a final answer) and Idle control execution without
 	// introducing application state or goal semantics into the Agent loop.
-	BeforeStep func(context.Context) (bool, error)
+	BeforeStep func(context.Context, bool) (bool, error)
 	Idle       func(context.Context, model.Request) ([]model.Message, error)
 	// OwnsCompletion lets an owner such as a goal runtime make the sole idle
 	// continuation decision, including its unfinished-todo policy.
@@ -197,7 +197,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			return err
 		}
 		if options.BeforeStep != nil {
-			proceed, err := options.BeforeStep(ctx)
+			proceed, err := options.BeforeStep(ctx, false)
 			if err != nil {
 				return err
 			}
@@ -322,7 +322,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		}
 		if len(result.Message.Calls) == 0 {
 			if options.BeforeStep != nil {
-				proceed, err := options.BeforeStep(ctx)
+				proceed, err := options.BeforeStep(ctx, true)
 				if err != nil {
 					return err
 				}

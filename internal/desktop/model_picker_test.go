@@ -254,7 +254,7 @@ func TestUnresolvedModelCannotSilentlySendDefaultAndRetryResolvesIt(t *testing.T
 	}
 }
 
-func TestStandardPickerReopensOnCurrentLockedProvider(t *testing.T) {
+func TestStandardPickerReopensOnCurrentProviderAndAllowsLiveSwitch(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession("chat-0")
 	a.modelProvider = "claude"
@@ -275,8 +275,20 @@ func TestStandardPickerReopensOnCurrentLockedProvider(t *testing.T) {
 	}
 	for _, row := range rows {
 		if row.model.ProviderID != "openai" {
-			t.Fatal("working session exposed a foreign provider")
+			t.Fatal("reopened picker did not start on the selected provider")
 		}
+	}
+	if err := tt.Click("Claude Code"); err != nil {
+		t.Fatal("running session hid another provider:", err)
+	}
+	if len(a.modelRows()) == 0 || a.modelRows()[0].model.ProviderID != "claude" {
+		t.Fatal("running session cannot browse another provider")
+	}
+	if err := tt.Click("Opus 4.6"); err != nil {
+		t.Fatal(err)
+	}
+	if a.modelID != "claude-opus-4-6" || a.errorText != "" {
+		t.Fatalf("live provider choice failed: model=%s, error=%s", a.modelID, a.errorText)
 	}
 }
 
@@ -369,7 +381,7 @@ func TestModelPickerRemovedFavoriteAndNumberShortcuts(t *testing.T) {
 	}
 }
 
-func TestModelProviderStaysLockedDuringActiveTurn(t *testing.T) {
+func TestModelProviderChangesDuringActiveTurn(t *testing.T) {
 	for _, status := range []contracts.SessionStatus{contracts.Working, contracts.AwaitingInput} {
 		a := testApp(t, "default")
 		a.selectSession("chat-0")
@@ -381,12 +393,12 @@ func TestModelProviderStaysLockedDuringActiveTurn(t *testing.T) {
 		provider := a.selectedModel().ProviderID
 		for _, row := range a.modelRows() {
 			if row.model.ProviderID != provider {
-				t.Fatal("active run offered a foreign provider")
+				t.Fatal("provider filter mixed models")
 			}
 		}
 		a.centralControls().activateModelRow([]modelRow{{model: contracts.Model{ID: "gpt-5.4", ProviderID: "openai"}, provider: contracts.Provider{ID: "openai"}}}, 0)
-		if a.selectedModel().ProviderID != provider {
-			t.Fatal("provider changed while a turn was active")
+		if a.selectedModel().ProviderID != "openai" || a.errorText != "" {
+			t.Fatal("active turn blocked provider selection")
 		}
 	}
 }

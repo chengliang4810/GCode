@@ -59,21 +59,28 @@ func mcpDiscoveryWarnings(client *mcp.Client) []string {
 
 // The namespace is stable across providers; protocol filtering never renames it.
 func filterMCPToolsForProtocol(tools []agent.Tool, protocol model.Protocol) ([]agent.Tool, []string) {
-	limit := 128
-	if protocol == model.Chat {
-		limit = 64
-	}
 	filtered := make([]agent.Tool, 0, len(tools))
 	var warnings []string
 	for _, tool := range tools {
 		name := tool.Definition().Name
-		if strings.HasPrefix(name, "mcp__") && len(name) > limit {
-			warnings = append(warnings, fmt.Sprintf("MCP tool %q skipped for %s: qualified name has %d characters, limit %d; other server tools remain available.", name, protocol, len(name), limit))
+		if warning := mcpToolProtocolWarning(name, protocol); warning != "" {
+			warnings = append(warnings, warning)
 			continue
 		}
 		filtered = append(filtered, tool)
 	}
 	return filtered, warnings
+}
+
+func mcpToolProtocolWarning(name string, protocol model.Protocol) string {
+	limit := 128
+	if protocol == model.Chat {
+		limit = 64
+	}
+	if strings.HasPrefix(name, "mcp__") && len(name) > limit {
+		return fmt.Sprintf("MCP tool %q skipped for %s: qualified name has %d characters, limit %d; other server tools remain available.", name, protocol, len(name), limit)
+	}
+	return ""
 }
 
 // connectMCP selects the server's actual protocol era before exposing any tools.

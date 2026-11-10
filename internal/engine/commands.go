@@ -95,6 +95,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	}
 	before := contracts.CloneSnapshot(e.state)
 	providers := slices.Clone(e.providers)
+	taskModels := maps.Clone(e.taskModels)
 	history, executionContext := maps.Clone(e.history), maps.Clone(e.context)
 	hashes, records, loaded := maps.Clone(e.sessionHashes), maps.Clone(e.sessionRecords), maps.Clone(e.loadedSessions)
 	dirty := maps.Clone(e.sessionDirty)
@@ -115,6 +116,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 				}
 			}
 			e.state, e.providers, e.history, e.context = before, providers, history, executionContext
+			e.taskModels = taskModels
 			e.sessionHashes, e.sessionRecords, e.loadedSessions = hashes, records, loaded
 			e.sessionDirty = dirty
 			for i := range e.state.Sessions {
@@ -411,9 +413,6 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if session.SubagentType != "" && (change.ModelID != nil || change.ReasoningLevel != nil) {
 			return errors.New("subagent execution settings are read-only")
 		}
-		if change.ModelID != nil && *change.ModelID != session.ModelID && e.runs[session.ID] != nil {
-			return errors.New("stop the current run before changing its model")
-		}
 		if change.Title != nil {
 			e.cancelNamingLocked(session.ID)
 			session.Title = *change.Title
@@ -442,20 +441,10 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if change.GroupOrder != nil {
 			session.GroupOrder = *change.GroupOrder
 		}
-		if change.ModelID != nil {
-			if *change.ModelID != session.ModelID {
-				if _, _, err := e.resolveModel(*change.ModelID); err != nil {
-					return err
-				}
+		if change.ModelID != nil || change.ReasoningLevel != nil {
+			if err := e.setSessionModelLocked(session, change.ModelID, change.ReasoningLevel); err != nil {
+				return err
 			}
-			session.ModelID = *change.ModelID
-		}
-		if change.ReasoningLevel != nil {
-			if run := e.runs[session.ID]; run != nil &&
-				model.EffortID(*change.ReasoningLevel) != model.EffortID(run.selection.Reasoning) {
-				return errors.New("stop the current run before changing its reasoning level")
-			}
-			session.ReasoningLevel = *change.ReasoningLevel
 		}
 	case "session.archive":
 		index := e.sessionIndex(command.ID)
@@ -532,6 +521,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.state.ModelRequests = slices.DeleteFunc(e.state.ModelRequests, func(request contracts.ModelRequest) bool { return request.SessionID == command.ID })
 		delete(e.history, command.ID)
 		delete(e.context, command.ID)
+		delete(e.taskModels, command.ID)
 		e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.SessionID == command.ID })
 	case "queue.remove":
 		e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.ID == command.ID })

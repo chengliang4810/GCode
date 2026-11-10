@@ -189,7 +189,6 @@ func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Eleme
 }
 
 // Root shell entry points delegate to the central composer.
-func (a *App) modelRows() []modelRow     { return a.centralControls().modelRows() }
-func (a *App) modelNoAgents() bool       { return a.centralControls().modelNoAgents() }
-func (a *App) restoreModelSelection()    { a.centralControls().restoreModelSelection() }
-func (a *App) modelProviderLocked() bool { return a.centralControls().modelProviderLocked() }
+func (a *App) modelRows() []modelRow  { return a.centralControls().modelRows() }
+func (a *App) modelNoAgents() bool    { return a.centralControls().modelNoAgents() }
+func (a *App) restoreModelSelection() { a.centralControls().restoreModelSelection() }

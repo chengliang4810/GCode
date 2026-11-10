@@ -227,18 +227,18 @@ func TestQueuedHookDenialsDoNotLeakUncheckedBatchInputs(t *testing.T) {
 	}
 	close(release)
 	state = waitSubagentState(t, core, runsFinished, sessionID)
-	if state.Runs[0].Status != "failed" {
-		t.Fatal("queued denial did not stop the run")
+	if len(state.Runs) != 2 || state.Runs[0].Status != "completed" || state.Runs[1].Status != "failed" {
+		t.Fatalf("queued denial did not fail only its own user task: %+v", state.Runs)
 	}
 	if err := core.Execute(context.Background(), contracts.Command{
 		Kind: "message.send", Send: &contracts.SendRequest{SessionID: sessionID, Text: "continue allowed work"},
 	}); err != nil {
 		t.Fatal(err)
 	}
-	// The queue hands over one row per turn: the denial fails the run and the
-	// accepted row waits for the next send instead of riding along with it.
-	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 2 && runsFinished(snapshot) }, sessionID)
-	if leaked.Load() || requests.Load() != 3 || state.Runs[1].Status != "completed" {
+	// The denied input owns its failed task; the approved row remains queued
+	// until another send resumes execution, then opens its own task too.
+	state = waitSubagentState(t, core, func(snapshot contracts.Snapshot) bool { return len(snapshot.Runs) == 4 && runsFinished(snapshot) }, sessionID)
+	if leaked.Load() || requests.Load() != 3 || state.Runs[2].Status != "completed" || state.Runs[3].Status != "completed" {
 		t.Fatalf("queued denial leaked into future execution: leaked=%v requests=%d runs=%+v", leaked.Load(), requests.Load(), state.Runs)
 	}
 	core.mu.Lock()
