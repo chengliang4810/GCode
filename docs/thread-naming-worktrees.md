@@ -11,8 +11,12 @@ already in flight. `"first-message"` uses up to 48 characters from the
 first message without another model request. Selecting a configured model key
 (`provider-id/model-id`) asks that model for a title separately from Agent
 execution. This adds a provider request and its associated usage cost. The
-request has no tools, at most 4,000 input characters, at most 96 output tokens,
-and a 30-second timeout. A failed request retains the initial title and publishes
+request uses only the user's first message, without Agent replies or tool
+results, and runs independently of the main conversation. It has no tools,
+at most 4,000 input characters, and a 30-second timeout. Output follows the
+selected model's normal configuration, without a separate naming token cap;
+the resulting title is still limited to 48 characters. A failed request retains
+the initial title and publishes
 `session.naming.failed`; it does not fail the Agent run. Explicit renaming,
 deletion, naming-model changes, provider replacement/removal and host shutdown
 cancel pending naming. Results cannot replace a manually supplied title.
@@ -108,7 +112,8 @@ the retained path and branch. Reused checkouts are never rollback targets.
 
 Verification uses `httptest` for all three model protocols and temporary real Git
 repositories. `go test ./internal/engine -run 'Test(Naming|Worktree|GitRefs)'`
-covers model selection, request limits, cancellation, fixed data-root locations,
+covers model selection, configured output budgets, naming before the main reply,
+reasoning followed by title text, cancellation, fixed data-root locations,
 short directory IDs, missing-root rejection, actual Agent writes in the new
 checkout, restart/reuse, duplicate submissions, and dirty
 switch failures. These tests do not constitute real-provider or native desktop

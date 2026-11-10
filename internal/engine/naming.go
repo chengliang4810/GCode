@@ -30,16 +30,6 @@ func (e *Engine) startNamingLocked(session contracts.Session, text string) {
 		e.publishLocked(contracts.Event{Kind: "session.naming.failed", SessionID: session.ID, Text: "The configured thread naming model is unavailable; the initial title was kept."})
 		return
 	}
-	provider = model.CloneProvider(provider)
-	for i := range provider.Models {
-		if provider.Models[i].ID == selected.ID {
-			if selected.MaxOutput == 0 || selected.MaxOutput > 96 {
-				provider.Models[i].MaxOutput = 96
-			}
-			selected = provider.Models[i]
-			break
-		}
-	}
 	gateway, err := e.client.Bind(provider, selected)
 	if err != nil {
 		e.publishLocked(contracts.Event{Kind: "session.naming.failed", SessionID: session.ID, Text: "The configured thread naming model is invalid; the initial title was kept."})
@@ -73,7 +63,7 @@ func (e *Engine) startNamingLocked(session contracts.Session, text string) {
 			History: []model.Message{{Role: "user", Text: string(prompt)}}, Effort: effort,
 		}, func(model.Delta) error { return nil })
 		title := strings.Trim(strings.TrimSpace(result.Message.Text), "\"'“”`")
-		if len(result.Message.Calls) != 0 || strings.ContainsAny(title, "\r\n") || title == "" {
+		if callErr == nil && (len(result.Message.Calls) != 0 || strings.ContainsAny(title, "\r\n") || title == "") {
 			callErr = errors.New("invalid conversation title")
 		}
 		runes := []rune(title)
