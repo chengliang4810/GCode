@@ -179,6 +179,10 @@ func applyHookToolOutput(name string, output model.ToolOutput, raw json.RawMessa
 	}
 	output.Data = value
 	output.Images = nil
+	// A replacement may redact the original stream. Do not expose a path to
+	// the pre-hook content as if it were the approved model output.
+	output.OutputFile = ""
+	output.HookContext = ""
 	if text, ok := value.(string); ok {
 		output.Text = text
 		return output

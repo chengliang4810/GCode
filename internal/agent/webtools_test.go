@@ -8,8 +8,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"gcode/internal/model"
 )
 
 func TestHTMLToTextKeepsProseDropsMarkup(t *testing.T) {
@@ -214,69 +212,5 @@ func TestWebSearchReportsHttpErrorWithoutReadingBody(t *testing.T) {
 	}
 	if !strings.Contains(output.Text, "HTTP 429") || strings.Contains(output.Text, "noise") {
 		t.Fatalf("error body echoed: %q", output.Text)
-	}
-}
-
-func TestMicroCompactShortensOnlyOldOversizedToolResults(t *testing.T) {
-	big := strings.Repeat("x", microCompactMaxToolChars*2)
-	small := "short result"
-	history := []model.Message{
-		{Role: "user", Text: "start", UserInput: true},
-		{Role: "assistant", Calls: []model.Call{{ID: "old", Name: "Read", Arguments: `{}`}}},
-		{Role: "tool", CallID: "old", Text: big},
-		{Role: "user", Text: "again", UserInput: true},
-		{Role: "tool", CallID: "mid", Text: small},
-		{Role: "user", Text: "third", UserInput: true},
-		{Role: "tool", CallID: "recent", Text: big},
-	}
-	trimmed, shortened := microCompact(history)
-	if shortened != 1 {
-		t.Fatalf("shortened %d results, want 1 (only the stale oversized one)", shortened)
-	}
-	if len(trimmed[2].Text) >= len(big) {
-		t.Fatal("stale result not shortened")
-	}
-	if !strings.Contains(trimmed[2].Text, "more characters truncated") {
-		t.Fatalf("marker missing: %q", trimmed[2].Text)
-	}
-	// The head and the tail survive: conclusions often live at the end.
-	if !strings.HasPrefix(trimmed[2].Text, "xxx") || !strings.HasSuffix(strings.TrimRight(trimmed[2].Text, "x"), "truncated)") == false {
-		t.Fatalf("head/tail not preserved: %q", trimmed[2].Text)
-	}
-	// Recent results and their pairing are untouched.
-	if trimmed[6].Text != big || trimmed[4].Text != small {
-		t.Fatal("recent tool results were shortened")
-	}
-	if len(trimmed) != len(history) {
-		t.Fatal("message count changed")
-	}
-
-	// Errored results are left alone: they are short and diagnostic.
-	errored := []model.Message{
-		{Role: "user", Text: "a", UserInput: true},
-		{Role: "tool", CallID: "e", Text: big, IsError: true},
-		{Role: "user", Text: "b", UserInput: true},
-		{Role: "user", Text: "c", UserInput: true},
-		{Role: "user", Text: "d", UserInput: true},
-		{Role: "user", Text: "e", UserInput: true},
-	}
-	if _, count := microCompact(errored); count != 0 {
-		t.Fatalf("error result was shortened: %d", count)
-	}
-
-	// A second pass is a no-op, so the per-turn call is cheap.
-	if _, count := microCompact(trimmed); count != 0 {
-		t.Fatalf("second pass shortened again: %d", count)
-	}
-}
-
-func TestTruncateToolOutputKeepsBothEnds(t *testing.T) {
-	text := "HEAD" + strings.Repeat("m", 10_000) + "TAIL"
-	got := truncateToolOutput(text, 400)
-	if !strings.HasPrefix(got, "HEAD") || !strings.HasSuffix(got, "TAIL") {
-		t.Fatalf("ends lost: %q", got)
-	}
-	if len([]rune(got)) > 400 {
-		t.Fatalf("over budget: %d runes", len([]rune(got)))
 	}
 }

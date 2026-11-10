@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -74,10 +75,8 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 			messages = append(messages, map[string]any{"role": role, "content": content})
 		}
 	}
-	output := target.model.MaxOutput
-	if output == 0 {
-		output = 8192
-	}
+	cacheConversationPrefix(messages, r.ContextChange == "summary")
+	output := target.model.OutputLimit(Messages)
 	body := map[string]any{
 		"model": target.model.ID, "system": cachedSystemBlocks(r.System), "messages": messages,
 		"stream": true, "max_tokens": output,
@@ -100,6 +99,44 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 		body["output_config"] = map[string]any{"effort": effort}
 	}
 	return body, nil
+}
+
+// A summary reads the existing prefix but does not cache its one-use
+// instruction. Never put cache_control directly on thinking or empty text.
+func cacheConversationPrefix(messages []any, summary bool) {
+	last := len(messages) - 1
+	if summary {
+		last--
+	}
+	for i := last; i >= 0; i-- {
+		message, _ := messages[i].(map[string]any)
+		content, _ := message["content"].([]any)
+		for j := len(content) - 1; j >= 0; j-- {
+			block, ok := content[j].(map[string]any)
+			if !ok {
+				raw, ok := content[j].(json.RawMessage)
+				if !ok {
+					continue
+				}
+				decoder := json.NewDecoder(bytes.NewReader(raw))
+				decoder.UseNumber()
+				if decoder.Decode(&block) != nil {
+					continue
+				}
+			}
+			switch block["type"] {
+			case "thinking", "redacted_thinking":
+				continue
+			case "text":
+				if block["text"] == "" {
+					continue
+				}
+			}
+			block["cache_control"] = map[string]any{"type": "ephemeral"}
+			content[j] = block
+			return
+		}
+	}
 }
 
 func (messagesAdapter) decoder() streamDecoder {

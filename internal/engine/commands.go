@@ -388,6 +388,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			session.Title = "Side chat"
 		}
 		e.state.Sessions = append([]contracts.Session{session}, e.state.Sessions...)
+		e.prompts[session.ID] = model.ClonePrompt(e.prompts[parent.ID])
 		if session.SideChat {
 			e.history[session.ID], e.context[session.ID] = e.sideChatSnapshotLocked(parent.ID)
 			e.state.Messages[session.ID] = []contracts.Message{}
@@ -521,6 +522,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.state.ModelRequests = slices.DeleteFunc(e.state.ModelRequests, func(request contracts.ModelRequest) bool { return request.SessionID == command.ID })
 		delete(e.history, command.ID)
 		delete(e.context, command.ID)
+		delete(e.prompts, command.ID)
 		delete(e.taskModels, command.ID)
 		e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.SessionID == command.ID })
 	case "queue.remove":

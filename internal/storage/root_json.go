@@ -22,15 +22,21 @@ func WriteJSONRoot(root *os.Root, name string, value any) error {
 // WriteJSONBytesRoot atomically replaces one file directly within an opened
 // directory using already encoded JSON, without marshaling the value again.
 func WriteJSONBytesRoot(root *os.Root, name string, data []byte) error {
+	if !json.Valid(data) {
+		return errors.New("invalid encoded JSON")
+	}
+	return WriteBytesRoot(root, name, data)
+}
+
+// WriteBytesRoot durably replaces a single owned file without following a
+// destination symlink or exposing partial output to readers.
+func WriteBytesRoot(root *os.Root, name string, data []byte) error {
 	if root == nil {
 		return errors.New("JSON storage root is required")
 	}
 	if name == "" || name == "." || name == ".." || filepath.Base(name) != name ||
 		filepath.IsAbs(name) || filepath.VolumeName(name) != "" || strings.ContainsAny(name, `\/:`) {
 		return errors.New("JSON storage name must be a single filename")
-	}
-	if !json.Valid(data) {
-		return errors.New("invalid encoded JSON")
 	}
 	var file *os.File
 	var temp string

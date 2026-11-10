@@ -40,8 +40,10 @@ type Event struct {
 }
 
 type Options struct {
-	Model         Model
-	ContextWindow int
+	Model Model
+	// ContextLimits reads the current model before each step. Unknown capacity
+	// disables automatic compaction without inventing a token limit.
+	ContextLimits func() ContextLimits
 	Request       model.Request
 	CWD           string
 	Tools         []Tool
@@ -67,6 +69,10 @@ type Options struct {
 	// the worker, so dynamic context cannot run on the UI thread.
 	PrepareInput        func(context.Context, model.Message) (model.Message, error)
 	CommitPreparedInput func(model.Message) error
+	// StoreToolOutput durably stores oversized text in the owning session.
+	// The returned path must be readable by this host's Read tool.
+	StoreToolOutput   func(context.Context, string) (string, error)
+	prepareToolResult func(model.Call, model.Message) (model.Message, error)
 }
 
 func Run(ctx context.Context, options Options) (runErr error) {
@@ -95,6 +101,9 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				request.Tools = append(request.Tools, tool.Definition())
 			}
 		}
+	}
+	options.prepareToolResult = func(call model.Call, message model.Message) (model.Message, error) {
+		return prepareToolResult(ctx, options.StoreToolOutput, request.History, call, message)
 	}
 	record := func(message model.Message) error {
 		if err := options.Record(message); err != nil {
@@ -209,26 +218,12 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			return err
 		}
 		refreshTools()
-		// Two reductions of very different cost, applied in order. Micro
-		// truncates oversized tool results in place at three quarters of the
-		// window: no model call, safe on every turn. Only when that is not
-		// enough, past 95%, does the conversation get summarized.
-		if options.ContextWindow > 0 {
-			trimmed, shortened := microCompact(request.History)
-			if shortened > 0 {
-				request.History = trimmed
-				if options.ReplaceContext != nil {
-					if err := options.ReplaceContext(model.CloneMessages(trimmed)); err != nil {
-						return err
-					}
-				}
-				if err := options.Emit(Event{Kind: "context.trimmed"}); err != nil {
-					return err
-				}
-			}
+		limits := ContextLimits{}
+		if options.ContextLimits != nil {
+			limits = options.ContextLimits()
 		}
 		if options.ReplaceContext != nil && len(request.History) >= minimumCompactMessages &&
-			options.ContextWindow > 0 && contextTokens(request) > options.ContextWindow*19/20 {
+			limits.Window > 0 && contextPressure(request, limits) >= compactThreshold(limits) {
 			before, err := applyHook(HookInput{Event: contracts.HookPreCompact, Trigger: "auto"})
 			if err != nil {
 				return err
@@ -260,6 +255,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 					return err
 				}
 				request.History = compacted
+				request.ContextChange = "compacted"
 				summary := ""
 				if len(compacted) > 0 {
 					summary = compacted[0].Text
@@ -282,6 +278,9 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				}
 			}
 		}
+		if request.ContextChange == "" && needsCompactionBaseline(request.History) {
+			request.ContextChange = "compacted"
+		}
 		// The checklist lives in the history, not in a separate store: rebuild
 		// it each round so reminders and the stop check track real progress.
 		if _, hasTodos := tools["TodoWrite"]; hasTodos {
@@ -303,9 +302,14 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			}
 			return err
 		}
+		result.Message.ContextUsage = &model.ContextUsage{
+			Known: result.Usage.Known, InputTokens: result.Usage.Input, OutputTokens: result.Usage.Output,
+			HistoryLength: len(request.History), ModelKey: limits.ModelKey, PromptHash: promptHash(request),
+		}
 		if err := record(result.Message); err != nil {
 			return err
 		}
+		request.ContextChange = ""
 		if err := options.Emit(Event{Kind: "message.end", Usage: result.Usage}); err != nil {
 			return err
 		}

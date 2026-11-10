@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,6 +69,31 @@ func TestBackgroundTaskRunsAndCanBeRetrieved(t *testing.T) {
 	task := data["task"].(map[string]any)
 	if data["retrieval_status"] != "success" || task["status"] != "completed" || task["exit_code"] != 0 || !strings.Contains(task["output"].(string), "background result") {
 		t.Fatalf("bad task result: %s", result.Text)
+	}
+}
+
+func TestBackgroundTaskPreservesCompleteOutputBeyondMemoryLimit(t *testing.T) {
+	directory := t.TempDir()
+	path := filepath.Join(directory, "background-output.txt")
+	tools, cleanup := RunToolSet(t.Context(), directory, RunToolOptions{
+		OpenOutput: func() (io.WriteCloser, string, error) {
+			file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+			return file, path, err
+		},
+	})
+	defer cleanup()
+	started := executeOwned(t, ownedTool(t, tools, "Bash"), map[string]any{
+		"command": `for ((i=0;i<12000;i++)); do printf '0123456789\n'; done; printf 'TAIL-END'`, "run_in_background": true,
+	})
+	id := started.Data.(map[string]any)["backgroundTaskId"].(string)
+	raw, _ := json.Marshal(map[string]any{"task_id": id, "block": true, "timeout": 30000})
+	result, err := ownedTool(t, tools, "TaskOutput").Execute(t.Context(), directory, raw)
+	if err != nil || result.OutputFile != path {
+		t.Fatalf("background output did not retain its durable file: %v %+v", err, result)
+	}
+	full, err := os.ReadFile(path)
+	if err != nil || string(full) != strings.Repeat("0123456789\n", 12000)+"TAIL-END" {
+		t.Fatalf("background stream lost output: %v bytes=%d", err, len(full))
 	}
 }
 
@@ -181,11 +207,11 @@ func TestBackgroundTaskOwnerCancellationDoesNotAffectAnotherOwner(t *testing.T) 
 func TestRunShellKeepsEnvironmentLocalAndUsesExplicitShell(t *testing.T) {
 	root := t.TempDir()
 	before := os.Getenv("RCODE_TEST_CHILD_ONLY")
-	out, err := RunShell(context.Background(), root, "bash", `printf '%s' "$RCODE_TEST_CHILD_ONLY"`, map[string]string{"RCODE_TEST_CHILD_ONLY": "child value"}, 10*time.Second)
+	out, err := RunShell(context.Background(), root, "bash", `printf '%s' "$RCODE_TEST_CHILD_ONLY"`, map[string]string{"RCODE_TEST_CHILD_ONLY": "child value"}, 10*time.Second, nil)
 	if err != nil || out.Text != "child value" || os.Getenv("RCODE_TEST_CHILD_ONLY") != before {
 		t.Fatalf("child env: %q %v", out.Text, err)
 	}
-	out, err = RunShell(context.Background(), root, "powershell", `[Console]::Write($env:RCODE_TEST_CHILD_ONLY)`, map[string]string{"RCODE_TEST_CHILD_ONLY": "powershell value"}, 10*time.Second)
+	out, err = RunShell(context.Background(), root, "powershell", `[Console]::Write($env:RCODE_TEST_CHILD_ONLY)`, map[string]string{"RCODE_TEST_CHILD_ONLY": "powershell value"}, 10*time.Second, nil)
 	_, pwshErr := exec.LookPath("pwsh")
 	_, powershellErr := exec.LookPath("powershell")
 	if pwshErr != nil && powershellErr != nil {
@@ -195,7 +221,7 @@ func TestRunShellKeepsEnvironmentLocalAndUsesExplicitShell(t *testing.T) {
 	} else if err != nil || out.Text != "powershell value" {
 		t.Fatalf("explicit PowerShell: %q %v", out.Text, err)
 	}
-	if _, err := RunShell(context.Background(), root, "invalid", "echo invalid", nil, time.Second); err == nil {
+	if _, err := RunShell(context.Background(), root, "invalid", "echo invalid", nil, time.Second, nil); err == nil {
 		t.Fatal("accepted unknown shell")
 	}
 }
@@ -212,7 +238,7 @@ func TestRunToolsSourceOnlyManagedSessionEnvFile(t *testing.T) {
 	if out.Text != "session value|argument" {
 		t.Fatalf("session environment: %s", out.Text)
 	}
-	if _, err := RunShell(context.Background(), root, "powershell", "echo x", map[string]string{"RCODE_SESSION_ENV_FILE": envFile}, time.Second); err == nil {
+	if _, err := RunShell(context.Background(), root, "powershell", "echo x", map[string]string{"RCODE_SESSION_ENV_FILE": envFile}, time.Second, nil); err == nil {
 		t.Fatal("PowerShell accepted Bash environment file")
 	}
 }

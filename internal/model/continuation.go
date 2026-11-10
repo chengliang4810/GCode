@@ -61,6 +61,10 @@ func CloneMessages(history []Message) []Message {
 		if c := out[i].Continuation; c != nil {
 			out[i].Continuation = &Continuation{scope: c.scope, data: bytes.Clone(c.data)}
 		}
+		if usage := out[i].ContextUsage; usage != nil {
+			copy := *usage
+			out[i].ContextUsage = &copy
+		}
 	}
 	return out
 }

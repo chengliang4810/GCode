@@ -34,6 +34,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		return err
 	}
 	history := model.CloneMessages(e.context[sessionID])
+	prompt := model.ClonePrompt(e.prompts[sessionID])
 	if len(history) < 6 {
 		return errors.New("not enough history to compact")
 	}
@@ -88,7 +89,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 			}
 		}
 		if err == nil {
-			compacted, err = agent.Compact(ctx, hookRuntimeDiagnosticModel{inner: bound, warnings: resources.warnings}, model.Request{History: history})
+			compacted, err = agent.Compact(ctx, bound, model.Request{System: prompt.System, Tools: prompt.Tools, Effort: prompt.Effort, History: history})
 		}
 		if err == nil {
 			summary := ""

@@ -82,7 +82,7 @@ func TestHookRuntimeAgentFiltersMCPNamesForBoundProtocol(t *testing.T) {
 
 func TestHookRuntimeCompactionRetainsMCPDiagnosticsAtModelBoundary(t *testing.T) {
 	backend := hookFixtureModel(func(_ context.Context, request model.Request, _ func(model.Delta) error) (model.Result, error) {
-		if !strings.HasPrefix(request.System, "Summarize this coding conversation") || !strings.Contains(request.System, "MCP skipped fixture") {
+		if request.ContextChange != "summary" || !strings.Contains(request.System, "MCP skipped fixture") {
 			t.Fatalf("compaction dropped diagnostics while preparing its summary prompt: %s", request.System)
 		}
 		return model.Result{Message: model.Message{Role: "assistant", Text: "Summary."}}, nil

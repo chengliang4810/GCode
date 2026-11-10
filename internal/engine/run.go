@@ -625,9 +625,12 @@ func (e *Engine) startRunWithProvidersLocked(
 					}
 					return e.persistLocked(session.ID)
 				},
-				Model: bound, ContextWindow: m.ContextWindow,
+				Model: bound, ContextLimits: liveModel.contextLimits,
 				Request: model.Request{System: system, History: history, Effort: session.ReasoningLevel},
 				CWD:     session.CWD, Tools: tools,
+				StoreToolOutput: func(ctx context.Context, text string) (string, error) {
+					return e.storeToolOutput(ctx, session, text)
+				},
 				Record: func(message model.Message) error {
 					e.mu.Lock()
 					defer e.mu.Unlock()
@@ -840,11 +843,6 @@ func (e *Engine) startRunWithProvidersLocked(
 func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string, event agent.Event) error {
 	if event.Kind == "context.compacting" {
 		e.publishLocked(contracts.Event{Kind: "context.compacting", SessionID: sessionID, RunID: runID})
-		return nil
-	}
-	// Tool-output trimming is a bookkeeping event: the history changed, the
-	// visible transcript did not.
-	if event.Kind == "context.trimmed" {
 		return nil
 	}
 	messages := e.state.Messages[sessionID]

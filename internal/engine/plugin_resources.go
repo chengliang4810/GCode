@@ -587,7 +587,7 @@ func (t dynamicContextTool) Execute(ctx context.Context, cwd string, raw json.Ra
 			return model.ToolOutput{}, err
 		}
 	}
-	output, err := agent.RunShell(ctx, cwd, t.shell, args.Command, t.env, 120*time.Second)
+	output, err := agent.RunShell(ctx, cwd, t.shell, args.Command, t.env, 120*time.Second, nil)
 	if t.redact != nil {
 		output.Text = t.redact(output.Text)
 		if data, ok := output.Data.(map[string]any); ok {

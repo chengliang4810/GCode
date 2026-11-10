@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
@@ -68,6 +69,15 @@ func (m sessionModel) selectionLocked() (contracts.Session, model.Provider, mode
 	return session, provider, selected, err
 }
 
+func (m sessionModel) contextLimits() agent.ContextLimits {
+	m.core.mu.Lock()
+	defer m.core.mu.Unlock()
+	session, provider, selected, _ := m.selectionLocked()
+	// Invalid configuration is reported at the request boundary.
+	effort, _ := selected.ResolveEffort(session.ReasoningLevel)
+	return agent.ContextLimits{Window: selected.ContextWindow, MaxOutput: selected.OutputLimit(provider.Protocol), ModelKey: model.ContextKey(provider, selected, effort)}
+}
+
 func (m sessionModel) Stream(ctx context.Context, request model.Request, emit func(model.Delta) error) (model.Result, error) {
 	if err := ctx.Err(); err != nil {
 		return model.Result{}, err
@@ -116,6 +126,15 @@ func (m sessionModel) Stream(ctx context.Context, request model.Request, emit fu
 		tools = append(tools, tool)
 	}
 	request.Tools = tools
+	if m.trackReply && emit != nil {
+		e.mu.Lock()
+		e.prompts[session.ID] = model.ClonePrompt(model.Prompt{System: request.System, Tools: request.Tools, Effort: request.Effort})
+		persistErr := e.persistLocked(session.ID)
+		e.mu.Unlock()
+		if persistErr != nil {
+			return model.Result{}, persistErr
+		}
+	}
 	bound := meteredModel{inner: gateway, core: e, sessionID: session.ID, turnID: m.run.id, provider: provider, modelID: selected.ID}
 	return bound.Stream(ctx, request, emit)
 }

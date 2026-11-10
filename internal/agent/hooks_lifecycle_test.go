@@ -196,10 +196,10 @@ func TestHookLifecycleCompactionEventsSurroundActualSummary(t *testing.T) {
 	}
 	calls := 0
 	var events []HookInput
-	err := Run(context.Background(), Options{ContextWindow: 100, Request: model.Request{History: history},
+	err := Run(context.Background(), Options{ContextLimits: func() ContextLimits { return ContextLimits{Window: 100} }, Request: model.Request{History: history},
 		Model: testModel{stream: func(request model.Request) (model.Result, error) {
 			calls++
-			if strings.HasPrefix(request.System, "Summarize") {
+			if request.ContextChange == "summary" {
 				return model.Result{Message: model.Message{Role: "assistant", Text: "actual compacted summary"}}, nil
 			}
 			return model.Result{Message: model.Message{Role: "assistant", Text: "done"}}, nil

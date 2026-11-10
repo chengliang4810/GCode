@@ -8,28 +8,33 @@ import (
 // Invocation describes one real HTTP attempt, including retryable failures.
 // It contains no transport credentials or request headers.
 type Invocation struct {
-	ID          string     `json:"id"`
-	Attempt     int        `json:"attempt"`
-	StartedAt   time.Time  `json:"startedAt"`
-	CompletedAt *time.Time `json:"completedAt,omitempty"`
-	DurationMS  int64      `json:"durationMs"`
-	ProviderID  string     `json:"providerId"`
-	Provider    string     `json:"provider"`
-	ModelID     string     `json:"modelId"`
-	Protocol    Protocol   `json:"protocol"`
-	System      string     `json:"system,omitempty"`
-	Effort      string     `json:"effort,omitempty"`
-	Messages    []Message  `json:"messages"`
-	Tools       []Tool     `json:"tools,omitempty"`
-	Response    *Result    `json:"response,omitempty"`
-	HTTPStatus  int        `json:"httpStatus,omitempty"`
-	Error       string     `json:"error,omitempty"`
-	Truncated   bool       `json:"truncated,omitempty"`
+	ID            string               `json:"id"`
+	Attempt       int                  `json:"attempt"`
+	StartedAt     time.Time            `json:"startedAt"`
+	CompletedAt   *time.Time           `json:"completedAt,omitempty"`
+	DurationMS    int64                `json:"durationMs"`
+	ProviderID    string               `json:"providerId"`
+	Provider      string               `json:"provider"`
+	ModelID       string               `json:"modelId"`
+	Protocol      Protocol             `json:"protocol"`
+	System        string               `json:"system,omitempty"`
+	Effort        string               `json:"effort,omitempty"`
+	Messages      []Message            `json:"messages"`
+	Tools         []Tool               `json:"tools,omitempty"`
+	Response      *Result              `json:"response,omitempty"`
+	HTTPStatus    int                  `json:"httpStatus,omitempty"`
+	Error         string               `json:"error,omitempty"`
+	Truncated     bool                 `json:"truncated,omitempty"`
+	Request       RequestDiagnostics   `json:"request"`
+	Transport     TransportDiagnostics `json:"transport"`
+	ContextChange string               `json:"contextChange,omitempty"`
+	CacheChange   *CacheChange         `json:"cacheChange,omitempty"`
 }
 
 func (g *Gateway) invocation(id string, attempt int, input Request, started time.Time) Invocation {
 	trace := Invocation{ID: id, Attempt: attempt, StartedAt: started, ProviderID: g.provider.ID,
 		Provider: g.provider.Name, ModelID: g.target.model.ID, Protocol: g.provider.Protocol, Effort: input.Effort}
+	trace.ContextChange = input.ContextChange
 	trace.System = traceText(strings.ReplaceAll(input.System, SystemPromptDynamicBoundary, ""), g.provider.APIKey, &trace.Truncated)
 	trace.Messages = traceMessages(input.History, g.provider.APIKey, &trace.Truncated)
 	for _, tool := range input.Tools {

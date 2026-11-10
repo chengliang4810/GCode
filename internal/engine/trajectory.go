@@ -37,6 +37,7 @@ func (e *Engine) trajectoryRecorder(session contracts.Session, turnID, source st
 		e.trajectoryMu.Lock()
 		e.mu.Unlock()
 		defer e.trajectoryMu.Unlock()
+		e.annotateCacheChange(session.ID, source, &invocation)
 		err := e.writeTrajectory(session, contracts.ModelInvocation{SessionID: session.ID,
 			TurnID: turnID, Source: source, Invocation: invocation})
 		if err != nil {
@@ -267,6 +268,7 @@ func (e *Engine) ReadModelTrajectory(ctx context.Context, sessionID string) (con
 func (e *Engine) removeTrajectory(session contracts.Session) {
 	e.trajectoryMu.Lock()
 	defer e.trajectoryMu.Unlock()
+	delete(e.cacheBaselines, session.ID)
 	folder, err := e.trajectoryDirectory(session, false)
 	if err != nil {
 		return

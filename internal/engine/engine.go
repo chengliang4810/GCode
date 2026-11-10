@@ -66,58 +66,61 @@ type activeRun struct {
 }
 
 type Engine struct {
-	trajectoryMu      sync.Mutex
-	trajectoryIssues  map[string]error
-	toolGuard         ToolGuard
-	mu                sync.Mutex
-	storage           *storage.Store
-	sessionHashes     map[string][32]byte
-	sessionDirty      map[string]struct{}
-	indexHash         [32]byte
-	indexHashKnown    bool
-	sessionRecords    map[string]string
-	persistErrors     []error
-	loadedSessions    map[string]bool
-	client            *model.Client
-	state             contracts.Snapshot
-	providers         []model.Provider
-	history           map[string][]model.Message
-	context           map[string][]model.Message
-	runs              map[string]*activeRun
-	taskModels        map[string]taskModel
-	naming            map[string]*namingRun
-	gitOperations     map[string]context.CancelFunc
-	checkoutProjects  map[string]int
-	checkoutRequests  map[string]bool
-	subs              map[uint64]chan contracts.Event
-	subSessions       map[uint64][]string
-	sessionRefs       map[string]int
-	sessionReads      map[string]*sessionRead
-	usageCache        map[string]sessionUsage
-	subNext           uint64
-	sequence          uint64
-	closed            bool
-	done              chan struct{}
-	wg                sync.WaitGroup
-	terminals         map[string]*terminalhost.Session
-	terminalOps       map[string]*sync.Mutex
-	resources         userResourceCatalog
-	modelChecks       map[string]*modelCheckRun
-	modelCheckResults map[string]contracts.ModelCheck
-	modelFetchRuns    map[string]*modelFetchRun
-	modelFetchResults map[string]contracts.ModelFetch
-	catalog           *modelcatalog.Cache
-	catalogCancel     context.CancelFunc
-	catalogDone       chan struct{}
-	maintenanceDone   chan struct{}
-	plugins           *plugins.Manager
-	pluginOperations  map[string]context.CancelFunc
-	pluginConfig      map[string]map[string]string
-	sessionHookOnce   map[string]*agent.HookOnceState
-	sessionStarted    map[string]bool
-	sessionTools      map[string]*sessionToolSet
-	projectScans      map[string]*projectScan
-	projectScanner    func(context.Context, contracts.Project) ([]contracts.File, error)
+	trajectoryMu       sync.Mutex
+	trajectoryIssues   map[string]error
+	toolGuard          ToolGuard
+	mu                 sync.Mutex
+	storage            *storage.Store
+	sessionHashes      map[string][32]byte
+	sessionDirty       map[string]struct{}
+	indexHash          [32]byte
+	indexHashKnown     bool
+	sessionRecords     map[string]string
+	persistErrors      []error
+	loadedSessions     map[string]bool
+	client             *model.Client
+	state              contracts.Snapshot
+	providers          []model.Provider
+	history            map[string][]model.Message
+	context            map[string][]model.Message
+	prompts            map[string]model.Prompt
+	cacheBaselines     map[string]cacheBaseline // guarded by trajectoryMu
+	cacheBaselineOrder []string                 // most recent last; at most 32
+	runs               map[string]*activeRun
+	taskModels         map[string]taskModel
+	naming             map[string]*namingRun
+	gitOperations      map[string]context.CancelFunc
+	checkoutProjects   map[string]int
+	checkoutRequests   map[string]bool
+	subs               map[uint64]chan contracts.Event
+	subSessions        map[uint64][]string
+	sessionRefs        map[string]int
+	sessionReads       map[string]*sessionRead
+	usageCache         map[string]sessionUsage
+	subNext            uint64
+	sequence           uint64
+	closed             bool
+	done               chan struct{}
+	wg                 sync.WaitGroup
+	terminals          map[string]*terminalhost.Session
+	terminalOps        map[string]*sync.Mutex
+	resources          userResourceCatalog
+	modelChecks        map[string]*modelCheckRun
+	modelCheckResults  map[string]contracts.ModelCheck
+	modelFetchRuns     map[string]*modelFetchRun
+	modelFetchResults  map[string]contracts.ModelFetch
+	catalog            *modelcatalog.Cache
+	catalogCancel      context.CancelFunc
+	catalogDone        chan struct{}
+	maintenanceDone    chan struct{}
+	plugins            *plugins.Manager
+	pluginOperations   map[string]context.CancelFunc
+	pluginConfig       map[string]map[string]string
+	sessionHookOnce    map[string]*agent.HookOnceState
+	sessionStarted     map[string]bool
+	sessionTools       map[string]*sessionToolSet
+	projectScans       map[string]*projectScan
+	projectScanner     func(context.Context, contracts.Project) ([]contracts.File, error)
 }
 
 var _ contracts.Service = (*Engine)(nil)
@@ -132,6 +135,7 @@ func Open(options Options) (*Engine, error) {
 		client = model.NewClient()
 	}
 	e := &Engine{toolGuard: options.ToolGuard, storage: options.Storage, client: client, runs: map[string]*activeRun{}, subs: map[uint64]chan contracts.Event{}, done: make(chan struct{}), history: map[string][]model.Message{}, context: map[string][]model.Message{}, terminals: map[string]*terminalhost.Session{}}
+	e.prompts = map[string]model.Prompt{}
 	e.modelChecks, e.modelCheckResults = map[string]*modelCheckRun{}, map[string]contracts.ModelCheck{}
 	e.modelFetchRuns, e.modelFetchResults = map[string]*modelFetchRun{}, map[string]contracts.ModelFetch{}
 	e.projectScans = map[string]*projectScan{}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -233,7 +234,7 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 		if milliseconds < 1 || milliseconds > 600000 {
 			return model.ToolOutput{}, errors.New("timeout must be 1..600000 milliseconds")
 		}
-		return RunShell(ctx, cwd, "bash", args.Command, nil, time.Duration(milliseconds)*time.Millisecond)
+		return RunShell(ctx, cwd, "bash", args.Command, nil, time.Duration(milliseconds)*time.Millisecond, nil)
 	}
 	return model.ToolOutput{}, errors.New("unknown tool")
 }
@@ -273,15 +274,37 @@ func filePatch(before, after string) []map[string]any {
 }
 
 type boundedOutput struct {
-	mu        sync.Mutex
-	data      []byte
-	truncated bool
+	mu         sync.Mutex
+	data       []byte
+	truncated  bool
+	openOutput func() (io.WriteCloser, string, error)
+	stream     io.WriteCloser
+	outputPath string
+	streamErr  error
 }
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	n := len(p)
+	if b.openOutput != nil && b.stream == nil && b.streamErr == nil && len(b.data)+len(p) > 64000 {
+		b.stream, b.outputPath, b.streamErr = b.openOutput()
+		if b.streamErr == nil && (b.stream == nil || b.outputPath == "") {
+			b.streamErr = errors.New("output storage returned no stream or path")
+		}
+		if b.streamErr == nil {
+			_, b.streamErr = b.stream.Write(b.data)
+		}
+	}
+	if b.streamErr != nil {
+		return 0, b.streamErr
+	}
+	if b.stream != nil {
+		if _, err := b.stream.Write(p); err != nil {
+			b.streamErr = err
+			return 0, err
+		}
+	}
 	space := 64000 - len(b.data)
 	if len(p) > space {
 		p = p[:space]
@@ -289,6 +312,25 @@ func (b *boundedOutput) Write(p []byte) (int, error) {
 	}
 	b.data = append(b.data, p...)
 	return n, nil
+}
+
+func (b *boundedOutput) Close() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.stream != nil {
+		b.streamErr = errors.Join(b.streamErr, b.stream.Close())
+		b.stream = nil
+	}
+	return b.streamErr
+}
+
+func (b *boundedOutput) OutputPath() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.streamErr != nil {
+		return ""
+	}
+	return b.outputPath
 }
 func (b *boundedOutput) String() string {
 	b.mu.Lock()

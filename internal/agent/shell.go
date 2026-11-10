@@ -17,7 +17,7 @@ import (
 
 // RunShell runs command in the requested shell without loading user profiles.
 // Environment overrides belong only to this child process.
-func RunShell(ctx context.Context, cwd, shell, command string, env map[string]string, timeout time.Duration) (model.ToolOutput, error) {
+func RunShell(ctx context.Context, cwd, shell, command string, env map[string]string, timeout time.Duration, openOutput func() (io.WriteCloser, string, error)) (model.ToolOutput, error) {
 	if timeout <= 0 {
 		return model.ToolOutput{}, errors.New("shell timeout must be positive")
 	}
@@ -28,12 +28,14 @@ func RunShell(ctx context.Context, cwd, shell, command string, env map[string]st
 		return model.ToolOutput{}, err
 	}
 	var output, stdout, stderr boundedOutput
+	output.openOutput = openOutput
 	cmd.Stdout, cmd.Stderr = io.MultiWriter(&output, &stdout), io.MultiWriter(&output, &stderr)
 	err = cmd.Run()
+	err = errors.Join(err, output.Close())
 	if runCtx.Err() != nil {
-		err = runCtx.Err()
+		err = errors.Join(err, runCtx.Err())
 	}
-	return model.ToolOutput{Text: output.String(), Data: map[string]any{"stdout": stdout.String(), "stderr": stderr.String(), "interrupted": runCtx.Err() != nil}}, err
+	return model.ToolOutput{Text: output.String(), OutputFile: output.OutputPath(), Data: map[string]any{"stdout": stdout.String(), "stderr": stderr.String(), "interrupted": runCtx.Err() != nil}}, err
 }
 
 func newShellCommand(ctx context.Context, cwd, shell, command string, env map[string]string) (*exec.Cmd, error) {

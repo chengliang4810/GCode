@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"slices"
 	"time"
 
@@ -39,7 +40,9 @@ func (e *Engine) sessionRuntimeTools(session contracts.Session, envFile string) 
 	if err != nil {
 		return nil, err
 	}
-	tools, cleanup := agent.RunToolSet(context.Background(), session.CWD, agent.RunToolOptions{Env: environment, EnvFile: envFile})
+	tools, cleanup := agent.RunToolSet(context.Background(), session.CWD, agent.RunToolOptions{Env: environment, EnvFile: envFile,
+		OpenOutput: func() (io.WriteCloser, string, error) { return e.openToolOutput(session) },
+	})
 	for i, inner := range tools {
 		if inner.Definition().Name == "TaskOutput" || inner.Definition().Name == "TaskStop" {
 			tools[i] = e.sessionTaskTool(session.ID, inner)

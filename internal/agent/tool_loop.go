@@ -72,8 +72,10 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 				call = result.call
 			}
 			output := result.output
+			modelText := strings.TrimSuffix(output.Text, output.HookContext)
 			if result.err != nil {
 				output.Text = strings.TrimSpace(output.Text + "\n" + result.err.Error())
+				modelText = strings.TrimSpace(modelText + "\n" + result.err.Error())
 				output.Images, output.Data = nil, nil
 			}
 			var response any = output.Text
@@ -85,9 +87,21 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 				response = content
 			}
 			toolCalls = append(toolCalls, HookToolCall{ToolName: call.Name, ToolInput: json.RawMessage(call.Arguments), ToolCallID: call.ID, ToolResponse: response})
-			if err := record(model.Message{
-				Role: "tool", CallID: call.ID, Text: output.Text, Images: output.Images, IsError: result.err != nil,
-			}); err != nil && firstError == nil {
+			message := model.Message{
+				Role: "tool", CallID: call.ID, Text: modelText, Images: output.Images, OutputFile: output.OutputFile, IsError: result.err != nil,
+			}
+			if options.prepareToolResult != nil {
+				prepared, err := options.prepareToolResult(call, message)
+				if err == nil {
+					message = prepared
+				} else if firstError == nil {
+					// Preserve the completed effect and full output before
+					// stopping; never claim unavailable disk output was saved.
+					firstError = err
+				}
+			}
+			message.Text += output.HookContext
+			if err := record(message); err != nil && firstError == nil {
 				firstError = err
 			}
 			if err := options.Emit(Event{Kind: "tool.end", Call: call, Output: output.Text, Data: output.Data, Error: result.err != nil}); err != nil && firstError == nil {

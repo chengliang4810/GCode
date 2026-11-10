@@ -37,6 +37,7 @@ type sessionDisk struct {
 	Messages      []contracts.Message       `json:"messages"`
 	History       []model.Message           `json:"history"`
 	Context       []model.Message           `json:"context"`
+	Prompt        model.Prompt              `json:"prompt"`
 	Runs          []contracts.Run           `json:"runs"`
 	ModelRequests []contracts.ModelRequest  `json:"modelRequests"`
 	Queue         []contracts.QueuedMessage `json:"queue"`
@@ -143,6 +144,7 @@ func (e *Engine) installSessionDiskLocked(disk sessionDisk, record string) {
 	session := disk.Session
 	e.state.Messages[session.ID] = disk.Messages
 	e.history[session.ID], e.context[session.ID] = disk.History, disk.Context
+	e.prompts[session.ID] = model.ClonePrompt(disk.Prompt)
 	e.state.Runs = slices.DeleteFunc(e.state.Runs, func(run contracts.Run) bool { return run.SessionID == session.ID })
 	e.state.Runs = append(e.state.Runs, disk.Runs...)
 	e.state.ModelRequests = append(e.state.ModelRequests, disk.ModelRequests...)
@@ -231,6 +233,7 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 			Format: engineDiskFormat, SessionID: session.ID, RootID: session.StorageRootID,
 			Session:  session,
 			Messages: e.state.Messages[session.ID], History: e.history[session.ID], Context: e.context[session.ID],
+			Prompt:       model.ClonePrompt(e.prompts[session.ID]),
 			ContextUsage: e.state.ContextUsage[session.ID],
 		}
 		disk.Session.StorageError = ""

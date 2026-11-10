@@ -201,6 +201,12 @@ type Image struct {
 type ToolOutput struct {
 	Text   string
 	Images []Image
+	// OutputFile is a host-owned complete stream, separate from bounded UI
+	// text. It is set only after the tool has actually opened that output.
+	OutputFile string
+	// HookContext is trusted host context appended to Text for display. The
+	// result budget preserves it verbatim outside the output preview.
+	HookContext string
 	// Data is the typed tool response delivered to hooks. Model adapters use
 	// Text and Images; no in-process serialization is required.
 	Data any
@@ -225,6 +231,22 @@ type Message struct {
 	IsError      bool          `json:"isError,omitempty"`
 	Images       []Image       `json:"images,omitempty"`
 	Continuation *Continuation `json:"continuation,omitempty"`
+	// ContextUsage is host-owned accounting for this complete response. It is
+	// never encoded by an adapter or reconstructed from display text.
+	ContextUsage *ContextUsage `json:"contextUsage,omitempty"`
+	// ContentHash identifies an original Read result, not a deduplication stub.
+	ContentHash string `json:"contentHash,omitempty"`
+	OutputFile  string `json:"outputFile,omitempty"`
+	Summary     bool   `json:"summary,omitempty"`
+}
+
+type ContextUsage struct {
+	Known         bool   `json:"known"`
+	InputTokens   int    `json:"inputTokens"`
+	OutputTokens  int    `json:"outputTokens"`
+	HistoryLength int    `json:"historyLength"`
+	ModelKey      string `json:"modelKey"`
+	PromptHash    string `json:"promptHash"`
 }
 
 type Tool struct {
@@ -253,6 +275,9 @@ type Request struct {
 	History []Message
 	Tools   []Tool
 	Effort  string
+	// ContextChange explains an intentional cache baseline change. It is
+	// diagnostic metadata, not a provider parameter.
+	ContextChange string
 }
 
 type Delta struct {

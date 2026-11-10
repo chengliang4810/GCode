@@ -586,7 +586,8 @@ func (t hookedTool) Execute(ctx context.Context, cwd string, raw json.RawMessage
 		err = errors.Join(err, errors.New(firstHookText(result.Reason, "Hook blocked execution.")))
 	}
 	if len(contexts) > 0 {
-		output.Text += "\n<system-reminder>\n" + strings.Join(contexts, "\n") + "\n</system-reminder>"
+		output.HookContext = "\n<system-reminder>\n" + strings.Join(contexts, "\n") + "\n</system-reminder>"
+		output.Text += output.HookContext
 	}
 	return output, errors.Join(toolErr, err)
 }

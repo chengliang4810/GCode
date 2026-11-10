@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -223,6 +225,11 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 		return Result{}, err
 	}
 	requestID := rand.Text()
+	var diagnostics RequestDiagnostics
+	if g.Observe != nil {
+		diagnostics = requestDiagnostics(payload, body, input)
+		diagnostics.TargetHash = g.target.scope
+	}
 	// One budget covers transport, HTTP status and incomplete streams. Only a
 	// complete response is returned to the Agent, which owns tool execution.
 	for attempt := 0; ; attempt++ {
@@ -236,7 +243,7 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 			}
 			return consumerErr
 		}
-		result, _, err = g.streamAttempt(ctx, input, deliver, endpoint, body, requestID, attempt+1)
+		result, _, err = g.streamAttempt(ctx, input, deliver, endpoint, body, requestID, attempt+1, diagnostics)
 		if record != nil {
 			if recordErr := record(result); recordErr != nil {
 				return result, errors.Join(err, recordErr)
@@ -265,14 +272,24 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 }
 
 func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(Delta) error, endpoint string, body []byte,
-	requestID string, attempt int) (result Result, status int, callErr error) {
+	requestID string, attempt int, diagnostics RequestDiagnostics) (result Result, status int, callErr error) {
 	started := time.Now()
+	var uploaded atomic.Int64
+	uploaded.Store(-1)
+	var headers *int64
+	var providerRequestID string
 	if g.Observe != nil {
 		trace := g.invocation(requestID, attempt, input, time.Now())
+		trace.Request = diagnostics
 		g.Observe(trace)
 		defer func() {
 			now := time.Now()
 			trace.CompletedAt, trace.DurationMS, trace.HTTPStatus = &now, now.Sub(trace.StartedAt).Milliseconds(), status
+			if elapsed := uploaded.Load(); elapsed >= 0 {
+				trace.Transport.UploadCompleteMS = &elapsed
+			}
+			trace.Transport.ResponseHeadersMS = headers
+			trace.Transport.RequestID = traceText(providerRequestID, g.provider.APIKey, &trace.Truncated)
 			response := result
 			response.Message = traceMessages([]Message{result.Message}, g.provider.APIKey, &trace.Truncated)[0]
 			if status >= 200 && status < 300 {
@@ -285,6 +302,13 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		}()
 	}
 	defer func() { result.RequestDuration = time.Since(started) }()
+	if g.Observe != nil {
+		ctx = httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{WroteRequest: func(info httptrace.WroteRequestInfo) {
+			if info.Err == nil {
+				uploaded.Store(time.Since(started).Milliseconds())
+			}
+		}})
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return result, 0, err
@@ -300,6 +324,12 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		return result, 0, providerConnectionError("model connection failed", err, g.provider.APIKey)
 	}
 	defer response.Body.Close()
+	elapsed := time.Since(started).Milliseconds()
+	headers = &elapsed
+	providerRequestID = response.Header.Get("x-request-id")
+	if providerRequestID == "" {
+		providerRequestID = response.Header.Get("request-id")
+	}
 	status = response.StatusCode
 	if status < 200 || status >= 300 {
 		return result, status, providerHTTPError(response, "model request failed", g.provider.APIKey)

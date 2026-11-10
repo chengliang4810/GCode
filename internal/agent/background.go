@@ -19,8 +19,9 @@ import (
 
 // RunToolOptions contains process-local settings owned by the execution host.
 type RunToolOptions struct {
-	Env     map[string]string
-	EnvFile string
+	Env        map[string]string
+	EnvFile    string
+	OpenOutput func() (io.WriteCloser, string, error)
 }
 
 const (
@@ -29,16 +30,17 @@ const (
 )
 
 type runTasks struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	cwd       string
-	env       map[string]string
-	mu        sync.Mutex
-	closed    bool
-	tasks     map[string]*backgroundTask
-	active    int
-	completed []string
-	wg        sync.WaitGroup
+	ctx        context.Context
+	cancel     context.CancelFunc
+	cwd        string
+	env        map[string]string
+	openOutput func() (io.WriteCloser, string, error)
+	mu         sync.Mutex
+	closed     bool
+	tasks      map[string]*backgroundTask
+	active     int
+	completed  []string
+	wg         sync.WaitGroup
 }
 
 type backgroundTask struct {
@@ -65,6 +67,9 @@ func RunToolSet(ctx context.Context, cwd string, options ...RunToolOptions) ([]T
 		}
 		if option.EnvFile != "" {
 			owner.env["RCODE_SESSION_ENV_FILE"] = option.EnvFile
+		}
+		if option.OpenOutput != nil {
+			owner.openOutput = option.OpenOutput
 		}
 	}
 	tools := CoreTools()
@@ -132,7 +137,7 @@ func (t runBashTool) Execute(ctx context.Context, _ string, raw json.RawMessage)
 		defer cancel()
 		stop := context.AfterFunc(t.owner.ctx, cancel)
 		defer stop()
-		return RunShell(callCtx, t.owner.cwd, "bash", args.Command, t.owner.env, time.Duration(timeout)*time.Millisecond)
+		return RunShell(callCtx, t.owner.cwd, "bash", args.Command, t.owner.env, time.Duration(timeout)*time.Millisecond, t.owner.openOutput)
 	}
 	task, err := t.owner.start(args.Command, args.Description, time.Duration(timeout)*time.Millisecond)
 	if err != nil {
@@ -165,6 +170,7 @@ func (r *runTasks) start(command, description string, timeout time.Duration) (*b
 		return nil, err
 	}
 	task := &backgroundTask{id: "task_" + hex.EncodeToString(token), command: command, description: description, cmd: cmd, cancel: cancel, done: make(chan struct{}), status: "running", exitCode: -1}
+	task.output.openOutput = r.openOutput
 	cmd.Stdout = io.MultiWriter(&task.output, &task.stdout)
 	cmd.Stderr = io.MultiWriter(&task.output, &task.stderr)
 	if err := cmd.Start(); err != nil {
@@ -179,6 +185,7 @@ func (r *runTasks) start(command, description string, timeout time.Duration) (*b
 		defer close(task.done)
 		defer cancel()
 		err := cmd.Wait()
+		err = errors.Join(err, task.output.Close())
 		task.mu.Lock()
 		task.exitCode = cmd.ProcessState.ExitCode()
 		task.err = err
@@ -275,7 +282,7 @@ func (t taskOutputTool) Execute(ctx context.Context, _ string, raw json.RawMessa
 	}
 	data := map[string]any{"retrieval_status": retrieval, "task": task.snapshot()}
 	output, err := json.Marshal(data)
-	return model.ToolOutput{Text: string(output), Data: data}, err
+	return model.ToolOutput{Text: string(output), Data: data, OutputFile: task.output.OutputPath()}, err
 }
 
 type taskStopTool struct{ owner *runTasks }
