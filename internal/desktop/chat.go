@@ -197,7 +197,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	frame := a.composerFrame
 	heroWidth := composerOuterWidth(a.chatWidth-reserve, width, true)
 	threadWidth := composerOuterWidth(a.chatWidth-reserve, width, false)
-	outerWidth := threadWidth + (heroWidth-threadWidth)*frame.Amount
+	outerWidth := heroWidth + (threadWidth-heroWidth)*frame.Amount
 	ui.Row(c).Key("main-composer").FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
 		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
 		block.Children(func() {
