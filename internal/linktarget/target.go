@@ -33,6 +33,12 @@ type Target struct {
 	Line, Column int
 }
 
+// IsAbsoluteFile reports whether a parsed target names an absolute host path,
+// using the target's syntax rather than the client's operating system.
+func (t Target) IsAbsoluteFile() bool {
+	return t.Kind == File && isAbsolute(t.Path)
+}
+
 var (
 	colonPosition = regexp.MustCompile(`^(.+?):([0-9]+)(?::([0-9]+))?(?:-([0-9]+)(?::([0-9]+))?)?$`)
 	hashPosition  = regexp.MustCompile(`^(.+)#L([0-9]+)(?:C([0-9]+))?(?:-L?([0-9]+)(?:C([0-9]+))?)?$`)

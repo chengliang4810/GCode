@@ -137,3 +137,49 @@ func TestInlinePiecesKeepsNonFileCodeAndExplicitLabels(t *testing.T) {
 		t.Fatalf("label=%q code=%v file=%v strong=%v pieces=%+v", label, foundCode, foundFile, foundStrong, pieces)
 	}
 }
+
+func TestGeneratedAbsoluteFileCodeResolvesWithoutProjectIndex(t *testing.T) {
+	for _, raw := range []string{
+		"/Users/example/.gcode/workspaces/task/巴中市城乡供水一体化管理平台_平台与设备清单.xlsx",
+		"/Users/example/My Reports/设备清单.xlsx",
+		`C:\Users\example\Reports\设备清单.xlsx`,
+		"file:///Users/example/Reports/report.xlsx",
+	} {
+		t.Run(raw, func(t *testing.T) {
+			cfg := Config{
+				Resolve: func(value string) (Destination, bool) {
+					target, err := linktarget.Parse(value)
+					return Destination{Raw: value, Tooltip: target.Path, Label: "generated.xlsx", Kind: target.Kind, Local: true}, err == nil
+				},
+			}
+			document := parser.Parse("**`" + raw + "`**")
+			th := markdown.DefaultTheme(design.Palette("rcode", false).UI())
+			pieces, linked := inlinePieces(document.Inlines(1), cfg, th, ui.Span{Size: 14})
+			if !linked || len(pieces) != 1 || pieces[0].destination == nil {
+				t.Fatalf("generated absolute file is not a link: %+v", pieces)
+			}
+			pc := pieces[0]
+			if pc.destination.Raw != raw || pc.destination.KnownFile || pc.copySource != raw ||
+				len(pc.spans) != 1 || pc.spans[0].Text != "generated.xlsx" {
+				t.Fatalf("generated file lost its original target or label: %+v", pc)
+			}
+		})
+	}
+}
+
+func TestUnknownRelativeCodeKeepsCodeStyle(t *testing.T) {
+	th := markdown.DefaultTheme(design.Palette("rcode", false).UI())
+	cfg := Config{Resolve: func(raw string) (Destination, bool) {
+		target, err := linktarget.Parse(raw)
+		return Destination{Raw: raw, Kind: target.Kind}, err == nil
+	}}
+	for _, raw := range []string{"report.xlsx", "reports/report.xlsx", "plain()", "../report.xlsx", `C:report.xlsx`, `\\server\share\report.xlsx`} {
+		t.Run(raw, func(t *testing.T) {
+			doc := parser.Parse("`" + raw + "`")
+			_, linked := inlinePieces(doc.Inlines(1), cfg, th, ui.Span{Size: 14})
+			if linked {
+				t.Fatalf("ordinary or ambiguous code became a link: %q", raw)
+			}
+		})
+	}
+}

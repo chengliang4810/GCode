@@ -80,6 +80,29 @@ func TestParseRejectsAmbiguousDestinations(t *testing.T) {
 	}
 }
 
+func TestTargetIsAbsoluteFile(t *testing.T) {
+	for _, tc := range []struct {
+		raw  string
+		want bool
+	}{
+		{"/Users/example/报告.xlsx", true},
+		{`C:\Users\example\报告.xlsx`, true},
+		{"file:///C:/Reports/report.xlsx", true},
+		{"file:///tmp/report.xlsx", true},
+		{"report.xlsx", false},
+		{"reports/report.xlsx", false},
+		{"https://example.com/report.xlsx", false},
+		{"#report", false},
+	} {
+		t.Run(tc.raw, func(t *testing.T) {
+			target, err := linktarget.Parse(tc.raw)
+			if err != nil || target.IsAbsoluteFile() != tc.want {
+				t.Fatalf("target=%+v error=%v, want absolute file=%t", target, err, tc.want)
+			}
+		})
+	}
+}
+
 func TestResolveFile(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

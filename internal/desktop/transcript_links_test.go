@@ -73,6 +73,40 @@ func TestTranscriptLinksShareFileRoutingAcrossRenderers(t *testing.T) {
 	}
 }
 
+func TestTranscriptGeneratedFileWithoutProjectHasActions(t *testing.T) {
+	const filename = "巴中市城乡供水一体化管理平台_平台与设备清单.xlsx"
+	const absolute = "/Users/example/.gcode/workspaces/task/" + filename
+	for _, dark := range []bool{false, true} {
+		t.Run(fmt.Sprintf("dark=%t", dark), func(t *testing.T) {
+			a := linkTestApp(t)
+			a.state.Projects, a.state.Files = nil, nil
+			a.state.Sessions[0].ProjectID = ""
+			a.workspace.Update(a.state)
+			message := contracts.Message{ID: "generated-file", SessionID: a.sessionID, Role: "assistant",
+				Blocks: []contracts.Block{{ID: "generated-path", Kind: "text", Text: "Excel 已生成：\n\n**`" + absolute + "`**"}}}
+			tt := linkMessageTester(t, a, message, dark)
+			if err := tt.RightClick(filename); err != nil {
+				t.Fatal(err)
+			}
+			for _, label := range []string{"Copy path", "Open in default app", "Show in folder"} {
+				found := false
+				for _, item := range tt.Menu() {
+					found = found || item == label
+				}
+				if !found {
+					t.Fatalf("missing generated file action %q: %v", label, tt.Menu())
+				}
+			}
+			if err := tt.ChooseMenuItem("Copy path"); err != nil {
+				t.Fatal(err)
+			}
+			if tt.Clipboard() != absolute {
+				t.Fatalf("copied generated path=%q", tt.Clipboard())
+			}
+		})
+	}
+}
+
 func TestTranscriptURLDefaultsToSideBrowserAndRejectsInvalidDestinations(t *testing.T) {
 	for _, raw := range []string{"https://example.com/docs", "https://user:pass@example.com", "javascript:alert(1)", "https://example.com/%zz"} {
 		t.Run(raw, func(t *testing.T) {

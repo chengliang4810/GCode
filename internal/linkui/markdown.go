@@ -160,7 +160,9 @@ func inlinePieces(inlines []parser.Inline, cfg Config, th *markdown.Theme, base 
 				s := style
 				s.Text = in.Text
 				if destination == nil {
-					if resolved, ok := cfg.Resolve(in.Text); ok && resolved.Kind == linktarget.File && resolved.KnownFile {
+					target, err := linktarget.Parse(in.Text)
+					if resolved, ok := cfg.Resolve(in.Text); ok && resolved.Kind == linktarget.File &&
+						(resolved.KnownFile || err == nil && target.IsAbsoluteFile()) {
 						if resolved.Raw == "" {
 							resolved.Raw = in.Text
 						}
