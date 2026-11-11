@@ -128,6 +128,7 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 				s.Error = readErr.Error()
 				return
 			}
+			s.Error = ""
 			s.openDocument(result.File, sessionID, result.AbsolutePath, true)
 			s.navigateDocument(s.documents[result.File.ID], target)
 			s.choose("file", result.File.ID, result.File.Name)

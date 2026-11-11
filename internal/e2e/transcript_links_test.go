@@ -39,9 +39,12 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 				t.Fatal(err)
 			}
 			const source = "package main\n\n// 中文🙂 TARGET\nfunc main() {}\n"
+			const textContent = "安全感知能力缺口说明\n这是有效 UTF-8 文本。\n"
 			sourcePath := filepath.Join(workspace, "示例", "source.go")
 			for name, contents := range map[string]string{
 				"README.MARKDOWN": "# NATIVE README PREVIEW\n\n[Preview source](示例/source.go:3:8)\n",
+				"设备清单.xlsx":       "PK\x03\x04\x00binary",
+				"缺口说明.txt":        textContent,
 				"示例/source.go":    source,
 				"icon.svg":        `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect width="40" height="40" fill="#c23668"/></svg>`,
 			} {
@@ -74,7 +77,7 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 			}))
 			defer page.Close()
 			pageURL := page.URL + "/links-proof"
-			reply := fmt.Sprintf("[Open README](README.MARKDOWN)\n\n[Source line](<%s:3:8>)\n\n[PNG image](image.png)\n\n[SVG image](icon.svg)\n\n[Local web page](%s)",
+			reply := fmt.Sprintf("[Open README](README.MARKDOWN)\n\n[Binary file](设备清单.xlsx) · [UTF-8 text](缺口说明.txt)\n\n[Source line](<%s:3:8>)\n\n[PNG image](image.png)\n\n[SVG image](icon.svg)\n\n[Local web page](%s)",
 				filepath.ToSlash(sourcePath), pageURL)
 			var modelRequests atomic.Int32
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -242,6 +245,41 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 				return nil
 			})
 			app.capture("blank-browser")
+			app.assertLinkDraft(draft)
+
+			app.pressLinkLabel("link", "Binary file")
+			app.await("binary read exposes the UTF-8 error", func() error {
+				tree, err := app.linkTree()
+				if err != nil {
+					return err
+				}
+				for _, node := range tree.Nodes {
+					if node.Label == "linked file is not UTF-8 text" {
+						return nil
+					}
+				}
+				return fmt.Errorf("binary read error is missing")
+			})
+			app.capture("binary-read-error")
+			app.pressLinkLabel("link", "UTF-8 text")
+			app.await("valid UTF-8 text opens without the previous binary error", func() error {
+				tree, err := app.linkTree()
+				if err != nil {
+					return err
+				}
+				var text bool
+				for _, node := range tree.Nodes {
+					if node.Label == "linked file is not UTF-8 text" {
+						return fmt.Errorf("previous binary error remains above the valid text")
+					}
+					text = text || node.Role == "textField" && node.Label == "缺口说明.txt" && node.Value == textContent
+				}
+				if !text {
+					return fmt.Errorf("valid UTF-8 editor is missing")
+				}
+				return nil
+			})
+			app.capture("utf8-text-without-stale-error")
 			app.assertLinkDraft(draft)
 
 			app.pressLinkLabel("link", "Open README")

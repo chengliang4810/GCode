@@ -121,6 +121,41 @@ func TestLinksRejectUnrelatedOrMissingSources(t *testing.T) {
 	}
 }
 
+func TestSuccessfulLinkedFileReadClearsPreviousError(t *testing.T) {
+	for _, retrySameFile := range []bool{false, true} {
+		t.Run(fmt.Sprintf("retrySameFile=%t", retrySameFile), func(t *testing.T) {
+			s := linkWorkspace(t)
+			const message = "linked file is not UTF-8 text"
+			const content = "安全感知能力缺口说明\n有效 UTF-8 正文"
+			service := &linkedTestService{err: fmt.Errorf("%s", message)}
+			s.backend = service
+			failedPath := "设备清单.xlsx"
+			if retrySameFile {
+				failedPath = "缺口说明.txt"
+			}
+			if err := s.OpenLink("root", failedPath); err == nil || s.Error != message {
+				t.Fatalf("failed read did not expose its error: %v, %q", err, s.Error)
+			}
+			service.err = nil
+			service.result = contracts.LinkedFileResult{
+				File: contracts.File{ID: "text", Path: "/workspace/缺口说明.txt", Name: "缺口说明.txt",
+					Content: content, Loaded: true, ReadOnly: true},
+				AbsolutePath: "/workspace/缺口说明.txt",
+			}
+			if err := s.OpenLink("root", "缺口说明.txt"); err != nil {
+				t.Fatal(err)
+			}
+			tt := ui.NewTester(s.View, 700, 500)
+			if s.activeFile() != "text" || s.documents["text"].editor.Buffer.String() != content {
+				t.Fatal("successful read did not open its UTF-8 contents")
+			}
+			if s.Error != "" || tt.HasText(message) {
+				t.Fatalf("valid UTF-8 document still displays the previous read error: %q", s.Error)
+			}
+		})
+	}
+}
+
 func TestSnapshotLinksResolveAgainstProjectAndPreviewDirectory(t *testing.T) {
 	s := linkWorkspace(t)
 	s.snapshot.Files = []contracts.File{
