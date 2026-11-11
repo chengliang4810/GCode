@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"unicode/utf8"
 
 	"gcode/internal/design"
 	"gcode/internal/linkui"
@@ -271,8 +272,10 @@ func (a *App) mathMarkdownBlock(c *ui.Context, document *parser.Document, index 
 		weight = theme.Headings[block.Level-1].Weight
 	}
 	runs := mathInlineRuns(inlines, ui.Span{Font: theme.Font, Size: fontSize, Weight: weight}, theme.CodeFont)
-	spans := make([]ui.Span, 0, len(runs))
-	var formulas []mathViewResult
+	formulaAt := make(map[int]*ui.SVG)
+	copyObjects := make(map[int]string)
+	var display strings.Builder
+	runeOffset := 0
 	for i := range runs {
 		run := &runs[i]
 		if run.source != "" {
@@ -280,7 +283,8 @@ func (a *App) mathMarkdownBlock(c *ui.Context, document *parser.Document, index 
 			if result.svg != nil {
 				run.span.Text = "\ufffc"
 				run.span.ObjectWidth, run.span.ObjectHeight = result.width*a.mathScale(), result.height*a.mathScale()
-				formulas = append(formulas, result)
+				formulaAt[runeOffset] = result.svg
+				copyObjects[runeOffset] = `\(` + run.source + `\)`
 			} else {
 				run.span.Font, run.span.Text = theme.CodeFont, "$"+run.source+"$"
 			}
@@ -288,11 +292,11 @@ func (a *App) mathMarkdownBlock(c *ui.Context, document *parser.Document, index 
 		if run.link != "" {
 			run.span.Color = theme.Link
 		}
-		spans = append(spans, run.span)
+		display.WriteString(run.span.Text)
+		runeOffset += utf8.RuneCountInString(run.span.Text)
 	}
 	source, services := strings.TrimRight(document.Lines(index), "\n"), c.Services()
-	font := ui.Font{Family: theme.Font, Size: fontSize}
-	element := ui.RichText(c).Font(theme.Font).FontSize(fontSize).Selectable().Label(source)
+	element := ui.RichText(c).Font(theme.Font).FontSize(fontSize).Label(source)
 	if block.Kind == parser.Heading {
 		element.Role(ui.RoleHeading).Level(block.Level)
 	}
@@ -310,20 +314,15 @@ func (a *App) mathMarkdownBlock(c *ui.Context, document *parser.Document, index 
 			}
 		}
 	})
-	element.Menu(func(menu *ui.Menu) {
+	a.linkSelection.RegisterObjects(element.ID(), display.String(), source, copyObjects)
+	element.ContextMenu(func(menu *ui.Menu) {
 		if menu.Item(tr(c, "Copy")).Chosen() {
 			services.WriteClipboard(source)
 		}
 	})
-	element.DrawOver(func(painter *ui.Painter, bounds ui.Rect) {
-		layout := ui.ShapeRichText(spans, font, bounds.W)
-		for i, object := range layout.Objects() {
-			if i >= len(formulas) {
-				break
-			}
-			rect := object.Rect
-			rect.X, rect.Y = rect.X+bounds.X, rect.Y+bounds.Y
-			painter.Image(formulas[i].svg, rect, ui.Contain)
+	element.DrawObjects(func(painter *ui.Painter, at int, rect ui.Rect) {
+		if formula := formulaAt[at]; formula != nil {
+			painter.Image(formula, rect, ui.Contain)
 		}
 	})
 	return true

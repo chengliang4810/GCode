@@ -127,6 +127,50 @@ func TestMathMarkdownPreservesNativeFallbackAndLinkedObjects(t *testing.T) {
 	}, 600, 180)
 }
 
+func TestMathDrawObjectsPreserveRichTextAndLinkedFormulas(t *testing.T) {
+	a := linkTestApp(t)
+	a.palette = design.Palette("rcode", false)
+	a.state.Settings.Appearance.RenderMath = true
+	a.state.Settings.Appearance.MathFont = "STIX Two"
+	source := "中文 **粗体 \\(x^2\\)**，链接 [公式 \\(y+1\\)](https://example.invalid)。\n下一行。"
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.DisableAnimations()
+		c.SetTheme(a.palette.UI())
+		c.Root().Background(a.palette.Background).Font("Geist")
+		a.prepareTranscriptMarkdown(c)
+		markdown.View(c, source, &a.md)
+	}, 720, 260)
+	for _, text := range []string{"中文", "粗体", "公式", "下一行"} {
+		if !tt.HasText(text) {
+			t.Fatalf("rich text lost %q: %v", text, tt.Texts())
+		}
+	}
+	for _, sourceText := range []string{"x^2", "y+1"} {
+		result := a.math.cache.entries[mathViewKey{source: sourceText, family: "STIX Two"}]
+		if result == nil || result.result.svg == nil || result.result.err != nil {
+			t.Fatalf("formula %q was not rendered: %+v", sourceText, result)
+		}
+	}
+	empty, err := ui.ParseSVG([]byte(`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Keep each object's metrics and every surrounding glyph unchanged. An
+	// empty SVG must remove actual pixels for each formula independently.
+	for _, formula := range []string{"x^2", "y+1"} {
+		entry := a.math.cache.entries[mathViewKey{source: formula, family: "STIX Two"}]
+		before := bytes.Clone(tt.Image().Pix)
+		original := entry.result.svg
+		entry.result.svg = empty
+		tt.Frame()
+		if bytes.Equal(before, tt.Image().Pix) {
+			t.Fatalf("formula %q contributed no rendered pixels", formula)
+		}
+		entry.result.svg = original
+		tt.Frame()
+	}
+}
+
 func TestMathViewCacheWorkerCompletesAndCancels(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

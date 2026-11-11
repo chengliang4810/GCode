@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
@@ -9,6 +10,12 @@ import (
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown/parser"
 )
+
+type promptInlineRun struct {
+	span  ui.Span
+	link  string
+	glyph string
+}
 
 func (a *App) userMarkdownBlock(c *ui.Context, document *parser.Document, index int) bool {
 	if a.transcriptTableBlock(c, document, index) {
@@ -49,36 +56,51 @@ func (a *App) promptMarkdownBlock(c *ui.Context, document *parser.Document, inde
 		size *= theme.Headings[block.Level-1].Size
 	}
 	runs := mathInlineRuns(inlines, ui.Span{Font: theme.Font, Size: size}, theme.CodeFont)
-	var spans []ui.Span
-	var links []string
-	var glyphs []string
+	promptRuns := make([]promptInlineRun, 0, len(runs)+1)
 	for _, run := range runs {
 		if strings.HasPrefix(run.link, "gcode://") {
 			parts := contracts.ParsePrompt("[token](" + run.link + ")")
 			if len(parts) == 1 && parts[0].Reference != nil {
-				spans = append(spans, ui.Span{Text: "\ufffc", ObjectWidth: size + 3, ObjectHeight: size})
-				links = append(links, "")
-				glyphs = append(glyphs, promptGlyph(*parts[0].Reference))
+				promptRuns = append(promptRuns, promptInlineRun{
+					// Match MyGo's inline-icon baseline: keep part of the
+					// square below it, beside both Latin and CJK labels.
+					span: ui.Span{Text: "\ufffc", Size: size, ObjectWidth: size + 3,
+						ObjectHeight: size * .86, ObjectDescent: size * .14},
+					glyph: promptGlyph(*parts[0].Reference),
+				})
+				// Keep the icon with the reference's first word at a wrap.
+				run.span.Text = "\u2060" + run.span.Text
 				run.span.Color, run.span.Weight = a.palette.Accent, 600
 				run.link = ""
 			}
 		} else if run.link != "" {
 			run.span.Color = theme.Link
 		}
-		spans = append(spans, run.span)
-		links = append(links, run.link)
+		promptRuns = append(promptRuns, promptInlineRun{span: run.span, link: run.link})
 	}
-	element := ui.RichText(c).Font(theme.Font).FontSize(size).FixedLineHeight(theme.FixedLineHeight).Selectable().Label(promptDisplay(document.Lines(index)))
+	glyphAt := make(map[int]string)
+	copyObjects := make(map[int]string)
+	runeOffset := 0
+	var display strings.Builder
+	for _, run := range promptRuns {
+		if run.glyph != "" {
+			glyphAt[runeOffset] = run.glyph
+			copyObjects[runeOffset], copyObjects[runeOffset+1] = "", ""
+		}
+		display.WriteString(run.span.Text)
+		runeOffset += utf8.RuneCountInString(run.span.Text)
+	}
+	element := ui.RichText(c).Font(theme.Font).FontSize(size).FixedLineHeight(theme.FixedLineHeight).Label(promptDisplay(document.Lines(index)))
 	element.Children(func() {
 		config := a.linkConfig(a.linkSource, "", c.Services())
-		for i, span := range spans {
-			if links[i] == "" || strings.HasPrefix(links[i], "gcode://") {
-				ui.RichText(c, span)
+		for _, run := range promptRuns {
+			if run.link == "" || strings.HasPrefix(run.link, "gcode://") {
+				ui.RichText(c, run.span)
 			} else {
-				if destination, ok := config.Resolve(links[i]); ok {
-					linkui.Link(c, []ui.Span{span}, destination, config)
+				if destination, ok := config.Resolve(run.link); ok {
+					linkui.Link(c, []ui.Span{run.span}, destination, config)
 				} else {
-					ui.RichText(c, span)
+					ui.RichText(c, run.span)
 				}
 			}
 		}
@@ -87,21 +109,16 @@ func (a *App) promptMarkdownBlock(c *ui.Context, document *parser.Document, inde
 		element.Role(ui.RoleHeading).Level(block.Level)
 	}
 	source, services := document.Lines(index), c.Services()
-	element.Menu(func(menu *ui.Menu) {
+	a.linkSelection.RegisterObjects(element.ID(), display.String(), source, copyObjects)
+	element.ContextMenu(func(menu *ui.Menu) {
 		if menu.Item(tr(c, "Copy")).Chosen() {
 			services.WriteClipboard(source)
 		}
 	})
-	font := ui.Font{Family: theme.Font, Size: size}
-	element.DrawOver(func(painter *ui.Painter, bounds ui.Rect) {
-		layout := ui.ShapeRichText(spans, font, bounds.W)
-		for i, object := range layout.Objects() {
-			if i >= len(glyphs) {
-				break
-			}
-			rect := object.Rect
-			rect.X, rect.Y, rect.W = rect.X+bounds.X, rect.Y+bounds.Y, size
-			if svg := assets.Icon(glyphs[i]); svg != nil {
+	element.DrawObjects(func(painter *ui.Painter, at int, rect ui.Rect) {
+		if glyph := glyphAt[at]; glyph != "" {
+			if svg := assets.Icon(glyph); svg != nil {
+				rect.W = size
 				painter.Icon(svg, rect, a.palette.Accent)
 			}
 		}

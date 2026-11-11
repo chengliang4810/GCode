@@ -1,5 +1,13 @@
 # 桌面测试
 
+2026-11-11 MyGo v0.8.3：设备菜单、引用图标对齐、模型选择器、正文/预览链接、
+Markdown 表格、设置持久化、面板开合和拖拽关闭共 8 组原生用例通过，
+证据为 `output/mygo-upgrade-20261111/native-final/20261111-122519-2869211955/evidence.json`。
+相关深浅主题截图已检查。引用布局使用私有核心重开的显示历史夹具；链接使用真实本机文件
+和回环 HTTP 模型/网页。自动化不证明 OS 输入法、远程宿主或真实供应商验收。
+原有引用发送用例仍有升级前可复现的技能展开问题，边界与对照证据见
+[MyGo 升级记录](mygo-upgrade-2026-11-11.md)。
+
 2026-11-11 链接读取错误清理：`TestDesktopLocalTranscriptLinks` 增加先读取二进制文件失败、
 再打开有效中文 UTF-8 文本的流程，验证正文显示且旧编码错误消失、中央草稿保持。
 深浅主题原生窗口均通过，截图已检查；同文件失败后重试另由 `ui.Tester` 组件回归覆盖。
@@ -374,7 +382,7 @@ Git/PR 入口已移除；手机空白弹窗可打开和关闭，底栏与设置�
 `windows.displayName`/`windows.installDirName` 与 slug 文件命名覆盖。
 应用命名完全跟随 `mygo.json` 的 `name`（GCode 为 ASCII，上游默认值即可覆盖）。
 
-当前框架固定为 `rcode-native-ui.23`；源码锁、补丁 SHA 和构建身份由
+2026-11-02 时框架固定为 `rcode-native-ui.23`；该阶段源码锁、补丁 SHA 和构建身份由
 `go run ./scripts/check-framework.go` 检查。当前树为 2,050 文件、19 个补丁条目，
 SHA-256 为
 `c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。

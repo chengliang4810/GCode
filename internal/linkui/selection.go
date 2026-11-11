@@ -2,6 +2,7 @@ package linkui
 
 import (
 	"html"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -77,6 +78,24 @@ func (s *Selection) register(id uint64, display, source string, replacements []s
 		display: display, source: source,
 		replacements: append([]selectionReplacement(nil), replacements...),
 	}
+}
+
+// RegisterObjects maps synthetic inline runes to their source text when the
+// shared selection copies a paragraph. An empty value omits decorative runes.
+func (s *Selection) RegisterObjects(id uint64, display, source string, objects map[int]string) {
+	if s == nil {
+		return
+	}
+	positions := make([]int, 0, len(objects))
+	for at := range objects {
+		positions = append(positions, at)
+	}
+	slices.Sort(positions)
+	replacements := make([]selectionReplacement, 0, len(positions))
+	for _, at := range positions {
+		replacements = append(replacements, selectionReplacement{start: at, end: at + 1, source: objects[at]})
+	}
+	s.register(id, display, source, replacements)
 }
 
 // CopyData preserves visible Markdown labels. A fully selected automatic file
