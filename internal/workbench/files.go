@@ -34,22 +34,28 @@ func (s *State) visibleFile(file contracts.File) bool {
 }
 
 func (s *State) filesIn(parent string) []contracts.File {
-	var files []contracts.File
-	for _, file := range s.snapshot.Files {
-		if file.ParentID == parent && s.visibleFile(file) {
-			files = append(files, file)
+	if s.fileChildrenIndex == nil || s.fileIndexProject != s.ProjectID || s.fileIndexHidden != s.snapshot.Settings.Files.ShowHidden {
+		s.fileChildrenIndex = make(map[string][]contracts.File)
+		s.fileIndexProject = s.ProjectID
+		s.fileIndexHidden = s.snapshot.Settings.Files.ShowHidden
+		for _, file := range s.snapshot.Files {
+			if s.visibleFile(file) {
+				s.fileChildrenIndex[file.ParentID] = append(s.fileChildrenIndex[file.ParentID], file)
+			}
+		}
+		for _, files := range s.fileChildrenIndex {
+			slices.SortStableFunc(files, func(a, b contracts.File) int {
+				if a.Kind == "directory" && b.Kind != "directory" {
+					return -1
+				}
+				if a.Kind != "directory" && b.Kind == "directory" {
+					return 1
+				}
+				return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+			})
 		}
 	}
-	slices.SortStableFunc(files, func(a, b contracts.File) int {
-		if a.Kind == "directory" && b.Kind != "directory" {
-			return -1
-		}
-		if a.Kind != "directory" && b.Kind == "directory" {
-			return 1
-		}
-		return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
-	})
-	return files
+	return s.fileChildrenIndex[parent]
 }
 
 func (s *State) projectFilesStatus(c *ui.Context) {

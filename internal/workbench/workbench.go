@@ -75,6 +75,9 @@ type State struct {
 	browsers          map[string]*browser
 	terminals         map[string]*terminalView
 	folders           map[string]*bool
+	fileChildrenIndex map[string][]contracts.File
+	fileIndexProject  string
+	fileIndexHidden   bool
 	fileSearch        string
 	search            fileSearchState
 	recentFiles       []string
@@ -137,6 +140,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 		return
 	}
 	s.snapshot = snapshot
+	s.fileChildrenIndex = nil
 	for i := len(s.tabs) - 1; i >= 0; i-- {
 		if s.tabs[i].kind != "trajectory" && s.tabs[i].kind != "goal" {
 			continue
