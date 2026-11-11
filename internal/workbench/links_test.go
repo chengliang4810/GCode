@@ -184,6 +184,26 @@ func TestSnapshotLinksResolveAgainstProjectAndPreviewDirectory(t *testing.T) {
 	}
 }
 
+func TestMarkdownPreviewNativeCodePreservesTabs(t *testing.T) {
+	s := linkWorkspace(t)
+	const code = "\tconsole.log('native tab');"
+	s.snapshot.Files = []contracts.File{{
+		ID: "code-guide", ProjectID: "project", Path: "guide.md", Name: "guide.md",
+		Content: "```js\n" + code + "\n```", Loaded: true, ReadOnly: true,
+	}}
+	s.OpenFile("code-guide")
+	tt := ui.NewTester(s.View, 700, 300)
+	if !tt.HasText(code) {
+		t.Fatalf("Markdown preview rewrote or lost the source tab: %v", tt.Texts())
+	}
+	if err := tt.Click("Copy code"); err != nil {
+		t.Fatal(err)
+	}
+	if got := tt.Clipboard(); got != code+"\n" {
+		t.Fatalf("Markdown preview code copied %q, want source tabs", got)
+	}
+}
+
 func TestLinkedImageReadsManagedResource(t *testing.T) {
 	s := linkWorkspace(t)
 	ref := "resource://managed/linked-image.svg"

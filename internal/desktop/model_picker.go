@@ -655,13 +655,13 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 			*measurement = next
 			c.After(time.Millisecond)
 		}
-		offset := min(max(float32(0), rowBounds.Y-providerBounds.Y-4), leftHeight-height)
+		offset := min(max(float32(0), rowBounds.Y-providerBounds.Y-4), max(float32(0), leftHeight-height))
 		if modelsOnLeft {
 			modelCard.AttachTo(providerCard, ui.AnchorTopStart, ui.AnchorTopEnd).Left(-modelPickerGap)
 		} else {
 			modelCard.AttachTo(providerCard, ui.AnchorTopEnd, ui.AnchorTopStart).Left(modelPickerGap)
 		}
-		modelCard.Top(offset).SnapToWindow(8).Children(func() {
+		modelCard.Margin(offset, 0, 0, 0).SnapToWindow(8).Children(func() {
 			if a.modelCatalogState(c, max(float32(0), height-10)) {
 				return
 			}

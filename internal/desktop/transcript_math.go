@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"gcode/internal/design"
 	"gcode/internal/linkui"
 	"gcode/internal/mathrender"
 	"github.com/egoist/mygo/ui"
@@ -332,6 +333,7 @@ func (a *App) configureMathMarkdown() {
 	for _, options := range []*markdown.Options{&a.md, &a.userMD} {
 		options.Extensions = parser.Default | parser.ExtDollarMath
 		options.Math, options.Block, options.Code = nil, nil, nil
+		options.CodeBlock = design.MarkdownCodeBlock
 		options.Block = a.transcriptMarkdownBlock
 		if !a.state.Settings.Appearance.RenderMath {
 			continue
@@ -339,7 +341,7 @@ func (a *App) configureMathMarkdown() {
 		options.Math = a.mathView
 		code := func(c *ui.Context, block *markdown.CodeBlockView) {
 			if block.Open {
-				markdown.DefaultCodeBlock(c, block)
+				design.MarkdownCodeBlock(c, block)
 				return
 			}
 			a.mathView(c, strings.TrimRight(block.Code(), "\n"))

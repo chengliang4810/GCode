@@ -1,5 +1,7 @@
 # R17 提示状态、点定位与渲染设备取证（进行中）
 
+> 本文保留原审计阶段的框架版本与验收范围；当前框架及补丁以 [mygo-patches.md](mygo-patches.md) 和源码锁为准。
+
 R17 目标当时为 active；UI 优化自 2026-10-29 起暂停。最新完整封存索引仍是
 `reference/validation/tabstrip-r16-result.json`；本文记录 R17 的候选和观察，
 不替代该历史证据，也不表示发布、完整视觉或跨平台验收通过。

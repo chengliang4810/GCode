@@ -38,7 +38,7 @@ try {
     $taskGoVersion = (& go env GOVERSION).Trim()
     if ($LASTEXITCODE -ne 0 -or $taskGoVersion -ne 'go1.27.3') { throw "Expected go1.27.3; found $taskGoVersion" }
     $taskMygoVersion = (& go list -m -f '{{.Version}}' github.com/egoist/mygo).Trim()
-    if ($LASTEXITCODE -ne 0 -or $taskMygoVersion -ne 'v0.7.4') { throw "Expected MyGo v0.7.4; found $taskMygoVersion" }
+    if ($LASTEXITCODE -ne 0 -or $taskMygoVersion -ne 'v0.8.3') { throw "Expected MyGo v0.8.3; found $taskMygoVersion" }
     $taskFrameworkStamp = (& go run ./scripts/check-framework.go -ldflags).Trim()
     if ($LASTEXITCODE -ne 0) { throw 'Pinned MyGo source/patch verification failed' }
     $env:MYGO_LDFLAGS = $taskFrameworkStamp

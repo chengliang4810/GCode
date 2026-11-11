@@ -140,7 +140,7 @@ func TestSideComposerProviderFlagsUseItsSessionDevice(t *testing.T) {
 			t.Fatalf("main composer adopted side device flags: %s", row.provider.ID)
 		}
 	}
-	if err := tt.Click("GPT-5.4"); err != nil {
+	if err := tt.Click("Select model in " + child.Title + " GPT-5.4"); err != nil {
 		t.Fatal(err)
 	}
 	if state.modelID != "gpt-5.4" || a.modelID != "claude-opus-4-6" {

@@ -154,7 +154,7 @@ func TestSidebarPinUnpinAndRestoreRevealDestination(t *testing.T) {
 	a.sidebarUI.projectsClosed = true
 	a.expanded["project:"+session.ProjectID] = true
 	tt.Frame()
-	if err := tt.RightClick(session.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, session.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Unpin"); err != nil {
@@ -165,7 +165,7 @@ func TestSidebarPinUnpinAndRestoreRevealDestination(t *testing.T) {
 	}
 	a.expanded["group:pinned"] = true
 	tt.Frame()
-	if err := tt.RightClick(session.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, session.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Pin"); err != nil {

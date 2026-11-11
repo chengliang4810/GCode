@@ -43,8 +43,11 @@ func TestLinkNativeActivationAndPreference(t *testing.T) {
 				t.Fatal(err)
 			}
 			tt.Key(0, ui.KeyEnter)
+			if len(internal) != 2 {
+				t.Fatalf("Enter did not activate the focused link: %v", internal)
+			}
 			tt.Key(0, ui.KeySpace)
-			if len(internal) != 3 || len(external) != 0 {
+			if len(internal) != 2 || len(external) != 0 {
 				t.Fatalf("native click/Enter/Space: internal=%v external=%v", internal, external)
 			}
 			cfg.Internal = false
@@ -216,8 +219,11 @@ func TestStandaloneLinkPreservesNativeSelectionAndKeys(t *testing.T) {
 		t.Fatalf("opens=%d clipboard=%q", opened, tt.Clipboard())
 	}
 	tt.Key(0, ui.KeyEnter)
+	if opened != 1 {
+		t.Fatalf("Enter did not activate the standalone link: %d", opened)
+	}
 	tt.Key(0, ui.KeySpace)
-	if opened != 2 {
+	if opened != 1 {
 		t.Fatalf("standalone native key activation=%d", opened)
 	}
 }

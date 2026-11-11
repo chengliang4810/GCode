@@ -101,7 +101,7 @@ func TestSidebarKeyboardSelectionAndInlineRename(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 880)
 	first := a.visibleSessions()[0]
-	if err := tt.Click(first.Title); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, first.Title); err != nil {
 		t.Fatal(err)
 	}
 	tt.Key(0, ui.KeyDown)
@@ -121,7 +121,7 @@ func TestSidebarKeyboardSelectionAndInlineRename(t *testing.T) {
 	if a.renameOpen || a.sidebarUI.renameID != "" {
 		t.Fatal("inline rename retained a modal/editor")
 	}
-	if err := tt.RightClick("Renamed from sidebar"); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, "Renamed from sidebar"); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Rename"); err != nil {
@@ -139,7 +139,7 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 	a.selectSession("chat-0")
 	tt := ui.NewTester(a.View, 1320, 880)
 	first := sidebarSession(t, a, "chat-0")
-	if err := tt.RightClick(first.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, first.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Archive"); err != nil {
@@ -174,7 +174,7 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 	}
 	a.navigate("chat/" + first.ID)
 	tt.Frame()
-	if err := tt.RightClick(first.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, first.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Unpin"); err != nil {
@@ -183,7 +183,7 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 	if sidebarSession(t, a, first.ID).Pinned {
 		t.Fatal("unpin did not persist")
 	}
-	if err := tt.RightClick(first.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, first.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Delete"); err != nil {
@@ -193,7 +193,7 @@ func TestSidebarArchiveRestorePinAndDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = sidebarSession(t, a, first.ID)
-	if err := tt.RightClick(first.Title); err != nil {
+	if err := rightClickAccessible(tt, ui.RoleButton, first.Title); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.ChooseMenuItem("Delete"); err != nil {

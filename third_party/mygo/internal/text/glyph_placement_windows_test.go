@@ -116,7 +116,7 @@ func TestQuarterUnsupportedPathsNormalizeToNative(t *testing.T) {
 			case "color-face":
 				g := s.Layout(Params{Text: "🎉", Style: Style{Size: 16}}).Lines[0].Glyphs[0]
 				f = g.Font
-				if !e.isColor(f.native) {
+				if !isColor(f.native) {
 					t.Fatal("color exclusion control did not resolve a color face")
 				}
 			case "unknown-policy":

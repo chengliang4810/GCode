@@ -39,9 +39,10 @@ func TestSessionDeleteDialogDimsSessionInfo(t *testing.T) {
 				if !tt.HasText("删除后，该对话将无法找回。如果只是想从列表中隐藏，可以使用归档操作。") {
 					t.Fatal("irreversible deletion and archive guidance missing")
 				}
-				if err := tt.Click(a.t("Branch changes")); err != nil {
-					t.Fatal(err)
-				}
+				// Intentionally send a pointer press to the covered
+				// background. A named click rejects this target before
+				// dispatch, so it would not exercise modal blocking.
+				tt.ClickAt(info.X+info.W/2, info.Y+info.H/2)
 				if a.right {
 					t.Fatal("modal allowed the background session-info action")
 				}

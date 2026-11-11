@@ -85,9 +85,11 @@ func TestTranscriptGeneratedFileWithoutProjectHasActions(t *testing.T) {
 			message := contracts.Message{ID: "generated-file", SessionID: a.sessionID, Role: "assistant",
 				Blocks: []contracts.Block{{ID: "generated-path", Kind: "text", Text: "Excel 已生成：\n\n**`" + absolute + "`**"}}}
 			tt := linkMessageTester(t, a, message, dark)
-			if err := tt.RightClick(filename); err != nil {
-				t.Fatal(err)
+			link, ok := tt.AccessByRole(ui.RoleLink, filename)
+			if !ok || !link.Focusable || link.Description != absolute {
+				t.Fatalf("generated file did not expose its accessible link: %+v", link)
 			}
+			tt.RightClickAt(link.Bounds.X+link.Bounds.W/2, link.Bounds.Y+link.Bounds.H/2)
 			for _, label := range []string{"Copy path", "Open in default app", "Show in folder"} {
 				found := false
 				for _, item := range tt.Menu() {

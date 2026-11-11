@@ -206,7 +206,7 @@ func TestRuntimeComposerSwitchSelectsLastConfiguredLevel(t *testing.T) {
 	if err := tt.Click("Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("second"); err != nil {
+	if err := tt.Click("Select model second"); err != nil {
 		t.Fatal(err)
 	}
 	if app.modelID != "user/second" || app.reasoning != "Extra high" {
@@ -215,7 +215,7 @@ func TestRuntimeComposerSwitchSelectsLastConfiguredLevel(t *testing.T) {
 	if err := tt.Click("Select model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("plain"); err != nil {
+	if err := tt.Click("Select model plain"); err != nil {
 		t.Fatal(err)
 	}
 	if app.modelID != "user/plain" || app.reasoning != "" {

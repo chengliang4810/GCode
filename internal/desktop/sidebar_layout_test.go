@@ -57,7 +57,7 @@ func TestSidebarNestedRowKeepsTheListEdge(t *testing.T) {
 			tt := ui.NewTester(app.View, 1440, 1400)
 			wash := func(label string) (int, int) {
 				t.Helper()
-				if err := tt.Click(label); err != nil {
+				if err := clickAccessible(tt, ui.RoleButton, label); err != nil {
 					t.Fatal(err)
 				}
 				tt.Frame()
@@ -187,7 +187,7 @@ func TestSidebarLayoutHierarchyAndPagination(t *testing.T) {
 	if !tt.HasText("继续检查文件变更") || !tt.HasText("整理对话记录") {
 		t.Fatal("show more did not reveal the remaining conversations")
 	}
-	if err := tt.Click("项目"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "项目"); err != nil {
 		t.Fatal(err)
 	}
 	if r, ok := tt.Find("fnbot"); ok && r.X < app.sidebarWidth {
@@ -206,7 +206,7 @@ func TestSidebarProjectAccordionPreservesDraftAndComposerTarget(t *testing.T) {
 	app.draft = "保留这段草稿"
 	target := app.projectID
 	tt := ui.NewTester(app.View, 1440, 1400)
-	if err := tt.Click("bzaqsc-new"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "bzaqsc-new"); err != nil {
 		t.Fatal(err)
 	}
 	if !app.expanded["project:1"] || app.projectID != target || app.draft != "保留这段草稿" {
@@ -215,7 +215,7 @@ func TestSidebarProjectAccordionPreservesDraftAndComposerTarget(t *testing.T) {
 	if tt.HasText("第二项目的对话") || !tt.HasText("了解对话输出目录内容") {
 		t.Fatal("project collapse hid the wrong conversations")
 	}
-	if err := tt.Click("bzaqsc-new"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "bzaqsc-new"); err != nil {
 		t.Fatal(err)
 	}
 	if app.expanded["project:1"] || !tt.HasText("第二项目的对话") {

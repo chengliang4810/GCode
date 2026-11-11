@@ -1,0 +1,62 @@
+diff --git a/third_party/mygo/ui/glyph_placement_windows.go b/third_party/mygo/ui/glyph_placement_windows.go
+index e16d4d6afae3afcabc36b9bb1a8698fe446ac19f..ac3fb98d6ffaea157d2c581baaf8dc822034947e 100644
+--- a/third_party/mygo/ui/glyph_placement_windows.go
++++ b/third_party/mygo/ui/glyph_placement_windows.go
+@@ -48,7 +48,7 @@ func paintQuarterText(p *Painter, origin Rect) {
+ 	}
+ 	sys := p.rt.text
+ 	s := p.scale
+-	deco := decoration{underline: ts.underline, wavy: ts.wavy, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
++	deco := decoration{underline: ts.underline, wavy: ts.wavy, dotted: ts.dotted, strike: ts.strike, color: ts.decoColor, thick: ts.decoThick}
+ 	shade := text.ShadeOf(color.R, color.G, color.B)
+ 	start := int32(len(p.s.Glyphs))
+ 	// Inline transforms do not change while the text paints; look for them once.
+diff --git a/third_party/mygo/ui/widgets.go b/third_party/mygo/ui/widgets.go
+index 0dabfd01a0b7a4a5507313a5ccd61e3310461d68..32d0c48f80e931c9f163b2bfc83a344dffec1ff8 100644
+--- a/third_party/mygo/ui/widgets.go
++++ b/third_party/mygo/ui/widgets.go
+@@ -204,10 +204,7 @@ func coreLink(c *context, label, url string) *node {
+ 			}
+ 		}
+ 		if e.Hovered() {
+-			// Whole, through descenders: a link's URL is mostly slashes
+-			// and letters below the baseline, which skipping ink cuts up.
+-			e.Underline()
+-			e.ts.solid = true
++			e.DottedUnderline()
+ 		}
+ 	})
+ 	return e
+diff --git a/third_party/mygo/ui/inline_test.go b/third_party/mygo/ui/inline_test.go
+index 88cbcc7b77f453f66a8d003d2037bbf8e027c3..2bdac81d0f1cdb2ab6e4e06a3c3530ec25595820 100644
+--- a/third_party/mygo/ui/inline_test.go
++++ b/third_party/mygo/ui/inline_test.go
+@@ -195,10 +195,9 @@ func TestInlineOnlyText(t *testing.T) {
+ 	}, 100, 100, 1)
+ }
+ 
+-// A link's hover underline is solid for the text inside it, as the spans
+-// of a RichText in a Link, which Markdown's links are; an underline of
+-// one's own is not.
+-func TestLinkHoverSolidUnderline(t *testing.T) {
++// A link's hover underline is dotted for the text inside it; an underline
++// of one's own remains a separate solid decoration.
++func TestLinkHoverDottedUnderline(t *testing.T) {
+ 	var para, link *node
+ 	tt := coreNewTester(func(c *context) {
+ 		para = coreRichText(c).Children(func() {
+@@ -215,12 +214,12 @@ func TestLinkHoverSolidUnderline(t *testing.T) {
+ 		}
+ 		return out
+ 	}
+-	if s := spans()["example.com/gypsy"]; s.Underline || s.solid {
++	if s := spans()["example.com/gypsy"]; s.Underline || s.DottedUnderline || s.solid {
+ 		t.Errorf("the link's text at rest: %+v", s)
+ 	}
+ 	tt.Move(center(link.frags[0]))
+ 	got := spans()
+-	if s := got["example.com/gypsy"]; !s.Underline || !s.solid {
++	if s := got["example.com/gypsy"]; s.Underline || !s.DottedUnderline || s.solid {
+ 		t.Errorf("the hovered link's text: %+v", s)
+ 	}
+ 	if s := got[" or "]; !s.Underline || s.solid {

@@ -26,18 +26,18 @@ func RasterGlyph(s *System, f *Font, id uint32, scale, x float32, shade Shade, o
 	subpixel := opaque && s.subpixel
 	if policy != GlyphPlacementWindowsClearTypeQuarter || !subpixel || !finitePen(x*4) {
 		q, n, carry := s.place(f, scale, subpixel, x)
-		return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
+		return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative, 0, 0, nil)
 	}
 	pk := placeKey{font: f, scale: uint32(scale*256 + 0.5), mode: quarterSubpixel}
 	if _, ok := s.places[pk]; !ok {
 		if !s.quarterEligible(f, scale, subpixel, policy) {
 			q, n, carry := s.place(f, scale, subpixel, x)
-			return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative)
+			return s.glyphAt(f, id, scale, shade, subpixel, q, n, carry, GlyphPlacementNative, 0, 0, nil)
 		}
 		s.places[pk] = placement{n: 4, round: true}
 	}
 	q, carry := quarterPosition(x)
-	return s.glyphAt(f, id, scale, shade, subpixel, q, 4, carry, policy)
+	return s.glyphAt(f, id, scale, shade, subpixel, q, 4, carry, policy, 0, 0, nil)
 }
 
 func finitePen(x float32) bool { return !math.IsNaN(float64(x)) && !math.IsInf(float64(x), 0) }

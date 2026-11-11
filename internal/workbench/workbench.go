@@ -859,6 +859,7 @@ func (s *State) fileView(c *ui.Context, id string) {
 			}
 		}
 		d.markdown.ShareSelection = true
+		d.markdown.CodeBlock = design.MarkdownCodeBlock
 		d.markdown.OnLink = func(raw string) {
 			if cfg.Open != nil {
 				target, err := linktarget.ParsePreview(raw, d.absolutePath)

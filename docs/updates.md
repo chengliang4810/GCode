@@ -1,6 +1,6 @@
 # 软件更新与发布
 
-GCode 使用仓库内 MyGo v0.7.4 的 `plugins/updater/native`。
+GCode 使用仓库内 MyGo v0.8.3 的 `plugins/updater/native`。
 更新窗口为原生 UI，不依赖 WebView；真实桌面普通启动注册插件，
 确定性 `--scenario`、截图用 `--headless` 和 `cmd/gcode-server` 不注册。
 

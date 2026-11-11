@@ -61,8 +61,8 @@ func TestInlineLinkKeepsClickKeysAndMenu(t *testing.T) {
 	tt.ClickAt(center(link.frags[0]))
 	tt.Key(0, KeyEnter)
 	tt.Key(0, KeySpace)
-	if clicks != 3 {
-		t.Fatalf("pointer and keyboard clicks=%d", clicks)
+	if clicks != 2 {
+		t.Fatalf("pointer and Enter clicks=%d", clicks)
 	}
 	tt.Key(Shift, KeyF10)
 	if !slices.Contains(tt.Menu(), "Copy link") {

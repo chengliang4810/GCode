@@ -61,11 +61,11 @@ func TestSidebarCollapsedProjectActivityLifecycle(t *testing.T) {
 		}
 	}
 	assertRunning(true)
-	if err := tt.Click("fnbot"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "fnbot · Running"); err != nil {
 		t.Fatal(err)
 	}
 	assertRunning(false)
-	if err := tt.Click("fnbot"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "fnbot"); err != nil {
 		t.Fatal(err)
 	}
 	assertRunning(true)

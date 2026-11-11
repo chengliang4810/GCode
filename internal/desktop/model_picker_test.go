@@ -27,6 +27,30 @@ func TestCaptureModelPickerAudit(t *testing.T) {
 	}
 }
 
+func clickAccessible(tt *ui.Tester, role ui.Role, name string) error {
+	info, ok := tt.AccessByRole(role, name)
+	if !ok {
+		return fmt.Errorf("ui: no accessible role %d named %q", role, name)
+	}
+	if info.Bounds.W <= 0 || info.Bounds.H <= 0 {
+		return fmt.Errorf("ui: accessible role %d named %q has no visible area: %+v", role, name, info.Bounds)
+	}
+	tt.ClickAt(info.Bounds.X+info.Bounds.W/2, info.Bounds.Y+info.Bounds.H/2)
+	return nil
+}
+
+func rightClickAccessible(tt *ui.Tester, role ui.Role, name string) error {
+	info, ok := tt.AccessByRole(role, name)
+	if !ok {
+		return fmt.Errorf("ui: no accessible role %d named %q", role, name)
+	}
+	if info.Bounds.W <= 0 || info.Bounds.H <= 0 {
+		return fmt.Errorf("ui: accessible role %d named %q has no visible area: %+v", role, name, info.Bounds)
+	}
+	tt.RightClickAt(info.Bounds.X+info.Bounds.W/2, info.Bounds.Y+info.Bounds.H/2)
+	return nil
+}
+
 func openTestModelList(tt *ui.Tester, label string) error {
 	if err := tt.Click(label); err != nil {
 		return err
@@ -87,7 +111,7 @@ func TestModelPickerProviderFiltersDoNotChangeSelection(t *testing.T) {
 			t.Fatal("provider filter mixed scopes")
 		}
 	}
-	if err := tt.Click("GPT-5.4"); err != nil {
+	if err := tt.Click("Select model GPT-5.4"); err != nil {
 		t.Fatal(err)
 	}
 	if a.modelID != "gpt-5.4" || a.modelMenu {
@@ -284,7 +308,7 @@ func TestStandardPickerReopensOnCurrentProviderAndAllowsLiveSwitch(t *testing.T)
 	if len(a.modelRows()) == 0 || a.modelRows()[0].model.ProviderID != "claude" {
 		t.Fatal("running session cannot browse another provider")
 	}
-	if err := tt.Click("Opus 4.6"); err != nil {
+	if err := tt.Click("Select model Opus 4.6"); err != nil {
 		t.Fatal(err)
 	}
 	if a.modelID != "claude-opus-4-6" || a.errorText != "" {
@@ -338,7 +362,7 @@ func TestIndependentReasoningPickerAndModelSelection(t *testing.T) {
 	if err := tt.Click("Codex"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("GPT-5.4"); err != nil {
+	if err := tt.Click("Select model GPT-5.4"); err != nil {
 		t.Fatal(err)
 	}
 	if a.modelID != "gpt-5.4" || a.reasoning == "Max" || a.modelMenu {
@@ -416,7 +440,7 @@ func TestModelPickerPreservesShellFillAndProviderChoice(t *testing.T) {
 	if err := tt.Click("Codex"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("GPT-5.4"); err != nil {
+	if err := tt.Click("Select model GPT-5.4"); err != nil {
 		t.Fatal(err)
 	}
 	fresh, err := New(a.service)

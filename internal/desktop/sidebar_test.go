@@ -16,7 +16,7 @@ func TestSidebarProjectSectionCollapsesChildrenAndPreservesComposer(t *testing.T
 	if _, ok := tt.Find("Collapse all projects"); ok {
 		t.Fatal("removed bulk toggle remains")
 	}
-	if err := tt.Click("项目"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "项目"); err != nil {
 		t.Fatal(err)
 	}
 	if !a.sidebarUI.projectsClosed || a.projectID != target || a.draft != "Keep draft" {
@@ -27,13 +27,13 @@ func TestSidebarProjectSectionCollapsesChildrenAndPreservesComposer(t *testing.T
 			t.Fatal("project children remain expanded")
 		}
 	}
-	if err := tt.Click("项目"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "项目"); err != nil {
 		t.Fatal(err)
 	}
 	if tt.HasText("第二项目的对话") || tt.HasText("了解对话输出目录内容") {
 		t.Fatal("reopening section reopened child conversations")
 	}
-	if err := tt.Click("bzaqsc-new"); err != nil {
+	if err := clickAccessible(tt, ui.RoleButton, "bzaqsc-new"); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("第二项目的对话") || tt.HasText("了解对话输出目录内容") {

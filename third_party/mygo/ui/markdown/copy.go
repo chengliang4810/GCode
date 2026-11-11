@@ -50,16 +50,9 @@ func (st *viewState) copyText(parts []ui.SelectedText) string {
 }
 
 // writeText writes the text of a selected part, with the source of the
-// math drawn as objects, as $x_i$, in place of their characters.
+// math drawn as objects, as $x_i$, in place of their characters, and
+// without links' icons, which have no source, or their joiners.
 func (st *viewState) writeText(b *strings.Builder, inf elemInfo, p ui.SelectedText) {
-	if inf.line >= 0 && st.doc.Block(inf.block).Kind == parser.CodeBlock {
-		// The source keeps its tabs, which the display shows as spaces.
-		src := st.doc.Source()
-		if a, z := st.srcAt(inf, p.Start, false), st.srcAt(inf, p.End, true); a <= z && z <= len(src) {
-			b.WriteString(src[a:z])
-		}
-		return
-	}
 	text := runeSlice(p.Text, p.Start, p.End)
 	if inf.line != -1 || inf.block >= len(st.paras) || !st.paras[inf.block].ok || len(st.paras[inf.block].p.objects) == 0 {
 		b.WriteString(text)
@@ -69,6 +62,12 @@ func (st *viewState) writeText(b *strings.Builder, inf elemInfo, p ui.SelectedTe
 	src := st.doc.Source()
 	r := p.Start
 	for _, c := range text {
+		if c == linkIconJoiner {
+			if k, found := slices.BinarySearchFunc(objects, r-1, func(o mathObject, r int) int { return o.rune - r }); found && objects[k].src == objects[k].end {
+				r++
+				continue
+			}
+		}
 		k, found := slices.BinarySearchFunc(objects, r, func(o mathObject, r int) int { return o.rune - r })
 		if found && c == '\uFFFC' && objects[k].end <= len(src) {
 			b.WriteString(src[objects[k].src:objects[k].end])
@@ -170,25 +169,13 @@ func (st *viewState) srcAt(inf elemInfo, r int, end bool) int {
 	case parser.CodeBlock, parser.HTMLBlock, parser.MathBlock:
 		// Lines from inf.line on, each followed by a newline.
 		n := d.LineCount(inf.block)
-		tab := 0
-		if b.Kind == parser.CodeBlock {
-			// Code blocks show their tabs as spaces, at tab stops.
-			tab = codeTabSize(b.Language())
-		}
 		for k := max(inf.line, 0); k < n; k++ {
 			line, at := d.Line(inf.block, k)
-			disp := line
-			if tab > 0 {
-				disp, _ = codeDisplay(line, tab)
-			}
-			c := utf8.RuneCountInString(disp)
+			c := utf8.RuneCountInString(line)
 			if r <= c || k == n-1 {
 				// Spaces standing for a tab partly taken by indentation
-				// are not the source's, nor are the ones tabs show as.
+				// are not the source's.
 				pad := linePad(d.Source(), line, at)
-				if tab > 0 {
-					return codeSourceAt(d.Source(), line, at, pad, r, end, tab)
-				}
 				off := at
 				for j := pad; j < r && off < len(d.Source()); j++ {
 					_, w := utf8.DecodeRuneInString(d.Source()[off:])
@@ -338,45 +325,6 @@ func (st *viewState) closeSyntax(in []parser.Inline, k int) string {
 		return src[n.End-ticks : n.End]
 	}
 	return ""
-}
-
-// codeSourceAt returns the source offset of display rune r of a code line
-// starting at at: its first pad display runes are spaces standing for a tab
-// the fence's indentation took, and the others are the line's, its tabs
-// expanded to spaces at tabSize-column stops, as codeDisplay shows them.
-// A caret inside a tab asks for its end when end, so that a selection
-// through any of its spaces copies it whole.
-func codeSourceAt(src, line string, at, pad, r int, end bool, tabSize int) int {
-	if r <= pad {
-		return at
-	}
-	i, col, off := pad, pad, at
-	for off < len(src) {
-		ch, w := utf8.DecodeRuneInString(src[off:])
-		if ch == '\n' || ch == '\r' {
-			break
-		}
-		n := 1
-		if ch == '\t' {
-			n = tabSize - col%tabSize
-			if col >= codeTabLimit {
-				n = 1
-			}
-		}
-		if r <= i {
-			return off
-		}
-		if r < i+n {
-			if ch == '\t' && end {
-				return off + w
-			}
-			return off
-		}
-		i += n
-		col += n
-		off += w
-	}
-	return off
 }
 
 // linePad returns how many spaces a code line starts with that are not

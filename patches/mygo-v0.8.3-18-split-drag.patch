@@ -1,0 +1,246 @@
+diff --git a/third_party/mygo/docs/ui/split.md b/third_party/mygo/docs/ui/split.md
+index 3eaad2dd1d4e27d70db99d9fbb001e85813d6a45..c0b718db433e2c0987a26f37a9811b3d203fec47 100644
+--- a/third_party/mygo/docs/ui/split.md
++++ b/third_party/mygo/docs/ui/split.md
+@@ -8,7 +8,12 @@ keyboard focus: a `*float32` is the width of the first, which the divider
+ keeps 40 DIPs from either edge. When the window leaves less room than
+ that, the first pane gives way so the second keeps its 40 DIPs, and the
+ first takes its size back when there is room again; the `*float32` keeps
+-the size the user chose. `Changed` reports a move.
++the size the user chose.
++
++A drag writes the size before the panes build, so read `*float32` after the
++split returns to see where the user put it; the same pass lays the panes out
++from it. `Changed` reports an arrow-key move, which lands after the panes
++have built and is read on the next frame.
+ 
+ ```go
+ ui.Split(c, &app.sidebarWidth, func() { app.files(c) }, func() { app.editor(c) }).Fill()
+diff --git a/third_party/mygo/ui/input.go b/third_party/mygo/ui/input.go
+index ad0f9ec5d8ceec121eaaaa62045571bb5f5d5b3a..aa702131bc1e77e1bf246ff886d2965526eb03d2 100644
+--- a/third_party/mygo/ui/input.go
++++ b/third_party/mygo/ui/input.go
+@@ -1753,6 +1753,21 @@ func (e *node) Dragged() (dx, dy float32, ok bool) {
+ 	return s.dragX, s.dragY, true
+ }
+ 
++// draggedBy is Dragged for a control that applies the move to its own layout
++// before it builds its children, as Split does: the move reaches the frame
++// that asked for it, and needs no second build to be reported.
++func (e *node) draggedBy() (dx, dy float32, ok bool) {
++	if !e.hasState() {
++		return 0, 0, false
++	}
++	e.flags |= flagDraggable
++	s := e.st
++	if !s.pressedPrimary() {
++		return 0, 0, false
++	}
++	return s.dragX, s.dragY, true
++}
++
+ // DragVelocity returns how fast, in DIPs per second along the element's
+ // local axes, the pointer pressing the element moves now: zero once it
+ // stops for a moment, or while nothing presses the element with the
+diff --git a/third_party/mygo/ui/split.go b/third_party/mygo/ui/split.go
+index 1d022326d78919878eb6d93f5dea11c288cc6862..693bbd1d86f37f3d4727bb3332d451e196b3af56 100644
+--- a/third_party/mygo/ui/split.go
++++ b/third_party/mygo/ui/split.go
+@@ -4,9 +4,11 @@ package ui
+ // them that the user drags to resize them, or moves with the arrows once
+ // it has the keyboard focus: *size is the width of first, which the
+ // divider keeps 40 DIPs from either edge. With less room than that, first
+-// gives way, keeping *size for when there is room again. Changed reports a
+-// move. Right to left (Direction), first is on the right. SplitReset makes
+-// a double click on the divider put first back at a size the app chooses.
++// gives way, keeping *size for when there is room again. A drag writes *size
++// before the panes build, so the view reads it after the split in the same
++// pass; Changed reports the arrow keys, which move the line after the panes
++// have built. Right to left (Direction), first is on the right. SplitReset
++// makes a double click on the divider put first back at a size the app chooses.
+ //
+ //	ui.Split(c, &app.sidebar, app.files, app.editor).Fill()
+ func coreSplit(c *context, size *float32, first, second func()) *node {
+@@ -76,6 +78,11 @@ func splitResetOf(e *node) *splitResetSettings {
+ func split(c *context, size *float32, first, second func(), vertical, inPercent bool) *node {
+ 	t := c.theme
+ 	minPane, grip := t.Space(10), t.Space(1.5)
++	// The hitbox a pointer grabs, as the reference's pane resize edge: 20
++	// DIPs around the seam, while the line it drags stays one DIP.
++	if grip < 20 {
++		grip = 20
++	}
+ 	stack := func() *node {
+ 		// One element or the other: creating one adds it to the parent.
+ 		if vertical {
+@@ -109,7 +116,7 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 	}
+ 	e.Children(func() {
+ 		// The panes meet at a line one DIP thick, with nothing between them
+-		// and it. The handle the pointer drags spans a few DIPs over either
++		// and it. The handle the pointer drags spans the grip over either
+ 		// pane, above them: it is placed in this box, which has no padding,
+ 		// whatever the split's.
+ 		in := stack().Grow(1).AlignItems(Stretch)
+@@ -130,7 +137,12 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 		case !inPercent && total > 0 && *size > minPane:
+ 			shown = fitSplit(*size, total, minPane)
+ 		}
+-		set := func(v float32) {
++		// set sizes the first pane. A drag answers the pointer here, before
++		// the panes build, so what they lay out from *size follows it in the
++		// same pass; it does not ask for another build to report the move.
++		// Only a keyboard move reports Changed: a view reads the size a drag
++		// left after building the split, in the same pass.
++		set := func(v float32, report bool) {
+ 			v = fitSplit(v, total, minPane)
+ 			if inPercent {
+ 				if total <= 1 {
+@@ -140,8 +152,33 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 			}
+ 			if v != *size {
+ 				*size = v
+-				e.st.markChanged()
+-				c.rt.consumed = true
++				if report {
++					e.st.markChanged()
++				}
++			}
++		}
++		// The handle is made before the panes, over the line where the last
++		// frame laid it out: placeOn keeps it there, also when the first pane
++		// gives way.
++		handle := coreBox(c).Absolute()
++		handle.flags |= flagDraggable | flagHover
++		if vertical {
++			handle.Left(0).Right(0).Top(-(grip - 1) / 2).Height(grip).Cursor(CursorResizeNS)
++		} else {
++			handle.Top(0).Bottom(0).Start(-(grip - 1) / 2).Width(grip).Cursor(CursorResizeEW)
++		}
++		// A press there focuses the line, as a press on it would. Only a
++		// move changes the size, so a press keeps *size for when there is
++		// room again.
++		dx, dy, held := handle.draggedBy()
++		if held && (dx != 0 || dy != 0) {
++			switch {
++			case vertical:
++				set(shown+dy, false)
++			case handle.rtl():
++				set(shown-dx, false)
++			default:
++				set(shown+dx, false)
+ 			}
+ 		}
+ 		// resetTo puts first at the size SplitReset chose, in the split's
+@@ -178,6 +215,10 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 			div.widget = "Divider"
+ 			div.flags |= flagOwnRing
+ 			length(div, 1)
++			handle.placeOn = div
++			if held {
++				div.Focus()
++			}
+ 			// The arrows move the line the way they point.
+ 			back, forth := div.arrows()
+ 			if vertical {
+@@ -185,10 +226,10 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 			}
+ 			div.afterInput(func() {
+ 				if div.Shortcut(0, back) {
+-					set(shown - t.Space(2.5))
++					set(shown-t.Space(2.5), true)
+ 				}
+ 				if div.Shortcut(0, forth) {
+-					set(shown + t.Space(2.5))
++					set(shown+t.Space(2.5), true)
+ 				}
+ 			})
+ 			div.hasRange, div.accRange = true, [3]float64{float64(minPane), float64(max(total-1-minPane, minPane)), float64(shown)}
+@@ -201,40 +242,17 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent
+ 			minLength(b, minPane)
+ 			b.Children(second)
+ 
+-			// placeOn keeps the handle on the divider where this frame lays
+-			// it out, also when the first pane gives way.
+-			handle := coreBox(c).Absolute()
+-			handle.placeOn = div
+-			handle.flags |= flagDraggable | flagHover
+-			if vertical {
+-				handle.Left(0).Right(0).Top(-(grip - 1) / 2).Height(grip).Cursor(CursorResizeNS)
+-			} else {
+-				handle.Top(0).Bottom(0).Start(-(grip - 1) / 2).Width(grip).Cursor(CursorResizeEW)
+-			}
+-			// A press there focuses the line, as a press on it would. Only a
+-			// move changes the size, so a press keeps *size for when there is
+-			// room again. A double click restores the size SplitReset chose.
+-			dx, dy, held := handle.Dragged()
++			// A press there focuses the line, as a press on it would. A double
++			// click restores the size SplitReset chose; pointer movement was
++			// applied above, before the panes built.
+ 			handle.afterInput(func() {
+ 				if reset != nil && reset.shownSet && handle.DoubleClicked() {
+ 					div.Focus()
+ 					resetTo(reset.shown)
+ 					return
+ 				}
+-				if !held {
+-					return
+-				}
+-				div.Focus()
+-				if dx == 0 && dy == 0 {
+-					return
+-				}
+-				switch {
+-				case vertical:
+-					set(shown + dy)
+-				case handle.rtl():
+-					set(shown - dx)
+-				default:
+-					set(shown + dx)
++				if held {
++					div.Focus()
+ 				}
+ 			})
+ 			div.Draw(func(p *Painter, r Rect) {
+diff --git a/third_party/mygo/ui/widgets_more_test.go b/third_party/mygo/ui/widgets_more_test.go
+index a88533e9c1c9b4a7ae89a92cece58f51a4879816..f5a3645787537be708e0298792622085bd83037d 100644
+--- a/third_party/mygo/ui/widgets_more_test.go
++++ b/third_party/mygo/ui/widgets_more_test.go
+@@ -105,6 +105,37 @@ func TestSplit(t *testing.T) {
+ 	}
+ }
+ 
++// A drag resizes the first pane before it builds, so the frame that shows the
++// moved divider already lays its content out at the new size, and a move asks
++// for no second build pass. The grip reaches 10 DIPs over either pane.
++func TestSplitDragAppliesBeforeThePanesBuild(t *testing.T) {
++	size := float32(120)
++	builds, changes := 0, 0
++	tt := coreNewTester(func(c *context) {
++		builds++
++		split := coreSplit(c, &size, func() { coreText(c, "left") }, func() { coreText(c, "right") }).Fill()
++		if split.Changed() {
++			changes++
++		}
++	}, 400, 200)
++	tt.Press(size-9, 100)
++	builds = 0
++	tt.Move(size-9+50, 100)
++	if size != 170 {
++		t.Fatalf("dragged 50 DIPs right, the first pane is %v wide", size)
++	}
++	if r, _ := tt.Find("right"); r.X != 171 {
++		t.Fatalf("the second pane starts at %v after the drag", r.X)
++	}
++	if builds != 1 {
++		t.Fatalf("a drag move built %d passes, want 1", builds)
++	}
++	tt.Release(size-9+50, 100)
++	if changes != 0 {
++		t.Fatalf("a pointer drag reported %d Changed calls", changes)
++	}
++}
++
+ func TestSplitVertical(t *testing.T) {
+ 	size := float32(60)
+ 	tt := coreNewTester(func(c *context) {

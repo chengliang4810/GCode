@@ -33,9 +33,9 @@ func (a *App) transcriptMessageForTest(c *ui.Context, message contracts.Message)
 	selection.Menu(c, root)
 }
 
-// A code block shows the tabs of its source at the editor's tab stops,
-// rather than collapsing them to nothing.
-func TestTranscriptCodeBlockShowsTabs(t *testing.T) {
+// Conversation code keeps its original tabs; the shared code-block view
+// supplies the editor's tab stops without rewriting the source.
+func TestTranscriptCodeBlockUsesNativeTabs(t *testing.T) {
 	a := testApp(t, "transcript")
 	a.selectSession("chat-0")
 	a.state.Messages[a.sessionID] = []contracts.Message{
@@ -48,7 +48,7 @@ func TestTranscriptCodeBlockShowsTabs(t *testing.T) {
 		c.SetTheme(a.palette.UI())
 		a.transcriptMessageForTest(c, a.state.Messages[a.sessionID][0])
 	}, 900, 600)
-	if !tt.HasText("    if x {") || !tt.HasText("        panic(1)") {
-		t.Fatalf("code block tabs are missing: %q", tt.Texts())
+	if !tt.HasText("\tif x {") || !tt.HasText("\t\tpanic(1)") {
+		t.Fatalf("code block no longer retains its source tabs: %q", tt.Texts())
 	}
 }

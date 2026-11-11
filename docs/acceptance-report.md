@@ -1,5 +1,7 @@
 # Acceptance report — 2026-10-28
 
+> 本文保留原审计阶段的框架版本与验收范围；当前框架及补丁以 [mygo-patches.md](mygo-patches.md) 和源码锁为准。
+
 Overall result: **in progress / not visually accepted**.
 
 Latest sealed phase: `reference/validation/tabstrip-r16-result.json` (R16).

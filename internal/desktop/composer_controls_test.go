@@ -43,7 +43,7 @@ func TestRunningComposersAllowSilentProviderAndReasoningChanges(t *testing.T) {
 					if err := tt.Click("Codex"); err != nil {
 						t.Fatal("running composer locked provider:", err)
 					}
-					if err := tt.Click("GPT-5.4"); err != nil {
+					if err := tt.Click("Select model" + suffix + " GPT-5.4"); err != nil {
 						t.Fatal(err)
 					}
 					if err := tt.Click("Select reasoning effort" + suffix); err != nil {

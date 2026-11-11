@@ -1,0 +1,178 @@
+diff --git a/third_party/mygo/ui/api_gen.go b/third_party/mygo/ui/api_gen.go
+index b33d8be034ed9ccea93a4c4e2cff98a19485ad91..861524d6c35fd8ea3e7d5a6b8fa89f043df01e46 100644
+--- a/third_party/mygo/ui/api_gen.go
++++ b/third_party/mygo/ui/api_gen.go
+@@ -321,6 +321,15 @@ func (_handle *Context) CloseToast(id string) {
+ 	_ctx.CloseToast(id)
+ }
+ 
++// DeviceScale returns the device pixels per DIP used to paint this frame.
++func (_handle *Context) DeviceScale() float32 {
++	_ctx := _handle.build()
++	if _ctx == nil {
++		return 0
++	}
++	return _ctx.DeviceScale()
++}
++
+ // Direction returns the direction of the elements built now: that of the
+ // element they go in. Widgets of an app's own read it to draw what points
+ // along the line, as an arrow forward:
+@@ -374,6 +383,21 @@ func (_handle *Context) FocusTakesText() bool {
+ 	return _ctx.FocusTakesText()
+ }
+ 
++// InputActivity returns a plain snapshot of the input received by the UI
++// engine since its first subscription. Events before that subscription have
++// no history, so the query establishing that subscription returns zero. It
++// consumes no event. Reading it subscribes this window to a new frame after
++// subsequent counted input or a blur that clears PointerDown, so
++// the view can observe activity even when no widget otherwise needs a frame.
++// It requests no recurring frame or timer.
++func (_handle *Context) InputActivity() InputActivitySnapshot {
++	_ctx := _handle.build()
++	if _ctx == nil {
++		return *new(InputActivitySnapshot)
++	}
++	return _ctx.InputActivity()
++}
++
+ // Instant reports whether this frame shows animated values at once
+ // (DisableAnimations). Views read it to render a change settled in the same
+ // frames where its animations are disabled.
+@@ -579,6 +603,17 @@ func (_handle *Context) SetMenuPresentation(p MenuPresentation) {
+ 	_ctx.SetMenuPresentation(p)
+ }
+ 
++// SetMotionPreferences overrides motion for this window, until called again.
++// Call it before building the window's controls. The preferences are copied;
++// nil restores the desktop defaults. It does not alter system preferences.
++func (_handle *Context) SetMotionPreferences(p *MotionPreferences) {
++	_ctx := _handle.build()
++	if _ctx == nil {
++		return
++	}
++	_ctx.SetMotionPreferences(p)
++}
++
+ // SetTheme makes the frame use t, for the window's root and the widgets
+ // created after the call. Inside the children of a Themed, which keep its
+ // theme, t is for the root and the widgets after the Themed.
+@@ -1190,6 +1225,21 @@ func CollapsibleBase(c *Context, open *bool) CollapsibleParts {
+ 	return wrapCollapsibleParts(_p)
+ }
+ 
++// CollapsibleBaseWithAnimation creates CollapsibleBase using animation for its
++// expansion and collapse. It keeps the same trigger, panel, keyboard and
++// accessibility behavior. Animation's zero value uses its default spring;
++// reduced motion and DisableAnimations still move to the target immediately.
++func CollapsibleBaseWithAnimation(c *Context, open *bool, animation Animation) CollapsibleParts {
++	_ctx := c.build()
++	if _ctx == nil {
++		return CollapsibleParts{}
++	}
++	_ctx.rt.beginBuild()
++	_p := coreCollapsibleBaseWithAnimation(_ctx, open, animation)
++	_ctx.rt.endBuild()
++	return wrapCollapsibleParts(_p)
++}
++
+ // ColorPicker creates a picker of *color, as AppKit's color panel: a
+ // square choosing the saturation, across, and the brightness, up, of the
+ // hue its slider chooses below it, a slider of opacity, the color in hex,
+@@ -2409,9 +2459,11 @@ func Spinner(c *Context) Element {
+ // them that the user drags to resize them, or moves with the arrows once
+ // it has the keyboard focus: *size is the width of first, which the
+ // divider keeps 40 DIPs from either edge. With less room than that, first
+-// gives way, keeping *size for when there is room again. Changed reports a
+-// move. Right to left (Direction), first is on the right. SplitReset makes
+-// a double click on the divider put first back at a size the app chooses.
++// gives way, keeping *size for when there is room again. A drag writes *size
++// before the panes build, so the view reads it after the split in the same
++// pass; Changed reports the arrow keys, which move the line after the panes
++// have built. Right to left (Direction), first is on the right. SplitReset
++// makes a double click on the divider put first back at a size the app chooses.
+ //
+ //	ui.Split(c, &app.sidebar, app.files, app.editor).Fill()
+ func Split(c *Context, size *float32, first func(), second func()) Element {
+@@ -3611,6 +3663,26 @@ func (_handle Element) Attach(at Anchor, self Anchor) Element {
+ 	return wrapElement(_node.Attach(at, self))
+ }
+ 
++// AttachAtPoint takes the element out of its parent's layout and places its
++// margin box gap logical pixels right of and below (x, y), in window coordinates.
++// It measures this layout's own content, padding, border and min/max constraints
++// before positioning. An overflowing right or bottom edge flips that axis to
++// gap before the point; a negative origin then moves to zero. An oversized box
++// keeps its measured size. There is no implicit window-edge inset or rounding.
++//
++// gap is at least zero. The coordinates are physical directions, independent of
++// text direction. Build in an Overlay to avoid ancestor clipping. This replaces
++// Attach/AttachTo positioning; SnapToWindow does not alter this placement.
++func (_handle Element) AttachAtPoint(x float32, y float32, gap float32) Element {
++	_node := _handle.node()
++	if _node == nil {
++		return Element{}
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return wrapElement(_node.AttachAtPoint(x, y, gap))
++}
++
+ // AttachEdgeMargin sets how far an element placed with AttachTo stays
+ // from the window's edges, v DIPs on each side, where it is 4 unless set:
+ // a panel that must not touch the edges of a small window keeps 12 from
+@@ -3642,7 +3714,7 @@ func (_handle Element) AttachEdgeMargin(v float32) Element {
+ // The element is target's popover: its elements follow target as Tab
+ // moves, and a press on target is not outside it (PressedOutside). Build
+ // target before it, in the same frame. AttachedAnchors tells the side it
+-// went to.
++// went to. SnapToWindow opts out of flipping.
+ func (_handle Element) AttachTo(target Element, at Anchor, self Anchor) Element {
+ 	_node := _handle.node()
+ 	if _node == nil {
+@@ -5590,6 +5662,20 @@ func (_handle Element) InViewMargin(margin ...float32) bool {
+ 	return _node.InViewMargin(margin...)
+ }
+ 
++// InputDisplayText returns a snapshot of the text a text input currently
++// displays, including an input method's uncommitted composition. Password
++// inputs return their masking bullets. Other elements return an empty string.
++// Reading it changes no bound value, composition, selection or undo history.
++func (_handle Element) InputDisplayText() string {
++	_node := _handle.node()
++	if _node == nil {
++		return ""
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return _node.InputDisplayText()
++}
++
+ // InputMethod sets whether the system's input methods compose text for the
+ // element while it has the keyboard focus, as they do by default for one
+ // that takes text (HandleTextInput, TextCaret). Turned off, keys type the
+@@ -7584,6 +7670,23 @@ func (_handle Element) SnapAlignY(a Align) Element {
+ 	return wrapElement(_node.SnapAlignY(a))
+ }
+ 
++// SnapToWindow fits an element placed with AttachTo into the window without
++// flipping its anchors. It uses this layout's full margin box, including
++// padding and border: an overflowing right or bottom edge moves to margin
++// inside that window edge, then a negative left or top edge moves to margin.
++// A box larger than the window therefore keeps its left or top edge visible.
++// Edges already inside the window stay where they are, even nearer than margin.
++// Calling this with zero still opts out of AttachTo's default flipping.
++func (_handle Element) SnapToWindow(margin float32) Element {
++	_node := _handle.node()
++	if _node == nil {
++		return Element{}
++	}
++	_ctx := _node.c
++	_ = _ctx
++	return wrapElement(_node.SnapToWindow(margin))
++}
++
+ // Sort tells assistive technology the order a table's rows are sorted in
+ // by the column whose header the element is (RoleColumnHeader), as ARIA's
+ // aria-sort: for a sortable table of your own, whose headers show it.

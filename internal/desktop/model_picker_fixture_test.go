@@ -85,7 +85,7 @@ func TestModelPickerFixtureUsesProductionMutations(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Frame()
-	if err := tt.Click("GPT-5.3 Codex"); err != nil {
+	if err := tt.Click("Select model GPT-5.3 Codex"); err != nil {
 		t.Fatal(err)
 	}
 	tt.Advance(10 * time.Millisecond)

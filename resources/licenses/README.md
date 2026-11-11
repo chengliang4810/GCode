@@ -12,7 +12,7 @@ identified explicitly below. `manifest.json` records the delivered bytes.
 | gobmp | `v0.0.0-20230614200233-a9de23ed2e25` | `go/gobmp-COPYING.txt` |
 | Models.dev catalog | JSON snapshot retrieved 2026-10-30 | `models-dev/LICENSE.txt` — original MIT, copyright 2025 models.dev |
 | Zeron source, artwork and rendering adapters | v0.2.128 / `ab189159f10cf8e63c0502be75a59bbc487e0eaf` | `zeron/LICENSE.txt` — original MIT text, copyright 2026 Wing |
-| MyGo | v0.7.4 + `rcode-native-ui.23` | `mygo/LICENSE.txt` — original MIT; patch source is fixed by `third_party/mygo.lock.json` in the source distribution |
+| MyGo | v0.8.3 + `rcode-native-ui.24` | `mygo/LICENSE.txt` — original MIT; patch source is fixed by `third_party/mygo.lock.json` in the source distribution |
 | Geist / Geist Mono | v1.7.2 | `fonts/Geist-OFL.txt`, `fonts/Geist-NOTICE.md` — original OFL 1.1 and reference font notice |
 | Solar Icons | imported reference Linear SVG set | `icons/Solar-ATTRIBUTION.md`, `icons/CC-BY-4.0.txt` |
 | Symbols file icons | `296ef1b62287fb2315cb5651e552e09e8c8e1de8` | `icons/Symbols-LICENSE.txt` — original MIT, Miguel Solorio |
@@ -55,7 +55,7 @@ terms remain recorded for the historical generated assets.
 ## Primary sources
 
 - Zeron: `https://github.com/zeronsh/zeron` (the local frozen reference is authoritative).
-- MyGo: `https://github.com/egoist/mygo/tree/v0.7.4`.
+- MyGo: `https://github.com/egoist/mygo/tree/v0.8.3`.
 - Geist: `https://github.com/vercel/geist-font/tree/v1.7.2`.
 - Symbols: `https://github.com/miguelsolorio/vscode-symbols/tree/296ef1b62287fb2315cb5651e552e09e8c8e1de8`.
 - CC BY 4.0 legal code: `https://creativecommons.org/licenses/by/4.0/legalcode.txt`.

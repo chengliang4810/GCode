@@ -1,4 +1,60 @@
-# MyGo v0.7.4 固定补丁
+# MyGo v0.8.3 固定补丁
+
+截至 2026-11-11，本仓库固定官方 `github.com/egoist/mygo v0.8.3`，基于官方提交
+`5add3817c74bb7505d0b473bc5fb28abe2201b99`，本地修订号为 `rcode-native-ui.24`。
+`go.mod` 只允许该模块替换到 `./third_party/mygo`；框架源码、补丁和锁文件共同构成可重放的固定输入。
+
+本次升级保留 16 个本地补丁。编号沿用历史功能编号，因此列表不连续：
+
+1. [`mygo-v0.8.3-01-motion.patch`](../patches/mygo-v0.8.3-01-motion.patch)：窗口级动效覆盖与滚轮缓动偏好，支持恢复系统设置。
+2. [`mygo-v0.8.3-02-markdown-line-height.patch`](../patches/mygo-v0.8.3-02-markdown-line-height.patch)：Markdown 精确 DIP 行高字段及排版、复制、流式选择测试。
+3. [`mygo-v0.8.3-03-snap-to-window.patch`](../patches/mygo-v0.8.3-03-snap-to-window.patch)：`AttachTo` 的 `SnapToWindow`，按实际 margin box 贴入窗口且不自动翻转锚点。
+4. [`mygo-v0.8.3-04-input-display-text.patch`](../patches/mygo-v0.8.3-04-input-display-text.patch)：原生输入显示文本快照，包含未提交 IME 预编辑内容。
+5. [`mygo-v0.8.3-05-windows-uia-provider.patch`](../patches/mygo-v0.8.3-05-windows-uia-provider.patch)：Windows UIA 服务端 provider 选项和 COM 契约测试。
+6. [`mygo-v0.8.3-06-richtext-composer.patch`](../patches/mygo-v0.8.3-06-richtext-composer.patch)：富文本 composer 的键盘、粘贴、IME、内容测量和附件纯文本处理。
+8. [`mygo-v0.8.3-08-inline-link-selection.patch`](../patches/mygo-v0.8.3-08-inline-link-selection.patch)：正文 `RoleLink` 跨过拖拽阈值后把手势交回可选段落；点击与上下文菜单保留。
+9. [`mygo-v0.8.3-09-collapsible-animation.patch`](../patches/mygo-v0.8.3-09-collapsible-animation.patch)：可配置的 `CollapsibleBaseWithAnimation`，保留默认动效和减少动态行为。
+10. [`mygo-v0.8.3-10-webview-data-directory.patch`](../patches/mygo-v0.8.3-10-webview-data-directory.patch)：应用级 WebView 数据目录配置。
+11. [`mygo-v0.8.3-11-windows-glyph-placement.patch`](../patches/mygo-v0.8.3-11-windows-glyph-placement.patch)：Windows ClearType quarter glyph 定位、缓存策略、颜色字体排除和跨架构测试。
+12. [`mygo-v0.8.3-12-rendering-parity.patch`](../patches/mygo-v0.8.3-12-rendering-parity.patch)：quarter 绘制路径传递 dotted 装饰，链接 hover 使用点状下划线并同步回归测试。
+13. [`mygo-v0.8.3-13-tooltip-primitives.patch`](../patches/mygo-v0.8.3-13-tooltip-primitives.patch)：tooltip 点定位、按需输入事实和指针持有按钮观察状态。
+15. [`mygo-v0.8.3-15-selection-spans.patch`](../patches/mygo-v0.8.3-15-selection-spans.patch)：文本选区保存 span 快照，虚拟化内容离开构建范围后仍可绘制、复制和编辑。
+17. [`mygo-v0.8.3-17-api-gen.patch`](../patches/mygo-v0.8.3-17-api-gen.patch)：运行 `go generate ./ui` 生成公开 API 包装，纳入本链新增方法。
+18. [`mygo-v0.8.3-18-split-drag.patch`](../patches/mygo-v0.8.3-18-split-drag.patch)：Split 拖动在 pane 构建前写入尺寸，扩大 20 DIP 命中区，并用 `draggedBy` 同帧报告；仅主按钮拖动生效。
+19. [`mygo-v0.8.3-19-patch-identity.patch`](../patches/mygo-v0.8.3-19-patch-identity.patch)：固定 `v0.8.3`、`rcode-native-ui.24` 和发布构建源码指纹。
+
+未列入本次链的历史编号：
+
+- `07` 已被 v0.8.3 上游吸收。
+- `14` 已被 v0.8.3 上游吸收。
+- `16` 由 v0.8.3 原生 `TabSize` 能力及产品侧接线替代，不再保留旧补丁或兼容分支。
+
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)，固定树包含 2356 个文件，
+树 SHA-256 为
+`e32652f3fe5699ea3c1e40a8fe4b832e96f1b9e6824f70bf7768bd0cc8760926`。
+补丁哈希、树哈希、文件数和版本身份同时记录在源码锁与
+[`scripts/frameworkpin/pin.go`](../scripts/frameworkpin/pin.go)；`go run ./scripts/check-framework.go`
+会校验这些值、模块替换路径以及实际 Go 模块解析结果。
+
+树指纹按 UTF-8 相对路径的字节序排序，再对每个
+`路径 + NUL + 文件 SHA-256 十六进制 + LF` 记录做 SHA-256。`.gitattributes` 禁止框架文件换行转换，
+因此重放结果按原始字节校验。补丁链从官方 v0.8.3 快照重新初始化后，按 01、02、03、04、05、06、08、
+09、10、11、12、13、15、17、18、19 顺序执行 `git apply --check` 和应用，得到与主 checkout
+逐文件、逐字节一致的结果。完整命令和本轮验证结果见
+[`output/mygo-upgrade-20261111/framework-verification.md`](../output/mygo-upgrade-20261111/framework-verification.md)。
+
+`third_party/mygo/internal/text/glyph_placement_windows.go` 的颜色字体判断使用包级 `isColor`，
+避免 v0.8.3 中不存在的 `dwrite.isColor` 方法；Windows 交叉编译必须覆盖该路径。链接 RoleLink
+遵循 v0.8.3 的键盘语义：Enter 激活，Space 保留滚动，不为旧行为增加框架兼容分支。
+
+本文件记录当前固定版本和补丁能力。旧 v0.7.4 记录保留在下方，仅作为截至 2026-11-05 的历史快照；
+其中旧补丁链接固定到提交 `fe336ef887c4918444ccaf2ab913f3abd5bd31a4`，不代表当前 checkout 的文件集合。
+
+---
+
+## 历史记录（截至 2026-11-05，v0.7.4 + `rcode-native-ui.23`）
+
+### 2026-11-02：v0.7.4 固定补丁（历史记录）
 
 2026-11-02：框架自 v0.7.3 升级到官方 **v0.7.4**（提交 `9bd34e1eb9…`,
 2026-11-01 发布），本地修订号 `rcode-native-ui.23`。上游 v0.7.4 已收录本仓库此前
@@ -30,25 +86,25 @@ UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同
 
 按顺序应用的补丁（19 个条目）：
 
-1. [`mygo-v0.7.4-01-motion.patch`](../patches/mygo-v0.7.4-01-motion.patch)：窗口级动效与滚轮缓动偏好。
-2. [`mygo-v0.7.4-02-markdown-line-height.patch`](../patches/mygo-v0.7.4-02-markdown-line-height.patch)：Markdown 可选 DIP 精确行高（与上游倍数行高并存）。
-3. [`mygo-v0.7.4-03-snap-to-window.patch`](../patches/mygo-v0.7.4-03-snap-to-window.patch)：可选按本轮实际 margin box 贴窗，不自动翻转。
-4. [`mygo-v0.7.4-04-input-display-text.patch`](../patches/mygo-v0.7.4-04-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
-5. [`mygo-v0.7.4-05-windows-uia-provider.patch`](../patches/mygo-v0.7.4-05-windows-uia-provider.patch)：Windows UIA 服务端 provider（`ServerSideProvider|UseComThreading` = `0x22`）与 COM 契约测试。
-6. [`mygo-v0.7.4-06-richtext-composer.patch`](../patches/mygo-v0.7.4-06-richtext-composer.patch)：原生富文本键盘/粘贴回调、IME 与内容测量快照、固定行高；与上游段落缩进/两端对齐并集。
-7. [`mygo-v0.7.4-07-richtext-usejustify.patch`](../patches/mygo-v0.7.4-07-richtext-usejustify.patch)：保留上游 `text.Shared().UseJustify()` 调用。
-8. [`mygo-v0.7.4-08-inline-link-selection.patch`](../patches/mygo-v0.7.4-08-inline-link-selection.patch)：正文 `RoleLink` 越过拖拽阈值后手势交回段落；不触发打开。
-9. [`mygo-v0.7.4-09-collapsible-animation.patch`](../patches/mygo-v0.7.4-09-collapsible-animation.patch)：`ui.CollapsibleBaseWithAnimation`，默认仍 200ms，可设 140ms 独立曲线。
-10. [`mygo-v0.7.4-10-webview-data-directory.patch`](../patches/mygo-v0.7.4-10-webview-data-directory.patch)：`Application.SetWebViewDataDirectory`（Windows WebView2 目录）。
-11. [`mygo-v0.7.4-11-windows-glyph-placement.patch`](../patches/mygo-v0.7.4-11-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与 ClearType quarter 定位。
-12. [`mygo-v0.7.4-12-rendering-parity.patch`](../patches/mygo-v0.7.4-12-rendering-parity.patch)：链接 hover 改为点状下划线；quarter 定位的绘制路径同步 `dotted` 装饰。
-13. [`mygo-v0.7.4-13-tooltip-primitives.patch`](../patches/mygo-v0.7.4-13-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属。
-14. [`mygo-v0.7.4-14-uia-benchmark-close.patch`](../patches/mygo-v0.7.4-14-uia-benchmark-close.patch)：补齐 UIA benchmark 合并后的函数收尾。
-15. [`mygo-v0.7.4-15-selection-spans.patch`](../patches/mygo-v0.7.4-15-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制。
-16. [`mygo-v0.7.4-16-code-block-tabs.patch`](../patches/mygo-v0.7.4-16-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。
-17. [`mygo-v0.7.4-17-api-gen.patch`](../patches/mygo-v0.7.4-17-api-gen.patch)：`go generate ./ui` 重新生成公开 API 包装，纳入本链新增的 `Element`/`Context` 方法。
-18. [`mygo-v0.7.4-18-split-drag.patch`](../patches/mygo-v0.7.4-18-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告；含 `TestSplitDragAppliesBeforeThePanesBuild` 回归测试。
-19. [`mygo-v0.7.4-19-patch-identity.patch`](../patches/mygo-v0.7.4-19-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.23` 身份。
+1. [`mygo-v0.7.4-01-motion.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-01-motion.patch)：窗口级动效与滚轮缓动偏好。
+2. [`mygo-v0.7.4-02-markdown-line-height.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-02-markdown-line-height.patch)：Markdown 可选 DIP 精确行高（与上游倍数行高并存）。
+3. [`mygo-v0.7.4-03-snap-to-window.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-03-snap-to-window.patch)：可选按本轮实际 margin box 贴窗，不自动翻转。
+4. [`mygo-v0.7.4-04-input-display-text.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-04-input-display-text.patch)：只读原生输入显示快照，包含未提交预编辑文本。
+5. [`mygo-v0.7.4-05-windows-uia-provider.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-05-windows-uia-provider.patch)：Windows UIA 服务端 provider（`ServerSideProvider|UseComThreading` = `0x22`）与 COM 契约测试。
+6. [`mygo-v0.7.4-06-richtext-composer.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-06-richtext-composer.patch)：原生富文本键盘/粘贴回调、IME 与内容测量快照、固定行高；与上游段落缩进/两端对齐并集。
+7. [`mygo-v0.7.4-07-richtext-usejustify.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-07-richtext-usejustify.patch)：保留上游 `text.Shared().UseJustify()` 调用。
+8. [`mygo-v0.7.4-08-inline-link-selection.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-08-inline-link-selection.patch)：正文 `RoleLink` 越过拖拽阈值后手势交回段落；不触发打开。
+9. [`mygo-v0.7.4-09-collapsible-animation.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-09-collapsible-animation.patch)：`ui.CollapsibleBaseWithAnimation`，默认仍 200ms，可设 140ms 独立曲线。
+10. [`mygo-v0.7.4-10-webview-data-directory.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-10-webview-data-directory.patch)：`Application.SetWebViewDataDirectory`（Windows WebView2 目录）。
+11. [`mygo-v0.7.4-11-windows-glyph-placement.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-11-windows-glyph-placement.patch)：checked `ui.WithGlyphPlacement` 与 ClearType quarter 定位。
+12. [`mygo-v0.7.4-12-rendering-parity.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-12-rendering-parity.patch)：链接 hover 改为点状下划线；quarter 定位的绘制路径同步 `dotted` 装饰。
+13. [`mygo-v0.7.4-13-tooltip-primitives.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-13-tooltip-primitives.patch)：点定位、按需输入事实和 committed Handle 主键按下归属。
+14. [`mygo-v0.7.4-14-uia-benchmark-close.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-14-uia-benchmark-close.patch)：补齐 UIA benchmark 合并后的函数收尾。
+15. [`mygo-v0.7.4-15-selection-spans.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-15-selection-spans.patch)：文本选区自带 span 文本快照，虚拟化列表滚出构建范围后选区仍可绘制与复制。
+16. [`mygo-v0.7.4-16-code-block-tabs.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-16-code-block-tabs.patch)：Markdown 代码块按语言制表位（Go 4、JS/TS/JSON 2，未知 4）把 tab 展开成空格排版，源码与“复制代码”保留 tab；选区复制把显示列映射回源码偏移。
+17. [`mygo-v0.7.4-17-api-gen.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-17-api-gen.patch)：`go generate ./ui` 重新生成公开 API 包装，纳入本链新增的 `Element`/`Context` 方法。
+18. [`mygo-v0.7.4-18-split-drag.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-18-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告；含 `TestSplitDragAppliesBeforeThePanesBuild` 回归测试。
+19. [`mygo-v0.7.4-19-patch-identity.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-19-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.23` 身份。
 
 源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.23` 的
 2,050 个文件的 SHA-256 树指纹为

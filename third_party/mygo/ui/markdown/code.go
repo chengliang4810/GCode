@@ -1,9 +1,7 @@
 package markdown
 
 import (
-	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/egoist/mygo/internal/l10n"
 	"github.com/egoist/mygo/ui"
@@ -32,7 +30,6 @@ func (b *CodeBlockView) Code() string { return b.st.doc.Lines(b.Index) }
 // and the spans of its chunks of lines, to highlight only what changed.
 type codeState struct {
 	lang     string
-	tab      int // columns a tab advances
 	tok      editor.Tokenizer
 	lines    []string
 	ends     []uint64
@@ -60,7 +57,7 @@ func (st *viewState) codeState(i int) *codeState {
 	cs := st.codes[b.Start]
 	lang := b.Language()
 	if cs == nil || cs.lang != lang {
-		cs = &codeState{lang: lang, tab: codeTabSize(lang)}
+		cs = &codeState{lang: lang}
 		if l := editor.LanguageNamed(lang); l != nil && lang != "" {
 			cs.tok = l.Tokenizer
 		}
@@ -238,16 +235,11 @@ func (st *viewState) highlight(cs *codeState, i int) {
 				ch.spans = append(ch.spans, ui.Span{Text: "\n"})
 			}
 			line := cs.lines[l]
-			disp, at := codeDisplay(line, cs.tab)
 			start := 0
 			for _, t := range cs.toks[l] {
 				end := min(t.End, len(line))
 				if end > start {
-					ds, de := start, end
-					if at != nil {
-						ds, de = at[start], at[end]
-					}
-					sp := ui.Span{Text: disp[ds:de], Color: ct.TokenColor(t.Kind)}
+					sp := ui.Span{Text: line[start:end], Color: ct.TokenColor(t.Kind)}
 					if s := ct.Tokens[t.Kind]; s.Bold {
 						sp.Weight = 600
 					} else if s.Italic {
@@ -258,11 +250,7 @@ func (st *viewState) highlight(cs *codeState, i int) {
 				start = max(start, end)
 			}
 			if start < len(line) {
-				ds := start
-				if at != nil {
-					ds = at[start]
-				}
-				ch.spans = append(ch.spans, ui.Span{Text: disp[ds:], Color: ct.Text})
+				ch.spans = append(ch.spans, ui.Span{Text: line[start:], Color: ct.Text})
 			}
 		}
 		if len(ch.spans) == 0 {
@@ -271,54 +259,4 @@ func (st *viewState) highlight(cs *codeState, i int) {
 		ch.n = last - first
 		ch.ok = true
 	}
-}
-
-// codeTabSize is the number of columns a tab of a code block advances: the
-// one its language's editor uses, as the same code shows there, or 4.
-func codeTabSize(lang string) int {
-	if l := editor.LanguageNamed(lang); l != nil && l.TabSize > 0 {
-		return l.TabSize
-	}
-	return 4
-}
-
-// codeTabLimit is where tabs stop expanding, which bounds the work of a
-// line, as the editor's display does.
-const codeTabLimit = 256
-
-// codeDisplay expands the tabs of a code line to spaces at tab stops tabSize
-// columns wide, as the editor shows the line, and returns the text and the
-// display byte offset of each of its source bytes. A line without tabs
-// returns itself and no offsets.
-func codeDisplay(line string, tabSize int) (string, []int) {
-	if strings.IndexByte(line, '\t') < 0 {
-		return line, nil
-	}
-	var b strings.Builder
-	b.Grow(len(line) + 8)
-	at := make([]int, len(line)+1)
-	col := 0
-	for i := 0; i < len(line); {
-		r, w := utf8.DecodeRuneInString(line[i:])
-		from := b.Len()
-		for j := i; j < i+w; j++ {
-			at[j] = from
-		}
-		if r == '\t' {
-			n := tabSize - col%tabSize
-			if col >= codeTabLimit {
-				n = 1
-			}
-			for range n {
-				b.WriteByte(' ')
-			}
-			col += n
-		} else {
-			b.WriteString(line[i : i+w])
-			col++
-		}
-		i += w
-	}
-	at[len(line)] = b.Len()
-	return b.String(), at
 }

@@ -11,7 +11,7 @@ func (s *System) quarterEligible(f *Font, scale float32, subpixel bool, policy u
 		return false
 	}
 	e.settings()
-	if !e.clearType || e.aliased || e.isColor(f.native) {
+	if !e.clearType || e.aliased || isColor(f.native) {
 		return false
 	}
 	mode, _ := e.mode(f, scale)

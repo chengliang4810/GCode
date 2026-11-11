@@ -27,8 +27,8 @@ The interface defaults to Simplified Chinese. Choose **设置 → 通用 → 语
 to switch to English without restarting; the choice is saved. Conversation content, code, file names
 and model/provider names retain their original text. See [i18n notes](docs/i18n.md).
 
-Requires Go 1.27.3. MyGo v0.7.4 is included with local patches,
-locked to the current `rcode-native-ui.23` source; `scripts/check-framework.go` verifies
+Requires Go 1.27.3. MyGo v0.8.3 is included with local patches,
+locked to the current `rcode-native-ui.24` source; `scripts/check-framework.go` verifies
 its source and patch hashes. Windows 11 22H2+ amd64 and macOS 13+ amd64/arm64
 are targets.
 

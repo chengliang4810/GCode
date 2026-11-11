@@ -105,7 +105,7 @@ func TestOptionEffortUsesIndependentSliderAndKeepsOtherOptionsInteractive(t *tes
 			if err := tt.Click("Select model"); err != nil {
 				t.Fatal(err)
 			}
-			if err := tt.Click("200k"); err != nil {
+			if err := clickAccessible(tt, ui.RoleMenuButton, "Context window"); err != nil {
 				t.Fatal(err)
 			}
 			if err := tt.ChooseMenuItem("1m"); err != nil {
@@ -128,10 +128,10 @@ func TestModelOptionChoiceLabelsDisplayAndPersistSeparateIDs(t *testing.T) {
 			a := testApp(t, "default")
 			modelID := a.modelID
 			option := contracts.ModelOption{ID: "contextWindow", Label: "Context window", Choices: []string{"standard", "1m"}, DefaultChoice: "standard"}
-			initial, next := "standard", "1m"
+			next := "1m"
 			if labels {
 				option.ChoiceLabels = map[string]string{"standard": "Standard", "1m": "1M tokens"}
-				initial, next = "Standard", "1M tokens"
+				next = "1M tokens"
 			}
 			for i := range a.state.Models {
 				if a.state.Models[i].ID == modelID {
@@ -145,7 +145,7 @@ func TestModelOptionChoiceLabelsDisplayAndPersistSeparateIDs(t *testing.T) {
 			if err := tt.Click("Select model"); err != nil {
 				t.Fatal(err)
 			}
-			if err := tt.Click(initial); err != nil {
+			if err := clickAccessible(tt, ui.RoleMenuButton, "Context window"); err != nil {
 				t.Fatal(err)
 			}
 			if err := tt.ChooseMenuItem(next); err != nil {

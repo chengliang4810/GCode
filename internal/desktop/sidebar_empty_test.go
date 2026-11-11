@@ -63,7 +63,7 @@ func TestSidebarEmptyProjectsAndConversationEntry(t *testing.T) {
 							t.Fatalf("capture: %v %v", err, closeErr)
 						}
 					}
-					if err := tt.Click("项目"); err != nil {
+					if err := clickAccessible(tt, ui.RoleButton, "项目"); err != nil {
 						t.Fatal(err)
 					}
 					if tt.HasText("未添加项目") {

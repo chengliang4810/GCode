@@ -207,7 +207,16 @@ func TestTranscriptDetailsScrollCompleteContentWithinTwentyFourLines(t *testing.
 			if !tt.HasText("record 000") || tt.HasText("record 099") {
 				t.Fatal("initial viewport is not virtualized from the start")
 			}
-			if err := tt.Click("Activity detail"); err != nil {
+			// Target the selectable row inside the list. Its container's
+			// center may hit a child with its own text-selection handler.
+			var firstRow string
+			for _, text := range tt.Texts() {
+				if strings.Contains(text, "record 000") {
+					firstRow = text
+					break
+				}
+			}
+			if err := tt.Click(firstRow); err != nil {
 				t.Fatal(err)
 			}
 			tt.Key(0, ui.KeyEnd)

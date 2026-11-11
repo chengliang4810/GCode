@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "936355af00f62912d62c475b583b50447378fd0d2d95da1b8ea25ef7e3831de7",
+  "noticeSha256": "e120b8353ece3c38334beb9b62387cecb77456f806bc1608c3a1bb768b53b509",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -11,7 +11,7 @@
     {
       "path": "README.md",
       "bytes": 6269,
-      "sha256": "392da8370788229d820a582d3a2c809670b1b0c5a12179c112bde535b82dd44a",
+      "sha256": "8aa827097283ba4f25778948edb5f6645d51d6ab81200c03acbd4d18d70c9e30",
       "source": "project-maintained component/source index; no substituted license terms"
     },
     {
@@ -246,7 +246,7 @@
       "path": "mygo/LICENSE.txt",
       "bytes": 1074,
       "sha256": "f0b56f4ab53beb6e18c5e155219c2e2b6000b5475c0ae3ddb3af3894fd9349b4",
-      "source": "github.com/egoist/mygo@v0.7.3/LICENSE (fixed local source copy)"
+      "source": "github.com/egoist/mygo@v0.8.3/LICENSE (verified verbatim local source copy)"
     },
     {
       "path": "native/Ghostty-MIT.txt",

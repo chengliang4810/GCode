@@ -1,0 +1,215 @@
+diff --git a/third_party/mygo/ui/input.go b/third_party/mygo/ui/input.go
+index 72c1e0c7c281c09303ad56e70acd50c38fd16378..e93753b373075dbeb2596f1f33a94b920dadebc3 100644
+--- a/third_party/mygo/ui/input.go
++++ b/third_party/mygo/ui/input.go
+@@ -745,7 +745,7 @@ func (rt *engine) scroll(dx, dy float32, mods Modifiers, precise, momentum bool)
+ 	}
+ 	// A wheel's notches glide, as browsers scroll them; a touchpad's
+ 	// small moves already follow the fingers.
+-	glide := !precise && !rt.preferences().ReduceMotion
++	glide := !precise && rt.wheelGlides()
+ 	for _, id := range chain {
+ 		s := rt.states[id]
+ 		if s == nil {
+diff --git a/third_party/mygo/ui/motion_preferences_test.go b/third_party/mygo/ui/motion_preferences_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..360673caa5347f1705c4f03b977a7f184771c821
+--- /dev/null
++++ b/third_party/mygo/ui/motion_preferences_test.go
+@@ -0,0 +1,96 @@
++package ui
++
++import (
++	"testing"
++	"time"
++)
++
++func TestApplicationMotionPreferencesOverrideAndReset(t *testing.T) {
++	var got Preferences
++	var override *MotionPreferences
++	tt := coreNewTester(func(c *context) { c.SetMotionPreferences(override); got = c.Preferences() }, 200, 200)
++	tt.SetPreferences(Preferences{ReduceMotion: true, TextScale: 1})
++	if !got.ReduceMotion {
++		t.Fatal("nil override lost desktop reduced motion")
++	}
++	override = &MotionPreferences{Motion: MotionFull, SmoothScrolling: true}
++	tt.Frame()
++	if got.ReduceMotion {
++		t.Fatal("full motion did not override the desktop")
++	}
++	override.Motion = MotionSystem
++	tt.Frame()
++	if !got.ReduceMotion {
++		t.Fatal("system motion did not restore desktop preference")
++	}
++	tt.SetPreferences(Preferences{TextScale: 1})
++	override.Motion = MotionReduced
++	tt.Frame()
++	if !got.ReduceMotion {
++		t.Fatal("application reduced motion did not apply")
++	}
++	override = nil
++	tt.Frame()
++	if got.ReduceMotion {
++		t.Fatal("nil override did not restore desktop preference")
++	}
++}
++
++func TestApplicationSmoothScrollingAndPendingGlide(t *testing.T) {
++	var scroll ScrollState
++	settings := MotionPreferences{Motion: MotionSystem, SmoothScrolling: false}
++	tt := coreNewTester(func(c *context) {
++		c.SetMotionPreferences(&settings)
++		coreScroll(c).Fill().TrackScroll(&scroll).Children(func() { coreBox(c).Height(1000).Shrink(0) })
++	}, 200, 200)
++	tt.Move(100, 100)
++	tt.Wheel(100, 100, 0, 100)
++	if scroll.Y != 100 {
++		t.Fatalf("disabled smooth scrolling moved to %g, want 100", scroll.Y)
++	}
++	settings.SmoothScrolling = true
++	tt.Frame()
++	tt.Wheel(100, 100, 0, 100)
++	tt.Advance(50 * time.Millisecond)
++	if scroll.Y <= 100 || scroll.Y >= 200 {
++		t.Fatalf("enabled glide offset = %g", scroll.Y)
++	}
++	settings.SmoothScrolling = false
++	tt.Frame()
++	if scroll.Y != 200 {
++		t.Fatalf("turning glide off did not finish its target: %g", scroll.Y)
++	}
++	for _, state := range tt.rt.states {
++		if state.wheel != nil {
++			t.Fatal("turning glide off left a wheel animation alive")
++		}
++	}
++	tt.Advance(time.Second)
++	if scroll.Y != 200 {
++		t.Fatalf("a stopped glide continued: %g", scroll.Y)
++	}
++}
++
++func TestApplicationReducedMotionWinsOverSmoothScrolling(t *testing.T) {
++	var scroll ScrollState
++	tt := coreNewTester(func(c *context) {
++		c.SetMotionPreferences(&MotionPreferences{Motion: MotionReduced, SmoothScrolling: true})
++		coreScroll(c).Fill().TrackScroll(&scroll).Children(func() { coreBox(c).Height(1000).Shrink(0) })
++	}, 200, 200)
++	tt.Move(100, 100)
++	tt.Wheel(100, 100, 0, 100)
++	if scroll.Y != 100 {
++		t.Fatalf("reduced motion did not disable glide: %g", scroll.Y)
++	}
++}
++
++func TestMotionPreferencesPublicGeneratedAPI(t *testing.T) {
++	var got Preferences
++	NewTester(func(c *Context) {
++		c.SetMotionPreferences(&MotionPreferences{Motion: MotionReduced, SmoothScrolling: false})
++		got = c.Preferences()
++	}, 200, 200)
++	if !got.ReduceMotion {
++		t.Fatal("generated Context API did not apply motion preferences")
++	}
++}
+diff --git a/third_party/mygo/ui/preferences.go b/third_party/mygo/ui/preferences.go
+index e13ccc1608608588d9a2d21db02b304439e55553..ddab943c779ae91c071d89ded6c2b14f2f3fa87d 100644
+--- a/third_party/mygo/ui/preferences.go
++++ b/third_party/mygo/ui/preferences.go
+@@ -62,6 +62,42 @@ func (p Preferences) Hover() bool { return !p.NoHover }
+ // AnyHover reports whether any pointing device can hover, as Media
+ // Queries 4's any-hover: hover.
+ func (p Preferences) AnyHover() bool { return !p.NoAnyHover }
++// MotionPreference selects how an application's motion follows the desktop.
++type MotionPreference uint8
++
++const (
++	// MotionSystem follows the desktop's Reduce Motion setting.
++	MotionSystem MotionPreference = iota
++	// MotionFull allows motion even when the desktop asks for less.
++	MotionFull
++	// MotionReduced asks controls to avoid motion.
++	MotionReduced
++)
++
++// MotionPreferences override motion for one native UI window. SmoothScrolling
++// controls mouse-wheel notch gliding; precise touchpad input and input handled
++// by custom controls are unchanged. Reduced motion always disables gliding.
++type MotionPreferences struct {
++	Motion          MotionPreference
++	SmoothScrolling bool
++}
++
++// SetMotionPreferences overrides motion for this window, until called again.
++// Call it before building the window's controls. The preferences are copied;
++// nil restores the desktop defaults. It does not alter system preferences.
++func (c *context) SetMotionPreferences(p *MotionPreferences) {
++	if p != nil && p.Motion > MotionReduced {
++		panic("ui: invalid motion preference")
++	}
++	c.rt.motionPreferencesSet = p != nil
++	if p != nil {
++		c.rt.motionPreferences = *p
++	}
++	if !c.rt.wheelGlides() {
++		// Finish an existing glide when the user turns smooth scrolling off.
++		c.rt.glideWheels(c.now)
++	}
++}
+ 
+ // Preferences returns the settings of the desktop that controls follow.
+ // A frame follows their changes.
+@@ -87,7 +123,20 @@ func (rt *engine) preferences() Preferences {
+ 		}
+ 		rt.prefsKnown = true
+ 	}
+-	return rt.prefs
++	p := rt.prefs
++	if rt.motionPreferencesSet {
++		switch rt.motionPreferences.Motion {
++		case MotionFull:
++			p.ReduceMotion = false
++		case MotionReduced:
++			p.ReduceMotion = true
++		}
++	}
++	return p
++}
++
++func (rt *engine) wheelGlides() bool {
++	return !rt.preferences().ReduceMotion && (!rt.motionPreferencesSet || rt.motionPreferences.SmoothScrolling)
+ }
+ 
+ // follow makes the theme follow the desktop's settings.
+diff --git a/third_party/mygo/ui/runtime.go b/third_party/mygo/ui/runtime.go
+index 62ec3bd8b60231275371e239224089a1e6851687..14676ac670bb23790124b3ca5290006425c41931 100644
+--- a/third_party/mygo/ui/runtime.go
++++ b/third_party/mygo/ui/runtime.go
+@@ -508,6 +508,9 @@ type engine struct {
+ 	// prefs are the desktop's preferences, read once until they change.
+ 	prefs      Preferences
+ 	prefsKnown bool
++	// Application motion settings are separate from the cached desktop values.
++	motionPreferences    MotionPreferences
++	motionPreferencesSet bool
+ 	// lang is the language the app shows, read as each frame starts.
+ 	lang string
+ 	// fmtRegion and fmtLocale are the formats the controls write dates
+diff --git a/third_party/mygo/ui/wheel.go b/third_party/mygo/ui/wheel.go
+index 18e7ab6bd45b1aba33bc2c53f9fe78957d3dbb5d..26192ce5b0a01421060a3a82e1e77c545a767bfe 100644
+--- a/third_party/mygo/ui/wheel.go
++++ b/third_party/mygo/ui/wheel.go
+@@ -116,6 +116,12 @@ func (rt *engine) glideWheels(now time.Time) {
+ 			continue
+ 		}
+ 		g := s.wheel
++		if !rt.wheelGlides() {
++			dx, dy := g.ahead()
++			s.wheel = nil
++			scrollBy(s, float32(dx), float32(dy))
++			continue
++		}
+ 		g.x.advance(now)
+ 		g.y.advance(now)
+ 		dx, dy := g.x.value-g.doneX, g.y.value-g.doneY

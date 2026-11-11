@@ -18,7 +18,7 @@ go run ./scripts/check-updates.go -check-key
 TASK_GO_VERSION=$(go env GOVERSION)
 [ "$TASK_GO_VERSION" = go1.27.3 ] || { echo "Expected go1.27.3, found $TASK_GO_VERSION" >&2; exit 1; }
 TASK_MYGO_VERSION=$(go list -m -f '{{.Version}}' github.com/egoist/mygo)
-[ "$TASK_MYGO_VERSION" = v0.7.4 ] || { echo "Expected MyGo v0.7.4, found $TASK_MYGO_VERSION" >&2; exit 1; }
+[ "$TASK_MYGO_VERSION" = v0.8.3 ] || { echo "Expected MyGo v0.8.3, found $TASK_MYGO_VERSION" >&2; exit 1; }
 MYGO_LDFLAGS=$(go run ./scripts/check-framework.go -ldflags)
 export MYGO_LDFLAGS
 go run ./scripts/check-distribution.go

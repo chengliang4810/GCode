@@ -42,7 +42,7 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 			const textContent = "安全感知能力缺口说明\n这是有效 UTF-8 文本。\n"
 			sourcePath := filepath.Join(workspace, "示例", "source.go")
 			for name, contents := range map[string]string{
-				"README.MARKDOWN": "# NATIVE README PREVIEW\n\n[Preview source](示例/source.go:3:8)\n",
+				"README.MARKDOWN": "# NATIVE README PREVIEW\n\n[Preview source](示例/source.go:3:8) <b>Native inline formatting</b>\n\n```js\n\tconsole.log('native tabs');\n```\n",
 				"设备清单.xlsx":       "PK\x03\x04\x00binary",
 				"缺口说明.txt":        textContent,
 				"示例/source.go":    source,
@@ -288,16 +288,17 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				var heading, edit bool
+				var heading, edit, tabs bool
 				for _, node := range tree.Nodes {
 					heading = heading || node.Role == "heading" && node.Label == "NATIVE README PREVIEW"
 					edit = edit || node.Role == "button" && node.Label == "Edit"
+					tabs = tabs || strings.Contains(node.Label, "\tconsole.log('native tabs');")
 					if node.Role == "textField" && node.Label == "README.MARKDOWN" {
 						return fmt.Errorf("Markdown opened an editor instead of its preview")
 					}
 				}
-				if !heading || !edit {
-					return fmt.Errorf("preview heading=%t edit action=%t", heading, edit)
+				if !heading || !edit || !tabs {
+					return fmt.Errorf("preview heading=%t edit action=%t native code tabs=%t", heading, edit, tabs)
 				}
 				return nil
 			})

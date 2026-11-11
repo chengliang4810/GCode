@@ -24,7 +24,7 @@ func TestSidebarSessionMenuFlatCopyAndTrajectoryOrder(t *testing.T) {
 				tt := ui.NewTester(a.View, 1320, 880)
 				open := func() {
 					t.Helper()
-					if err := tt.RightClick(session.Title); err != nil {
+					if err := rightClickAccessible(tt, ui.RoleButton, session.Title); err != nil {
 						t.Fatal(err)
 					}
 				}
