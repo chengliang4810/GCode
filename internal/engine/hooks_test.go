@@ -78,7 +78,10 @@ func TestHooksExecuteFromUserSettingsInRealEngineLifecycle(t *testing.T) {
 	if err != nil || len(summary.Sessions) != 1 {
 		t.Fatalf("goal session was not created: %+v, %v", summary.Sessions, err)
 	}
-	state = waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
+	// Hooks launch several real helper processes. Wait for the authoritative
+	// completion snapshot so Windows race builds are not bound to the short
+	// subagent polling deadline.
+	state = waitIdle(t, core, summary.Sessions[0].ID)
 	if state.Runs[0].Status != "completed" || requests.Load() != 3 {
 		t.Fatalf("run failed: %+v requests=%d", state.Runs, requests.Load())
 	}
