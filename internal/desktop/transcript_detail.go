@@ -3,6 +3,7 @@ package desktop
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"gcode/internal/contracts"
@@ -89,12 +90,72 @@ func detailLines(source activityDetailSource) []thoughtLine {
 	return lines
 }
 
+func readableDetailSource(c *ui.Context, block contracts.Block, live bool) activityDetailSource {
+	source := detailSource(block, live)
+	tool := block.Tool
+	if tool == nil || tool.IsError {
+		return source
+	}
+	switch tool.Category() {
+	case contracts.ToolTaskOutput, contracts.ToolTaskStop:
+		source.args, source.path = "", ""
+		source.command = firstNonempty(tool.Command, tool.TaskID)
+		status := tool.TaskStatus
+		switch tool.TaskStatus {
+		case "running":
+			status = "Running"
+		case "completed":
+			status = "Completed"
+		case "failed":
+			status = "Failed"
+		case "killed", "interrupted":
+			status = "Stopped"
+		case "stopping":
+			status = "Stop requested"
+		}
+		if status != "" {
+			source.command = strings.TrimSpace(fmt.Sprintf(tr(c, "Task status: %s"), tr(c, status)) + "\n" + source.command)
+		}
+		if tool.ExitCode != nil {
+			source.command = strings.TrimSpace(source.command + "\n" + fmt.Sprintf(tr(c, "Exit code: %d"), *tool.ExitCode))
+		}
+	case contracts.ToolSkill, contracts.ToolAgent, contracts.ToolDirectory, contracts.ToolWebFetch, contracts.ToolWebSearch:
+		source.args, source.path = "", ""
+		source.command = firstNonempty(tool.Command, tool.Summary, tool.Path)
+	case contracts.ToolGoalRead:
+		if goal := tool.GoalSnapshot; goal != nil {
+			lines := []string{
+				fmt.Sprintf(tr(c, "Goal: %s"), goal.Objective),
+				fmt.Sprintf(tr(c, "Status: %s"), tr(c, goalStatusLabel(goal.Status))),
+				fmt.Sprintf(tr(c, "Tokens used: %d"), goal.TokensUsed),
+			}
+			if goal.TokenBudget != nil {
+				lines = append(lines, fmt.Sprintf(tr(c, "Token budget: %d"), *goal.TokenBudget))
+			}
+			if goal.NextAction != "" {
+				lines = append(lines, fmt.Sprintf(tr(c, "Next action: %s"), goal.NextAction))
+			}
+			if goal.Reason != "" {
+				lines = append(lines, fmt.Sprintf(tr(c, "Reason: %s"), goal.Reason))
+			}
+			source.args, source.path = "", ""
+			source.command = strings.Join(lines, "\n")
+		} else if tool.Status == "completed" && tool.Output == "" {
+			source.args, source.path = "", ""
+			source.command = tr(c, "No active goal")
+		} else if tool.Status == "running" {
+			source.args = ""
+		}
+	}
+	return source
+}
+
 // One viewport policy for thoughts, folded notes, invocation and output:
 // preserve all lines, grow up to 24 rows, and build only the visible rows.
 func (a *App) activityTextDetail(c *ui.Context, block contracts.Block, live bool) {
 	container := ui.Column(c.Key("activity-detail:"+block.ID)).FillWidth().MinWidth(0).Padding(6, 0)
 	state := ui.Local(container, "detail", func() activityDetailState { return activityDetailState{} })
-	source := detailSource(block, live)
+	source := readableDetailSource(c, block, live)
 	size := design.TextSize(c, design.TextBase)
 	if block.Tool != nil {
 		size = float32(a.state.Settings.Appearance.CodeFontSize)

@@ -130,6 +130,7 @@ func CloneBlocks(src []Block) []Block {
 		}
 		if b.Tool != nil {
 			v := *b.Tool
+			v.GoalSnapshot = v.GoalSnapshot.Clone()
 			if v.ExitCode != nil {
 				code := *v.ExitCode
 				v.ExitCode = &code

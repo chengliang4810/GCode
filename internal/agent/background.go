@@ -311,7 +311,11 @@ func (t taskStopTool) Execute(ctx context.Context, _ string, raw json.RawMessage
 		return model.ToolOutput{}, ctx.Err()
 	case <-task.done:
 	}
-	data := map[string]any{"task_id": task.id, "message": "Task stopped"}
+	snapshot := task.snapshot()
+	data := map[string]any{
+		"task_id": task.id, "message": "Task stopped",
+		"description": snapshot["description"], "command": snapshot["command"], "status": snapshot["status"],
+	}
 	output, err := json.Marshal(data)
 	return model.ToolOutput{Text: string(output), Data: data}, err
 }

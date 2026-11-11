@@ -25,6 +25,11 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		Description string `json:"description"`
 		Query       string `json:"query"`
 		URL         string `json:"url"`
+		TaskID      string `json:"task_id"`
+		Skill       string `json:"skill"`
+		SkillArgs   string `json:"args"`
+		Prompt      string `json:"prompt"`
+		AgentType   string `json:"subagent_type"`
 	}
 	if json.Unmarshal([]byte(call.Arguments), &args) != nil {
 		tool.Summary = call.Name
@@ -35,6 +40,25 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		tool.Path = args.FilePath
 	}
 	switch tool.Kind {
+	case contracts.ToolTaskOutput, contracts.ToolTaskStop:
+		tool.TaskID, tool.Summary = args.TaskID, args.TaskID
+	case contracts.ToolSkill:
+		tool.Summary, tool.Command = args.Skill, args.SkillArgs
+	case contracts.ToolAgent:
+		tool.Summary, tool.Command = args.Description, args.Prompt
+		if tool.Summary == "" {
+			tool.Summary = args.AgentType
+		}
+	case contracts.ToolGoalRead:
+		tool.Summary = ""
+	case contracts.ToolDirectory:
+		tool.Summary = args.Path
+		if tool.Path == "" {
+			tool.Path = args.Path
+		}
+	case contracts.ToolMCP:
+		service, operation, _ := strings.Cut(strings.TrimPrefix(call.Name, "mcp__"), "__")
+		tool.Summary = service + " · " + operation
 	case contracts.ToolTodo:
 		if update, err := agent.ParseTodoUpdate(json.RawMessage(call.Arguments)); err == nil {
 			tool.Summary = todoProgress(update)
@@ -62,6 +86,74 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		}
 	}
 	return tool
+}
+
+func taskStopPresentation(tool *contracts.ToolCall, data any) {
+	result, ok := data.(map[string]any)
+	if !ok {
+		return
+	}
+	status, ok := result["status"].(string)
+	if !ok {
+		return
+	}
+	tool.TaskStatus = status
+	tool.Command, _ = result["command"].(string)
+	description, _ := result["description"].(string)
+	if description != "" {
+		tool.Summary = description
+	}
+	tool.Output = ""
+}
+
+func goalReadPresentation(tool *contracts.ToolCall, data any) {
+	goal, ok := data.(*contracts.SessionGoal)
+	if !ok {
+		return
+	}
+	tool.GoalSnapshot = goal.Clone()
+	if goal != nil {
+		tool.Summary = goal.Objective
+	}
+	tool.Output = ""
+}
+
+// TaskOutput has two current result shapes: an owned command wraps its task,
+// while a subagent returns the task fields directly. Project either at the
+// event boundary so clients display the result instead of a protocol envelope.
+func taskOutputPresentation(tool *contracts.ToolCall, data any) {
+	result, ok := data.(map[string]any)
+	if !ok {
+		return
+	}
+	if task, ok := result["task"].(map[string]any); ok {
+		result = task
+	}
+	output, ok := result["output"].(string)
+	if !ok {
+		return
+	}
+	tool.Output = output
+	if id, ok := result["task_id"].(string); ok && id != "" {
+		tool.TaskID = id
+	}
+	tool.TaskStatus, _ = result["status"].(string)
+	tool.Command, _ = result["command"].(string)
+	description, _ := result["description"].(string)
+	tool.Summary = tool.TaskID
+	if strings.TrimSpace(tool.Command) != "" {
+		tool.Summary = tool.Command
+	}
+	if strings.TrimSpace(description) != "" {
+		tool.Summary = description
+	}
+	switch code := result["exit_code"].(type) {
+	case int:
+		tool.ExitCode = &code
+	case float64:
+		value := int(code)
+		tool.ExitCode = &value
+	}
 }
 
 // readLineCount reads the text window a Read actually returned. Image reads

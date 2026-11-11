@@ -98,7 +98,11 @@ func (c *Client) Tools(ctx context.Context) (listedTools []RemoteTool, resultErr
 	for page := 0; page < 100; page++ {
 		var result struct {
 			Tools []struct {
-				Name        string         `json:"name"`
+				Name        string `json:"name"`
+				Title       string `json:"title"`
+				Annotations struct {
+					Title string `json:"title"`
+				} `json:"annotations"`
 				Description string         `json:"description"`
 				Schema      map[string]any `json:"inputSchema"`
 			} `json:"tools"`
@@ -144,7 +148,21 @@ func (c *Client) Tools(ctx context.Context) (listedTools []RemoteTool, resultErr
 					continue
 				}
 			}
-			tools = append(tools, RemoteTool{client: c, original: tool.Name, headers: headers, definition: model.Tool{Name: name, Description: c.scrub(tool.Description), Parameters: tool.Schema}})
+			title := strings.TrimSpace(tool.Title)
+			if title == "" {
+				title = strings.TrimSpace(tool.Annotations.Title)
+			}
+			if title == "" {
+				title = tool.Name
+			}
+			service := c.config.Name
+			if c.config.Plugin != "" {
+				service = c.config.Plugin + " · " + service
+			}
+			tools = append(tools, RemoteTool{client: c, original: tool.Name, headers: headers, definition: model.Tool{
+				Name: name, DisplayName: c.scrub(service + " · " + title),
+				Description: c.scrub(tool.Description), Parameters: tool.Schema,
+			}})
 		}
 		if result.Next == "" {
 			return tools, nil

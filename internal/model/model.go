@@ -250,6 +250,8 @@ type ContextUsage struct {
 }
 
 type Tool struct {
+	// DisplayName is host presentation metadata, excluded from model protocols.
+	DisplayName string         `json:"-"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Parameters  map[string]any `json:"parameters"`

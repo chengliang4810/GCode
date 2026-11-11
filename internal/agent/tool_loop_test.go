@@ -13,12 +13,27 @@ import (
 )
 
 type probeTool struct {
-	name       string
-	concurrent bool
-	execute    func(context.Context) error
+	name        string
+	displayName string
+	concurrent  bool
+	execute     func(context.Context) error
 }
 
 type failingImageTool struct{}
+
+func TestToolStartCarriesDisplayMetadataWithoutChangingCallIdentity(t *testing.T) {
+	tool := probeTool{name: "mcp__files__read", displayName: "文件服务 · 读取文件", execute: func(context.Context) error { return nil }}
+	var started Event
+	err := executeTools(t.Context(), Options{Emit: func(event Event) error {
+		if event.Kind == "tool.start" {
+			started = event
+		}
+		return nil
+	}}, map[string]Tool{tool.name: tool}, []model.Call{{ID: "call", Name: tool.name, Arguments: `{}`}}, func(model.Message) error { return nil })
+	if err != nil || started.DisplayName != tool.displayName || started.Call.Name != tool.name || started.Call.ID != "call" {
+		t.Fatalf("lost display metadata or protocol identity: %+v error=%v", started, err)
+	}
+}
 
 func (failingImageTool) Definition() model.Tool { return model.Tool{Name: "broken-image"} }
 func (failingImageTool) Concurrent() bool       { return true }
@@ -50,8 +65,10 @@ func TestToolErrorsDropImagesAndKeepDisplayText(t *testing.T) {
 	}
 }
 
-func (t probeTool) Definition() model.Tool { return model.Tool{Name: t.name} }
-func (t probeTool) Concurrent() bool       { return t.concurrent }
+func (t probeTool) Definition() model.Tool {
+	return model.Tool{Name: t.name, DisplayName: t.displayName}
+}
+func (t probeTool) Concurrent() bool { return t.concurrent }
 func (t probeTool) Execute(ctx context.Context, _ string, _ json.RawMessage) (model.ToolOutput, error) {
 	return model.ToolOutput{Text: t.name}, t.execute(ctx)
 }

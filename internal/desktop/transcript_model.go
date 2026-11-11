@@ -255,6 +255,11 @@ func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint
 		if tool := block.Tool; tool != nil {
 			hash = fnvMix(hash, tool.ID)
 			hash = fnvMix(hash, tool.Status)
+			hash = fnvMix(hash, tool.Summary)
+			hash = fnvMix(hash, tool.Command)
+			hash = fnvMix(hash, tool.Path)
+			hash = fnvMix(hash, tool.TaskID)
+			hash = fnvMix(hash, tool.TaskStatus)
 			hash = fnvMixInt(hash, len(tool.Output))
 			hash = fnvMixInt(hash, len(tool.Args))
 		}
@@ -411,12 +416,26 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 		return "Search", firstNonempty(t.Summary, t.Path), "magnifer"
 	case contracts.ToolGlob:
 		return "Glob", firstNonempty(t.Summary, t.Path), "folder-with-files"
+	case contracts.ToolDirectory:
+		return "List directory", firstNonempty(t.Summary, t.Path), "folder-with-files"
 	case contracts.ToolWebFetch:
-		return "Fetch", firstNonempty(t.Summary, t.Args), "global"
+		return "Read web page", firstNonempty(t.Summary, t.Path), "global"
 	case contracts.ToolWebSearch:
-		return "Web", firstNonempty(t.Summary, t.Args), "global"
+		return "Search web", t.Summary, "global"
 	case contracts.ToolTodo:
 		return "Todo", firstNonempty(t.Summary, t.Args), "checklist"
+	case contracts.ToolTaskOutput:
+		return "Read task output", firstNonempty(t.Summary, t.Command, t.TaskID), "terminal"
+	case contracts.ToolTaskStop:
+		return "Stop task", firstNonempty(t.Summary, t.TaskID), "terminal"
+	case contracts.ToolSkill:
+		return "Use skill", t.Summary, "widget"
+	case contracts.ToolGoalRead:
+		return "Read goal", t.Summary, "checklist"
+	case contracts.ToolAgent:
+		return "Start agent", t.Summary, "bot"
+	case contracts.ToolMCP:
+		return "Call tool", t.Summary, "widget"
 	default:
 		return "Tool", firstNonempty(t.Name, t.Summary), "widget"
 	}

@@ -134,10 +134,16 @@ func TestActivityTypedLabelsAndPaths(t *testing.T) {
 		{"patch", contracts.ToolApplyPatch, "Patch", "document", true},
 		{"search", contracts.ToolSearch, "Search", "magnifer", false},
 		{"glob", contracts.ToolGlob, "Glob", "folder-with-files", false},
-		{"fetch", contracts.ToolWebFetch, "Fetch", "global", false},
-		{"web", contracts.ToolWebSearch, "Web", "global", false},
+		{"directory", contracts.ToolDirectory, "List directory", "folder-with-files", false},
+		{"fetch", contracts.ToolWebFetch, "Read web page", "global", false},
+		{"web", contracts.ToolWebSearch, "Search web", "global", false},
 		{"todo", contracts.ToolTodo, "Todo", "checklist", false},
-		{"mcp", contracts.ToolMCP, "Tool", "widget", false},
+		{"task output", contracts.ToolTaskOutput, "Read task output", "terminal", false},
+		{"stop", contracts.ToolTaskStop, "Stop task", "terminal", false},
+		{"skill", contracts.ToolSkill, "Use skill", "widget", false},
+		{"goal", contracts.ToolGoalRead, "Read goal", "checklist", false},
+		{"agent", contracts.ToolAgent, "Start agent", "bot", false},
+		{"mcp", contracts.ToolMCP, "Call tool", "widget", false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			b := contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{Kind: test.kind, Path: "src/main.go", Command: "go test ./...", Name: "server.query"}}
@@ -153,6 +159,34 @@ func TestActivityTypedLabelsAndPaths(t *testing.T) {
 	}
 	if activityBasename(`C:\work\src\main.go`) != "main.go" || activityBasename("src/main.go") != "main.go" {
 		t.Fatal("cross-platform basename mismatch")
+	}
+}
+
+func TestTranscriptToolDetailsRefreshForEqualLengthInputChanges(t *testing.T) {
+	for _, field := range []string{"summary", "command", "path"} {
+		t.Run(field, func(t *testing.T) {
+			first := contracts.ToolCall{ID: "call", Kind: contracts.ToolSkill, Status: "running",
+				Summary: "first", Command: "src/a", Path: "src/a", Args: `{"args":"src/a"}`}
+			message := contracts.Message{ID: "message", Role: "assistant",
+				Blocks: []contracts.Block{{ID: "block", Kind: "tool", Tool: &first}}}
+			var cache transcriptCache
+			cache.rowsFor(message, false)
+			second := first
+			switch field {
+			case "summary":
+				second.Summary = "other"
+			case "command":
+				second.Command = "src/b"
+			case "path":
+				second.Path = "src/b"
+			}
+			message.Blocks = []contracts.Block{{ID: "block", Kind: "tool", Tool: &second}}
+			rows := cache.rowsFor(message, false)
+			if got := rows[0].Activity[0].Tool; got.Summary != second.Summary ||
+				got.Command != second.Command || got.Path != second.Path {
+				t.Fatalf("same-length tool update retained stale presentation: %+v", got)
+			}
+		})
 	}
 }
 

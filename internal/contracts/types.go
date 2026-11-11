@@ -188,6 +188,11 @@ type ToolCall struct {
 	// ReadLines is how many text lines a Read returned. It stays zero for
 	// image reads and failed reads, which have no line window.
 	ReadLines int `json:"readLines,omitempty"`
+	// TaskID and TaskStatus describe the task being inspected, independently
+	// of whether the TaskOutput call itself completed successfully.
+	TaskID       string       `json:"taskId,omitempty"`
+	TaskStatus   string       `json:"taskStatus,omitempty"`
+	GoalSnapshot *SessionGoal `json:"goalSnapshot,omitempty"`
 }
 type Question struct {
 	ID       string           `json:"id"`

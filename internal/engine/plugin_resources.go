@@ -758,7 +758,10 @@ func (e *Engine) prepareRuntimeInput(ctx context.Context, message model.Message,
 		args, _ := json.Marshal(map[string]any{"skill": name, "args": arguments})
 		e.state.Messages[session.ID] = append(e.state.Messages[session.ID], contracts.Message{
 			ID: id("message"), SessionID: session.ID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(),
-			Blocks: []contracts.Block{{ID: toolID, Kind: "tool", Tool: &contracts.ToolCall{ID: toolID, Name: "Skill", Args: string(args), Status: "running"}}},
+			Blocks: []contracts.Block{{ID: toolID, Kind: "tool", Tool: &contracts.ToolCall{
+				ID: toolID, Name: "Skill", Kind: contracts.ToolSkill, Summary: name, Command: arguments,
+				Args: string(args), Status: "running",
+			}}},
 		})
 		e.publishLocked(contracts.Event{Kind: "message.changed", SessionID: session.ID, RunID: run.id})
 		e.mu.Unlock()

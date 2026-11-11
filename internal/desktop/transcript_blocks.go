@@ -113,7 +113,7 @@ func (a *App) transcriptSubagent(c *ui.Context, agent contracts.Subagent) {
 	button.Children(func() {
 		ui.Row(c).Size(18, 18).Radius(5).Background(a.activityInk(.08)).AlignItems(ui.Center).Justify(ui.Center).Children(func() { icon(c, "bot", 12) })
 		ui.Text(c, tr(c, "Agent")).FontWeight(500).FontSize(design.TextSize(c, design.TextBase)).SingleLine().TextColor(color)
-		ui.Text(c, firstNonempty(agent.Name, agent.Task)).FontSize(design.TextSize(c, design.TextBase)).SingleLine().Grow(1).TextColor(color)
+		ui.Text(c, firstNonempty(agent.Task, agent.Name)).FontSize(design.TextSize(c, design.TextBase)).SingleLine().Grow(1).TextColor(color)
 		if agent.Status == "working" || agent.Status == "running" {
 			ui.Spinner(c).Size(11, 11)
 		}

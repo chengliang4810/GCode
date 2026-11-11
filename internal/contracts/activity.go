@@ -15,9 +15,15 @@ const (
 	ToolApplyPatch ToolKind = "applyPatch"
 	ToolSearch     ToolKind = "search"
 	ToolGlob       ToolKind = "glob"
+	ToolDirectory  ToolKind = "directory"
 	ToolWebFetch   ToolKind = "webFetch"
 	ToolWebSearch  ToolKind = "webSearch"
 	ToolTodo       ToolKind = "todo"
+	ToolTaskOutput ToolKind = "taskOutput"
+	ToolTaskStop   ToolKind = "taskStop"
+	ToolSkill      ToolKind = "skill"
+	ToolGoalRead   ToolKind = "goalRead"
+	ToolAgent      ToolKind = "agent"
 	ToolMCP        ToolKind = "mcp"
 	ToolUnknown    ToolKind = "unknown"
 )
@@ -48,6 +54,18 @@ func (t ToolCall) Category() ToolKind {
 		return ToolWebSearch
 	case "todowrite", "todo":
 		return ToolTodo
+	case "taskoutput":
+		return ToolTaskOutput
+	case "taskstop":
+		return ToolTaskStop
+	case "skill":
+		return ToolSkill
+	case "goal_read":
+		return ToolGoalRead
+	case "agent":
+		return ToolAgent
+	case "listdirectory":
+		return ToolDirectory
 	}
 	return ToolUnknown
 }
@@ -155,7 +173,7 @@ func SummarizeActivity(blocks []Block) ActivitySummary {
 			edited[path] = true
 		case ToolReadFile:
 			summary.Reads++
-		case ToolSearch, ToolGlob, ToolWebSearch:
+		case ToolSearch, ToolGlob, ToolDirectory, ToolWebSearch:
 			summary.Searches++
 		case ToolWebFetch:
 			summary.Fetches++

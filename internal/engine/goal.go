@@ -626,7 +626,7 @@ func (e *Engine) goalReadTool(scope goalScope) agent.Tool {
 			data, err := json.Marshal(struct {
 				Goal *contracts.SessionGoal `json:"goal"`
 			}{Goal: goal})
-			return model.ToolOutput{Text: string(data)}, err
+			return model.ToolOutput{Text: string(data), Data: goal}, err
 		},
 	}
 }

@@ -956,12 +956,19 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 		now := time.Now()
 		path := e.beginEditLocked(sessionID, event.Call)
 		tool := toolPresentation(event.Call, path, now)
+		if tool.Kind == contracts.ToolMCP && event.DisplayName != "" {
+			tool.Summary = event.DisplayName
+		}
 		message.Blocks = append(message.Blocks, contracts.Block{ID: event.Call.ID, Kind: "tool", Tool: &tool})
 	case "tool.input.changed":
 		path := e.beginEditLocked(sessionID, event.Call)
 		for i := range message.Blocks {
 			if tool := message.Blocks[i].Tool; tool != nil && tool.ID == event.Call.ID {
-				tool.Args, tool.Path = event.Call.Arguments, path
+				projection := toolPresentation(event.Call, path, tool.StartedAt)
+				if tool.Kind == contracts.ToolMCP {
+					projection.Summary = tool.Summary
+				}
+				*tool = projection
 			}
 		}
 	case "tool.end":
@@ -979,6 +986,15 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				block.Tool.Diff = e.finishEditLocked(sessionID, event.Call)
 				if block.Tool.Kind == contracts.ToolReadFile {
 					block.Tool.ReadLines = readLineCount(event.Data)
+				}
+				if block.Tool.Kind == contracts.ToolTaskOutput && !event.Error {
+					taskOutputPresentation(block.Tool, event.Data)
+				}
+				if block.Tool.Kind == contracts.ToolTaskStop && !event.Error {
+					taskStopPresentation(block.Tool, event.Data)
+				}
+				if block.Tool.Kind == contracts.ToolGoalRead && !event.Error {
+					goalReadPresentation(block.Tool, event.Data)
 				}
 			}
 		}

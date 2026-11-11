@@ -27,11 +27,12 @@ type Model interface {
 }
 
 type Event struct {
-	Kind      string
-	Text      string
-	Reasoning string
-	Call      model.Call
-	Output    string
+	Kind        string
+	Text        string
+	Reasoning   string
+	Call        model.Call
+	DisplayName string
+	Output      string
 	// Data is the same typed result the tool returned, for hosts that project
 	// structured fields. It is in-process only and never serialized here.
 	Data  any

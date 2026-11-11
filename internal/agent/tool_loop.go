@@ -27,7 +27,11 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 		}
 		batch := calls[start:end]
 		for _, call := range batch {
-			if err := options.Emit(Event{Kind: "tool.start", Call: call}); err != nil {
+			displayName := ""
+			if tool := tools[call.Name]; tool != nil {
+				displayName = tool.Definition().DisplayName
+			}
+			if err := options.Emit(Event{Kind: "tool.start", Call: call, DisplayName: displayName}); err != nil {
 				return err
 			}
 		}

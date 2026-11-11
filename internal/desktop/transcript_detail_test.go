@@ -3,13 +3,81 @@ package desktop
 import (
 	"bytes"
 	"fmt"
+	"image/png"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	localize "gcode/internal/i18n/view"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestTaskOutputDetailShowsTaskAndOutputInsteadOfJSON(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, language := range []string{"en", "zh-CN"} {
+			for _, width := range []int{420, 900} {
+				name := fmt.Sprintf("%s-dark-%t-%d", language, dark, width)
+				t.Run(name, func(t *testing.T) {
+					a := testApp(t, "default")
+					a.palette = design.Palette("rcode", dark)
+					zero := 0
+					block := contracts.Block{ID: "task-output", Kind: "tool", Tool: &contracts.ToolCall{
+						ID: "task-output", Kind: contracts.ToolTaskOutput, Name: "TaskOutput",
+						Summary: "Verify desktop controls", TaskID: "task-check", TaskStatus: "completed",
+						Command: "go test ./internal/desktop", Status: "completed", ExitCode: &zero,
+						Args:   `{"task_id":"task-check","block":true,"timeout":1000}`,
+						Output: "ok  gcode/internal/desktop  16.803s\n",
+					}}
+					tt := ui.NewTester(func(c *ui.Context) {
+						localize.Set(c, language)
+						c.SetTheme(a.palette.UI())
+						c.DisableAnimations()
+						c.Root().Background(a.palette.Background)
+						ui.Column(c).Fill().Padding(24).Children(func() {
+							a.activityItem(c, "task-row", block, false, false, activityRowMotion{settled: true})
+						})
+					}, width, 400)
+					label, status, exit := "Read task output", "Task status: Completed", "Exit code: 0"
+					if language == "zh-CN" {
+						label, status, exit = "读取任务结果", "任务状态：已完成", "退出码：0"
+					}
+					if err := tt.Click(label + ": Verify desktop controls"); err != nil {
+						t.Fatal(err)
+					}
+					for _, text := range []string{label, status, exit, block.Tool.Command, strings.TrimSpace(block.Tool.Output)} {
+						if !tt.HasText(text) {
+							t.Fatalf("missing readable task content %q: %v", text, tt.Texts())
+						}
+					}
+					for _, text := range tt.Texts() {
+						if strings.Contains(text, `"task_id"`) || text == "TaskOutput" {
+							t.Fatalf("internal protocol leaked into task detail: %q", text)
+						}
+					}
+					if directory := os.Getenv("RCODE_TASK_OUTPUT_EVIDENCE"); directory != "" {
+						if err := os.MkdirAll(directory, 0755); err != nil {
+							t.Fatal(err)
+						}
+						file, err := os.Create(filepath.Join(directory, name+".png"))
+						if err != nil {
+							t.Fatal(err)
+						}
+						if err := png.Encode(file, tt.Image()); err != nil {
+							file.Close()
+							t.Fatal(err)
+						}
+						if err := file.Close(); err != nil {
+							t.Fatal(err)
+						}
+					}
+				})
+			}
+		}
+	}
+}
 
 func TestTranscriptErrorPreservesOriginalProviderText(t *testing.T) {
 	body := "Run failed: model request failed (HTTP 503)\n" +

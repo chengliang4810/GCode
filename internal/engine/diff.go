@@ -29,12 +29,28 @@ func toolKind(name string) contracts.ToolKind {
 		return contracts.ToolEditFile
 	case "Grep":
 		return contracts.ToolSearch
-	case "Glob", "ListDirectory":
+	case "Glob":
 		return contracts.ToolGlob
+	case "ListDirectory":
+		return contracts.ToolDirectory
 	case "Bash":
 		return contracts.ToolExec
 	case "TodoWrite":
 		return contracts.ToolTodo
+	case "TaskOutput":
+		return contracts.ToolTaskOutput
+	case "TaskStop":
+		return contracts.ToolTaskStop
+	case "Skill":
+		return contracts.ToolSkill
+	case "goal_read":
+		return contracts.ToolGoalRead
+	case "Agent":
+		return contracts.ToolAgent
+	case "WebFetch":
+		return contracts.ToolWebFetch
+	case "WebSearch":
+		return contracts.ToolWebSearch
 	default:
 		if strings.HasPrefix(name, "mcp__") {
 			return contracts.ToolMCP

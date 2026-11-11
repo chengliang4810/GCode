@@ -71,11 +71,16 @@ func (e *Engine) sessionTaskTool(parentID string, inner agent.Tool) agent.Tool {
 		}
 		child := e.runs[input.TaskID]
 		if inner.Definition().Name == "TaskStop" {
+			session := e.state.Sessions[index]
+			status := session.LastOutcome
 			if child != nil {
 				child.cancel()
+				status = "stopping"
 			}
 			e.mu.Unlock()
-			return model.ToolOutput{Text: "Subagent task stop requested: " + input.TaskID}, nil
+			return model.ToolOutput{Text: "Subagent task stop requested: " + input.TaskID, Data: map[string]any{
+				"task_id": input.TaskID, "description": session.Title, "status": status,
+			}}, nil
 		}
 		block, timeout := true, 30000
 		if input.Block != nil {
@@ -115,6 +120,9 @@ func (e *Engine) sessionTaskTool(parentID string, inner agent.Tool) agent.Tool {
 			status = session.LastOutcome
 		}
 		text := fmt.Sprintf("task_id: %s\nstatus: %s\n%s", session.ID, status, finalReply(e.history[session.ID]))
-		return model.ToolOutput{Text: text, Data: map[string]any{"task_id": session.ID, "status": status, "output": finalReply(e.history[session.ID])}}, nil
+		return model.ToolOutput{Text: text, Data: map[string]any{
+			"task_id": session.ID, "description": session.Title, "status": status,
+			"output": finalReply(e.history[session.ID]),
+		}}, nil
 	}}
 }
