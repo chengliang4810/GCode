@@ -1,6 +1,7 @@
 package contracts
 
 import (
+	"cmp"
 	"errors"
 	"strings"
 )
@@ -8,7 +9,8 @@ import (
 // ReorderInput moves one existing item immediately before or after another.
 // Model IDs are local to ProviderID; provider and group reorders leave
 // ProviderID empty. GroupID is the destination session group of a session
-// reorder, empty for the ungrouped root.
+// reorder, empty for the ungrouped root. Project conversation moves derive
+// their scope from the source session and require a target in that project.
 type ReorderInput struct {
 	ProviderID string `json:"providerId,omitempty"`
 	GroupID    string `json:"groupId,omitempty"`
@@ -20,7 +22,7 @@ type ReorderInput struct {
 // IsReorderCommand reports whether kind carries only a ReorderInput payload.
 func IsReorderCommand(kind string) bool {
 	switch kind {
-	case "provider.reorder", "provider.models.reorder", "group.reorder", "session.reorder", "queue.move":
+	case "provider.reorder", "provider.models.reorder", "group.reorder", "session.reorder", "session.project.reorder", "queue.move":
 		return true
 	}
 	return false
@@ -34,6 +36,10 @@ func (r ReorderInput) Validate(kind string) error {
 		return errors.New("source and target IDs are required for reordering")
 	}
 	switch kind {
+	case "session.project.reorder":
+		if r.ProviderID != "" || r.GroupID != "" {
+			return errors.New("project conversation reordering does not accept provider or group scopes")
+		}
 	case "provider.models.reorder":
 		if strings.TrimSpace(r.ProviderID) == "" {
 			return errors.New("provider ID is required for model reordering")
@@ -48,4 +54,17 @@ func (r ReorderInput) Validate(kind string) error {
 		}
 	}
 	return nil
+}
+
+// CompareProjectSessions keeps new, unpositioned conversations (order zero)
+// above the saved manual list. Timestamps only break ties; activity never
+// reshuffles conversations with distinct saved positions.
+func CompareProjectSessions(a, b Session) int {
+	if order := cmp.Compare(a.ProjectOrder, b.ProjectOrder); order != 0 {
+		return order
+	}
+	if updated := b.UpdatedAt.Compare(a.UpdatedAt); updated != 0 {
+		return updated
+	}
+	return cmp.Compare(a.ID, b.ID)
 }

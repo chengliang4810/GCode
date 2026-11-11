@@ -71,7 +71,7 @@ func (e *Engine) reorderSessionLocked(command contracts.Command) error {
 }
 
 // reorderableSession reports whether a conversation can take part in manual
-// session ordering: only active top-level conversations own a group position.
+// session ordering: only active top-level conversations own ordinary positions.
 func reorderableSession(session contracts.Session) bool {
 	return session.ID != "" && !session.Pinned && !session.Archived &&
 		session.ParentSessionID == "" && !session.SideChat
@@ -96,4 +96,43 @@ func (e *Engine) groupMembersLocked(groupID string) []contracts.Session {
 		return members[i].ID < members[j].ID
 	})
 	return members
+}
+
+// reorderProjectSessionLocked changes only the source project's manual order.
+// Project ownership, custom groups and pinning have independent semantics.
+func (e *Engine) reorderProjectSessionLocked(input *contracts.ReorderInput) ([]string, error) {
+	index := e.sessionIndex(input.SourceID)
+	if index < 0 {
+		return nil, errors.New("session not found")
+	}
+	source := e.state.Sessions[index]
+	if source.ProjectID == "" || !reorderableSession(source) {
+		return nil, errors.New("only active top-level project conversations can be reordered")
+	}
+	var members []contracts.Session
+	for _, session := range e.state.Sessions {
+		if session.ProjectID == source.ProjectID && reorderableSession(session) {
+			members = append(members, session)
+		}
+	}
+	slices.SortStableFunc(members, contracts.CompareProjectSessions)
+	members, err := reorder.Move(members, input.SourceID, input.TargetID, input.After,
+		func(session contracts.Session) string { return session.ID })
+	if err != nil {
+		return nil, err
+	}
+	// Load before assigning ranks so lazy records cannot overwrite the index
+	// projection; return all IDs for the command's atomic persistence boundary.
+	ids := make([]string, 0, len(members))
+	for _, session := range members {
+		if err := e.ensureSessionDataLocked(session.ID); err != nil {
+			return nil, err
+		}
+		ids = append(ids, session.ID)
+	}
+	for rank, id := range ids {
+		e.state.Sessions[e.sessionIndex(id)].ProjectOrder = rank + 1
+		e.markSessionDirtyLocked(id)
+	}
+	return ids, nil
 }

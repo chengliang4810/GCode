@@ -280,6 +280,12 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		for _, session := range e.groupMembersLocked(command.Reorder.GroupID) {
 			requiredSessions = append(requiredSessions, session.ID)
 		}
+	case "session.project.reorder":
+		ids, err := e.reorderProjectSessionLocked(command.Reorder)
+		if err != nil {
+			return err
+		}
+		requiredSessions = append(requiredSessions, ids...)
 	case "provider.delete":
 		for _, session := range e.state.Sessions {
 			if strings.HasPrefix(session.ModelID, command.ID+"/") && e.runs[session.ID] != nil {

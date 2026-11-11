@@ -129,6 +129,7 @@ type Session struct {
 	PinOrder          int                        `json:"pinOrder"`
 	GroupID           string                     `json:"groupId,omitempty"`
 	GroupOrder        int                        `json:"groupOrder"`
+	ProjectOrder      int                        `json:"projectOrder"`
 	CreatedAt         time.Time                  `json:"createdAt"`
 	UpdatedAt         time.Time                  `json:"updatedAt"`
 	LastOutcome       string                     `json:"lastOutcome"`

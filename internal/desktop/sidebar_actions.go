@@ -136,8 +136,8 @@ func (a *App) sessionDeleteDialog(c *ui.Context) {
 }
 
 // reorderSidebarRows handles a native list drop. Pinned rows keep the pin
-// order path; conversation rows in the group view move within their group or
-// into the group under the pointer.
+// order path; project rows reorder inside their project, while group-view
+// conversations may also join the group under the pointer.
 func (a *App) reorderSidebarRows(rows []sidebarRow, from []int, to int) {
 	if len(from) != 1 || from[0] < 0 || from[0] >= len(rows) {
 		return
@@ -159,7 +159,44 @@ func (a *App) reorderSidebarRows(rows []sidebarRow, from []int, to int) {
 			return
 		}
 	}
+	if !moved.Pinned && strings.HasPrefix(row.Group, "project:") {
+		if target, after, ok := sidebarProjectDrop(rows, row.Group, to); ok {
+			if target != moved.ID {
+				a.dispatch(contracts.Command{Kind: "session.project.reorder", Reorder: &contracts.ReorderInput{
+					SourceID: moved.ID, TargetID: target, After: after,
+				}})
+			}
+			return
+		}
+		// A project drop may enter the explicit pinned section, but cannot
+		// reorder or reassign a conversation in a different project.
+		if to < 0 || to >= len(rows) || rows[to].Group != "group:pinned" {
+			return
+		}
+	}
 	a.reorderPinnedSession(rows, moved, to)
+}
+
+func sidebarProjectDrop(rows []sidebarRow, group string, to int) (string, bool, bool) {
+	if to < 0 || to > len(rows) {
+		return "", false, false
+	}
+	if to < len(rows) && rows[to].Group == group {
+		if rows[to].Session.ID != "" {
+			return rows[to].Session.ID, false, true
+		}
+		if rows[to].Project {
+			for i := to + 1; i < len(rows) && rows[i].Group == group; i++ {
+				if rows[i].Session.ID != "" {
+					return rows[i].Session.ID, false, true
+				}
+			}
+		}
+	}
+	if to > 0 && rows[to-1].Group == group && rows[to-1].Session.ID != "" {
+		return rows[to-1].Session.ID, true, true
+	}
+	return "", false, false
 }
 
 // reorderSessionGroups moves one group header to where it was dropped. Only

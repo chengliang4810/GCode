@@ -514,6 +514,8 @@ func (s *Server) applyLocked(c contracts.Command) error {
 		return s.reorderGroupsLocked(c)
 	case "session.reorder":
 		return s.reorderSessionLocked(c)
+	case "session.project.reorder":
+		return s.reorderProjectSessionLocked(c.Reorder)
 	case "catalog.retry":
 		s.state.ModelCatalog.Error = ""
 		if catalogStatus(s.state) == contracts.CatalogNoAgents {

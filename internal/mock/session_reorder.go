@@ -83,3 +83,31 @@ func mockReorderableSession(session contracts.Session) bool {
 	return session.ID != "" && !session.Pinned && !session.Archived &&
 		session.ParentSessionID == "" && !session.SideChat
 }
+
+func (s *Server) reorderProjectSessionLocked(input *contracts.ReorderInput) error {
+	index := s.sessionIndexLocked(input.SourceID)
+	if index < 0 {
+		return errors.New("session not found")
+	}
+	source := s.state.Sessions[index]
+	if source.ProjectID == "" || !mockReorderableSession(source) {
+		return errors.New("only active top-level project conversations can be reordered")
+	}
+	var members []contracts.Session
+	for _, session := range s.state.Sessions {
+		if session.ProjectID == source.ProjectID && mockReorderableSession(session) {
+			members = append(members, session)
+		}
+	}
+	slices.SortStableFunc(members, contracts.CompareProjectSessions)
+	members, err := reorder.Move(members, input.SourceID, input.TargetID, input.After,
+		func(session contracts.Session) string { return session.ID })
+	if err != nil {
+		return err
+	}
+	for rank, member := range members {
+		s.state.Sessions[s.sessionIndexLocked(member.ID)].ProjectOrder = rank + 1
+	}
+	s.publishLocked("session.updated", input.SourceID, "", "", "")
+	return s.persist()
+}

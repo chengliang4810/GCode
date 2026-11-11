@@ -283,6 +283,53 @@ func TestSidebarGroupedDragReordersMembers(t *testing.T) {
 	}
 }
 
+func TestSidebarProjectDragReordersConversations(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		t.Run(appearance, func(t *testing.T) {
+			a := testApp(t, "default")
+			settings := a.state.Settings
+			settings.SidebarGrouping = "project"
+			settings.Appearance.Mode = appearance
+			a.dispatch(contracts.Command{Kind: "settings.update", Settings: &settings})
+			var members []contracts.Session
+			for _, row := range a.sidebarRows() {
+				if row.Group == "project:fieldnotes" && row.Session.ID != "" {
+					members = append(members, row.Session)
+				}
+			}
+			if len(members) < 2 {
+				t.Fatal("fixture needs two conversations in the same project")
+			}
+			first, second := members[0], members[1]
+			tt := ui.NewTester(a.View, 900, 700)
+			top, ok := tt.Find(first.Title)
+			if !ok {
+				t.Fatal("first conversation missing")
+			}
+			bottom, ok := tt.Find(second.Title)
+			if !ok {
+				t.Fatal("second conversation missing")
+			}
+			tt.Press(bottom.X+80, bottom.Y+bottom.H/2)
+			tt.Move(bottom.X+90, bottom.Y+bottom.H/2)
+			tt.Move(top.X+80, top.Y+3)
+			tt.Release(top.X+80, top.Y+3)
+			var order []string
+			for _, row := range a.sidebarRows() {
+				if row.Group == "project:fieldnotes" && row.Session.ID != "" {
+					order = append(order, row.Session.ID)
+					if row.Session.Pinned {
+						t.Fatal("project reorder pinned a conversation")
+					}
+				}
+			}
+			if len(order) < 2 || order[0] != second.ID || order[1] != first.ID {
+				t.Fatalf("project drag did not persist display order: %v, error=%s", order, a.errorText)
+			}
+		})
+	}
+}
+
 func TestSidebarGroupHeaderDragReordersGroups(t *testing.T) {
 	a := testApp(t, "default")
 	alpha := createSidebarGroup(t, a, "Alpha")

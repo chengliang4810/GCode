@@ -4,6 +4,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/i18n"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -105,6 +106,7 @@ func (a *App) projectSidebarRows() []sidebarRow {
 		for _, project := range a.state.Projects {
 			key := "project:" + project.ID
 			sessions := byProject[project.ID]
+			slices.SortStableFunc(sessions, contracts.CompareProjectSessions)
 			rows = append(rows, sidebarRow{
 				Key: "sidebar-project:" + project.ID, Header: project.Name, ProjectID: project.ID,
 				Group: key, Project: true, Count: len(sessions), Working: working[project.ID],

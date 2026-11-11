@@ -521,7 +521,7 @@ func TestCloseFlushesOnlineConversationWhenHistoricalRootIsOffline(t *testing.T)
 }
 
 func TestCompoundSessionChangesRollBackIfAnyRecordCannotCommit(t *testing.T) {
-	for _, kind := range []string{"group.delete", "session.reorder"} {
+	for _, kind := range []string{"group.delete", "session.reorder", "session.project.reorder"} {
 		t.Run(kind, func(t *testing.T) {
 			core := openStorageTestCore(t, t.TempDir())
 			defer core.Close()
@@ -532,6 +532,9 @@ func TestCompoundSessionChangesRollBackIfAnyRecordCannotCommit(t *testing.T) {
 			for rank, session := range []contracts.Session{first, second} {
 				index := core.sessionIndex(session.ID)
 				core.state.Sessions[index].GroupID, core.state.Sessions[index].GroupOrder = "group", rank
+				if kind == "session.project.reorder" {
+					core.state.Sessions[index].ProjectID = "project"
+				}
 			}
 			err := core.persistLocked(first.ID, second.ID)
 			before := contracts.CloneSnapshot(core.state)
@@ -559,6 +562,11 @@ func TestCompoundSessionChangesRollBackIfAnyRecordCannotCommit(t *testing.T) {
 					SourceID: first.ID, TargetID: second.ID, GroupID: "group", After: true,
 				}}
 			}
+			if kind == "session.project.reorder" {
+				command = contracts.Command{Kind: kind, Reorder: &contracts.ReorderInput{
+					SourceID: first.ID, TargetID: second.ID, After: true,
+				}}
+			}
 			if err := core.Execute(t.Context(), command); err == nil {
 				t.Fatal("a compound change succeeded without saving every affected conversation")
 			}
@@ -571,7 +579,7 @@ func TestCompoundSessionChangesRollBackIfAnyRecordCannotCommit(t *testing.T) {
 			}
 			for _, session := range state.Sessions {
 				for _, previous := range before.Sessions {
-					if session.ID == previous.ID && (session.GroupID != previous.GroupID || session.GroupOrder != previous.GroupOrder) {
+					if session.ID == previous.ID && (session.GroupID != previous.GroupID || session.GroupOrder != previous.GroupOrder || session.ProjectOrder != previous.ProjectOrder) {
 						t.Fatal("failed compound change left partially updated session ordering")
 					}
 				}

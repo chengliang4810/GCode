@@ -14,6 +14,10 @@ func TestProviderReorderCommandsValidateAndClone(t *testing.T) {
 		wantErr bool
 	}{
 		{name: "providers", command: Command{Kind: "provider.reorder", Reorder: &valid}},
+		{name: "project conversations", command: Command{Kind: "session.project.reorder", Reorder: &valid}},
+		{name: "project missing target", command: Command{Kind: "session.project.reorder", Reorder: &ReorderInput{SourceID: "a"}}, wantErr: true},
+		{name: "project group scope", command: Command{Kind: "session.project.reorder", Reorder: &ReorderInput{SourceID: "a", TargetID: "b", GroupID: "g"}}, wantErr: true},
+		{name: "project provider scope", command: Command{Kind: "session.project.reorder", Reorder: &ReorderInput{SourceID: "a", TargetID: "b", ProviderID: "p"}}, wantErr: true},
 		{name: "models", command: Command{Kind: "provider.models.reorder", Reorder: &ReorderInput{
 			ProviderID: "custom", SourceID: "model/third", TargetID: "model/first",
 		}}},

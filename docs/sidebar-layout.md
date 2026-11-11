@@ -86,7 +86,13 @@ sidebarShowArchived、sidebarCompact、sidebarShowBranch、showProjectLabels 保
 旧的项目筛选弹层、筛选状态及 Organize 列表/设备分组模式已由项目树替换，
 对应的 sidebarShowProjectFilter、sidebarGrouping 字段和调用方一并删除，无兼容分支；
 sidebarShowHarness、sidebarShowArchived 随运行框架图标与侧栏归档分组一并删除。
-排序、置顶、归档、状态、重命名、拖动置顶排序和删除继续使用原业务命令。
+置顶、归档、状态、重命名、拖动置顶排序和删除继续使用原业务命令。
+项目下普通对话的整行拖拽通过 `session.project.reorder` 保存项目内手动顺序，
+使用独立 `ProjectOrder`，不改变项目归属、自定义分组或置顶状态。
+第一次拖拽前按最近更新排列；拖拽后按保存位置排列，对话更新和重启不重排。
+新建对话的顺序为零，显示在已有手动列表上方；拖拽后由核心为整个项目列表
+分配从一开始的连续位置。跨项目落点不移动会话，不隐式修改工作目录。
+项目排序与分组的 `GroupOrder`、置顶的 `PinOrder` 独立，时间线仍按最近更新排列。
 
 对话右键菜单直接提供“复制标题”“复制对话 ID”“复制分支”，不再使用复制子菜单；
 无分支时禁用“复制分支”。“调用轨迹”紧跟“标为未读/标为已读”，删除位于分隔线之后。
