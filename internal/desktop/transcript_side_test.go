@@ -176,7 +176,7 @@ func TestSideCompletionDoesNotEraseNewerDraftOrAttachment(t *testing.T) {
 		t.Fatal("stale request took current draft")
 	}
 	a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: "showcase-agent", RequestID: "request-1"}}, nil)
-	if state.Draft != "Newer draft" || len(state.Attachments) != 1 || state.Attachments[0].ID != "new" || state.Pending != nil {
+	if state.Draft != "Newer draft" || len(state.Attachments) != 2 || state.Attachments[0].ID != "submitted" || state.Attachments[1].ID != "new" || state.Pending != nil {
 		t.Fatal("async send completion erased a later edit")
 	}
 }

@@ -75,26 +75,13 @@ func (a *App) sideCommandFinished(command contracts.Command, err error) bool {
 	state.Pending = nil
 	if err != nil {
 		state.Failure = err.Error()
+		if state.Draft == "" && len(state.Attachments) == 0 {
+			state.Draft = pending.Draft
+			state.Attachments = append([]contracts.Attachment(nil), pending.Attachments...)
+		}
 		return true
 	}
 	state.Failure = ""
-	if state.Draft == pending.Draft {
-		state.Draft = ""
-	}
-	kept := make([]contracts.Attachment, 0, len(state.Attachments))
-	for _, item := range state.Attachments {
-		sent := false
-		for _, submitted := range pending.Attachments {
-			if submitted.ID == item.ID {
-				sent = true
-				break
-			}
-		}
-		if !sent {
-			kept = append(kept, item)
-		}
-	}
-	state.Attachments = kept
 	return true
 }
 
@@ -114,11 +101,14 @@ func (a *App) sendSideMessage(session contracts.Session, state *sideComposerStat
 	}
 	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: busy, Steer: delivery == "steer"}
 	state.Failure = ""
-	a.dispatch(contracts.Command{Kind: "message.send", ProjectID: session.ProjectID, Send: &contracts.SendRequest{
+	command := contracts.Command{Kind: "message.send", ProjectID: session.ProjectID, Send: &contracts.SendRequest{
 		RequestID: id, SessionID: session.ID, ProjectID: session.ProjectID, DeviceID: session.DeviceID,
 		ModelID: state.modelID, ReasoningLevel: state.reasoning, Delivery: delivery,
 		Branch: session.Branch, WorktreeID: session.WorktreeID, Text: strings.TrimSpace(text), Attachments: append([]contracts.Attachment(nil), state.Attachments...),
-	}})
+	}}
+	state.Draft, state.Attachments = "", nil
+	a.stageLocalSend(command)
+	a.dispatch(command)
 	return state.Failure == ""
 }
 
@@ -159,7 +149,7 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 	// transcript's, with identities prefixed so a fold opened here does not
 	// open in the conversation behind it.
 	cache := a.sideTranscriptCache(sessionID)
-	entries := cache.entriesFor(a.state.Revision, sessionID, a.state.Messages[sessionID], a.state.Settings.General.CompactMode)
+	entries := cache.entriesFor(a.state.Revision, sessionID, a.projectedMessages(sessionID), a.state.Settings.General.CompactMode)
 	messages := make([]contracts.Message, len(entries))
 	copy(messages, entries)
 	for i := range messages {
@@ -177,7 +167,7 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 		a.sessionStorageNotice(c, session)
 		pane := transcriptPane{cache: cache, scope: "side:" + sessionID, session: sessionID}
 		a.transcriptScope(c, pane.scope, func() {
-			if a.sessionDetailsAreLoading(sessionID) {
+			if a.sessionDetailsAreLoading(sessionID) && !a.hasLocalSend(sessionID) {
 				ui.Column(c).Grow(1).FillWidth().AlignItems(ui.Center).Justify(ui.Center).Children(func() {
 					ui.Text(c, tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
 				})

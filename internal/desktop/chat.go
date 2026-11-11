@@ -25,14 +25,14 @@ func (a *App) chatView(c *ui.Context) {
 	if a.state.Settings.General.StopWithEscape && !composerFocused {
 		c.OnShortcut(0, ui.KeyEscape, a.stopRun)
 	}
-	messages := a.transcriptCache.entriesFor(a.state.Revision, a.sessionID, a.state.Messages[a.sessionID], a.state.Settings.General.CompactMode)
+	messages := a.transcriptCache.entriesFor(a.state.Revision, a.sessionID, a.projectedMessages(a.sessionID), a.state.Settings.General.CompactMode)
 	rows := a.transcriptCache.conversationFor(messages, a.state.Settings.General.CompactMode)
 	reserve, _ := a.infoVisibility()
 
 	// The blank canvas is the route with no selected session. A send starts
 	// the handoff immediately (launchingNewSession) instead of waiting for
 	// the host to mint the session, so the composer answers the key at once.
-	docked := a.sessionID != "" || a.launchingNewSession
+	docked := a.sessionID != "" || a.launchingNewSession || a.hasLocalSend(a.sessionID)
 	reduced := a.reduceMotion(c)
 	frame := a.composerDock.tick(c.Now(), docked, reduced)
 	if reduced {
@@ -83,11 +83,11 @@ func (a *App) chatView(c *ui.Context) {
 		})
 		if docked {
 			transcript := ui.Column(c).Key("chat-transcript").Grow(1).FillWidth().MinHeight(0)
-			if frame.Transcript < .999 {
+			if frame.Transcript < .999 && len(messages) == 0 {
 				transcript.Opacity(frame.Transcript)
 			}
 			transcript.Children(func() {
-				if a.sessionDetailsAreLoading(a.sessionID) {
+				if a.sessionDetailsAreLoading(a.sessionID) && !a.hasLocalSend(a.sessionID) {
 					ui.Spacer(c).Grow(1)
 					ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
 						ui.Spinner(c.Key("conversation-loading")).Label(tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
@@ -186,6 +186,7 @@ func (a *App) userMessage(c *ui.Context, m contracts.Message) {
 					textButton(c, a.annotationLabel(item.Index)).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
 				}
 			}
+			a.localSendStatus(c, m)
 		})
 	})
 }

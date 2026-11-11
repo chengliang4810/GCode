@@ -41,6 +41,11 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 				return nil
 			}
 		}
+		for _, queued := range e.state.Queue {
+			if queued.RequestID == send.RequestID {
+				return nil
+			}
+		}
 	}
 	if handled, err := e.goalTextLocked(send, checkout); handled {
 		if err == nil && checkout != nil {
@@ -61,6 +66,11 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 	if index >= 0 {
 		if err := e.ensureSessionDataLocked(sessionID); err != nil {
 			return err
+		}
+		for _, message := range e.state.Messages[sessionID] {
+			if send.RequestID != "" && message.RequestID == send.RequestID {
+				return nil
+			}
 		}
 		session = e.state.Sessions[index]
 		if session.SubagentType != "" {
@@ -126,7 +136,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		if len(e.state.Queue) >= 100 {
 			return errors.New("session message queue is full")
 		}
-		e.state.Queue = append(e.state.Queue, contracts.QueuedMessage{ID: id("queue"), SessionID: sessionID, Text: send.Text, Prompt: prompt, Delivery: send.Delivery, Attachments: send.Attachments, ModelID: session.ModelID, ReasoningLevel: session.ReasoningLevel, CreatedAt: time.Now()})
+		e.state.Queue = append(e.state.Queue, contracts.QueuedMessage{ID: id("queue"), RequestID: send.RequestID, SessionID: sessionID, Text: send.Text, Prompt: prompt, Delivery: send.Delivery, Attachments: send.Attachments, ModelID: session.ModelID, ReasoningLevel: session.ReasoningLevel, CreatedAt: time.Now()})
 		if err := e.persistLocked(session.ID); err != nil {
 			return err
 		}
@@ -148,6 +158,8 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 	e.history[sessionID] = append(e.history[sessionID], message)
 	e.context[sessionID] = append(e.context[sessionID], message)
 	e.appendUserLocked(sessionID, send.Text)
+	messages := e.state.Messages[sessionID]
+	messages[len(messages)-1].RequestID = send.RequestID
 	if len(send.Attachments) > 0 {
 		messages := e.state.Messages[sessionID]
 		for _, item := range send.Attachments {

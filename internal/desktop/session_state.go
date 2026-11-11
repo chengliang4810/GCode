@@ -103,6 +103,7 @@ func (a *App) newConversation() {
 	a.pendingNew = false
 	a.pendingNewRequestID = ""
 	delete(a.pendingSends, "")
+	a.localSends = slices.DeleteFunc(a.localSends, func(send *localSend) bool { return send.message.SessionID == "" })
 	a.navigate("chat")
 	a.footerGit.Requested, a.footerGit.Branch = false, ""
 	a.footerGit.PendingRef, a.footerGit.CursorRef = "", ""
@@ -191,6 +192,7 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
+	a.localSendFinished(cmd, err)
 	if a.questionCommandFinished(cmd, err) {
 		return
 	}
@@ -240,7 +242,9 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 	if err == nil {
 		return
 	}
-	a.errorText = err.Error()
+	if cmd.Send == nil || a.localSendByRequest(cmd.Send.RequestID) == nil {
+		a.errorText = err.Error()
+	}
 	if cmd.Kind == "message.send" && cmd.Send != nil {
 		req := cmd.Send
 		text := req.Text
@@ -262,7 +266,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 			}
 		}
 		if a.sessionID == req.SessionID {
-			if a.draft == "" {
+			if a.draft == "" && len(a.attachments) == 0 && len(a.annotations) == 0 {
 				a.draft = text
 				a.attachments = append([]contracts.Attachment(nil), req.Attachments...)
 				a.annotations = append([]contracts.Annotation(nil), req.Annotations...)
@@ -272,7 +276,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 				a.sessionStates = make(map[string]sessionViewState)
 			}
 			v := a.sessionStates[req.SessionID]
-			if v.Draft == "" {
+			if v.Draft == "" && len(v.Attachments) == 0 && len(v.Annotations) == 0 {
 				v.Draft = text
 				v.Attachments = append([]contracts.Attachment(nil), req.Attachments...)
 				v.Annotations = append([]contracts.Annotation(nil), req.Annotations...)

@@ -170,6 +170,7 @@ func (e *Engine) startQueuedUserLocked(sessionID string, queued contracts.Queued
 	e.appendUserLocked(sessionID, queued.Text)
 	messages := e.state.Messages[sessionID]
 	messages[len(messages)-1].ID = queued.ID
+	messages[len(messages)-1].RequestID = queued.RequestID
 	for _, item := range queued.Attachments {
 		attachment := item
 		messages[len(messages)-1].Blocks = append(messages[len(messages)-1].Blocks, contracts.Block{ID: id("block"), Kind: "attachment", Attachment: &attachment})

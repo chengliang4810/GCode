@@ -109,6 +109,8 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 			display = command.Goal.InputText
 		}
 		e.appendUserLocked(session.ID, display)
+		messages := e.state.Messages[session.ID]
+		messages[len(messages)-1].RequestID = command.RequestID
 		prompt := session.Goal.Objective
 		if instructions != "" {
 			prompt += "\n\n" + instructions

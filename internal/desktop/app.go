@@ -43,6 +43,7 @@ type App struct {
 	branchCreation  *branchCreation
 	now             func() time.Time
 	pendingSends    map[string]primaryPendingSend
+	localSends      []*localSend
 	composerControls
 	footerUsage         composerUsageState
 	appUsage            appUsageState
@@ -445,6 +446,7 @@ func (a *App) apply(s contracts.Snapshot) {
 	}
 	a.reconcileBranchCreation()
 	a.selectCreatedProject()
+	a.reconcileLocalSends()
 	a.refreshSessionSubscription()
 }
 
@@ -525,6 +527,7 @@ func (a *App) applyEvent(event contracts.Event) {
 			a.bottom.Update(s)
 		}
 	}
+	a.reconcileLocalSends()
 	if !a.pendingNew || event.RequestID == "" || event.RequestID != a.pendingNewRequestID || a.pendingNewEpoch != a.draftEpoch || a.pendingNewRuns[event.RunID] || event.Kind != "run.started" && event.Kind != "request.created" && event.Kind != "queue.changed" {
 		return
 	}
@@ -557,6 +560,7 @@ func (a *App) settleCreatedSession(id string) {
 
 func (a *App) creationCommandApplied(command contracts.Command, err error) {
 	a.branchCommandApplied(command, err)
+	a.localSendSnapshotApplied(command, err)
 	if err == nil && a.pendingNew && command.Kind == "message.send" && command.Send != nil && command.Send.SessionID == "" && command.Send.RequestID == a.pendingNewRequestID {
 		// A concurrent deletion can remove both the created row and its run
 		// before this complete snapshot. A finished command must still settle.
@@ -1216,6 +1220,7 @@ func (a *App) send(text string) bool {
 	a.annotations = nil
 	a.workspace.ResetAnnotations()
 	a.drafts[a.sessionID] = ""
+	a.stageLocalSend(cmd)
 	a.dispatch(cmd)
 	return a.draft == "" && len(a.attachments) == 0 && len(a.annotations) == 0
 }

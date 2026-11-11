@@ -140,6 +140,7 @@ type SessionGroup struct {
 	Order int    `json:"order"`
 }
 type Message struct {
+	RequestID      string    `json:"requestId,omitempty"`
 	ModelID        string    `json:"modelId,omitempty"`
 	ContinuationOf string    `json:"continuationOf,omitempty"`
 	DurationMS     int64     `json:"durationMs,omitempty"`
@@ -272,6 +273,7 @@ type Run struct {
 	FinishedAt   *time.Time      `json:"finishedAt,omitempty"`
 }
 type QueuedMessage struct {
+	RequestID      string       `json:"requestId,omitempty"`
 	Prompt         string       `json:"prompt"`
 	Source         string       `json:"source,omitempty"`
 	Delivery       string       `json:"delivery"`

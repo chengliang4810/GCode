@@ -470,7 +470,7 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 		if req.WorktreeID == "" {
 			req.WorktreeID = current.WorktreeID
 		}
-		q := contracts.QueuedMessage{ID: s.idLocked("queue"), SessionID: req.SessionID, Text: req.Text, Attachments: req.Attachments, CreatedAt: s.opts.Now().UTC(), ModelID: req.ModelID, ReasoningLevel: req.ReasoningLevel, DeviceID: req.DeviceID, Branch: req.Branch, WorktreeID: req.WorktreeID, Annotations: req.Annotations}
+		q := contracts.QueuedMessage{ID: s.idLocked("queue"), RequestID: req.RequestID, SessionID: req.SessionID, Text: req.Text, Attachments: req.Attachments, CreatedAt: s.opts.Now().UTC(), ModelID: req.ModelID, ReasoningLevel: req.ReasoningLevel, DeviceID: req.DeviceID, Branch: req.Branch, WorktreeID: req.WorktreeID, Annotations: req.Annotations}
 		s.state.Queue = append(s.state.Queue, q)
 		s.publishLocked("queue.changed", req.SessionID, "", req.RequestID, "")
 		s.mu.Unlock()
@@ -545,7 +545,7 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 			a := annotation.Bounded()
 			blocks = append(blocks, contracts.Block{ID: s.idLocked("block"), Kind: "annotation", Annotation: &a})
 		}
-		s.state.Messages[session.ID] = append(s.state.Messages[session.ID], contracts.Message{ID: s.idLocked("message"), SessionID: session.ID, TurnID: run.ID, Role: "user", CreatedAt: now, Blocks: blocks})
+		s.state.Messages[session.ID] = append(s.state.Messages[session.ID], contracts.Message{ID: s.idLocked("message"), RequestID: req.RequestID, SessionID: session.ID, TurnID: run.ID, Role: "user", CreatedAt: now, Blocks: blocks})
 	}
 	msg := contracts.Message{ID: s.idLocked("message"), SessionID: session.ID, TurnID: run.ID, Role: "assistant", CreatedAt: now, Streaming: true, Blocks: []contracts.Block{{ID: s.idLocked("block"), Kind: "text"}}, Usage: contracts.Usage{InputTokens: 1240, ContextTokens: 18420, ContextLimit: 200000}}
 	msg.ContinuationOf = continuation
@@ -665,7 +665,7 @@ func (s *Server) advanceRun(sessionID, runID, text string, done bool) bool {
 		for qi, q := range s.state.Queue {
 			if q.SessionID == sessionID && si >= 0 {
 				s.state.Queue = append(s.state.Queue[:qi], s.state.Queue[qi+1:]...)
-				s.startLocked(si, contracts.SendRequest{SessionID: sessionID, Text: q.Text, Attachments: q.Attachments, ModelID: q.ModelID, ReasoningLevel: q.ReasoningLevel, DeviceID: q.DeviceID, Branch: q.Branch, WorktreeID: q.WorktreeID, Annotations: q.Annotations}, true)
+				s.startLocked(si, contracts.SendRequest{RequestID: q.RequestID, SessionID: sessionID, Text: q.Text, Attachments: q.Attachments, ModelID: q.ModelID, ReasoningLevel: q.ReasoningLevel, DeviceID: q.DeviceID, Branch: q.Branch, WorktreeID: q.WorktreeID, Annotations: q.Annotations}, true)
 				break
 			}
 		}
