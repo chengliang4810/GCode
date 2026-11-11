@@ -261,3 +261,74 @@ func TestComposerPromptPickerAboveAndCoversGoalTodos(t *testing.T) {
 		})
 	}
 }
+
+// The editor seats an attachment's box on the line's baseline with the box
+// reaching up by its height: the chip's label and icon must sit on that same
+// baseline as the prose typed beside them, not float above it.
+func TestComposerPromptChipSitsOnTheProseBaseline(t *testing.T) {
+	a := testApp(t, "default")
+	a.palette = design.Palette("rcode-light", false)
+	ref := contracts.PromptReference{Kind: "command", ID: "goal", Label: "Goal"}
+	at := a.promptAttachment(ref)
+	var box ui.Rect
+	drawn := at.Draw
+	at.Draw = func(painter *ui.Painter, bounds ui.Rect) {
+		box = bounds
+		drawn(painter, bounds)
+	}
+	text := richtext.NewText("")
+	text = text.ReplaceString(0, 0, string(richtext.ObjectReplacement), richtext.Attributes{Tag: ref.Markdown(), Attachment: at})
+	text = text.ReplaceString(1, 1, " 中文审查", richtext.Attributes{})
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(a.palette.UI())
+		c.Root().Background(a.palette.Background)
+		design.ApplyReferenceTypography(c)
+		ui.Column(c).Width(400).Padding(20).Children(func() {
+			richtext.EditorBase(c, richtext.NewDocument(text), richtext.EditorOptions{
+				Label: "Draft", Font: ui.Font{Family: design.Font(a.state.Settings.Appearance.Font), Size: design.UIFontSize},
+			})
+		})
+	}, 400, 160)
+	tt.Advance(time.Second)
+	img := tt.Image()
+	background := img.RGBAAt(390, 150)
+	ink := func(x0, x1 int) (top, bottom int) {
+		top, bottom = -1, -1
+		for x := x0; x < x1; x++ {
+			for y := 0; y < img.Bounds().Dy(); y++ {
+				if img.RGBAAt(x, y) == background {
+					continue
+				}
+				if top < 0 || y < top {
+					top = y
+				}
+				if y > bottom {
+					bottom = y
+				}
+			}
+		}
+		return top, bottom
+	}
+	if box.H <= 0 {
+		t.Fatalf("chip was not painted: %+v", box)
+	}
+	// The chip's height is the label's ascent, so the box's bottom is the
+	// line's baseline and the labelless descent never lifts the box.
+	ascent := float32(ui.ShapeText(ref.Label, ui.Font{Family: design.Font(a.state.Settings.Appearance.Font), Size: design.UIFontSize, Weight: 500}, 0).Lines()[0].Baseline)
+	if abs := box.H - ascent; abs > .5 || abs < -.5 {
+		t.Fatalf("chip box height %g is not the label ascent %g: the chip floats off the baseline", box.H, ascent)
+	}
+	iconTop, iconBottom := ink(int(box.X), int(box.X)+14)
+	labelTop, labelBottom := ink(int(box.X)+19, int(box.X+box.W))
+	proseTop, proseBottom := ink(int(box.X+box.W)+2, int(box.X+box.W)+40)
+	center := func(top, bottom int) float64 { return float64(top+bottom) / 2 }
+	if iconTop < 0 || labelTop < 0 || proseTop < 0 {
+		t.Fatalf("nothing painted: icon %d..%d label %d..%d prose %d..%d", iconTop, iconBottom, labelTop, labelBottom, proseTop, proseBottom)
+	}
+	for _, got := range []float64{center(iconTop, iconBottom), center(labelTop, labelBottom)} {
+		if delta := got - center(proseTop, proseBottom); delta > 2 || delta < -2 {
+			t.Fatalf("chip ink centered at %.1f, prose at %.1f: icon %d..%d label %d..%d prose %d..%d",
+				got, center(proseTop, proseBottom), iconTop, iconBottom, labelTop, labelBottom, proseTop, proseBottom)
+		}
+	}
+}

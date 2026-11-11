@@ -68,13 +68,22 @@ func (a *App) stylePromptAttachment(attachment *richtext.Attachment, ref contrac
 	}
 	font := ui.Font{Family: design.Font(a.state.Settings.Appearance.Font), Size: size, Weight: 500}
 	layout := ui.ShapeText(ref.Label, font, 0)
-	width, height := layout.Size()
-	attachment.Width, attachment.Height = width+size+5, max(height, size)
+	width, _ := layout.Size()
+	// The editor seats an attachment's box on the line's baseline: the box
+	// reaches up by its height and never below it. The box's height is the
+	// label's ascent, so the label's baseline is the line's baseline, and the
+	// chip's icon, drawn on the same baseline, sits with the text beside it.
+	ascent := font.Metrics().Ascent
+	if lines := layout.Lines(); len(lines) > 0 {
+		ascent = lines[0].Baseline
+	}
+	attachment.Width, attachment.Height = width+size+5, ascent
 	attachment.Draw = func(painter *ui.Painter, bounds ui.Rect) {
+		baseline := bounds.Y + bounds.H
 		if glyph := assets.Icon(promptGlyph(ref)); glyph != nil {
-			painter.Icon(glyph, ui.Rect{X: bounds.X, Y: bounds.Y + (bounds.H-size)/2, W: size, H: size}, a.palette.Muted)
+			painter.Icon(glyph, ui.Rect{X: bounds.X, Y: baseline - size*.86, W: size, H: size}, a.palette.Muted)
 		}
-		painter.TextLayout(layout, bounds.X+size+5, bounds.Y+(bounds.H-height)/2, a.palette.Muted)
+		painter.TextLayout(layout, bounds.X+size+5, bounds.Y, a.palette.Muted)
 	}
 }
 
