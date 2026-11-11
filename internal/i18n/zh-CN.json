@@ -46,6 +46,8 @@
   "Appearance": "外观",
   "Personalization": "个性化",
   "Memory": "记忆",
+  "Hierarchical context compression": "分层上下文压缩",
+  "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.": "将较早的工作整理为可恢复原文的分层摘要。默认关闭，修改从下次运行生效。",
   "Auto memory": "自动记忆",
   "Remember facts about you and your projects across sessions. Off until you turn it on.": "跨会话记住与你和项目相关的事实。默认关闭，开启后生效。",
   "Global instructions": "全局指令",

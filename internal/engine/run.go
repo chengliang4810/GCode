@@ -316,6 +316,11 @@ func (e *Engine) startRunWithProvidersLocked(
 	profileSnapshot := contracts.CloneSubagentProfiles(e.state.Settings.Subagents)
 	searchSettings := e.state.Settings.General.WebSearch
 	memoryEnabled := e.state.Settings.Personalization.MemoryEnabled && child == nil
+	hierarchicalContext := e.state.Settings.General.HierarchicalContext
+	var contextMemory agent.ContextMemory
+	if hierarchicalContext {
+		contextMemory = agent.CloneContextMemory(e.contextMemories[session.ID])
+	}
 	memoryDir := memoryDirectory(e.storage.ConfigDirectory(), session.CWD)
 	if e.sessionHookOnce == nil {
 		e.sessionHookOnce = map[string]*agent.HookOnceState{}
@@ -614,7 +619,17 @@ func (e *Engine) startRunWithProvidersLocked(
 			}
 		}
 		if runErr == nil && !startupStopped {
+			var memory *agent.ContextMemory
+			if hierarchicalContext {
+				memory = &contextMemory
+			}
 			runErr = agent.Run(runCtx, agent.Options{
+				Memory: memory,
+				ReplaceMemory: func(messages []model.Message, state agent.ContextMemory) error {
+					e.mu.Lock()
+					defer e.mu.Unlock()
+					return e.replaceContextMemoryLocked(session.ID, messages, state)
+				},
 				ToolAllowed: toolAllowed,
 				Hook:        invokeHook, HookSource: hookSource, SkipSessionStart: skipSessionStart,
 				PrepareInput: func(ctx context.Context, input model.Message) (model.Message, error) {

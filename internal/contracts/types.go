@@ -421,6 +421,8 @@ type WebSearchSettings struct {
 }
 
 type GeneralSettings struct {
+	// HierarchicalContext enables session-local, recoverable context folding.
+	HierarchicalContext bool              `json:"hierarchicalContext"`
 	WebSearch           WebSearchSettings `json:"webSearch"`
 	OpenLinksExternally bool              `json:"openLinksExternally"`
 	Language            string            `json:"language"`

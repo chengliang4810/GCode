@@ -52,7 +52,11 @@ type Options struct {
 	// Record commits complete execution messages before the next effect.
 	Record         func(model.Message) error
 	ReplaceContext func([]model.Message) error
-	Emit           func(Event) error
+	// Memory is a worker-owned snapshot; nil keeps ordinary compaction.
+	// ReplaceMemory atomically persists both the view and archive before use.
+	Memory        *ContextMemory
+	ReplaceMemory func([]model.Message, ContextMemory) error
+	Emit          func(Event) error
 	// Pending drains steering at step boundaries, and follow-ups only at idle.
 	Pending func(idle bool) []model.Message
 	// BeforeStep (idle after a final answer) and Idle control execution without
@@ -84,6 +88,26 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		}
 	}()
 	request := options.Request
+	if options.Memory != nil {
+		if options.ReplaceMemory == nil {
+			return errors.New("context memory requires durable replacement")
+		}
+		request.History = model.CloneMessages(request.History)
+		AssignContextRefs(request.History)
+		if err := options.ReplaceMemory(request.History, *options.Memory); err != nil {
+			return err
+		}
+		request.System += contextMemoryInstructions
+		commit := func(history []model.Message, state ContextMemory) error {
+			if err := options.ReplaceMemory(history, state); err != nil {
+				return err
+			}
+			request.History, *options.Memory = history, state
+			request.ContextChange = "compacted"
+			return nil
+		}
+		options.Tools = append(append([]Tool(nil), options.Tools...), contextMemoryTools(&request, options.Memory, commit)...)
+	}
 	turnID := hookUUID()
 	request.Tools = nil
 	tools := map[string]Tool{}
@@ -107,6 +131,9 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		return prepareToolResult(ctx, options.StoreToolOutput, request.History, call, message)
 	}
 	record := func(message model.Message) error {
+		if options.Memory != nil && message.ContextRef == "" {
+			message.ContextRef = "m_" + hookUUID()
+		}
 		if err := options.Record(message); err != nil {
 			return err
 		}
@@ -153,6 +180,9 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			prepared, err := options.PrepareInput(ctx, request.History[initialUserIndex])
 			if err != nil {
 				return err
+			}
+			if options.Memory != nil && prepared.ContextRef == "" {
+				prepared.ContextRef = "m_" + hookUUID()
 			}
 			request.History[initialUserIndex] = prepared
 			if options.CommitPreparedInput != nil {
@@ -223,7 +253,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		if options.ContextLimits != nil {
 			limits = options.ContextLimits()
 		}
-		if options.ReplaceContext != nil && len(request.History) >= minimumCompactMessages &&
+		if (options.ReplaceContext != nil || options.Memory != nil && options.ReplaceMemory != nil) && len(request.History) >= minimumCompactMessages &&
 			limits.Window > 0 && contextPressure(request, limits) >= compactThreshold(limits) {
 			before, err := applyHook(HookInput{Event: contracts.HookPreCompact, Trigger: "auto"})
 			if err != nil {
@@ -242,24 +272,59 @@ func Run(ctx context.Context, options Options) (runErr error) {
 						retained = &message
 					}
 				}
-				compacted, err := Compact(ctx, options.Model, request)
+				var compacted []model.Message
+				var nextMemory ContextMemory
+				var err error
+				if options.Memory != nil {
+					// Preserve any observed excess over our text estimate
+					// until a new real model response establishes a baseline.
+					excess := max(0, contextPressure(request, limits)-contextTokens(request))
+					compacted, nextMemory, err = CompactContext(ctx, options.Model, request, *options.Memory)
+					// A single large segment may not reclaim enough space.
+					// Continue folding before sending the normal model step.
+					for rounds := 1; err == nil && excess+contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted}) >= compactThreshold(limits); rounds++ {
+						if rounds >= 32 {
+							err = errors.New("context remains above budget after 32 folds; recent or protected content is too large")
+							break
+						}
+						nextRequest := request
+						nextRequest.History = compacted
+						compacted, nextMemory, err = CompactContext(ctx, options.Model, nextRequest, nextMemory)
+					}
+				} else {
+					compacted, err = Compact(ctx, options.Model, request)
+				}
 				if err != nil {
 					return err
 				}
 				if retained != nil {
+					if options.Memory != nil && retained.ContextRef == "" {
+						retained.ContextRef = "m_" + hookUUID()
+					}
 					if err := options.Record(*retained); err != nil {
 						return err
 					}
 					compacted = append(compacted, *retained)
 				}
-				if err = options.ReplaceContext(compacted); err != nil {
+				if options.Memory != nil {
+					err = options.ReplaceMemory(compacted, nextMemory)
+				} else {
+					err = options.ReplaceContext(compacted)
+				}
+				if err != nil {
 					return err
+				}
+				if options.Memory != nil {
+					*options.Memory = nextMemory
 				}
 				request.History = compacted
 				request.ContextChange = "compacted"
 				summary := ""
 				if len(compacted) > 0 {
 					summary = compacted[0].Text
+				}
+				if options.Memory != nil && len(nextMemory.Blocks) > 0 {
+					summary = nextMemory.Blocks[len(nextMemory.Blocks)-1].Summary
 				}
 				_, err = applyHook(HookInput{Event: contracts.HookPostCompact, Trigger: "auto", CompactSummary: summary})
 				if err != nil {
@@ -281,6 +346,18 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		}
 		if request.ContextChange == "" && needsCompactionBaseline(request.History) {
 			request.ContextChange = "compacted"
+		}
+		if options.Memory != nil && estimateMessages(request.History) >= max(50000, options.Memory.NextNudge) {
+			message := model.Message{Role: "user", Text: "<system-reminder>Context has grown by about 50K tokens. Use ContextStatus and CompressContext to summarize completed work while retaining constraints and evidence. Recover exact details with SearchContext and DecompressContext when needed.</system-reminder>"}
+			if err := record(message); err != nil {
+				return err
+			}
+			next := *options.Memory
+			next.NextNudge = estimateMessages(request.History) + 50000
+			if err := options.ReplaceMemory(request.History, next); err != nil {
+				return err
+			}
+			*options.Memory = next
 		}
 		// The checklist lives in the history, not in a separate store: rebuild
 		// it each round so reminders and the stop check track real progress.

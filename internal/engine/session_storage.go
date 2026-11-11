@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 
+	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 	"gcode/internal/storage"
@@ -37,6 +38,7 @@ type sessionDisk struct {
 	Messages      []contracts.Message       `json:"messages"`
 	History       []model.Message           `json:"history"`
 	Context       []model.Message           `json:"context"`
+	ContextMemory agent.ContextMemory       `json:"contextMemory"`
 	Prompt        model.Prompt              `json:"prompt"`
 	Runs          []contracts.Run           `json:"runs"`
 	ModelRequests []contracts.ModelRequest  `json:"modelRequests"`
@@ -144,6 +146,10 @@ func (e *Engine) installSessionDiskLocked(disk sessionDisk, record string) {
 	session := disk.Session
 	e.state.Messages[session.ID] = disk.Messages
 	e.history[session.ID], e.context[session.ID] = disk.History, disk.Context
+	if e.contextMemories == nil {
+		e.contextMemories = map[string]agent.ContextMemory{}
+	}
+	e.contextMemories[session.ID] = disk.ContextMemory
 	e.prompts[session.ID] = model.ClonePrompt(disk.Prompt)
 	e.state.Runs = slices.DeleteFunc(e.state.Runs, func(run contracts.Run) bool { return run.SessionID == session.ID })
 	e.state.Runs = append(e.state.Runs, disk.Runs...)
@@ -233,8 +239,9 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 			Format: engineDiskFormat, SessionID: session.ID, RootID: session.StorageRootID,
 			Session:  session,
 			Messages: e.state.Messages[session.ID], History: e.history[session.ID], Context: e.context[session.ID],
-			Prompt:       model.ClonePrompt(e.prompts[session.ID]),
-			ContextUsage: e.state.ContextUsage[session.ID],
+			ContextMemory: e.contextMemories[session.ID],
+			Prompt:        model.ClonePrompt(e.prompts[session.ID]),
+			ContextUsage:  e.state.ContextUsage[session.ID],
 		}
 		disk.Session.StorageError = ""
 		disk.Session.ModelRetry = nil

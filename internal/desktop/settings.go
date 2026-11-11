@@ -462,6 +462,11 @@ func recordedShortcut(event ui.InputEvent) string {
 func (a *App) generalSettings(c *ui.Context) {
 	g := &a.state.Settings.General
 	a.settingsCard(c, func() {
+		a.settingsRow(c, "Hierarchical context compression", "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.", func() {
+			a.settingsToggle(c, "Hierarchical context compression", &g.HierarchicalContext)
+		})
+	})
+	a.settingsCard(c, func() {
 		a.settingsRow(c, "Language", "", func() {
 			a.settingsChoice(c, "Language", &g.Language, []settingOption{{"zh-CN", "简体中文"}, {"en", "English"}}, nil)
 		})

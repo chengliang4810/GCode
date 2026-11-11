@@ -34,6 +34,11 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		return err
 	}
 	history := model.CloneMessages(e.context[sessionID])
+	hierarchicalContext := e.state.Settings.General.HierarchicalContext
+	var contextMemory agent.ContextMemory
+	if hierarchicalContext {
+		contextMemory = agent.CloneContextMemory(e.contextMemories[sessionID])
+	}
 	prompt := model.ClonePrompt(e.prompts[sessionID])
 	if len(history) < 6 {
 		return errors.New("not enough history to compact")
@@ -89,12 +94,20 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 			}
 		}
 		if err == nil {
-			compacted, err = agent.Compact(ctx, bound, model.Request{System: prompt.System, Tools: prompt.Tools, Effort: prompt.Effort, History: history})
+			request := model.Request{System: prompt.System, Tools: prompt.Tools, Effort: prompt.Effort, History: history}
+			if hierarchicalContext {
+				compacted, contextMemory, err = agent.CompactContext(ctx, bound, request, contextMemory)
+			} else {
+				compacted, err = agent.Compact(ctx, bound, agent.WithoutContextMemory(request))
+			}
 		}
 		if err == nil {
 			summary := ""
 			if len(compacted) > 0 {
 				summary = compacted[0].Text
+			}
+			if hierarchicalContext && len(contextMemory.Blocks) > 0 {
+				summary = contextMemory.Blocks[len(contextMemory.Blocks)-1].Summary
 			}
 			_, err = invoke(ctx, agent.HookInput{Event: contracts.HookPostCompact, Trigger: "manual", CompactSummary: summary})
 		}
@@ -109,8 +122,13 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		e.mu.Lock()
 		defer e.mu.Unlock()
 		defer e.evictIdleSessionsLocked()
+		previousContext, previousHistory := e.context[sessionID], e.history[sessionID]
+		previousMemory := e.contextMemories[sessionID]
 		if err == nil {
 			e.context[sessionID] = append(model.CloneMessages(compacted), model.CloneMessages(startupContext)...)
+			if hierarchicalContext {
+				e.contextMemories[sessionID] = contextMemory
+			}
 			e.history[sessionID] = append(e.history[sessionID], model.CloneMessages(startupContext)...)
 		}
 		if index := e.sessionIndex(sessionID); index >= 0 {
@@ -146,6 +164,10 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		e.state.Messages[sessionID] = append(e.state.Messages[sessionID], contracts.Message{ID: id("message"), SessionID: sessionID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: id("block"), Kind: "text", Text: label}}})
 		delete(e.runs, sessionID)
 		if persistErr := e.persistLocked(sessionID); persistErr != nil {
+			if hierarchicalContext {
+				e.context[sessionID], e.history[sessionID] = previousContext, previousHistory
+				e.contextMemories[sessionID] = previousMemory
+			}
 			for i := range e.state.Runs {
 				if e.state.Runs[i].ID == run.id {
 					e.state.Runs[i].Status = "failed"

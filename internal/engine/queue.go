@@ -248,6 +248,7 @@ func (e *Engine) restoreGoalInputsLocked(sessionID string, run *activeRun) {
 	// never reached the executor. Rebuild from the complete saved history
 	// instead of deleting that summary and losing the earlier work.
 	e.context[sessionID] = model.CloneMessages(e.history[sessionID])
+	delete(e.contextMemories, sessionID)
 	e.state.Messages[sessionID] = slices.DeleteFunc(e.state.Messages[sessionID], func(message contracts.Message) bool {
 		_, found := run.pending[message.ID]
 		return found

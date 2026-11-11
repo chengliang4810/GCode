@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 	"gcode/internal/reorder"
@@ -389,8 +390,13 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		}
 		e.state.Sessions = append([]contracts.Session{session}, e.state.Sessions...)
 		e.prompts[session.ID] = model.ClonePrompt(e.prompts[parent.ID])
+		if e.contextMemories == nil {
+			e.contextMemories = map[string]agent.ContextMemory{}
+		}
+		e.contextMemories[session.ID] = agent.CloneContextMemory(e.contextMemories[parent.ID])
 		if session.SideChat {
 			e.history[session.ID], e.context[session.ID] = e.sideChatSnapshotLocked(parent.ID)
+			e.contextMemories[session.ID] = agent.ContextMemoryForView(e.contextMemories[parent.ID], e.context[session.ID])
 			e.state.Messages[session.ID] = []contracts.Message{}
 		} else {
 			e.history[session.ID] = model.CloneMessages(e.history[parent.ID])
@@ -522,6 +528,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.state.ModelRequests = slices.DeleteFunc(e.state.ModelRequests, func(request contracts.ModelRequest) bool { return request.SessionID == command.ID })
 		delete(e.history, command.ID)
 		delete(e.context, command.ID)
+		delete(e.contextMemories, command.ID)
 		delete(e.prompts, command.ID)
 		delete(e.taskModels, command.ID)
 		e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.SessionID == command.ID })

@@ -35,6 +35,7 @@ func TestSettingsControlsSwitchGeometryAcrossPages(t *testing.T) {
 			}, 1100, 1400)
 			for _, page := range []struct{ section, label string }{
 				{"General", "Toggle Compact mode"},
+				{"General", "Toggle Hierarchical context compression"},
 				{"Model settings", "Enable provider Shared provider"},
 				{"MCP servers", "Enable Shared MCP"},
 				{"Subagents", "Enable " + app.state.Settings.Subagents[0].Name},

@@ -243,6 +243,7 @@ func (e *Engine) rejectHookInputLocked(sessionID, inputID string, run *activeRun
 	})
 	// Rebuild after rejection so compacted context cannot retain denied input.
 	e.context[sessionID] = model.CloneMessages(e.history[sessionID])
+	delete(e.contextMemories, sessionID)
 	delete(run.pending, inputID)
 	if goal := e.goalLocked(run.goal); goal != nil && goal.InitialInputID == inputID {
 		e.state.Sessions[e.sessionIndex(sessionID)].Goal = nil

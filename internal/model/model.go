@@ -214,6 +214,9 @@ type ToolOutput struct {
 
 // Message is execution history, not a reconstruction from display summaries.
 type Message struct {
+	// ContextRef is a stable host-owned context-management reference.
+	// Provider adapters never serialize this field.
+	ContextRef string `json:"contextRef,omitempty"`
 	// SourceText retains the accepted user invocation for hook input and skill
 	// expansion. Provider adapters only send the prepared Text.
 	SourceText string `json:"sourceText,omitempty"`

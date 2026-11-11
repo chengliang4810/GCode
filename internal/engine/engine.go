@@ -83,6 +83,7 @@ type Engine struct {
 	providers          []model.Provider
 	history            map[string][]model.Message
 	context            map[string][]model.Message
+	contextMemories    map[string]agent.ContextMemory
 	prompts            map[string]model.Prompt
 	cacheBaselines     map[string]cacheBaseline // guarded by trajectoryMu
 	cacheBaselineOrder []string                 // most recent last; at most 32
@@ -136,6 +137,7 @@ func Open(options Options) (*Engine, error) {
 	}
 	e := &Engine{toolGuard: options.ToolGuard, storage: options.Storage, client: client, runs: map[string]*activeRun{}, subs: map[uint64]chan contracts.Event{}, done: make(chan struct{}), history: map[string][]model.Message{}, context: map[string][]model.Message{}, terminals: map[string]*terminalhost.Session{}}
 	e.prompts = map[string]model.Prompt{}
+	e.contextMemories = map[string]agent.ContextMemory{}
 	e.modelChecks, e.modelCheckResults = map[string]*modelCheckRun{}, map[string]contracts.ModelCheck{}
 	e.modelFetchRuns, e.modelFetchResults = map[string]*modelFetchRun{}, map[string]contracts.ModelFetch{}
 	e.projectScans = map[string]*projectScan{}

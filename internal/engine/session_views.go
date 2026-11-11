@@ -151,6 +151,7 @@ func (e *Engine) evictSessionLocked(id string, index int) {
 	delete(e.loadedSessions, id)
 	delete(e.history, id)
 	delete(e.context, id)
+	delete(e.contextMemories, id)
 	delete(e.prompts, id)
 	delete(e.state.Messages, id)
 	e.state.Sessions[index].Goal = nil
