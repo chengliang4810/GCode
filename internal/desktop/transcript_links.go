@@ -26,7 +26,7 @@ func (a *App) configureWorkspaceLinks() {
 // scope of its own while its blocks are rows: the list holds one scope, and a
 // selection crosses its blocks the way the reference's surface does.
 func (a *App) transcriptScope(c *ui.Context, pane string, build func()) {
-	root := ui.Column(c).Key("transcript-scope:"+pane).FillWidth().Grow(1).Selectable()
+	root := ui.Column(c).Key("transcript-scope:" + pane).FillWidth().Grow(1).Selectable()
 	selection := linkui.BeginSelection(root)
 	if a.transcriptSelections == nil {
 		a.transcriptSelections = map[string]*linkui.Selection{}
@@ -41,7 +41,7 @@ func (a *App) transcriptScope(c *ui.Context, pane string, build func()) {
 
 // Keep delayed actions bound to the paragraph's source, rather than the last
 // conversation built in another pane. Options own image caches and are not copied.
-func (a *App) transcriptOptions(sessionID string, user bool) *markdown.Options {
+func (a *App) transcriptOptions(c *ui.Context, sessionID string, user bool) *markdown.Options {
 	if sessionID == "" {
 		sessionID = a.sessionID
 	}
@@ -60,7 +60,10 @@ func (a *App) transcriptOptions(sessionID string, user bool) *markdown.Options {
 	}
 	options.Theme, options.Extensions, options.ShareSelection = base.Theme, base.Extensions, base.ShareSelection
 	options.Math, options.Code, options.CodeBlock = base.Math, base.Code, base.CodeBlock
+	options.InlineMath, options.LinkIcon = base.InlineMath, base.LinkIcon
+	options.Resolve, options.Preview = base.Resolve, base.Preview
 	options.HTML, options.LoadImage, options.WrapCode, options.Reveal = base.HTML, base.LoadImage, base.WrapCode, base.Reveal
+	options.LinkMenu = linkui.MarkdownMenu(c, a.linkConfig(sessionID, "", c.Services()))
 	options.OnLink = func(raw string) { a.openTranscriptLink(sessionID, raw) }
 	options.Block = func(c *ui.Context, document *parser.Document, index int) bool {
 		previous := a.linkSource

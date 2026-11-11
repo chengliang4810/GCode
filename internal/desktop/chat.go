@@ -165,7 +165,9 @@ func (a *App) userMessage(c *ui.Context, m contracts.Message) {
 					if foldable && !expanded {
 						body.MaxHeight(110)
 					}
-					body.Children(func() { markdown.View(c, linktarget.NormalizeMarkdown(b.Text), a.transcriptOptions(m.SessionID, true)) })
+					body.Children(func() {
+						markdown.View(c, linktarget.NormalizeMarkdown(b.Text), a.transcriptOptions(c, m.SessionID, true))
+					})
 					if foldable {
 						name, label := "alt-arrow-down", "Expand message"
 						if expanded {
@@ -288,24 +290,26 @@ func (a *App) projectPicker(c *ui.Context) {
 }
 func (a *App) devicePicker(c *ui.Context) {
 	a.reconcileComposerCloudDevice()
-	b := ui.ButtonBase(c).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select device")).Children(func() {
+	b := ui.ButtonBase(c.Key("composer-device-picker")).Padding(3, 4).Radius(5).Gap(5).Label(tr(c, "Select device")).Children(func() {
 		icon(c, "monitor", 12)
 		ui.Text(c, a.deviceLabel()).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		icon(c, "alt-arrow-down", 10)
 	})
-	b.OnClick(func() { a.deviceMenu = !a.deviceMenu })
-	ui.Popover(c, b, &a.deviceMenu, func() {
+	b.PopoverMenuButton(func(menu *ui.Menu) {
 		for _, device := range a.state.Devices {
-			d := device
-			if footerCloudDevice(d.ID) {
+			if footerCloudDevice(device.ID) {
 				continue
 			}
-			menuChoice(c, d.Name, a.deviceID == d.ID, func() { a.pickComposerDevice(d.ID) })
+			if menu.Item(device.Name).ID("device:" + device.ID).Checked(a.deviceID == device.ID).Chosen() {
+				a.pickComposerDevice(device.ID)
+			}
 		}
 		if project, found := a.footerGitProject(); found && footerCloudRepositoryAvailable(a.state, project) {
-			menuChoice(c, tr(c, "Cloud"), footerCloudDevice(a.deviceID), func() { a.pickComposerDevice(a.composerCloudDeviceID()) })
+			if menu.Item(tr(c, "Cloud")).ID("device:cloud").Checked(footerCloudDevice(a.deviceID)).Chosen() {
+				a.pickComposerDevice(a.composerCloudDeviceID())
+			}
 		}
-	})
+	}, ui.PopoverMenuButtonOptions{Open: &a.deviceMenu})
 }
 func (a *App) attachmentChip(c *ui.Context, item contracts.Attachment, removable bool) {
 	ui.Row(c).Padding(6, 8).Radius(8).Border(1, a.palette.Border).Gap(6).AlignItems(ui.Center).Children(func() {

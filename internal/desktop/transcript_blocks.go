@@ -14,7 +14,7 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 	switch b.Kind {
 	case "text":
 		source := linktarget.NormalizeMarkdown(b.Text)
-		options := a.transcriptOptions(m.SessionID, false)
+		options := a.transcriptOptions(c, m.SessionID, false)
 		root := ui.Column(c).FillWidth()
 		mounted := ui.Local(root, "stream-mounted", func() bool { return false })
 		root.Children(func() {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gcode/internal/design"
+	"gcode/internal/linkui"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
@@ -179,7 +180,9 @@ func (a *App) transcriptTableRow(c *ui.Context, cells []transcriptTableCell, wid
 	}
 	sourceSession := a.linkSource
 	options := &markdown.Options{Theme: &theme, Extensions: a.md.Extensions, ShareSelection: true,
-		OnLink: func(raw string) { a.openTranscriptLink(sourceSession, raw) }, LoadImage: a.md.LoadImage, Math: a.md.Math}
+		OnLink: func(raw string) { a.openTranscriptLink(sourceSession, raw) }, LoadImage: a.md.LoadImage,
+		Math: a.md.Math, InlineMath: a.md.InlineMath,
+		LinkMenu: linkui.MarkdownMenu(c, a.linkConfig(sourceSession, "", c.Services()))}
 	options.Block = func(c *ui.Context, document *parser.Document, index int) bool {
 		previous := a.linkSource
 		a.linkSource = sourceSession

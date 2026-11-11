@@ -97,6 +97,31 @@ func TestComposerDeviceChoiceResolvesRemoteModelAndSends(t *testing.T) {
 	t.Fatal("remote agent was blocked by local no-agents state")
 }
 
+func TestDeviceMenuRestoresFocusAndHonorsControlledClose(t *testing.T) {
+	a := testApp(t, "default")
+	tt := ui.NewTester(a.View, 1320, 880)
+	if err := tt.Click("Select device"); err != nil {
+		t.Fatal(err)
+	}
+	if !a.deviceMenu || !tt.HasText("MacBook Pro") {
+		t.Fatal("device choices did not open")
+	}
+	tt.Key(0, ui.KeyEscape)
+	if a.deviceMenu || !tt.Focused("Select device") {
+		t.Fatal("Escape did not close the menu and return focus to its trigger")
+	}
+	a.deviceMenu = true
+	tt.Frame()
+	if !tt.HasText("MacBook Pro") {
+		t.Fatal("application-controlled menu opening was ignored")
+	}
+	a.deviceMenu = false
+	tt.Frame()
+	if tt.HasText("MacBook Pro") {
+		t.Fatal("application-controlled menu closing left stale device choices")
+	}
+}
+
 func TestSideComposerProviderFlagsUseItsSessionDevice(t *testing.T) {
 	a := testApp(t, "transcript")
 	child := sideSession(t, a, "showcase-agent")

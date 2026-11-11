@@ -73,6 +73,41 @@ func TestTranscriptLinksShareFileRoutingAcrossRenderers(t *testing.T) {
 	}
 }
 
+func TestNativeMarkdownLinkMenusRetainSourceConversation(t *testing.T) {
+	for _, source := range []struct{ name, text string }{
+		{"html", "[native guide](guide.MARKDOWN) <b>details</b>"},
+		{"image", "[native guide](guide.MARKDOWN) ![picture](missing.png)"},
+		{"footnote", "[native guide](guide.MARKDOWN) [^note]\n\n[^note]: Details"},
+	} {
+		for _, role := range []string{"assistant", "user"} {
+			t.Run(source.name+"/"+role, func(t *testing.T) {
+				a := linkTestApp(t)
+				message := contracts.Message{ID: "native-menu", SessionID: "root-links", Role: role,
+					Blocks: []contracts.Block{{ID: "body", Kind: "text", Text: source.text}}}
+				tt := linkMessageTester(t, a, message, false)
+				if err := tt.RightClick("native guide"); err != nil {
+					t.Fatal(err)
+				}
+				if err := tt.ChooseMenuItem("Copy path"); err != nil {
+					t.Fatal(err)
+				}
+				if tt.Clipboard() != "/workspace/guide.MARKDOWN" {
+					t.Fatalf("native menu copied wrong source path: %q", tt.Clipboard())
+				}
+				if err := tt.RightClick("native guide"); err != nil {
+					t.Fatal(err)
+				}
+				if err := tt.ChooseMenuItem("Open in GCode"); err != nil {
+					t.Fatal(err)
+				}
+				if a.workspace.ActiveKind() != "file" || a.sessionID != "root-links" {
+					t.Fatal("native link menu changed the source conversation or failed to open its file")
+				}
+			})
+		}
+	}
+}
+
 func TestTranscriptGeneratedFileWithoutProjectHasActions(t *testing.T) {
 	const filename = "巴中市城乡供水一体化管理平台_平台与设备清单.xlsx"
 	const absolute = "/Users/example/.gcode/workspaces/task/" + filename

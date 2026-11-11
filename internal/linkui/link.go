@@ -8,7 +8,6 @@ import (
 	"unicode/utf16"
 
 	"gcode/internal/design"
-	i18nview "gcode/internal/i18n/view"
 	"gcode/internal/linktarget"
 	"github.com/egoist/mygo/ui"
 )
@@ -79,45 +78,10 @@ func link(c *ui.Context, spans []ui.Span, d Destination, cfg Config, underline b
 		}
 		open(d, cfg, false)
 	})
-	services := c.Services()
-	copyLabel, openLabel := i18nview.T(c, "Copy link address"), i18nview.T(c, "Open in GCode")
-	externalLabel := i18nview.T(c, "Open in external browser")
-	folderLabel, appLabel := i18nview.T(c, "Show in folder"), i18nview.T(c, "Open in default app")
-	preferenceLabel := i18nview.T(c, "Open web links in GCode")
-	if d.Kind == linktarget.File {
-		copyLabel = i18nview.T(c, "Copy path")
-	}
+	buildMenu := linkMenu(c, cfg)
 	element.ContextMenu(func(menu *ui.Menu) {
 		st.shown, st.dismissed = false, true
-		if menu.Item(copyLabel).Chosen() {
-			services.WriteClipboard(targetText(d))
-		}
-		if menu.Item(openLabel).Disabled(cfg.Open == nil).Chosen() {
-			open(d, cfg, true)
-		}
-		switch d.Kind {
-		case linktarget.Web, linktarget.Mail:
-			if menu.Item(externalLabel).Disabled(cfg.OpenExternal == nil).Chosen() {
-				cfg.OpenExternal(d.Raw)
-			}
-			if d.Kind == linktarget.Web && cfg.SetInternal != nil {
-				menu.Separator()
-				if menu.Item(preferenceLabel).Checked(cfg.Internal).Chosen() {
-					cfg.SetInternal(!cfg.Internal)
-				}
-			}
-		case linktarget.File:
-			if d.Local {
-				if menu.Item(appLabel).Disabled(cfg.OpenExternal == nil).Chosen() {
-					cfg.OpenExternal(d.Raw)
-				}
-				if menu.Item(folderLabel).Disabled(cfg.Reveal == nil).Chosen() {
-					cfg.Reveal(d.Raw)
-				}
-			}
-		}
-		menu.Separator()
-		menu.EditItems()
+		buildMenu(menu, d)
 	})
 	hover := element.Hovered()
 	if underline && hover {
