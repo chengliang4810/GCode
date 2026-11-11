@@ -3,6 +3,7 @@ package desktop
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"gcode/internal/appusage"
 	"gcode/internal/design"
@@ -21,6 +22,20 @@ func (a *App) usageChartCard(c *ui.Context, title string, draw func()) {
 func (a *App) usageModelName(id string) string {
 	if id == "" {
 		return a.t("Unknown model")
+	}
+	for _, model := range a.state.Models {
+		if model.ID == id {
+			return a.runtimeModelLabel(model)
+		}
+	}
+	// Recorded usage outlives model configuration. Resolve its provider while
+	// retaining the complete request model ID, including any embedded slashes.
+	if providerID, modelID, ok := strings.Cut(id, "/"); ok {
+		for _, provider := range a.state.Providers {
+			if provider.ID == providerID {
+				return provider.Name + "/" + modelID
+			}
+		}
 	}
 	return id
 }

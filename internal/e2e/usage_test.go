@@ -231,11 +231,15 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			if got := app.waitKey("usage-total").Label; got != "240" {
 				t.Fatalf("persisted/forked usage total=%s, want 240", got)
 			}
-			for i, modelID := range []string{"usage/alpha", "usage/beta"} {
+			for i, modelName := range []string{"Local fixture/alpha", "Local fixture/beta"} {
 				label := app.waitKey(fmt.Sprintf("usage-model-%d", i)).Label
-				if !strings.Contains(label, modelID) || !strings.Contains(label, "120 Tokens") || !strings.Contains(label, "50.0%") {
+				if !strings.Contains(label, modelName) || !strings.Contains(label, "120 Tokens") || !strings.Contains(label, "50.0%") {
 					t.Fatalf("actual request model split is wrong: %s", label)
 				}
+			}
+			hint := app.waitKey("usage-value-" + time.Now().Format("2006-01-02")).Label
+			if !strings.Contains(hint, "Local fixture/alpha · 120") || !strings.Contains(hint, "Local fixture/beta · 120") {
+				t.Fatalf("usage trend tooltip lost provider/model names: %s", hint)
 			}
 			app.capture("usage-7d")
 			app.act("usage-range-30", "press", "")
