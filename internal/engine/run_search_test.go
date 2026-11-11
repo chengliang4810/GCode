@@ -128,6 +128,71 @@ func TestSearchToolsRoundTripThroughThreeProtocols(t *testing.T) {
 	}
 }
 
+func TestWebSearchSurvivesSessionRuntimeToolSelection(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled-%t", enabled), func(t *testing.T) {
+			var calls atomic.Int32
+			var searches atomic.Int32
+			search := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				searches.Add(1)
+				var request map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&request)
+				if request["query"] != "tool catalog" {
+					t.Error("search did not receive the model query")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"results":[{"title":"Catalog evidence","url":"https://example.test/catalog","content":"tool catalog verified"}]}`))
+			}))
+			defer search.Close()
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body := subagentRequest(t, r)
+				found := 0
+				for _, raw := range body["tools"].([]any) {
+					if raw.(map[string]any)["function"].(map[string]any)["name"] == "WebSearch" {
+						found++
+					}
+				}
+				if (found == 1) != enabled || found > 1 {
+					t.Errorf("enabled=%t but actual request contains %d WebSearch tools", enabled, found)
+				}
+				if calls.Add(1) == 1 && enabled {
+					w.Header().Set("Content-Type", "text/event-stream")
+					emitSearchCall(w, model.Chat, "web-search", "WebSearch", `{"query":"tool catalog"}`)
+					return
+				}
+				if enabled {
+					wire, _ := json.Marshal(body)
+					if !strings.Contains(string(wire), "Catalog evidence") {
+						t.Error("search result did not return to the model")
+					}
+				}
+				subagentText(w, model.Chat, "Tool catalog checked.")
+			}))
+			defer server.Close()
+			core, _ := subagentCore(t, server.URL, server.URL, model.Chat)
+			state, err := core.Snapshot(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			settings := state.Settings
+			settings.General.WebSearch.Enabled = enabled
+			settings.General.WebSearch.Endpoint = search.URL
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
+				t.Fatal(err)
+			}
+			startSubagentParent(t, core)
+			state = waitSubagentState(t, core, func(s contracts.Snapshot) bool { return len(s.Runs) == 1 && runsFinished(s) })
+			wantCalls, wantSearches := int32(1), int32(0)
+			if enabled {
+				wantCalls, wantSearches = 2, 1
+			}
+			if calls.Load() != wantCalls || searches.Load() != wantSearches || state.Sessions[0].LastOutcome != "completed" {
+				t.Fatal("runtime tool catalog request did not complete")
+			}
+		})
+	}
+}
+
 func emitSearchCall(w http.ResponseWriter, protocol model.Protocol, id, name, arguments string) {
 	switch protocol {
 	case model.Chat:

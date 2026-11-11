@@ -397,11 +397,6 @@ func (e *Engine) startRunWithProvidersLocked(
 			tools = readOnlyTools()
 		} else {
 			tools, closeTools, mcpWarnings, toolErr = loadRunTools(runCtx, root, session.CWD, processEnv)
-			// Search keeps its own credentials: enabling it hands the tool a
-			// config that never inherits the model provider's key.
-			if toolErr == nil && searchSettings.Enabled {
-				tools = append(tools, agent.NewWebSearchTool(&agent.WebSearchConfig{Endpoint: searchSettings.Endpoint, Token: searchSettings.Token}))
-			}
 		}
 		defer closeTools()
 		if toolErr == nil {
@@ -420,6 +415,11 @@ func (e *Engine) startRunWithProvidersLocked(
 			}
 		}
 		tools = runtimeTools
+		// Add optional tools after selecting the session-owned runtime set.
+		// Search credentials remain independent of the model provider.
+		if toolErr == nil && searchSettings.Enabled && (child == nil || !contracts.IsReadOnlySubagent(child.profile.ID)) {
+			tools = append(tools, agent.NewWebSearchTool(&agent.WebSearchConfig{Endpoint: searchSettings.Endpoint, Token: searchSettings.Token}))
+		}
 		var pluginClients []*mcp.Client
 		defer func() {
 			for _, client := range pluginClients {
