@@ -385,8 +385,9 @@ func (a *App) activityShimmerInk(c *ui.Context, el ui.Element, title string, pha
 }
 
 // A read is a record of which file the agent opened, not something to inspect:
-// the row stays flat and the file name opens the file itself. No disclosure
-// key, chevron or detail viewport belongs to it.
+// the row stays flat, states what it did in the same label word the other rows
+// use, and the file name opens the file itself. No disclosure key, chevron or
+// detail viewport belongs to it.
 func (a *App) activityReadItem(c *ui.Context, id string, block contracts.Block, continues bool, motion activityRowMotion) {
 	tool := block.Tool
 	color := a.palette.Muted
@@ -406,6 +407,7 @@ func (a *App) activityReadItem(c *ui.Context, id string, block contracts.Block, 
 		row.Children(func() {
 			a.activityRowIcon(c, "document", color)
 			ui.Row(c).Grow(1).MinWidth(0).Height(30).Margin(0, 0, 0, activityTextGap).AlignItems(ui.Center).Gap(8).TextColor(color).Children(func() {
+				ui.Text(c, tr(c, "Read")).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color).SingleLine().Shrink(0)
 				a.activityFileBadge(c, "activity-file:"+id, tool.Path, color)
 				if summary := activityReadSummary(c, *tool); summary != "" {
 					ui.Text(c, summary).MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color).SingleLine()

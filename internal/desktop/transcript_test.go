@@ -70,9 +70,12 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 	if read.H != 32 || edit.H != 32 || write.H != 32 || write.Y-edit.Y != 32 {
 		t.Fatalf("tree row drift: read=%+v edit=%+v write=%+v", read, edit, write)
 	}
-	// A read keeps the shared tree gutter without a disclosure of its own.
-	if badge, _ := tt.Find("Open file: README.md"); badge.X-header.X != 56 {
-		t.Fatalf("read file name starts at %v, want source 48+8 gutter", badge.X-header.X)
+	// A read states its label word at the shared tree gutter without a
+	// disclosure of its own, and its file name follows that word.
+	readLabel, labelOK := tt.Find("Read")
+	readBadge, badgeOK := tt.Find("Open file: README.md")
+	if !labelOK || !badgeOK || readLabel.X-header.X != 56 || readBadge.X < readLabel.X+readLabel.W {
+		t.Fatalf("read label starts at %v, badge at %v: want source 48+8 gutter before the file name", readLabel.X-header.X, readBadge.X)
 	}
 	if err := tt.Click("Thought process: thought-1"); err != nil {
 		t.Fatal(err)
@@ -527,7 +530,7 @@ func TestTranscriptLogicalGeometryAtDesktopScales(t *testing.T) {
 			if !ok || row.H != 32 {
 				t.Fatalf("scaled row %+v", row)
 			}
-			label, _ := tt.Find("Open file: README.md")
+			label, _ := tt.Find("Read")
 			if label.X-row.X != 56 {
 				t.Fatalf("scaled native gutter: %v", label.X-row.X)
 			}

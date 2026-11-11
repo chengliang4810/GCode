@@ -39,10 +39,11 @@ Readable command/search fields are decoded by the core at `tool.start`, with
 the original arguments retained for inspection.
 
 2026-11-06 read rows: a `Read` is a record of which file the agent opened, not
-something to inspect. It renders as a flat 32px row carrying the file badge and
-the line window the tool actually returned (`README.md · 80 lines`), with no
-disclosure key, chevron or detail viewport at all — the invocation JSON and the
-file text never enter the conversation. The core projects that window from the
+something to inspect. It renders as a flat 32px row carrying the label word the
+other rows use, the file badge and the line window the tool actually returned
+(`读取  README.md · 80 lines`), with no disclosure key, chevron or detail
+viewport at all — the invocation JSON and the file text never enter the
+conversation. The core projects that window from the
 tool's own typed result: `agent.Event.Data` carries the `tool.end` payload and
 `engine` stores its `file.numLines` as `contracts.ToolCall.ReadLines`, so the
 count is what was read rather than the requested `limit`. Image reads, failed
@@ -59,7 +60,8 @@ which is how remote and outside-project files open.
 Native evidence for that change (2026-11-06): run
 `go run ./scripts/desktop-e2e -run TestDesktopLocalTranscriptActivity` on macOS.
 The Read assertions pass in light and dark — the row exposes no
-`activity-item-toggle`, shows `Open file: <path>` plus `· 80 lines`, and pressing
+`activity-item-toggle`, shows the `Read` label word followed by
+`Open file: <path>` plus `· 80 lines`, and pressing
 `activity-file:<group>:<block>` opens the file tab whose editor value contains
 the file's last line. Those runs still fail the separate
 "completed thought shows its first line" step, which the same test fails on a
