@@ -77,3 +77,37 @@ func TestInvocationPreservesPartialInterruptedResponse(t *testing.T) {
 		t.Fatal("stream failure lost partial model output")
 	}
 }
+
+func TestInvocationPreservesInvalidToolCallAndRedactsCredentials(t *testing.T) {
+	const secret = "private-secret"
+	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {
+		return retryResponse(200, `data: {"choices":[{"delta":{"tool_calls":[{"index":2,"id":"bad","function":{"name":"Write","arguments":"{\"content\":\"private-secret\""}}]},"finish_reason":"tool_calls"}]}`+"\n\ndata: [DONE]\n\n"), nil
+	}))
+	var records []Invocation
+	gateway.Observe = func(record Invocation) {
+		if record.CompletedAt != nil {
+			records = append(records, record)
+		}
+	}
+	result, err := gateway.Stream(t.Context(), Request{}, nil)
+	if err == nil || !strings.Contains(err.Error(), "arguments") || len(result.Message.Calls) != 0 {
+		t.Fatalf("invalid arguments lack a field-specific failure: %+v %v", result, err)
+	}
+	if len(records) != DefaultMaxRetries+1 {
+		t.Fatalf("invalid calls escaped the shared retry budget: attempts=%d", len(records))
+	}
+	data, marshalErr := json.Marshal(records[len(records)-1])
+	if marshalErr != nil {
+		t.Fatal(marshalErr)
+	}
+	var record map[string]json.RawMessage
+	if json.Unmarshal(data, &record) != nil || len(record["invalidToolCall"]) == 0 {
+		t.Fatalf("diagnostics dropped the invalid call: %s", data)
+	}
+	if strings.Contains(string(data), secret) || !strings.Contains(string(record["invalidToolCall"]), "[redacted]") {
+		t.Fatal("invalid call diagnostic leaked credentials or omitted arguments")
+	}
+	if records[len(records)-1].Response == nil || len(records[len(records)-1].Response.Message.Calls) != 0 {
+		t.Fatal("diagnostics published invalid calls as an executable response")
+	}
+}

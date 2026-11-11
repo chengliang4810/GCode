@@ -16,6 +16,19 @@ var ErrStreamInterrupted = errors.New("model stream ended before completion")
 
 var errOutputLimit = errors.New("model output limit reached; incomplete tool calls were not executed")
 
+// ToolCallError retains a rejected call for diagnostics only. The entire
+// response batch remains unavailable for execution.
+type ToolCallError struct {
+	Index   int    `json:"index"`
+	Call    Call   `json:"call"`
+	Field   string `json:"field"`
+	Problem string `json:"problem"`
+}
+
+func (e *ToolCallError) Error() string {
+	return fmt.Sprintf("model returned an incomplete tool call (index %d: %s %s)", e.Index, e.Field, e.Problem)
+}
+
 type streamReadError struct{ cause error }
 
 func (e *streamReadError) Error() string { return e.cause.Error() }
@@ -120,6 +133,7 @@ func (s *streamState) finish() (Result, error) {
 		return s.result, errors.New("model stream omitted its finish reason")
 	}
 	// Validate the entire batch before publishing any executable calls.
+	s.result.Stop = s.stop
 	calls := make([]Call, 0, len(s.calls))
 	seen := make(map[string]bool, len(s.calls))
 	for _, index := range sortedKeys(s.calls) {
@@ -127,10 +141,21 @@ func (s *streamState) finish() (Result, error) {
 		if call.Arguments == "" {
 			call.Arguments = "{}"
 		}
+		invalid := func(field, problem string) (Result, error) {
+			return s.result, &ToolCallError{Index: index, Call: s.calls[index].Call, Field: field, Problem: problem}
+		}
+		if strings.TrimSpace(call.ID) == "" {
+			return invalid("id", "is missing")
+		}
+		if strings.TrimSpace(call.Name) == "" {
+			return invalid("name", "is missing")
+		}
 		var args map[string]json.RawMessage
-		if call.ID == "" || call.Name == "" ||
-			json.Unmarshal([]byte(call.Arguments), &args) != nil || args == nil {
-			return s.result, errors.New("model returned an incomplete tool call")
+		if err := json.Unmarshal([]byte(call.Arguments), &args); err != nil {
+			return invalid("arguments", "must be a valid JSON object")
+		}
+		if args == nil {
+			return invalid("arguments", "must be a JSON object")
 		}
 		if seen[call.ID] {
 			return s.result, errors.New("model returned duplicate tool call IDs")
@@ -138,7 +163,6 @@ func (s *streamState) finish() (Result, error) {
 		seen[call.ID] = true
 		calls = append(calls, call)
 	}
-	s.result.Stop = s.stop
 	switch {
 	case len(calls) > 0:
 		s.result.Stop = StopTools

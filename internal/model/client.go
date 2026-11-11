@@ -297,6 +297,7 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 			}
 			if callErr != nil {
 				trace.Error = traceText(callErr.Error(), g.provider.APIKey, &trace.Truncated)
+				trace.InvalidToolCall = traceInvalidToolCall(callErr, g.provider.APIKey, &trace.Truncated)
 			}
 			g.Observe(trace)
 		}()

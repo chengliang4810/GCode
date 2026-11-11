@@ -55,6 +55,15 @@ func TestGeneratedConversationIDsAreLowercase(t *testing.T) {
 }
 
 func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
+	testReplyRetriesWithoutRepeatingCompletedTools(t, false)
+}
+
+func TestInvalidToolCallRetriesWithoutRepeatingCompletedTools(t *testing.T) {
+	testReplyRetriesWithoutRepeatingCompletedTools(t, true)
+}
+
+func testReplyRetriesWithoutRepeatingCompletedTools(t *testing.T, invalidToolCall bool) {
+	t.Helper()
 	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
 		t.Run(string(protocol), func(t *testing.T) {
 			var requests atomic.Int32
@@ -65,6 +74,9 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 				callID, path, content := "Call_KeepCase", "completed.txt", "completed-once"
 				if attempt == 2 {
 					callID, path, content = "Call_Incomplete", "must-not-exist.txt", "unsafe"
+					if invalidToolCall {
+						callID = ""
+					}
 				}
 				arguments := fmt.Sprintf(`{"file_path":%q,"content":%q}`, path, content)
 				if attempt > 1 && (!strings.Contains(string(payload), "Call_KeepCase") || !strings.Contains(string(payload), "Wrote")) {
@@ -78,16 +90,17 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 					if attempt < 3 {
 						delta := map[string]any{"tool_calls": []any{map[string]any{"index": 0, "id": callID, "function": map[string]any{"name": "Write", "arguments": arguments}}}}
 						choice := map[string]any{"delta": delta}
-						if attempt == 1 {
+						if attempt == 1 || invalidToolCall {
 							choice["finish_reason"] = "tool_calls"
-						} else {
+						}
+						if attempt == 2 {
 							delta["content"] = "discarded partial"
 						}
 						sendSSE(w, map[string]any{"choices": []any{choice}})
 					} else {
 						fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"RECOVERED_OK\"},\"finish_reason\":\"stop\"}]}\n\n")
 					}
-					if attempt != 2 {
+					if attempt != 2 || invalidToolCall {
 						fmt.Fprint(w, "data: [DONE]\n\n")
 					}
 				case model.Responses:
@@ -96,6 +109,13 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 						sendSSE(w, map[string]any{"type": "response.completed", "response": map[string]any{"status": "completed", "output": []any{map[string]any{"type": "function_call", "call_id": callID, "name": "Write", "arguments": arguments}}}})
 					case 2:
 						fmt.Fprint(w, "data: {\"type\":\"response.output_text.delta\",\"delta\":\"discarded partial\"}\n\n")
+						if invalidToolCall {
+							sendSSE(w, map[string]any{"type": "response.completed", "response": map[string]any{"status": "completed",
+								"output": []any{
+									map[string]any{"type": "message", "content": []any{map[string]any{"type": "output_text", "text": "discarded partial"}}},
+									map[string]any{"type": "function_call", "call_id": callID, "name": "Write", "arguments": arguments},
+								}}})
+						}
 					default:
 						fmt.Fprint(w, "data: {\"type\":\"response.output_text.delta\",\"delta\":\"RECOVERED_OK\"}\n\ndata: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[]}}\n\n")
 					}
@@ -106,6 +126,11 @@ func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
 						fmt.Fprint(w, "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"}}\n\ndata: {\"type\":\"message_stop\"}\n\n")
 					case 2:
 						fmt.Fprint(w, "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"discarded partial\"}}\n\n")
+						if invalidToolCall {
+							sendSSE(w, map[string]any{"type": "content_block_start", "index": 1, "content_block": map[string]any{
+								"type": "tool_use", "id": callID, "name": "Write", "input": map[string]any{"file_path": path, "content": content}}})
+							fmt.Fprint(w, "data: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"}}\n\ndata: {\"type\":\"message_stop\"}\n\n")
+						}
 					default:
 						fmt.Fprint(w, "data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"RECOVERED_OK\"}}\n\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\ndata: {\"type\":\"message_stop\"}\n\n")
 					}

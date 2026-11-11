@@ -78,6 +78,35 @@ func TestChatFragmentedToolNameAndArguments(t *testing.T) {
 	}
 }
 
+func TestInvalidToolCallIdentifiesFieldWithoutPublishingBatch(t *testing.T) {
+	for _, test := range []struct {
+		name, id, tool, args, field string
+	}{
+		{"missing id", "", "Write", "{}", "id"},
+		{"missing name", "call", "", "{}", "name"},
+		{"partial JSON", "call", "Write", "{", "arguments"},
+		{"array", "call", "Write", "[]", "arguments"},
+		{"null", "call", "Write", "null", "arguments"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			event, _ := json.Marshal(map[string]any{"choices": []any{map[string]any{
+				"delta": map[string]any{"tool_calls": []any{
+					map[string]any{"index": 0, "id": "valid", "function": map[string]any{"name": "Write", "arguments": "{}"}},
+					map[string]any{"index": 1, "id": test.id, "function": map[string]any{"name": test.tool, "arguments": test.args}},
+				}}, "finish_reason": "tool_calls",
+			}}})
+			result, err := decodeStream(strings.NewReader("data: "+string(event)+"\n\ndata: [DONE]\n\n"), chatAdapter{}.decoder(), nil)
+			var invalid *ToolCallError
+			if !errors.As(err, &invalid) || invalid.Index != 1 || invalid.Field != test.field || invalid.Call.Arguments != test.args {
+				t.Fatalf("invalid call diagnostic=%+v, error=%v", invalid, err)
+			}
+			if len(result.Message.Calls) != 0 || result.Stop != StopTools {
+				t.Fatalf("failed batch exposed calls or lost stop reason: %+v", result)
+			}
+		})
+	}
+}
+
 func TestDecodeStreamEmitsBeforeReadingNextEvent(t *testing.T) {
 	t.Parallel()
 	first := `data: {"choices":[{"delta":{"content":"first"}}]}` + "\n\n"

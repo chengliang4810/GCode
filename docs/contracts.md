@@ -163,12 +163,14 @@ The loop records assistant tool calls before executing effects, records results
 before requesting another model step, and never automatically replays an uncertain
 side effect at startup. Restarted runs become interrupted. Complete execution
 history and the model context used after compaction are persisted separately.
-Recoverable transport, HTTP and stream failures share one model-layer budget:
+Recoverable transport, HTTP, stream and invalid tool-call failures share one model-layer budget:
 10 additional retries (11 physical attempts) per logical model request. Incomplete
 display blocks are replaced before retrying; incomplete tool calls are never
 committed or executed. Completed tool effects and results remain in the context.
-Each physical attempt retains its own usage and trajectory entry. Cancellation
-ends recovery immediately. Session.ModelRetry is a cloned runtime projection
+Each physical attempt retains its own usage and trajectory entry. Invalid calls
+retain field-specific, credential-redacted diagnostics outside the executable
+response batch. Cancellation and persistence failures end recovery immediately.
+Session.ModelRetry is a cloned runtime projection
 for local and remote clients, cleared on output or settlement and omitted from
 persistence. The loading slot exposes its retry counter from retry 3, without a
 countdown. See [model retry](model-retry.md).

@@ -27,8 +27,14 @@ var failureRules = []func(error) (Failure, bool){
 	certificateFailure,
 	providerBusinessFailure,
 	httpFailure,
+	toolCallFailure,
 	streamFailure,
 	networkFailure,
+}
+
+func toolCallFailure(err error) (Failure, bool) {
+	var invalid *ToolCallError
+	return Failure{Reason: "invalid_tool_call", Retryable: true}, errors.As(err, &invalid)
 }
 
 func ClassifyFailure(err error) Failure {

@@ -87,6 +87,36 @@ func TestRetryMixedFailuresShareOneRequestAndBudget(t *testing.T) {
 	}
 }
 
+func TestRetryInvalidToolCallWithoutPublishingAnyCalls(t *testing.T) {
+	var payloads []string
+	gateway := retryGateway(t, retryTransport(func(request *http.Request) (*http.Response, error) {
+		body, _ := io.ReadAll(request.Body)
+		payloads = append(payloads, string(body))
+		if len(payloads) == 1 {
+			return retryResponse(200, `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"valid","function":{"name":"Write","arguments":"{}"}},{"index":1,"id":"invalid","function":{"name":"Write","arguments":"{"}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":12,"completion_tokens":7}}`+"\n\ndata: [DONE]\n\n"), nil
+		}
+		return retryResponse(200, "data: {\"choices\":[{\"delta\":{\"content\":\"recovered\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"), nil
+	}))
+	var retries []RetryStatus
+	var attempts []Result
+	result, err := gateway.StreamWithAttempts(t.Context(), Request{History: []Message{{Role: "user", Text: "original"}}},
+		func(delta Delta) error {
+			if delta.Retry != nil {
+				retries = append(retries, *delta.Retry)
+			}
+			return nil
+		}, func(result Result) error { attempts = append(attempts, result); return nil })
+	if err != nil || result.Message.Text != "recovered" || len(payloads) != 2 || len(attempts) != 2 {
+		t.Fatalf("invalid call was not recovered: result=%+v err=%v requests=%d", result, err, len(payloads))
+	}
+	if len(attempts[0].Message.Calls) != 0 || attempts[0].Usage.Output != 7 {
+		t.Fatal("failed batch published executable calls or lost usage")
+	}
+	if payloads[0] != payloads[1] || len(retries) != 1 || retries[0].Reason != "invalid_tool_call" {
+		t.Fatalf("retry changed request or classification: %+v", retries)
+	}
+}
+
 func TestRetryBudgetIsTenAdditionalAttemptsAndResetsPerRequest(t *testing.T) {
 	calls := 0
 	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {
