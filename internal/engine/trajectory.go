@@ -95,12 +95,17 @@ func (e *Engine) writeTrajectory(session contracts.Session, record contracts.Mod
 			response.Message = model.Message{Role: "assistant", Text: "[response content omitted: record size limit]"}
 			record.Response = &response
 		}
+		data, err = json.MarshalIndent(record, "", "  ")
+		if err != nil {
+			return err
+		}
 	}
 	name := fmt.Sprintf("call-%019d-%s-%03d.json", record.StartedAt.UnixNano(), record.ID, record.Attempt)
 	if !trajectoryFilename.MatchString(name) {
 		return errors.New("invalid model invocation identity")
 	}
-	if err := storage.WriteJSONRoot(folder, name, record); err != nil {
+	// Reuse the encoded size-check result; only truncated records need encoding again.
+	if err := storage.WriteBytesRoot(folder, name, data); err != nil {
 		return err
 	}
 	files, err := trajectoryFiles(folder)

@@ -16,7 +16,8 @@ func WriteJSONRoot(root *os.Root, name string, value any) error {
 	if err != nil {
 		return err
 	}
-	return WriteJSONBytesRoot(root, name, data)
+	// MarshalIndent has already produced valid JSON.
+	return WriteBytesRoot(root, name, data)
 }
 
 // WriteJSONBytesRoot atomically replaces one file directly within an opened

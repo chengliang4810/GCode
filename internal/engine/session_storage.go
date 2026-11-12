@@ -399,7 +399,8 @@ func (e *Engine) writeSessionRecord(session contracts.Session, record string, da
 		return err
 	}
 	defer folder.Close()
-	return storage.WriteJSONBytesRoot(folder, record+".json", data)
+	// persistLocked supplies the bytes directly from json.MarshalIndent.
+	return storage.WriteBytesRoot(folder, record+".json", data)
 }
 
 func (e *Engine) removeSessionRecord(rootID, sessionID, record string) {

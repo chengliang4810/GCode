@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -10,6 +13,72 @@ import (
 	"gcode/internal/model"
 	"gcode/internal/storage"
 )
+
+func TestTrajectoryEncodedContentAndTruncation(t *testing.T) {
+	store, err := storage.Open(storage.Options{Home: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	core, err := openExecutionFixture(t, Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer core.Close()
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "session.create", Name: "Encoding"}); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := core.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := snapshot.Sessions[0]
+	for _, tc := range []struct {
+		name string
+		text string
+	}{
+		{"normal", "中文\n<request>"},
+		{"oversized", strings.Repeat("x", trajectoryRecordSize+1)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			record := contracts.ModelInvocation{
+				SessionID: session.ID,
+				Invocation: model.Invocation{
+					ID: tc.name, Attempt: 1, StartedAt: time.Unix(1, 0), System: tc.text,
+					Response: &model.Result{Message: model.Message{Role: "assistant", Text: "原始回复"}},
+				},
+			}
+			if err := core.writeTrajectory(session, record); err != nil {
+				t.Fatal(err)
+			}
+			if record.System != tc.text || record.Response.Message.Text != "原始回复" || record.Truncated {
+				t.Fatal("saving diagnostics mutated the caller's request or response")
+			}
+			expected := record
+			if tc.name == "oversized" {
+				expected.Truncated = true
+				expected.System = "[request context omitted: record size limit]"
+				response := *record.Response
+				response.Message = model.Message{Role: "assistant", Text: "[response content omitted: record size limit]"}
+				expected.Response = &response
+			}
+			want, err := json.MarshalIndent(expected, "", "  ")
+			if err != nil {
+				t.Fatal(err)
+			}
+			folder, err := core.trajectoryDirectory(session, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer folder.Close()
+			name := fmt.Sprintf("call-%019d-%s-%03d.json", record.StartedAt.UnixNano(), record.ID, record.Attempt)
+			got, err := folder.ReadFile(name)
+			if err != nil || !bytes.Equal(got, want) {
+				t.Fatalf("saved trajectory differs from the expected JSON: %v", err)
+			}
+		})
+	}
+}
 
 func TestTrajectoryOwnershipRetentionAndMissingHistory(t *testing.T) {
 	store, err := storage.Open(storage.Options{Home: t.TempDir()})
