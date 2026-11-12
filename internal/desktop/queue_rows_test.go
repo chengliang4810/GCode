@@ -2,12 +2,51 @@ package desktop
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 
 	"github.com/egoist/mygo/ui"
 )
+
+func TestQueueRowsStayInsideComposerWidth(t *testing.T) {
+	for _, width := range []int{700, 1320, 2048} {
+		for _, dark := range []bool{false, true} {
+			for _, empty := range []bool{false, true} {
+				t.Run(fmt.Sprintf("width=%d/dark=%t/empty=%t", width, dark, empty), func(t *testing.T) {
+					a, _ := queueRowApp(t)
+					a.state.Settings.Appearance.ThemeID = "rcode-light"
+					if dark {
+						a.state.Settings.Appearance.ThemeID = "rcode-dark"
+					}
+					if empty {
+						a.state.Messages[a.sessionID] = nil
+						a.state.Revision++
+					}
+					var surface ui.Rect
+					tt := ui.NewTester(func(c *ui.Context) {
+						a.View(c)
+						surface = a.composerSurface.Bounds(c)
+					}, width, 880)
+					tt.Advance(time.Second)
+					tt.Frame()
+					for _, label := range []string{"First queued message", "Second queued message", "Send now (interrupt)", "Edit queued message", "Remove queued message"} {
+						bounds, ok := tt.Find(label)
+						if !ok {
+							t.Fatalf("queue control missing: %s", label)
+						}
+						if bounds.X < surface.X || bounds.X+bounds.W > surface.X+surface.W || bounds.Y+bounds.H > surface.Y {
+							t.Fatalf("%s=%+v must stay above and within composer=%+v", label, bounds, surface)
+						}
+					}
+					writeModelSurfaceEvidence(t, fmt.Sprintf("queue-width-%d-dark-%t-empty-%t", width, dark, empty), tt, map[string]any{"composer": surface})
+				})
+			}
+		}
+	}
+}
 
 // queueCommandRecorder keeps the queue commands the app dispatches so a test
 // can read the rows they name.

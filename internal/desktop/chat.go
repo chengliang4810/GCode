@@ -120,9 +120,6 @@ func (a *App) chatView(c *ui.Context) {
 						iconButton(c.Key("transcript-latest"), "arrow-down", tr(c, "Back to latest")).OnClick(func() { a.messages.ScrollToEnd() })
 					})
 				}
-				ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
-					a.queueRows(c, a.sessionID)
-				})
 			})
 		} else {
 			ui.Spacer(c).Grow(1)
@@ -206,6 +203,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	ui.Row(c).Key("main-composer").FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
 		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
 		block.Children(func() {
+			a.queueRows(c, a.sessionID)
 			if a.questionComposer(c, a.sessionID, "main:"+a.sessionID) {
 				return
 			}
