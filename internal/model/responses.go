@@ -97,32 +97,42 @@ func (responsesAdapter) encode(r Request, target adapterTarget) (map[string]any,
 }
 
 func (responsesAdapter) decoder() streamDecoder {
-	return &responsesDecoder{streamState: newStreamState(), output: make(map[int]json.RawMessage)}
+	return &responsesDecoder{streamState: newStreamState(), output: make(map[int]json.RawMessage), streamed: make(map[int]*streamCall)}
 }
 
 type responsesDecoder struct {
 	streamState
 	output map[int]json.RawMessage
+	// streamed accumulates function_call items that arrive as deltas, so a host
+	// that never repeats them in the final output still executes the calls.
+	streamed map[int]*streamCall
+	// functionDeltas counts streamed tool arguments, which must never end in a
+	// silent answer without an executable call.
+	functionDeltas int
+}
+
+// responsesEvent is one streamed Responses API event.
+type responsesEvent struct {
+	Type        string          `json:"type"`
+	Delta       string          `json:"delta"`
+	Item        json.RawMessage `json:"item"`
+	ItemID      string          `json:"item_id"`
+	OutputIndex int             `json:"output_index"`
+	Response    struct {
+		Status string            `json:"status"`
+		Output []json.RawMessage `json:"output"`
+		Usage  struct {
+			Input   *int `json:"input_tokens"`
+			Output  *int `json:"output_tokens"`
+			Details struct {
+				Cached *int `json:"cached_tokens"`
+			} `json:"input_tokens_details"`
+		} `json:"usage"`
+	} `json:"response"`
 }
 
 func (d *responsesDecoder) consume(payload string) (Delta, error) {
-	var event struct {
-		Type        string          `json:"type"`
-		Delta       string          `json:"delta"`
-		Item        json.RawMessage `json:"item"`
-		OutputIndex int             `json:"output_index"`
-		Response    struct {
-			Status string            `json:"status"`
-			Output []json.RawMessage `json:"output"`
-			Usage  struct {
-				Input   *int `json:"input_tokens"`
-				Output  *int `json:"output_tokens"`
-				Details struct {
-					Cached *int `json:"cached_tokens"`
-				} `json:"input_tokens_details"`
-			} `json:"usage"`
-		} `json:"response"`
-	}
+	var event responsesEvent
 	if err := json.Unmarshal([]byte(payload), &event); err != nil {
 		return Delta{}, errors.New("invalid model streaming event")
 	}
@@ -138,7 +148,27 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 		delta.Text = event.Delta
 	case "response.reasoning_summary_text.delta":
 		delta.Reasoning = event.Delta
-	case "response.function_call_arguments.delta", "response.reasoning_text.delta":
+	case "response.output_item.added":
+		var item struct {
+			Type   string `json:"type"`
+			CallID string `json:"call_id"`
+			Name   string `json:"name"`
+		}
+		if err := json.Unmarshal(event.Item, &item); err != nil {
+			return Delta{}, errors.New("invalid model output item")
+		}
+		if item.Type == "function_call" {
+			d.streamed[event.OutputIndex] = newStreamCall(Call{ID: item.CallID, Name: item.Name})
+		}
+	case "response.function_call_arguments.delta":
+		if call := d.streamedCall(event); call != nil {
+			call.append("", event.Delta)
+		}
+		if event.Delta != "" {
+			d.functionDeltas++
+		}
+		delta.Output = event.Delta != ""
+	case "response.reasoning_text.delta":
 		delta.Output = event.Delta != ""
 	case "response.output_item.done":
 		d.output[event.OutputIndex] = event.Item
@@ -159,6 +189,37 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 	}
 	d.add(delta)
 	return delta, nil
+}
+
+// streamedCall resolves the accumulated call for a function call delta. Endpoints
+// that omit response.output_item.added are handled by item_id or output index; a
+// delta without either creates the call for its index so the arguments are kept
+// and reported as an incomplete call instead of being dropped.
+func (d *responsesDecoder) streamedCall(event responsesEvent) *streamCall {
+	if call := d.streamed[event.OutputIndex]; call != nil {
+		return call
+	}
+	if event.ItemID != "" {
+		for _, call := range d.streamed {
+			if call.ID == event.ItemID {
+				return call
+			}
+		}
+	}
+	call := newStreamCall(Call{ID: event.ItemID})
+	d.streamed[event.OutputIndex] = call
+	return call
+}
+
+// hasCallID reports whether the final output already carries this call, so a
+// renumbered item is not executed twice.
+func (d *responsesDecoder) hasCallID(id string) bool {
+	for _, call := range d.calls {
+		if call.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func (d *responsesDecoder) finish() (Result, error) {
@@ -202,7 +263,29 @@ func (d *responsesDecoder) finish() (Result, error) {
 		}
 		d.result.Message.Text = finalText.String()
 	}
+	// Calls that only ever arrived as deltas still execute, and stay in the
+	// replayed output so the next request carries the assistant tool use.
+	for _, index := range sortedKeys(d.streamed) {
+		call := d.streamed[index]
+		if _, ok := d.calls[index]; ok {
+			continue
+		}
+		if call.ID != "" && d.hasCallID(call.ID) {
+			continue
+		}
+		d.calls[index] = call
+		item, err := json.Marshal(map[string]any{
+			"type": "function_call", "call_id": call.ID, "name": call.Name, "arguments": call.Arguments,
+		})
+		if err != nil {
+			return d.result, err
+		}
+		output = append(output, item)
+	}
 	result, err := d.streamState.finish()
+	if err == nil && d.functionDeltas > 0 && len(result.Message.Calls) == 0 {
+		return result, errors.New("model streamed tool arguments without a complete call")
+	}
 	if err == nil && len(output) > 0 {
 		data, marshalErr := json.Marshal(output)
 		if marshalErr != nil {

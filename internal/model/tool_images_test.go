@@ -158,13 +158,18 @@ func TestMessagesToolImagesRemainInsideToolResults(t *testing.T) {
 	if err := json.Unmarshal(data, &body); err != nil {
 		t.Fatal(err)
 	}
-	if len(body.Messages) != len(history) {
-		t.Fatalf("unexpected messages: %s", data)
+	// Adjacent tool results belong to one user message, so results are matched
+	// by call ID instead of by message position.
+	results := map[string]Message{}
+	for _, message := range history {
+		if message.Role == "tool" {
+			results[message.CallID] = message
+		}
 	}
 	assertToolImageContent(t, Messages, body.Messages[0].Content, history[0])
 	pending := map[string]bool{}
 	outputIDs := []string{}
-	for index, item := range body.Messages {
+	for _, item := range body.Messages {
 		var blocks []struct {
 			Type      string          `json:"type"`
 			ID        string          `json:"id"`
@@ -185,8 +190,11 @@ func TestMessagesToolImagesRemainInsideToolResults(t *testing.T) {
 				}
 				delete(pending, block.ToolUseID)
 				outputIDs = append(outputIDs, block.ToolUseID)
-				result := history[index]
-				if block.ToolUseID != result.CallID || block.IsError != result.IsError {
+				result, ok := results[block.ToolUseID]
+				if !ok {
+					t.Fatalf("unknown tool result %q: %s", block.ToolUseID, data)
+				}
+				if block.IsError != result.IsError {
 					t.Fatalf("tool result identity/error flag changed: %s", item.Content)
 				}
 				if len(result.Images) == 0 {

@@ -27,7 +27,9 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 		return nil, errors.New("anthropic messages does not support minimal effort")
 	}
 	messages := []any{}
-	for _, m := range r.History {
+	summary := r.ContextChange == "summary"
+	trailing := 0
+	for i, m := range r.History {
 		content := []any{}
 		role := m.Role
 		if role == "tool" {
@@ -72,10 +74,14 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 			}
 		}
 		if len(content) > 0 {
-			messages = append(messages, map[string]any{"role": role, "content": content})
+			if summary && i == len(r.History)-1 {
+				// The final message of a summary request is a one-use instruction.
+				trailing = len(content)
+			}
+			messages = appendAnthropicMessage(messages, role, content)
 		}
 	}
-	cacheConversationPrefix(messages, r.ContextChange == "summary")
+	cacheConversationPrefix(messages, trailing)
 	output := target.model.OutputLimit(Messages)
 	body := map[string]any{
 		"model": target.model.ID, "system": cachedSystemBlocks(r.System), "messages": messages,
@@ -101,20 +107,53 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 	return body, nil
 }
 
-// A summary reads the existing prefix but does not cache its one-use
-// instruction. Never put cache_control directly on thinking or empty text.
-func cacheConversationPrefix(messages []any, summary bool) {
-	last := len(messages) - 1
-	if summary {
-		last--
+// appendAnthropicMessage merges a message into the previous one when both use
+// the same role. The Messages API requires alternating roles, while one
+// assistant turn can produce several tool results and hook reminders that all
+// belong to a single user message.
+func appendAnthropicMessage(messages []any, role string, content []any) []any {
+	if len(content) == 0 {
+		return messages
 	}
-	for i := last; i >= 0; i-- {
-		message, _ := messages[i].(map[string]any)
-		content, _ := message["content"].([]any)
-		for j := len(content) - 1; j >= 0; j-- {
-			block, ok := content[j].(map[string]any)
+	if len(messages) > 0 {
+		if last, ok := messages[len(messages)-1].(map[string]any); ok && last["role"] == role {
+			if blocks, ok := last["content"].([]any); ok {
+				last["content"] = append(blocks, content...)
+				return messages
+			}
+		}
+	}
+	return append(messages, map[string]any{"role": role, "content": content})
+}
+
+// A summary reads the existing prefix but does not cache its one-use
+// instruction, which is the trailing block count excluded from marking. Never
+// put cache_control directly on thinking or empty text.
+func cacheConversationPrefix(messages []any, trailing int) {
+	total := 0
+	for _, message := range messages {
+		if content, ok := message.(map[string]any)["content"].([]any); ok {
+			total += len(content)
+		}
+	}
+	limit := total - trailing
+	position := -1
+	var target map[string]any
+	var targetContent []any
+	var targetIndex int
+	for _, message := range messages {
+		content, ok := message.(map[string]any)["content"].([]any)
+		if !ok {
+			continue
+		}
+		for j, entry := range content {
+			position++
+			if position >= limit {
+				break
+			}
+			block, ok := entry.(map[string]any)
 			if !ok {
-				raw, ok := content[j].(json.RawMessage)
+				raw, ok := entry.(json.RawMessage)
 				if !ok {
 					continue
 				}
@@ -132,11 +171,14 @@ func cacheConversationPrefix(messages []any, summary bool) {
 					continue
 				}
 			}
-			block["cache_control"] = map[string]any{"type": "ephemeral"}
-			content[j] = block
-			return
+			target, targetContent, targetIndex = block, content, j
 		}
 	}
+	if target == nil {
+		return
+	}
+	target["cache_control"] = map[string]any{"type": "ephemeral"}
+	targetContent[targetIndex] = target
 }
 
 func (messagesAdapter) decoder() streamDecoder {

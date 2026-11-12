@@ -45,7 +45,9 @@ func TestMessagesCacheBreakpointFollowsConversationAndPrecedesSummary(t *testing
 }
 
 func TestDiagnosticMessageHashesIgnoreMovingCacheMarkersOnly(t *testing.T) {
-	first := Request{History: []Message{{Role: "user", Text: "first"}}}
+	// The assistant turn keeps the roles alternating, so the appended user
+	// message stays a separate message and only the cache marker moves.
+	first := Request{History: []Message{{Role: "user", Text: "first"}, {Role: "assistant", Text: "answer"}}}
 	payload, _ := (messagesAdapter{}).encode(first, adapterTarget{model: Model{ID: "m"}})
 	body, _ := json.Marshal(payload)
 	before := requestDiagnostics(payload, body, first)

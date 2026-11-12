@@ -67,6 +67,12 @@ Messages 的 `minimal` 配置无效。实际模型接受哪些等级仍由用户
 无法支持的停止状态、输出截断和不完整工具调用明确失败，不伪装成正常完成。
 一个批次的全部调用通过校验后才发布给 Agent，重复调用 ID 会使整个批次失败。
 
+Anthropic Messages 要求 user/assistant 交替，因此同一回合的多个工具结果、以及紧随其后的
+提醒消息合入同一条 user 消息；缓存打点仍落在一次性摘要指令之前，不缓存该指令本身。
+Responses 的 `response.function_call_arguments.delta` 按输出下标累积：即使兼容端点不在最终
+`output` 中重复该调用，调用仍会执行并进入回放数据；只有参数而缺少调用标识时明确失败，
+不当作普通回答结束。
+
 工具返回 `model.ToolOutput`，文字与图片分别进入统一历史；适配器负责各协议的图片位置。
 Chat 在同批全部工具结果之后追加图片用户消息，Responses 和 Anthropic 将图片嵌入工具结果
 的内容数组。图片不会降成普通 Base64 文本，也不会被转协议时丢弃。详见 [Read 工具](read-tool.md)。

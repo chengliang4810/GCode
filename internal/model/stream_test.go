@@ -150,7 +150,7 @@ func TestDecodeTimingUsesFirstActualOutput(t *testing.T) {
 	}{
 		{"chat reasoning", chatAdapter{}, `{"choices":[{"delta":{"role":"assistant"}}]}`, `{"choices":[{"delta":{"reasoning_content":"think"}}]}`, "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]"},
 		{"chat tool", chatAdapter{}, `{}`, `{"choices":[{"delta":{"tool_calls":[{"index":0,"id":"t","function":{"name":"Read","arguments":"{}"}}]}}]}`, "{\"choices\":[{\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]"},
-		{"responses tool", responsesAdapter{}, `{"type":"response.created"}`, `{"type":"response.function_call_arguments.delta","delta":"{}"}`, `{"type":"response.completed","response":{"status":"completed"}}`},
+		{"responses tool", responsesAdapter{}, `{"type":"response.output_item.added","output_index":0,"item":{"type":"function_call","call_id":"t","name":"Read"}}`, `{"type":"response.function_call_arguments.delta","output_index":0,"delta":"{}"}`, `{"type":"response.completed","response":{"status":"completed"}}`},
 		{"messages tool", messagesAdapter{}, `{"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"t","name":"Read"}}`, `{"type":"content_block_delta","index":0,"delta":{"partial_json":"{}"}}`, "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"}}\n\ndata: {\"type\":\"message_stop\"}"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

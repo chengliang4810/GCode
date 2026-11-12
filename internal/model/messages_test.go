@@ -166,3 +166,46 @@ func TestCachedSystemBlocksSplitsAtDynamicBoundary(t *testing.T) {
 		t.Fatalf("empty system: %#v", got)
 	}
 }
+
+func TestMessagesMergesAdjacentSameRoleMessages(t *testing.T) {
+	t.Parallel()
+	// One assistant turn with two parallel tool calls produces two tool results,
+	// and a hook reminder arrives as another user message. The Messages API
+	// rejects consecutive messages with the same role.
+	body, err := (messagesAdapter{}).encode(Request{History: []Message{
+		{Role: "user", Text: "read two files"},
+		{Role: "assistant", Calls: []Call{{ID: "call-1", Name: "Read", Arguments: `{"path":"a"}`}, {ID: "call-2", Name: "Read", Arguments: `{"path":"b"}`}}},
+		{Role: "tool", CallID: "call-1", Text: "first"},
+		{Role: "tool", CallID: "call-2", Text: "second"},
+		{Role: "user", Text: "reminder"},
+	}}, adapterTarget{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, _ := json.Marshal(body)
+	var request struct {
+		Messages []struct {
+			Role    string `json:"role"`
+			Content []struct {
+				Type      string `json:"type"`
+				ToolUseID string `json:"tool_use_id"`
+				Text      string `json:"text"`
+			} `json:"content"`
+		} `json:"messages"`
+	}
+	if err := json.Unmarshal(encoded, &request); err != nil {
+		t.Fatal(err)
+	}
+	if len(request.Messages) != 3 {
+		t.Fatalf("messages = %d: %s", len(request.Messages), encoded)
+	}
+	for i := 1; i < len(request.Messages); i++ {
+		if request.Messages[i-1].Role == request.Messages[i].Role {
+			t.Fatalf("adjacent %s messages: %s", request.Messages[i].Role, encoded)
+		}
+	}
+	merged := request.Messages[2].Content
+	if len(merged) != 3 || merged[0].ToolUseID != "call-1" || merged[1].ToolUseID != "call-2" || merged[2].Text != "reminder" {
+		t.Fatalf("merged tool results: %s", encoded)
+	}
+}
