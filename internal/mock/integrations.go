@@ -8,35 +8,6 @@ import (
 	"gcode/internal/contracts"
 )
 
-func cloneIntegrations(v contracts.IntegrationState) contracts.IntegrationState {
-	v.Providers = slices.Clone(v.Providers)
-	for i := range v.Providers {
-		v.Providers[i].LoginOptions = slices.Clone(v.Providers[i].LoginOptions)
-	}
-	v.Accounts = slices.Clone(v.Accounts)
-	for i := range v.Accounts {
-		v.Accounts[i].Usage = slices.Clone(v.Accounts[i].Usage)
-	}
-	if v.Login != nil {
-		x := *v.Login
-		v.Login = &x
-	}
-	v.Cloud.Repositories = slices.Clone(v.Cloud.Repositories)
-	v.Cloud.Connections = slices.Clone(v.Cloud.Connections)
-	v.Cloud.Usage = slices.Clone(v.Cloud.Usage)
-	v.Billing.Plans = slices.Clone(v.Billing.Plans)
-	if v.Billing.Subscription != nil {
-		x := *v.Billing.Subscription
-		v.Billing.Subscription = &x
-	}
-	if v.Billing.Checkout != nil {
-		x := *v.Billing.Checkout
-		v.Billing.Checkout = &x
-	}
-	return v
-}
-
-// Missing metadata is additive: existing provider switches and user histories survive.
 func (s *Server) ensureIntegrationsLocked() {
 	if s.state.Integrations.ProvidersState != "" {
 		return
