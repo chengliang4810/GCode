@@ -20,6 +20,14 @@ type Tool interface {
 	Execute(context.Context, string, json.RawMessage) (model.ToolOutput, error)
 }
 
+// modelTool is implemented by tools that need the turn's model while they run.
+// WebFetch uses it to condense a page around the caller's prompt instead of
+// pasting the whole text into the next request. The method is unexported, so
+// only this package's tools can claim the model.
+type modelTool interface {
+	withModel(Model) Tool
+}
+
 // Model is the Agent's only model dependency. Channel selection, authentication
 // and wire protocols belong to the bound implementation.
 type Model interface {

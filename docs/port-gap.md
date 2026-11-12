@@ -35,6 +35,10 @@ re-deriving it.
    http(s) only, 2 MiB read cap enforced mid-stream, 100k char output cap,
    30 s timeout, HTML reduced to prose (scripts/styles/templates dropped,
    block tags become breaks, prose entities decoded), 4xx body reported.
+   2026-11-12: the optional `prompt` argument is honoured — the turn's model
+   condenses the page around it instead of returning the whole text; a
+   missing model or a failed summary keeps the page and says why the prompt
+   was not applied.
 2. **~~WebSearch tool~~ — PORTED 2026-10-31** (`internal/agent/websearch.go`):
    Tavily-protocol `POST {endpoint}/search`, config from
    `Settings.General.WebSearch` with its own endpoint+token that never

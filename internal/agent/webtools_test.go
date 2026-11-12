@@ -3,11 +3,14 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"gcode/internal/model"
 )
 
 func TestHTMLToTextKeepsProseDropsMarkup(t *testing.T) {
@@ -212,5 +215,156 @@ func TestWebSearchReportsHttpErrorWithoutReadingBody(t *testing.T) {
 	}
 	if !strings.Contains(output.Text, "HTTP 429") || strings.Contains(output.Text, "noise") {
 		t.Fatalf("error body echoed: %q", output.Text)
+	}
+}
+
+// summaryModel records the request it answered and replies with a fixed
+// extraction.
+type summaryModel struct {
+	requests []model.Request
+	reply    string
+	err      error
+	calls    []model.Call
+}
+
+func (m *summaryModel) Stream(_ context.Context, request model.Request, _ func(model.Delta) error) (model.Result, error) {
+	m.requests = append(m.requests, request)
+	if m.err != nil {
+		return model.Result{}, m.err
+	}
+	return model.Result{Message: model.Message{Role: "assistant", Text: m.reply, Calls: m.calls}, Stop: model.StopComplete}, nil
+}
+
+func TestWebFetchSummarisesThePageAroundThePrompt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("release 4.2 fixed the crash\nrelease 4.3 added tracing"))
+	}))
+	defer server.Close()
+
+	bound := &summaryModel{reply: "4.3"}
+	tool := webFetchTool{}.withModel(bound)
+	output, err := tool.Execute(context.Background(), "", json.RawMessage(`{"url":"`+server.URL+`","prompt":"which release added tracing"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bound.requests) != 1 {
+		t.Fatalf("summary requests = %d", len(bound.requests))
+	}
+	request := bound.requests[0]
+	if len(request.History) != 1 || !strings.Contains(request.History[0].Text, "which release added tracing") {
+		t.Fatalf("prompt missing from request: %+v", request.History)
+	}
+	if !strings.Contains(request.History[0].Text, "release 4.2 fixed the crash") {
+		t.Fatalf("page missing from request: %+v", request.History)
+	}
+	if !strings.Contains(output.Text, "4.3") || strings.Contains(output.Text, "release 4.2 fixed the crash") {
+		t.Fatalf("summary did not replace the page: %q", output.Text)
+	}
+	if !strings.Contains(output.Text, "summarised from") {
+		t.Fatalf("summary origin missing: %q", output.Text)
+	}
+}
+
+func TestWebFetchWithoutPromptKeepsTheWholePage(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("whole page"))
+	}))
+	defer server.Close()
+
+	bound := &summaryModel{reply: "summary"}
+	tool := webFetchTool{}.withModel(bound)
+	output, err := tool.Execute(context.Background(), "", json.RawMessage(`{"url":"`+server.URL+`"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bound.requests) != 0 {
+		t.Fatalf("model called without a prompt: %+v", bound.requests)
+	}
+	if !strings.Contains(output.Text, "whole page") {
+		t.Fatalf("page lost: %q", output.Text)
+	}
+}
+
+func TestWebFetchKeepsThePageWhenTheSummaryFails(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("whole page"))
+	}))
+	defer server.Close()
+
+	bound := &summaryModel{err: errors.New("provider unavailable")}
+	tool := webFetchTool{}.withModel(bound)
+	output, err := tool.Execute(context.Background(), "", json.RawMessage(`{"url":"`+server.URL+`","prompt":"anything"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.Text, "whole page") || !strings.Contains(output.Text, "the prompt was not applied") {
+		t.Fatalf("failure was not reported with the page: %q", output.Text)
+	}
+	if !strings.Contains(output.Text, "provider unavailable") {
+		t.Fatalf("failure reason missing: %q", output.Text)
+	}
+}
+
+func TestWebFetchWithoutABoundModelReportsTheUnusedPrompt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("whole page"))
+	}))
+	defer server.Close()
+
+	output, err := (webFetchTool{}).Execute(context.Background(), "", json.RawMessage(`{"url":"`+server.URL+`","prompt":"anything"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output.Text, "whole page") || !strings.Contains(output.Text, "the prompt was not applied") {
+		t.Fatalf("unused prompt was not reported: %q", output.Text)
+	}
+}
+
+func TestWebFetchDoesNotSummariseAnErrorPage(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("no such page"))
+	}))
+	defer server.Close()
+
+	bound := &summaryModel{reply: "summary"}
+	tool := webFetchTool{}.withModel(bound)
+	output, err := tool.Execute(context.Background(), "", json.RawMessage(`{"url":"`+server.URL+`","prompt":"anything"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bound.requests) != 0 {
+		t.Fatalf("model called for an error page: %+v", bound.requests)
+	}
+	if !strings.Contains(output.Text, "HTTP 404") {
+		t.Fatalf("status lost: %q", output.Text)
+	}
+}
+
+func TestToolLoopBindsTheTurnModelToToolsThatNeedIt(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("whole page"))
+	}))
+	defer server.Close()
+
+	bound := &summaryModel{reply: "extracted"}
+	var tool Tool = webFetchTool{}
+	if _, ok := tool.(modelTool); !ok {
+		t.Fatal("web fetch does not declare the model dependency")
+	}
+	var recorded model.Message
+	err := executeTools(context.Background(), Options{Model: bound, Emit: func(Event) error { return nil }},
+		map[string]Tool{"WebFetch": tool},
+		[]model.Call{{ID: "call", Name: "WebFetch", Arguments: `{"url":"` + server.URL + `","prompt":"anything"}`}},
+		func(message model.Message) error { recorded = message; return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(bound.requests) != 1 {
+		t.Fatalf("model was not bound to the tool: %+v", bound.requests)
+	}
+	if !strings.Contains(recorded.Text, "extracted") {
+		t.Fatalf("summary was not returned to the model: %q", recorded.Text)
 	}
 }

@@ -68,6 +68,11 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 						return
 					}
 				}
+				// Bind the turn's model before hooks wrap the call: a tool that
+				// reads the page for the model must use the same model.
+				if needsModel, ok := tool.(modelTool); ok {
+					tool = needsModel.withModel(options.Model)
+				}
 				if options.Hook != nil {
 					tool = hookedTool{Tool: tool, hook: options.Hook, callID: call.ID,
 						inputUpdated: func(raw json.RawMessage) {
