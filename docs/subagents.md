@@ -54,8 +54,15 @@ Messages 不接受 `minimal`。`none` 是明确的关闭选项；空值表示未
 }
 ```
 
-`description` 和 `prompt` 必填；省略类型时用 general-purpose。`model` 可选，
-只接受 sonnet/opus/haiku/inherit；它们是虚拟角色，不创建虚假模型目录项，也不会直接发送
+`description` 和 `prompt` 必填；省略类型时用 general-purpose。
+
+`run_in_background` 优先传 JSON 布尔值 `true` / `false`，省略为 `false`；
+宿主也接受精确字符串 `"true"` / `"false"`，执行前转换为布尔值。
+所有工具执行前按其 JSON Schema 校验参数，Hook 改写后再次校验。
+类型或约束错误作为工具错误返回模型，模型可纠正参数后重试；无效参数不执行工具。
+其他字段不进行隐式类型转换。
+
+`model` 可选，只接受 sonnet/opus/haiku/inherit；它们是虚拟角色，不创建虚假模型目录项，也不会直接发送
 这些名称给供应商。目前所有角色映射到调用方当前的有效模型与思考档位；
 若用户为指定子 Agent 类型配置了模型，配置优先。
 子 Agent 已选择模型 B 后，其内部技能的角色别名继续继承 B，不回到主对话的模型 A。

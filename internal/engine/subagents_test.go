@@ -184,7 +184,7 @@ func TestBackgroundSubagentNotifiesParentAfterItsTurnEnds(t *testing.T) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		switch parentCalls.Add(1) {
 		case 1:
-			subagentCall(w, `{"description":"Background lookup","prompt":"task","subagent_type":"worker","run_in_background":true}`)
+			subagentCall(w, `{"description":"Background lookup","prompt":"task","subagent_type":"worker","run_in_background":"true"}`)
 		case 2:
 			subagentText(w, model.Chat, "PARENT FIRST TURN")
 		default:

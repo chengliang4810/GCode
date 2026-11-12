@@ -55,6 +55,19 @@ func executeTools(ctx context.Context, options Options, tools map[string]Tool, c
 					results[index].err = fmt.Errorf("tool %q is disabled by the active skill", call.Name)
 					return
 				}
+				raw, err := PrepareToolArguments(tool.Definition(), json.RawMessage(call.Arguments))
+				if err != nil {
+					results[index].err = err
+					return
+				}
+				if string(raw) != call.Arguments {
+					call.Arguments = string(raw)
+					results[index].call = call
+					if err := options.Emit(Event{Kind: "tool.input.changed", Call: call}); err != nil {
+						results[index].err = err
+						return
+					}
+				}
 				if options.Hook != nil {
 					tool = hookedTool{Tool: tool, hook: options.Hook, callID: call.ID,
 						inputUpdated: func(raw json.RawMessage) {

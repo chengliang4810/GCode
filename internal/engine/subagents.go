@@ -128,7 +128,7 @@ func (e *Engine) delegationTool(
 						"type": "string", "description": "Complete task instructions; parent history is not shared",
 					},
 					"subagent_type":     map[string]any{"type": "string", "enum": types},
-					"run_in_background": map[string]any{"type": "boolean"},
+					"run_in_background": map[string]any{"type": "boolean", "description": "Run asynchronously when true; defaults to false. Prefer JSON booleans true/false without quotes. The host also accepts the exact strings \"true\" and \"false\"."},
 					"model":             map[string]any{"type": "string", "enum": []string{"sonnet", "opus", "haiku", "inherit"}, "description": "Claude model role. This host resolves roles to the inherited model; a user-configured subagent model takes precedence."},
 				},
 			},

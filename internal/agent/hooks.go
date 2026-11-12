@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -517,6 +518,11 @@ type hookedTool struct {
 // host-initiated tools, including a skill's dynamic shell context.
 func ExecuteHookedTool(ctx context.Context, tool Tool, cwd string, raw json.RawMessage,
 	hook func(context.Context, HookInput) (HookResult, error), callID string) (model.ToolOutput, error) {
+	prepared, err := PrepareToolArguments(tool.Definition(), raw)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	raw = prepared
 	if hook == nil {
 		return tool.Execute(ctx, cwd, raw)
 	}
@@ -562,6 +568,15 @@ func (t hookedTool) Execute(ctx context.Context, cwd string, raw json.RawMessage
 			}
 		}
 	}
+	prepared, validationErr := PrepareToolArguments(t.Definition(), raw)
+	if validationErr != nil {
+		return model.ToolOutput{}, validationErr
+	}
+	if !bytes.Equal(prepared, raw) && t.inputUpdated != nil {
+		t.inputUpdated(slices.Clone(prepared))
+	}
+	raw = prepared
+	input.ToolInput = slices.Clone(raw)
 	output, toolErr := t.Tool.Execute(ctx, cwd, raw)
 	input.Event, input.ToolOutput = contracts.HookPostToolUse, output.Text
 	if output.Data != nil {

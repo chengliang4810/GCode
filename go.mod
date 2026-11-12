@@ -7,6 +7,7 @@ require (
 	github.com/egoist/mygo v0.8.3
 	github.com/fyne-io/image v0.1.1
 	github.com/go-latex/latex v0.0.0-20250304174226-2790903426af
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/image v0.46.0
 	golang.org/x/net v0.59.0
