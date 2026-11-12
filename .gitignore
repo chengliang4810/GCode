@@ -5,4 +5,8 @@
 *.test
 /.cache/
 /.claude/worktrees/
+/.mygo/
+/.tmp/
+/gcode
+/gcode.exe
 mygo-update.key

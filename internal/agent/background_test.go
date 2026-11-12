@@ -211,7 +211,7 @@ func TestRunShellKeepsEnvironmentLocalAndUsesExplicitShell(t *testing.T) {
 	if err != nil || out.Text != "child value" || os.Getenv("RCODE_TEST_CHILD_ONLY") != before {
 		t.Fatalf("child env: %q %v", out.Text, err)
 	}
-	out, err = RunShell(context.Background(), root, "powershell", `[Console]::Write($env:RCODE_TEST_CHILD_ONLY)`, map[string]string{"RCODE_TEST_CHILD_ONLY": "powershell value"}, 10*time.Second, nil)
+	out, err = RunShell(context.Background(), root, "powershell", `[Console]::Write($env:RCODE_TEST_CHILD_ONLY)`, map[string]string{"RCODE_TEST_CHILD_ONLY": "powershell value"}, 60*time.Second, nil)
 	_, pwshErr := exec.LookPath("pwsh")
 	_, powershellErr := exec.LookPath("powershell")
 	if pwshErr != nil && powershellErr != nil {

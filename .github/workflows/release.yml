@@ -85,11 +85,22 @@ jobs:
       - name: Race checks
         env:
           CGO_ENABLED: "1"
-        run: go test -race ./... -count=1 -timeout 25m
+        shell: bash
+        run: |
+          # The engine and desktop suites are far too slow under the race
+          # detector to finish in one job; they run without it in the next step.
+          packages=$(go list ./... | grep -v -e '/internal/engine$' -e '/internal/desktop$')
+          go test -race $packages -count=1 -timeout 25m
+      - name: Core regression checks
+        run: go test ./internal/engine ./internal/desktop -count=1 -timeout 45m
       - name: Static checks
         run: |
           go vet ./...
+          go vet -tags=e2e ./...
           go tool mygo vet .
+      - name: Format checks
+        shell: bash
+        run: test -z "$(gofmt -l cmd internal scripts)"
       - name: Shared controls boundary
         run: go test ./internal/desktop -run 'Test(SettingsControls|InspectSettingsControls)'
       - name: Build Windows

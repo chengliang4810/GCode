@@ -22,7 +22,7 @@ TASK_MYGO_VERSION=$(go list -m -f '{{.Version}}' github.com/egoist/mygo)
 MYGO_LDFLAGS=$(go run ./scripts/check-framework.go -ldflags)
 export MYGO_LDFLAGS
 go run ./scripts/check-distribution.go
-go test ./...
+go test ./... -timeout 30m
 go vet ./...
 go tool mygo vet .
 go tool mygo build -platform darwin/amd64,darwin/arm64,darwin/universal -o build -skip-notarize

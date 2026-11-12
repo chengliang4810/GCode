@@ -9,7 +9,7 @@ run:
 	go build -o "$(DESKTOP_BINARY)" ./cmd/rcode
 	"$(DESKTOP_BINARY)"
 test:
-	go test ./...
+	go test ./... -timeout 30m
 vet:
 	go vet ./...
 	go tool mygo vet .

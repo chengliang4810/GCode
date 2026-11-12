@@ -45,7 +45,7 @@ try {
     & go run ./scripts/check-distribution.go
     if ($LASTEXITCODE -ne 0) { throw 'Independent distribution identity verification failed' }
     if (-not $SkipTests) {
-        & go test ./...
+        & go test ./... -timeout 30m
         if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
         & go vet ./...
         if ($LASTEXITCODE -ne 0) { throw 'Go vet failed' }
