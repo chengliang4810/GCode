@@ -29,6 +29,45 @@ func TestExactEditPreservesUnicodeAndCRLF(t *testing.T) {
 	}
 }
 
+func TestFileWriteToolsStayInsideWorkingDirectory(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	target := filepath.Join(outside, "secret.txt")
+	tools := []fileTool{{name: "Write"}, {name: "Edit"}}
+	cases := []struct {
+		name string
+		args string
+	}{
+		{"absolute", `{"file_path":"` + filepath.ToSlash(target) + `","content":"escaped","old_string":"","new_string":"escaped"}`},
+		{"parent traversal", `{"file_path":"../` + filepath.Base(outside) + `/secret.txt","content":"escaped","old_string":"","new_string":"escaped"}`},
+		{"symlink escape", `{"file_path":"link/secret.txt","content":"escaped","old_string":"","new_string":"escaped"}`},
+	}
+	if runtime.GOOS == "windows" {
+		cases = cases[:2]
+	} else if err := os.Symlink(outside, filepath.Join(root, "link")); err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range tools {
+		for _, test := range cases {
+			if test.name == "symlink escape" && runtime.GOOS == "windows" {
+				continue
+			}
+			if _, err := tool.Execute(context.Background(), root, json.RawMessage(test.args)); err == nil {
+				t.Fatalf("%s %s escaped the working directory", tool.name, test.name)
+			}
+		}
+	}
+	if _, err := os.Stat(target); !os.IsNotExist(err) {
+		t.Fatalf("out-of-workspace file was written: %v", err)
+	}
+	if _, err := (fileTool{name: "Write"}).Execute(context.Background(), "", json.RawMessage(`{"file_path":"outside.txt","content":"x"}`)); err == nil {
+		t.Fatal("write without a working directory succeeded")
+	}
+	if _, err := (fileTool{name: "Write"}).Execute(context.Background(), root, json.RawMessage(`{"file_path":"nested/inside.txt","content":"ok"}`)); err != nil {
+		t.Fatalf("workspace write rejected: %v", err)
+	}
+}
+
 func TestEditReplacesAllMatchesAndCreatesOnlyEmptyFiles(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "all.txt")

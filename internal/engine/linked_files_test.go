@@ -10,6 +10,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -145,6 +146,36 @@ func TestReadLinkedFileValidatesFilesAndCancellation(t *testing.T) {
 	cancel()
 	if _, err := core.ReadLinkedFile(ctx, contracts.LinkedFileRequest{SessionID: session.ID, Path: "fake.png"}); !errors.Is(err, context.Canceled) {
 		t.Fatalf("canceled read = %v", err)
+	}
+}
+
+func TestReadLinkedFileRejectsCredentialStores(t *testing.T) {
+	core, workspace, session := linkedFileTestCore(t)
+	configuration := core.storage.ConfigDirectory()
+	enginePath := filepath.Join(configuration, "engine.json")
+	if err := storage.WriteJSON(enginePath, map[string]string{"providers": "private-key"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"engine.json", "connection.json", "server.json", "plugin-configuration.json"} {
+		path := filepath.Join(configuration, name)
+		if res, err := core.ReadLinkedFile(t.Context(), contracts.LinkedFileRequest{SessionID: session.ID, Path: path}); err == nil {
+			t.Fatalf("accepted credential store %q: %+v", name, res)
+		}
+	}
+	if runtime.GOOS != "windows" {
+		link := filepath.Join(workspace, "alias.json")
+		if err := os.Symlink(enginePath, link); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := core.ReadLinkedFile(t.Context(), contracts.LinkedFileRequest{SessionID: session.ID, Path: link}); err == nil {
+			t.Fatal("symlinked credential store was readable")
+		}
+	}
+	if err := os.WriteFile(filepath.Join(configuration, "notes.txt"), []byte("ordinary notes"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := core.ReadLinkedFile(t.Context(), contracts.LinkedFileRequest{SessionID: session.ID, Path: filepath.Join(configuration, "notes.txt")}); err != nil {
+		t.Fatalf("ordinary configuration file rejected: %v", err)
 	}
 }
 

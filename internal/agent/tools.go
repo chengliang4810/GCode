@@ -34,8 +34,8 @@ func CoreTools() []Tool {
 	text := func(description string) any { return map[string]any{"type": "string", "description": description} }
 	tools := []Tool{
 		readTool{},
-		fileTool{"Write", "Create or replace a file with the supplied complete content.", map[string]any{"file_path": text("File path"), "content": text("Complete content")}, []string{"file_path", "content"}},
-		fileTool{"Edit", "Replace an exact old_string with new_string. Read the file first. The match must be unique unless replace_all is true. CRLF and LF match equivalently.", map[string]any{"file_path": text("File path"), "old_string": text("Exact old text"), "new_string": text("Replacement"), "replace_all": map[string]any{"type": "boolean", "default": false}}, []string{"file_path", "old_string", "new_string"}},
+		fileTool{"Write", "Create or replace a file with the supplied complete content. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "content": text("Complete content")}, []string{"file_path", "content"}},
+		fileTool{"Edit", "Replace an exact old_string with new_string. Read the file first. The match must be unique unless replace_all is true. CRLF and LF match equivalently. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "old_string": text("Exact old text"), "new_string": text("Replacement"), "replace_all": map[string]any{"type": "boolean", "default": false}}, []string{"file_path", "old_string", "new_string"}},
 		fileTool{"ListDirectory", "List directory entries. GCode extension.", map[string]any{"path": text("Directory path")}, []string{"path"}},
 		globTool{},
 		grepTool{},
@@ -66,6 +66,32 @@ func shellExecutionDescription() string {
 // EnvironmentInstructions describes the actual host shell independently of its tool name.
 func EnvironmentInstructions(cwd string) string {
 	return fmt.Sprintf("Host operating system: %s.\nWorking directory: %q.\nShell execution: %s", runtime.GOOS, cwd, shellExecutionDescription())
+}
+
+// fileEffectRoot confines a writing file tool to the session working directory.
+// The relative name is opened through os.Root, so a symlink inside the
+// workspace cannot redirect the effect outside it.
+func fileEffectRoot(cwd, path string) (*os.Root, string, error) {
+	if cwd == "" {
+		return nil, "", errors.New("file tools require a session working directory")
+	}
+	base, err := filepath.Abs(cwd)
+	if err != nil {
+		return nil, "", err
+	}
+	target, err := filepath.Abs(path)
+	if err != nil {
+		return nil, "", err
+	}
+	relative, err := filepath.Rel(base, target)
+	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+		return nil, "", fmt.Errorf("%s is outside the session working directory %s", path, base)
+	}
+	root, err := os.OpenRoot(base)
+	if err != nil {
+		return nil, "", err
+	}
+	return root, relative, nil
 }
 
 func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) (model.ToolOutput, error) {
@@ -120,14 +146,21 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 		if args.FilePath == "" || args.Content == nil {
 			return model.ToolOutput{}, errors.New("file_path and content are required")
 		}
-		previous, readErr := os.ReadFile(path)
+		root, relative, err := fileEffectRoot(cwd, path)
+		if err != nil {
+			return model.ToolOutput{}, err
+		}
+		defer root.Close()
+		previous, readErr := root.ReadFile(relative)
 		if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
 			return model.ToolOutput{}, readErr
 		}
-		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return model.ToolOutput{}, err
+		if directory := filepath.Dir(relative); directory != "." {
+			if err := root.MkdirAll(directory, 0755); err != nil {
+				return model.ToolOutput{}, err
+			}
 		}
-		err := os.WriteFile(path, []byte(*args.Content), 0644)
+		err = root.WriteFile(relative, []byte(*args.Content), 0644)
 		kind := "update"
 		var original any = string(previous)
 		if errors.Is(readErr, os.ErrNotExist) {
@@ -142,12 +175,19 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 		if *args.Old == *args.New {
 			return model.ToolOutput{}, errors.New("old_string and new_string must differ")
 		}
-		data, err := os.ReadFile(path)
+		root, relative, err := fileEffectRoot(cwd, path)
+		if err != nil {
+			return model.ToolOutput{}, err
+		}
+		defer root.Close()
+		data, err := root.ReadFile(relative)
 		if errors.Is(err, os.ErrNotExist) && *args.Old == "" {
-			if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-				return model.ToolOutput{}, err
+			if directory := filepath.Dir(relative); directory != "." {
+				if err := root.MkdirAll(directory, 0755); err != nil {
+					return model.ToolOutput{}, err
+				}
 			}
-			err = os.WriteFile(path, []byte(*args.New), 0644)
+			err = root.WriteFile(relative, []byte(*args.New), 0644)
 			return model.ToolOutput{Text: "Created " + path, Data: map[string]any{"filePath": path, "oldString": "", "newString": *args.New, "originalFile": nil, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch("", *args.New)}}, err
 		}
 		if err != nil {
@@ -193,11 +233,11 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 				result = result[:start] + insert + result[end:]
 			}
 		}
-		info, err := os.Stat(path)
+		info, err := root.Stat(relative)
 		if err != nil {
 			return model.ToolOutput{}, err
 		}
-		err = os.WriteFile(path, []byte(result), info.Mode().Perm())
+		err = root.WriteFile(relative, []byte(result), info.Mode().Perm())
 		return model.ToolOutput{Text: "Edited " + path, Data: map[string]any{"filePath": path, "oldString": *args.Old, "newString": *args.New, "originalFile": content, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch(content, result)}}, err
 	case "ListDirectory":
 		entries, err := os.ReadDir(path)

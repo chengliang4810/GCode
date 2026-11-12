@@ -95,6 +95,9 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 	if err := ctx.Err(); err != nil {
 		return result, err
 	}
+	if e.isCredentialFile(absolute) {
+		return result, errors.New("linked file is an application credential store")
+	}
 	info, err := os.Stat(absolute)
 	if err != nil {
 		return result, err
@@ -377,4 +380,25 @@ func (r linkedContextReader) Read(p []byte) (int, error) {
 		return 0, err
 	}
 	return r.reader.Read(p)
+}
+
+// credentialFiles are the configuration entries that hold provider keys, remote
+// tokens or plugin secrets. A conversation link must never load them.
+var credentialFiles = []string{"engine.json", "connection.json", "server.json", "plugin-configuration.json"}
+
+// isCredentialFile reports whether path names one of the application's
+// credential stores. Both the configuration directory and the requested path are
+// resolved first, so a symlinked home or a temporary directory alias cannot
+// bypass the check.
+func (e *Engine) isCredentialFile(path string) bool {
+	configuration, err := filepath.EvalSymlinks(e.storage.ConfigDirectory())
+	if err != nil {
+		return false
+	}
+	for _, name := range credentialFiles {
+		if path == filepath.Join(configuration, name) {
+			return true
+		}
+	}
+	return false
 }
