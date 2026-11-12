@@ -9,6 +9,13 @@
 结束后交接。`handoffUserInputLocked` 选择下一输入，运行收尾通过 `run.nextInput` 开始
 下一任务；只有显式 Send now 会取消当前执行。当前规则与验证见 `model-adapters.md`、
 `backend-v1.md` 及 `output/user-input-task-boundaries-final/`。
+
+2026-11-12 更新：交接语义不变，改变的是引导输入的呈现。引导消息发送后立刻作为
+对话流里的用户气泡出现，不再显示为输入框上方的队列行；气泡下标注“正在纠正当前回复”
+并提供取消入口。输入框上方的队列区只保留真正等待下一轮的普通排队消息。实现见
+`internal/desktop/local_send.go` 的 `steeringMessage` / `localSendStatus`，
+`queue_rows.go` 与 `transcript_side.go` 跳过承载引导的队列行。
+
 以下内容保留为 2026-11-01 的历史实现及验收记录。
 
 ## 参考的两个时期
@@ -29,6 +36,7 @@
 | `UiSettings.active_turn_send_behavior` | `contracts.GeneralSettings.ActiveTurnSendBehavior`（JSON `activeTurnSendBehavior`），值 `steer`/`queue`，空值读作 steer；默认写入 `contracts.DefaultSettings` 与 mock 种子。 |
 | 忙时 steer 立刻并入当前回合 | `App.send()` 在会话 `Working`/`AwaitingInput` 且设置为 steer 时给 `SendRequest.Delivery` 填 `"steer"`；engine 的 `drainPendingLocked`（`engine/queue.go:11`）在 `idle=false`（回合进行中）只放行 steer 行，于是它进入当前回合的下一步（`engine/run.go:635` 的 `Pending(false)`）。 |
 | 忙时排队 | Delivery 为空，消息进入 `state.Queue`，回合结束后按 `idle=true` 排空。 |
+| 引导的呈现 | 引导的队列行由 UI 投影为对话流中的用户气泡（`steeringMessage`），气泡下显示“正在纠正当前回复”与取消按钮（`queue.remove`）；队列区不渲染引导行，交接后由核心自己的消息接管，不重复显示。 |
 | 发送按钮三态 | `composerSendMode`（`composer_surface.go`）：空输入且运行中为 **Stop**；有内容且运行中按设置显示 **Steer the running response** 或 **Queue for the next turn**；否则 **Send message**。侧边会话的输入框同规则。 |
 | 忙时提示 | 运行中的提示语区分两种：steer 为 "Steering the running response"，queue 为 "Queued — will send automatically"（`working_trailer.go`）。 |
 | 队列行的 Steer / 编辑 / 删除 | 行上的「Send as steering」(`queue.steer`)、「Edit queued message」（取回输入框并出队）、「Remove queued message」(`queue.remove`)。 |
@@ -49,6 +57,9 @@
   运行中空输入为 Stop，有内容为 Steer，改设置为 queue 后为 Queue。
 - `go test ./internal/desktop -run 'TestWorkingTrailerNamesTheSteer'`：提示语区分
   steer 与 queue。
+- `go test ./internal/desktop -run 'TestSteering'`：引导的队列行投影为对话流中的
+  用户气泡，位置在普通队列行之上；队列区只渲染普通排队行；气泡的取消按钮派发
+  `queue.remove`；交接后消息只出现一次。
 - `go test ./internal/i18n`：界面文案门禁无缺失条目。
 - `go test ./internal/engine -run 'TestIdleDrainHandsOverOneQueuedMessage'`：
   `idle=true` 每次只交出一条并保留其余顺序；`idle=false` 只放行 steer 行。
@@ -70,3 +81,5 @@
 - 队列拖动在 `ui.Tester` 里验证了落点与命令，但真实窗口的指针拖动、
   自动滚动与跨行手感尚未验收。
 - 设置项在原生设置页的渲染没有截图证据。
+- 引导气泡的呈现只由 `ui.Tester` 组件测试覆盖（投影、位置与取消命令）；原生窗口中
+  一次真实纠正的气泡、状态行与取消按钮尚未截图验收。
