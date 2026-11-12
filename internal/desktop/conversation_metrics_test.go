@@ -1,11 +1,14 @@
 package desktop
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
+	localize "gcode/internal/i18n/view"
 	"gcode/internal/model"
 	"github.com/egoist/mygo/ui"
 )
@@ -25,9 +28,9 @@ func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
 	}
 	a := &App{state: contracts.Snapshot{
 		Sessions: []contracts.Session{
-			{ID: "main"}, {ID: "child", ParentSessionID: "main", SubagentType: "general"},
-			{ID: "nested", ParentSessionID: "child", SubagentType: "general"},
-			{ID: "other-child", ParentSessionID: "main", SubagentType: "general"},
+			{ID: "main"}, {ID: "child", ParentSessionID: "main", ParentRunID: "first", SubagentType: "general"},
+			{ID: "nested", ParentSessionID: "child", ParentRunID: "child-turn", SubagentType: "general"},
+			{ID: "other-child", ParentSessionID: "main", ParentRunID: "second", SubagentType: "general"},
 			{ID: "side", ParentSessionID: "main", SideChat: true}, {ID: "fork", ParentSessionID: "main"},
 		},
 		Messages: map[string][]contracts.Message{"main": {{TurnID: "first", Blocks: []contracts.Block{{Subagent: &contracts.Subagent{SessionID: "child"}}}}}},
@@ -52,6 +55,7 @@ func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
 			metricRequest("fork", "fork-turn", "F", "f", 999, 999, time.Second),
 		},
 	}}
+	publishMetricsFixture(a)
 	reply := a.metricsFor("main", "first")
 	if reply.totals.Requests != 4 || reply.totals.Input+reply.totals.Output != 270 ||
 		len(reply.models) != 3 || reply.generationDuration != 4*time.Second {
@@ -104,9 +108,11 @@ func TestConversationMetricsMarkUnrecordedRunsWithoutChargingForks(t *testing.T)
 		},
 		ModelRequests: []contracts.ModelRequest{metricRequest("main", "new", "P", "r", 100, 20, time.Second)},
 	}}
+	publishMetricsFixture(a)
 	if stats := a.metricsFor("main", ""); !stats.totals.Unrecorded || stats.totals.Input+stats.totals.Output != 120 {
 		t.Fatal("missing earlier accounting was presented as a complete total")
 	}
+	publishMetricsFixture(a)
 	if stats := a.metricsFor("fork", ""); stats.totals.Unrecorded || stats.totals.Requests != 0 {
 		t.Fatal("inherited text was charged to its fork")
 	}
@@ -117,13 +123,15 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 		name    string
 		request contracts.ModelRequest
 		run     time.Duration
+		zeroRun bool
 		want    string
 	}{
 		{name: "unknown failed request"},
 		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: "0 Token"},
 		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "12 Token"},
 		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: "0 rounds 1 steps · Time taken —"},
-		{name: "wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, run: 2500 * time.Millisecond, want: "0 rounds 1 steps · Time taken 2.50s"},
+		{name: "wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, run: 2500 * time.Millisecond, want: "0 rounds 1 steps · Time taken 2s"},
+		{name: "known zero wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, zeroRun: true, want: "0 rounds 1 steps · Time taken 0s"},
 		{name: "negative generation time", request: contracts.ModelRequest{DecodeDuration: -time.Second}},
 		{name: "cache without usable denominator", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true}}},
 		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "20 Token · Cache hit 50.0%"},
@@ -134,18 +142,19 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 			a.state.Runs = nil
 			sessionID := "metrics"
 			tt := ui.NewTester(func(c *ui.Context) {
-				ui.Row(c).FillWidth().Children(func() { a.conversationMetricsView(c, sessionID) })
+				ui.Row(c).FillWidth().Children(func() { publishMetricsFixture(a); a.conversationMetricsView(c, sessionID) })
 			}, 720, 80)
 			if len(tt.Texts()) != 0 {
 				t.Fatalf("empty conversation exposed metrics: %v", tt.Texts())
 			}
 			tc.request.SessionID = sessionID
 			a.state.ModelRequests = []contracts.ModelRequest{tc.request}
-			if tc.run > 0 {
+			if tc.run > 0 || tc.zeroRun {
 				started := a.now().Add(-tc.run)
 				finished := a.now()
 				a.state.Runs = []contracts.Run{{ID: "run", SessionID: sessionID, StartedAt: started, FinishedAt: &finished, DurationMS: tc.run.Milliseconds()}}
 			}
+			a.state.Revision++ // The core publishes new accounting with a new revision.
 			tt.Frame()
 			if tc.want == "" {
 				if len(tt.Texts()) != 0 {
@@ -157,6 +166,7 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 				t.Fatalf("first useful data did not reveal metrics: %v", tt.Texts())
 			}
 			a.state.ModelRequests = append(a.state.ModelRequests, contracts.ModelRequest{SessionID: sessionID})
+			a.state.Revision++
 			tt.Frame()
 			if len(tt.Texts()) == 0 {
 				t.Fatal("subsequent unknown request hid existing metrics")
@@ -175,6 +185,93 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 	}
 }
 
+func TestMetricDurationUsesWholeSeconds(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		duration time.Duration
+		known    bool
+		want     string
+	}{
+		{"unknown", time.Second, false, "—"},
+		{"zero", 0, true, "0s"},
+		{"negative", -time.Second, true, "0s"},
+		{"subsecond", 900 * time.Millisecond, true, "0s"},
+		{"fraction discarded", 2500 * time.Millisecond, true, "2s"},
+		{"last second", time.Minute - time.Nanosecond, true, "59s"},
+		{"minute rollover", time.Minute, true, "1m 00s"},
+		{"last minute", time.Hour - time.Nanosecond, true, "59m 59s"},
+		{"hour rollover", time.Hour, true, "1h 00m 00s"},
+		{"long running", 353*time.Minute + 48900*time.Millisecond, true, "5h 53m 48s"},
+		{"last hour", 24*time.Hour - time.Nanosecond, true, "23h 59m 59s"},
+		{"day rollover", 24 * time.Hour, true, "1d 00h 00m 00s"},
+		{"multiple days", 51*time.Hour + 4*time.Minute + 5900*time.Millisecond, true, "2d 03h 04m 05s"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := metricDuration(test.duration, test.known); got != test.want {
+				t.Fatalf("elapsed = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+func TestConversationMetricsElapsedSecondsAndStableDigits(t *testing.T) {
+	for _, language := range []string{"en", "zh-CN"} {
+		for _, dark := range []bool{false, true} {
+			for _, reply := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/dark=%v/reply=%v", language, dark, reply), func(t *testing.T) {
+					a := testApp(t, "default")
+					a.state.Settings.General.Language = language
+					a.palette = design.Palette("rcode-dark", dark)
+					stats := conversationMetrics{turns: 2, wallKnown: true, totals: contracts.ModelRequestTotals{Requests: 47, Input: 100}}
+					tt := ui.NewTester(func(c *ui.Context) {
+						localize.Set(c, language)
+						c.SetTheme(a.palette.UI())
+						ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+							a.metricsGroup(c, "elapsed", stats, reply)
+						})
+					}, 900, 100)
+					tt.SetLocale(i18n.Native(language))
+					for _, format := range []struct {
+						base   time.Duration
+						prefix string
+					}{
+						{0, ""},
+						{42 * time.Minute, "42m "},
+						{5*time.Hour + 53*time.Minute, "5h 53m "},
+						{51*time.Hour + 4*time.Minute, "2d 03h 04m "},
+					} {
+						var initial ui.Rect
+						for i, seconds := range []int{11, 12, 18, 19, 20, 22, 28, 38, 48, 58, 59} {
+							for _, fractional := range []time.Duration{100 * time.Millisecond, 900 * time.Millisecond} {
+								stats.wallDuration = format.base + time.Duration(seconds)*time.Second + fractional
+								tt.Frame()
+								duration := fmt.Sprintf("%ds", seconds)
+								if format.prefix != "" {
+									duration = fmt.Sprintf("%s%02ds", format.prefix, seconds)
+								}
+								reading := a.t("Time taken") + " " + duration
+								if !reply {
+									reading = fmt.Sprintf(a.t("%d rounds %d steps"), 2, 47) + " · " + reading
+								}
+								bounds, ok := tt.Find(a.t("Time taken") + ": " + reading)
+								if !ok {
+									t.Fatalf("integer-second reading missing: %q; got %v", reading, tt.Texts())
+								}
+								if i == 0 && fractional == 100*time.Millisecond {
+									initial = bounds
+								}
+								if bounds != initial {
+									t.Fatalf("elapsed digits moved the footer: initial=%+v actual=%+v at %v", initial, bounds, stats.wallDuration)
+								}
+							}
+						}
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		a := testApp(t, "default")
@@ -184,6 +281,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 		a.state.Runs = []contracts.Run{{ID: "turn", SessionID: "metrics", StartedAt: turnStarted, FinishedAt: &turnFinished, DurationMS: 1000}}
 		message := contracts.Message{ID: "reply", SessionID: "metrics", TurnID: "turn", CreatedAt: time.Now(),
 			Blocks: []contracts.Block{{Kind: "text", Text: "copy only this reply"}}}
+		publishMetricsFixture(a)
 		for _, width := range []int{320, 720} {
 			var dateLabel string
 			tt := ui.NewTester(func(c *ui.Context) {
@@ -195,7 +293,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 				})
 			}, width, 700)
 			tt.Advance(time.Second)
-			timing, timingOK := tt.Find("Time taken: Time taken 1.00s")
+			timing, timingOK := tt.Find("Time taken: Time taken 1s")
 			usage, usageOK := tt.Find("Turn usage: Usage 120 Token")
 			copyButton, copyOK := tt.Find("Copy message")
 			dateText, dateOK := tt.Find(dateLabel)
@@ -204,7 +302,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 				t.Fatalf("reply footer must show copy, usage, time, date: copy=%+v usage=%+v time=%+v date=%+v",
 					copyButton, usage, timing, dateText)
 			}
-			conversationTime, timeOK := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1.00s")
+			conversationTime, timeOK := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1s")
 			conversationUsage, usageOK := tt.Find("Conversation usage: 120 Token · Cache hit 50.0%")
 			if !timeOK || !usageOK || conversationTime.X+conversationTime.W > conversationUsage.X {
 				t.Fatalf("composer footer must show time before usage: time=%+v usage=%+v", conversationTime, conversationUsage)
@@ -235,13 +333,13 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 			}
 			tt.Move(float32(width-1), 699)
 			tt.Advance(time.Second)
-			conversationTime, ok := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1.00s")
+			conversationTime, ok := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1s")
 			if !ok {
 				t.Fatal("conversation time trigger missing")
 			}
 			tt.Move(conversationTime.X+conversationTime.W/2, conversationTime.Y+conversationTime.H/2)
 			tt.Advance(time.Second)
-			if !tt.HasText("Time taken") || !tt.HasText("Output speed") || !tt.HasText("1.00s") {
+			if !tt.HasText("Time taken") || !tt.HasText("Output speed") || !tt.HasText("1s") {
 				t.Fatalf("time panel did not open at %+v (width %d): %v", conversationTime, width, tt.Texts())
 			}
 			for _, removed := range []string{"Speed count coverage", "First-token count coverage", "Speed excludes first-token wait and tool execution."} {
@@ -269,7 +367,7 @@ func TestConversationMetricsMultiModelPanelUpdatesAndMissingTiming(t *testing.T)
 	message := contracts.Message{ID: "reply", SessionID: "metrics", TurnID: "turn"}
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(a.palette.UI())
-		ui.Column(c).Fill().Children(func() { a.replyMetricsView(c, message) })
+		ui.Column(c).Fill().Children(func() { publishMetricsFixture(a); a.replyMetricsView(c, message) })
 	}, 700, 700)
 	if err := tt.Click("Turn usage: Usage 360 Token"); err != nil {
 		t.Fatal(err)
@@ -280,15 +378,16 @@ func TestConversationMetricsMultiModelPanelUpdatesAndMissingTiming(t *testing.T)
 		}
 	}
 	a.state.ModelRequests = append(a.state.ModelRequests, metricRequest("metrics", "turn", "Provider A", "third", 100, 20, time.Second))
+	a.state.Revision++
 	tt.Frame()
 	if !tt.HasText("480 Token") || tt.HasText("Cache count coverage") || tt.HasText("2/3 requests") {
 		t.Fatalf("open panel did not update with new accounting: %v", tt.Texts())
 	}
 	tt.Key(0, ui.KeyEscape)
-	if err := tt.Click("Time taken: Time taken 4.00s"); err != nil {
+	if err := tt.Click("Time taken: Time taken 4s"); err != nil {
 		t.Fatal(err)
 	}
-	if tt.HasText("0/3 requests") || !tt.HasText("—") || !tt.HasText("20 Token/s") || !tt.HasText("4.00s") {
+	if tt.HasText("0/3 requests") || !tt.HasText("—") || !tt.HasText("20 Token/s") || !tt.HasText("4s") {
 		t.Fatalf("historical missing timing was inferred: %v", tt.Texts())
 	}
 }

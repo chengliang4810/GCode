@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"fmt"
 	"strings"
 
 	"gcode/internal/contracts"
@@ -15,6 +14,7 @@ type transcriptRow struct {
 	ID       string
 	Block    contracts.Block
 	Activity []contracts.Block
+	Summary  contracts.ActivitySummary
 	AutoOpen bool
 	Compact  bool
 }
@@ -97,7 +97,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 			return
 		}
 		rows = append(rows, transcriptRow{
-			ID: message.ID + ":activity:" + work[0].ID, Activity: work,
+			ID: message.ID + ":activity:" + work[0].ID, Activity: work, Summary: contracts.SummarizeActivity(work),
 			AutoOpen: !compact && message.Streaming && groupLast == len(blocks)-1,
 			Compact:  compact,
 		})
@@ -152,7 +152,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 		rows = append(rows, transcriptRow{ID: message.ID + ":" + block.ID, Block: block})
 	}
 	if compact && len(work) > 0 {
-		group := transcriptRow{ID: message.ID + ":activity:" + work[0].ID, Activity: work, Compact: true}
+		group := transcriptRow{ID: message.ID + ":activity:" + work[0].ID, Activity: work, Summary: contracts.SummarizeActivity(work), Compact: true}
 		rows = append(rows, transcriptRow{})
 		copy(rows[groupPosition+1:], rows[groupPosition:])
 		rows[groupPosition] = group
@@ -254,6 +254,14 @@ func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint
 		hash = fnvMixInt(hash, len(block.Text))
 		if tool := block.Tool; tool != nil {
 			hash = fnvMix(hash, tool.ID)
+			hash = fnvMix(hash, string(tool.Kind))
+			hash = fnvMix(hash, tool.Name)
+			if tool.Failed() {
+				hash = fnvMixInt(hash, 1)
+			}
+			if tool.Diff != nil {
+				hash = fnvMix(hash, tool.Diff.Path)
+			}
 			hash = fnvMix(hash, tool.Status)
 			hash = fnvMix(hash, tool.Summary)
 			hash = fnvMix(hash, tool.Command)
@@ -482,20 +490,4 @@ func activityFile(block contracts.Block) bool {
 		return true
 	}
 	return false
-}
-
-func workedFor(milliseconds int64) string {
-	secs := max(milliseconds/1000, 0)
-	var duration string
-	switch {
-	case secs < 60:
-		duration = fmt.Sprintf("%ds", secs)
-	case secs < 3600:
-		duration = fmt.Sprintf("%dm %ds", secs/60, secs%60)
-	case secs < 86400:
-		duration = fmt.Sprintf("%dh %dm", secs/3600, secs%3600/60)
-	default:
-		duration = fmt.Sprintf("%dd %dh", secs/86400, secs%86400/3600)
-	}
-	return "Worked for " + duration
 }

@@ -165,15 +165,10 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 	root := ui.Column(c).FillWidth().Margin(0, 0, 0, -activityLeadingInset).Key(row.ID)
 	open := ui.Local(root, "open", func() bool { return row.AutoOpen })
 	a.activityFold(row.ID, open, row.AutoOpen)
-	summary := a.activitySummary(contracts.SummarizeActivity(row.Activity))
+	summary := a.activitySummary(row.Summary)
 	title := summary
 	if row.Compact && !message.Streaming {
 		duration := message.DurationMS
-		for _, run := range a.state.Runs {
-			if run.ID == message.TurnID {
-				duration = max(duration, run.DurationMS)
-			}
-		}
 		if duration > 0 {
 			title = a.workedFor(duration)
 		}
@@ -188,7 +183,11 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 	now := c.Now()
 	streaming := message.Streaming && len(row.Activity) > 0 && len(message.Blocks) > 0 &&
 		row.Activity[len(row.Activity)-1].ID == message.Blocks[len(message.Blocks)-1].ID
-	headerStart, starts := a.activityRevealStarts(row.ID, row.Activity, streaming, streaming && !still, now)
+	var headerStart time.Time
+	var starts []time.Time
+	if message.Streaming {
+		headerStart, starts = a.activityRevealStarts(row.ID, row.Activity, streaming, streaming && !still, now)
+	}
 	headerProgress := activityRevealProgress(headerStart, now, still, activityRowRevealDuration, activityRowRevealEase)
 	shimmerPhase := float32(-1)
 	if streaming && !still && title != "" {
@@ -196,7 +195,10 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 		shimmerPhase = activityShimmerPhase(*shimmerStart, now)
 		c.After(activityShimmerFrame)
 	}
-	motions := make([]activityRowMotion, len(row.Activity))
+	var motions []activityRowMotion
+	if message.Streaming {
+		motions = make([]activityRowMotion, len(row.Activity))
+	}
 	animating := headerProgress < 1
 	for i := range motions {
 		progress := activityRevealProgress(starts[i], now, still, activityRowRevealDuration, activityRowRevealEase)
@@ -262,7 +264,14 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 				if block.Subagent != nil {
 					ui.Column(c).FillWidth().Height(38).Padding(4, 0).Children(func() { a.transcriptSubagent(c, *block.Subagent) })
 				} else {
-					a.activityItem(c, row.ID+":"+block.ID, block, i+1 < len(row.Activity), live, motions[i])
+					motion := activityRowMotion{progress: 1, content: 1, incoming: 1, settled: true}
+					if i+1 < len(row.Activity) {
+						motion.continuation = 1
+					}
+					if len(motions) > 0 {
+						motion = motions[i]
+					}
+					a.activityItem(c, row.ID+":"+block.ID, block, i+1 < len(row.Activity), live, motion)
 				}
 			}
 		})

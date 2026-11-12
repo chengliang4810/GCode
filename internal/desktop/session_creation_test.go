@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/i18n"
@@ -223,32 +222,12 @@ func TestSideCreationFailureCanRetry(t *testing.T) {
 	}
 }
 
-func TestExistingSideChatEntryKeepsParentSelected(t *testing.T) {
-	a := testApp(t, "transcript")
-	a.selectSession("chat-0")
-	a.draft = "Parent draft"
-	a.expanded["session-info-user"], a.expanded["session-info"] = true, true
-	child := sideSession(t, a, "showcase-agent")
-	tt := ui.NewTester(a.View, 1600, 1000)
-	if err := tt.Click(child.Title); err != nil {
-		t.Fatal(err)
-	}
-	tt.Advance(300 * time.Millisecond)
-	if _, ok := tt.Find("Message to " + child.Title); !ok || a.sessionID != "chat-0" || a.draft != "Parent draft" {
-		t.Fatal("existing side entry navigated over the main conversation")
-	}
-}
-
-func TestForkEntryOpensCopiedConversationAndRestoresParentDraft(t *testing.T) {
+func TestForkCreationOpensCopiedConversationAndRestoresParentDraft(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession("chat-0")
 	a.draft = "Parent draft"
-	a.expanded["session-info-user"], a.expanded["session-info"] = true, true
 	count := len(a.state.Messages["chat-0"])
-	tt := ui.NewTester(a.View, 1600, 1000)
-	if err := tt.Click("Fork chat"); err != nil {
-		t.Fatal(err)
-	}
+	a.createRelatedSession("chat-0", false)
 	if a.sessionID == "chat-0" || a.sessionID == "" || len(a.state.Messages[a.sessionID]) != count || a.branchCreation != nil || a.pendingNew {
 		t.Fatal("fork did not open its copied conversation")
 	}

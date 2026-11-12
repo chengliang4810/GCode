@@ -21,7 +21,7 @@ func TestSidebarUsageOpensApplicationStatisticsSettings(t *testing.T) {
 	for sessionID, sessionMessages := range messages {
 		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(sessionMessages)
 	}
-	a.service = applicationUsageTestService{Service: a.service, usage: usage}
+	a.service = applicationUsageTestService{Service: a.service, usage: applicationUsageFixture(usage, a.state.Messages, now)}
 	tt := ui.NewTester(a.View, 1320, 1200)
 	if err := tt.Click(a.t("Usage statistics")); err != nil {
 		t.Fatal(err)
@@ -51,6 +51,7 @@ func TestSidebarUsageOpensApplicationStatisticsSettings(t *testing.T) {
 		}
 	}
 	a.now = func() time.Time { return now.AddDate(0, 0, 1) }
+	a.service = applicationUsageTestService{Service: a.service, usage: applicationUsageFixture(usage, messages, a.now())}
 	a.refreshAppUsage()
 	if !a.appUsage.generated.Equal(a.now()) {
 		t.Fatal("refresh did not rebuild calendar bounds")

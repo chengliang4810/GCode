@@ -2,19 +2,16 @@ package desktop
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 )
 
-type modelMetrics struct {
-	provider, model string
-	totals          contracts.ModelRequestTotals
-}
+type modelMetrics = contracts.ModelMetrics
 
 type conversationMetrics struct {
 	totals             contracts.ModelRequestTotals
@@ -22,149 +19,35 @@ type conversationMetrics struct {
 	turns              int
 	generationDuration time.Duration
 	wallDuration       time.Duration
+	wallKnown          bool
 	toolDuration       time.Duration
+	running            bool
 }
 
-// A parent's accounting includes its delegated agents, but never side chats or
-// forked conversations. Reply accounting follows only children spawned in it.
+// The core owns and persists all aggregates. Rendering reads a typed projection;
+// only an active wall clock depends on the current time.
 func (a *App) metricsFor(sessionID, turnID string) conversationMetrics {
-	scope := map[string]bool{sessionID: true}
+	saved := a.state.Metrics[sessionID].Total
 	if turnID != "" {
-		for _, message := range a.state.Messages[sessionID] {
-			if message.TurnID == turnID {
-				for _, block := range message.Blocks {
-					if block.Subagent != nil {
-						scope[block.Subagent.SessionID] = true
-					}
-				}
-			}
-		}
+		saved = a.state.Metrics[sessionID].Turns[turnID]
 	}
-	for changed := true; changed; {
-		changed = false
-		for _, session := range a.state.Sessions {
-			if scope[session.ID] || session.SubagentType == "" || !scope[session.ParentSessionID] {
-				continue
-			}
-			if turnID != "" && session.ParentSessionID == sessionID {
-				continue
-			}
-			scope[session.ID], changed = true, true
-		}
+	now := time.Time{}
+	if !saved.RunningSince.IsZero() {
+		now = a.metricsNow()
 	}
-	stats := conversationMetrics{}
-	models := make(map[string]int)
-	recorded := make(map[string]bool)
-	turns := make(map[string]bool)
-	for _, request := range a.state.ModelRequests {
-		if !scope[request.SessionID] || (turnID != "" && request.SessionID == sessionID && request.TurnID != turnID) {
-			continue
-		}
-		stats.totals.Add(request)
-		stats.generationDuration += max(0, request.DecodeDuration)
-		if request.SessionID == sessionID && request.TurnID != "" {
-			turns[request.TurnID] = true
-		}
-		recorded[request.SessionID+"\x00"+request.TurnID] = true
-		key := request.ProviderID + "\x00" + request.ProviderName + "\x00" + request.ModelID
-		index, exists := models[key]
-		if !exists {
-			index = len(stats.models)
-			models[key] = index
-			stats.models = append(stats.models, modelMetrics{provider: request.ProviderName, model: request.ModelID})
-		}
-		stats.models[index].totals.Add(request)
+	elapsed, known := saved.Elapsed(now)
+	return conversationMetrics{
+		totals: saved.Totals, models: saved.Models, turns: saved.Turns,
+		generationDuration: saved.GenerationDuration, wallDuration: elapsed,
+		wallKnown: known, toolDuration: saved.ToolDuration, running: !saved.RunningSince.IsZero(),
 	}
-	// Inherited fork text has no owned run. Missing records on an owned
-	// model run make subsequent totals a lower bound, never a factual zero.
-	for _, run := range a.state.Runs {
-		if !scope[run.SessionID] || (turnID != "" && run.SessionID == sessionID && run.ID != turnID) ||
-			recorded[run.SessionID+"\x00"+run.ID] {
-			continue
-		}
-		for _, message := range a.state.Messages[run.SessionID] {
-			if message.TurnID == run.ID && message.Role == "assistant" && message.ModelID != "" {
-				stats.totals.Unrecorded = true
-				break
-			}
-		}
-	}
-	stats.turns = len(turns)
-	stats.wallDuration = a.wallDuration(scope, sessionID, turnID)
-	tools := make(map[string]contracts.ToolCall)
-	for id := range scope {
-		for _, message := range a.state.Messages[id] {
-			if turnID != "" && id == sessionID && message.TurnID != turnID {
-				continue
-			}
-			for _, block := range message.Blocks {
-				if block.Tool != nil {
-					tools[id+"\x00"+block.Tool.ID] = *block.Tool
-				}
-			}
-		}
-	}
-	for _, tool := range tools {
-		if tool.FinishedAt != nil && !tool.StartedAt.IsZero() {
-			stats.toolDuration += max(0, tool.FinishedAt.Sub(tool.StartedAt))
-		}
-	}
-	return stats
 }
 
-// wallDuration is the covered wall-clock time of the runs in scope: from the
-// moment a run started until it ended. Parent and subagent runs overlap, so
-// their intervals are merged and parallel work counts once.
-func (a *App) wallDuration(scope map[string]bool, sessionID, turnID string) time.Duration {
-	type span struct{ start, end time.Time }
-	now := time.Now()
+func (a *App) metricsNow() time.Time {
 	if a.now != nil {
-		now = a.now()
+		return a.now()
 	}
-	spans := make([]span, 0, len(a.state.Runs))
-	for _, run := range a.state.Runs {
-		if !scope[run.SessionID] {
-			continue
-		}
-		if turnID != "" && run.SessionID == sessionID && run.ID != turnID {
-			continue
-		}
-		if run.StartedAt.IsZero() {
-			continue
-		}
-		end := run.StartedAt.Add(time.Duration(run.DurationMS) * time.Millisecond)
-		switch {
-		case run.FinishedAt != nil:
-			end = *run.FinishedAt
-		case run.Status == "running":
-			end = now
-		}
-		if end.Before(run.StartedAt) {
-			end = run.StartedAt
-		}
-		spans = append(spans, span{run.StartedAt, end})
-	}
-	sort.Slice(spans, func(i, j int) bool { return spans[i].start.Before(spans[j].start) })
-	total := time.Duration(0)
-	merged := span{}
-	for _, current := range spans {
-		if merged.end.IsZero() {
-			merged = current
-			continue
-		}
-		if current.start.After(merged.end) {
-			total += merged.end.Sub(merged.start)
-			merged = current
-			continue
-		}
-		if current.end.After(merged.end) {
-			merged.end = current.end
-		}
-	}
-	if !merged.end.IsZero() {
-		total += merged.end.Sub(merged.start)
-	}
-	return total
+	return time.Now()
 }
 
 func metricsAvailable(stats conversationMetrics) bool {
@@ -213,10 +96,7 @@ func metricDuration(duration time.Duration, known bool) string {
 	if !known {
 		return "—"
 	}
-	if duration < time.Minute {
-		return fmt.Sprintf("%.2fs", duration.Seconds())
-	}
-	return fmt.Sprintf("%dm %.1fs", int(duration/time.Minute), (duration % time.Minute).Seconds())
+	return i18n.Duration(i18n.English, duration.Milliseconds())
 }
 
 type metricPanelState struct {
@@ -245,13 +125,16 @@ func (a *App) replyMetricsView(c *ui.Context, message contracts.Message) bool {
 }
 
 func (a *App) metricsGroup(c *ui.Context, scope string, stats conversationMetrics, reply bool) bool {
+	if stats.running {
+		c.After(time.Second)
+	}
 	group := ui.Row(c.Key(scope)).MinWidth(0).Gap(design.Metrics().Gap).AlignItems(ui.Center).
 		Label(tr(c, "Conversation statistics"))
 	state := ui.Local(group, "panel", func() metricPanelState { return metricPanelState{} })
 	t := stats.totals
 	tokens := a.metricTokens(c, t.Input+t.Output, t.UnknownUsage > 0 || t.Unrecorded)
 	counts := fmt.Sprintf(tr(c, "%d rounds %d steps"), stats.turns, t.Requests)
-	duration := metricDuration(stats.wallDuration, stats.wallDuration > 0)
+	duration := metricDuration(stats.wallDuration, stats.wallKnown)
 	timeReading := counts + " · " + tr(c, "Time taken") + " " + duration
 	usageReading := tokens
 	if _, known := t.CacheHitFraction(); known {
@@ -330,15 +213,15 @@ func (a *App) metricsUsagePanel(c *ui.Context, scope string, stats conversationM
 		controlMetricField(c.Key(scope+":"+key), tr(c, label), value)
 	}
 	if reply && len(stats.models) == 1 {
-		field("model", "Provider / model", stats.models[0].provider+" · "+stats.models[0].model)
+		field("model", "Provider / model", stats.models[0].Provider+" · "+stats.models[0].ModelID)
 	}
 	a.metricsUsageFields(c, scope, t)
 	if reply && len(stats.models) > 1 {
 		for i, entry := range stats.models {
 			ui.Box(c).FillWidth().Height(design.Controls().BorderWidth).Background(c.Theme().Border)
 			modelScope := fmt.Sprintf("%s:model-%d", scope, i)
-			controlMetricField(c.Key(modelScope), tr(c, "Provider / model"), entry.provider+" · "+entry.model)
-			a.metricsUsageFields(c, modelScope, entry.totals)
+			controlMetricField(c.Key(modelScope), tr(c, "Provider / model"), entry.Provider+" · "+entry.ModelID)
+			a.metricsUsageFields(c, modelScope, entry.Totals)
 		}
 	}
 }
@@ -362,7 +245,7 @@ func (a *App) metricsUsageFields(c *ui.Context, scope string, t contracts.ModelR
 
 func (a *App) metricsTimePanel(c *ui.Context, scope string, stats conversationMetrics) {
 	t := stats.totals
-	duration := metricDuration(stats.wallDuration, stats.wallDuration > 0)
+	duration := metricDuration(stats.wallDuration, stats.wallKnown)
 	controlMetricHeading(c, "clock-circle", tr(c, "Time taken"), duration)
 	field := func(key, label, value string) {
 		controlMetricField(c.Key(scope+":"+key), tr(c, label), value)

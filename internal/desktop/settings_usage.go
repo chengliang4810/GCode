@@ -7,16 +7,23 @@ import (
 	"gcode/internal/appusage"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 )
 
 type appUsageState struct {
-	report    appusage.Report
-	generated time.Time
-	errorText string
-	loading   bool
-	rangeDays int
-	heatMode  string
+	report       appusage.Report
+	generated    time.Time
+	errorText    string
+	loading      bool
+	rangeDays    int
+	heatMode     string
+	heatmap      []appusage.Day
+	heatmapAt    time.Time
+	window       []appusage.Day
+	windowModels []appusage.Model
+	windowAt     time.Time
+	windowDays   int
 }
 
 func (a *App) refreshVisibleAppUsage() {
@@ -39,7 +46,7 @@ func (a *App) refreshAppUsage() {
 	state.errorText = ""
 	// Snapshots are immutable projections; event application copies changed
 	// slices. The worker owns only that projection, never UI contexts/elements.
-	messages, revision, now := a.state.Messages, a.state.Revision, a.now()
+	revision := a.state.Revision
 	a.backgroundTask(func() func() {
 		usage, err := reader.ReadApplicationUsage(a.ctx)
 		return func() {
@@ -48,7 +55,8 @@ func (a *App) refreshAppUsage() {
 				state.errorText = err.Error()
 				return
 			}
-			state.report, state.generated, state.errorText = appusage.BuildWithRecords(usage.Records, messages, usage.Runs, now), now, ""
+			state.report, state.generated, state.errorText = appusage.FromContractReport(usage.Report), usage.GeneratedAt, ""
+			state.invalidateDerivedUsage()
 			if a.state.Revision != revision {
 				a.refreshVisibleAppUsage()
 			}
@@ -80,13 +88,17 @@ func (a *App) appUsageSettings(c *ui.Context) {
 			{"usage-current-streak", "Current streak", a.usageDays(summary.CurrentStreak)},
 			{"usage-longest-streak", "Longest streak", a.usageDays(summary.LongestStreak)},
 		} {
-			ui.Column(c).Grow(1).MinWidth(110).Padding(12).Gap(6).AlignItems(ui.Center).Children(func() {
+			minWidth := float32(110)
+			if item.key == "usage-longest-session" {
+				minWidth = 260
+			}
+			ui.Column(c).Grow(1).MinWidth(minWidth).Padding(12).Gap(6).AlignItems(ui.Center).Children(func() {
 				ui.Text(c.Key(item.key), item.value).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500)
 				ui.Text(c, tr(c, item.label)).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall))
 			})
 		}
 	})
-	a.appUsageHeatmap(c, state.report.Heatmap(state.generated))
+	a.appUsageHeatmap(c, state.usageHeatmap())
 	ui.Row(c).FillWidth().Wrap().AlignItems(ui.Center).Gap(12).Children(func() {
 		ui.Text(c, tr(c, "Application usage")).Grow(1).FontWeight(500)
 		ui.Row(c).Gap(4).Children(func() {
@@ -102,8 +114,7 @@ func (a *App) appUsageSettings(c *ui.Context) {
 	if count == 0 {
 		count = 7
 	}
-	days := state.report.Window(state.generated, count)
-	models := appusage.Models(days)
+	days, models := state.usageWindow(count)
 	a.appUsageTrend(c, days, models)
 	a.appUsageModels(c, models)
 	if summary.UnknownModelTokens > 0 {
@@ -115,6 +126,33 @@ func (a *App) appUsageSettings(c *ui.Context) {
 	})
 }
 
+func (s *appUsageState) invalidateDerivedUsage() {
+	s.heatmap = nil
+	s.heatmapAt = time.Time{}
+	s.window = nil
+	s.windowModels = nil
+	s.windowAt = time.Time{}
+	s.windowDays = 0
+}
+
+func (s *appUsageState) usageHeatmap() []appusage.Day {
+	if s.heatmap == nil || !s.heatmapAt.Equal(s.generated) {
+		s.heatmap = s.report.Heatmap(s.generated)
+		s.heatmapAt = s.generated
+	}
+	return s.heatmap
+}
+
+func (s *appUsageState) usageWindow(count int) ([]appusage.Day, []appusage.Model) {
+	if s.window == nil || s.windowDays != count || !s.windowAt.Equal(s.generated) {
+		s.window = s.report.Window(s.generated, count)
+		s.windowModels = appusage.Models(s.window)
+		s.windowDays = count
+		s.windowAt = s.generated
+	}
+	return s.window, s.windowModels
+}
+
 func (a *App) usageDays(days int) string {
 	if days == 1 {
 		return a.t("1 day")
@@ -123,14 +161,7 @@ func (a *App) usageDays(days int) string {
 }
 
 func (a *App) usageDuration(ms int64) string {
-	minutes := max(0, ms) / 60000
-	if minutes >= 1440 {
-		return fmt.Sprintf(a.t("%dd %dh %dm"), minutes/1440, minutes%1440/60, minutes%60)
-	}
-	if minutes >= 60 {
-		return fmt.Sprintf(a.t("%dh %dm"), minutes/60, minutes%60)
-	}
-	return fmt.Sprintf(a.t("%dm"), minutes)
+	return i18n.Duration(a.state.Settings.General.Language, ms)
 }
 
 func compactUsage(tokens int64) string {

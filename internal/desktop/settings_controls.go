@@ -516,6 +516,67 @@ func controlRowButton(c *ui.Context) ui.Element {
 	return b
 }
 
+func (a *App) controlSessionAgentGroup(c *ui.Context, count int, expanded bool) ui.Element {
+	size := design.Controls().IconSize
+	return controlRowButton(c).FillWidth().Label(tr(c, "Ended")).Expanded(expanded).
+		Gap(design.Controls().ButtonGap).Children(func() {
+		ui.Box(c).Size(size, size).Shrink(0).Radius(size/2).
+			Border(design.Controls().BorderWidth, a.palette.Muted).TextColor(a.palette.Muted).
+			Children(func() { icon(c, "check", size) })
+		ui.Text(c, tr(c, "Ended")).SingleLine().Grow(1).MinWidth(0).
+			FontSize(design.TextSize(c, design.TextBase))
+		ui.Text(c, fmt.Sprint(count)).TextColor(a.palette.Muted).
+			FontSize(design.TextSize(c, design.TextBase))
+		glyph := "alt-arrow-right"
+		if expanded {
+			glyph = "alt-arrow-down"
+		}
+		ui.Box(c).Size(size, size).Shrink(0).TextColor(a.palette.Muted).
+			Children(func() { icon(c, glyph, size) })
+	})
+}
+
+func (a *App) controlSessionAgent(c *ui.Context, title, status, duration string) ui.Element {
+	color := a.palette.Muted
+	switch status {
+	case "Running":
+		color = a.palette.Accent
+	case "Awaiting input":
+		color = a.palette.Warning
+	case "Completed":
+		color = a.palette.Success
+	case "Failed":
+		color = a.palette.Danger
+	}
+	reading := tr(c, status) + " · " + tr(c, "Time taken") + " " + duration
+	return controlRowButton(c).FillWidth().Label(title).Tooltip(reading).
+		Gap(design.Controls().ButtonGap).Children(func() {
+		size := design.Controls().IconSize
+		ui.Box(c).Size(size, size).Shrink(0).TextColor(color).Label(tr(c, status)).Children(func() {
+			if status == "Running" {
+				ui.Spinner(c).Size(size, size).TextColor(color)
+				return
+			}
+			glyph := "clock-circle"
+			switch status {
+			case "Awaiting input":
+				glyph = "chat-round-line"
+			case "Completed":
+				glyph = "check"
+			case "Failed":
+				glyph = "close-circle"
+			case "Stopped", "Ended":
+				glyph = "stop"
+			}
+			icon(c, glyph, size)
+		})
+		ui.Text(c, title).SingleLine().Grow(1).MinWidth(0).
+			FontSize(design.TextSize(c, design.TextBase))
+		ui.Text(c, duration).SingleLine().Shrink(0).
+			TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextXS)).FontFeatures("tnum")
+	})
+}
+
 func controlProviderLogoButton(c *ui.Context, label string) ui.Element {
 	return controlIconButton(c, label).Center()
 }
@@ -760,7 +821,7 @@ func controlMetricButton(c *ui.Context, glyph, label, reading string, open bool)
 	}
 	return b.Children(func() {
 		icon(c, glyph, s.IconSize)
-		ui.Text(c, reading).SingleLine().MinWidth(0)
+		ui.Text(c, reading).SingleLine().MinWidth(0).FontFeatures("tnum")
 	})
 }
 
@@ -774,7 +835,7 @@ func controlMetricHeading(c *ui.Context, glyph, title, value string) {
 		icon(c, glyph, design.Controls().IconSize)
 		ui.Text(c, title).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 		ui.Spacer(c).Grow(1).MinWidth(0)
-		ui.Text(c, value).FontSize(design.TextSize(c, design.TextBase)).TextAlign(ui.End).MinWidth(0)
+		ui.Text(c, value).FontSize(design.TextSize(c, design.TextBase)).TextAlign(ui.End).MinWidth(0).FontFeatures("tnum")
 	})
 	ui.Box(c).FillWidth().Height(design.Controls().BorderWidth).Background(c.Theme().Border)
 }
@@ -782,7 +843,19 @@ func controlMetricHeading(c *ui.Context, glyph, title, value string) {
 func controlMetricField(c *ui.Context, label, value string) ui.Element {
 	return ui.Row(c).FillWidth().Gap(design.Controls().ButtonGap).Label(label + ": " + value).Tooltip(value).Children(func() {
 		ui.Text(c, label).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted).Shrink(0)
-		ui.Text(c, value).Grow(1).MinWidth(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).Selectable()
+		ui.Text(c, value).Grow(1).MinWidth(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).Selectable().FontFeatures("tnum")
+	})
+}
+
+// controlDiffStats keeps per-edit line counts legible beside a shrinking path.
+func controlDiffStats(c *ui.Context, additions, deletions int) ui.Element {
+	t := c.Theme()
+	return ui.Row(c).Label(fmt.Sprintf("+%d -%d", additions, deletions)).
+		Gap(design.Controls().ButtonGap).Shrink(0).AlignItems(ui.Center).Children(func() {
+		ui.Text(c, fmt.Sprintf("+%d", additions)).SingleLine().
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success)
+		ui.Text(c, fmt.Sprintf("-%d", deletions)).SingleLine().
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger)
 	})
 }
 
@@ -898,16 +971,4 @@ func (a *App) controlSwitch(c *ui.Context, value *bool, label string, disabled b
 		}
 	})
 	return b
-}
-
-// controlDiffStats keeps per-edit line counts legible beside a shrinking path.
-func controlDiffStats(c *ui.Context, additions, deletions int) ui.Element {
-	t := c.Theme()
-	return ui.Row(c).Label(fmt.Sprintf("+%d -%d", additions, deletions)).
-		Gap(design.Controls().ButtonGap).Shrink(0).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, fmt.Sprintf("+%d", additions)).SingleLine().
-			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success)
-		ui.Text(c, fmt.Sprintf("-%d", deletions)).SingleLine().
-			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger)
-	})
 }

@@ -26,7 +26,7 @@ func testTodos(count, active int) []contracts.Todo {
 
 func TestTodoPanelLifecycleAndFocusWindow(t *testing.T) {
 	items := testTodos(10, 4)
-	start, end := todoFocusWindow(items)
+	start, end := todoFocusWindow(items, summarizeTodos(items))
 	if start != 3 || end != 6 {
 		t.Fatalf("focus window=%d:%d", start, end)
 	}

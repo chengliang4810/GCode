@@ -190,16 +190,18 @@ func TestTranscriptToolDetailsRefreshForEqualLengthInputChanges(t *testing.T) {
 	}
 }
 
-func TestActivityLineCapsAndElapsedFormatting(t *testing.T) {
+func TestWorkedDurationUsesSharedFormat(t *testing.T) {
+	a := testApp(t, "default")
+	a.state.Settings.General.Language = "en"
 	for _, test := range []struct {
 		name string
 		ms   int64
 		want string
 	}{
-		{"seconds", 59000, "Worked for 59s"}, {"minutes", 61000, "Worked for 1m 1s"}, {"hours", 3661000, "Worked for 1h 1m"}, {"days", 90000000, "Worked for 1d 1h"},
+		{"seconds", 59000, "Worked for 59s"}, {"minutes", 61000, "Worked for 1m 01s"}, {"hours", 3661000, "Worked for 1h 01m 01s"}, {"days", 90000000, "Worked for 1d 01h 00m 00s"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if got := workedFor(test.ms); got != test.want {
+			if got := a.workedFor(test.ms); got != test.want {
 				t.Fatalf("%s", got)
 			}
 		})
@@ -313,4 +315,24 @@ func sameRows(a, b []transcriptRow) bool {
 		}
 	}
 	return true
+}
+
+func TestActivitySummaryProjectionRefreshesOnlyWithItsContent(t *testing.T) {
+	cache := transcriptCache{}
+	message := contracts.Message{ID: "summary-message", Role: "assistant", Blocks: []contracts.Block{{ID: "tool", Kind: "tool", Tool: &contracts.ToolCall{ID: "tool", Kind: contracts.ToolExec, Status: "completed"}}}}
+	rows := cache.rowsFor(message, false)
+	if len(rows) != 1 || rows[0].Summary.Commands != 1 {
+		t.Fatal("activity summary not projected")
+	}
+	if allocs := testing.AllocsPerRun(20, func() { cache.rowsFor(message, false) }); allocs != 0 {
+		t.Fatalf("unchanged projection rebuilt summary: %v", allocs)
+	}
+	updated := message
+	updated.Blocks = contracts.CloneBlocks(message.Blocks)
+	updated.Blocks[0].Tool.Kind = contracts.ToolReadFile
+	updated.Blocks[0].Tool.Status = "failed"
+	rows = cache.rowsFor(updated, false)
+	if rows[0].Summary.Reads != 1 || rows[0].Summary.Commands != 0 || rows[0].Summary.Failed != 1 {
+		t.Fatal("changed tool kind/status retained old summary")
+	}
 }

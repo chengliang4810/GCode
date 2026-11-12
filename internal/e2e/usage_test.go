@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -174,6 +175,10 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			}
 			app.capture("conversation-usage-panel")
 			closeMetrics(scope + ":usage-panel")
+			timeLabel := app.waitKey(scope + ":time").Label
+			if matched, err := regexp.MatchString(` (\d+d )?(\d+h )?(\d+m )?\d+s$`, timeLabel); err != nil || !matched {
+				t.Fatalf("footer must show elapsed whole seconds: %s (%v)", timeLabel, err)
+			}
 			app.hoverMetric(scope + ":time")
 			app.waitKey(scope + ":time-panel")
 			if strings.Contains(app.waitKey(scope+":first-token").Label, "—") || strings.Contains(app.waitKey(scope+":model-time").Label, "—") {

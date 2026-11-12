@@ -42,11 +42,11 @@ func (s todoSummary) headline() int {
 	return s.next
 }
 
-func todoFocusWindow(items []contracts.Todo) (int, int) {
+func todoFocusWindow(items []contracts.Todo, summary todoSummary) (int, int) {
 	if len(items) <= 6 {
 		return 0, len(items)
 	}
-	focus := summarizeTodos(items).headline()
+	focus := summary.headline()
 	if focus < 0 {
 		focus = len(items) - 1
 	}
@@ -73,6 +73,7 @@ func latestTodoWrite(messages []contracts.Message) todoWrite {
 // watermark or legacy history fallback is needed. Only presentation lives here.
 type todoPanelState struct {
 	write                    todoWrite
+	summary                  todoSummary
 	revision                 uint64
 	observed                 bool
 	expanded, earlier, later bool
@@ -82,7 +83,7 @@ type todoPanelState struct {
 }
 
 func (s *todoPanelState) observe(write todoWrite) {
-	before := summarizeTodos(s.write.Items)
+	before := s.summary
 	retired := s.write.ID == "" || len(s.write.Items) == 0 || before.done == before.total
 	fresh := retired || s.dismissed && write.ID != s.write.ID
 	if write.ID != s.write.ID || fresh {
@@ -94,13 +95,14 @@ func (s *todoPanelState) observe(write todoWrite) {
 	}
 	s.write = write
 	after := summarizeTodos(write.Items)
+	s.summary = after
 	if after.total == 0 || after.done == after.total {
 		s.expanded = false
 	}
 }
 
 func (s *todoPanelState) visible() bool {
-	summary := summarizeTodos(s.write.Items)
+	summary := s.summary
 	return !s.dismissed && summary.total > 0 && summary.done < summary.total
 }
 
@@ -167,7 +169,7 @@ func (a *App) todoTray(c *ui.Context, session contracts.Session, scope string) {
 	}
 	key := "todo-panel:" + scope + ":" + session.ID
 	live := session.Status == contracts.Working || session.Status == contracts.AwaitingInput
-	summary := summarizeTodos(state.write.Items)
+	summary := state.summary
 	a.attachedComposerPanel(c, key, tr(c, "Todo list"), inset, true, func(c *ui.Context) {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Children(func() {
 			label, glyph := "Expand todos", "alt-arrow-up"
@@ -199,7 +201,7 @@ func (a *App) todoTray(c *ui.Context, session contracts.Session, scope string) {
 		a.attachedFade(c, rows, state.openedAt)
 		rows.Children(func() {
 			controlTodoScroll(c.Key(key+":scroll"), &state.scroll, height*.3).Children(func() {
-				start, end := todoFocusWindow(state.write.Items)
+				start, end := todoFocusWindow(state.write.Items, state.summary)
 				fold := func(earlier bool, count int) {
 					side, noun, open := "later", "%d later", &state.later
 					if earlier {

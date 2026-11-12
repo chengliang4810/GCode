@@ -25,25 +25,26 @@ import (
 )
 
 type App struct {
-	math            mathViewState
-	notifications   *desktopNotifications
-	wallpaper       wallpaperState
-	checkForUpdates func()
-	onCloseStart    func()
-	connections     contracts.ConnectionSettingsService
-	runtimeUI       runtimeSettingsState
-	modelsUI        modelSettingsState
-	capabilityUI    capabilitySettingsState
-	settingsRemoval settingsRemovalState
-	settingsImport  settingsImportState
-	cloudPage       cloudSettingsPageState
-	agentsDraft     string
-	agentsSaved     string
-	agentsLoadedFor string
-	branchCreation  *branchCreation
-	now             func() time.Time
-	pendingSends    map[string]primaryPendingSend
-	localSends      []*localSend
+	sessionInfoProjection sessionInfoProjection
+	math                  mathViewState
+	notifications         *desktopNotifications
+	wallpaper             wallpaperState
+	checkForUpdates       func()
+	onCloseStart          func()
+	connections           contracts.ConnectionSettingsService
+	runtimeUI             runtimeSettingsState
+	modelsUI              modelSettingsState
+	capabilityUI          capabilitySettingsState
+	settingsRemoval       settingsRemovalState
+	settingsImport        settingsImportState
+	cloudPage             cloudSettingsPageState
+	agentsDraft           string
+	agentsSaved           string
+	agentsLoadedFor       string
+	branchCreation        *branchCreation
+	now                   func() time.Time
+	pendingSends          map[string]primaryPendingSend
+	localSends            []*localSend
 	composerControls
 	footerUsage         composerUsageState
 	appUsage            appUsageState
@@ -404,6 +405,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.sessionInfoProjection = sessionInfoProjection{}
 		a.linkFiles = nil
 		a.clearSessionDetailsLoading(s)
 		for sessionID := range a.trajectoryViews {
@@ -516,6 +518,7 @@ func (a *App) applyEvent(event contracts.Event) {
 		s.Messages[event.SessionID] = messages
 		s.Revision = event.Revision
 		a.state = s
+		a.sessionInfoProjection = sessionInfoProjection{}
 		if event.Kind != "message.delta" {
 			a.refreshVisibleAppUsage()
 		}

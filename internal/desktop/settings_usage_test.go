@@ -36,13 +36,19 @@ func TestSettingsUsageThemesAndNarrowWindows(t *testing.T) {
 						Usage:     contracts.Usage{InputTokens: (i%7 + 1) * 1200, OutputTokens: 300, CachedTokens: 200},
 					})
 				}
+				app.service = applicationUsageTestService{Service: app.service, usage: applicationUsageFixture(contracts.ApplicationUsage{Runs: []contracts.Run{
+					{ID: "long-session", SessionID: "history", Status: "completed", DurationMS: (51*60*60 + 4*60 + 5) * 1000},
+				}}, app.state.Messages, now)}
 				app.route = "settings"
 				app.selectSettingsSection("Usage statistics")
 				tt := ui.NewTester(app.View, width, 1400)
-				for _, label := range []string{"Settings page viewport", "Settings page content", "Application usage", "Token activity", "Model usage"} {
+				for _, label := range []string{"Settings page viewport", "Settings page content", "Application usage", "Token activity", "Model usage", "2天 03小时 04分 05秒"} {
 					bounds, exists := tt.Find(app.t(label))
 					if !exists || bounds.X < 0 || bounds.X+bounds.W > float32(width)+1 {
 						t.Fatalf("usage layout exceeds the viewport: %s %+v", label, bounds)
+					}
+					if label == "2天 03小时 04分 05秒" && bounds.H > 32 {
+						t.Fatalf("longest session duration wraps within its units: %+v", bounds)
 					}
 				}
 				if tt.HasText(app.t("Coding Plan")) {

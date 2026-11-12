@@ -17,6 +17,7 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/engine"
+	"gcode/internal/i18n"
 	"gcode/internal/model"
 	"gcode/internal/storage"
 )
@@ -155,7 +156,7 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			for _, request := range snapshot.ModelRequests {
 				generationDuration += request.DecodeDuration
 			}
-			if want := fmt.Sprintf("用时 %.2fs", wallDuration.Seconds()); wallDuration <= 0 || !strings.Contains(timing.Label, want) {
+			if want := "用时 " + i18n.Duration(i18n.English, wallDuration.Milliseconds()); wallDuration <= 0 || !strings.Contains(timing.Label, want) {
 				t.Fatalf("reply does not show the turn's wall time: %s; want %s", timing.Label, want)
 			}
 			copyButton := app.waitKey("copy-message:" + replyID)
@@ -217,7 +218,7 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			app.hoverMetric(scope + ":time")
 			app.waitKey(scope + ":time-panel")
 			app.waitKey(scope + ":output-speed")
-			if label := app.waitKey(scope + ":decode-time").Label; !strings.Contains(label, fmt.Sprintf("%.2fs", generationDuration.Seconds())) {
+			if label := app.waitKey(scope + ":decode-time").Label; !strings.Contains(label, i18n.Duration(i18n.English, generationDuration.Milliseconds())) {
 				t.Fatalf("reply time panel does not show the observed generation time: %s", label)
 			}
 			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {

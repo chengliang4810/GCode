@@ -1,5 +1,11 @@
 # 桌面测试
 
+2026-11-13：核心统计持久化后，`TestDesktopLocalConversationMetricsPanels`、
+`TestDesktopLocalApplicationUsage` 的深浅主题均通过，统计面板与用量页代表截图已检查。
+应用从独立真实核心的持久化数据重开，模型端点为本地 HTTP 夹具；不代表真实供应商或远程宿主验收。
+证据：`output/durable-metrics-20261113/native/20261113-012455-212660129/evidence.json`。
+设计与验收边界见 [统计持久化](metrics-persistence-2026-11-13.md)。
+
 2026-11-11 MyGo v0.8.3：设备菜单、引用图标对齐、模型选择器、正文/预览链接、
 Markdown 表格、设置持久化、面板开合和拖拽关闭共 8 组原生用例通过，
 证据为 `output/mygo-upgrade-20261111/native-final/20261111-122519-2869211955/evidence.json`。
