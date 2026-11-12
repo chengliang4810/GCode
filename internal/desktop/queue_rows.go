@@ -15,12 +15,13 @@ type queueRowDrag struct {
 
 // queueRows draws the queued messages above the composer. A row can be
 // dragged before or after another row of the same session; Send now stops the
-// live run and sends the row at once, while steering starts the row's task at
-// the next step boundary. Editing takes the row back into the composer.
+// live run and sends the row at once. Editing takes the row back into the
+// composer. A steering row is absent here on purpose: it is already the user's
+// message and the conversation shows it, waiting for its step boundary.
 func (a *App) queueRows(c *ui.Context, sessionID string) {
 	real := a.state.Runtime != nil
 	for _, queued := range a.state.Queue {
-		if queued.SessionID != sessionID {
+		if queued.SessionID != sessionID || queued.Delivery == "steer" {
 			continue
 		}
 		q := queued
@@ -31,11 +32,9 @@ func (a *App) queueRows(c *ui.Context, sessionID string) {
 				iconButton(c, "queue-send", tr(c, "Send now (interrupt)")).OnClick(func() {
 					a.dispatch(contracts.Command{Kind: "queue.send", ID: q.ID})
 				})
-				if q.Delivery != "steer" {
-					iconButton(c, "arrow-up", tr(c, "Send as steering")).OnClick(func() {
-						a.dispatch(contracts.Command{Kind: "queue.steer", ID: q.ID})
-					})
-				}
+				iconButton(c, "arrow-up", tr(c, "Send as steering")).OnClick(func() {
+					a.dispatch(contracts.Command{Kind: "queue.steer", ID: q.ID})
+				})
 			}
 			iconButton(c, "pen", tr(c, "Edit queued message")).OnClick(func() {
 				a.draft = q.Text

@@ -62,6 +62,7 @@ func (a *App) hasLocalSend(sessionID string) bool {
 
 func (a *App) projectedMessages(sessionID string) []contracts.Message {
 	messages := a.state.Messages[sessionID]
+	pending := make([]contracts.Message, 0, len(a.localSends))
 	for _, send := range a.localSends {
 		if send.message.SessionID != sessionID {
 			continue
@@ -71,9 +72,46 @@ func (a *App) projectedMessages(sessionID string) []contracts.Message {
 			slices.ContainsFunc(a.state.Queue, func(q contracts.QueuedMessage) bool { return q.RequestID == send.message.RequestID }) {
 			continue
 		}
-		messages = append(slices.Clip(messages), send.message)
+		pending = append(pending, send.message)
 	}
-	return messages
+	// A steering input is already accepted: it takes over at the next step
+	// boundary instead of waiting for the next turn, so it reads as a message
+	// in the conversation rather than as a row waiting in the queue.
+	for _, queued := range a.state.Queue {
+		if queued.SessionID != sessionID || queued.Delivery != "steer" ||
+			slices.ContainsFunc(messages, func(m contracts.Message) bool { return m.ID == queued.ID }) {
+			continue
+		}
+		pending = append(pending, steeringMessage(queued))
+	}
+	slices.SortStableFunc(pending, func(x, y contracts.Message) int { return x.CreatedAt.Compare(y.CreatedAt) })
+	return append(slices.Clip(messages), pending...)
+}
+
+// steeringMessage projects a steering queue row as the user message it
+// already is. The core keeps the row until the next step boundary hands it
+// over; the conversation shows it right away.
+func steeringMessage(queued contracts.QueuedMessage) contracts.Message {
+	message := contracts.Message{
+		ID: steeringMessageID(queued.ID), RequestID: queued.RequestID, SessionID: queued.SessionID,
+		Role: "user", CreatedAt: queued.CreatedAt,
+		Blocks: []contracts.Block{{ID: queued.ID + ":text", Kind: "text", Text: queued.Text}},
+	}
+	for _, item := range queued.Attachments {
+		attachment := item
+		message.Blocks = append(message.Blocks, contracts.Block{ID: queued.ID + ":attachment:" + item.ID, Kind: "attachment", Attachment: &attachment})
+	}
+	for _, item := range queued.Annotations {
+		annotation := item
+		message.Blocks = append(message.Blocks, contracts.Block{ID: queued.ID + ":" + annotation.Link(), Kind: "annotation", Annotation: &annotation})
+	}
+	return message
+}
+
+// steeringMessageID marks a projected steering message so its status and its
+// removal stay bound to the queue row it comes from.
+func steeringMessageID(queuedID string) string {
+	return "steering:" + queuedID
 }
 
 func (a *App) localSendFinished(command contracts.Command, err error) {
@@ -186,6 +224,15 @@ func (a *App) retryLocalSend(id string) {
 }
 
 func (a *App) localSendStatus(c *ui.Context, message contracts.Message) {
+	if id, steering := strings.CutPrefix(message.ID, "steering:"); steering {
+		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
+			ui.Text(c, tr(c, "Steering the running response")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			iconButton(c.Key("cancel-steering:"+id), "close", tr(c, "Cancel this correction")).OnClick(func() {
+				a.dispatch(contracts.Command{Kind: "queue.remove", ID: id})
+			})
+		})
+		return
+	}
 	send := a.localSendByRequest(message.RequestID)
 	if send == nil || message.ID != send.message.ID && !strings.HasSuffix(message.ID, ":"+send.message.ID) {
 		return

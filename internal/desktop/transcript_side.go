@@ -292,7 +292,8 @@ func (a *App) stopSideMessage(id string) {
 
 func (a *App) sideQueuedMessages(c *ui.Context, id string, state *sideComposerState) {
 	for _, queued := range a.state.Queue {
-		if queued.SessionID != id {
+		// A steering row is already the user's message in the pane above.
+		if queued.SessionID != id || queued.Delivery == "steer" {
 			continue
 		}
 		q := queued
