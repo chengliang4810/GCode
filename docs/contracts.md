@@ -58,7 +58,9 @@ with API keys removed and `hasApiKey` metadata. `provider.save` accepts private
 configuration; `preserveKey` explicitly retains a saved key during edits.
 An explicit reveal action reads a saved key through `ProviderKeyService`;
 local desktop calls the core directly, while remote clients use the authenticated
-`GET /v1/provider-key?id=...` endpoint with `Cache-Control: no-store`.
+`POST /v1/provider-key/reveal` endpoint with a `{"id":"..."}` body and
+`Cache-Control: no-store`. The host records every reveal with the provider ID
+and caller address, never the value.
 Revealed values stay in transient UI state, outside snapshots and events.
 `provider.reorder` and `provider.models.reorder` accept only a typed `reorder`
 payload: `sourceId`, `targetId`, and `after` move an existing item immediately

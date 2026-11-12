@@ -141,7 +141,7 @@ func TestModelSettingsQueuedSaveKeepsNewerInputAndWaitsBeforeNavigation(t *testi
 	if app.route != "chat" {
 		t.Fatal("did not leave settings after saving")
 	}
-	key, err := core.ReadProviderKey(context.Background(), id)
+	key, err := core.RevealProviderKey(context.Background(), id)
 	if err != nil || key != "key-before-leaving-settings" {
 		t.Fatal("leaving settings lost the focused key draft")
 	}

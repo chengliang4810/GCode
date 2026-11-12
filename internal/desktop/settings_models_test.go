@@ -222,7 +222,7 @@ func TestModelSettingsKeySavesOnlyOnBlur(t *testing.T) {
 				tt.Advance(400 * time.Millisecond)
 				tt.Type("secret")
 				tt.Advance(400 * time.Millisecond)
-				key, err := core.ReadProviderKey(context.Background(), provider.ID)
+				key, err := core.RevealProviderKey(context.Background(), provider.ID)
 				if err != nil || key != "" {
 					t.Fatal("saved while the input was focused")
 				}
@@ -236,7 +236,7 @@ func TestModelSettingsKeySavesOnlyOnBlur(t *testing.T) {
 				if err := tt.Click("Provider name"); err != nil {
 					t.Fatal(err)
 				}
-				key, err = core.ReadProviderKey(context.Background(), provider.ID)
+				key, err = core.RevealProviderKey(context.Background(), provider.ID)
 				if err != nil || key != "first-secret" {
 					t.Fatalf("automatic save failed: %v", err)
 				}
@@ -295,7 +295,7 @@ func TestModelSettingsRevealSavedKey(t *testing.T) {
 				if err := tt.Click("Provider name"); err != nil {
 					t.Fatal(err)
 				}
-				saved, err := core.ReadProviderKey(context.Background(), provider.ID)
+				saved, err := core.RevealProviderKey(context.Background(), provider.ID)
 				if err != nil || saved != "replacement-secret" {
 					t.Fatal("edited key did not reach the core")
 				}
@@ -343,7 +343,7 @@ func TestModelSettingsRevealedKeyIsNotResubmittedByUnrelatedEdits(t *testing.T) 
 	if err := tt.Click("Provider Base URL"); err != nil {
 		t.Fatal(err)
 	}
-	key, err := core.ReadProviderKey(context.Background(), provider.ID)
+	key, err := core.RevealProviderKey(context.Background(), provider.ID)
 	if err != nil || key != "rotated-secret" {
 		t.Fatal("unrelated edit overwrote the saved key with an old revealed value")
 	}
@@ -354,7 +354,7 @@ type providerKeyReadHook struct {
 	read func(context.Context, string) (string, error)
 }
 
-func (s providerKeyReadHook) ReadProviderKey(ctx context.Context, id string) (string, error) {
+func (s providerKeyReadHook) RevealProviderKey(ctx context.Context, id string) (string, error) {
 	return s.read(ctx, id)
 }
 
@@ -379,7 +379,7 @@ func TestModelSettingsDiscardsObsoleteKeyReveal(t *testing.T) {
 					app.modelsUI.selected = "other"
 					app.syncInlineProvider(contracts.ProviderConfiguration{Provider: model.Provider{ID: "other"}})
 				}
-				return core.ReadProviderKey(ctx, id)
+				return core.RevealProviderKey(ctx, id)
 			}}
 			app.toggleProviderKey()
 			if app.modelsUI.showKey || app.modelsUI.revealedKey != "" || app.modelsUI.keyLoading {

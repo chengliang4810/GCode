@@ -9,7 +9,9 @@ import (
 
 var _ contracts.ProviderKeyService = (*Engine)(nil)
 
-func (e *Engine) ReadProviderKey(ctx context.Context, id string) (string, error) {
+// RevealProviderKey returns the stored credential for one explicit reveal. The
+// caller owns the plaintext result and must not persist or publish it.
+func (e *Engine) RevealProviderKey(ctx context.Context, id string) (string, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if err := e.checkLocked(ctx); err != nil {

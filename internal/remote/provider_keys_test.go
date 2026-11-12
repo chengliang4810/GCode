@@ -37,7 +37,7 @@ func TestProviderKeyRevealRequiresAuthenticationAndDoesNotPublishSecrets(t *test
 	}
 	host := httptest.NewServer(handler)
 	defer host.Close()
-	response, err := http.Get(host.URL + "/v1/provider-key?id=saved")
+	response, err := http.Get(host.URL + "/v1/provider-key/reveal")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,11 +50,11 @@ func TestProviderKeyRevealRequiresAuthenticationAndDoesNotPublishSecrets(t *test
 		t.Fatal(err)
 	}
 	defer client.Close()
-	key, err := client.ReadProviderKey(ctx, provider.ID)
+	key, err := client.RevealProviderKey(ctx, provider.ID)
 	if err != nil || key != provider.APIKey {
 		t.Fatal("authenticated client could not reveal the saved key")
 	}
-	response, err = client.request(ctx, http.MethodGet, "/v1/provider-key?id=saved", nil)
+	response, err = client.request(ctx, http.MethodPost, "/v1/provider-key/reveal", providerKeyReveal{ID: provider.ID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,12 +62,18 @@ func TestProviderKeyRevealRequiresAuthenticationAndDoesNotPublishSecrets(t *test
 	if response.Header.Get("Cache-Control") != "no-store" {
 		t.Fatal("credential response permits caching")
 	}
-	if _, err := client.ReadProviderKey(ctx, "missing"); err == nil {
+	if _, err := client.request(ctx, http.MethodGet, "/v1/provider-key?id=saved", nil); err == nil {
+		t.Fatal("the retired readable key endpoint still serves credentials")
+	}
+	if _, err := client.RevealProviderKey(ctx, "missing"); err == nil {
 		t.Fatal("missing provider returned a successful key")
+	}
+	if _, err := client.request(ctx, http.MethodPost, "/v1/provider-key/reveal", map[string]string{}); err == nil {
+		t.Fatal("reveal without a provider ID was accepted")
 	}
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
-	if _, err := core.ReadProviderKey(canceled, provider.ID); err == nil {
+	if _, err := core.RevealProviderKey(canceled, provider.ID); err == nil {
 		t.Fatal("canceled key read succeeded")
 	}
 	snapshot, err := client.Snapshot(ctx)

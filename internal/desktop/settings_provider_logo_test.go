@@ -73,7 +73,7 @@ func TestProviderLogoSelectFetchAndFailurePreserveConfiguration(t *testing.T) {
 	if snapshot.CustomProviders[0].Provider.Logo != logo {
 		t.Fatal("failed website lookup replaced the existing logo")
 	}
-	key, err := core.ReadProviderKey(context.Background(), "logos")
+	key, err := core.RevealProviderKey(context.Background(), "logos")
 	if err != nil || key != "private-api-key" {
 		t.Fatal("logo editing changed the API key")
 	}

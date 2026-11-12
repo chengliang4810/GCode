@@ -188,7 +188,7 @@ func (a *App) toggleProviderKey() {
 	request := state.keyRequest
 	state.keyLoading, state.inlineError = true, ""
 	a.backgroundTask(func() func() {
-		key, err := service.ReadProviderKey(a.ctx, id)
+		key, err := service.RevealProviderKey(a.ctx, id)
 		return func() {
 			if state.keyRequest != request || state.inlineID != id || state.selected != id {
 				return

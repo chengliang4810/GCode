@@ -26,10 +26,11 @@ type ProviderInput struct {
 	PreserveKey bool           `json:"preserveKey"`
 }
 
-// ProviderKeyService reads a saved credential only on an explicit reveal action.
-// Keys must not enter snapshots or broadcast events.
+// ProviderKeyService reveals a saved credential to one explicit user action.
+// Keys must not enter snapshots or broadcast events, and the business host may
+// record every reveal: nothing reads this interface implicitly.
 type ProviderKeyService interface {
-	ReadProviderKey(context.Context, string) (string, error)
+	RevealProviderKey(context.Context, string) (string, error)
 }
 
 // ProviderLogoService fetches public website artwork through the business host.
