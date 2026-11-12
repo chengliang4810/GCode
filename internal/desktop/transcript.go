@@ -468,8 +468,12 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 		detail = reasoningPreview(block.Text, live)
 	}
 	color := a.palette.Muted
+	var change *contracts.Change
 	if block.Tool != nil && block.Tool.Failed() {
 		color = a.palette.Danger
+	}
+	if tool := block.Tool; tool != nil && tool.Status == "completed" && !tool.Failed() {
+		change = tool.Diff
 	}
 	root.Draw(func(p *ui.Painter, r ui.Rect) {
 		if motion.settled {
@@ -484,7 +488,11 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 		if block.Kind == "reasoning" {
 			accessibleDetail = block.ID
 		}
-		trigger := parts.Trigger.FillWidth().Justify(ui.Start).Label(tr(c, label) + ": " + accessibleDetail)
+		accessibleLabel := tr(c, label) + ": " + accessibleDetail
+		if change != nil {
+			accessibleLabel += fmt.Sprintf(" +%d -%d", change.Additions, change.Deletions)
+		}
+		trigger := parts.Trigger.FillWidth().Justify(ui.Start).Label(accessibleLabel)
 		if motion.settled {
 			trigger.Height(activityRowHeight).AlignItems(ui.Center)
 		} else {
@@ -505,12 +513,15 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 				}
 				ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine().Shrink(0)
 				if activityFile(block) {
-					a.activityFileBadge(c, "", block.Tool.Path, color)
+					a.activityFileBadge(c, "activity-file:"+id, block.Tool.Path, color)
 				} else if detail != "" {
 					ui.Text(c, detail).MinWidth(0).Shrink(1).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine()
 				}
+				if change != nil {
+					controlDiffStats(c.Key("activity-diff-stats:"+id), change.Additions, change.Deletions)
+				}
 				progress := parts.Progress()
-				tile := ui.Box(c).Size(18, 18).Shrink(0)
+				tile := ui.Box(c.Key("activity-chevron:"+id)).Size(18, 18).Shrink(0)
 				if !trigger.Hovered() && !trigger.FocusVisible() {
 					tile.Opacity(0)
 				}
@@ -536,7 +547,7 @@ func (a *App) activityFileBadge(c *ui.Context, key, path string, color ui.Color)
 	badge.OnClick(open)
 	badge.Children(func() {
 		ui.Row(c).Size(20, 20).Shrink(0).AlignItems(ui.Center).Justify(ui.Center).Children(func() { ui.Icon(c, workbench.FileIcon(file, a.palette.Dark)).Size(14, 14) })
-		ui.Text(c, activityBasename(path)).SingleLine().FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color)
+		ui.Text(c, activityBasename(path)).MinWidth(0).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(color)
 	})
 }
 

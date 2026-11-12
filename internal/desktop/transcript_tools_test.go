@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -144,5 +145,82 @@ func TestGoalDetailShowsEmptyStateAndPreservesReadErrors(t *testing.T) {
 	}, 1, 1)
 	if source.output != "cannot read goal" || source.args != "{}" {
 		t.Fatal("failed read concealed its error or original parameters")
+	}
+}
+
+func TestEditActivityShowsPerCallLineCountsBesidePath(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{300, 900} {
+			for _, kind := range []contracts.ToolKind{contracts.ToolEditFile, contracts.ToolWriteFile, contracts.ToolApplyPatch} {
+				t.Run(fmt.Sprintf("%s-dark-%t-%d", kind, dark, width), func(t *testing.T) {
+					a := testApp(t, "default")
+					a.palette = design.Palette("rcode", dark)
+					path := "/workspace/internal/a_very_long_conversation_metrics_filename.go"
+					tool := contracts.ToolCall{Kind: kind, Status: "completed", Path: path,
+						Diff: &contracts.Change{Additions: 12, Deletions: 1, OldContent: "before\n", NewContent: "after\n"}}
+					block := contracts.Block{ID: "edit-count", Kind: "tool", Tool: &tool}
+					tt := ui.NewTester(func(c *ui.Context) {
+						localize.Set(c, "zh-CN")
+						c.SetTheme(a.palette.UI())
+						c.DisableAnimations()
+						ui.Column(c).Fill().Children(func() {
+							a.activityItem(c, "edit-row", block, false, false, activityRowMotion{settled: true})
+						})
+					}, width, 300)
+					added, addedOK := tt.Find("+12")
+					deleted, deletedOK := tt.Find("-1")
+					badge, badgeOK := tt.Find("打开文件：" + path)
+					if !addedOK || !deletedOK || !badgeOK {
+						t.Fatalf("missing line counts or path: %v", tt.Texts())
+					}
+					if added.X < badge.X+badge.W || deleted.X < added.X+added.W || deleted.X+deleted.W > float32(width) ||
+						added.Y != deleted.Y || added.Y < badge.Y || added.Y+added.H > badge.Y+badge.H {
+						t.Fatalf("counts overlap or leave the row: path=%+v added=%+v deleted=%+v", badge, added, deleted)
+					}
+					label, _, _ := activityTitle(block)
+					label = map[string]string{"Edit": "编辑", "Write": "写入", "Patch": "补丁"}[label]
+					if err := tt.Click(label); err != nil {
+						t.Fatal(err)
+					}
+					tt.Advance(time.Second)
+					if _, ok := tt.Find("更改详情"); !ok || !tt.HasText("+12") || !tt.HasText("-1") {
+						t.Fatal("expanding diff lost the change or header counts")
+					}
+					for _, state := range []struct {
+						name, status string
+						failed, diff bool
+					}{
+						{"running", "running", false, true},
+						{"failed", "completed", true, true},
+						{"missing diff", "completed", false, false},
+					} {
+						tool.Status, tool.IsError = state.status, state.failed
+						if !state.diff {
+							tool.Diff = nil
+						}
+						tt.Frame()
+						if tt.HasText("+12") || tt.HasText("-1") {
+							t.Fatalf("%s exposed completed change counts", state.name)
+						}
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestEditActivityFileBadgeStillOpensEditorWithoutExpandingDiff(t *testing.T) {
+	a := testApp(t, "default")
+	m := contracts.Message{ID: "edit-message", Role: "assistant", Blocks: []contracts.Block{
+		{ID: "edit", Kind: "tool", Tool: &contracts.ToolCall{Kind: contracts.ToolEditFile, Path: "internal/layout.go", Status: "completed",
+			Diff: &contracts.Change{Additions: 12, Deletions: 1, OldContent: "before\n", NewContent: "after\n"}}},
+	}}
+	a.rememberActivityFold(m.ID+":activity:edit", true)
+	tt := transcriptTester(t, a, &m, 420, 400, false)
+	if err := tt.Click("Open file: internal/layout.go"); err != nil {
+		t.Fatal(err)
+	}
+	if a.workspace.ActiveKind() != "file" || a.workspace.TabCount() != 1 || tt.HasText("Activity diff") {
+		t.Fatal("edit file badge did not open the file independently of its diff disclosure")
 	}
 }

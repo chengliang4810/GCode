@@ -899,3 +899,15 @@ func (a *App) controlSwitch(c *ui.Context, value *bool, label string, disabled b
 	})
 	return b
 }
+
+// controlDiffStats keeps per-edit line counts legible beside a shrinking path.
+func controlDiffStats(c *ui.Context, additions, deletions int) ui.Element {
+	t := c.Theme()
+	return ui.Row(c).Label(fmt.Sprintf("+%d -%d", additions, deletions)).
+		Gap(design.Controls().ButtonGap).Shrink(0).AlignItems(ui.Center).Children(func() {
+		ui.Text(c, fmt.Sprintf("+%d", additions)).SingleLine().
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success)
+		ui.Text(c, fmt.Sprintf("-%d", deletions)).SingleLine().
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger)
+	})
+}
