@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 
 	"gcode/internal/assets"
@@ -61,22 +62,29 @@ func (s *State) projectRoot(session contracts.Session) (string, error) {
 // linkSession accepts only the visible workspace's root or descendants.
 func (s *State) linkSession(id string) (contracts.Session, error) {
 	var source contracts.Session
-	sessions := make(map[string]contracts.Session, len(s.snapshot.Sessions))
 	for _, session := range s.snapshot.Sessions {
-		sessions[session.ID] = session
 		if session.ID == id {
 			source = session
+			break
 		}
 	}
 	if s.closed.Load() || source.ID == "" || source.Archived {
 		return source, fmt.Errorf("link source conversation is unavailable")
 	}
-	seen := map[string]bool{}
-	for current := source; current.ID != "" && !seen[current.ID]; current = sessions[current.ParentSessionID] {
+	// Links usually belong to the root or a direct child. Walk only their
+	// ancestry instead of allocating a map of every conversation per link.
+	// A valid ancestry cannot visit more nodes than there are conversations.
+	for current, remaining := source, len(s.snapshot.Sessions); current.ID != "" && remaining > 0; remaining-- {
 		if current.ID == s.scopeID {
 			return source, nil
 		}
-		seen[current.ID] = true
+		parent := slices.IndexFunc(s.snapshot.Sessions, func(session contracts.Session) bool {
+			return session.ID == current.ParentSessionID
+		})
+		if parent < 0 {
+			break
+		}
+		current = s.snapshot.Sessions[parent]
 	}
 	return source, fmt.Errorf("link source does not belong to the current workspace")
 }

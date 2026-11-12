@@ -51,6 +51,43 @@ func linkWorkspace(t *testing.T) *State {
 	return s
 }
 
+func TestLinkSourceAncestryAndUpdates(t *testing.T) {
+	s := linkWorkspace(t)
+	s.snapshot.Sessions = append(s.snapshot.Sessions,
+		contracts.Session{ID: "grandchild", ParentSessionID: "child", CWD: "/nested"},
+		contracts.Session{ID: "cycle-a", ParentSessionID: "cycle-b"},
+		contracts.Session{ID: "cycle-b", ParentSessionID: "cycle-a"},
+		contracts.Session{ID: "orphan", ParentSessionID: "missing"},
+	)
+	for _, id := range []string{"root", "child", "grandchild"} {
+		if !s.LinkSourceAvailable(id) {
+			t.Fatalf("valid descendant %q was rejected", id)
+		}
+	}
+	for _, id := range []string{"unrelated", "missing", "cycle-a", "orphan"} {
+		if s.LinkSourceAvailable(id) {
+			t.Fatalf("invalid source %q was accepted", id)
+		}
+	}
+	s.snapshot.Sessions[1].Archived = true
+	if s.LinkSourceAvailable("child") {
+		t.Fatal("archived source remained available")
+	}
+	s.snapshot.Sessions[1].Archived = false
+	s.snapshot.Sessions[1].CWD = "/changed"
+	if root, err := s.LinkRoot("child"); err != nil || root != "/changed" {
+		t.Fatalf("working directory update was not visible: %q, %v", root, err)
+	}
+	s.snapshot.Sessions[1].ParentSessionID = "unrelated"
+	if s.LinkSourceAvailable("child") || s.LinkSourceAvailable("grandchild") {
+		t.Fatal("reparented conversation retained access to the previous workspace")
+	}
+	s.Close()
+	if s.LinkSourceAvailable("root") {
+		t.Fatal("closed workspace still accepted links")
+	}
+}
+
 func TestBrowserLauncherStartsNativeBlankTab(t *testing.T) {
 	s := linkWorkspace(t)
 	s.OpenSurface("browser")
