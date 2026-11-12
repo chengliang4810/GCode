@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"context"
+	"slices"
 	"time"
 )
 
@@ -61,15 +62,39 @@ func UsageRuns(runs []Run) []Run {
 	return projected
 }
 
-// ApplicationUsage is the compact, on-demand application-wide usage result.
-// Records are keyed by session ID and contain no transcript text.
+// ApplicationUsage is the compact, persisted application-wide usage state.
+// Records are keyed by session ID and contain no transcript text. Report is
+// the already-generated presentation projection; GeneratedAt is its calendar
+// anchor for range and heatmap rendering.
 type ApplicationUsage struct {
-	Records map[string][]UsageRecord `json:"records"`
-	Runs    []Run                    `json:"runs"`
+	Records     map[string][]UsageRecord `json:"records"`
+	Runs        []Run                    `json:"runs"`
+	Report      ApplicationUsageReport   `json:"report"`
+	GeneratedAt time.Time                `json:"generatedAt"`
 }
 
-// ApplicationUsageService reads usage metadata without loading all session
-// transcripts into a snapshot.
+// Clone returns an owned copy of compact usage state and its nested report.
+func (v ApplicationUsage) Clone() ApplicationUsage {
+	clone := v
+	if v.Records != nil {
+		clone.Records = make(map[string][]UsageRecord, len(v.Records))
+		for sessionID, records := range v.Records {
+			clone.Records[sessionID] = slices.Clone(records)
+		}
+	}
+	clone.Runs = slices.Clone(v.Runs)
+	for i := range clone.Runs {
+		if clone.Runs[i].FinishedAt != nil {
+			finishedAt := *clone.Runs[i].FinishedAt
+			clone.Runs[i].FinishedAt = &finishedAt
+		}
+	}
+	clone.Report = v.Report.Clone()
+	return clone
+}
+
+// ApplicationUsageService reads the generated application usage report without
+// loading all session transcripts into a snapshot.
 type ApplicationUsageService interface {
 	ReadApplicationUsage(context.Context) (ApplicationUsage, error)
 }

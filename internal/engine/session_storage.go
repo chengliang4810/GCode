@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strings"
 
+	"gcode/internal/accounting"
 	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -207,6 +208,7 @@ func (e *Engine) markSessionDirtyLocked(sessionIDs ...string) {
 func (e *Engine) persistLocked(required ...string) (resultErr error) {
 	e.persistErrors = nil
 	e.markSessionDirtyLocked(required...)
+	e.refreshStatisticsLocked()
 	records := maps.Clone(e.sessionRecords)
 	hashes := maps.Clone(e.sessionHashes)
 	dirty := maps.Clone(e.sessionDirty)
@@ -323,6 +325,20 @@ func (e *Engine) persistLocked(required ...string) (resultErr error) {
 		if err := json.Unmarshal(data, &committed); err != nil {
 			return err
 		}
+		durable.ApplicationUsage = RestoreUnavailableUsage(durable.ApplicationUsage, committed.Snapshot.ApplicationUsage, unavailable)
+		durable.Metrics = maps.Clone(durable.Metrics)
+		for _, id := range unavailable {
+			if summary, exists := committed.Snapshot.Metrics[id]; exists {
+				durable.Metrics[id] = summary
+			} else {
+				delete(durable.Metrics, id)
+			}
+		}
+		// Ancestors must include the committed child's summary, not statistics
+		// from a record whose source write failed.
+		projection := contracts.Snapshot{Sessions: durable.Sessions, Metrics: durable.Metrics}
+		accounting.Refresh(&projection, unavailable)
+		durable.Metrics = projection.Metrics
 		for i, session := range durable.Sessions {
 			if !slices.Contains(unavailable, session.ID) {
 				continue

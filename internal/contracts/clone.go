@@ -10,6 +10,18 @@ import (
 // CloneSnapshot deliberately shares only immutable strings and time values.
 // This avoids serializing thousands of historical messages on each UI update.
 func CloneSnapshot(v Snapshot) Snapshot {
+	if v.Metrics != nil {
+		source := v.Metrics
+		v.Metrics = make(map[string]ConversationMetrics, len(source))
+		for id, metrics := range source {
+			v.Metrics[id] = metrics.Clone()
+		}
+	}
+	if v.ApplicationUsage != nil {
+		copied := v.ApplicationUsage.Clone()
+		v.ApplicationUsage = &copied
+	}
+
 	v.Plugins = v.Plugins.Clone()
 	v.UserResources = v.UserResources.Clone()
 	if v.Runtime != nil {

@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"gcode/internal/contracts"
 	"gcode/internal/mock"
 )
 
@@ -76,13 +75,14 @@ func TestScopedSnapshotSubscriptionAndUsageRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := contracts.UsageRecordsFromMessages(detail.Messages["chat-0"])
-	if !reflect.DeepEqual(usage.Records["chat-0"], want) {
-		t.Fatalf("usage metadata differs from scoped transcript projection:\ngot=%+v\nwant=%+v", usage.Records["chat-0"], want)
+	saved, err := backend.ReadApplicationUsage(ctx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, ok := usage.Records["chat-1"]; !ok {
-		t.Fatal("application usage omitted another resident session")
+	if len(usage.Records) != 0 || len(usage.Runs) != 0 || !reflect.DeepEqual(usage.Report, saved.Report) {
+		t.Fatal("remote usage did not preserve the core-owned report")
 	}
+
 	data, err := json.Marshal(usage)
 	if err != nil {
 		t.Fatal(err)

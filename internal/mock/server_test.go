@@ -199,19 +199,17 @@ func TestReadApplicationUsageReturnsMetadataWithoutTranscriptBodies(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(usage.Records) == 0 || len(usage.Records["chat-0"]) == 0 {
-		t.Fatal("usage metadata omitted resident message records")
+	if len(usage.Records) != 0 || len(usage.Runs) != 0 {
+		t.Fatal("usage returned raw ledger instead of the generated report")
 	}
-	detail := snapshotForSessions(t, s, "chat-0")
-	want := contracts.UsageRecordsFromMessages(detail.Messages["chat-0"])
-	if !reflect.DeepEqual(usage.Records["chat-0"], want) {
-		t.Fatalf("usage metadata differs from resident message projection:\ngot=%+v\nwant=%+v", usage.Records["chat-0"], want)
+	if !reflect.DeepEqual(usage.Report, s.state.ApplicationUsage.Report) {
+		t.Fatal("usage report differs from the core-owned saved projection")
 	}
-	for _, run := range usage.Runs {
-		if run.Summary != (contracts.ActivitySummary{}) || run.FinishReason != "" || run.Error != "" || !run.StartedAt.IsZero() || run.FinishedAt != nil {
-			t.Fatalf("usage exposed non-metadata run fields: %+v", run)
-		}
+	usage.Report.Days = nil
+	if len(s.state.ApplicationUsage.Report.Days) == 0 {
+		t.Fatal("caller changed the core report")
 	}
+
 }
 
 func TestAtomicCreateAndSend(t *testing.T) {

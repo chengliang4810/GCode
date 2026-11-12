@@ -162,6 +162,8 @@ func New(opts Options) (*Server, error) {
 		}
 		reconcileAgentTurns(&s.state, opts)
 	}
+	s.refreshMetricsLocked()
+	s.refreshApplicationUsageLocked()
 	s.ensureComposerFooterGitLocked(restored)
 	s.ensureContextUsageLocked(restored)
 	if opts.Scenario == "live" && s.sessionIndexLocked("chat-0") >= 0 && s.state.Sessions[s.sessionIndexLocked("chat-0")].Status == contracts.Working {
@@ -188,9 +190,8 @@ func (s *Server) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.
 	return cloneSnapshot(contracts.SessionProjection(s.state, uniqueSessionIDs(sessionIDs))), nil
 }
 
-// ReadApplicationUsage returns compact usage metadata without exposing
-// transcript bodies. Resident messages are projected while the backend lock is
-// held, so callers never need a full scoped snapshot to build usage reports.
+// ReadApplicationUsage returns the mock core's saved report, without raw
+// transcripts or a render-time reconstruction.
 func (s *Server) ReadApplicationUsage(ctx context.Context) (contracts.ApplicationUsage, error) {
 	if err := ctx.Err(); err != nil {
 		return contracts.ApplicationUsage{}, err
@@ -200,20 +201,10 @@ func (s *Server) ReadApplicationUsage(ctx context.Context) (contracts.Applicatio
 	if s.closed {
 		return contracts.ApplicationUsage{}, ErrClosed
 	}
-	usage := contracts.ApplicationUsage{Records: make(map[string][]contracts.UsageRecord, len(s.state.Messages))}
-	for sessionID, messages := range s.state.Messages {
-		usage.Records[sessionID] = contracts.UsageRecordsFromMessages(messages)
+	if s.state.ApplicationUsage == nil {
+		return contracts.ApplicationUsage{}, nil
 	}
-	usage.Runs = make([]contracts.Run, 0, len(s.state.Runs))
-	for _, run := range s.state.Runs {
-		usage.Runs = append(usage.Runs, contracts.Run{
-			ID:         run.ID,
-			SessionID:  run.SessionID,
-			Status:     run.Status,
-			DurationMS: run.DurationMS,
-		})
-	}
-	return usage, nil
+	return contracts.ApplicationUsage{Report: s.state.ApplicationUsage.Report.Clone(), GeneratedAt: s.state.ApplicationUsage.GeneratedAt}, nil
 }
 
 // Subscribe sends the current scoped state immediately. A slow reader receives
@@ -260,6 +251,8 @@ func (s *Server) idLocked(prefix string) string {
 
 func (s *Server) publishLocked(kind, sessionID, runID, requestID, text string) {
 	s.observeHostContextLocked(kind, sessionID, runID)
+	s.refreshMetricsLocked()
+	s.refreshApplicationUsageLocked()
 	if sessionID != "" && runID != "" {
 		s.updateRunSummaryLocked(sessionID, runID)
 	}

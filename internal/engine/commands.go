@@ -382,6 +382,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.loadedSessions[session.ID] = true
 		session.ParentSessionID = parentID
 		session.SubagentType = ""
+		session.ParentRunID = ""
 		session.RunningSubagents = 0
 		session.Goal = nil
 		session.CreationRequestID = command.RequestID
@@ -534,6 +535,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			deletedSession = e.state.Sessions[index]
 			deletedRecord = e.sessionRecords[command.ID]
 			e.removeTrajectory(deletedSession)
+		}
+		if deletedSession.SubagentType != "" && deletedSession.ParentSessionID != "" {
+			e.markSessionDirtyLocked(deletedSession.ParentSessionID)
 		}
 		e.state.Sessions = slices.DeleteFunc(e.state.Sessions, func(s contracts.Session) bool { return s.ID == command.ID })
 		delete(e.state.Messages, command.ID)

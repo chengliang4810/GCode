@@ -20,39 +20,41 @@ const (
 )
 
 type Snapshot struct {
-	Plugins             PluginState             `json:"plugins"`
-	UserResources       UserResourceState       `json:"userResources"`
-	Runtime             *RuntimeInfo            `json:"runtime,omitempty"`
-	CustomProviders     []ProviderConfiguration `json:"customProviders,omitempty"`
-	Integrations        IntegrationState        `json:"integrations"`
-	ModelCatalog        ModelCatalogState       `json:"modelCatalog"`
-	AppshotCapabilities AppshotCapabilities     `json:"appshotCapabilities"`
-	ThemeLibrary        []ThemeLibraryEntry     `json:"themeLibrary"`
-	ThemeImport         *ThemeImportPreview     `json:"themeImport,omitempty"`
-	SchemaVersion       int                     `json:"schemaVersion"`
-	Revision            uint64                  `json:"revision"`
-	User                User                    `json:"user"`
-	Capabilities        Capabilities            `json:"capabilities"`
-	Projects            []Project               `json:"projects"`
-	Devices             []Device                `json:"devices"`
-	Sessions            []Session               `json:"sessions"`
-	SessionGroups       []SessionGroup          `json:"sessionGroups,omitempty"`
-	Messages            map[string][]Message    `json:"messages"`
-	Models              []Model                 `json:"models"`
-	Providers           []Provider              `json:"providers"`
-	Settings            Settings                `json:"settings"`
-	Files               []File                  `json:"files"`
-	Changes             []Change                `json:"changes"`
-	Commits             []Commit                `json:"commits"`
-	RepoRefs            map[string]RepoRefs     `json:"repoRefs,omitempty"`
-	Terminals           []Terminal              `json:"terminals"`
-	Queue               []QueuedMessage         `json:"queue"`
-	Runs                []Run                   `json:"runs"`
-	ModelRequests       []ModelRequest          `json:"modelRequests"`
-	Account             Account                 `json:"account"`
-	Appshots            []Attachment            `json:"appshots"`
-	Attachments         []Attachment            `json:"attachments"`
-	Update              Update                  `json:"update"`
+	Metrics             map[string]ConversationMetrics `json:"metrics"`
+	ApplicationUsage    *ApplicationUsage              `json:"applicationUsage,omitempty"`
+	Plugins             PluginState                    `json:"plugins"`
+	UserResources       UserResourceState              `json:"userResources"`
+	Runtime             *RuntimeInfo                   `json:"runtime,omitempty"`
+	CustomProviders     []ProviderConfiguration        `json:"customProviders,omitempty"`
+	Integrations        IntegrationState               `json:"integrations"`
+	ModelCatalog        ModelCatalogState              `json:"modelCatalog"`
+	AppshotCapabilities AppshotCapabilities            `json:"appshotCapabilities"`
+	ThemeLibrary        []ThemeLibraryEntry            `json:"themeLibrary"`
+	ThemeImport         *ThemeImportPreview            `json:"themeImport,omitempty"`
+	SchemaVersion       int                            `json:"schemaVersion"`
+	Revision            uint64                         `json:"revision"`
+	User                User                           `json:"user"`
+	Capabilities        Capabilities                   `json:"capabilities"`
+	Projects            []Project                      `json:"projects"`
+	Devices             []Device                       `json:"devices"`
+	Sessions            []Session                      `json:"sessions"`
+	SessionGroups       []SessionGroup                 `json:"sessionGroups,omitempty"`
+	Messages            map[string][]Message           `json:"messages"`
+	Models              []Model                        `json:"models"`
+	Providers           []Provider                     `json:"providers"`
+	Settings            Settings                       `json:"settings"`
+	Files               []File                         `json:"files"`
+	Changes             []Change                       `json:"changes"`
+	Commits             []Commit                       `json:"commits"`
+	RepoRefs            map[string]RepoRefs            `json:"repoRefs,omitempty"`
+	Terminals           []Terminal                     `json:"terminals"`
+	Queue               []QueuedMessage                `json:"queue"`
+	Runs                []Run                          `json:"runs"`
+	ModelRequests       []ModelRequest                 `json:"modelRequests"`
+	Account             Account                        `json:"account"`
+	Appshots            []Attachment                   `json:"appshots"`
+	Attachments         []Attachment                   `json:"attachments"`
+	Update              Update                         `json:"update"`
 
 	ContextUsage map[string]ContextUsage `json:"contextUsage"`
 }
@@ -108,6 +110,7 @@ type Session struct {
 	StorageRootID     string                     `json:"storageRootId"`
 	StorageError      string                     `json:"storageError,omitempty"`
 	Goal              *SessionGoal               `json:"goal,omitempty"`
+	ParentRunID       string                     `json:"parentRunId,omitempty"`
 	SubagentType      string                     `json:"subagentType,omitempty"`
 	CreationRequestID string                     `json:"creationRequestId,omitempty"`
 	CWD               string                     `json:"cwd,omitempty"`

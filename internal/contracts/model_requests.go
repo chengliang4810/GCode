@@ -26,15 +26,22 @@ type ModelRequest struct {
 // ModelRequestTotals only pairs output tokens with their own measured decode
 // duration. Averaging individual TPS values would overweight short requests.
 type ModelRequestTotals struct {
-	Requests, UnknownUsage, DecodeRequests int
-	Input, Output, Cached                  int64
-	DecodeTokens                           int64
-	DecodeDuration                         time.Duration
-	Unrecorded                             bool
-	CacheRequests                          int
-	CacheInputTokens, CacheReadTokens      int64
-	TimedRequests, FirstTokenRequests      int
-	RequestDuration, FirstTokenLatency     time.Duration
+	Requests           int           `json:"requests"`
+	UnknownUsage       int           `json:"unknownUsage"`
+	DecodeRequests     int           `json:"decodeRequests"`
+	Input              int64         `json:"input"`
+	Output             int64         `json:"output"`
+	Cached             int64         `json:"cached"`
+	DecodeTokens       int64         `json:"decodeTokens"`
+	DecodeDuration     time.Duration `json:"decodeDuration"`
+	Unrecorded         bool          `json:"unrecorded"`
+	CacheRequests      int           `json:"cacheRequests"`
+	CacheInputTokens   int64         `json:"cacheInputTokens"`
+	CacheReadTokens    int64         `json:"cacheReadTokens"`
+	TimedRequests      int           `json:"timedRequests"`
+	FirstTokenRequests int           `json:"firstTokenRequests"`
+	RequestDuration    time.Duration `json:"requestDuration"`
+	FirstTokenLatency  time.Duration `json:"firstTokenLatency"`
 }
 
 func (s *ModelRequestTotals) Add(request ModelRequest) {

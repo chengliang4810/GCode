@@ -7,6 +7,16 @@ import "slices"
 // The returned projection shares source data until CloneSnapshot is called.
 func SessionProjection(source Snapshot, sessionIDs []string) Snapshot {
 	out := source
+	out.ApplicationUsage = nil
+	out.Metrics = make(map[string]ConversationMetrics, len(source.Metrics))
+	for id, metrics := range source.Metrics {
+		if !slices.Contains(sessionIDs, id) {
+			metrics.Turns = nil
+			metrics.OwnTurns = nil
+		}
+		out.Metrics[id] = metrics
+	}
+
 	out.Messages = make(map[string][]Message, len(sessionIDs))
 	for _, id := range sessionIDs {
 		if messages, ok := source.Messages[id]; ok {

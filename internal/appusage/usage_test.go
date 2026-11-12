@@ -137,3 +137,17 @@ func TestWindowUsesCalendarDaysAcrossDST(t *testing.T) {
 		}
 	}
 }
+
+func TestContractReportRoundTripPreservesChartData(t *testing.T) {
+	now := time.Date(2026, 11, 13, 12, 0, 0, 0, time.FixedZone("Shanghai", 8*3600))
+	want := Report{
+		Summary: Summary{Total: 42, Input: 30, Output: 12, Cached: 8, Peak: 20, LongestSessionMS: 9_000, CurrentStreak: 2, LongestStreak: 3, UnknownModelTokens: 4},
+		Days: map[string]Day{
+			Date(now): {Date: Midnight(now), Tokens: 42, Turns: 2, Tools: 1, Models: map[string]int64{"provider/model": 42}},
+		},
+	}
+	got := FromContractReport(ToContractReport(want))
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("contract report round trip changed chart data:\n got=%+v\nwant=%+v", got, want)
+	}
+}

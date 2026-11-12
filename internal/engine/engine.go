@@ -100,7 +100,6 @@ type Engine struct {
 	subSessions        map[uint64][]string
 	sessionRefs        map[string]int
 	sessionReads       map[string]*sessionRead
-	usageCache         map[string]sessionUsage
 	subNext            uint64
 	sequence           uint64
 	closed             bool

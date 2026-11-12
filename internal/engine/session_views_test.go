@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"gcode/internal/agent"
-	"gcode/internal/appusage"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
@@ -169,21 +168,26 @@ func TestApplicationUsageReadsUnloadedHistoryWithoutRetainingBodies(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(usage.Records[first]) != 1 || len(usage.Records[second]) != 1 {
-		t.Fatal("usage excluded unloaded conversations")
+	if core.state.ApplicationUsage == nil || len(core.state.ApplicationUsage.Records[first]) != 1 || len(core.state.ApplicationUsage.Records[second]) != 1 {
+		t.Fatal("saved usage omitted unloaded conversations")
+	}
+	if len(usage.Records) != 0 || len(usage.Runs) != 0 {
+		t.Fatal("usage response exposed the ledger instead of the report")
 	}
 	if len(core.loadedSessions) != 0 || len(core.state.Messages) != 0 {
 		t.Fatal("reading usage installed historical bodies")
 	}
-	before := appusage.BuildRecords(usage.Records, usage.Runs, time.Now())
-	view, err := core.Snapshot(t.Context(), first)
+	if _, err := core.Snapshot(t.Context(), first); err != nil {
+		t.Fatal(err)
+	}
+	after, err := core.ReadApplicationUsage(t.Context())
 	if err != nil {
 		t.Fatal(err)
 	}
-	after := appusage.BuildWithRecords(usage.Records, view.Messages, usage.Runs, time.Now())
-	if before.Summary != after.Summary {
-		t.Fatal("opening a historical conversation changed application totals")
+	if usage.Report.Summary != after.Report.Summary {
+		t.Fatal("opening history changed the saved application totals")
 	}
+
 }
 
 func TestCanceledNamingKeepsBodyUntilRequestAccountingCommits(t *testing.T) {

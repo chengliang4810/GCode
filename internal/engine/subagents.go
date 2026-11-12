@@ -255,7 +255,7 @@ func (e *Engine) spawnSubagentLocked(
 	}
 	now := time.Now()
 	child := contracts.Session{
-		ID: childID, StorageRootID: parent.StorageRootID, ParentSessionID: parentID, SubagentType: profile.ID, SideChat: true,
+		ID: childID, StorageRootID: parent.StorageRootID, ParentSessionID: parentID, ParentRunID: parentRun.id, SubagentType: profile.ID, SideChat: true,
 		Title: description, ProjectID: parent.ProjectID, DeviceID: parent.DeviceID,
 		CWD: parent.CWD, Branch: parent.Branch, WorktreeID: parent.WorktreeID,
 		ModelID: selectedModel, ReasoningLevel: model.ReasoningLabel(effort),

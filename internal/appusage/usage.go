@@ -2,6 +2,7 @@
 package appusage
 
 import (
+	"maps"
 	"sort"
 	"time"
 
@@ -32,6 +33,69 @@ type Summary struct {
 type Report struct {
 	Summary Summary
 	Days    map[string]Day
+}
+
+// ToContractReport converts the calculation projection into the durable
+// snapshot representation. It copies nested model maps so the report can be
+// retained by the core without sharing mutable calculation state.
+func ToContractReport(report Report) contracts.ApplicationUsageReport {
+	durable := contracts.ApplicationUsageReport{
+		Summary: contracts.ApplicationUsageSummary{
+			Total:              report.Summary.Total,
+			Input:              report.Summary.Input,
+			Output:             report.Summary.Output,
+			Cached:             report.Summary.Cached,
+			Peak:               report.Summary.Peak,
+			LongestSessionMS:   report.Summary.LongestSessionMS,
+			CurrentStreak:      report.Summary.CurrentStreak,
+			LongestStreak:      report.Summary.LongestStreak,
+			UnknownModelTokens: report.Summary.UnknownModelTokens,
+		},
+	}
+	if report.Days != nil {
+		durable.Days = make(map[string]contracts.ApplicationUsageDay, len(report.Days))
+		for key, day := range report.Days {
+			durable.Days[key] = contracts.ApplicationUsageDay{
+				Date:   day.Date,
+				Tokens: day.Tokens,
+				Turns:  day.Turns,
+				Tools:  day.Tools,
+				Models: maps.Clone(day.Models),
+			}
+		}
+	}
+	return durable
+}
+
+// FromContractReport converts a persisted report into the local calculation
+// projection used by the usage charts and calendar helpers.
+func FromContractReport(report contracts.ApplicationUsageReport) Report {
+	converted := Report{
+		Summary: Summary{
+			Total:              report.Summary.Total,
+			Input:              report.Summary.Input,
+			Output:             report.Summary.Output,
+			Cached:             report.Summary.Cached,
+			Peak:               report.Summary.Peak,
+			LongestSessionMS:   report.Summary.LongestSessionMS,
+			CurrentStreak:      report.Summary.CurrentStreak,
+			LongestStreak:      report.Summary.LongestStreak,
+			UnknownModelTokens: report.Summary.UnknownModelTokens,
+		},
+	}
+	if report.Days != nil {
+		converted.Days = make(map[string]Day, len(report.Days))
+		for key, day := range report.Days {
+			converted.Days[key] = Day{
+				Date:   day.Date,
+				Tokens: day.Tokens,
+				Turns:  day.Turns,
+				Tools:  day.Tools,
+				Models: maps.Clone(day.Models),
+			}
+		}
+	}
+	return converted
 }
 
 func Date(t time.Time) string { return t.Format("2006-01-02") }

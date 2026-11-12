@@ -247,3 +247,15 @@ configuration and submitted commands. `Settings.Hooks` and `Settings.Subagents`
 are deeply cloned. `provider.test` exposes transient per-model diagnostics.
 Project resources and old prompts/mcp.json formats are not loaded.
 See [user settings](user-settings.md) for runtime semantics and verification limits.
+
+
+## 持久化执行统计
+
+`Snapshot.Metrics` 是由宿主核心维护的强类型汇总，包含每个会话的 `Own`、`Total`、
+`OwnTurns`、`Turns`。`ExecutionMetrics` 保存请求总计、模型明细、生成与工具耗时、
+已结束墙钟区间及活动尾区间起点。`Session.ParentRunID` 将委派工作明确归属到父运行。
+会话投影保留各会话总计与自有用时，仅传送已订阅会话的运行明细；不广播应用用量台账。
+
+应用用量接口直接返回核心生成的 `ApplicationUsage.Report` 与 `GeneratedAt`，不再要求客户端
+根据全量消息/台账重新计算生命周期统计。紧凑记录与报告保存在核心索引，原始正文无需为统计而加载。
+相关 map、slice 与报告模型字段遵循 `CloneSnapshot` 的深拷贝所有权。

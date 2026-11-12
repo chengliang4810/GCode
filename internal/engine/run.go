@@ -836,6 +836,7 @@ func (e *Engine) startRunWithProvidersLocked(
 			if child != nil {
 				e.finishSubagentLocked(session, run, runErr)
 			}
+			e.refreshStatisticsLocked()
 		}
 		run.err = runErr
 		if child != nil {

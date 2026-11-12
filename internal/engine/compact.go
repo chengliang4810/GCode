@@ -173,6 +173,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 					e.state.Runs[i].Error = persistErr.Error()
 				}
 			}
+			e.refreshStatisticsLocked()
 		}
 		e.publishLocked(contracts.Event{Kind: "run.finished", SessionID: sessionID, RunID: run.id, RequestID: requestID})
 		if !e.closed && slices.ContainsFunc(e.state.Queue, func(message contracts.QueuedMessage) bool {
