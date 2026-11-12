@@ -102,6 +102,10 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	dirty := maps.Clone(e.sessionDirty)
 	var answerChannel chan []contracts.QuestionAnswer
 	var answerOwner *activeRun
+	// A deleted conversation keeps its stored body until the index commit
+	// succeeds, so a failed delete leaves the conversation intact.
+	var deletedSession contracts.Session
+	var deletedRecord string
 	requiredSessions := []string{affectedSession}
 	defer func() {
 		if resultErr != nil {
@@ -527,11 +531,15 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		}
 		e.cancelNamingLocked(command.ID)
 		if index := e.sessionIndex(command.ID); index >= 0 {
-			e.removeTrajectory(e.state.Sessions[index])
+			deletedSession = e.state.Sessions[index]
+			deletedRecord = e.sessionRecords[command.ID]
+			e.removeTrajectory(deletedSession)
 		}
 		e.state.Sessions = slices.DeleteFunc(e.state.Sessions, func(s contracts.Session) bool { return s.ID == command.ID })
 		delete(e.state.Messages, command.ID)
 		e.state.ModelRequests = slices.DeleteFunc(e.state.ModelRequests, func(request contracts.ModelRequest) bool { return request.SessionID == command.ID })
+		e.state.Runs = slices.DeleteFunc(e.state.Runs, func(run contracts.Run) bool { return run.SessionID == command.ID })
+		e.state.Changes = slices.DeleteFunc(e.state.Changes, func(change contracts.Change) bool { return change.SessionID == command.ID })
 		delete(e.history, command.ID)
 		delete(e.context, command.ID)
 		delete(e.contextMemories, command.ID)
@@ -585,6 +593,10 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		}
 	}
 	if command.Kind == "session.delete" {
+		if deletedRecord != "" {
+			e.removeSessionRecord(deletedSession.StorageRootID, deletedSession.ID, deletedRecord)
+			e.releaseEmptySessionDirectories(deletedSession)
+		}
 		delete(e.loadedSessions, command.ID)
 		if owner := e.sessionTools[command.ID]; owner != nil {
 			delete(e.sessionTools, command.ID)

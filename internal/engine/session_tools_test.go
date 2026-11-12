@@ -215,3 +215,50 @@ func TestHostCloseWaitsForDetachedSessionOwnerCleanup(t *testing.T) {
 		t.Fatal("host close did not finish after cleanup")
 	}
 }
+
+func TestSessionDeleteRemovesStoredBodyAndSessionState(t *testing.T) {
+	core := openStorageTestCore(t, t.TempDir())
+	defer core.Close()
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "session.create"}); err != nil {
+		t.Fatal(err)
+	}
+	session := core.state.Sessions[0]
+	core.mu.Lock()
+	record := core.sessionRecords[session.ID]
+	core.mu.Unlock()
+	if record == "" {
+		t.Fatal("conversation was not stored before deletion")
+	}
+	directory := filepath.Join(core.storage.Directory(), "sessions", session.ID)
+	body := filepath.Join(directory, record+".json")
+	if _, err := os.Stat(body); err != nil {
+		t.Fatalf("conversation body missing before deletion: %v", err)
+	}
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "session.delete", ID: session.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(body); !os.IsNotExist(err) {
+		t.Fatalf("conversation body survived deletion: %v", err)
+	}
+	if _, err := os.Stat(directory); !os.IsNotExist(err) {
+		t.Fatalf("conversation directory survived deletion: %v", err)
+	}
+	core.mu.Lock()
+	defer core.mu.Unlock()
+	if core.sessionIndex(session.ID) >= 0 {
+		t.Fatal("deleted conversation is still listed")
+	}
+	for _, run := range core.state.Runs {
+		if run.SessionID == session.ID {
+			t.Fatal("deleted conversation still has runs")
+		}
+	}
+	for _, change := range core.state.Changes {
+		if change.SessionID == session.ID {
+			t.Fatal("deleted conversation still has changes")
+		}
+	}
+	if _, ok := core.sessionRecords[session.ID]; ok {
+		t.Fatal("deleted conversation still has a stored record")
+	}
+}
