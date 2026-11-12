@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "e120b8353ece3c38334beb9b62387cecb77456f806bc1608c3a1bb768b53b509",
+  "noticeSha256": "4b365b767e430c6cfdc15303b6a802bdc3e041fcf3037d0c151206adf69c6839",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -10,8 +10,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6269,
-      "sha256": "8aa827097283ba4f25778948edb5f6645d51d6ab81200c03acbd4d18d70c9e30",
+      "bytes": 6375,
+      "sha256": "8905844ec04e0ffe1fc71b66cac4ec7dca5666f62dfae472b0968237596a947f",
       "source": "project-maintained component/source index; no substituted license terms"
     },
     {
@@ -135,6 +135,12 @@
       "source": "github.com/jsummers/gobmp@v0.0.0-20230614200233-a9de23ed2e25/COPYING.txt (local module cache)"
     },
     {
+      "path": "go/jsonschema-Apache-2.0.txt",
+      "bytes": 10141,
+      "sha256": "c8858a5a76440bbca484e134cf7df46385d090dd18b2c58e650f939258802e5b",
+      "source": "github.com/santhosh-tekuri/jsonschema/v6@v6.0.2/LICENSE (local module cache)"
+    },
+    {
       "path": "go/purego-Apache-2.0.txt",
       "bytes": 11357,
       "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1",
@@ -246,7 +252,7 @@
       "path": "mygo/LICENSE.txt",
       "bytes": 1074,
       "sha256": "f0b56f4ab53beb6e18c5e155219c2e2b6000b5475c0ae3ddb3af3894fd9349b4",
-      "source": "github.com/egoist/mygo@v0.8.3/LICENSE (verified verbatim local source copy)"
+      "source": "github.com/egoist/mygo@v0.8.3/LICENSE (fixed local source copy)"
     },
     {
       "path": "native/Ghostty-MIT.txt",
@@ -282,7 +288,7 @@
       "path": "native/ghostty-vt-manifest.json",
       "bytes": 1934,
       "sha256": "2d7c464140e016bf4790671bcd4e61af8995c75a86e491f347297b1a637a29a4",
-      "source": "github.com/egoist/mygo@v0.7.3/plugins/terminal/mygo-plugin.json (verbatim local source)"
+      "source": "github.com/egoist/mygo@v0.8.3/plugins/terminal/mygo-plugin.json (verbatim local source)"
     },
     {
       "path": "native/simdutf-9.0.0-Apache-2.0.txt",
@@ -372,7 +378,7 @@
       "path": "themes/iTerm2-Color-Schemes-MIT.txt",
       "bytes": 1244,
       "sha256": "bddc663c9774e998502e82633e5b7a436e1bbebcbc3ec1314d80e0360b08d805",
-      "source": "github.com/egoist/mygo@v0.7.3/plugins/terminal/ghostty_themes.go, original complete license comment with comment markers removed"
+      "source": "github.com/egoist/mygo@v0.8.3/plugins/terminal/ghostty_themes.go, original complete license comment with comment markers removed"
     },
     {
       "path": "zeron/LICENSE.txt",

@@ -24,6 +24,8 @@ offline in `licenses/`. The original texts take precedence over this index.
 - Hook ECMAScript matcher expressions: `github.com/dlclark/regexp2` v1.12.0,
   MIT, copyright Doug Clark; original license and the complete Microsoft/Go/Mono
   attribution are in `licenses/go/regexp2-MIT.txt` and `licenses/go/regexp2-ATTRIB.txt`.
+- Tool argument validation: `github.com/santhosh-tekuri/jsonschema/v6` v6.0.2,
+  Apache-2.0; original license is in `licenses/go/jsonschema-Apache-2.0.txt`.
 - Ghostty-VT native library: MIT at the exact source revision recorded by MyGo;
   the library manifest, known component notices and source details are in
   `licenses/native/`.

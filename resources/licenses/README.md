@@ -28,6 +28,7 @@ identified explicitly below. `manifest.json` records the delivered bytes.
 | go-latex/latex | `v0.0.0-20250304174226-2790903426af` | `go/go-latex-BSD-3-Clause.txt` |
 | go.yaml.in/yaml/v3 | v3.0.5 | `go/yaml-v3-LICENSE.txt`, `go/yaml-v3-NOTICE.txt` — original mixed MIT/Apache-2.0 terms and Canonical notice; the complete Apache-2.0 text is also delivered in `go/purego-Apache-2.0.txt` |
 | dlclark/regexp2 | v1.12.0 | `go/regexp2-MIT.txt`, `go/regexp2-ATTRIB.txt` — original Doug Clark MIT license plus verbatim Microsoft MIT, Go BSD and Mono test-data attribution |
+| santhosh-tekuri/jsonschema/v6 | v6.0.2 | `go/jsonschema-Apache-2.0.txt` — original upstream license |
 | go-text/typesetting-utils | `v0.0.0-20260419141703-4ffe8874dabc` | `go/go-text-typesetting-utils-test-only-LICENSE.txt`; test dependency, not application fixture-font redistribution |
 | Ghostty-VT | `befcdfd2c3a1cb24d9ec886e93c95b2b5daa7028` | `native/Ghostty-MIT.txt`, `native/PROVENANCE.md`, native manifest and component licenses |
 | Fira Math | 0.3.4 | `fonts/OFL-FiraMath.txt` |
