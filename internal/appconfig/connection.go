@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,10 +68,11 @@ func (m *Connections) ConfigureConnection(ctx context.Context, input contracts.C
 		return errors.New("enter the token when changing the remote host")
 	}
 	if config.Enabled {
-		u, err := url.Parse(config.URL)
-		if err != nil || u.Host == "" || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-			return errors.New("remote host must be an HTTP(S) URL")
+		address, err := contracts.ValidateRemoteURL(config.URL)
+		if err != nil {
+			return err
 		}
+		config.URL = address
 		if len(config.Token) < 24 {
 			return errors.New("remote API token must contain at least 24 characters")
 		}

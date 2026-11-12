@@ -269,9 +269,13 @@ go build -o gcode-server ./cmd/gcode-server
 切换运行数据根不会更换 token。服务运行时不同时打开同一配置入口。
 默认监听回环地址。跨设备可用安全隧道/反向代理，或直接指定
 `--listen 0.0.0.0:27655 --tls-cert cert.pem --tls-key key.pem`。
-非回环地址未配置 TLS 时输出明文传输告警，仍允许已有隧道/反向代理部署；
-没有强制改变监听策略或移除认证后的密钥显示。
+非回环监听且未配置 TLS 时服务拒绝启动，必须显式声明
+`--allow-insecure-listen` 才允许在隧道或反向代理终止 TLS 的部署继续运行，
+并在日志中记录明文传输告警。回环监听保持明文可用，供本机隧道使用。
 不要通过未加密公网 HTTP 传递宿主认证 token。
+
+桌面端只接受 HTTPS 远程地址；`http://` 仅对回环地址放行，供本机隧道使用。
+非回环的明文地址在设置保存与传输边界都会被拒绝。
 
 桌面设置 → 设备填写地址与 token，保存后重启桌面生效。或：
 
@@ -297,6 +301,7 @@ go run ./cmd/rcode --local
 | `GET /v1/resources?ref=...` | 读取托管附件 |
 | `GET /v1/terminals/{id}/stream` | 终端原始输出字节流，断开只分离视图 |
 | `POST /v1/terminals/{id}/input` | 终端原始输入字节，不创建临时视图 |
+| `POST /v1/provider-key/reveal` | 显式揭示已保存的供应商凭据，宿主记录审计 |
 
 全部 API 要求 `Authorization: Bearer <token>`。移动客户端可以复用这套接口，
 当前仓库没有新增 Android/iOS 客户端，也没有完成手机实机验收。

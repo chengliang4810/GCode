@@ -50,6 +50,7 @@ func run() (result error) {
 	showToken := flag.Bool("show-token", false, "Print the local remote API token and exit")
 	certificate := flag.String("tls-cert", "", "TLS certificate PEM (optional behind a secure tunnel or reverse proxy)")
 	privateKey := flag.String("tls-key", "", "TLS private key PEM")
+	allowInsecure := flag.Bool("allow-insecure-listen", false, "Allow a non-loopback listener without TLS when a secure tunnel or reverse proxy terminates TLS")
 	flag.Parse()
 	var err error
 	store, err = storage.Open(storage.Options{Directory: *directory})
@@ -116,7 +117,9 @@ func run() (result error) {
 	if (*certificate == "") != (*privateKey == "") {
 		return errors.New("provide both --tls-cert and --tls-key")
 	}
-	warnInsecureHTTP(listener.Addr(), *certificate != "")
+	if err := checkListenerSecurity(listener.Addr(), *certificate != "", *allowInsecure); err != nil {
+		return err
+	}
 	if *certificate != "" {
 		err = server.ServeTLS(listener, *certificate, *privateKey)
 	} else {
@@ -128,12 +131,19 @@ func run() (result error) {
 	return err
 }
 
-func warnInsecureHTTP(address net.Addr, tlsEnabled bool) {
+// checkListenerSecurity keeps plaintext credentials off any non-loopback
+// listener unless the operator states that TLS terminates elsewhere. A
+// loopback listener stays open for local tunnels and reverse proxies.
+func checkListenerSecurity(address net.Addr, tlsEnabled, allowInsecure bool) error {
 	if tlsEnabled {
-		return
+		return nil
 	}
 	if tcp, ok := address.(*net.TCPAddr); ok && tcp.IP.IsLoopback() {
-		return
+		return nil
+	}
+	if !allowInsecure {
+		return fmt.Errorf("refusing to listen on %s without TLS: pass --tls-cert and --tls-key, or --allow-insecure-listen when a secure tunnel or reverse proxy terminates TLS", address)
 	}
 	log.Printf("WARNING: GCode server listening on %s without TLS; Bearer tokens, API keys and session data are transmitted in plaintext; protect this listener with TLS or a secure tunnel/reverse proxy", address)
+	return nil
 }

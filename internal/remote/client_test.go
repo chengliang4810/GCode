@@ -10,6 +10,20 @@ import (
 	"time"
 )
 
+func TestClientRejectsPlaintextRemoteHosts(t *testing.T) {
+	t.Parallel()
+	token := strings.Repeat("x", 24)
+	if _, err := NewClient("http://host.example:27655", token); err == nil {
+		t.Fatal("plaintext remote host accepted")
+	}
+	if _, err := NewClient("http://127.0.0.1:27655", token); err != nil {
+		t.Fatalf("loopback plaintext host rejected: %v", err)
+	}
+	if _, err := NewClient("https://host.example:27655", strings.Repeat("x", 8)); err == nil {
+		t.Fatal("short token accepted")
+	}
+}
+
 func TestReconnectBackoffIsBoundedAndResets(t *testing.T) {
 	t.Parallel()
 	var backoff reconnectBackoff

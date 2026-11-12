@@ -54,6 +54,34 @@ func TestConnectionPersistsAndKeepsCredentialsPrivate(t *testing.T) {
 	}
 }
 
+func TestConfigureConnectionRequiresTLSOutsideLoopback(t *testing.T) {
+	store, err := storage.Open(storage.Options{Home: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	manager, err := OpenConnections(store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	secret := strings.Repeat("test-only", 4)
+	for _, address := range []string{"http://host.example:27655", "http://192.168.1.2:27655"} {
+		if err := manager.ConfigureConnection(ctx, contracts.ConnectionInput{URL: address, Token: secret, Enabled: true}); err == nil {
+			t.Fatalf("plaintext remote host %q accepted", address)
+		}
+	}
+	if err := manager.ConfigureConnection(ctx, contracts.ConnectionInput{URL: "http://127.0.0.1:27655", Token: secret, Enabled: true}); err != nil {
+		t.Fatalf("loopback tunnel rejected: %v", err)
+	}
+	if err := manager.ConfigureConnection(ctx, contracts.ConnectionInput{URL: "https://host.example:27655/", Token: secret, Enabled: true}); err != nil {
+		t.Fatalf("TLS host rejected: %v", err)
+	}
+	if got := manager.Credentials().URL; got != "https://host.example:27655" {
+		t.Fatalf("stored URL = %q", got)
+	}
+}
+
 func TestConnectionStaysInConfigurationRootAfterDataRootSwitch(t *testing.T) {
 	options := storage.Options{Home: t.TempDir()}
 	store, err := storage.Open(options)

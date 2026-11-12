@@ -14,25 +14,31 @@ import (
 	"gcode/internal/storage"
 )
 
-func TestWarnInsecureHTTPOnlyForNonLoopbackPlaintext(t *testing.T) {
+func TestListenerSecurityRequiresTLSOutsideLoopback(t *testing.T) {
 	var output bytes.Buffer
 	previous := log.Writer()
 	log.SetOutput(&output)
 	defer log.SetOutput(previous)
 	for _, test := range []struct {
 		name, address string
-		tls, warning  bool
+		tls, allowed  bool
+		refused       bool
+		warning       bool
 	}{
-		{"IPv4 loopback", "127.0.0.1", false, false},
-		{"IPv6 loopback", "::1", false, false},
-		{"IPv4 all interfaces", "0.0.0.0", false, true},
-		{"IPv6 all interfaces", "::", false, true},
-		{"LAN plaintext", "192.168.1.2", false, true},
-		{"LAN TLS", "192.168.1.2", true, false},
+		{"IPv4 loopback", "127.0.0.1", false, false, false, false},
+		{"IPv6 loopback", "::1", false, false, false, false},
+		{"IPv4 all interfaces", "0.0.0.0", false, false, true, false},
+		{"IPv6 all interfaces", "::", false, false, true, false},
+		{"LAN plaintext", "192.168.1.2", false, false, true, false},
+		{"LAN plaintext acknowledged", "192.168.1.2", false, true, false, true},
+		{"LAN TLS", "192.168.1.2", true, false, false, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			output.Reset()
-			warnInsecureHTTP(&net.TCPAddr{IP: net.ParseIP(test.address), Port: 27655}, test.tls)
+			err := checkListenerSecurity(&net.TCPAddr{IP: net.ParseIP(test.address), Port: 27655}, test.tls, test.allowed)
+			if (err != nil) != test.refused {
+				t.Fatalf("error = %v, wanted refusal %v", err, test.refused)
+			}
 			if got := strings.Contains(output.String(), "without TLS"); got != test.warning {
 				t.Fatalf("warning = %q, wanted warning %v", output.String(), test.warning)
 			}

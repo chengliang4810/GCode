@@ -26,16 +26,16 @@ type Client struct {
 }
 
 func NewClient(address, token string) (*Client, error) {
-	u, err := url.Parse(address)
-	if err != nil || u.Host == "" || (u.Scheme != "https" && u.Scheme != "http") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
-		return nil, errors.New("remote address must be an HTTP(S) URL")
+	host, err := contracts.ValidateRemoteURL(address)
+	if err != nil {
+		return nil, err
 	}
 	if len(token) < 24 {
 		return nil, errors.New("remote API token must contain at least 24 characters")
 	}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.ResponseHeaderTimeout = 30 * time.Second
-	return &Client{url: strings.TrimRight(address, "/"), token: token, http: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, done: make(chan struct{})}, nil
+	return &Client{url: host, token: token, http: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, done: make(chan struct{})}, nil
 }
 func (c *Client) request(ctx context.Context, method, path string, body any) (*http.Response, error) {
 	var data []byte
