@@ -196,9 +196,48 @@ func TestCompactContextRejectsInvalidSummaryWithoutLosingArchive(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			history := contextMemoryHistory()
 			before := model.CloneMessages(history)
-			_, state, err := CompactContext(context.Background(), testModel{stream: func(model.Request) (model.Result, error) { return model.Result{Message: test.result}, test.err }}, model.Request{History: history}, ContextMemory{})
+			calls := 0
+			_, state, err := CompactContext(context.Background(), testModel{stream: func(model.Request) (model.Result, error) {
+				calls++
+				return model.Result{Message: test.result}, test.err
+			}}, model.Request{History: history}, ContextMemory{})
 			if err == nil || len(state.Blocks) != 0 || !reflect.DeepEqual(history, before) {
 				t.Fatal("invalid summary changed context", err)
+			}
+			want := 3
+			if test.err != nil || len(test.result.Calls) > 0 {
+				want = 1
+			}
+			if calls != want {
+				t.Fatalf("summary requests = %d, want %d", calls, want)
+			}
+		})
+	}
+}
+
+func TestCompactContextCorrectsInvalidGeneratedSummary(t *testing.T) {
+	for _, invalid := range []string{"  ", strings.Repeat("中", 8001), strings.Repeat("摘", 10986), strings.Repeat("large summary ", 5000)} {
+		t.Run(fmt.Sprintf("runes-%d", len([]rune(invalid))), func(t *testing.T) {
+			history := contextMemoryHistory()
+			before := model.CloneMessages(history)
+			calls := 0
+			backend := testModel{stream: func(request model.Request) (model.Result, error) {
+				calls++
+				if calls == 1 {
+					return model.Result{Message: model.Message{Role: "assistant", Text: invalid}}, nil
+				}
+				last := request.History[len(request.History)-1].Text
+				if !strings.Contains(last, "Previous summary was rejected:") || !strings.Contains(last, "8000") {
+					t.Fatal("retry missing actionable validation feedback", last)
+				}
+				return model.Result{Message: model.Message{Role: "assistant", Text: "Completed work; TOKEN_EXPIRED remains unresolved."}}, nil
+			}}
+			view, state, err := CompactContext(t.Context(), backend, model.Request{History: history}, ContextMemory{})
+			if err != nil {
+				t.Fatalf("invalid generated summary aborted compaction: %v", err)
+			}
+			if calls != 2 || len(state.Blocks) != 1 || !view[1].Summary || !reflect.DeepEqual(history, before) {
+				t.Fatal("retry did not atomically fold original history", calls, len(state.Blocks))
 			}
 		})
 	}
@@ -220,6 +259,9 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 		Model: testModel{stream: func(request model.Request) (model.Result, error) {
 			if request.ContextChange == "summary" {
 				summaries++
+				if summaries == 1 {
+					return model.Result{Message: model.Message{Role: "assistant", Text: strings.Repeat("摘", 8001)}}, nil
+				}
 				return model.Result{Message: model.Message{Role: "assistant", Text: "Completed stages with original evidence available."}}, nil
 			}
 			normal++
@@ -232,7 +274,7 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 			return model.Result{Message: model.Message{Role: "assistant", Text: "done"}}, nil
 		}},
 	})
-	if err != nil || summaries < 2 || normal != 1 || len(state.Blocks) != summaries {
+	if err != nil || summaries < 3 || normal != 1 || len(state.Blocks) != summaries-1 {
 		t.Fatal("budget folding failed", summaries, normal, len(state.Blocks), err)
 	}
 }
