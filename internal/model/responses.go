@@ -74,7 +74,7 @@ func (responsesAdapter) encode(r Request, target adapterTarget) (map[string]any,
 		}
 	}
 	body := map[string]any{
-		"model": target.model.ID, "instructions": r.System, "input": items,
+		"model": target.model.ID, "instructions": systemWithoutBoundary(r.System), "input": items,
 		"stream": true, "store": false, "include": []string{"reasoning.encrypted_content"},
 	}
 	tools := []any{}

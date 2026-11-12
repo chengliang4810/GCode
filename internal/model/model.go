@@ -320,3 +320,21 @@ const (
 // from the part that changes per request. Model adapters place a prompt-cache
 // breakpoint at this seam; it is removed from the text they send.
 const SystemPromptDynamicBoundary = "SYSTEM_PROMPT_DYNAMIC_BOUNDARY"
+
+// systemWithoutBoundary drops the cache seam for protocols that send the system
+// prompt as one string, so every protocol shows the model the same text.
+func systemWithoutBoundary(system string) string {
+	index := strings.Index(system, SystemPromptDynamicBoundary)
+	if index < 0 {
+		return system
+	}
+	stable := strings.TrimSpace(system[:index])
+	dynamic := strings.TrimSpace(system[index+len(SystemPromptDynamicBoundary):])
+	switch {
+	case stable == "":
+		return dynamic
+	case dynamic == "":
+		return stable
+	}
+	return stable + "\n\n" + dynamic
+}

@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -21,8 +22,8 @@ func (chatAdapter) encode(r Request, target adapterTarget) (map[string]any, erro
 		return nil, err
 	}
 	messages := []any{}
-	if r.System != "" {
-		messages = append(messages, map[string]any{"role": "system", "content": r.System})
+	if system := systemWithoutBoundary(r.System); system != "" {
+		messages = append(messages, map[string]any{"role": "system", "content": system})
 	}
 	toolImages := []any{}
 	for index, m := range r.History {
@@ -186,6 +187,12 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 				call = newStreamCall(Call{})
 				d.calls[change.Index] = call
 			}
+			// A reused index would silently merge two calls into one, executing a
+			// single call with concatenated arguments. Compatible gateways that
+			// omit or repeat the index must fail loudly instead.
+			if change.ID != "" && call.ID != "" && call.ID != change.ID {
+				return Delta{}, fmt.Errorf("model stream reused tool call index %d for call ids %q and %q", change.Index, call.ID, change.ID)
+			}
 			if change.ID != "" {
 				call.ID = change.ID
 			}
@@ -200,7 +207,7 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 			case "length":
 				d.stopErr = errOutputLimit
 			default:
-				d.stopErr = errors.New("unsupported model stop reason")
+				d.stopErr = fmt.Errorf("unsupported model stop reason %q", choice.Finish)
 			}
 		}
 	}
