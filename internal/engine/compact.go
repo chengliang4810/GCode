@@ -83,7 +83,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		resources, tools, cleanup, err := e.compactHookResources(ctx, session, root, configSnapshot, profileSnapshot)
 		defer cleanup()
 		hookRules = append(hookRules, resources.hooks...)
-		hooks, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
+		_, invoke := e.runHookRunner(session, run, hookRules, hookRuntimeOptions{Model: bound, Tools: tools, Warnings: resources.warnings, EnvFile: resources.envFile, OnceState: onceState})
 		var compacted []model.Message
 		var startupContext []model.Message
 		if err == nil {
@@ -118,7 +118,6 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 				startupContext = []model.Message{{Role: "user", Text: "<system-reminder>\n" + started.Context + "\n</system-reminder>"}}
 			}
 		}
-		err = errors.Join(err, hooks.Wait())
 		e.mu.Lock()
 		defer e.mu.Unlock()
 		defer e.evictIdleSessionsLocked()

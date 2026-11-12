@@ -55,7 +55,9 @@ shell form 使用对应环境变量，避免把配置值当作脚本。
 默认 command/http/mcp 超时 600 秒；prompt 30 秒，agent 60 秒。
 `UserPromptSubmit` 与模型切换默认 30 秒，`MessageDisplay` 默认 10 秒；
 `SessionEnd` 默认 1.5 秒，显式超时最多 60 秒。`timeout` 可按规则指定秒数，支持小数秒，不截断为整数。
-`async: true` 在宿主取消前不额外设 Hook 超时；`asyncRewake` 保留超时。
+`async: true` 与 `asyncRewake` 同样受超时约束（未指定时按上表默认时长），
+异步 Hook 在宿主上下文中运行，不阻塞当前回合，其结果在后续边界投递；
+宿主关闭时后台 Hook 被取消并回收。
 本机命令被取消时回收进程树。
 
 ## 输入与输出

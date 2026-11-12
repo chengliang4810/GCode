@@ -122,6 +122,10 @@ type Engine struct {
 	sessionTools       map[string]*sessionToolSet
 	projectScans       map[string]*projectScan
 	projectScanner     func(context.Context, contracts.Project) ([]contracts.File, error)
+	// background is canceled when the host closes; asynchronous hooks use it
+	// because they outlive the turn that started them.
+	background     context.Context
+	hookBackground sync.WaitGroup
 }
 
 var _ contracts.Service = (*Engine)(nil)
@@ -208,6 +212,7 @@ func Open(options Options) (*Engine, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	e.catalogCancel = cancel
+	e.background = ctx
 	e.catalogDone = make(chan struct{})
 	go func() {
 		defer close(e.catalogDone)
@@ -325,6 +330,9 @@ func (e *Engine) Close() error {
 		_ = host.Close()
 	}
 	e.wg.Wait()
+	// The background context is already canceled, so background hooks stop and
+	// their final report still reaches the state before storage closes.
+	e.hookBackground.Wait()
 	<-e.catalogDone
 	<-e.maintenanceDone
 	e.mu.Lock()

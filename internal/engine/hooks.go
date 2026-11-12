@@ -123,6 +123,7 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		})
 		return nil
 	}, agent.WithHookEvaluator(hookRuntimeEvaluator(options, session)), agent.WithHookOnceState(options.OnceState),
+		agent.WithHookBackgroundContext(e.background), agent.WithHookBackgroundTracker(e),
 		agent.WithHookPermissionRequest(func(ctx context.Context, input agent.HookInput, reason string) (bool, error) {
 			reason = redactAll(reason)
 			if len(input.ToolInput) > 0 {
@@ -251,3 +252,8 @@ func (e *Engine) rejectHookInputLocked(sessionID, inputID string, run *activeRun
 	}
 	return false
 }
+
+// BackgroundStarted and BackgroundFinished count running asynchronous hooks so
+// shutdown can join them.
+func (e *Engine) BackgroundStarted()  { e.hookBackground.Add(1) }
+func (e *Engine) BackgroundFinished() { e.hookBackground.Done() }

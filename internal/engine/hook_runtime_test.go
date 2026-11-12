@@ -236,7 +236,7 @@ func TestHookRuntimeRedactsSensitiveOutputAndExportsBoundTranscript(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := runner.Wait(); err != nil {
+	if err := runner.WaitBackground(); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(result.Context, secret) || !strings.Contains(result.Context, "[REDACTED]") {
@@ -437,7 +437,7 @@ func TestHookRuntimeEventsExposeActualProcessResultAndIdentity(t *testing.T) {
 	if _, err := invoke(context.Background(), agent.HookInput{Event: contracts.HookStop}); err != nil {
 		t.Fatal(err)
 	}
-	if err := runner.Wait(); err != nil {
+	if err := runner.WaitBackground(); err != nil {
 		t.Fatal(err)
 	}
 	for {

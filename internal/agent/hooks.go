@@ -201,7 +201,8 @@ func WithHookOnceState(state *HookOnceState) HookRunnerOption {
 }
 
 // HookRunner owns background children. The owner must cancel its context and
-// call Wait at teardown. Report and injected callbacks must be concurrency safe.
+// call WaitBackground at teardown. Report and injected callbacks must be
+// concurrency safe.
 type HookRunner struct {
 	rules       []contracts.HookRule
 	conditions  map[string]hookCondition
@@ -211,11 +212,22 @@ type HookRunner struct {
 	asyncResult func(context.Context, HookExecution) error
 	rewake      func(context.Context, HookExecution) error
 	ask         func(context.Context, HookInput, string) (bool, error)
-	wg          sync.WaitGroup
-	mu          sync.Mutex
-	err         error
-	onceState   *HookOnceState
-	llm         chan struct{}
+	// background is the parent of asynchronous hooks. They outlive the turn
+	// that started them, so the host owns this context.
+	background context.Context
+	tracker    BackgroundTracker
+	wg         sync.WaitGroup
+	mu         sync.Mutex
+	err        error
+	onceState  *HookOnceState
+	llm        chan struct{}
+}
+
+// BackgroundTracker counts running background hooks so the host can join them
+// at shutdown.
+type BackgroundTracker interface {
+	BackgroundStarted()
+	BackgroundFinished()
 }
 
 func NewHookRunner(rules []contracts.HookRule, report func(HookExecution) error, options ...HookRunnerOption) *HookRunner {
@@ -260,6 +272,26 @@ func (h *HookRunner) PushRules(rules []contracts.HookRule) (func(), error) {
 			h.conditions = compileHookConditions(h.rules)
 		})
 	}, nil
+}
+
+// WithHookBackgroundContext sets the parent context of asynchronous hooks. They
+// must outlive the turn that started them; without this option they inherit the
+// turn context and stop when it ends.
+func WithHookBackgroundContext(ctx context.Context) HookRunnerOption {
+	return func(h *HookRunner) {
+		if ctx != nil {
+			h.background = ctx
+		}
+	}
+}
+
+// WithHookBackgroundTracker registers the counter for asynchronous hooks.
+func WithHookBackgroundTracker(tracker BackgroundTracker) HookRunnerOption {
+	return func(h *HookRunner) {
+		if tracker != nil {
+			h.tracker = tracker
+		}
+	}
 }
 
 func (h *HookRunner) HasEvent(event contracts.HookEvent) bool {
@@ -311,16 +343,29 @@ func (h *HookRunner) Run(ctx context.Context, input HookInput) (HookResult, erro
 			}
 		}
 		if rule.Async || rule.AsyncRewake {
+			// Background hooks run on the host context so they outlive the turn,
+			// and they always carry a deadline so a silent hook cannot run
+			// forever.
+			parent := h.background
+			if parent == nil {
+				parent = ctx
+			}
 			h.wg.Add(1)
+			if h.tracker != nil {
+				h.tracker.BackgroundStarted()
+			}
 			go func() {
 				defer h.wg.Done()
-				execution, fatal := h.execute(ctx, rule, input)
+				if h.tracker != nil {
+					defer h.tracker.BackgroundFinished()
+				}
+				execution, fatal := h.execute(parent, hookTimeout(rule), rule, input)
 				h.completeOnce(rule, execution)
 				if h.asyncResult != nil && (execution.Result.Context != "" || execution.Result.SystemMessage != "") {
-					fatal = errors.Join(fatal, h.asyncResult(ctx, execution))
+					fatal = errors.Join(fatal, h.asyncResult(parent, execution))
 				}
 				if rule.AsyncRewake && execution.ExitCode == 2 && h.rewake != nil {
-					fatal = errors.Join(fatal, h.rewake(ctx, execution))
+					fatal = errors.Join(fatal, h.rewake(parent, execution))
 				}
 				h.mu.Lock()
 				h.err = errors.Join(h.err, fatal)
@@ -331,7 +376,7 @@ func (h *HookRunner) Run(ctx context.Context, input HookInput) (HookResult, erro
 		foreground.Add(1)
 		go func() {
 			defer foreground.Done()
-			execution, fatal := h.execute(ctx, rule, input)
+			execution, fatal := h.execute(ctx, hookTimeout(rule), rule, input)
 			h.completeOnce(rule, execution)
 			outcomes[index] = outcome{execution.Result, fatal}
 		}()
@@ -388,7 +433,10 @@ func (h *HookRunner) completeOnce(rule contracts.HookRule, execution HookExecuti
 	state.mu.Unlock()
 }
 
-func (h *HookRunner) Wait() error {
+// WaitBackground joins asynchronous hooks. A turn never waits for background
+// work; the host calls this at shutdown, after it canceled the background
+// context.
+func (h *HookRunner) WaitBackground() error {
 	h.wg.Wait()
 	h.mu.Lock()
 	defer h.mu.Unlock()

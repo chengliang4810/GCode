@@ -213,7 +213,7 @@ func TestHookRunnerAsyncCancellationAndWait(t *testing.T) {
 	}
 	cancel()
 	waited := make(chan error, 1)
-	go func() { waited <- runner.Wait() }()
+	go func() { waited <- runner.WaitBackground() }()
 	select {
 	case err := <-waited:
 		if !errors.Is(err, context.Canceled) {
@@ -383,5 +383,64 @@ func TestStopHookContextContinuesWithFeedback(t *testing.T) {
 	})
 	if err != nil || calls != 2 {
 		t.Fatalf("Stop feedback did not continue execution once: calls=%d err=%v", calls, err)
+	}
+}
+
+func TestAsyncHookDoesNotBlockTheTurnAndOutlivesIt(t *testing.T) {
+	directory := t.TempDir()
+	started := filepath.Join(directory, "started")
+	rule := testHookRule(t, contracts.HookStop, "wait", started)
+	rule.Async = true
+	// The helper sleeps far longer than the turn; only host cancellation stops it.
+	rule.TimeoutSeconds = 0
+	reported := make(chan HookExecution, 1)
+	hostCtx, cancelHost := context.WithCancel(context.Background())
+	defer cancelHost()
+	runner := NewHookRunner([]contracts.HookRule{rule}, func(execution HookExecution) error {
+		select {
+		case reported <- execution:
+		default:
+		}
+		return nil
+	}, WithHookBackgroundContext(hostCtx))
+	turnCtx, cancelTurn := context.WithCancel(context.Background())
+	startedAt := time.Now()
+	if _, err := runner.Run(turnCtx, HookInput{Event: contracts.HookStop, CWD: directory}); err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(startedAt); elapsed > 2*time.Second {
+		t.Fatalf("turn waited for a background hook: %v", elapsed)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := os.Stat(started); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("background hook did not start")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancelTurn()
+	// The turn's cancellation must not stop the background hook.
+	time.Sleep(300 * time.Millisecond)
+	cancelHost()
+	waited := make(chan error, 1)
+	go func() { waited <- runner.WaitBackground() }()
+	select {
+	case err := <-waited:
+		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("background hook reported %v", err)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("background hook outlived host cancellation")
+	}
+	select {
+	case execution := <-reported:
+		if execution.Err == nil {
+			t.Fatal("cancelled background hook reported success")
+		}
+	default:
+		t.Fatal("background hook never reported its outcome")
 	}
 }

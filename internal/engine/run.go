@@ -715,7 +715,6 @@ func (e *Engine) startRunWithProvidersLocked(
 		if runErr != nil {
 			cancel()
 		}
-		runErr = errors.Join(runErr, hooks.Wait())
 		if errors.Is(runErr, errGoalHalted) {
 			runErr = context.Canceled
 		}

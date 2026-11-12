@@ -160,7 +160,7 @@ func TestHookAsyncRewakeAndNotification(t *testing.T) {
 	if err != nil || result.Deny {
 		t.Fatalf("%+v %v", result, err)
 	}
-	if err := runner.Wait(); err != nil {
+	if err := runner.WaitBackground(); err != nil {
 		t.Fatal(err)
 	}
 	if wakes.Load() != 1 {
@@ -181,7 +181,7 @@ func TestHookAsyncRewakeAndNotification(t *testing.T) {
 	if err != nil || result.Context != "" {
 		t.Fatalf("late context injected synchronously: %+v %v", result, err)
 	}
-	if err := runner.Wait(); err != nil {
+	if err := runner.WaitBackground(); err != nil {
 		t.Fatal(err)
 	}
 	if notifications.Load() != 1 {

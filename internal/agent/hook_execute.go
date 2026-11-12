@@ -21,7 +21,10 @@ import (
 	"gcode/internal/processutil"
 )
 
-func (h *HookRunner) execute(ctx context.Context, rule contracts.HookRule, input HookInput) (execution HookExecution, fatal error) {
+// execute runs one hook. The parent context carries host cancellation and is
+// reported as a failure; the timeout bounds the hook itself and stays a
+// diagnostic.
+func (h *HookRunner) execute(ctx context.Context, timeout time.Duration, rule contracts.HookRule, input HookInput) (execution HookExecution, fatal error) {
 	execution.Rule, execution.Input = rule, input
 	defer func() {
 		if h.report != nil {
@@ -37,13 +40,8 @@ func (h *HookRunner) execute(ctx context.Context, rule contracts.HookRule, input
 			return execution, ctx.Err()
 		}
 	}
-	runCtx := ctx
-	// async:true has no hook timeout; asyncRewake retains its deadline.
-	if !rule.Async || rule.AsyncRewake {
-		var cancel context.CancelFunc
-		runCtx, cancel = context.WithTimeout(ctx, hookTimeout(rule))
-		defer cancel()
-	}
+	runCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 	var result HookEvaluation
 	switch rule.Type {
 	case "command":
