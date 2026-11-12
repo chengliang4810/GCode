@@ -44,20 +44,6 @@ func goalHeaderLabel(status contracts.GoalStatus) string {
 	}
 }
 
-func goalDuration(language string, milliseconds int64) string {
-	seconds := max(milliseconds/1000, 0)
-	switch {
-	case seconds < 60:
-		return i18n.In(language, "%ds", seconds)
-	case seconds < 3600:
-		return i18n.In(language, "%dm", seconds/60)
-	case seconds < 86400:
-		return i18n.In(language, "%dh", seconds/3600)
-	default:
-		return i18n.In(language, "%dd", seconds/86400)
-	}
-}
-
 func goalElapsed(goal *contracts.SessionGoal, now time.Time) int64 {
 	elapsed := max(int64(0), goal.TimeUsedMS)
 	if (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying) && goal.ActiveSince != nil {
@@ -126,7 +112,7 @@ func (a *App) goalBanner(c *ui.Context, session contracts.Session) {
 			icon(c, "goal", 13)
 			ui.Text(c, tr(c, goalHeaderLabel(goal.Status))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500)
 			ui.Text(c.Key("goal-objective:"+session.ID), goal.Objective).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).Tooltip(goal.Objective + " · " + fmt.Sprintf(tr(c, "Round %d"), goal.Iteration))
-			ui.Text(c.Key("goal-duration:"+session.ID), "· "+goalDuration(a.state.Settings.General.Language, goalElapsed(goal, a.now()))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			ui.Text(c.Key("goal-duration:"+session.ID), "· "+i18n.Duration(a.state.Settings.General.Language, goalElapsed(goal, a.now()))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 			pending := a.goalActions[session.ID]
 			inlineIconButton(c.Key("goal-clear:"+session.ID), "trash-bin-minimalistic", tr(c, "Clear goal")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.clear", SessionID: session.ID, ID: goal.ID}) })
 			switch goal.Status {

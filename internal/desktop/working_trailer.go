@@ -116,7 +116,7 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 		}
 		ui.Text(c, caption).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
 		if elapsed != "" {
-			ui.Text(c, elapsed).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Margin(1, 0, 0, 0)
+			ui.Text(c, elapsed).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Margin(1, 0, 0, 0).FontFeatures("tnum")
 		}
 	})
 	// Elapsed time is meaningful state even when animation is disabled.

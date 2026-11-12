@@ -39,7 +39,7 @@ func TestLocalizedDatesAndDurations(t *testing.T) {
 	if Date(Chinese, at, "Jan 2, 3:04 PM") != "10月29日 13:05" || Date(English, at, "Jan 2") != "Oct 29" {
 		t.Fatal("date formatting changed the instant or failed to localize")
 	}
-	if Duration(Chinese, 65000) != "1分 5秒" || Duration(English, 65000) != "1m 5s" {
+	if Duration(Chinese, 65000) != "1分 05秒" || Duration(English, 65000) != "1m 05s" {
 		t.Fatal("duration formatting failed")
 	}
 }

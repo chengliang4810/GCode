@@ -254,14 +254,23 @@ func TestGoalElapsedOnlyAccruesWhileRunning(t *testing.T) {
 	}
 }
 
-func TestGoalHeaderDurationUsesSingleUnit(t *testing.T) {
+func TestGoalHeaderDurationPreservesWholeSeconds(t *testing.T) {
 	for _, test := range []struct {
 		seconds int64
 		want    string
-	}{{0, "0s"}, {59, "59s"}, {60, "1m"}, {3599, "59m"}, {3600, "1h"}, {86399, "23h"}, {86400, "1d"}} {
+	}{{0, "0s"}, {59, "59s"}, {60, "1m 00s"}, {3599, "59m 59s"}, {3600, "1h 00m 00s"}, {86399, "23h 59m 59s"}, {86400, "1d 00h 00m 00s"}} {
 		t.Run(test.want, func(t *testing.T) {
-			if got := goalDuration("en", test.seconds*1000); got != test.want {
-				t.Fatalf("duration=%q want %q", got, test.want)
+			a := testApp(t, "default")
+			a.state.Settings.General.Language = "en"
+			session := contracts.Session{ID: "duration", Goal: &contracts.SessionGoal{
+				ID: "goal", Objective: "Timing fixture", Status: contracts.GoalPaused, TimeUsedMS: test.seconds*1000 + 999,
+			}}
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(a.palette.UI())
+				a.goalBanner(c, session)
+			}, 900, 200)
+			if !tt.HasText("· " + test.want) {
+				t.Fatalf("goal header omitted whole-second duration: %v", tt.Texts())
 			}
 		})
 	}

@@ -22,16 +22,18 @@ func Date(language string, at time.Time, layout string) string {
 	return at.Format(layout)
 }
 
+// Duration formats UI elapsed time in whole seconds, retaining every lower
+// unit through seconds. Measurement and persistence keep their original precision.
 func Duration(language string, milliseconds int64) string {
 	seconds := max(milliseconds/1000, 0)
 	switch {
 	case seconds < 60:
 		return In(language, "%ds", seconds)
 	case seconds < 3600:
-		return In(language, "%dm %ds", seconds/60, seconds%60)
+		return In(language, "%dm %02ds", seconds/60, seconds%60)
 	case seconds < 86400:
-		return In(language, "%dh %dm", seconds/3600, seconds%3600/60)
+		return In(language, "%dh %02dm %02ds", seconds/3600, seconds/60%60, seconds%60)
 	default:
-		return In(language, "%dd %dh", seconds/86400, seconds%86400/3600)
+		return In(language, "%dd %02dh %02dm %02ds", seconds/86400, seconds/3600%24, seconds/60%60, seconds%60)
 	}
 }

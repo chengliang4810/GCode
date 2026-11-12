@@ -142,6 +142,19 @@ FillWidth、Margin 等内容/行为/布局属性。禁止在页面覆写控件�
 工具分组仅在现有正文内边距中向左借用图标画布的留白；主对话、侧聊和紧凑模式共用实现。
 口径与证据见 `conversation-metrics.md`。
 
+耗时显示遵循 `AGENTS.md` 的整秒规范，唯一格式化入口为
+`internal/i18n/format.go` 的 `Duration`。覆盖主对话与侧聊、回复、智能体、
+运行状态、“已工作”记录、目标、用量统计及其详情和悬停提示；
+日历时间、相对日期及原始诊断数据保留各自语义。
+例如 `65.9s → 1m 05s`、`3661.9s → 1h 01m 01s`、
+`183845.9s → 2d 03h 04m 05s`，本地化入口按当前语言显示单位。
+已知不足一秒显示 `0s`（中文为 `0秒`），缺少记录显示 `—`；
+显示精度裁剪不修改真实计时。详情和提示同样使用整秒，没有小数秒例外。
+新增入口复用同一格式化函数，删除被替代的局部换算函数。
+实时耗时文字使用 `FontFeatures("tnum")`；同位数变化不移动邻项，
+位数增加或单位进位可以产生必要的宽度变化。
+窄窗为完整耗时预留宽度，优先换行整个统计项，避免拆开数值与单位。
+
 聊天侧栏使用共享 `controlSidebarRow`、`controlSidebarProjectRow`、
 `controlSidebarProjectToggle`、
 `controlSidebarConversationRow`、`controlSidebarHeading`、`controlSidebarMoreRow`
