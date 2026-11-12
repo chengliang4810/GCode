@@ -21,11 +21,11 @@ import (
 const (
 	ModulePath      = "github.com/egoist/mygo"
 	UpstreamVersion = "v0.8.3"
-	Revision        = "rcode-native-ui.24"
+	Revision        = "rcode-native-ui.25"
 	Replacement     = "./third_party/mygo"
 	UpstreamSum     = "h1:aTLEhS221YhsX+gKGNLQ5xEKMLCcYYr3pH9AkTwIRs4="
 
-	ExpectedTreeSHA256 = "e32652f3fe5699ea3c1e40a8fe4b832e96f1b9e6824f70bf7768bd0cc8760926"
+	ExpectedTreeSHA256 = "ba3109386e8135d21bd34fc9994b209115a6e54715ad47af2106d27105908c2b"
 )
 
 // patchChain lists the reviewed local patches in application order over
@@ -47,6 +47,7 @@ var patchChain = []Patch{
 	{Path: "patches/mygo-v0.8.3-17-api-gen.patch", SHA256: "6feac1fc63a4a7e1a37c34623646c992f873a916e49f231da2d2a9270ab6d21a"},
 	{Path: "patches/mygo-v0.8.3-18-split-drag.patch", SHA256: "c21b2b2e181e513bf7acc9221067ba3fb487f2a7e00871f35b51c2158110a2c6"},
 	{Path: "patches/mygo-v0.8.3-19-patch-identity.patch", SHA256: "fc348d7bbda69047b3b77a9d3d0f16b85d059f75bb90dafc35031710199926f2"},
+	{Path: "patches/mygo-v0.8.3-20-richtext-clip.patch", SHA256: "db801aa78647d4d8527ed6b07b8c4a2ee594791522beb31321dbcfcf30c36434"},
 }
 
 type Patch struct {

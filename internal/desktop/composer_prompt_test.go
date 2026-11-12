@@ -286,7 +286,7 @@ func TestComposerPromptChipSitsOnTheProseBaseline(t *testing.T) {
 		ui.Column(c).Width(400).Padding(20).Children(func() {
 			richtext.EditorBase(c, richtext.NewDocument(text), richtext.EditorOptions{
 				Label: "Draft", Font: ui.Font{Family: design.Font(a.state.Settings.Appearance.Font), Size: design.UIFontSize},
-			})
+			}).FillWidth().Height(80)
 		})
 	}, 400, 160)
 	tt.Advance(time.Second)

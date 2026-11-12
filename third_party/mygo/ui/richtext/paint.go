@@ -11,6 +11,12 @@ import (
 // their decorations, the selection, their text, the markers of lists, the
 // composition, the caret and the scroll bar.
 func (v *view) paint(p *ui.Painter, r ui.Rect) {
+	// Element.Clip constrains children, while Draw runs before that clip.
+	// A wrapped paragraph can extend beyond both edges of the viewport.
+	p.Clip(r, 0, func() { v.paintViewport(p, r) })
+}
+
+func (v *view) paintViewport(p *ui.Painter, r ui.Rect) {
 	v.rect = r
 	w, h := max(r.W-v.padX-v.padRight, 1), max(r.H-v.padY-v.padBottom, 1)
 	v.layout(w, h)

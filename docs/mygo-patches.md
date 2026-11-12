@@ -1,10 +1,10 @@
 # MyGo v0.8.3 固定补丁
 
-截至 2026-11-11，本仓库固定官方 `github.com/egoist/mygo v0.8.3`，基于官方提交
-`5add3817c74bb7505d0b473bc5fb28abe2201b99`，本地修订号为 `rcode-native-ui.24`。
+截至 2026-11-13，本仓库固定官方 `github.com/egoist/mygo v0.8.3`，基于官方提交
+`5add3817c74bb7505d0b473bc5fb28abe2201b99`，本地修订号为 `rcode-native-ui.25`。
 `go.mod` 只允许该模块替换到 `./third_party/mygo`；框架源码、补丁和锁文件共同构成可重放的固定输入。
 
-本次升级保留 16 个本地补丁。编号沿用历史功能编号，因此列表不连续：
+当前保留 17 个本地补丁。编号沿用历史功能编号，因此列表不连续：
 
 1. [`mygo-v0.8.3-01-motion.patch`](../patches/mygo-v0.8.3-01-motion.patch)：窗口级动效覆盖与滚轮缓动偏好，支持恢复系统设置。
 2. [`mygo-v0.8.3-02-markdown-line-height.patch`](../patches/mygo-v0.8.3-02-markdown-line-height.patch)：Markdown 精确 DIP 行高字段及排版、复制、流式选择测试。
@@ -23,15 +23,17 @@
 18. [`mygo-v0.8.3-18-split-drag.patch`](../patches/mygo-v0.8.3-18-split-drag.patch)：Split 拖动在 pane 构建前写入尺寸，扩大 20 DIP 命中区，并用 `draggedBy` 同帧报告；仅主按钮拖动生效。
 19. [`mygo-v0.8.3-19-patch-identity.patch`](../patches/mygo-v0.8.3-19-patch-identity.patch)：固定 `v0.8.3`、`rcode-native-ui.24` 和发布构建源码指纹。
 
+20. [`mygo-v0.8.3-20-richtext-clip.patch`](../patches/mygo-v0.8.3-20-richtext-clip.patch)：富文本绘制限制在编辑器视口内，补充像素回归并将修订号更新为 `rcode-native-ui.25`。
+
 未列入本次链的历史编号：
 
 - `07` 已被 v0.8.3 上游吸收。
 - `14` 已被 v0.8.3 上游吸收。
 - `16` 由 v0.8.3 原生 `TabSize` 能力及产品侧接线替代，不再保留旧补丁或兼容分支。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)，固定树包含 2356 个文件，
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)，固定树包含 2357 个文件，
 树 SHA-256 为
-`e32652f3fe5699ea3c1e40a8fe4b832e96f1b9e6824f70bf7768bd0cc8760926`。
+`ba3109386e8135d21bd34fc9994b209115a6e54715ad47af2106d27105908c2b`。
 补丁哈希、树哈希、文件数和版本身份同时记录在源码锁与
 [`scripts/frameworkpin/pin.go`](../scripts/frameworkpin/pin.go)；`go run ./scripts/check-framework.go`
 会校验这些值、模块替换路径以及实际 Go 模块解析结果。
@@ -39,7 +41,7 @@
 树指纹按 UTF-8 相对路径的字节序排序，再对每个
 `路径 + NUL + 文件 SHA-256 十六进制 + LF` 记录做 SHA-256。`.gitattributes` 禁止框架文件换行转换，
 因此重放结果按原始字节校验。补丁链从官方 v0.8.3 快照重新初始化后，按 01、02、03、04、05、06、08、
-09、10、11、12、13、15、17、18、19 顺序执行 `git apply --check` 和应用，得到与主 checkout
+09、10、11、12、13、15、17、18、19、20 顺序执行 `git apply --check` 和应用，得到与主 checkout
 逐文件、逐字节一致的结果。完整命令和本轮验证结果见
 [`output/mygo-upgrade-20261111/framework-verification.md`](../output/mygo-upgrade-20261111/framework-verification.md)。
 

@@ -16,7 +16,7 @@ type SourcePatch struct {
 // These values are also recorded in the executable's Go linker settings.
 // Development builds keep sourcePatchSHA256 empty; release verification rejects
 // such builds and requires the complete fixed identity.
-var sourcePatchRevision = "rcode-native-ui.24"
+var sourcePatchRevision = "rcode-native-ui.25"
 var sourcePatchSHA256 string
 var sourcePatchIdentity string
 
@@ -26,7 +26,7 @@ func FrameworkPatch() SourcePatch {
 }
 
 func init() {
-	if sourcePatchRevision != "rcode-native-ui.24" {
+	if sourcePatchRevision != "rcode-native-ui.25" {
 		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
 	}
 	if sourcePatchSHA256 != "" {
