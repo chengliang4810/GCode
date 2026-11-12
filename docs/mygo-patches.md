@@ -106,7 +106,7 @@ UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同
 18. [`mygo-v0.7.4-18-split-drag.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-18-split-drag.patch)：Split 拖动在布局前写入尺寸，命中带扩大到 20 DIP，并用 `draggedBy` 同帧报告；含 `TestSplitDragAppliesBeforeThePanesBuild` 回归测试。
 19. [`mygo-v0.7.4-19-patch-identity.patch`](https://github.com/chengliang4810/GCode/blob/fe336ef887c4918444ccaf2ab913f3abd5bd31a4/patches/mygo-v0.7.4-19-patch-identity.patch)：固定 `v0.7.4` + `rcode-native-ui.23` 身份。
 
-源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。当前 `.23` 的
+源码锁为 [`third_party/mygo.lock.json`](../third_party/mygo.lock.json)。历史 `.23` 的
 2,050 个文件的 SHA-256 树指纹为
 `c50af74375c6b2cbb2b8a50a09c407469dd419b29788d5774bed1e8c99deda50`。
 补丁按上述顺序在 v0.7.4 原版上重放得到与锁定树逐字节一致的结果；

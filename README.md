@@ -3,8 +3,8 @@
 Naming and retained upstream attribution are documented in [branding](docs/branding.md).
 
 **Moving to another machine:** start with [the handoff guide](docs/machine-handoff.md).
-The branch contains source, pinned dependencies, acceptance evidence and replay
-scripts. UI optimization was paused by the user on October 29, 2026; the current
+The branch contains source, pinned dependencies, acceptance evidence indexes and
+replay scripts; captured payloads stay on the recording machine. UI optimization was paused by the user on October 29, 2026; the current
 UI is the baseline for the native Go backend. See [backend usage](docs/backend-v1.md). Full visual parity remains
 unaccepted. See [the UI checkpoint](docs/ui-checkpoint.md).
 
@@ -34,7 +34,7 @@ are targets.
 
 Desktop updates use MyGo's native updater and signed GitHub Releases from
 `chengliang4810/GCode`. Open **设置 → 关于 → 软件更新** to check.
-Versions start at `0.0.1-beta`; beta identifies the rapid iteration stage and uses
+The current version is `0.0.2-beta`; beta identifies the rapid iteration stage and uses
 ordinary latest Releases. Push a new version on `main` to run Windows/macOS
 checks, signed packaging and publication through GitHub Actions.
 Local release builds require the signing key; see [update and release setup](docs/updates.md).

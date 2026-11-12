@@ -54,7 +54,9 @@
 证据目录由 `go run ./scripts/desktop-e2e -run 'TestDesktopLocal(ApplicationUsage|SidebarFooter)$'`
 逐次生成。
 
-2026-11-03 原生验收通过：`output/application-usage/native-acceptance/20261103-134257-621543837/evidence.json`。
+2026-11-03 本机原生运行已通过：原机证据目录
+`output/application-usage/native-acceptance/20261103-134257-621543837/evidence.json`
+不在分支内（`output/` 被忽略），需要时按上面的命令重新生成。
 已检查中英文原生截图，真实供应商与跨平台实机未测试。
 desktop、engine、appusage、contracts、i18n 包回归通过；共享控件门禁、
 相关包 Go vet、`go tool mygo vet internal/desktop`、普通桌面和无桌面服务构建通过。

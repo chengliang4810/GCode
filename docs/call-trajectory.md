@@ -75,8 +75,9 @@ MyGo Automation 不支持选择系统右键菜单；右键入口以组件测试�
 原生测试通过正常 `trajectory/<id>` 路由进入同一实现，再验证 Tab 和内容操作。
 这不代表真实供应商、系统菜单输入、跨平台实机或视觉一致性验收。
 
-2026-11-03 原生验收通过，证据：
-`output/call-trajectory/native-final/20261103-142328-2463797459/evidence.json`。
+2026-11-03 本机原生运行已通过，原机证据目录
+`output/call-trajectory/native-final/20261103-142328-2463797459/evidence.json`
+不在分支内（`output/` 被忽略），需要时按 `scripts/desktop-e2e` 重新生成。
 已检查英文浅色与中文深色窄窗截图。相关包测试、Go vet、desktop/workbench
 范围的 MyGo 生命周期检查，以及普通桌面和无桌面服务构建通过。
 无桌面服务依赖树不包含 MyGo。

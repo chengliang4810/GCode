@@ -37,7 +37,7 @@
 
 | 共享职责 | 唯一入口 |
 | --- | --- |
-| 设置页外框、最大宽度、居中、内边距、间距和标题 | `settingsPageViewport` / `settingsPageContent` / `settingsPageHeading`；规格在 `internal/design/settings.go` 的 `SettingsPage()` |
+| 设置页外框、最大宽度、居中、内边距、间距和标题 | 外框 `settingsPageViewport` / `settingsPageContent` / `settingsPageHeading` 在 `internal/desktop/settings_page.go`；规格在 `internal/design/settings.go` 的 `SettingsPage()` |
 | 控件尺寸、圆角、字体、内部间距 | `internal/design/controls.go` |
 | 控件外观与状态（含桌面 `textButton` / `iconButton`） | `internal/desktop/settings_controls.go`；颜色使用现有主题语义色 |
 

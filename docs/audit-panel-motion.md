@@ -60,7 +60,7 @@ GCode 用 MyGo 的 `ui.Split`，同样直接跟指针并复用 `panel_resize.go`
 侧栏显示时用 split 当帧的 `sidebarContentWidth` 重算 `frameColumns`，
 `TestSidebarDragMovesColumnsInTheSameFrame` 锁住这一点。
 
-框架层修正（`patches/mygo-v0.7.4-20-split-drag.patch`）：
+框架层修正（`patches/mygo-v0.8.3-18-split-drag.patch`）：
 
 - split 的拖拽命中区从主题的 1.5 DIP 线宽扩到 20 DIP（左右各约 10 DIP），
   与参考的 `PANE_RESIZE_HALF_WIDTH = 10` 一致；可视分隔线仍为 1 DIP。
