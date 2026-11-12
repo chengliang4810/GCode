@@ -63,6 +63,9 @@ type activeRun struct {
 	// active reply and its tools. These snapshots also survive live compaction.
 	sideChatHistory []model.Message
 	sideChatContext []model.Message
+	// lastPersist bounds how often a running turn rewrites the conversation.
+	// It is guarded by Engine.mu.
+	lastPersist time.Time
 }
 
 type Engine struct {
@@ -409,6 +412,8 @@ func (e *Engine) publishLocked(event contracts.Event) {
 		message := projectMessageTodos(*event.Message)
 		event.Message = &message
 	}
+	// Each subscriber receives its own deep copy: one subscriber's projection
+	// must never observe another subscriber's mutation.
 	for subID, ch := range e.subs {
 		scope := e.subSessions[subID]
 		owned := event

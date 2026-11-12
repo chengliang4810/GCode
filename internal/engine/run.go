@@ -19,6 +19,12 @@ import (
 	"gcode/internal/streamtext"
 )
 
+// messagePersistInterval bounds how often a running turn rewrites its
+// conversation. Durability is unchanged for completed turns: the run persists
+// before it settles, and a crash loses at most this window of execution
+// messages.
+const messagePersistInterval = 2 * time.Second
+
 func (e *Engine) sendLocked(send contracts.SendRequest) error {
 	return e.sendWithCheckoutLocked(send, nil)
 }
@@ -667,6 +673,15 @@ func (e *Engine) startRunWithProvidersLocked(
 						run.sideChatHistory = model.CloneMessages(e.history[session.ID])
 						run.sideChatContext = model.CloneMessages(e.context[session.ID])
 					}
+					e.markSessionDirtyLocked(session.ID)
+					// A turn records many messages; rewriting the conversation and
+					// its index for each one holds the engine lock across a durable
+					// write. Persist at a bounded cadence instead, and always at the
+					// turn's end.
+					if time.Since(run.lastPersist) < messagePersistInterval {
+						return nil
+					}
+					run.lastPersist = time.Now()
 					return e.persistLocked(session.ID)
 				},
 				ReplaceContext: func(messages []model.Message) error {
