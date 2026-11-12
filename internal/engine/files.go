@@ -121,6 +121,15 @@ func (e *Engine) fileCommandLocked(command contracts.Command) error {
 		if index < 0 || file.Kind == "directory" {
 			return errors.New("file not found")
 		}
+		// Opening a pipe blocks until a writer appears, so the type is checked
+		// before the file is opened, while the engine lock is held.
+		info, err := root.Stat(filepath.FromSlash(file.Path))
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return errors.New("file is not a regular file")
+		}
 		f, err := root.Open(filepath.FromSlash(file.Path))
 		if err != nil {
 			return err
@@ -144,6 +153,14 @@ func (e *Engine) fileCommandLocked(command contracts.Command) error {
 	case "file.save":
 		if index < 0 {
 			return errors.New("file not found")
+		}
+		info, err := root.Stat(filepath.FromSlash(file.Path))
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			// Reading a pipe or device would block while the engine lock is held.
+			return errors.New("file is not a regular file")
 		}
 		current, err := root.ReadFile(filepath.FromSlash(file.Path))
 		if err != nil {

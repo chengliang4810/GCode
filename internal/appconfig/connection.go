@@ -3,10 +3,8 @@ package appconfig
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -28,10 +26,9 @@ type Connections struct {
 
 func OpenConnections(store *storage.Store) (*Connections, error) {
 	manager := &Connections{store: store}
-	data, err := os.ReadFile(filepath.Join(store.ConfigDirectory(), "connection.json"))
-	if err == nil {
-		err = json.Unmarshal(data, &manager.config)
-	}
+	// The file holds a bearer token, so it is read with the same protections
+	// Save applies instead of a plain read.
+	err := store.Load("connection.json", &manager.config)
 	if errors.Is(err, os.ErrNotExist) {
 		err = nil
 	}

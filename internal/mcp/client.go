@@ -468,7 +468,17 @@ func (c *Client) write(ctx context.Context, message any) error {
 	go func() {
 		c.writeMu.Lock()
 		defer c.writeMu.Unlock()
-		completed <- json.NewEncoder(c.input).Encode(message)
+		encoded, err := json.Marshal(message)
+		if err != nil {
+			completed <- err
+			return
+		}
+		if len(encoded) > maxMessageBytes {
+			completed <- fmt.Errorf("MCP request exceeds the %d byte limit", maxMessageBytes)
+			return
+		}
+		_, err = c.input.Write(append(encoded, '\n'))
+		completed <- err
 	}()
 	select {
 	case err := <-completed:

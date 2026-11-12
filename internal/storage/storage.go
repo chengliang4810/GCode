@@ -329,6 +329,30 @@ func (s *Store) Save(name string, value any) error {
 	return writeJSON(filepath.Join(s.anchor, name), value)
 }
 
+// Load reads small application configuration from the fixed entrance with the
+// same protections Save applies: the file must be a regular file below the
+// configuration directory, and it must contain exactly one known JSON value.
+func (s *Store) Load(name string, value any) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.configLock == nil {
+		return errors.New("data store is closed")
+	}
+	if filepath.Base(name) != name || filepath.VolumeName(name) != "" ||
+		name == "." || name == "" || strings.ContainsAny(name, `\/:`) ||
+		slices.Contains([]string{locationFile, rootMarkerFile, configLockFile, rootLockFile, "runtime.lock"}, name) {
+		return errors.New("invalid application configuration filename")
+	}
+	if err := noSymlinkParents(s.anchor); err != nil {
+		return err
+	}
+	data, err := readRegular(filepath.Join(s.anchor, name))
+	if err != nil {
+		return err
+	}
+	return decodeJSON(data, value)
+}
+
 func (s *Store) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

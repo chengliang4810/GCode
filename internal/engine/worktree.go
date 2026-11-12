@@ -39,7 +39,10 @@ type checkoutResult struct {
 }
 
 func gitOutput(ctx context.Context, directory string, args ...string) (string, error) {
-	command := exec.CommandContext(ctx, "git", append([]string{"-c", "core.quotePath=false", "-C", directory}, args...)...)
+	// A project's own .git can carry hooks, a filesystem monitor or a pager
+	// program; none of them may run with application privileges.
+	command := exec.CommandContext(ctx, "git",
+		append([]string{"-c", "core.quotePath=false", "-c", "core.hooksPath=", "-c", "core.fsmonitor=false", "-c", "core.pager=cat", "-C", directory}, args...)...)
 	processutil.HideConsole(command)
 	command.WaitDelay = 2 * time.Second
 	output, err := command.CombinedOutput()

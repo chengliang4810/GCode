@@ -118,3 +118,33 @@ func TestConnectionStaysInConfigurationRootAfterDataRootSwitch(t *testing.T) {
 		t.Fatalf("connection credentials were copied to the runtime root: %v", err)
 	}
 }
+
+func TestConnectionReadRefusesSymlinkedConfiguration(t *testing.T) {
+	store, err := storage.Open(storage.Options{Home: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	secret := strings.Repeat("test-only", 4)
+	if err := store.Save("connection.json", map[string]any{"url": "https://example.test", "token": secret, "enabled": true}); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(store.ConfigDirectory(), "connection.json")
+	original, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elsewhere := filepath.Join(t.TempDir(), "stolen.json")
+	if err := os.WriteFile(elsewhere, original, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(elsewhere, path); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := OpenConnections(store); err == nil {
+		t.Fatal("symlinked connection configuration was read")
+	}
+}
