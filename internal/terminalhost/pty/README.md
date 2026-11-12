@@ -1,7 +1,7 @@
 # Pure Go PTY
 
 Copied from `third_party/mygo/internal/pty` when the framework was pinned at
-MyGo `v0.6.4+zeron-native-ui.9`. The current pinned framework is MyGo v0.7.3,
+MyGo `v0.6.4+zeron-native-ui.9`. The current pinned framework is MyGo v0.8.3,
 which no longer ships `internal/pty`; this copy remains app-owned. The MIT
 license is retained in `LICENSE`. The original files remain untouched.
 

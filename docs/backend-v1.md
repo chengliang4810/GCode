@@ -162,6 +162,8 @@ JSON 仍使用临时文件与原子替换；Windows 有界重试不会先删除�
   Grep 使用 Go 正则及 `-i/-n/-A/-B/-C/context`，省略 path 时使用工作目录。
   ignore、分页与预算见 [搜索工具](agent-search-tools.md)。
 - Edit 默认要求唯一匹配，`replace_all=true` 替换全部；保留原文件换行。
+  Write/Edit 经 `os.Root` 限制在会话工作目录内：越界的绝对路径、`..` 逃逸与指向
+  外部的符号链接被拒绝；链接文件读取另外拒绝配置目录中的凭据文件。
   Write/Edit 产生真实前后差异；工具的结构化 Data 用于 Hook tool_response。
 - 只读工具可以并发，文件写入、命令、问题和 MCP 调用作为执行屏障。
   取消前台 shell 会终止该次自有进程树。
@@ -302,6 +304,11 @@ go run ./cmd/rcode --local
 | `GET /v1/terminals/{id}/stream` | 终端原始输出字节流，断开只分离视图 |
 | `POST /v1/terminals/{id}/input` | 终端原始输入字节，不创建临时视图 |
 | `POST /v1/provider-key/reveal` | 显式揭示已保存的供应商凭据，宿主记录审计 |
+| `POST /v1/linked-files/read` | 宿主按链接目标读取文件（拒绝凭据文件） |
+| `GET /v1/model-metadata` | 宿主本地模型目录元数据 |
+| `POST /v1/provider-logo` | 由宿主抓取并返回供应商标识 |
+| `GET /v1/model-trajectory` | 宿主保存的调用轨迹 |
+| `GET /v1/application-usage` | 宿主本机应用用量统计 |
 
 全部 API 要求 `Authorization: Bearer <token>`。移动客户端可以复用这套接口，
 当前仓库没有新增 Android/iOS 客户端，也没有完成手机实机验收。

@@ -58,5 +58,5 @@
 前一轮 `goals.md`、`todos.md` 将保存冲突描述为目标 ID 加原文比较，该描述对应当时代码，
 但不足以实现 RCode 的修订号保护；本轮统一更新为修订号。
 旧文档也未说明恢复会换执行 ID、显式替换、目标检查与待办共用状态，本轮同步补齐。
-`docs/goal-execution.md` 的历史段落曾记载 `output/go.mod`，当前检出没有该文件；
+`docs/goal-execution.md` 的历史段落曾记载 `output/go.mod`，该文件现已存在并隔离证据子树；
 源码检查使用 `./cmd/... ./internal/... ./scripts/...`，保留历史输出，不修改其夹具。

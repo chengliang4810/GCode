@@ -188,8 +188,11 @@ New core-generated IDs use lowercase random text, including all session branches
 provider-supplied tool-call IDs remain case-sensitive and unchanged.
 
 File reads use project-relative `os.Root`; editor saves reject an on-disk version
-conflict. Core agent tools can access files and execute shells as the current OS
-user. Tool write/edit changes expose actual before/after text in the transcript.
+conflict. The agent's Write and Edit tools open their target through `os.Root`
+relative to the session working directory, so absolute paths outside it, `..`
+escapes and symlinks pointing outside are rejected; reads and Bash still work as
+the current OS user. Tool write/edit changes expose actual before/after text in
+the transcript.
 Files in a project tree are loaded on demand. Search is bounded rather than a
 background filesystem index.
 

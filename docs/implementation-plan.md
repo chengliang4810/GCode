@@ -5,7 +5,7 @@ Accepted 2026-10-28. Reference: `D:/zeron` commit
 
 ## Scope
 
-Go 1.27.3, MyGo v0.7.3 native desktop. Windows 11 22H2+ amd64 first;
+Go 1.27.3 native desktop (acceptance at that time used MyGo v0.7.3; current pin is v0.8.3). Windows 11 22H2+ amd64 first;
 macOS 13+ Intel/Apple Silicon implemented together, with runtime acceptance
 recorded per architecture. Current product branding is GCode and the interface
 defaults to Simplified Chinese, with English available in settings. Use `rcode`

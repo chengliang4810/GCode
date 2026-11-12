@@ -59,6 +59,8 @@ Windows 路径按自身语法处理，不依赖 UI 客户端的操作系统。
 `LinkedFileService.ReadLinkedFile` 是真实文件读取边界：
 本机 UI 直接调用 Go 核心；远程客户端通过认证后的外围适配器让宿主读取。
 相对路径使用 `os.Root` 拒绝目录穿越和符号链接逃逸。
+配置目录中的凭据文件（`engine.json`、`connection.json`、`server.json`、
+`plugin-configuration.json`）总是被拒绝，先解析符号链接，别名无法绕过。
 会话所属项目内的现有文件复用文件 ID 与保存能力；其他绝对文件只读打开。
 正文 UTF-8 文件限制 16 MiB，图片沿用附件尺寸及容量限制并校验格式。
 链接文件读取成功后清除工作区上一次错误，避免先打开二进制文件失败、

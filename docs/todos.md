@@ -78,9 +78,9 @@ go test ./internal/desktop -run 'Test(SettingsControls|InspectSettingsControls)'
 go run ./scripts/desktop-e2e -run '^TestDesktop(LocalTodoWrite|LocalGoalTodoStack|PromptPickerOverGoalTodos)$'
 ```
 
-根目录 `./...` 会误扫历史 `output/` 中的 Go 夹具；当前检出没有
-`docs/goal-execution.md` 历史段落提到的 `output/go.mod`，因此本轮检查源码目录，
-保留历史证据，不更改其内容。Go/MyGo vet 同样检查源码目录。
+`docs/goal-execution.md` 历史段落提到的 `output/go.mod` 现已存在，把历史证据子树
+隔离为独立 module `gcode-evidence`，因此根目录 `go test ./...` 与 vet 不再扫描
+`output/` 中的夹具；历史证据保持原样。
 
 2026-11-05 原生验证：三个用例的深浅主题分支全部通过，包含真实 Goal/TodoWrite
 执行、编辑保存、暂停恢复、完成/清除、长列表折叠、失败保留、完成列表不复活、

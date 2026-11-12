@@ -126,11 +126,11 @@ UIA benchmark 收尾、选区 span 快照、代码块制表位、Split 拖动同
 ## 2026-11-05 上游追新审计
 
 上游没有新的正式版本，本次只做审计，**不改动** `third_party/mygo`、`patches/`、
-源码锁和 `scripts/frameworkpin` 的固定值（仍是 v0.7.4 + `rcode-native-ui.23`）。
+源码锁和 `scripts/frameworkpin` 的固定值（当时为 v0.7.4 + `rcode-native-ui.23`）。
 
 | 项目 | 结果 |
 | --- | --- |
-| 上游 tag / release | 最新为 **v0.7.4**（2026-11-01 发布），即当前固定版本 |
+| 上游 tag / release | 当时最新为 **v0.7.4**（2026-11-01 发布），当时即固定版本 |
 | 上游 `main` | 比 v0.7.4 领先 **145 个提交**（`compare` 的文件清单在 300 项截断）；HEAD `fbcd4311`（2026-11-04） |
 | 本仓库策略 | 只固定官方发布版本；未发版的 `main` 不作为升级目标 |
 
