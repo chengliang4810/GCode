@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ type conversationMetrics struct {
 	models             []modelMetrics
 	turns              int
 	generationDuration time.Duration
+	wallDuration       time.Duration
 	toolDuration       time.Duration
 }
 
@@ -88,6 +90,7 @@ func (a *App) metricsFor(sessionID, turnID string) conversationMetrics {
 		}
 	}
 	stats.turns = len(turns)
+	stats.wallDuration = a.wallDuration(scope, sessionID, turnID)
 	tools := make(map[string]contracts.ToolCall)
 	for id := range scope {
 		for _, message := range a.state.Messages[id] {
@@ -107,6 +110,61 @@ func (a *App) metricsFor(sessionID, turnID string) conversationMetrics {
 		}
 	}
 	return stats
+}
+
+// wallDuration is the covered wall-clock time of the runs in scope: from the
+// moment a run started until it ended. Parent and subagent runs overlap, so
+// their intervals are merged and parallel work counts once.
+func (a *App) wallDuration(scope map[string]bool, sessionID, turnID string) time.Duration {
+	type span struct{ start, end time.Time }
+	now := time.Now()
+	if a.now != nil {
+		now = a.now()
+	}
+	spans := make([]span, 0, len(a.state.Runs))
+	for _, run := range a.state.Runs {
+		if !scope[run.SessionID] {
+			continue
+		}
+		if turnID != "" && run.SessionID == sessionID && run.ID != turnID {
+			continue
+		}
+		if run.StartedAt.IsZero() {
+			continue
+		}
+		end := run.StartedAt.Add(time.Duration(run.DurationMS) * time.Millisecond)
+		switch {
+		case run.FinishedAt != nil:
+			end = *run.FinishedAt
+		case run.Status == "running":
+			end = now
+		}
+		if end.Before(run.StartedAt) {
+			end = run.StartedAt
+		}
+		spans = append(spans, span{run.StartedAt, end})
+	}
+	sort.Slice(spans, func(i, j int) bool { return spans[i].start.Before(spans[j].start) })
+	total := time.Duration(0)
+	merged := span{}
+	for _, current := range spans {
+		if merged.end.IsZero() {
+			merged = current
+			continue
+		}
+		if current.start.After(merged.end) {
+			total += merged.end.Sub(merged.start)
+			merged = current
+			continue
+		}
+		if current.end.After(merged.end) {
+			merged.end = current.end
+		}
+	}
+	if !merged.end.IsZero() {
+		total += merged.end.Sub(merged.start)
+	}
+	return total
 }
 
 func metricsAvailable(stats conversationMetrics) bool {
@@ -193,7 +251,7 @@ func (a *App) metricsGroup(c *ui.Context, scope string, stats conversationMetric
 	t := stats.totals
 	tokens := a.metricTokens(c, t.Input+t.Output, t.UnknownUsage > 0 || t.Unrecorded)
 	counts := fmt.Sprintf(tr(c, "%d rounds %d steps"), stats.turns, t.Requests)
-	duration := metricDuration(stats.generationDuration, stats.generationDuration > 0)
+	duration := metricDuration(stats.wallDuration, stats.wallDuration > 0)
 	timeReading := counts + " · " + tr(c, "Time taken") + " " + duration
 	usageReading := tokens
 	if _, known := t.CacheHitFraction(); known {
@@ -304,7 +362,7 @@ func (a *App) metricsUsageFields(c *ui.Context, scope string, t contracts.ModelR
 
 func (a *App) metricsTimePanel(c *ui.Context, scope string, stats conversationMetrics) {
 	t := stats.totals
-	duration := metricDuration(stats.generationDuration, stats.generationDuration > 0)
+	duration := metricDuration(stats.wallDuration, stats.wallDuration > 0)
 	controlMetricHeading(c, "clock-circle", tr(c, "Time taken"), duration)
 	field := func(key, label, value string) {
 		controlMetricField(c.Key(scope+":"+key), tr(c, label), value)
@@ -317,6 +375,6 @@ func (a *App) metricsTimePanel(c *ui.Context, scope string, stats conversationMe
 		latency = t.FirstTokenLatency / time.Duration(t.FirstTokenRequests)
 	}
 	field("first-token", "Average first-token wait", metricDuration(latency, t.FirstTokenRequests > 0))
-	field("decode-time", "Decode time", duration)
+	field("decode-time", "Decode time", metricDuration(stats.generationDuration, stats.generationDuration > 0))
 	field("output-speed", "Output speed", metricSpeed(c, t))
 }

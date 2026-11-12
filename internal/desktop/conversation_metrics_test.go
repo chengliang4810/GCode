@@ -18,6 +18,11 @@ func metricRequest(session, turn, provider, id string, input, output int, durati
 }
 
 func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
+	t0 := time.Date(2026, 11, 12, 10, 0, 0, 0, time.UTC)
+	at := func(seconds int) *time.Time {
+		end := t0.Add(time.Duration(seconds) * time.Second)
+		return &end
+	}
 	a := &App{state: contracts.Snapshot{
 		Sessions: []contracts.Session{
 			{ID: "main"}, {ID: "child", ParentSessionID: "main", SubagentType: "general"},
@@ -26,6 +31,15 @@ func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
 			{ID: "side", ParentSessionID: "main", SideChat: true}, {ID: "fork", ParentSessionID: "main"},
 		},
 		Messages: map[string][]contracts.Message{"main": {{TurnID: "first", Blocks: []contracts.Block{{Subagent: &contracts.Subagent{SessionID: "child"}}}}}},
+		Runs: []contracts.Run{
+			{ID: "first", SessionID: "main", StartedAt: t0, FinishedAt: at(10)},
+			{ID: "child-turn", SessionID: "child", StartedAt: t0.Add(2 * time.Second), FinishedAt: at(5)},
+			{ID: "nested-turn", SessionID: "nested", StartedAt: t0.Add(3 * time.Second), FinishedAt: at(4)},
+			{ID: "other-turn", SessionID: "other-child", StartedAt: t0.Add(6 * time.Second), FinishedAt: at(8)},
+			{ID: "second", SessionID: "main", StartedAt: t0.Add(20 * time.Second), FinishedAt: at(35)},
+			{ID: "side-turn", SessionID: "side", StartedAt: t0, FinishedAt: at(60)},
+			{ID: "fork-turn", SessionID: "fork", StartedAt: t0, FinishedAt: at(90)},
+		},
 		ModelRequests: []contracts.ModelRequest{
 			metricRequest("main", "first", "A", "a", 100, 100, time.Second),
 			metricRequest("main", "first", "A", "retry", 20, 10, time.Second),
@@ -43,9 +57,15 @@ func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
 		len(reply.models) != 3 || reply.generationDuration != 4*time.Second {
 		t.Fatalf("reply scope or multi-model totals: %+v", reply)
 	}
+	if reply.wallDuration != 10*time.Second {
+		t.Fatalf("reply wall time counted overlapping subagent runs: %v", reply.wallDuration)
+	}
 	total := a.metricsFor("main", "")
 	if total.totals.Requests != 7 || total.totals.Input+total.totals.Output != 572 || total.generationDuration != 15*time.Second {
 		t.Fatalf("conversation counted a side chat/fork or omitted maintenance: %+v", total)
+	}
+	if total.wallDuration != 25*time.Second {
+		t.Fatalf("conversation wall time counted a side chat/fork or double counted parallel runs: %v", total.wallDuration)
 	}
 }
 
@@ -96,12 +116,14 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		request contracts.ModelRequest
+		run     time.Duration
 		want    string
 	}{
 		{name: "unknown failed request"},
 		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: "0 Token"},
 		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "12 Token"},
-		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: "0 rounds 1 steps · Time taken 1.00s"},
+		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: "0 rounds 1 steps · Time taken —"},
+		{name: "wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, run: 2500 * time.Millisecond, want: "0 rounds 1 steps · Time taken 2.50s"},
 		{name: "negative generation time", request: contracts.ModelRequest{DecodeDuration: -time.Second}},
 		{name: "cache without usable denominator", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true}}},
 		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "20 Token · Cache hit 50.0%"},
@@ -119,6 +141,11 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 			}
 			tc.request.SessionID = sessionID
 			a.state.ModelRequests = []contracts.ModelRequest{tc.request}
+			if tc.run > 0 {
+				started := a.now().Add(-tc.run)
+				finished := a.now()
+				a.state.Runs = []contracts.Run{{ID: "run", SessionID: sessionID, StartedAt: started, FinishedAt: &finished, DurationMS: tc.run.Milliseconds()}}
+			}
 			tt.Frame()
 			if tc.want == "" {
 				if len(tt.Texts()) != 0 {
@@ -153,6 +180,8 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 		a := testApp(t, "default")
 		a.palette = design.Palette("rcode-dark", dark)
 		a.state.ModelRequests = []contracts.ModelRequest{metricRequest("metrics", "turn", "Custom provider", "r", 100, 20, time.Second)}
+		turnStarted, turnFinished := a.now().Add(-time.Second), a.now()
+		a.state.Runs = []contracts.Run{{ID: "turn", SessionID: "metrics", StartedAt: turnStarted, FinishedAt: &turnFinished, DurationMS: 1000}}
 		message := contracts.Message{ID: "reply", SessionID: "metrics", TurnID: "turn", CreatedAt: time.Now(),
 			Blocks: []contracts.Block{{Kind: "text", Text: "copy only this reply"}}}
 		for _, width := range []int{320, 720} {
@@ -235,6 +264,8 @@ func TestConversationMetricsMultiModelPanelUpdatesAndMissingTiming(t *testing.T)
 	second := metricRequest("metrics", "turn", "Provider B", "second", 200, 40, 2*time.Second)
 	second.Usage.CacheKnown = false
 	a.state.ModelRequests = []contracts.ModelRequest{first, second}
+	turnStarted, turnFinished := a.now().Add(-4*time.Second), a.now()
+	a.state.Runs = []contracts.Run{{ID: "turn", SessionID: "metrics", StartedAt: turnStarted, FinishedAt: &turnFinished, DurationMS: 4000}}
 	message := contracts.Message{ID: "reply", SessionID: "metrics", TurnID: "turn"}
 	tt := ui.NewTester(func(c *ui.Context) {
 		c.SetTheme(a.palette.UI())

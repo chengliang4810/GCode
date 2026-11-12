@@ -146,12 +146,17 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			scope := "reply-metrics:" + replyID
 			timing := app.waitKey(scope + ":time")
 			usageTrigger := app.waitKey(scope + ":usage")
-			var generationDuration time.Duration
+			var wallDuration, generationDuration time.Duration
+			for _, run := range snapshot.Runs {
+				if run.SessionID == sessionID && run.RequestID == requestID && run.FinishedAt != nil {
+					wallDuration = run.FinishedAt.Sub(run.StartedAt)
+				}
+			}
 			for _, request := range snapshot.ModelRequests {
 				generationDuration += request.DecodeDuration
 			}
-			if want := fmt.Sprintf("用时 %.2fs", generationDuration.Seconds()); !strings.Contains(timing.Label, want) {
-				t.Fatalf("reply does not show observed generation time: %s; want %s", timing.Label, want)
+			if want := fmt.Sprintf("用时 %.2fs", wallDuration.Seconds()); wallDuration <= 0 || !strings.Contains(timing.Label, want) {
+				t.Fatalf("reply does not show the turn's wall time: %s; want %s", timing.Label, want)
 			}
 			copyButton := app.waitKey("copy-message:" + replyID)
 			dateText := app.waitKey("message-date:" + replyID)
@@ -212,6 +217,9 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			app.hoverMetric(scope + ":time")
 			app.waitKey(scope + ":time-panel")
 			app.waitKey(scope + ":output-speed")
+			if label := app.waitKey(scope + ":decode-time").Label; !strings.Contains(label, fmt.Sprintf("%.2fs", generationDuration.Seconds())) {
+				t.Fatalf("reply time panel does not show the observed generation time: %s", label)
+			}
 			if err := app.client.call("idle", map[string]int{"timeout": 2000}, nil); err != nil {
 				t.Fatal(err)
 			}
