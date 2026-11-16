@@ -129,7 +129,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		prompt = checkout.prompt
 	} else {
 		var err error
-		prompt, err = expandPrompt(e.storage.ConfigDirectory(), session.CWD, send.Text)
+		prompt, err = e.expandPromptLocked(session.CWD, send.Text)
 		if err != nil {
 			return err
 		}

@@ -3,9 +3,9 @@ package engine
 import "sync"
 
 // stateMutex serializes mutations through transaction while view protects the
-// live state. Persistence releases view while retaining transaction. Progress
-// saves admit live reads; transactional saves retain a read barrier until the
-// caller settles. No mutation can invalidate a caller's save-failure rollback.
+// live state. I/O releases view while retaining transaction. Read-only staging
+// and progress saves admit live reads; pending mutations retain a read barrier
+// until the caller settles. No mutation can invalidate a save-failure rollback.
 // Always acquire transaction before view for mutations.
 type stateMutex struct {
 	transaction sync.Mutex

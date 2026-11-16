@@ -299,7 +299,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.providers = slices.DeleteFunc(e.providers, func(p model.Provider) bool { return p.ID == command.ID })
 		e.refreshProvidersLocked()
 	case "storage.change":
-		if err := e.storage.RequestDirectory(command.Path); err != nil {
+		if err := e.withStateUnlocked(false, func() error { return e.storage.RequestDirectory(command.Path) }); err != nil {
 			return err
 		}
 		e.refreshStorageLocked()
@@ -534,7 +534,6 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if index := e.sessionIndex(command.ID); index >= 0 {
 			deletedSession = e.state.Sessions[index]
 			deletedRecord = e.sessionRecords[command.ID]
-			e.removeTrajectory(deletedSession)
 		}
 		if deletedSession.SubagentType != "" && deletedSession.ParentSessionID != "" {
 			e.markSessionDirtyLocked(deletedSession.ParentSessionID)
@@ -598,8 +597,13 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	}
 	if command.Kind == "session.delete" {
 		if deletedRecord != "" {
-			e.removeSessionRecord(deletedSession.StorageRootID, deletedSession.ID, deletedRecord)
-			e.releaseEmptySessionDirectories(deletedSession)
+			e.wg.Add(1)
+			outsideLock = append(outsideLock, func() {
+				defer e.wg.Done()
+				e.removeTrajectory(deletedSession)
+				e.removeSessionRecord(deletedSession.StorageRootID, deletedSession.ID, deletedRecord)
+				e.releaseEmptySessionDirectories(deletedSession)
+			})
 		}
 		delete(e.loadedSessions, command.ID)
 		if owner := e.sessionTools[command.ID]; owner != nil {

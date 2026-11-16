@@ -97,6 +97,10 @@ func fileVersion(data []byte) uint64 {
 }
 
 func (e *Engine) fileCommandLocked(command contracts.Command) error {
+	return e.fileCommandWithIOLocked(command, executeFileCommand)
+}
+
+func (e *Engine) fileCommandWithIOLocked(command contracts.Command, operation func(contracts.Command, contracts.Project, contracts.File, bool) (fileCommandResult, error)) error {
 	index := slices.IndexFunc(e.state.Files, func(file contracts.File) bool { return file.ID == command.ID })
 	projectID := command.ProjectID
 	if index >= 0 {
@@ -107,128 +111,158 @@ func (e *Engine) fileCommandLocked(command contracts.Command) error {
 		return errors.New("project not found")
 	}
 	project := e.state.Projects[projectIndex]
-	root, err := os.OpenRoot(project.Path)
-	if err != nil {
-		return err
-	}
-	defer root.Close()
 	var file contracts.File
 	if index >= 0 {
 		file = e.state.Files[index]
 	}
-	switch command.Kind {
-	case "file.open":
-		if index < 0 || file.Kind == "directory" {
-			return errors.New("file not found")
-		}
-		// Opening a pipe blocks until a writer appears, so the type is checked
-		// before the file is opened, while the engine lock is held.
-		info, err := root.Stat(filepath.FromSlash(file.Path))
-		if err != nil {
-			return err
-		}
-		if !info.Mode().IsRegular() {
-			return errors.New("file is not a regular file")
-		}
-		f, err := root.Open(filepath.FromSlash(file.Path))
-		if err != nil {
-			return err
-		}
-		data, readErr := io.ReadAll(io.LimitReader(f, 16<<20+1))
-		_ = f.Close()
-		if readErr != nil {
-			return readErr
-		}
-		if len(data) > 16<<20 {
-			return errors.New("file exceeds the 16 MiB editor limit")
-		}
-		if !utf8.Valid(data) {
-			return errors.New("file is not UTF-8 text")
-		}
-		file.Content = string(data)
-		file.Version = fileVersion(data)
-		file.Loaded = true
-		e.state.Files[index] = file
-		return nil
-	case "file.save":
-		if index < 0 {
-			return errors.New("file not found")
-		}
-		info, err := root.Stat(filepath.FromSlash(file.Path))
-		if err != nil {
-			return err
-		}
-		if !info.Mode().IsRegular() {
-			// Reading a pipe or device would block while the engine lock is held.
-			return errors.New("file is not a regular file")
-		}
-		current, err := root.ReadFile(filepath.FromSlash(file.Path))
-		if err != nil {
-			return err
-		}
-		if fileVersion(current) != command.Version {
-			return errors.New("file changed on disk; reopen it before saving")
-		}
-		if err := root.WriteFile(filepath.FromSlash(file.Path), []byte(command.Text), 0644); err != nil {
-			return err
-		}
-		file.Content = command.Text
-		file.Version = fileVersion([]byte(command.Text))
-		file.Loaded = true
-		e.state.Files[index] = file
-		return nil
-	case "file.create":
-		if command.Path == "" {
-			return errors.New("file path is required")
-		}
-		if command.Enabled {
-			if err := root.Mkdir(filepath.FromSlash(command.Path), 0755); err != nil {
-				return err
-			}
-			e.startProjectFilesLocked(project)
-			return nil
-		}
-		f, err := root.OpenFile(filepath.FromSlash(command.Path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
-		if err != nil {
-			return err
-		}
-		if _, err = f.WriteString(command.Text); err != nil {
-			_ = f.Close()
-			return err
-		}
-		if err = f.Close(); err != nil {
-			return err
-		}
-	case "file.rename":
-		if index < 0 || command.Name == "" {
-			return errors.New("file and new name are required")
-		}
-		target := filepath.Join(filepath.Dir(filepath.FromSlash(file.Path)), command.Name)
-		if _, err = root.Stat(target); err == nil {
-			return errors.New("destination already exists")
-		} else if !errors.Is(err, fs.ErrNotExist) {
-			return err
-		}
-		if err = root.Rename(filepath.FromSlash(file.Path), target); err != nil {
-			return err
-		}
+	var result fileCommandResult
+	err := e.withStateUnlocked(true, func() error {
+		var err error
+		result, err = operation(command, project, file, index >= 0)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	if result.updated {
+		e.state.Files[index] = result.file
+	}
+	if result.removed {
 		e.state.Files = slices.DeleteFunc(e.state.Files, func(candidate contracts.File) bool {
 			return candidate.ID == file.ID || (file.Kind == "directory" && candidate.ProjectID == project.ID &&
 				strings.HasPrefix(candidate.Path, file.Path+"/"))
 		})
+	}
+	if result.refresh {
+		e.startProjectFilesLocked(project)
+	}
+	return nil
+}
+
+type fileCommandResult struct {
+	file                      contracts.File
+	updated, removed, refresh bool
+}
+
+// The transaction gate pins project/file identities while disk work runs without
+// the view lock. Readers see the previous state until the result is installed.
+func executeFileCommand(command contracts.Command, project contracts.Project, file contracts.File, exists bool) (fileCommandResult, error) {
+	result := fileCommandResult{}
+	root, err := os.OpenRoot(project.Path)
+	if err != nil {
+		return result, err
+	}
+	defer root.Close()
+	switch command.Kind {
+	case "file.open":
+		if !exists || file.Kind == "directory" {
+			return result, errors.New("file not found")
+		}
+		// Opening a pipe blocks until a writer appears, so the type is checked
+		// before the file is opened.
+		info, err := root.Stat(filepath.FromSlash(file.Path))
+		if err != nil {
+			return result, err
+		}
+		if !info.Mode().IsRegular() {
+			return result, errors.New("file is not a regular file")
+		}
+		f, err := root.Open(filepath.FromSlash(file.Path))
+		if err != nil {
+			return result, err
+		}
+		data, readErr := io.ReadAll(io.LimitReader(f, 16<<20+1))
+		_ = f.Close()
+		if readErr != nil {
+			return result, readErr
+		}
+		if len(data) > 16<<20 {
+			return result, errors.New("file exceeds the 16 MiB editor limit")
+		}
+		if !utf8.Valid(data) {
+			return result, errors.New("file is not UTF-8 text")
+		}
+		file.Content = string(data)
+		file.Version = fileVersion(data)
+		file.Loaded = true
+		result.file, result.updated = file, true
+		return result, nil
+	case "file.save":
+		if !exists {
+			return result, errors.New("file not found")
+		}
+		info, err := root.Stat(filepath.FromSlash(file.Path))
+		if err != nil {
+			return result, err
+		}
+		if !info.Mode().IsRegular() {
+			// Reading a pipe or device would block this operation.
+			return result, errors.New("file is not a regular file")
+		}
+		current, err := root.ReadFile(filepath.FromSlash(file.Path))
+		if err != nil {
+			return result, err
+		}
+		if fileVersion(current) != command.Version {
+			return result, errors.New("file changed on disk; reopen it before saving")
+		}
+		if err := root.WriteFile(filepath.FromSlash(file.Path), []byte(command.Text), 0644); err != nil {
+			return result, err
+		}
+		file.Content = command.Text
+		file.Version = fileVersion([]byte(command.Text))
+		file.Loaded = true
+		result.file, result.updated = file, true
+		return result, nil
+	case "file.create":
+		if command.Path == "" {
+			return result, errors.New("file path is required")
+		}
+		if command.Enabled {
+			if err := root.Mkdir(filepath.FromSlash(command.Path), 0755); err != nil {
+				return result, err
+			}
+			result.refresh = true
+			return result, nil
+		}
+		f, err := root.OpenFile(filepath.FromSlash(command.Path), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		if err != nil {
+			return result, err
+		}
+		if _, err = f.WriteString(command.Text); err != nil {
+			_ = f.Close()
+			return result, err
+		}
+		if err = f.Close(); err != nil {
+			return result, err
+		}
+	case "file.rename":
+		if !exists || command.Name == "" {
+			return result, errors.New("file and new name are required")
+		}
+		target := filepath.Join(filepath.Dir(filepath.FromSlash(file.Path)), command.Name)
+		if _, err = root.Stat(target); err == nil {
+			return result, errors.New("destination already exists")
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return result, err
+		}
+		if err = root.Rename(filepath.FromSlash(file.Path), target); err != nil {
+			return result, err
+		}
+		result.removed = true
 	case "file.delete":
-		if index < 0 {
-			return errors.New("file not found")
+		if !exists {
+			return result, errors.New("file not found")
 		}
 		if err = root.Remove(filepath.FromSlash(file.Path)); err != nil {
-			return err
+			return result, err
 		}
-		e.state.Files = slices.DeleteFunc(e.state.Files, func(candidate contracts.File) bool { return candidate.ID == file.ID })
+		result.removed = true
 	default:
-		return fmt.Errorf("unknown file command %s", command.Kind)
+		return result, fmt.Errorf("unknown file command %s", command.Kind)
 	}
-	e.startProjectFilesLocked(project)
-	return nil
+	result.refresh = true
+	return result, nil
 }
 
 func (e *Engine) SearchWorkspace(ctx context.Context, request contracts.WorkspaceSearchRequest) (contracts.WorkspaceSearchResult, error) {

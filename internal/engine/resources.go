@@ -147,3 +147,26 @@ func expandCommand(root, cwd string, text string) (string, error) {
 	}
 	return "", errors.New("user command not found or disabled")
 }
+
+// Prompt preparation may read resource files and run command substitutions.
+// Keep the mutation gate while releasing the state lock; snapshots wait until
+// the enclosing command commits or rolls back its other pending changes.
+func (e *Engine) expandPromptLocked(cwd, text string) (string, error) {
+	var prompt string
+	err := e.withStateUnlocked(false, func() error {
+		var err error
+		prompt, err = expandPrompt(e.storage.ConfigDirectory(), cwd, text)
+		return err
+	})
+	return prompt, err
+}
+
+func (e *Engine) promptResourcesLocked(text string) (string, string, error) {
+	var plain, additions string
+	err := e.withStateUnlocked(false, func() error {
+		var err error
+		plain, additions, err = promptResources(e.storage.ConfigDirectory(), text)
+		return err
+	})
+	return plain, additions, err
+}

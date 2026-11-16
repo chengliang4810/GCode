@@ -87,7 +87,7 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 			}
 			selected.WriteString(ref.Markdown() + " ")
 		}
-		_, instructions, err := promptResources(e.storage.ConfigDirectory(), selected.String())
+		_, instructions, err := e.promptResourcesLocked(selected.String())
 		if err != nil {
 			return err
 		}
@@ -233,7 +233,7 @@ func (e *Engine) goalTextLocked(send contracts.SendRequest, checkout *checkoutRe
 	if err := input.Validate(); err != nil {
 		return true, err
 	}
-	if _, _, err := promptResources(e.storage.ConfigDirectory(), send.Text); err != nil {
+	if _, _, err := e.promptResourcesLocked(send.Text); err != nil {
 		return true, err
 	}
 	if kind == "goal.set" && index >= 0 && e.state.Sessions[index].Goal != nil &&

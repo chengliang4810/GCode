@@ -364,7 +364,7 @@ func (e *Engine) checkoutSend(ctx context.Context, command contracts.Command) er
 	fields := strings.Fields(contracts.PlainPrompt(prompt))
 	goal := len(fields) > 0 && fields[0] == "/goal" && len(command.Send.Attachments) == 0
 	if goal {
-		if _, _, err := promptResources(e.storage.ConfigDirectory(), prompt); err != nil {
+		if _, _, err := e.promptResourcesLocked(prompt); err != nil {
 			e.mu.Unlock()
 			return err
 		}
@@ -378,7 +378,7 @@ func (e *Engine) checkoutSend(ctx context.Context, command contracts.Command) er
 			return err
 		}
 	} else {
-		prompt, err = expandPrompt(e.storage.ConfigDirectory(), project.Path, prompt)
+		prompt, err = e.expandPromptLocked(project.Path, prompt)
 		if err != nil {
 			e.mu.Unlock()
 			return err

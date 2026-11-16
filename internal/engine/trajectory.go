@@ -268,8 +268,8 @@ func (e *Engine) ReadModelTrajectory(ctx context.Context, sessionID string) (con
 	return result, e.trajectoryIssues[sessionID]
 }
 
-// Called only by the existing explicit conversation deletion path, while its
-// engine lock is held. Unknown files are left in place.
+// Called after explicit conversation deletion commits, without the state lock.
+// trajectoryMu serializes cleanup with recorders. Unknown files are left in place.
 func (e *Engine) removeTrajectory(session contracts.Session) {
 	e.trajectoryMu.Lock()
 	defer e.trajectoryMu.Unlock()

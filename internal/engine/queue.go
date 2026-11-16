@@ -155,7 +155,7 @@ func (e *Engine) startQueuedUserLocked(sessionID string, queued contracts.Queued
 	prompt := queued.Prompt
 	if prompt == "" {
 		var err error
-		prompt, err = expandPrompt(e.storage.ConfigDirectory(), session.CWD, queued.Text)
+		prompt, err = e.expandPromptLocked(session.CWD, queued.Text)
 		if err != nil {
 			return err
 		}

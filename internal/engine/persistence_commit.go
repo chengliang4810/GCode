@@ -40,7 +40,7 @@ func (e *Engine) persistWithWriterLocked(required []string, readLive bool, commi
 		indexHash:    e.indexHash, indexHashKnown: e.indexHashKnown,
 	}
 
-	err := e.commitPersistenceOutsideStateLock(readLive, func() error { return commit(writer, required...) })
+	err := e.withStateUnlocked(readLive, func() error { return commit(writer, required...) })
 	e.persistErrors = writer.persistErrors
 	for i := range e.state.Sessions {
 		e.state.Sessions[i].StorageError = writer.state.Sessions[i].StorageError
@@ -56,7 +56,9 @@ func (e *Engine) persistWithWriterLocked(required []string, readLive bool, commi
 	return err
 }
 
-func (e *Engine) commitPersistenceOutsideStateLock(readLive bool, commit func() error) error {
+// withStateUnlocked keeps the transaction gate while running I/O. Live reads
+// are allowed only when no uncommitted state has been installed by the caller.
+func (e *Engine) withStateUnlocked(readLive bool, commit func() error) error {
 	e.persistLiveRead = readLive
 	e.mu.view.Unlock()
 	defer func() {

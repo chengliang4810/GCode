@@ -68,7 +68,6 @@ func (e *Engine) ImportAttachments(ctx context.Context, request contracts.Attach
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	defer e.evictIdleSessionsLocked()
 	if err := e.checkLocked(ctx); err != nil {
 		return nil, err
 	}
@@ -78,61 +77,69 @@ func (e *Engine) ImportAttachments(ctx context.Context, request contracts.Attach
 		if index < 0 {
 			return nil, errors.New("source session not found")
 		}
-		if err := e.ensureSessionDataLocked(request.SessionID); err != nil {
-			return nil, err
-		}
 		session := e.state.Sessions[index]
 		rootID = session.StorageRootID
 	}
-	directory, err := e.storage.Resolve(rootID)
-	if err != nil {
-		return nil, err
-	}
-	uploads, err := managedUploadsRoot(directory)
-	if err != nil {
-		return nil, err
-	}
-	defer uploads.Close()
+	var uploads *os.Root
 	var attachments []contracts.Attachment
 	var paths []string
 	cleanup := func() {
-		for _, path := range paths {
-			_ = uploads.Remove(path)
+		if uploads != nil {
+			for _, path := range paths {
+				_ = uploads.Remove(path)
+			}
 		}
 	}
-	for _, file := range staged {
-		key := id("attachment")
-		// Keep common file extensions so agent tools can select the right reader.
-		if ext := filepath.Ext(file.name); managedResourceComponent(ext) {
-			key += ext
+	err = e.withStateUnlocked(true, func() error {
+		directory, err := e.storage.Resolve(rootID)
+		if err != nil {
+			return err
 		}
-		mime := http.DetectContentType(file.data)
-		item := contracts.Attachment{ID: key, StorageRootID: rootID, Name: file.name, MIME: mime, Size: int64(len(file.data)), Status: "ready", AssetRef: managedResourceRef(rootID, key)}
-		if strings.HasPrefix(mime, "image/") {
-			config, _, err := image.DecodeConfig(bytes.NewReader(file.data))
+		uploads, err = managedUploadsRoot(directory)
+		if err != nil {
+			return err
+		}
+		for _, file := range staged {
+			key := id("attachment")
+			// Keep common file extensions so agent tools can select the right reader.
+			if ext := filepath.Ext(file.name); managedResourceComponent(ext) {
+				key += ext
+			}
+			mime := http.DetectContentType(file.data)
+			item := contracts.Attachment{ID: key, StorageRootID: rootID, Name: file.name, MIME: mime, Size: int64(len(file.data)), Status: "ready", AssetRef: managedResourceRef(rootID, key)}
+			if strings.HasPrefix(mime, "image/") {
+				config, _, err := image.DecodeConfig(bytes.NewReader(file.data))
+				if err != nil {
+					cleanup()
+					return err
+				}
+				if config.Width > contracts.MaxAttachmentImageDimension || config.Height > contracts.MaxAttachmentImageDimension || config.Width*config.Height > contracts.MaxAttachmentImagePixels {
+					cleanup()
+					return errors.New("image dimensions are too large")
+				}
+				item.Width, item.Height = config.Width, config.Height
+			}
+			target, err := uploads.OpenFile(key, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 			if err != nil {
 				cleanup()
-				return nil, err
+				return err
 			}
-			if config.Width > contracts.MaxAttachmentImageDimension || config.Height > contracts.MaxAttachmentImageDimension || config.Width*config.Height > contracts.MaxAttachmentImagePixels {
+			paths = append(paths, key)
+			_, writeErr := target.Write(file.data)
+			closeErr := target.Close()
+			if err := errors.Join(writeErr, closeErr); err != nil {
 				cleanup()
-				return nil, errors.New("image dimensions are too large")
+				return err
 			}
-			item.Width, item.Height = config.Width, config.Height
+			attachments = append(attachments, item)
 		}
-		target, err := uploads.OpenFile(key, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-		if err != nil {
-			cleanup()
-			return nil, err
-		}
-		paths = append(paths, key)
-		_, writeErr := target.Write(file.data)
-		closeErr := target.Close()
-		if err := errors.Join(writeErr, closeErr); err != nil {
-			cleanup()
-			return nil, err
-		}
-		attachments = append(attachments, item)
+		return nil
+	})
+	if uploads != nil {
+		defer uploads.Close()
+	}
+	if err != nil {
+		return nil, err
 	}
 	before := len(e.state.Attachments)
 	e.state.Attachments = append(e.state.Attachments, attachments...)
@@ -151,7 +158,13 @@ func (e *Engine) ReadResource(ctx context.Context, ref string) ([]byte, error) {
 	if err := e.checkLocked(ctx); err != nil {
 		return nil, err
 	}
-	return e.resourceLocked(ref)
+	var data []byte
+	err := e.withStateUnlocked(true, func() error {
+		var err error
+		data, err = e.resourceLocked(ref)
+		return err
+	})
+	return data, err
 }
 func (e *Engine) resourceLocked(ref string) ([]byte, error) {
 	file, err := e.openResourceLocked(ref)
@@ -233,6 +246,17 @@ func managedUploadsRoot(directory string) (*os.Root, error) {
 }
 
 func (e *Engine) inputMessageLocked(text string, attachments []contracts.Attachment) (model.Message, error) {
+	var message model.Message
+	err := e.withStateUnlocked(false, func() error {
+		var err error
+		message, err = e.inputMessage(text, attachments)
+		return err
+	})
+	return message, err
+}
+
+// The transaction gate keeps the attachment catalog stable during resource I/O.
+func (e *Engine) inputMessage(text string, attachments []contracts.Attachment) (model.Message, error) {
 	message := model.Message{Role: "user", Text: text, UserInput: true, InputIDs: []string{id("input")}}
 	if len(attachments) > contracts.MaxAttachmentCount {
 		return message, errors.New("too many attachments")
