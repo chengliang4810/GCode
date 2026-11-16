@@ -124,6 +124,9 @@ func (a *App) selectSettingsSection(section string) {
 	a.settingsRemoval.Open = false
 	a.settingsImport = settingsImportState{}
 	a.section = section
+	if section == "Personalization" {
+		a.loadGlobalAgentsDraft()
+	}
 	if section == "Usage statistics" {
 		a.refreshAppUsage()
 	}

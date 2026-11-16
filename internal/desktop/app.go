@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log"
 	"maps"
 	"runtime"
 	"slices"
@@ -40,7 +41,10 @@ type App struct {
 	cloudPage             cloudSettingsPageState
 	agentsDraft           string
 	agentsSaved           string
-	agentsLoadedFor       string
+	agentsLoading         bool
+	agentsSaving          bool
+	agentsSavePending     bool
+	agentsSaveDone        chan struct{}
 	branchCreation        *branchCreation
 	now                   func() time.Time
 	pendingSends          map[string]primaryPendingSend
@@ -366,6 +370,9 @@ func (a *App) startClose() {
 			a.applyPaneWidths()
 		}
 		settings := a.state.Settings
+		instructions := a.agentsDraft
+		saveInstructions := a.agentsDraft != a.agentsSaved
+		instructionsDone := a.agentsSaveDone
 		a.closed = true
 		if a.sessionSubscriptionCancel != nil {
 			a.sessionSubscriptionCancel()
@@ -378,6 +385,27 @@ func (a *App) startClose() {
 		_ = a.bottom.Close()
 		go func() {
 			defer close(a.closeDone)
+			if saveInstructions {
+				if service, ok := a.service.(contracts.GlobalInstructionsService); ok {
+					ctx, cancel := context.WithTimeout(context.WithoutCancel(a.ctx), time.Second)
+					ready := true
+					if instructionsDone != nil {
+						select {
+						case <-instructionsDone:
+						case <-ctx.Done():
+							ready = false
+						}
+					}
+					if ready {
+						if err := service.WriteGlobalInstructions(ctx, instructions); err != nil {
+							log.Printf("save global instructions before shutdown: %v", err)
+						}
+					} else {
+						log.Printf("save global instructions before shutdown: %v", ctx.Err())
+					}
+					cancel()
+				}
+			}
 			if savePane {
 				ctx, cancel := context.WithTimeout(context.WithoutCancel(a.ctx), time.Second)
 				_ = a.service.Execute(ctx, contracts.Command{Kind: "settings.update", Settings: &settings})

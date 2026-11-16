@@ -72,6 +72,7 @@ type Engine struct {
 	trajectoryMu       sync.Mutex
 	trajectoryIssues   map[string]error
 	toolGuard          ToolGuard
+	instructionsMu     sync.Mutex
 	mu                 sync.Mutex
 	storage            *storage.Store
 	sessionHashes      map[string][32]byte

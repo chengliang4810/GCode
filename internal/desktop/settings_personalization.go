@@ -1,64 +1,73 @@
 package desktop
 
 import (
-	"os"
-	"path/filepath"
-
+	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
 
-// globalAgentsPath resolves ~/.gcode/AGENTS.md from the engine-reported config
-// directory, falling back to the home anchor while the runtime is not
-// connected. The engine loads this same file through loadInstructions.
-func (a *App) globalAgentsPath() string {
-	if a.state.Runtime != nil && a.state.Runtime.ConfigDirectory != "" {
-		return filepath.Join(a.state.Runtime.ConfigDirectory, "AGENTS.md")
-	}
-	if home, err := os.UserHomeDir(); err == nil {
-		return filepath.Join(home, ".gcode", "AGENTS.md")
-	}
-	return ""
-}
-
-// loadGlobalAgentsDraft reads the global instructions file for editing. The
-// byte cap matches loadInstructions in the engine, which skips longer files.
 func (a *App) loadGlobalAgentsDraft() {
-	a.agentsDraft = ""
-	defer func() { a.agentsSaved = a.agentsDraft }()
-	path := a.globalAgentsPath()
-	if path == "" {
+	service, ok := a.service.(contracts.GlobalInstructionsService)
+	if !ok {
+		a.notification(a.t("Could not save AGENTS.md."))
 		return
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
+	if a.agentsLoading || a.agentsSaving || a.agentsDraft != a.agentsSaved {
 		return
 	}
-	if len(data) > 256<<10 {
-		data = data[:256<<10]
-	}
-	a.agentsDraft = string(data)
+	a.agentsLoading = true
+	a.backgroundTask(func() func() {
+		text, err := service.ReadGlobalInstructions(a.ctx)
+		return func() {
+			a.agentsLoading = false
+			if err != nil {
+				a.notification(err.Error())
+				return
+			}
+			a.agentsDraft, a.agentsSaved = text, text
+		}
+	})
 }
 
 func (a *App) saveGlobalAgentsDraft() {
-	if len(a.agentsDraft) > 256<<10 {
+	if a.agentsLoading || a.agentsDraft == a.agentsSaved {
+		return
+	}
+	if len(a.agentsDraft) > contracts.MaxGlobalInstructionsBytes {
 		a.notification(a.t("AGENTS.md is too large. The limit is 256 KB."))
 		return
 	}
-	path := a.globalAgentsPath()
-	if path == "" {
+	if a.agentsSaving {
+		a.agentsSavePending = true
+		return
+	}
+	service, ok := a.service.(contracts.GlobalInstructionsService)
+	if !ok {
 		a.notification(a.t("Could not save AGENTS.md."))
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		a.notification(a.t("Could not save AGENTS.md."))
-		return
-	}
-	if err := os.WriteFile(path, []byte(a.agentsDraft), 0o600); err != nil {
-		a.notification(a.t("Could not save AGENTS.md."))
-		return
-	}
-	a.agentsSaved = a.agentsDraft
-	a.notification(a.t("Saved"))
+	text := a.agentsDraft
+	a.agentsSaving = true
+	done := make(chan struct{})
+	a.agentsSaveDone = done
+	a.backgroundTask(func() func() {
+		defer close(done)
+		err := service.WriteGlobalInstructions(a.ctx, text)
+		return func() {
+			a.agentsSaving = false
+			pending := a.agentsSavePending
+			a.agentsSavePending = false
+			if err != nil {
+				a.notification(err.Error())
+				return
+			}
+			a.agentsSaved = text
+			if pending {
+				a.saveGlobalAgentsDraft()
+			} else {
+				a.notification(a.t("Saved"))
+			}
+		}
+	})
 }
 
 func (a *App) personalizationSettings(c *ui.Context) {
@@ -69,13 +78,9 @@ func (a *App) personalizationSettings(c *ui.Context) {
 			a.settingsToggle(c, "Auto memory", &p.MemoryEnabled)
 		})
 	})
-	if a.agentsLoadedFor != "Personalization" {
-		a.loadGlobalAgentsDraft()
-		a.agentsLoadedFor = "Personalization"
-	}
 	ui.Row(c.Key("agents-actions")).FillWidth().AlignItems(ui.Center).Children(func() {
 		sectionTitle(c, tr(c, "Global instructions"))
 	})
-	input := controlTextArea(c.Key("agents-draft"), &a.agentsDraft).FillWidth().Height(360).Label("AGENTS.md")
+	input := controlTextArea(c.Key("agents-draft"), &a.agentsDraft).FillWidth().Height(360).Label("AGENTS.md").Disabled(a.agentsLoading)
 	settingsInputCommit(input, &a.agentsDraft, a.saveGlobalAgentsDraft)
 }

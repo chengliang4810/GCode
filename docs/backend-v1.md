@@ -296,6 +296,7 @@ go run ./cmd/rcode --local
 | `GET /v1/snapshot` | 完整状态 |
 | `POST /v1/commands` | 强类型命令的远程 JSON 表示 |
 | `GET /v1/events` | SSE 快照及增量事件 |
+| `GET /v1/instructions` / `PUT /v1/instructions` | 读取与原子保存宿主全局指令 |
 | `POST /v1/directories` | 宿主目录选择数据 |
 | `POST /v1/directory-locations` | 宿主的可选位置（Home 与磁盘卷） |
 | `POST /v1/search` | 宿主项目搜索 |
