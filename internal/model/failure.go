@@ -25,6 +25,7 @@ type Failure struct {
 var failureRules = []func(error) (Failure, bool){
 	cancelledFailure,
 	streamLimitFailure,
+	contentFilterFailure,
 	certificateFailure,
 	providerBusinessFailure,
 	httpFailure,
@@ -150,4 +151,8 @@ func networkFailure(err error) (Failure, bool) {
 		return Failure{Reason: "network", Retryable: true}, true
 	}
 	return Failure{}, false
+}
+
+func contentFilterFailure(err error) (Failure, bool) {
+	return Failure{Reason: "content_filter"}, errors.Is(err, errContentFiltered)
 }

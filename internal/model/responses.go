@@ -120,7 +120,10 @@ type responsesEvent struct {
 	ItemID      string          `json:"item_id"`
 	OutputIndex int             `json:"output_index"`
 	Response    struct {
-		Status string            `json:"status"`
+		Status            string `json:"status"`
+		IncompleteDetails struct {
+			Reason string `json:"reason"`
+		} `json:"incomplete_details"`
 		Output []json.RawMessage `json:"output"`
 		Usage  struct {
 			Input   *int `json:"input_tokens"`
@@ -145,6 +148,9 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 	switch event.Type {
 	case "error", "response.failed":
 		return Delta{}, &streamProviderError{payload: payload}
+	case "response.refusal.delta":
+		d.refused = true
+		delta.Text = event.Delta
 	case "response.output_text.delta":
 		delta.Text = event.Delta
 	case "response.reasoning_summary_text.delta":
@@ -187,6 +193,9 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 			}
 		}
 	case "response.incomplete":
+		if event.Response.IncompleteDetails.Reason == "content_filter" {
+			return Delta{}, errContentFiltered
+		}
 		return Delta{}, errors.New("model response was truncated")
 	}
 	d.add(delta)
@@ -239,8 +248,9 @@ func (d *responsesDecoder) finish() (Result, error) {
 			Name      string `json:"name"`
 			Arguments string `json:"arguments"`
 			Content   []struct {
-				Type string `json:"type"`
-				Text string `json:"text"`
+				Type    string `json:"type"`
+				Text    string `json:"text"`
+				Refusal string `json:"refusal"`
 			} `json:"content"`
 		}
 		if err := json.Unmarshal(raw, &item); err != nil {
@@ -253,8 +263,12 @@ func (d *responsesDecoder) finish() (Result, error) {
 		if item.Type == "message" {
 			hasFinalMessage = true
 			for _, part := range item.Content {
-				if part.Type == "output_text" {
+				switch part.Type {
+				case "output_text":
 					finalText.WriteString(part.Text)
+				case "refusal":
+					d.refused = true
+					finalText.WriteString(part.Refusal)
 				}
 			}
 		}

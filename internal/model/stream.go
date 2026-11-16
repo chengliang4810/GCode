@@ -18,6 +18,8 @@ var ErrStreamLimit = errors.New("model stream event exceeds the 8 MiB size limit
 
 const maxStreamEventBytes = 8 << 20
 
+var errContentFiltered = errors.New("model response was blocked by the provider content filter")
+
 var errOutputLimit = errors.New("model output limit reached; incomplete tool calls were not executed")
 
 // ToolCallError retains a rejected call for diagnostics only. The entire
@@ -53,6 +55,7 @@ type streamState struct {
 	complete       bool
 	stop           StopReason
 	stopErr        error
+	refused        bool
 	inputReported  bool
 	outputReported bool
 	cacheReported  bool
@@ -132,6 +135,12 @@ func (s *streamState) finish() (Result, error) {
 	}
 	if s.stopErr != nil {
 		return s.result, s.stopErr
+	}
+	if s.refused {
+		if len(s.calls) != 0 {
+			return s.result, errors.New("refused model response contained tool calls")
+		}
+		s.stop = StopComplete
 	}
 	if s.stop != StopComplete && s.stop != StopTools {
 		return s.result, errors.New("model stream omitted its finish reason")

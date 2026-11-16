@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -108,9 +109,8 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 }
 
 // appendAnthropicMessage merges a message into the previous one when both use
-// the same role. The Messages API requires alternating roles, while one
-// assistant turn can produce several tool results and hook reminders that all
-// belong to a single user message.
+// the same role. One assistant turn can produce several tool results and hook
+// reminders; normalize them into a single user message at the wire boundary.
 func appendAnthropicMessage(messages []any, role string, content []any) []any {
 	if len(content) == 0 {
 		return messages
@@ -305,12 +305,14 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 		case "":
 		case "end_turn", "stop_sequence":
 			d.stop = StopComplete
+		case "refusal":
+			d.refused, d.stop = true, StopComplete
 		case "tool_use":
 			d.stop = StopTools
 		case "max_tokens":
 			d.stopErr = errOutputLimit
 		default:
-			d.stopErr = errors.New("unsupported model stop reason")
+			d.stopErr = fmt.Errorf("unsupported model stop reason %q", event.Delta.Stop)
 		}
 		// message_delta usage is cumulative, not an increment.
 		d.recordUsage(nil, event.Usage.Output, nil)

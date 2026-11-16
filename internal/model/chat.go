@@ -141,6 +141,7 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 		Choices []struct {
 			Delta struct {
 				Content   string  `json:"content"`
+				Refusal   string  `json:"refusal"`
 				Reasoning *string `json:"reasoning_content"`
 				Calls     []struct {
 					Index    int    `json:"index"`
@@ -176,6 +177,10 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 	delta := Delta{}
 	for _, choice := range event.Choices {
 		delta.Text += choice.Delta.Content
+		if choice.Delta.Refusal != "" {
+			d.refused = true
+			delta.Text += choice.Delta.Refusal
+		}
 		if choice.Delta.Reasoning != nil {
 			d.reasoningReported = true
 			delta.Reasoning += *choice.Delta.Reasoning
@@ -206,6 +211,8 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 				d.stop = StopTools
 			case "length":
 				d.stopErr = errOutputLimit
+			case "content_filter":
+				d.stopErr = errContentFiltered
 			default:
 				d.stopErr = fmt.Errorf("unsupported model stop reason %q", choice.Finish)
 			}
