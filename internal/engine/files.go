@@ -254,7 +254,7 @@ func (e *Engine) SearchWorkspace(ctx context.Context, request contracts.Workspac
 		if request.ProjectID != "" && file.ProjectID != request.ProjectID {
 			continue
 		}
-		if !request.IncludeHidden && strings.HasPrefix(file.Name, ".") {
+		if !request.IncludeHidden && (strings.HasPrefix(file.Name, ".") || hiddenWorkspacePath(file.Path)) {
 			continue
 		}
 		if strings.Contains(strings.ToLower(file.Path), query) && len(result.Files) < fileLimit {
@@ -299,4 +299,13 @@ func (e *Engine) SearchWorkspace(ctx context.Context, request contracts.Workspac
 		}
 	}
 	return result, nil
+}
+
+func hiddenWorkspacePath(path string) bool {
+	for _, part := range strings.Split(strings.ReplaceAll(path, "\\", "/"), "/") {
+		if strings.HasPrefix(part, ".") && part != "." && part != ".." {
+			return true
+		}
+	}
+	return false
 }
