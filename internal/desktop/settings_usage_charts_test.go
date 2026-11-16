@@ -43,56 +43,60 @@ func TestUsageChartModelName(t *testing.T) {
 }
 
 func TestUsageChartsDisplayProviderAndModel(t *testing.T) {
-	for _, dark := range []bool{false, true} {
-		for _, width := range []int{900, 1320} {
-			t.Run(fmt.Sprintf("%d-dark=%v", width, dark), func(t *testing.T) {
-				app := testApp(t, "default")
-				app.state.Settings.Appearance.Mode = "Light"
-				app.state.Settings.Appearance.ThemeID = "rcode-light"
-				if dark {
-					app.state.Settings.Appearance.Mode = "Dark"
-					app.state.Settings.Appearance.ThemeID = "rcode-dark"
-				}
-				app.state.Providers = []contracts.Provider{
-					{ID: "provider-one", Name: "第一供应商"},
-					{ID: "provider-two", Name: "第二供应商"},
-				}
-				app.state.Models = []contracts.Model{
-					{ID: "provider-one/family/model", ProviderID: "provider-one", Label: "family/model"},
-					{ID: "provider-two/family/model", ProviderID: "provider-two", Label: "family/model"},
-				}
-				now := app.now()
-				app.appUsage.report = appusage.Report{Days: map[string]appusage.Day{
-					appusage.Date(now): {
-						Date: now, Tokens: 300,
-						Models: map[string]int64{"provider-one/family/model": 200, "provider-two/family/model": 100},
-					},
-				}}
-				app.appUsage.generated = now
-				app.route, app.section = "settings", "Usage statistics"
-				tt := ui.NewTester(app.View, width, 1400)
-				for _, name := range []string{"第一供应商/family/model", "第二供应商/family/model"} {
-					if !tt.HasText(name) {
-						t.Fatalf("chart legend or model list is missing %q", name)
+	for _, language := range []string{"en", "zh-CN"} {
+		for _, dark := range []bool{false, true} {
+			for _, width := range []int{900, 1320} {
+				t.Run(fmt.Sprintf("%s-%d-dark=%v", language, width, dark), func(t *testing.T) {
+					app := testApp(t, "default")
+					app.state.Settings.General.Language = language
+					tokens := app.t("Tokens")
+					app.state.Settings.Appearance.Mode = "Light"
+					app.state.Settings.Appearance.ThemeID = "rcode-light"
+					if dark {
+						app.state.Settings.Appearance.Mode = "Dark"
+						app.state.Settings.Appearance.ThemeID = "rcode-dark"
 					}
-				}
-				for _, label := range []string{
-					"第一供应商/family/model · 200 Tokens · 66.7%",
-					"第二供应商/family/model · 100 Tokens · 33.3%",
-				} {
-					if _, ok := tt.Find(label); !ok {
-						t.Fatalf("model share identity or accounting is wrong: %q", label)
+					app.state.Providers = []contracts.Provider{
+						{ID: "provider-one", Name: "第一供应商"},
+						{ID: "provider-two", Name: "第二供应商"},
 					}
-				}
-				hint := fmt.Sprintf("%s · 300 Tokens\n第一供应商/family/model · 200\n第二供应商/family/model · 100", appusage.Date(now))
-				if _, ok := tt.Find(hint); !ok {
-					t.Fatalf("trend tooltip is missing resolved model names: %q", hint)
-				}
-				text := strings.Join(tt.Texts(), "\n")
-				if strings.Contains(text, "provider-one/") || strings.Contains(text, "provider-two/") {
-					t.Fatal("charts exposed internal provider identifiers")
-				}
-			})
+					app.state.Models = []contracts.Model{
+						{ID: "provider-one/family/model", ProviderID: "provider-one", Label: "family/model"},
+						{ID: "provider-two/family/model", ProviderID: "provider-two", Label: "family/model"},
+					}
+					now := app.now()
+					app.appUsage.report = appusage.Report{Days: map[string]appusage.Day{
+						appusage.Date(now): {
+							Date: now, Tokens: 300,
+							Models: map[string]int64{"provider-one/family/model": 200, "provider-two/family/model": 100},
+						},
+					}}
+					app.appUsage.generated = now
+					app.route, app.section = "settings", "Usage statistics"
+					tt := ui.NewTester(app.View, width, 1400)
+					for _, name := range []string{"第一供应商/family/model", "第二供应商/family/model"} {
+						if !tt.HasText(name) {
+							t.Fatalf("chart legend or model list is missing %q", name)
+						}
+					}
+					for _, label := range []string{
+						"第一供应商/family/model · 200 " + tokens + " · 66.7%",
+						"第二供应商/family/model · 100 " + tokens + " · 33.3%",
+					} {
+						if _, ok := tt.Find(label); !ok {
+							t.Fatalf("model share identity or accounting is wrong: %q", label)
+						}
+					}
+					hint := fmt.Sprintf("%s · 300 %s\n第一供应商/family/model · 200\n第二供应商/family/model · 100", appusage.Date(now), tokens)
+					if _, ok := tt.Find(hint); !ok {
+						t.Fatalf("trend tooltip is missing resolved model names: %q", hint)
+					}
+					text := strings.Join(tt.Texts(), "\n")
+					if strings.Contains(text, "provider-one/") || strings.Contains(text, "provider-two/") {
+						t.Fatal("charts exposed internal provider identifiers")
+					}
+				})
+			}
 		}
 	}
 }

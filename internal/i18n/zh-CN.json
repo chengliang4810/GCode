@@ -1114,6 +1114,7 @@
   "Input tokens": "输入 Token",
   "Output tokens": "输出 Token",
   "Cached input tokens": "缓存输入 Token",
+  "Tokens": "Token",
   "Total tokens": "总 Token",
   "This project has no supported pull request remote.": "当前项目没有受支持的 PR 远程仓库。",
   "Built-in": "内置",

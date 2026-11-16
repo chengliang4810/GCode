@@ -83,8 +83,9 @@ func (a *App) chooseBackground(state *backgroundSettingsState) {
 	}
 	state.Error = ""
 	window := a.win
+	title := a.t("Choose New Thread Composer Background")
 	go func() {
-		paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{Parent: window, Title: "Choose New Thread Composer Background"})
+		paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{Parent: window, Title: title})
 		window.Update(func() {
 			if a.closed {
 				return

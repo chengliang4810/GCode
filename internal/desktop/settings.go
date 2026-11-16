@@ -805,7 +805,7 @@ func (a *App) themeLibrary(c *ui.Context) {
 				if a.win == nil {
 					return
 				}
-				paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{Parent: a.win, Title: "Choose Theme Source"})
+				paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{Parent: a.win, Title: a.t("Choose Theme Source")})
 				if err != nil {
 					a.notification(err.Error())
 				} else if len(paths) > 0 {

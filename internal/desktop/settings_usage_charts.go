@@ -99,11 +99,11 @@ func (a *App) appUsageHeatmap(c *ui.Context, days []appusage.Day) {
 								color = a.palette.Border.Alpha(.5)
 							}
 						}
-						hint := fmt.Sprintf("%s · %s Tokens · %s",
-							appusage.Date(day.Date), fmt.Sprint(value), fmt.Sprintf(tr(c, "%d turns, %d tools"), day.Turns, day.Tools))
+						hint := fmt.Sprintf("%s · %s %s · %s",
+							appusage.Date(day.Date), fmt.Sprint(value), tr(c, "Tokens"), fmt.Sprintf(tr(c, "%d turns, %d tools"), day.Turns, day.Tools))
 						if state.heatMode == "weekly" || state.heatMode == "cumulative" {
-							hint = fmt.Sprintf("%s – %s · %d Tokens", appusage.Date(days[week*7].Date),
-								appusage.Date(days[week*7+6].Date), value)
+							hint = fmt.Sprintf("%s – %s · %d %s", appusage.Date(days[week*7].Date),
+								appusage.Date(days[week*7+6].Date), value, tr(c, "Tokens"))
 						}
 						ui.Box(c.Key(fmt.Sprintf("usage-day-%s", appusage.Date(day.Date)))).
 							FillWidth().Height(10).Radius(2).Background(color).Label(hint).Tooltip(hint)
@@ -234,7 +234,7 @@ func (a *App) appUsageTrend(c *ui.Context, days []appusage.Day, models []appusag
 			// exposes precise values without adding another visible control.
 			ui.Row(c.Key("usage-daily-values")).Fill().Padding(10, 12, 30, 48).Children(func() {
 				for _, day := range days {
-					hint := fmt.Sprintf("%s · %d Tokens", appusage.Date(day.Date), day.Tokens)
+					hint := fmt.Sprintf("%s · %d %s", appusage.Date(day.Date), day.Tokens, tr(c, "Tokens"))
 					for _, model := range chartModels {
 						value := day.Models[model.ID]
 						if model.ID == "\x00other" {
@@ -273,7 +273,7 @@ func (a *App) appUsageModels(c *ui.Context, models []appusage.Model) {
 		chartModels := usageChartModels(models)
 		ui.Row(c).FillWidth().Wrap().Gap(24).AlignItems(ui.Center).Children(func() {
 			ui.Column(c.Key("usage-model-donut")).Size(190, 190).AlignSelf(ui.Center).Center().
-				Label(fmt.Sprintf("%s: %d Tokens", tr(c, "Model usage"), total)).
+				Label(fmt.Sprintf("%s: %d %s", tr(c, "Model usage"), total, tr(c, "Tokens"))).
 				Draw(func(p *ui.Painter, bounds ui.Rect) {
 					var start float64 = -math.Pi / 2
 					for i, model := range chartModels {
@@ -304,18 +304,18 @@ func (a *App) appUsageModels(c *ui.Context, models []appusage.Model) {
 					}
 				}).Children(func() {
 				ui.Text(c, compactUsage(total)).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500)
-				ui.Text(c, "Tokens").TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall))
+				ui.Text(c, tr(c, "Tokens")).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall))
 			})
 			ui.Column(c.Key("usage-model-list")).Grow(1).MinWidth(180).Gap(12).Children(func() {
 				for i, model := range chartModels {
 					name := a.usageChartModelName(model.ID)
-					hint := fmt.Sprintf("%s · %d Tokens · %.1f%%", name, model.Tokens, 100*float64(model.Tokens)/float64(total))
+					hint := fmt.Sprintf("%s · %d %s · %.1f%%", name, model.Tokens, tr(c, "Tokens"), 100*float64(model.Tokens)/float64(total))
 					ui.Row(c.Key(fmt.Sprintf("usage-model-%d", i))).FillWidth().Gap(8).AlignItems(ui.Center).Label(hint).Tooltip(hint).
 						Children(func() {
 							ui.Box(c).Size(9, 9).Radius(2).Background(a.usageChartColor(i))
 							ui.Column(c).Grow(1).MinWidth(0).Gap(3).Children(func() {
 								ui.Text(c, name).SingleLine()
-								ui.Text(c, compactUsage(model.Tokens)+" Tokens").FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+								ui.Text(c, compactUsage(model.Tokens)+" "+tr(c, "Tokens")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 							})
 							ui.Text(c, fmt.Sprintf("%.1f%%", 100*float64(model.Tokens)/float64(total))).TextColor(a.palette.Muted)
 						})
