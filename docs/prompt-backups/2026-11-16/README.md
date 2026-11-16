@@ -10,7 +10,7 @@
 - `runtime-sections.zh-CN.md`：运行时条件段落中文翻译及拼接说明。
 - `system-prompt-full.en.md`：英文基础正文与运行时条件模板合并版。
 - `system-prompt-full.zh-CN.md`：中文合并版，末尾提供待追加规则区，便于评审和后续修改。
-- `source/`：上述内容涉及的当前源码副本。原有文件改动均保留。
+- `source/`：上述内容涉及的源码副本，以 `.go.txt` 保存，避免被 Go 工具当成可编译包。副本正文及其 SHA-256 保持不变；原始源码路径由去掉 `.txt` 的文件名对应。
 - `source-sha256.json`：源码副本 SHA-256 校验值。
 
 ## 范围与注意事项
