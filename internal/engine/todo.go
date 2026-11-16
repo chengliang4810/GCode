@@ -3,6 +3,8 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"gcode/internal/agent"
@@ -62,8 +64,16 @@ func todoProgress(update agent.TodoUpdate) string {
 // All snapshot paths (initial, reconnect and slow-subscriber recovery) share
 // the same projection used by incremental message events.
 func (e *Engine) snapshotLocked(sessionIDs ...string) contracts.Snapshot {
-	snapshot := contracts.CloneSnapshot(contracts.SessionProjection(e.state, sessionIDs))
+	return contracts.CloneSnapshot(e.snapshotProjectionLocked(sessionIDs...))
+}
+
+// This temporary projection shares core state and may only be used under mu.
+// Project once per scope, then deep-copy for every subscriber.
+func (e *Engine) snapshotProjectionLocked(sessionIDs ...string) contracts.Snapshot {
+	snapshot := contracts.SessionProjection(e.state, sessionIDs)
+	snapshot.Messages = maps.Clone(snapshot.Messages)
 	for sessionID, messages := range snapshot.Messages {
+		messages = slices.Clone(messages)
 		for i := range messages {
 			messages[i] = projectMessageTodos(messages[i])
 		}

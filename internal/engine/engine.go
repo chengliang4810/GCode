@@ -467,6 +467,16 @@ func (e *Engine) publishLocked(event contracts.Event) {
 	}
 	// Each subscriber receives its own deep copy: one subscriber's projection
 	// must never observe another subscriber's mutation.
+	projections := make(map[string]contracts.Snapshot)
+	snapshotFor := func(scope []string) contracts.Snapshot {
+		key := strings.Join(scope, "\x00")
+		projection, ok := projections[key]
+		if !ok {
+			projection = e.snapshotProjectionLocked(scope...)
+			projections[key] = projection
+		}
+		return contracts.CloneSnapshot(projection)
+	}
 	for subID, ch := range e.subs {
 		scope := e.subSessions[subID]
 		owned := event
@@ -475,7 +485,7 @@ func (e *Engine) publishLocked(event contracts.Event) {
 			owned.ExitCode = &value
 		}
 		if event.Message == nil && event.Kind != "message.delta" {
-			snapshot := e.snapshotLocked(scope...)
+			snapshot := snapshotFor(scope)
 			owned.Snapshot = &snapshot
 		}
 		if event.Message != nil {
@@ -497,7 +507,7 @@ func (e *Engine) publishLocked(event contracts.Event) {
 			for len(ch) > 0 {
 				<-ch
 			}
-			snapshot := e.snapshotLocked(scope...)
+			snapshot := snapshotFor(scope)
 			ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 		}
 	}
