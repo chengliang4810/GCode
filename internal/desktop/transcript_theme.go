@@ -15,7 +15,8 @@ func (a *App) prepareTranscriptMarkdown(c *ui.Context) {
 	a.md.Theme = &markdown.Theme{
 		FontSize: fontSize, Font: design.Font(a.state.Settings.Appearance.Font),
 		CodeFont: codeFont, CodeSize: float32(a.state.Settings.Appearance.CodeFontSize) / fontSize,
-		Link: a.palette.Accent, LinkWeight: 500, BlockSpacing: 12 / fontSize, CodeBlockRadius: 10,
+		InlineCodeSize: 1,
+		Link:           a.palette.Accent, LinkWeight: 500, BlockSpacing: 12 / fontSize, CodeBlockRadius: 10,
 		FixedLineHeight:     fontSize * 1.75,
 		CodeFixedLineHeight: float32(a.state.Settings.Appearance.CodeFontSize) * 1.5,
 	}

@@ -216,6 +216,9 @@ Go vet、MyGo vet 和桌面构建再次通过。控件样例、设置页和模�
 此轮全仓测试、Go vet、MyGo vet 和桌面构建通过。原生窗口已更新并检查，
 启动错误日志为空；当前实窗截图为 `output/settings-page-frame/native-model-settings.png`。
 
+对话中的行内代码跟随所在正文或标题的字号，保留等宽字体、灰底及加粗等语义样式。
+独立代码块继续使用外观设置中的代码字体和代码字号；主对话、侧聊及用户消息共用此规则。
+
 ## 标题栏窗口按钮
 
 Windows 窗口通过 `mygo.WindowOptions.HideWindowButtons` 隐藏系统标题栏按钮，

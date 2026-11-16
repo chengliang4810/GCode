@@ -1,6 +1,7 @@
 package markdown
 
 import (
+	"fmt"
 	"os"
 	"slices"
 	"strings"
@@ -420,5 +421,56 @@ func TestRevealBySentence(t *testing.T) {
 	tt.Advance(100 * time.Millisecond)
 	if got := strings.Join(tt.Texts(), ""); got != text {
 		t.Errorf("done, shows %q", got)
+	}
+}
+
+func TestInlineCodeFollowsSurroundingSize(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{320, 900} {
+			t.Run(fmt.Sprintf("dark=%v/width=%d", dark, width), func(t *testing.T) {
+				source := "已改成：**`安全设备统计.xlsx`** → `01-危险源`（17 项）\n\n# 标题 `heading`\n\n```text\nblock\n```"
+				options := &Options{Theme: &Theme{FontSize: 14, CodeSize: 12.0 / 14, InlineCodeSize: 1}}
+				var st *viewState
+				tt := ui.NewTester(func(c *ui.Context) {
+					if dark {
+						c.SetTheme(ui.DarkTheme())
+					} else {
+						c.SetTheme(ui.LightTheme())
+					}
+					st = *ui.Local(View(c, source, options), stateKey{}, newState)
+				}, width, 700)
+				found := 0
+				for _, paragraph := range st.paras {
+					for _, piece := range paragraph.p.pieces {
+						for _, span := range piece.spans {
+							want := float32(14)
+							switch span.Text {
+							case "安全设备统计.xlsx", "01-危险源":
+							case "heading":
+								want = st.th.em(st.th.Headings[0].Size)
+							default:
+								continue
+							}
+							found++
+							if span.Size != want || span.Font != st.th.CodeFont || span.Background != st.th.CodeBackground {
+								t.Fatalf("inline code lost surrounding size or code styling: %+v, want size %v", span, want)
+							}
+							if span.Text == "安全设备统计.xlsx" && span.Weight != st.th.StrongWeight {
+								t.Fatal("bold code lost weight")
+							}
+						}
+					}
+				}
+				if found != 3 {
+					t.Fatalf("found %d inline code spans", found)
+				}
+				if st.th.em(st.th.CodeSize) != 12 {
+					t.Fatal("code block size changed")
+				}
+				if _, ok := tt.Find("block"); !ok {
+					t.Fatal("code block missing")
+				}
+			})
+		}
 	}
 }
