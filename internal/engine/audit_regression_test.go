@@ -64,6 +64,8 @@ func TestPublishedSnapshotsRetainIndependentSubscriberOwnership(t *testing.T) {
 func TestUnchangedIndexAvoidsReplacementButRepairsMissingFile(t *testing.T) {
 	core := openStorageTestCore(t, t.TempDir())
 	t.Cleanup(func() { _ = core.Close() })
+	core.mu.Lock()
+	defer core.mu.Unlock()
 	if err := core.persistLocked(); err != nil {
 		t.Fatal(err)
 	}

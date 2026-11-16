@@ -73,7 +73,7 @@ type Engine struct {
 	trajectoryIssues   map[string]error
 	toolGuard          ToolGuard
 	instructionsMu     sync.Mutex
-	mu                 sync.Mutex
+	mu                 stateMutex
 	storage            *storage.Store
 	sessionHashes      map[string][32]byte
 	sessionDirty       map[string]struct{}
@@ -81,6 +81,7 @@ type Engine struct {
 	indexHashKnown     bool
 	sessionRecords     map[string]string
 	persistErrors      []error
+	persistLiveRead    bool
 	loadedSessions     map[string]bool
 	client             *model.Client
 	state              contracts.Snapshot
@@ -206,7 +207,10 @@ func Open(options Options) (*Engine, error) {
 	}
 	e.state.Plugins = e.pluginProjection()
 	e.applyPluginConfiguredLocked()
-	if err := e.persistLocked(); err != nil {
+	e.mu.Lock()
+	err = e.persistLocked()
+	e.mu.Unlock()
+	if err != nil {
 		return nil, err
 	}
 	e.catalog = options.Catalog
@@ -247,6 +251,26 @@ func Open(options Options) (*Engine, error) {
 func (e *Engine) Bootstrap(ctx context.Context) (contracts.Snapshot, error) { return e.Snapshot(ctx) }
 func (e *Engine) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.Snapshot, error) {
 	sessionIDs = uniqueSessionIDs(sessionIDs)
+	// Only nonterminal progress saves permit live reads. Commands and final
+	// settlement must finish before snapshots can expose their result.
+	e.mu.view.Lock()
+	ready := e.persistLiveRead
+	for _, sessionID := range sessionIDs {
+		if e.sessionIndex(sessionID) >= 0 && !e.loadedSessions[sessionID] {
+			ready = false
+			break
+		}
+	}
+	if ready {
+		err := e.checkLocked(ctx)
+		var snapshot contracts.Snapshot
+		if err == nil {
+			snapshot = e.snapshotLocked(sessionIDs...)
+		}
+		e.mu.view.Unlock()
+		return snapshot, err
+	}
+	e.mu.view.Unlock()
 	if err := e.prepareSessionView(ctx, sessionIDs); err != nil {
 		return contracts.Snapshot{}, err
 	}

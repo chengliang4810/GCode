@@ -56,7 +56,10 @@ func benchmarkSessionPersistenceCore(b *testing.B, count int) *Engine {
 		core.loadedSessions[id] = true
 		ids = append(ids, id)
 	}
-	if err := core.persistLocked(ids...); err != nil {
+	core.mu.Lock()
+	err = core.persistLocked(ids...)
+	core.mu.Unlock()
+	if err != nil {
 		b.Fatal(err)
 	}
 	return core
@@ -69,8 +72,11 @@ func BenchmarkPersistDirtySessionAmong100(b *testing.B) {
 	for b.Loop() {
 		iteration++
 		id := core.state.Sessions[0].ID
+		core.mu.Lock()
 		core.state.Sessions[0].Title = fmt.Sprintf("Conversation %d", iteration)
-		if err := core.persistLocked(id); err != nil {
+		err := core.persistLocked(id)
+		core.mu.Unlock()
+		if err != nil {
 			b.Fatal(err)
 		}
 	}

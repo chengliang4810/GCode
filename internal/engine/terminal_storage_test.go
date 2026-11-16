@@ -226,7 +226,9 @@ func TestStandaloneTerminalCloseRemovesOnlyCommittedUnreferencedOutput(t *testin
 					t.Fatal(err)
 				}
 			}
+			core.mu.Lock()
 			cleanup, err := core.closeTerminalLocked(item.ID)
+			core.mu.Unlock()
 			if cleanup != nil {
 				cleanup()
 			}
@@ -260,7 +262,10 @@ func TestStandaloneTerminalFirstOutputFailureSurvivesRestart(t *testing.T) {
 	if err := os.WriteFile(blocker, []byte("block writes"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := core.persistLocked(); err != nil {
+	core.mu.Lock()
+	persistErr := core.persistLocked()
+	core.mu.Unlock()
+	if err := persistErr; err != nil {
 		t.Fatal("one failed output blocked the configuration index", err)
 	}
 	if !core.state.Terminals[0].OutputIncomplete || core.state.Terminals[0].OutputRef != "" {
@@ -279,7 +284,10 @@ func TestStandaloneTerminalFirstOutputFailureSurvivesRestart(t *testing.T) {
 		t.Fatalf("restart pretended an unsaved output was complete empty history: %+v", item)
 	}
 	core.state.Terminals[0].Output = "actual new runtime output"
-	if err := core.persistLocked(); err != nil {
+	core.mu.Lock()
+	persistErr = core.persistLocked()
+	core.mu.Unlock()
+	if err := persistErr; err != nil {
 		t.Fatal(err)
 	}
 	if core.state.Terminals[0].OutputIncomplete || core.state.Terminals[0].StorageError != "" ||
@@ -295,7 +303,10 @@ func TestStandaloneTerminalFailedUpdateKeepsIncompleteFlagAfterOldReferenceReloa
 		ID: "terminal-prior-output", StorageRootID: core.storage.ActiveRootID(),
 		Status: "exited", Output: "committed output",
 	}}
-	if err := core.persistLocked(); err != nil {
+	core.mu.Lock()
+	persistErr := core.persistLocked()
+	core.mu.Unlock()
+	if err := persistErr; err != nil {
 		t.Fatal(err)
 	}
 	oldRef := core.state.Terminals[0].OutputRef
@@ -308,7 +319,10 @@ func TestStandaloneTerminalFailedUpdateKeepsIncompleteFlagAfterOldReferenceReloa
 		t.Fatal(err)
 	}
 	core.state.Terminals[0].Output += "\nunsaved tail"
-	if err := core.persistLocked(); err != nil {
+	core.mu.Lock()
+	persistErr = core.persistLocked()
+	core.mu.Unlock()
+	if err := persistErr; err != nil {
 		t.Fatal("failed terminal update blocked global persistence", err)
 	}
 	if core.state.Terminals[0].OutputRef != oldRef || !core.state.Terminals[0].OutputIncomplete {
@@ -329,7 +343,10 @@ func TestStandaloneTerminalFailedUpdateKeepsIncompleteFlagAfterOldReferenceReloa
 	if item.Output != "committed output" || item.OutputRef != oldRef || !item.OutputIncomplete || item.StorageError == "" {
 		t.Fatalf("old-reference reload hid the unsaved tail: %+v", item)
 	}
-	if err := core.persistLocked(); err != nil {
+	core.mu.Lock()
+	persistErr = core.persistLocked()
+	core.mu.Unlock()
+	if err := persistErr; err != nil {
 		t.Fatal(err)
 	}
 	if !core.state.Terminals[0].OutputIncomplete || core.state.Terminals[0].StorageError == "" {

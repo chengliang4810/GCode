@@ -205,10 +205,10 @@ func (e *Engine) markSessionDirtyLocked(sessionIDs ...string) {
 	}
 }
 
-func (e *Engine) persistLocked(required ...string) (resultErr error) {
+// commitPersistence operates on a detached persistence view. It must not read or
+// mutate the live Engine; the owning transaction keeps its source bodies stable.
+func (e *Engine) commitPersistence(required ...string) (resultErr error) {
 	e.persistErrors = nil
-	e.markSessionDirtyLocked(required...)
-	e.refreshStatisticsLocked()
 	records := maps.Clone(e.sessionRecords)
 	hashes := maps.Clone(e.sessionHashes)
 	dirty := maps.Clone(e.sessionDirty)

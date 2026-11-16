@@ -67,7 +67,7 @@ func (m meteredModel) recordAttempt(result model.Result) error {
 	})
 	// Accounting survives an error or cancellation even when no assistant
 	// execution message can safely be committed.
-	err := m.core.persistLocked(m.sessionID)
+	err := m.core.persistProgressLocked(m.sessionID)
 	m.core.publishLocked(contracts.Event{Kind: "model.request.recorded", SessionID: m.sessionID, RunID: m.turnID})
 	return err
 }

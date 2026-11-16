@@ -26,7 +26,7 @@ func (e *Engine) flushRunningConversations(ctx context.Context) {
 					}
 				}
 				if len(dirty) > 0 {
-					if err := e.persistLocked(dirty...); err != nil {
+					if err := e.persistProgressLocked(dirty...); err != nil {
 						log.Printf("flush running conversations: %v", err)
 					}
 				}

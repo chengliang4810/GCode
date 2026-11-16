@@ -673,15 +673,13 @@ func (e *Engine) startRunWithProvidersLocked(
 						run.sideChatContext = model.CloneMessages(e.context[session.ID])
 					}
 					e.markSessionDirtyLocked(session.ID)
-					// A turn records many messages; rewriting the conversation and
-					// its index for each one holds the engine lock across a durable
-					// write. Persist at a bounded cadence instead, and always at the
-					// turn's end.
+					// Save nonterminal progress at a bounded cadence. Readers may
+					// inspect it during I/O; final settlement uses a read barrier.
 					if time.Since(run.lastPersist) < messagePersistInterval {
 						return nil
 					}
 					run.lastPersist = time.Now()
-					return e.persistLocked(session.ID)
+					return e.persistProgressLocked(session.ID)
 				},
 				ReplaceContext: func(messages []model.Message) error {
 					e.mu.Lock()
