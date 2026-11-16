@@ -130,6 +130,62 @@ func TestSemanticToolsRenderReadableActivity(t *testing.T) {
 	}
 }
 
+func TestContextToolsRenderReadableActivity(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, language := range []string{"en", "zh-CN"} {
+			for _, width := range []int{300, 900} {
+				t.Run(fmt.Sprintf("%s-dark-%t-%d", language, dark, width), func(t *testing.T) {
+					a := testApp(t, "default")
+					a.palette = design.Palette("rcode", dark)
+					cases := []struct{ name, english, chinese string }{
+						{"ContextStatus", "View context status", "查看上下文状态"},
+						{"CompressContext", "Compress context", "压缩上下文"},
+						{"SearchContext", "Search context history", "搜索历史上下文"},
+						{"DecompressContext", "Read archived context", "读取归档上下文"},
+					}
+					tt := ui.NewTester(func(c *ui.Context) {
+						localize.Set(c, language)
+						c.SetTheme(a.palette.UI())
+						c.DisableAnimations()
+						ui.Column(c).Fill().Children(func() {
+							for _, test := range cases {
+								tool := contracts.ToolCall{
+									Kind: contracts.ToolUnknown, Name: test.name, Summary: test.name,
+									Status: "completed", Args: `{}`, Output: "context result",
+								}
+								a.activityItem(c, test.name, contracts.Block{ID: test.name, Kind: "tool", Tool: &tool},
+									false, false, activityRowMotion{settled: true})
+							}
+						})
+					}, width, 600)
+					for _, test := range cases {
+						label := test.english
+						if language == "zh-CN" {
+							label = test.chinese
+						}
+						if !tt.HasText(label) {
+							t.Fatalf("incorrect context tool title %q: %v", label, tt.Texts())
+						}
+						_, detail, _ := activityTitle(contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{
+							Kind: contracts.ToolUnknown, Name: test.name, Summary: test.name,
+						}})
+						if detail != "" {
+							t.Fatalf("raw tool name leaked into visible detail: %q", detail)
+						}
+						if err := tt.Click(label + ": " + test.name); err != nil {
+							t.Fatal(err)
+						}
+					}
+					tt.Advance(time.Second)
+					if !tt.HasText("context result") {
+						t.Fatal("context tool output is missing from expanded details")
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestGoalDetailShowsEmptyStateAndPreservesReadErrors(t *testing.T) {
 	tool := contracts.ToolCall{Kind: contracts.ToolGoalRead, Name: "goal_read", Status: "completed", Args: `{}`}
 	var source activityDetailSource

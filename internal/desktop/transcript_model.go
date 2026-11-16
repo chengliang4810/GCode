@@ -445,6 +445,16 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 	case contracts.ToolMCP:
 		return "Call tool", t.Summary, "widget"
 	default:
+		switch t.Name {
+		case "ContextStatus":
+			return "View context status", "", "widget"
+		case "CompressContext":
+			return "Compress context", "", "widget"
+		case "SearchContext":
+			return "Search context history", "", "widget"
+		case "DecompressContext":
+			return "Read archived context", "", "widget"
+		}
 		return "Tool", firstNonempty(t.Name, t.Summary), "widget"
 	}
 }
