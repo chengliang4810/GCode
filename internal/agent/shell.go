@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"gcode/internal/model"
+	"gcode/internal/processutil"
 )
 
 // RunShell runs command in the requested shell without loading user profiles.
@@ -80,7 +81,7 @@ func newShellCommand(ctx context.Context, cwd, shell, command string, env map[st
 		}
 		return key
 	}
-	for _, entry := range os.Environ() {
+	for _, entry := range processutil.ToolEnvironment(os.Environ()) {
 		name, value, ok := strings.Cut(entry, "=")
 		if ok {
 			key := normalize(name)

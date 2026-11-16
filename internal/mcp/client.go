@@ -200,7 +200,7 @@ func ConnectWithOptions(ctx context.Context, config Config, cwd string, options 
 		command := exec.CommandContext(life, config.Command, config.Args...)
 		command.Dir = cwd
 		command.WaitDelay = 2 * time.Second
-		command.Env = processutil.Environment(os.Environ(), config.ProcessEnv, config.Env)
+		command.Env = processutil.Environment(processutil.ToolEnvironment(os.Environ()), config.ProcessEnv, config.Env)
 		stdout, err := command.StdoutPipe()
 		if err != nil {
 			return nil, err

@@ -292,7 +292,7 @@ func hookEnvironment(rule contracts.HookRule, input HookInput) []string {
 	for key, value := range rule.UserConfig {
 		owned["CLAUDE_PLUGIN_OPTION_"+strings.ToUpper(key)] = value
 	}
-	for _, pair := range os.Environ() {
+	for _, pair := range processutil.ToolEnvironment(os.Environ()) {
 		key, _, _ := strings.Cut(pair, "=")
 		if strings.HasPrefix(strings.ToUpper(key), "OTEL_") || !envFileAvailable && strings.EqualFold(key, "CLAUDE_ENV_FILE") {
 			continue

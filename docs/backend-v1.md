@@ -153,6 +153,9 @@ JSON 仍使用临时文件与原子替换；Windows 有界重试不会先删除�
   超时单位为毫秒，默认 120000，最大 600000；不加载用户 profile 或 BASH_ENV。
   SessionStart Hook 收到受管 CLAUDE_ENV_FILE 后可向其写入 Bash 环境，后续命令显式加载
   该会话文件；不会使用用户任意 BASH_ENV。PowerShell 不加载这份 Bash 环境文件。
+  Bash、Hook 和 stdio MCP 默认只继承白名单中的系统/工具链运行变量，不继承任意
+  供应商或云服务凭据。需要凭据的 MCP 在其 `Env` 中显式配置；Bash 的会话环境
+  继续使用上述受管文件，不增加隐式继承回退。
   动态上下文和 Hook 可明确选择 PowerShell，原生交互式终端的 shell 配置独立。
 - `Bash.run_in_background` 启动宿主会话拥有的任务；模型回合结束或远程客户端断开
   不终止已接受的后台命令。`TaskOutput` 按 ID 读取并可限时等待，`TaskStop` 只停止

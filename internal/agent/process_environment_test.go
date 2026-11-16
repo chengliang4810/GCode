@@ -41,6 +41,20 @@ func TestBashUsesOwnedTemporaryDirectory(t *testing.T) {
 	}
 }
 
+func TestBashAndHooksDoNotInheritProviderCredentials(t *testing.T) {
+	t.Setenv("ANTHROPIC_API_KEY", "ambient-provider-secret")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", "ambient-cloud-secret")
+	out, err := RunShell(t.Context(), t.TempDir(), "bash",
+		`printf '%s|%s' "$ANTHROPIC_API_KEY" "$AWS_SECRET_ACCESS_KEY"`, nil, 10*time.Second, nil)
+	if err != nil || out.Text != "|" {
+		t.Fatalf("shell inherited credentials: %q %v", out.Text, err)
+	}
+	env := strings.Join(hookEnvironment(contracts.HookRule{}, HookInput{}), "\n")
+	if strings.Contains(env, "ambient-provider-secret") || strings.Contains(env, "ambient-cloud-secret") {
+		t.Fatal("hook inherited credentials")
+	}
+}
+
 func TestHookProcessReceivesTypedEnvironmentWithoutJSONLeak(t *testing.T) {
 	executable, err := os.Executable()
 	if err != nil {
