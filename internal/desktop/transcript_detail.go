@@ -25,6 +25,9 @@ type activityDetailState struct {
 
 func detailSource(block contracts.Block, live bool) activityDetailSource {
 	source := activityDetailSource{kind: block.Kind, text: block.Text, live: live}
+	if block.Hook != nil {
+		source.output = block.Hook.Details
+	}
 	if t := block.Tool; t != nil {
 		source.command, source.args, source.path, source.output = t.Command, t.Args, t.Path, t.Output
 		if t.Kind == contracts.ToolTodo && t.Status == "completed" && !t.IsError {
@@ -92,6 +95,9 @@ func detailLines(source activityDetailSource) []thoughtLine {
 
 func readableDetailSource(c *ui.Context, block contracts.Block, live bool) activityDetailSource {
 	source := detailSource(block, live)
+	if block.Hook != nil && block.Hook.ExitCode != nil {
+		source.command = fmt.Sprintf(tr(c, "Exit code: %d"), *block.Hook.ExitCode)
+	}
 	tool := block.Tool
 	if tool == nil || tool.IsError {
 		return source

@@ -136,6 +136,14 @@ func CloneBlocks(src []Block) []Block {
 	out := slices.Clone(src)
 	for i := range out {
 		b := &out[i]
+		if b.Hook != nil {
+			record := *b.Hook
+			if record.ExitCode != nil {
+				code := *record.ExitCode
+				record.ExitCode = &code
+			}
+			b.Hook = &record
+		}
 		if b.Annotation != nil {
 			v := b.Annotation.Bounded()
 			b.Annotation = &v

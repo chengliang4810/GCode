@@ -160,6 +160,7 @@ type Message struct {
 
 // Block is a tagged union. Exactly the payload matching Kind is populated.
 type Block struct {
+	Hook       *HookRecord `json:"hook,omitempty"`
 	Annotation *Annotation `json:"annotation,omitempty"`
 	ID         string      `json:"id"`
 	Kind       string      `json:"kind"`

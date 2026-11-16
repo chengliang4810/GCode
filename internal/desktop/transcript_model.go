@@ -252,6 +252,12 @@ func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint
 		hash = fnvMix(hash, block.ID)
 		hash = fnvMix(hash, block.Kind)
 		hash = fnvMixInt(hash, len(block.Text))
+		if hook := block.Hook; hook != nil {
+			hash = fnvMix(hash, hook.Name)
+			hash = fnvMix(hash, string(hook.Event))
+			hash = fnvMix(hash, hook.Status)
+			hash = fnvMixInt(hash, len(hook.Details))
+		}
 		if tool := block.Tool; tool != nil {
 			hash = fnvMix(hash, tool.ID)
 			hash = fnvMix(hash, string(tool.Kind))
@@ -390,6 +396,9 @@ func conversationRows(entries []contracts.Message, rowsOf func(contracts.Message
 }
 
 func activityTitle(block contracts.Block) (label, detail, glyph string) {
+	if block.Hook != nil {
+		return "Hook", block.Hook.Name, "widget"
+	}
 	if block.Kind == "reasoning" {
 		return "Thought process", "", "chat-round-line"
 	}

@@ -117,7 +117,7 @@ func TestHooksExecuteFromUserSettingsInRealEngineLifecycle(t *testing.T) {
 	visibleHooks := 0
 	for _, message := range state.Messages[state.Sessions[0].ID] {
 		for _, block := range message.Blocks {
-			if strings.HasPrefix(block.Text, "Hook ") {
+			if block.Kind == "hook" && block.Hook != nil {
 				visibleHooks++
 			}
 		}

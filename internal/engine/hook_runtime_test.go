@@ -423,7 +423,7 @@ func TestHookRuntimeEventsExposeActualProcessResultAndIdentity(t *testing.T) {
 	session := state.Sessions[0]
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	events, err := core.Subscribe(ctx)
+	events, err := core.Subscribe(ctx, session.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -448,6 +448,15 @@ func TestHookRuntimeEventsExposeActualProcessResultAndIdentity(t *testing.T) {
 			}
 			if event.ResourceID != rule.ID || event.ComponentID != rule.ID || event.PluginID != rule.PluginID || event.ExitCode == nil || *event.ExitCode != 0 || event.Error != "" || event.Text != `{}` {
 				t.Fatalf("lost actual process evidence: %+v", event)
+			}
+			if event.Message == nil || len(event.Message.Blocks) != 1 {
+				t.Fatalf("hook record missing from event: %+v", event)
+			}
+			block := event.Message.Blocks[0]
+			if block.Kind != "hook" || block.Text != "" || block.Hook == nil ||
+				block.Hook.RuleID != rule.ID || block.Hook.Event != contracts.HookStop ||
+				block.Hook.Status != "completed" || block.Hook.Details != `{}` {
+				t.Fatalf("hook event was rendered as reply text or lost its typed evidence: %+v", block)
 			}
 			return
 		default:

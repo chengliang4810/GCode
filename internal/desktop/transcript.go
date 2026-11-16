@@ -481,6 +481,9 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	if block.Tool != nil && block.Tool.Failed() {
 		color = a.palette.Danger
 	}
+	if block.Hook != nil && (block.Hook.Status == "failed" || block.Hook.Status == "blocked") {
+		color = a.palette.Danger
+	}
 	if tool := block.Tool; tool != nil && tool.Status == "completed" && !tool.Failed() {
 		change = tool.Diff
 	}
@@ -498,6 +501,9 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 			accessibleDetail = block.ID
 		}
 		accessibleLabel := tr(c, label) + ": " + accessibleDetail
+		if block.Hook != nil {
+			accessibleLabel += " · " + string(block.Hook.Event) + " · " + tr(c, hookStatusLabel(block.Hook.Status))
+		}
 		if change != nil {
 			accessibleLabel += fmt.Sprintf(" +%d -%d", change.Additions, change.Deletions)
 		}
@@ -517,7 +523,8 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 			})
 			ui.Row(c).Grow(1).MinWidth(0).Height(30).Margin(0, 0, 0, activityTextGap).AlignItems(ui.Center).Gap(8).TextColor(color).Children(func() {
 				text := color
-				if trigger.Hovered() && (block.Tool == nil || !block.Tool.Failed()) {
+				if trigger.Hovered() && (block.Tool == nil || !block.Tool.Failed()) &&
+					(block.Hook == nil || block.Hook.Status != "failed" && block.Hook.Status != "blocked") {
 					text = a.palette.Text
 				}
 				ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(text).SingleLine().Shrink(0)
@@ -528,6 +535,12 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 				}
 				if change != nil {
 					controlDiffStats(c.Key("activity-diff-stats:"+id), change.Additions, change.Deletions)
+				}
+				if block.Hook != nil {
+					ui.Text(c, string(block.Hook.Event)).Shrink(0).
+						FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
+					ui.Text(c, tr(c, hookStatusLabel(block.Hook.Status))).Shrink(0).
+						FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
 				}
 				progress := parts.Progress()
 				tile := ui.Box(c.Key("activity-chevron:"+id)).Size(18, 18).Shrink(0)

@@ -187,3 +187,22 @@ elicitation 动作与终端控制序列尚未全部获得宿主动作实现；
 本次替换了旧文档中七事件、`process`、Windows 默认 PowerShell、
 30 秒统一默认超时、camelCase stdin、顶层 allow/deny、任意 stdout 注入上下文、
 所有工具必发 PermissionRequest 和执行错误中止运行等描述。这些旧约定不再保留。
+
+## 会话中的执行记录
+
+所有事件及 command/http/prompt/agent/mcp_tool handler 共用同一记录入口。
+执行完成后保存 `kind: "hook"` 与类型化 `HookRecord`，不再把日志拼为普通回复正文。
+记录保留规则、插件身份、事件、状态、真实进程退出码及脱敏详情；
+非命令 handler 不伪造进程退出码。
+
+桌面主对话与侧聊复用现有活动折叠组件，默认只显示名称、事件和本地化状态。
+完成、阻止、停止与失败分别显示；阻止或失败沿用活动行的错误颜色。
+点击、Enter 或 Space 可展开详情，输出使用现有可选择、双向滚动的详情视口，
+最多显示 24 行。长名称收缩，事件与状态保持可见。
+Hook 详情不进入回复复制，也不计作模型的工具调用或进度说明。
+
+`suppressOutput` 控制详情中的 stdout，同步、`async`、`asyncRewake` 均保留该标记；
+stderr、显式通知和执行错误仍可在详情中检查。`hook.finished` 继续保留脱敏审计输出。
+折叠展示不改变 `additionalContext` 注入、权限决策、参数改写及后台结果投递。
+现有普通文本历史不解析、不迁移或改写，新记录采用上述结构。
+专项验证与证据见 [Hook 执行记录修复](hook-records-2026-11-16.md)。

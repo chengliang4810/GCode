@@ -41,41 +41,7 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		redactionsMu.Lock()
 		redactions[execution.Rule.ID] = redact
 		redactionsMu.Unlock()
-		name := execution.Rule.Name
-		if name == "" {
-			name = execution.Rule.ID
-		}
-		text := "Hook " + name + " · " + string(execution.Input.Event)
-		if execution.Err != nil {
-			text += "\n" + execution.Err.Error()
-		} else if execution.Rule.Async || execution.Rule.AsyncRewake {
-			text += "\nNotification completed."
-		} else if execution.Result.Deny {
-			text += "\nBlocked: " + execution.Result.Reason
-		} else {
-			text += "\nCompleted."
-		}
-		if fields := unsupportedHookOutputs(execution.Result); len(fields) > 0 {
-			text += "\nHost action is not implemented: " + strings.Join(fields, ", ") + "."
-		}
-		if raw := execution.Result.UpdatedToolOutput; raw != nil {
-			if err := agent.ValidateHookToolOutput(execution.Input.ToolName, raw, execution.Input.ToolOutput); err != nil {
-				text += "\nIgnored invalid updatedToolOutput: " + err.Error()
-			}
-		}
-		if execution.Result.UpdatedMCPToolOutput != nil && !strings.HasPrefix(execution.Input.ToolName, "mcp__") {
-			text += "\nIgnored updatedMCPToolOutput for a builtin tool."
-		}
-		if execution.Result.SystemMessage != "" {
-			text += "\n" + execution.Result.SystemMessage
-		}
-		if output := strings.TrimSpace(execution.Output); output != "" && !execution.Result.SuppressOutput {
-			text += "\n" + output
-		}
-		if stderr := strings.TrimSpace(execution.Stderr); stderr != "" {
-			text += "\n" + stderr
-		}
-		text = redact(text)
+		record := hookExecutionRecord(execution, redact)
 		title := redact(execution.Result.SessionTitle)
 		if execution.Input.Event == contracts.HookSessionStart && !slices.Contains([]string{"startup", "resume", "fork"}, execution.Input.Source) {
 			title = ""
@@ -95,7 +61,7 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		message := contracts.Message{
 			ID: id("message"), SessionID: session.ID, TurnID: run.id,
 			Role: "assistant", CreatedAt: time.Now(),
-			Blocks: []contracts.Block{{ID: id("block"), Kind: "text", Text: text}},
+			Blocks: []contracts.Block{{ID: id("block"), Kind: "hook", Hook: &record}},
 		}
 		e.state.Messages[session.ID] = append(e.state.Messages[session.ID], message)
 		if err := e.persistLocked(session.ID); err != nil {
@@ -107,11 +73,6 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		if goalCleared {
 			e.publishLocked(contracts.Event{Kind: "goal.changed", SessionID: session.ID, RunID: run.id})
 		}
-		var exitCode *int
-		if execution.ExitCodeKnown {
-			value := execution.ExitCode
-			exitCode = &value
-		}
 		failure := ""
 		if execution.Err != nil {
 			failure = redact(execution.Err.Error())
@@ -119,7 +80,7 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		e.publishLocked(contracts.Event{
 			Kind: "hook.finished", SessionID: session.ID, RunID: run.id, Message: &message,
 			PluginID: execution.Rule.PluginID, ComponentID: execution.Rule.ID, ResourceID: execution.Rule.ID,
-			Text: redact(execution.Output), Error: failure, ExitCode: exitCode,
+			Text: redact(execution.Output), Error: failure, ExitCode: record.ExitCode,
 		})
 		return nil
 	}, agent.WithHookEvaluator(hookRuntimeEvaluator(options, session)), agent.WithHookOnceState(options.OnceState),

@@ -1083,6 +1083,8 @@
   "Expand all": "全部展开",
   "Collapse all": "全部折叠",
   "Completed": "已完成",
+  "Hook": "钩子",
+  "Blocked": "已阻止",
   "Output": "输出",
   "Tool definitions": "工具定义",
   "Copy call": "复制调用",
