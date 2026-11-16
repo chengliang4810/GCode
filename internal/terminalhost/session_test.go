@@ -81,11 +81,12 @@ func TestRealShellInputResizeInterruptDetachAndExit(t *testing.T) {
 		t.Fatal("invalid size accepted")
 	}
 	if runtime.GOOS == "windows" {
-		write("Start-Sleep -Seconds 30")
+		write(proof("sleeping.txt", "started") + "; Start-Sleep -Seconds 30")
 	} else {
-		write("sleep 30")
+		write(proof("sleeping.txt", "started") + "; sleep 30")
 	}
-	time.Sleep(300 * time.Millisecond)
+	// Wait for shell execution rather than assuming input was processed.
+	waitProof("sleeping.txt", "started")
 	beforeInterrupt := len(host.History())
 	if _, err = first.Write([]byte{3}); err != nil {
 		t.Fatal(err)
