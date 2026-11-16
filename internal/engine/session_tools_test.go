@@ -100,7 +100,7 @@ func TestSessionDeleteJoinsBackgroundOwnerOutsideEngineLock(t *testing.T) {
 		t.Fatalf("unrelated owner was cancelled: %s", out.Text)
 	}
 	out = callSessionTestTool(t, otherTools, "Bash", map[string]any{"command": "printf still-open"})
-	if out.Text != "still-open" {
+	if out.Data.(map[string]any)["stdout"] != "still-open" {
 		t.Fatalf("unrelated owner cannot accept further work: %s", out.Text)
 	}
 	if _, err := core.sessionRuntimeTools(deleted, ""); err == nil {
@@ -156,7 +156,7 @@ func TestSessionDeletePersistenceFailureKeepsBackgroundOwner(t *testing.T) {
 		t.Fatalf("failed delete killed accepted background work: %s", out.Text)
 	}
 	out = callSessionTestTool(t, tools, "Bash", map[string]any{"command": "printf retained"})
-	if out.Text != "retained" {
+	if out.Data.(map[string]any)["stdout"] != "retained" {
 		t.Fatalf("failed delete closed its owner: %s", out.Text)
 	}
 }
