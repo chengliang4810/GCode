@@ -23,7 +23,11 @@ func TestSubscriptionReportsDisconnectAndReconnectWithoutReplayingTasks(t *testi
 			return
 		}
 		attempt := requests.Add(1)
+		if attempt > 1 && r.Header.Get("Last-Event-ID") != "host:7" {
+			t.Errorf("reconnect lost event cursor: %q", r.Header.Get("Last-Event-ID"))
+		}
 		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, "id: host:7\n")
 		fmt.Fprintf(w, "data: {\"kind\":\"snapshot\",\"revision\":%d,\"snapshot\":{\"revision\":%d}}\n\n", attempt, attempt)
 		w.(http.Flusher).Flush()
 		if attempt == 1 {

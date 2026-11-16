@@ -3,11 +3,13 @@ package remote
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +26,7 @@ func (s Server) Handler() (http.Handler, error) {
 		return nil, errors.New("remote API token must contain at least 24 characters")
 	}
 	mux := http.NewServeMux()
+	streamID := rand.Text()
 	s.resourceHandlers(mux)
 	s.linkedFileHandlers(mux)
 	s.terminalHandlers(mux)
@@ -105,7 +108,22 @@ func (s Server) Handler() (http.Handler, error) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		stream, err := s.Core.Subscribe(r.Context(), sessionIDs...)
+		var after uint64
+		resuming := false
+		if epoch, cursor, found := strings.Cut(r.Header.Get("Last-Event-ID"), ":"); found && epoch == streamID {
+			resuming = true
+			after, err = strconv.ParseUint(cursor, 10, 64)
+			if err != nil {
+				http.Error(w, "invalid event cursor", http.StatusBadRequest)
+				return
+			}
+		}
+		var stream <-chan contracts.Event
+		if resume, ok := s.Core.(contracts.EventResumeService); ok && resuming {
+			stream, err = resume.SubscribeFrom(r.Context(), after, sessionIDs...)
+		} else {
+			stream, err = s.Core.Subscribe(r.Context(), sessionIDs...)
+		}
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
@@ -141,7 +159,7 @@ func (s Server) Handler() (http.Handler, error) {
 					return
 				}
 				_ = controller.SetWriteDeadline(time.Now().Add(15 * time.Second))
-				if _, err := fmt.Fprintf(w, "id: %d\ndata: %s\n\n", event.Sequence, data); err != nil {
+				if _, err := fmt.Fprintf(w, "id: %s:%d\ndata: %s\n\n", streamID, event.Sequence, data); err != nil {
 					return
 				}
 				if err := controller.Flush(); err != nil {

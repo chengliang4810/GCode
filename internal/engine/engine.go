@@ -103,6 +103,8 @@ type Engine struct {
 	sessionReads       map[string]*sessionRead
 	subNext            uint64
 	sequence           uint64
+	recentEvents       []contracts.Event
+	eventFloor         uint64
 	closed             bool
 	done               chan struct{}
 	wg                 sync.WaitGroup
@@ -257,6 +259,14 @@ func (e *Engine) Snapshot(ctx context.Context, sessionIDs ...string) (contracts.
 	return e.snapshotLocked(sessionIDs...), nil
 }
 func (e *Engine) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
+	return e.subscribeFrom(ctx, 0, false, sessionIDs...)
+}
+
+func (e *Engine) SubscribeFrom(ctx context.Context, after uint64, sessionIDs ...string) (<-chan contracts.Event, error) {
+	return e.subscribeFrom(ctx, after, true, sessionIDs...)
+}
+
+func (e *Engine) subscribeFrom(ctx context.Context, after uint64, resume bool, sessionIDs ...string) (<-chan contracts.Event, error) {
 	sessionIDs = uniqueSessionIDs(sessionIDs)
 	if err := e.prepareSessionView(ctx, sessionIDs); err != nil {
 		return nil, err
@@ -275,6 +285,22 @@ func (e *Engine) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan co
 		e.subSessions = make(map[uint64][]string)
 	}
 	e.subSessions[id] = sessionIDs
+	if resume && after >= e.eventFloor && after <= e.sequence {
+		for _, event := range e.recentEvents {
+			if event.Sequence <= after {
+				continue
+			}
+			owned := event
+			if owned.SessionID != "" && !slices.Contains(sessionIDs, owned.SessionID) {
+				owned.Text = ""
+			}
+			if event.ExitCode != nil {
+				code := *event.ExitCode
+				owned.ExitCode = &code
+			}
+			ch <- owned
+		}
+	}
 	snapshot := e.snapshotLocked(sessionIDs...)
 	ch <- contracts.Event{SchemaVersion: contracts.SchemaVersion, Kind: "snapshot", Revision: snapshot.Revision, Sequence: e.sequence, Snapshot: &snapshot}
 	go func() {
@@ -409,6 +435,29 @@ func (e *Engine) publishLocked(event contracts.Event) {
 	event.Revision = e.state.Revision
 	event.Sequence = e.sequence
 	event.EventID = id("event")
+	// Keep only immutable metadata/deltas. Full message bodies are restored by
+	// the snapshot after replay, so the journal never pins tool output, images,
+	// or nested mutable business objects. Large deltas expire older cursors.
+	journal := event
+	journal.Message, journal.Snapshot = nil, nil
+	if event.ExitCode != nil {
+		code := *event.ExitCode
+		journal.ExitCode = &code
+	}
+	payloadBytes := len(journal.ResourceID) + len(journal.PluginID) + len(journal.ComponentID) +
+		len(journal.Error) + len(journal.MessageID) + len(journal.BlockKind) +
+		len(journal.EventID) + len(journal.Kind) + len(journal.SessionID) +
+		len(journal.RunID) + len(journal.RequestID) + len(journal.Text)
+	if payloadBytes > 64<<10 {
+		e.recentEvents = nil
+		e.eventFloor = e.sequence
+	} else {
+		if len(e.recentEvents) == 128 {
+			e.eventFloor = e.recentEvents[0].Sequence
+			e.recentEvents = append(e.recentEvents[:0], e.recentEvents[1:]...)
+		}
+		e.recentEvents = append(e.recentEvents, journal)
+	}
 	if len(e.subs) == 0 {
 		return
 	}

@@ -38,6 +38,10 @@ func NewClient(address, token string) (*Client, error) {
 	return &Client{url: host, token: token, http: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, done: make(chan struct{})}, nil
 }
 func (c *Client) request(ctx context.Context, method, path string, body any) (*http.Response, error) {
+	return c.requestWithCursor(ctx, method, path, body, "")
+}
+
+func (c *Client) requestWithCursor(ctx context.Context, method, path string, body any, cursor string) (*http.Response, error) {
 	var data []byte
 	var err error
 	if body != nil {
@@ -51,6 +55,9 @@ func (c *Client) request(ctx context.Context, method, path string, body any) (*h
 		return nil, err
 	}
 	request.Header.Set("Authorization", "Bearer "+c.token)
+	if cursor != "" {
+		request.Header.Set("Last-Event-ID", cursor)
+	}
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
@@ -166,11 +173,17 @@ func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan co
 			}
 		}
 		var reconnect reconnectBackoff
+		var lastID string
 		for {
+			var pendingID string
 			scanner := bufio.NewScanner(response.Body)
 			scanner.Buffer(make([]byte, 4096), 64<<20)
 			for scanner.Scan() {
 				line := scanner.Text()
+				if strings.HasPrefix(line, "id: ") {
+					pendingID = strings.TrimPrefix(line, "id: ")
+					continue
+				}
 				if !strings.HasPrefix(line, "data: ") {
 					continue
 				}
@@ -181,6 +194,10 @@ func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan co
 				reconnect.reset()
 				select {
 				case events <- event:
+					if pendingID != "" {
+						lastID = pendingID
+					}
+					pendingID = ""
 				case <-streamCtx.Done():
 					_ = response.Body.Close()
 					return
@@ -195,7 +212,7 @@ func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan co
 					return
 				}
 				var err error
-				response, err = c.request(streamCtx, http.MethodGet, path, nil)
+				response, err = c.requestWithCursor(streamCtx, http.MethodGet, path, nil, lastID)
 				if err == nil {
 					break
 				}
@@ -204,8 +221,8 @@ func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan co
 				_ = response.Body.Close()
 				return
 			}
-			// Every connection begins with the server's authoritative snapshot,
-			// covering missed events without replaying any task or command.
+			// The server replays available events before an authoritative
+			// snapshot. Expired cursors and a restarted host rebuild directly.
 		}
 	}()
 	return events, nil
