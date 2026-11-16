@@ -8,8 +8,6 @@ import (
 	"gcode/internal/testenv"
 )
 
-func TestMain(m *testing.M) { testenv.Main(m) }
-
 func waitShellReady(t *testing.T, host *Session) {
 	t.Helper()
 	deadline := time.Now().Add(20 * time.Second)
