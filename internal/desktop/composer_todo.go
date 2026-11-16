@@ -133,18 +133,11 @@ func (a *App) attachedComposerPanel(c *ui.Context, key, label string, inset floa
 			mounted := ui.Local(clip, "mounted-at", func() time.Time { return c.Now() })
 			a.attachedFade(c, clip, *mounted)
 		}
-		uiState := ui.Local(clip, "height", func() float32 { return s.Height })
-		clip.Height(max(0, *uiState-s.Overlap))
 		clip.Children(func() {
 			panel := ui.Column(c.Key(key+":surface")).FillWidth().Shrink(0).
-				Radius(s.Radius, s.Radius, 0, 0).Padding(0, 2, s.Overlap, 2)
+				Radius(s.Radius, s.Radius, 0, 0).Padding(0, 2, s.Overlap, 2).Margin(0, 0, -s.Overlap, 0)
 			panel = a.attachedComposerSurface(c, panel)
 			panel.Children(func() { content(c) })
-			height := panel.Bounds().H
-			if height > 0 && height != *uiState {
-				*uiState = height
-				c.Invalidate()
-			}
 		})
 	})
 }

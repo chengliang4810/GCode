@@ -156,7 +156,7 @@ func TestComposerAttachedGoalTodoGeometryAndInteraction(t *testing.T) {
 				}
 				tt.Advance(time.Second)
 				if tt.HasText("4/10") {
-					t.Fatal("dismissed checklist remained visible")
+					t.Fatalf("dismissed checklist remained visible: dismissed=%t expanded=%t texts=%v", a.todoPanel("main", session.ID).dismissed, a.todoPanel("main", session.ID).expanded, tt.Texts())
 				}
 				a.state.Messages[session.ID][0].Blocks[0].ID = "new-write"
 				a.state.Revision++
