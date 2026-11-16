@@ -165,21 +165,21 @@ func (s *State) browserView(c *ui.Context, id string) {
 	}
 	services := c.Services()
 	ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
-		ui.ButtonBase(c).Label(tr(c, "Back")).Disabled(!b.data.CanGoBack).Size(24, 24).Tooltip(tr(c, "Back")).OnClick(func() {
+		ui.ButtonBase(c.Key("browser-back:"+id)).Label(tr(c, "Back")).Disabled(!b.data.CanGoBack).Size(24, 24).Tooltip(tr(c, "Back")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.focusBody = true
 				b.view.Page().GoBack()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-left")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c).Label(tr(c, "Forward")).Disabled(!b.data.CanGoForward).Size(24, 24).Tooltip(tr(c, "Forward")).OnClick(func() {
+		ui.ButtonBase(c.Key("browser-forward:"+id)).Label(tr(c, "Forward")).Disabled(!b.data.CanGoForward).Size(24, 24).Tooltip(tr(c, "Forward")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.focusBody = true
 				b.view.Page().GoForward()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-right")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c).Label(tr(c, "Reload page")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
+		ui.ButtonBase(c.Key("browser-reload:"+id)).Label(tr(c, "Reload page")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.data.Loading = true
@@ -196,21 +196,21 @@ func (s *State) browserView(c *ui.Context, id string) {
 				b.focusAddress = false
 			}
 			if in.Focused() || b.address != b.data.URL {
-				ui.ButtonBase(c).Label(tr(c, "Go to address")).Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
+				ui.ButtonBase(c.Key("browser-go:"+id)).Label(tr(c, "Go to address")).Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
 			}
 		})
 		label := "Annotate an element"
 		if b.annotation != nil {
 			label = "Stop annotating"
 		}
-		button := ui.ButtonBase(c).Label(tr(c, label)).Tooltip(tr(c, label)).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
+		button := ui.ButtonBase(c.Key("browser-annotate:"+id)).Label(tr(c, label)).Tooltip(tr(c, label)).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
 		color := p.Muted
 		if b.annotation != nil {
 			button.Background(sourceInk(p.Dark, .1))
 			color = p.Accent
 		}
 		button.Children(func() { ui.Icon(c, assets.Icon("cursor-square")).Size(14, 14).TextColor(color) })
-		ui.ButtonBase(c).Label(tr(c, "Open in default browser")).Tooltip(tr(c, "Open in default browser")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
+		ui.ButtonBase(c.Key("browser-external:"+id)).Label(tr(c, "Open in default browser")).Tooltip(tr(c, "Open in default browser")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
 	})
 	if b.data.Error != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {

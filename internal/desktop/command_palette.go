@@ -418,7 +418,7 @@ func (a *App) commandPalette(c *ui.Context) {
 			}
 			ui.Row(c).Padding(6, 12).Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				for i, title := range paletteTabs {
-					row := ui.ButtonBase(c).Label(tr(c, "Command tab: ")+tr(c, title)).Padding(4, 8).Height(26).Radius(6).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
+					row := ui.ButtonBase(c.Key(fmt.Sprintf("command-tab-%d", i))).Label(tr(c, "Command tab: ")+tr(c, title)).Padding(4, 8).Height(26).Radius(6).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
 					if p.tab == i {
 						row.Background(sourcePaletteWash(a.palette.Dark, .1))
 					}
