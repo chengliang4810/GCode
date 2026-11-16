@@ -94,6 +94,20 @@ func fileEffectRoot(cwd, path string) (*os.Root, string, error) {
 	return root, relative, nil
 }
 
+type fileToolArgs struct {
+	FilePath        string  `json:"file_path"`
+	Path            string  `json:"path"`
+	Content         *string `json:"content"`
+	OldString       *string `json:"old_string"`
+	NewString       *string `json:"new_string"`
+	ReplaceAll      bool    `json:"replace_all"`
+	Command         string  `json:"command"`
+	Timeout         *int    `json:"timeout"`
+	Description     string  `json:"description"`
+	RunInBackground bool    `json:"run_in_background"`
+	DisableSandbox  bool    `json:"dangerouslyDisableSandbox"`
+}
+
 func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) (model.ToolOutput, error) {
 	allowed := map[string]bool{}
 	for _, tool := range CoreTools() {
@@ -113,19 +127,7 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 			return model.ToolOutput{}, fmt.Errorf("unknown %s parameter %q", t.name, key)
 		}
 	}
-	var args struct {
-		FilePath       string  `json:"file_path"`
-		Path           string  `json:"path"`
-		Content        *string `json:"content"`
-		Old            *string `json:"old_string"`
-		New            *string `json:"new_string"`
-		ReplaceAll     bool    `json:"replace_all"`
-		Command        string  `json:"command"`
-		Timeout        *int    `json:"timeout"`
-		Description    string  `json:"description"`
-		Background     bool    `json:"run_in_background"`
-		DisableSandbox bool    `json:"dangerouslyDisableSandbox"`
-	}
+	var args fileToolArgs
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&args); err != nil {
@@ -143,140 +145,161 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 	}
 	switch t.name {
 	case "Write":
-		if args.FilePath == "" || args.Content == nil {
-			return model.ToolOutput{}, errors.New("file_path and content are required")
-		}
-		root, relative, err := fileEffectRoot(cwd, path)
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		defer root.Close()
-		previous, readErr := root.ReadFile(relative)
-		if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
-			return model.ToolOutput{}, readErr
-		}
-		if directory := filepath.Dir(relative); directory != "." {
-			if err := root.MkdirAll(directory, 0755); err != nil {
-				return model.ToolOutput{}, err
-			}
-		}
-		err = root.WriteFile(relative, []byte(*args.Content), 0644)
-		kind := "update"
-		var original any = string(previous)
-		if errors.Is(readErr, os.ErrNotExist) {
-			kind = "create"
-			original = nil
-		}
-		return model.ToolOutput{Text: "Wrote " + path, Data: map[string]any{"type": kind, "filePath": path, "content": *args.Content, "originalFile": original, "structuredPatch": filePatch(string(previous), *args.Content)}}, err
+		return executeFileWrite(args, cwd, path)
 	case "Edit":
-		if args.FilePath == "" || args.Old == nil || args.New == nil {
-			return model.ToolOutput{}, errors.New("file_path, old_string and new_string are required")
-		}
-		if *args.Old == *args.New {
-			return model.ToolOutput{}, errors.New("old_string and new_string must differ")
-		}
-		root, relative, err := fileEffectRoot(cwd, path)
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		defer root.Close()
-		data, err := root.ReadFile(relative)
-		if errors.Is(err, os.ErrNotExist) && *args.Old == "" {
-			if directory := filepath.Dir(relative); directory != "." {
-				if err := root.MkdirAll(directory, 0755); err != nil {
-					return model.ToolOutput{}, err
-				}
-			}
-			err = root.WriteFile(relative, []byte(*args.New), 0644)
-			return model.ToolOutput{Text: "Created " + path, Data: map[string]any{"filePath": path, "oldString": "", "newString": *args.New, "originalFile": nil, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch("", *args.New)}}, err
-		}
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		content := string(data)
-		old := *args.Old
-		normalized, indices := normalizeLines(content)
-		old = strings.ReplaceAll(old, "\r\n", "\n")
-		count := strings.Count(normalized, old)
-		if old == "" && content != "" {
-			return model.ToolOutput{}, errors.New("empty old_string requires an empty or missing file")
-		}
-		if count == 0 || (!args.ReplaceAll && count != 1) {
-			return model.ToolOutput{}, errors.New("old_string must match; use replace_all only when replacing all occurrences")
-		}
-		replacement := strings.ReplaceAll(*args.New, "\r\n", "\n")
-		result := content
-		// Apply matches from right to left so byte offsets stay valid. Preserve
-		// the newline style of each matched region independently.
-		if old == "" {
-			result = replacement
-		} else {
-			positions := []int{}
-			for next := 0; next <= len(normalized)-len(old); {
-				at := strings.Index(normalized[next:], old)
-				if at < 0 {
-					break
-				}
-				at += next
-				positions = append(positions, at)
-				next = at + len(old)
-				if !args.ReplaceAll {
-					break
-				}
-			}
-			for i := len(positions) - 1; i >= 0; i-- {
-				start, end := indices[positions[i]], indices[positions[i]+len(old)]
-				insert := replacement
-				if strings.Contains(content[start:end], "\r\n") {
-					insert = strings.ReplaceAll(insert, "\n", "\r\n")
-				}
-				result = result[:start] + insert + result[end:]
-			}
-		}
-		info, err := root.Stat(relative)
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		err = root.WriteFile(relative, []byte(result), info.Mode().Perm())
-		return model.ToolOutput{Text: "Edited " + path, Data: map[string]any{"filePath": path, "oldString": *args.Old, "newString": *args.New, "originalFile": content, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch(content, result)}}, err
+		return executeFileEdit(args, cwd, path)
 	case "ListDirectory":
-		entries, err := os.ReadDir(path)
-		if err != nil {
-			return model.ToolOutput{}, err
-		}
-		var out strings.Builder
-		for i, entry := range entries {
-			if i >= 1000 {
-				out.WriteString("[directory truncated]")
-				break
-			}
-			out.WriteString(entry.Name())
-			if entry.IsDir() {
-				out.WriteByte('/')
-			}
-			out.WriteByte('\n')
-		}
-		return model.ToolOutput{Text: out.String()}, nil
+		return executeDirectoryList(path)
 	case "Bash":
-		if strings.TrimSpace(args.Command) == "" {
-			return model.ToolOutput{}, errors.New("command is required")
-		}
-		if args.Background {
-			return model.ToolOutput{}, errors.New("run_in_background is not supported by this host")
-		}
-		if args.DisableSandbox {
-			return model.ToolOutput{}, errors.New("dangerouslyDisableSandbox is not supported by this host")
-		}
-		milliseconds := 120000
-		if args.Timeout != nil {
-			milliseconds = *args.Timeout
-		}
-		if milliseconds < 1 || milliseconds > 600000 {
-			return model.ToolOutput{}, errors.New("timeout must be 1..600000 milliseconds")
-		}
-		return RunShell(ctx, cwd, "bash", args.Command, nil, time.Duration(milliseconds)*time.Millisecond, nil)
+		return executeBash(ctx, args, cwd)
 	}
 	return model.ToolOutput{}, errors.New("unknown tool")
+}
+
+func executeFileWrite(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
+	if args.FilePath == "" || args.Content == nil {
+		return model.ToolOutput{}, errors.New("file_path and content are required")
+	}
+	root, relative, err := fileEffectRoot(cwd, path)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	defer root.Close()
+	previous, readErr := root.ReadFile(relative)
+	if readErr != nil && !errors.Is(readErr, os.ErrNotExist) {
+		return model.ToolOutput{}, readErr
+	}
+	if err := createParentDirectories(root, relative); err != nil {
+		return model.ToolOutput{}, err
+	}
+	err = root.WriteFile(relative, []byte(*args.Content), 0644)
+	kind := "update"
+	var original any = string(previous)
+	if errors.Is(readErr, os.ErrNotExist) {
+		kind = "create"
+		original = nil
+	}
+	return model.ToolOutput{Text: "Wrote " + path, Data: map[string]any{"type": kind, "filePath": path, "content": *args.Content, "originalFile": original, "structuredPatch": filePatch(string(previous), *args.Content)}}, err
+}
+
+func executeFileEdit(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
+	if args.FilePath == "" || args.OldString == nil || args.NewString == nil {
+		return model.ToolOutput{}, errors.New("file_path, old_string and new_string are required")
+	}
+	if *args.OldString == *args.NewString {
+		return model.ToolOutput{}, errors.New("old_string and new_string must differ")
+	}
+	root, relative, err := fileEffectRoot(cwd, path)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	defer root.Close()
+	data, err := root.ReadFile(relative)
+	if errors.Is(err, os.ErrNotExist) && *args.OldString == "" {
+		if err := createParentDirectories(root, relative); err != nil {
+			return model.ToolOutput{}, err
+		}
+		err = root.WriteFile(relative, []byte(*args.NewString), 0644)
+		return model.ToolOutput{Text: "Created " + path, Data: map[string]any{"filePath": path, "oldString": "", "newString": *args.NewString, "originalFile": nil, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch("", *args.NewString)}}, err
+	}
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	content := string(data)
+	old := *args.OldString
+	normalized, indices := normalizeLines(content)
+	old = strings.ReplaceAll(old, "\r\n", "\n")
+	count := strings.Count(normalized, old)
+	if old == "" && content != "" {
+		return model.ToolOutput{}, errors.New("empty old_string requires an empty or missing file")
+	}
+	if count == 0 || (!args.ReplaceAll && count != 1) {
+		return model.ToolOutput{}, errors.New("old_string must match; use replace_all only when replacing all occurrences")
+	}
+	replacement := strings.ReplaceAll(*args.NewString, "\r\n", "\n")
+	result := content
+	// Apply matches from right to left so byte offsets stay valid. Preserve
+	// the newline style of each matched region independently.
+	if old == "" {
+		result = replacement
+	} else {
+		positions := []int{}
+		for next := 0; next <= len(normalized)-len(old); {
+			at := strings.Index(normalized[next:], old)
+			if at < 0 {
+				break
+			}
+			at += next
+			positions = append(positions, at)
+			next = at + len(old)
+			if !args.ReplaceAll {
+				break
+			}
+		}
+		for i := len(positions) - 1; i >= 0; i-- {
+			start, end := indices[positions[i]], indices[positions[i]+len(old)]
+			insert := replacement
+			if strings.Contains(content[start:end], "\r\n") {
+				insert = strings.ReplaceAll(insert, "\n", "\r\n")
+			}
+			result = result[:start] + insert + result[end:]
+		}
+	}
+	info, err := root.Stat(relative)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	err = root.WriteFile(relative, []byte(result), info.Mode().Perm())
+	return model.ToolOutput{Text: "Edited " + path, Data: map[string]any{"filePath": path, "oldString": *args.OldString, "newString": *args.NewString, "originalFile": content, "replaceAll": args.ReplaceAll, "structuredPatch": filePatch(content, result)}}, err
+}
+
+func executeDirectoryList(path string) (model.ToolOutput, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return model.ToolOutput{}, err
+	}
+	var out strings.Builder
+	for i, entry := range entries {
+		if i >= 1000 {
+			out.WriteString("[directory truncated]")
+			break
+		}
+		out.WriteString(entry.Name())
+		if entry.IsDir() {
+			out.WriteByte('/')
+		}
+		out.WriteByte('\n')
+	}
+	return model.ToolOutput{Text: out.String()}, nil
+}
+
+func executeBash(ctx context.Context, args fileToolArgs, cwd string) (model.ToolOutput, error) {
+	if strings.TrimSpace(args.Command) == "" {
+		return model.ToolOutput{}, errors.New("command is required")
+	}
+	if args.RunInBackground {
+		return model.ToolOutput{}, errors.New("run_in_background is not supported by this host")
+	}
+	if args.DisableSandbox {
+		return model.ToolOutput{}, errors.New("dangerouslyDisableSandbox is not supported by this host")
+	}
+	milliseconds := 120000
+	if args.Timeout != nil {
+		milliseconds = *args.Timeout
+	}
+	if milliseconds < 1 || milliseconds > 600000 {
+		return model.ToolOutput{}, errors.New("timeout must be 1..600000 milliseconds")
+	}
+	return RunShell(ctx, cwd, "bash", args.Command, nil, time.Duration(milliseconds)*time.Millisecond, nil)
+}
+
+func createParentDirectories(root *os.Root, relative string) error {
+	if directory := filepath.Dir(relative); directory != "." {
+		if err := root.MkdirAll(directory, 0755); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func normalizeLines(s string) (string, []int) {
