@@ -278,6 +278,7 @@ type Run struct {
 	Status       string          `json:"status"`
 	FinishReason string          `json:"finishReason"`
 	Error        string          `json:"error,omitempty"`
+	OutputFile   string          `json:"outputFile,omitempty"`
 	StartedAt    time.Time       `json:"startedAt"`
 	FinishedAt   *time.Time      `json:"finishedAt,omitempty"`
 }

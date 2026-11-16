@@ -200,6 +200,10 @@ Files in a project tree are loaded on demand. Search is bounded rather than a
 background filesystem index.
 
 Agent tools return `model.ToolOutput` with separate text and image values.
+子 Agent 的长最终回复由核心先完整落盘，再通过前台结果或后台通知回传有界预览。
+`Run.OutputFile` 保存完整回复文件路径，原始回复仍留在子会话历史中；
+`TaskOutput` 复用该路径，结构化输出包含 `output_file` 和 `output_truncated: true`。
+没有文件的短结果直接返回，不为旧记录增加重建或迁移路径。
 `read` accepts UTF-8 text and PNG/JPEG/GIF/WebP/BMP files, bounds input pixels and
 bytes, normalizes JPEG orientation, preserves the first GIF frame's logical
 canvas, and resizes/encodes images within local budgets. Images are stored in

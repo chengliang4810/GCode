@@ -464,7 +464,10 @@ func (e *Engine) startRunWithProvidersLocked(
 		}
 		if child != nil {
 			system += "\n\nSubagent task instructions:\n" + child.profile.Prompt
-			system += "\nYou are a subagent. Return the result to your parent; you cannot delegate further."
+			system += "\nYou are a subagent. Return a concise result with key findings, evidence, " +
+				"relevant file paths and unfinished work directly in your final reply; you cannot delegate further. " +
+				"Do not create report or summary files merely to return your answer. " +
+				"The host preserves oversized final replies and delivers a preview with the full output path to your parent."
 		} else {
 			tools = append(tools, e.goalReadTool(goalScope{sessionID: session.ID}))
 			if profiles := enabledSubagentProfiles(run.profiles); len(profiles) > 0 {
@@ -731,6 +734,25 @@ func (e *Engine) startRunWithProvidersLocked(
 			runErr = context.Canceled
 		}
 		e.mu.Lock()
+		run.output = finalReply(e.history[session.ID])
+		e.mu.Unlock()
+		if child != nil && runErr == nil {
+			// Preserve accepted child results before publishing completion.
+			// File I/O stays outside the core lock, including after cancellation.
+			output, err := agent.PrepareOutput(
+				context.WithoutCancel(runCtx),
+				func(ctx context.Context, text string) (string, error) {
+					return e.storeToolOutput(ctx, session, text)
+				},
+				model.Message{Text: run.output},
+			)
+			if err != nil {
+				runErr = fmt.Errorf("cannot preserve subagent result: %w", err)
+			} else {
+				run.output, run.outputFile = output.Text, output.OutputFile
+			}
+		}
+		e.mu.Lock()
 		defer e.mu.Unlock()
 		defer e.evictIdleSessionsLocked()
 		if runErr == nil {
@@ -769,6 +791,7 @@ func (e *Engine) startRunWithProvidersLocked(
 				r.FinishedAt = &now
 				r.DurationMS = now.Sub(r.StartedAt).Milliseconds()
 				r.Status = "completed"
+				r.OutputFile = run.outputFile
 				if runErr != nil {
 					r.Status = "failed"
 					r.Error = runErr.Error()
@@ -811,7 +834,6 @@ func (e *Engine) startRunWithProvidersLocked(
 			e.state.Messages[session.ID] = append(e.state.Messages[session.ID], message)
 		}
 		delete(e.runs, session.ID)
-		run.output = finalReply(e.history[session.ID])
 		if child != nil {
 			e.finishSubagentLocked(session, run, runErr)
 		}

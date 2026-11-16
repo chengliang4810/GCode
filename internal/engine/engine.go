@@ -47,6 +47,7 @@ type activeRun struct {
 	done         chan struct{}
 	err          error
 	output       string
+	outputFile   string
 	subagent     *subagentExecution
 	selection    contracts.ModelSelection
 	profiles     []contracts.SubagentProfile

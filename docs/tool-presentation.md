@@ -15,6 +15,10 @@
 | WebSearch | 搜索网页 | 查询内容 |
 | Agent | 启动智能体 | 委派任务描述；成功启动后显示子智能体记录 |
 | MCP 工具 | 调用工具 | 插件、服务名称与工具可读标题 |
+| ContextStatus | 查看上下文状态 | 无额外摘要，原始参数与输出保留在详情 |
+| CompressContext | 压缩上下文 | 同上 |
+| SearchContext | 搜索历史上下文 | 同上 |
+| DecompressContext | 读取归档上下文 | 同上 |
 
 MCP 标题按 `title`、`annotations.title`、`name` 的顺序选择。
 展示名称不参与模型工具 schema 或 `tools/call`，原始工具身份保持独立。

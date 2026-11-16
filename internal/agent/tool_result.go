@@ -65,6 +65,16 @@ func prepareToolResult(ctx context.Context, store func(context.Context, string) 
 		message.Text += "\nIdentical image is still available in tool result " + previous + "."
 		message.Images = slices.Delete(message.Images, i, i+1)
 	}
+	return PrepareOutput(ctx, store, message)
+}
+
+// PrepareOutput preserves large text before replacing it with a bounded preview.
+// A known OutputFile reuses an already preserved result without writing it again.
+func PrepareOutput(
+	ctx context.Context,
+	store func(context.Context, string) (string, error),
+	message model.Message,
+) (model.Message, error) {
 	if message.OutputFile == "" && (store == nil || utf8.RuneCountInString(message.Text) <= toolResultInlineChars) {
 		return message, nil
 	}
@@ -73,11 +83,11 @@ func prepareToolResult(ctx context.Context, store func(context.Context, string) 
 		var err error
 		path, err = store(ctx, message.Text)
 		if err != nil {
-			return message, fmt.Errorf("preserve full tool output: %w", err)
+			return message, fmt.Errorf("preserve full output: %w", err)
 		}
 	}
 	if strings.TrimSpace(path) == "" {
-		return message, errors.New("tool output storage returned an empty path")
+		return message, errors.New("output storage returned an empty path")
 	}
 	runes := []rune(message.Text)
 	message.OutputFile = path
@@ -86,6 +96,10 @@ func prepareToolResult(ctx context.Context, store func(context.Context, string) 
 	if len(runes) > 2048 {
 		tail = "\n\n…\n\n" + string(runes[len(runes)-512:])
 	}
-	message.Text = fmt.Sprintf("Complete tool output saved to: %s\nUse Read with offset/limit, or a bounded file-processing command for very large files.\n\nPreview:\n%s%s", path, head, tail)
+	message.Text = fmt.Sprintf(
+		"Complete output saved to: %s\nThis is an incomplete preview; the file contains the full output. "+
+			"Use Read with offset/limit, or a bounded file-processing command for very large files, "+
+			"to inspect the complete result before relying on omitted details.\n\nPreview:\n%s%s",
+		path, head, tail)
 	return message, nil
 }

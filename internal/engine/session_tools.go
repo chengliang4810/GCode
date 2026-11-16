@@ -119,10 +119,25 @@ func (e *Engine) sessionTaskTool(parentID string, inner agent.Tool) agent.Tool {
 		if e.runs[input.TaskID] == nil {
 			status = session.LastOutcome
 		}
-		text := fmt.Sprintf("task_id: %s\nstatus: %s\n%s", session.ID, status, finalReply(e.history[session.ID]))
-		return model.ToolOutput{Text: text, Data: map[string]any{
+		output := model.Message{Text: finalReply(e.history[session.ID])}
+		var latest time.Time
+		for _, run := range e.state.Runs {
+			if run.SessionID == session.ID && !run.StartedAt.Before(latest) {
+				latest, output.OutputFile = run.StartedAt, run.OutputFile
+			}
+		}
+		output, err := agent.PrepareOutput(ctx, nil, output)
+		if err != nil {
+			return model.ToolOutput{}, err
+		}
+		text := fmt.Sprintf("task_id: %s\nstatus: %s\n%s", session.ID, status, output.Text)
+		data := map[string]any{
 			"task_id": session.ID, "description": session.Title, "status": status,
-			"output": finalReply(e.history[session.ID]),
-		}}, nil
+			"output": output.Text,
+		}
+		if output.OutputFile != "" {
+			data["output_file"], data["output_truncated"] = output.OutputFile, true
+		}
+		return model.ToolOutput{Text: text, Data: data}, nil
 	}}
 }
