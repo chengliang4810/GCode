@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -132,6 +133,136 @@ func TestReadImagesReachEveryProtocolAndSurviveRestart(t *testing.T) {
 				t.Fatalf("restarted image history did not continue: %+v", state.Runs)
 			}
 			assertImageToolRequest(t, protocol, <-bodies, encoded.Bytes())
+		})
+	}
+}
+
+func TestImageAttachmentsBoundWirePayloadAndDeduplicateAcrossRestart(t *testing.T) {
+	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
+		t.Run(string(protocol), func(t *testing.T) {
+			var requests atomic.Int32
+			bodies := make(chan []byte, 4)
+			fixture := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				bodies <- body
+				w.Header().Set("Content-Type", "text/event-stream")
+				if requests.Add(1) == 1 {
+					sendImageReadCalls(w, protocol)
+				} else {
+					sendImageReadAnswer(w, protocol)
+				}
+			}))
+			defer fixture.Close()
+			home, workspace := t.TempDir(), t.TempDir()
+			var original bytes.Buffer
+			if err := png.Encode(&original, image.NewNRGBA(image.Rect(0, 0, 4096, 64))); err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(workspace, "photo.png")
+			if err := os.WriteFile(path, original.Bytes(), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(workspace, "note.txt"), []byte("expected text"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			store, err := storage.Open(storage.Options{Home: home})
+			if err != nil {
+				t.Fatal(err)
+			}
+			core, err := openExecutionFixture(t, Options{Storage: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = core.Close() }()
+			provider := model.Provider{ID: "images", Name: "Image fixture", Protocol: protocol, BaseURL: fixture.URL,
+				Models: []model.Model{{ID: "vision"}}}
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "provider.save", Provider: &contracts.ProviderInput{Provider: provider}}); err != nil {
+				t.Fatal(err)
+			}
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{Path: workspace, Name: "Images"}}); err != nil {
+				t.Fatal(err)
+			}
+			attachments, err := core.ImportAttachments(t.Context(), contracts.AttachmentImportRequest{Paths: []string{path}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			snapshot, _ := core.Snapshot(t.Context())
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
+				ProjectID: snapshot.Projects[0].ID, ModelID: "images/vision", Text: "Read the photo and note",
+				Attachments: append(attachments, attachments...),
+			}}); err != nil {
+				t.Fatal(err)
+			}
+			snapshot, _ = core.Snapshot(t.Context())
+			sid := snapshot.Sessions[0].ID
+			release := pinSessionView(t, core, sid)
+			state := waitIdle(t, core, sid)
+			if state.Sessions[0].LastOutcome != "completed" || requests.Load() != 2 {
+				t.Fatal("attachment round trip failed")
+			}
+			core.mu.Lock()
+			history := model.CloneMessages(core.history[sid])
+			core.mu.Unlock()
+			var prepared model.Image
+			for _, message := range history {
+				for _, picture := range message.Images {
+					if prepared.Data != "" {
+						t.Fatal("duplicate image persisted in live history")
+					}
+					prepared = picture
+				}
+			}
+			if prepared.Width != 2048 || prepared.Height != 32 || len(prepared.Data) > 4<<20 {
+				t.Fatal("attachment did not use bounded model representation")
+			}
+			assertWireImage := func(body []byte) {
+				t.Helper()
+				if bytes.Count(body, []byte(prepared.Data)) != 1 ||
+					bytes.Contains(body, []byte(base64.StdEncoding.EncodeToString(original.Bytes()))) ||
+					bytes.Contains(body, []byte(`"imageRefs"`)) {
+					t.Fatal("wire request duplicated the image or sent the full-size original")
+				}
+			}
+			assertWireImage(<-bodies)
+			assertWireImage(<-bodies)
+			data, err := core.ReadResource(t.Context(), attachments[0].AssetRef)
+			if err != nil || !bytes.Equal(data, original.Bytes()) {
+				t.Fatal("original image was changed or lost", err)
+			}
+			if !strings.Contains(history[0].Text, `image="original"`) || !strings.Contains(history[0].Text, " path=") {
+				t.Fatal("model has no way to reopen the original")
+			}
+			release()
+			if err := core.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			store, err = storage.Open(storage.Options{Home: home})
+			if err != nil {
+				t.Fatal(err)
+			}
+			core, err = openExecutionFixture(t, Options{Storage: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{
+				SessionID: sid, Text: "Inspect the attached image again", Attachments: attachments,
+			}}); err != nil {
+				t.Fatal(err)
+			}
+			release = pinSessionView(t, core, sid)
+			defer release()
+			state = waitIdle(t, core, sid)
+			if state.Sessions[0].LastOutcome != "completed" || requests.Load() != 3 {
+				t.Fatal("restored attachment round trip failed")
+			}
+			assertWireImage(<-bodies)
 		})
 	}
 }

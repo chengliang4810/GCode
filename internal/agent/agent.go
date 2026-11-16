@@ -184,9 +184,17 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			}
 		}
 	}
-	if options.PrepareInput != nil && initialUserIndex >= 0 {
+	if initialUserIndex >= 0 {
 		if request.History[initialUserIndex].UserInput {
-			prepared, err := options.PrepareInput(ctx, request.History[initialUserIndex])
+			prepared := request.History[initialUserIndex]
+			var err error
+			if options.PrepareInput != nil {
+				prepared, err = options.PrepareInput(ctx, prepared)
+				if err != nil {
+					return err
+				}
+			}
+			prepared, err = prepareInputImages(ctx, request.History[:initialUserIndex], prepared)
 			if err != nil {
 				return err
 			}
@@ -225,6 +233,11 @@ func Run(ctx context.Context, options Options) (runErr error) {
 						admissionErr = errors.Join(admissionErr, err)
 						continue
 					}
+				}
+				message, err = prepareInputImages(ctx, request.History, message)
+				if err != nil {
+					admissionErr = errors.Join(admissionErr, err)
+					continue
 				}
 				turnID = hookUUID()
 			}

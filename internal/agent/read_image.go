@@ -46,9 +46,26 @@ func readImage(ctx context.Context, file *os.File, size int64, path string) (mod
 	if err != nil {
 		return model.ToolOutput{}, err
 	}
+	return prepareImageData(ctx, data, path)
+}
+
+// prepareImage gives user attachments and Read the same model-facing image.
+// Callers retain the original file; this representation is only for the model.
+func prepareImage(ctx context.Context, data []byte, path string) (model.ToolOutput, error) {
+	select {
+	case imageReadSlots <- struct{}{}:
+		defer func() { <-imageReadSlots }()
+	case <-ctx.Done():
+		return model.ToolOutput{}, ctx.Err()
+	}
+	return prepareImageData(ctx, data, path)
+}
+
+func prepareImageData(ctx context.Context, data []byte, path string) (model.ToolOutput, error) {
 	if len(data) > maxReadImageBytes {
 		return model.ToolOutput{}, errors.New("image file exceeds 24 MiB")
 	}
+	size := int64(len(data))
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
 		return model.ToolOutput{}, errors.New("invalid or unsupported image; supported formats: PNG, JPEG, GIF, WebP, BMP")

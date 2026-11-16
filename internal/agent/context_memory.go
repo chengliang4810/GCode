@@ -174,6 +174,7 @@ func foldContext(history []model.Message, state ContextMemory, start, end int, s
 	out := append([]model.Message(nil), history[:start]...)
 	out = append(out, replacement)
 	out = append(out, history[end:]...)
+	out = retainReferencedImages(history, out)
 	return out, ContextMemory{Blocks: blocks, NextNudge: estimateMessages(out) + 50000}, nil
 }
 

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -40,31 +39,7 @@ func prepareToolResult(ctx context.Context, store func(context.Context, string) 
 		}
 		message.ContentHash = key
 	}
-	message.Images = slices.Clone(message.Images)
-	for i := 0; i < len(message.Images); {
-		key := imageHash(message.Images[i])
-		previous := ""
-		for _, prior := range history {
-			if prior.Role != "tool" || prior.IsError {
-				continue
-			}
-			for _, image := range prior.Images {
-				if imageHash(image) == key {
-					previous = prior.CallID
-					break
-				}
-			}
-			if previous != "" {
-				break
-			}
-		}
-		if previous == "" {
-			i++
-			continue
-		}
-		message.Text += "\nIdentical image is still available in tool result " + previous + "."
-		message.Images = slices.Delete(message.Images, i, i+1)
-	}
+	message = deduplicateImages(history, message)
 	return PrepareOutput(ctx, store, message)
 }
 

@@ -228,6 +228,10 @@ managed resource reference includes its storage root identity, so changing the
 active root does not redirect historical reads. Live imports accept PNG/JPEG/GIF
 images and UTF-8 text, with 24 MiB per item, 20 items, 96 MiB per batch and image
 pixel/dimension limits. This is narrower than the historical mock media showcase.
+原始图片保持不变；首次模型请求前在后台复用 Read 的图片处理，限制最长边 2048 像素、
+单图 Base64 4 MiB，并提交模型表示到执行历史。用户附件与工具图片只在当前有效上下文内
+按内容去重，同一条消息内也去重；提问、原件路径与引用保留。压缩移除原图后允许重新读图，
+不按时间清除历史图片。详见 `docs/context-caching.md`。
 
 `Snapshot.runtime` exposes the fixed configuration directory, active data root,
 pending root, directory-switch errors and whether the host is remote. Switching

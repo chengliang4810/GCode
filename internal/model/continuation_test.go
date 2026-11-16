@@ -139,14 +139,15 @@ func TestContinuationPersistsAndOnlyReplaysToItsTarget(t *testing.T) {
 
 func TestCloneMessagesOwnsContinuationAndSlices(t *testing.T) {
 	original := []Message{{
-		Calls: []Call{{ID: "call"}}, Images: []Image{{Data: "original"}},
+		Calls: []Call{{ID: "call"}}, Images: []Image{{Data: "original"}}, ImageRefs: []string{"original-ref"},
 		Continuation: &Continuation{scope: "scope", data: json.RawMessage(`["original"]`)},
 	}}
 	cloned := CloneMessages(original)
 	cloned[0].Calls[0].ID = "changed"
 	cloned[0].Images[0].Data = "changed"
+	cloned[0].ImageRefs[0] = "changed"
 	cloned[0].Continuation.data[2] = 'X'
-	if original[0].Calls[0].ID != "call" || original[0].Images[0].Data != "original" ||
+	if original[0].Calls[0].ID != "call" || original[0].Images[0].Data != "original" || original[0].ImageRefs[0] != "original-ref" ||
 		string(original[0].Continuation.data) != `["original"]` {
 		t.Fatal("worker mutation changed the persisted source history")
 	}

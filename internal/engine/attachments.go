@@ -281,6 +281,15 @@ func (e *Engine) inputMessage(text string, attachments []contracts.Attachment) (
 				MIME: stored.MIME, Data: base64.StdEncoding.EncodeToString(data),
 				Width: stored.Width, Height: stored.Height,
 			})
+			file, err := e.openResourceLocked(stored.AssetRef)
+			if err != nil {
+				return message, err
+			}
+			path := file.Name()
+			if err := file.Close(); err != nil {
+				return message, err
+			}
+			message.Text += fmt.Sprintf("\n\n<attachment name=%q path=%q image=%q />", stored.Name, path, "original")
 		} else {
 			file, err := e.openResourceLocked(stored.AssetRef)
 			if err != nil {

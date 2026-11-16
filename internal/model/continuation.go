@@ -58,6 +58,7 @@ func CloneMessages(history []Message) []Message {
 		out[i].InputIDs = slices.Clone(out[i].InputIDs)
 		out[i].Calls = slices.Clone(out[i].Calls)
 		out[i].Images = slices.Clone(out[i].Images)
+		out[i].ImageRefs = slices.Clone(out[i].ImageRefs)
 		if c := out[i].Continuation; c != nil {
 			out[i].Continuation = &Continuation{scope: c.scope, data: bytes.Clone(c.data)}
 		}

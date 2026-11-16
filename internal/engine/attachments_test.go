@@ -103,7 +103,8 @@ func TestClipboardBinaryAttachmentAndImageKeepTheirInputTypes(t *testing.T) {
 				t.Fatal(err)
 			}
 			if test.image {
-				if len(message.Images) != 1 || message.Images[0].Width != 2 || message.Images[0].Height != 3 || message.Text != "" {
+				if len(message.Images) != 1 || message.Images[0].Width != 2 || message.Images[0].Height != 3 ||
+					!strings.Contains(message.Text, `image="original"`) || !strings.Contains(message.Text, " path=") {
 					t.Fatalf("image input changed: %+v", message)
 				}
 			} else if len(message.Images) != 0 || !strings.Contains(message.Text, " path=") {

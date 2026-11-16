@@ -51,5 +51,5 @@ func Compact(ctx context.Context, client Model, request model.Request) ([]model.
 		hasHuman = hasHuman || message.UserInput
 	}
 	messages := []model.Message{{Role: "user", Summary: true, InputIDs: inputIDs, Text: "Earlier conversation summary:\n" + result.Message.Text + "\n\nMost recent user instruction before this window:\n" + lastUser}}
-	return append(messages, model.CloneMessages(request.History[cut:])...), nil
+	return retainReferencedImages(request.History, append(messages, model.CloneMessages(request.History[cut:])...)), nil
 }
