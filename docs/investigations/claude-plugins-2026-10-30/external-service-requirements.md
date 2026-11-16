@@ -24,7 +24,7 @@
    单独当作整插件硬阻塞。没有测试真实登录、scopes、付费权益、额度、读写权限或业务成功率。
 
 握手逐条证据见 [public-mcp-auth-probes.json](public-mcp-auth-probes.json)，
-可复核脚本为 [probe_public_mcp_auth.py](probe_public_mcp_auth.py)。
+一次性探针及报告生成脚本已于 2026-11-16 清理，可从 Git 历史追溯；上述握手结果仅反映记录日期。
 该脚本仅做协议初始化和自身临时 session 回收，不执行插件代码或任何业务 tools/call。
 
 ## 逐项源码证据

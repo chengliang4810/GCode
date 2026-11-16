@@ -105,14 +105,14 @@
 | E05 | install-smoke 无引用等于发布链失败 | 原判断过强 | 脚本入口存在与是否自动调用分别核实；未执行签名发布链不宣称成功或失败。 | `scripts/install-smoke.ps1`；`scripts/check-distribution.go` |
 | E06 | 构建产物可被误提交 | 已修复 | .mygo、.tmp 和根二进制忽略规则已存在；本轮显式按文件暂存。 | `.gitignore` |
 | E07 | 测试文件少即缺陷成立 | 原判断过强 | 测试按行为覆盖核对，不以文件名一一对应或 src:test 比例证明逻辑错误。 | `internal/contracts`；`internal/engine`；`cmd/gcode-server` |
-| E08 | 提示词备份源码破坏整仓构建 | 已修复 | 源码快照改为 .go.txt，正文和 SHA 保持不变；根模块不再解析混合 package。 | `docs/prompt-backups/2026-11-16/source-sha256.json` |
+| E08 | 提示词备份源码破坏整仓构建 | 已修复 | 源码快照曾改为 .go.txt；现已按清理要求删除备份目录，根模块不再解析混合 package。 | Git 历史提交 `88c9db8` |
 | D01 | 多个文档当前框架指纹漂移 | 已修复 | 叙述文档统一引用 canonical lock，不把其他任务未提交的 .26 身份写进本轮；历史记录保留原身份。 | `third_party/mygo.lock.json`；`docs/mygo-patches.md` |
 | D02 | UI parity 重复计数 | 原判断不成立 | JSON 有 58 个唯一 ID：48 included、5 macOS-only、5 excluded，与文档一致；原报告的 53 计数错误。 | `docs/ui-parity.md`；`reference/settings-index.json` |
 | D03 | 更新入口/版本号过时 | 已核对 | 当前入口为关于，版本来自 mygo.json；历史版本保留时间语义。 | `docs/updates.md`；`mygo.json` |
 | D04 | split-drag 补丁死链 | 已核对 | 当前引用的 v0.8.3-18 补丁存在；原 v0.7.4 路径不再当作当前入口。 | `docs/audit-panel-motion.md`；`patches` |
 | D05 | 验收 manifest 等于可复核产物 | 证据边界已明确 | manifest 是路径/摘要索引，不能替代未随分支提交的原始产物。 | `docs/acceptance-report.md`；`reference/validation` |
-| D06 | 历史 output/异机源码链接缺失 | 证据边界已明确 | 区分本机缺失产物与另一机器的外部源码引用；不补造运行证据，不以缺失证明历史未发生。 | `docs/audit-followup-2026-11-16.md`；`本机 doc-link-audit.json` |
-| D07 | 多轮报告互相矛盾/滚动列问题 | 已收口 | 本表覆盖原会话各轮结论和后续补充，旧报告仅保留历史复现，当前状态统一由本表解释。 | `docs/audit-closure-2026-11-16.md` |
+| D06 | 历史 output/异机源码链接缺失 | 证据边界已明确 | 区分本机缺失产物与另一机器的外部源码引用；不补造运行证据，不以缺失证明历史未发生。 | Git 历史中的逐项核实记录；临时审计产物已清理 |
+| D07 | 多轮报告互相矛盾/滚动列问题 | 已收口 | 本表覆盖原会话各轮结论和后续补充，重复旧报告已清理，可从 Git 历史追溯，当前状态统一由本表解释。 | `docs/audit-closure-2026-11-16.md` |
 
 ## 本轮实现边界
 
@@ -121,11 +121,11 @@
 - 非 Windows 的拥有目录新增/删除请求同步父目录；Windows 目录同步明确没有新增硬保证。测试不替代掉电实验。
 - 拒答按协议作为有文本的正常结束保留；拒答与工具调用混杂时拒绝执行整个批次。没有自动更换模型、重新尝试拒答或改变宿主权限。
 - 文案和 key 修改不改变布局、控件尺寸或视觉规范；跨包视觉一致性重构继续暂停。
-- 提示词源码备份仅增加 `.txt` 后缀；9 个副本正文和 SHA-256 未改变。叙述文档以 canonical lock 为当前框架身份入口，历史身份不重标。
+- 提示词源码备份曾仅增加 `.txt` 后缀；后续清理已删除该备份，原内容可从 Git 历史追溯。叙述文档以 canonical lock 为当前框架身份入口，历史身份不重标。
 
 ## 验证结果与证据边界
 
-最终命令、状态和原始输出统一归档于本机 `output/session-audit-closure-20261116/`。该目录是本机留存证据；可随提交复核的回归测试源码在对应代码包中。
+以下是审计阶段的历史验证结果。原始输出曾归档于本机 `output/session-audit-closure-20261116/`，已按后续清理要求删除；可随提交复核的回归测试源码仍在对应代码包中。
 
 - 存储改造版本：Engine 全量通过（679.721 秒），Agent、Model、MCP、Remote、Contracts、Storage、Mock 全量通过。
 - 桌面及相关包全量通过：Desktop 250.119 秒、Workbench 2.458 秒、i18n 0.090 秒；其余 36 个包的测试或无测试包编译也全部通过。

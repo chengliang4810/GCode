@@ -63,7 +63,7 @@
 
 **本轮独立实验：7 项通过**
 
-代码位于 [scripts/experiments/moejs-workflow](D:/projects/GCode/scripts/experiments/moejs-workflow/README.md)，独立 `go.mod` replace 指向相邻 moejs，不修改 GCode 主模块。代码为本次独立验证实现，没有搬用 ZCode 业务代码。
+一次性实验代码已于 2026-11-16 清理，可从 Git 历史追溯；原实验使用独立 Go 模块和相邻 moejs，不属于 GCode 产品实现。以下结论是历史实验记录，不代表当前功能。
 
 | 用例 | 实际证明 |
 | --- | --- |
