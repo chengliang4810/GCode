@@ -231,6 +231,11 @@ func TestHookExecFormAndFutureFieldsRemainVisible(t *testing.T) {
 	if len(bundle.Unsupported) != 1 || hook.Unknown["futurePolicy"] == nil {
 		t.Fatal("future hook field was silently dropped")
 	}
+	issue := bundle.Unsupported[0]
+	if issue.Path != "PreToolUse.futurePolicy" ||
+		issue.String() != "hooks: PreToolUse.futurePolicy: Unrecognized hook field; retained but ignored during execution." {
+		t.Fatalf("unknown hook diagnostic lost its field or execution meaning: %+v", issue)
+	}
 	encoded, err := json.Marshal(hook)
 	if err != nil {
 		t.Fatal(err)

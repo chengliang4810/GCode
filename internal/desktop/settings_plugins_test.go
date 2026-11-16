@@ -50,7 +50,7 @@ func pluginUIFixture(t *testing.T) (*App, *pluginUIService) {
 			{ID: "community", Name: "Community", Source: "owner/community", Kind: "github", State: "ready"},
 		},
 		Catalog: []contracts.PluginCatalogItem{
-			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill", Components: []string{"skills"}, Issues: []string{"Fixture dependency issue"}},
+			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill", Components: []string{"skills"}, Issues: []contracts.PluginIssue{{Message: "Fixture dependency issue"}}},
 		},
 		Installed: []contracts.InstalledPlugin{
 			{ID: "fixture@official", CatalogID: "fixture@official", Name: "fixture", Marketplace: "official", Enabled: true,
@@ -72,6 +72,35 @@ func pluginUITester(app *App) *ui.Tester {
 		c.SetTheme(app.palette.UI())
 		app.settingsView(c)
 	}, 900, 1200)
+}
+
+func TestPluginIssueShowsHookFieldAndTranslatesWithoutReload(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{360, 900} {
+			t.Run(fmt.Sprintf("dark=%v/width=%d", dark, width), func(t *testing.T) {
+				app := testApp(t, "default")
+				app.palette = design.Palette("rcode", dark)
+				issues := []contracts.PluginIssue{{
+					Component: "hooks", Path: "SessionStart.powershell",
+					Message: "Unrecognized hook field; retained but ignored during execution.",
+				}, {Component: "settings", Path: "unknownSetting", Message: "setting is not allowed for plugins"}}
+				tt := ui.NewTester(func(c *ui.Context) {
+					localize.Set(c, app.state.Settings.General.Language)
+					c.SetTheme(app.palette.UI())
+					ui.Column(c).Fill().Children(func() { app.pluginDetails(c, nil, issues) })
+				}, width, 400)
+				if !tt.HasText("hooks: SessionStart.powershell: Unrecognized hook field; retained but ignored during execution.") ||
+					!tt.HasText("settings: unknownSetting: setting is not allowed for plugins") {
+					t.Fatalf("plugin field locations missing: %v", tt.Texts())
+				}
+				app.state.Settings.General.Language = "zh-CN"
+				tt.Frame()
+				if !tt.HasText("hooks: SessionStart.powershell: 未识别的 Hook 字段：已保留，执行时忽略。") {
+					t.Fatalf("hook diagnostic did not translate on language change: %v", tt.Texts())
+				}
+			})
+		}
+	}
 }
 
 func TestPluginSettingsNavigationAndEmptyState(t *testing.T) {

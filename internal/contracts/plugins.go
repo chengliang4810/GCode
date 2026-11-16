@@ -31,16 +31,16 @@ type PluginMarketplace struct {
 }
 
 type PluginCatalogItem struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Marketplace string   `json:"marketplace"`
-	Description string   `json:"description"`
-	Version     string   `json:"version,omitempty"`
-	Author      string   `json:"author,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Homepage    string   `json:"homepage,omitempty"`
-	Components  []string `json:"components,omitempty"`
-	Issues      []string `json:"issues,omitempty"`
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Marketplace string        `json:"marketplace"`
+	Description string        `json:"description"`
+	Version     string        `json:"version,omitempty"`
+	Author      string        `json:"author,omitempty"`
+	Category    string        `json:"category,omitempty"`
+	Homepage    string        `json:"homepage,omitempty"`
+	Components  []string      `json:"components,omitempty"`
+	Issues      []PluginIssue `json:"issues,omitempty"`
 }
 
 type InstalledPlugin struct {
@@ -53,8 +53,16 @@ type InstalledPlugin struct {
 	Enabled     bool                `json:"enabled"`
 	Path        string              `json:"path"`
 	Components  []string            `json:"components"`
-	Issues      []string            `json:"issues"`
+	Issues      []PluginIssue       `json:"issues"`
 	Config      []PluginConfigField `json:"config"`
+}
+
+// PluginIssue retains the location separately so clients can translate the
+// diagnostic message without parsing a formatted error string.
+type PluginIssue struct {
+	Component string `json:"component,omitempty"`
+	Path      string `json:"path,omitempty"`
+	Message   string `json:"message"`
 }
 
 type PluginConfigField struct {

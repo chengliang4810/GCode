@@ -1084,6 +1084,7 @@
   "Collapse all": "全部折叠",
   "Completed": "已完成",
   "Hook": "钩子",
+  "Unrecognized hook field; retained but ignored during execution.": "未识别的 Hook 字段：已保留，执行时忽略。",
   "Blocked": "已阻止",
   "Output": "输出",
   "Tool definitions": "工具定义",

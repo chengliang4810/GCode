@@ -150,3 +150,45 @@ func TestPluginOptionalMetadataWarningReachesHostDiagnostics(t *testing.T) {
 		t.Fatal("warning or preserved skill body was lost at the host boundary")
 	}
 }
+
+func TestPluginUnknownHookFieldKeepsLocationInSettingsAndRuntime(t *testing.T) {
+	core, _ := resourceCore(t)
+	market := t.TempDir()
+	writePluginFile(t, market, ".claude-plugin/marketplace.json",
+		`{"name":"fixture","owner":{"name":"fixture"},"plugins":[{"name":"sample","source":"./sample"}]}`)
+	writePluginFile(t, market, "sample/.claude-plugin/plugin.json", `{"name":"sample","version":"1.0.0"}`)
+	writePluginFile(t, market, "sample/hooks/hooks.json",
+		`{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"printf fixture","shell":"bash","powershell":"ignored"}]}]}}`)
+	installRuntimeFixture(t, core, market)
+	state, err := core.Snapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(state.Plugins.Installed) != 1 || len(state.Plugins.Installed[0].Issues) != 1 {
+		t.Fatalf("missing public diagnostic: %+v", state.Plugins)
+	}
+	want := contracts.PluginIssue{
+		Component: "hooks", Path: "SessionStart.powershell",
+		Message: "Unrecognized hook field; retained but ignored during execution.",
+	}
+	if got := state.Plugins.Installed[0].Issues[0]; got != want {
+		t.Fatalf("field location lost at public boundary: %+v", got)
+	}
+	bundles, err := core.plugins.Bundles()
+	if err != nil {
+		t.Fatal(err)
+	}
+	resources, err := core.prepareRuntimeResources(
+		core.storage.ConfigDirectory(), contracts.Session{CWD: t.TempDir()}, bundles, nil, nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(resources.instructions(),
+		"sample@fixture: hooks: SessionStart.powershell: Unrecognized hook field; retained but ignored during execution.") {
+		t.Fatal("runtime diagnostic dropped hook field location")
+	}
+	if len(resources.hooks) != 1 || resources.hooks[0].Command != "printf fixture" || resources.hooks[0].Shell != "bash" {
+		t.Fatalf("diagnostic changed hook execution: %+v", resources.hooks)
+	}
+}

@@ -174,6 +174,14 @@ type Issue struct {
 	Message   string `json:"message"`
 }
 
+func (i Issue) String() string {
+	location := i.Component
+	if i.Path != "" {
+		location += ": " + i.Path
+	}
+	return location + ": " + i.Message
+}
+
 type SkillMetadata struct {
 	Name                   string                   `yaml:"name" json:"name,omitempty"`
 	Description            string                   `yaml:"description" json:"description,omitempty"`

@@ -119,26 +119,30 @@ func (e *Engine) pluginProjection() contracts.PluginState {
 		}
 		bundle, err := plugins.LoadInstallation(install)
 		if err != nil {
-			item.Issues = append(item.Issues, err.Error())
+			item.Issues = append(item.Issues, contracts.PluginIssue{Message: err.Error()})
 		} else {
 			item.Name = bundle.Manifest.Name
 			item.Components = bundleComponents(bundle)
-			item.Issues = append(item.Issues, bundleComponentWarnings(bundle)...)
+			for _, warning := range bundleComponentWarnings(bundle) {
+				item.Issues = append(item.Issues, contracts.PluginIssue{Message: warning})
+			}
 			for _, issue := range bundle.Unsupported {
-				item.Issues = append(item.Issues, issue.Component+": "+issue.Message)
+				item.Issues = append(item.Issues, contracts.PluginIssue{
+					Component: issue.Component, Path: issue.Path, Message: issue.Message,
+				})
 			}
 			if len(bundle.LSPServers) > 0 {
-				item.Issues = append(item.Issues, "LSP runtime is not connected.")
+				item.Issues = append(item.Issues, contracts.PluginIssue{Message: "LSP runtime is not connected."})
 			}
 			if len(bundle.OutputStyles) > 0 {
-				item.Issues = append(item.Issues, "Output style selection requires host support.")
+				item.Issues = append(item.Issues, contracts.PluginIssue{Message: "Output style selection requires host support."})
 			}
 			keys := slices.Sorted(maps.Keys(bundle.Manifest.UserConfig))
 			for _, key := range keys {
 				option := bundle.Manifest.UserConfig[key]
 				field, configErr := publicPluginConfigField(key, option)
 				if configErr != nil {
-					item.Issues = append(item.Issues, "userConfig: "+configErr.Error())
+					item.Issues = append(item.Issues, contracts.PluginIssue{Component: "userConfig", Message: configErr.Error()})
 					continue
 				}
 				item.Config = append(item.Config, field)

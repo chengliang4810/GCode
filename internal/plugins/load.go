@@ -620,7 +620,10 @@ func (b *Bundle) loadConfig(kind string, raw json.RawMessage, defaultPath string
 								b.Unsupported = append(b.Unsupported, Issue{Component: "hooks", Path: event, Message: "unsupported hook type: " + hook.Type})
 							}
 							for key := range hook.Unknown {
-								b.Unsupported = append(b.Unsupported, Issue{Component: "hooks", Path: event + "." + key, Message: "unrecognized hook field retained"})
+								b.Unsupported = append(b.Unsupported, Issue{
+									Component: "hooks", Path: event + "." + key,
+									Message: "Unrecognized hook field; retained but ignored during execution.",
+								})
 							}
 						}
 					}

@@ -379,6 +379,9 @@ func redactPluginConfigProjection(item *contracts.InstalledPlugin, secrets []str
 		}
 	}
 	for i := range item.Issues {
-		item.Issues[i] = redactPluginConfigText(item.Issues[i], secrets)
+		issue := &item.Issues[i]
+		issue.Component = redactPluginConfigText(issue.Component, secrets)
+		issue.Path = redactPluginConfigText(issue.Path, secrets)
+		issue.Message = redactPluginConfigText(issue.Message, secrets)
 	}
 }

@@ -189,7 +189,7 @@ func buildRuntimeResources(configRoot, runtimeRoot, cwd, sessionID string, bundl
 			}
 		}
 		for _, issue := range b.Unsupported {
-			r.warnings = append(r.warnings, b.ID+": "+issue.Component+": "+issue.Message)
+			r.warnings = append(r.warnings, redactPluginConfigText(b.ID+": "+issue.String(), configSecrets))
 		}
 	}
 	user, err := readResourceCatalog(configRoot)

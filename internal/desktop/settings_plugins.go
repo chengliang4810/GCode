@@ -209,12 +209,23 @@ func (a *App) pluginCatalogDialog(c *ui.Context) {
 	})
 }
 
-func (a *App) pluginDetails(c *ui.Context, components, issues []string) {
+func (a *App) pluginDetails(c *ui.Context, components []string, issues []contracts.PluginIssue) {
 	if len(components) > 0 {
 		ui.Text(c, strings.Join(components, " · ")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 	}
 	for _, issue := range issues {
-		ui.Text(c, issue).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning).Selectable()
+		location := issue.Component
+		if issue.Path != "" {
+			if location != "" {
+				location += ": "
+			}
+			location += issue.Path
+		}
+		text := tr(c, issue.Message)
+		if location != "" {
+			text = location + ": " + text
+		}
+		ui.Text(c, text).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning).Selectable()
 	}
 }
 
