@@ -109,6 +109,7 @@ type responsesDecoder struct {
 	// functionDeltas counts streamed tool arguments, which must never end in a
 	// silent answer without an executable call.
 	functionDeltas int
+	finalOutput    bool
 }
 
 // responsesEvent is one streamed Responses API event.
@@ -178,6 +179,7 @@ func (d *responsesDecoder) consume(payload string) (Delta, error) {
 		}
 		d.complete, d.stop = true, StopComplete
 		if event.Response.Output != nil {
+			d.finalOutput = true
 			// The final array is authoritative; never execute stale interim items.
 			d.output = make(map[int]json.RawMessage, len(event.Response.Output))
 			for index, item := range event.Response.Output {
@@ -266,6 +268,9 @@ func (d *responsesDecoder) finish() (Result, error) {
 	// Calls that only ever arrived as deltas still execute, and stay in the
 	// replayed output so the next request carries the assistant tool use.
 	for _, index := range sortedKeys(d.streamed) {
+		if d.finalOutput {
+			break
+		}
 		call := d.streamed[index]
 		if _, ok := d.calls[index]; ok {
 			continue
@@ -283,7 +288,7 @@ func (d *responsesDecoder) finish() (Result, error) {
 		output = append(output, item)
 	}
 	result, err := d.streamState.finish()
-	if err == nil && d.functionDeltas > 0 && len(result.Message.Calls) == 0 {
+	if err == nil && !d.finalOutput && d.functionDeltas > 0 && len(result.Message.Calls) == 0 {
 		return result, errors.New("model streamed tool arguments without a complete call")
 	}
 	if err == nil && len(output) > 0 {

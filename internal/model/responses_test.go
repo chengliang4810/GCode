@@ -57,3 +57,32 @@ func TestResponsesReportsStreamedToolArgumentsWithoutACall(t *testing.T) {
 		t.Fatal("streamed tool arguments without a call were reported as a complete answer")
 	}
 }
+
+func TestResponsesFinalOutputExcludesInterimCalls(t *testing.T) {
+	for _, output := range []string{
+		`[]`,
+		`[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"Finished"}]}]`,
+		`[{"type":"function_call","call_id":"final","name":"Read","arguments":"{}"}]`,
+	} {
+		t.Run(output, func(t *testing.T) {
+			fixture := `data: {"type":"response.output_item.added","output_index":1,"item":{"type":"function_call","call_id":"stale","name":"Write"}}` + "\n\n" +
+				`data: {"type":"response.function_call_arguments.delta","output_index":1,"delta":"{}"}` + "\n\n" +
+				`data: {"type":"response.completed","response":{"status":"completed","output":` + output + `}}` + "\n\n"
+			result, err := decodeStream(strings.NewReader(fixture), responsesAdapter{}.decoder(), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, call := range result.Message.Calls {
+				if call.ID == "stale" {
+					t.Fatal("final response resurrected an excluded tool call")
+				}
+			}
+			if result.Message.Continuation != nil && strings.Contains(string(result.Message.Continuation.data), "stale") {
+				t.Fatal("continuation replay contains an excluded call")
+			}
+			if strings.Contains(output, `"final"`) && (len(result.Message.Calls) != 1 || result.Message.Calls[0].ID != "final") {
+				t.Fatalf("final call missing: %+v", result.Message.Calls)
+			}
+		})
+	}
+}
