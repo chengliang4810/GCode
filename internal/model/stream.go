@@ -14,6 +14,10 @@ import (
 // ErrStreamInterrupted means the response ended before its protocol completion event.
 var ErrStreamInterrupted = errors.New("model stream ended before completion")
 
+var ErrStreamLimit = errors.New("model stream event exceeds the 8 MiB size limit")
+
+const maxStreamEventBytes = 8 << 20
+
 var errOutputLimit = errors.New("model output limit reached; incomplete tool calls were not executed")
 
 // ToolCallError retains a rejected call for diagnostics only. The entire
@@ -185,14 +189,16 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		}
 	}()
 	scanner := bufio.NewScanner(reader)
-	scanner.Buffer(make([]byte, 4096), 8<<20)
+	scanner.Buffer(make([]byte, 4096), maxStreamEventBytes)
 	var data []string
+	eventBytes := 0
 	process := func() error {
 		if len(data) == 0 {
 			return nil
 		}
 		payload := strings.Join(data, "\n")
 		data = nil
+		eventBytes = 0
 		delta, err := decoder.consume(payload)
 		if err != nil {
 			return err
@@ -227,10 +233,18 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 				return finish()
 			}
 		} else if strings.HasPrefix(line, "data:") {
-			data = append(data, strings.TrimPrefix(strings.TrimPrefix(line, "data:"), " "))
+			part := strings.TrimPrefix(strings.TrimPrefix(line, "data:"), " ")
+			eventBytes += len(part) + 1
+			if eventBytes > maxStreamEventBytes {
+				return decoder.snapshot(), ErrStreamLimit
+			}
+			data = append(data, part)
 		}
 	}
 	if err := scanner.Err(); err != nil {
+		if errors.Is(err, bufio.ErrTooLong) {
+			return decoder.snapshot(), ErrStreamLimit
+		}
 		if errors.Is(err, io.ErrUnexpectedEOF) {
 			return decoder.snapshot(), fmt.Errorf("%w: %v", ErrStreamInterrupted, err)
 		}

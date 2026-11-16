@@ -117,6 +117,24 @@ func TestRetryInvalidToolCallWithoutPublishingAnyCalls(t *testing.T) {
 	}
 }
 
+func TestRetryDoesNotRepeatOversizedStream(t *testing.T) {
+	calls, retries := 0, 0
+	body := "data: " + strings.Repeat("x", maxStreamEventBytes) + "\n\n"
+	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {
+		calls++
+		return retryResponse(http.StatusOK, body), nil
+	}))
+	_, err := gateway.Stream(t.Context(), Request{}, func(delta Delta) error {
+		if delta.Retry != nil {
+			retries++
+		}
+		return nil
+	})
+	if !errors.Is(err, ErrStreamLimit) || calls != 1 || retries != 0 {
+		t.Fatalf("oversized stream retried: calls=%d retries=%d error=%v", calls, retries, err)
+	}
+}
+
 func TestRetryBudgetIsTenAdditionalAttemptsAndResetsPerRequest(t *testing.T) {
 	calls := 0
 	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {

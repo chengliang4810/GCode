@@ -4,10 +4,31 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestOversizedStreamEventsAreTerminalFailures(t *testing.T) {
+	for _, tc := range []struct{ name, input string }{
+		{"single line", "data: " + strings.Repeat("x", maxStreamEventBytes) + "\n\n"},
+		{"multiline event", strings.Repeat("data: "+strings.Repeat("x", 1024)+"\n", maxStreamEventBytes/1024+1) + "\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := decodeStream(strings.NewReader(tc.input), chatAdapter{}.decoder(), nil)
+			if !errors.Is(err, ErrStreamLimit) || len(result.Message.Calls) != 0 {
+				t.Fatalf("oversized event exposed executable output: %+v %v", result, err)
+			}
+			for _, wrapped := range []error{err, &url.Error{Op: "read", URL: "http://fixture", Err: err}} {
+				failure := ClassifyFailure(wrapped)
+				if failure.Retryable || failure.Reason != "response_too_large" {
+					t.Fatalf("deterministic limit was retried: %+v", failure)
+				}
+			}
+		})
+	}
+}
 
 func TestStreamSnapshotsAndDeltasRemainImmutable(t *testing.T) {
 	t.Parallel()

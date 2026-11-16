@@ -24,12 +24,17 @@ type Failure struct {
 // failures. New cases belong here; budgets, UI and callers do not classify errors.
 var failureRules = []func(error) (Failure, bool){
 	cancelledFailure,
+	streamLimitFailure,
 	certificateFailure,
 	providerBusinessFailure,
 	httpFailure,
 	toolCallFailure,
 	streamFailure,
 	networkFailure,
+}
+
+func streamLimitFailure(err error) (Failure, bool) {
+	return Failure{Reason: "response_too_large"}, errors.Is(err, ErrStreamLimit)
 }
 
 func toolCallFailure(err error) (Failure, bool) {
