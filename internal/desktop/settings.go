@@ -82,7 +82,14 @@ func (a *App) settingsNavigation(c *ui.Context) {
 		controlNavButton(c.Key("back-to-conversations"), tr(c, "Back to conversations"), false).FillWidth().Children(func() {
 			icon(c, "alt-arrow-left", 16)
 			ui.Text(c, tr(c, "Back")).FontSize(design.TextSize(c, design.TextBase))
-		}).OnClick(func() { a.clearShortcutRecording(); a.navigate("chat") })
+		}).OnClick(func() {
+			a.clearShortcutRecording()
+			route := "chat"
+			if a.sessionID != "" {
+				route += "/" + a.sessionID
+			}
+			a.navigate(route)
+		})
 		ui.Scroll(c.Key("settings-navigation")).Grow(1).Gap(3).Children(func() {
 			for _, name := range a.sections() {
 				section := name
