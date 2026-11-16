@@ -36,11 +36,11 @@ func TestFileWriteToolsStayInsideWorkingDirectory(t *testing.T) {
 	tools := []fileTool{{name: "Write"}, {name: "Edit"}}
 	cases := []struct {
 		name string
-		args string
+		path string
 	}{
-		{"absolute", `{"file_path":"` + filepath.ToSlash(target) + `","content":"escaped","old_string":"","new_string":"escaped"}`},
-		{"parent traversal", `{"file_path":"../` + filepath.Base(outside) + `/secret.txt","content":"escaped","old_string":"","new_string":"escaped"}`},
-		{"symlink escape", `{"file_path":"link/secret.txt","content":"escaped","old_string":"","new_string":"escaped"}`},
+		{"absolute", target},
+		{"parent traversal", "../" + filepath.Base(outside) + "/secret.txt"},
+		{"symlink escape", "link/secret.txt"},
 	}
 	if runtime.GOOS == "windows" {
 		cases = cases[:2]
@@ -52,9 +52,22 @@ func TestFileWriteToolsStayInsideWorkingDirectory(t *testing.T) {
 			if test.name == "symlink escape" && runtime.GOOS == "windows" {
 				continue
 			}
-			if _, err := tool.Execute(context.Background(), root, json.RawMessage(test.args)); err == nil {
-				t.Fatalf("%s %s escaped the working directory", tool.name, test.name)
-			}
+			t.Run(tool.name+"/"+test.name, func(t *testing.T) {
+				args := map[string]any{"file_path": test.path}
+				if tool.name == "Write" {
+					args["content"] = "escaped"
+				} else {
+					args["old_string"], args["new_string"] = "", "escaped"
+				}
+				raw, err := json.Marshal(args)
+				if err != nil {
+					t.Fatal(err)
+				}
+				_, err = tool.Execute(context.Background(), root, raw)
+				if err == nil || strings.Contains(err.Error(), "parameter") {
+					t.Fatalf("expected path boundary rejection, got %v", err)
+				}
+			})
 		}
 	}
 	if _, err := os.Stat(target); !os.IsNotExist(err) {
