@@ -3,6 +3,7 @@ module gcode
 go 1.27.3
 
 require (
+	github.com/clipperhouse/uax29/v2 v2.5.0
 	github.com/dlclark/regexp2 v1.12.0
 	github.com/egoist/mygo v0.9.1
 	github.com/fyne-io/image v0.1.1
@@ -18,6 +19,7 @@ replace github.com/egoist/mygo => ./third_party/mygo
 
 require (
 	github.com/ProtonMail/go-crypto v1.4.1 // indirect
+	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/cloudflare/circl v1.6.2 // indirect
 	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/go-text/typesetting v0.3.5 // indirect
