@@ -10,6 +10,7 @@ import (
 // CloneSnapshot deliberately shares only immutable strings and time values.
 // This avoids serializing thousands of historical messages on each UI update.
 func CloneSnapshot(v Snapshot) Snapshot {
+	v.PrivacyModels = slices.Clone(v.PrivacyModels)
 	if v.Metrics != nil {
 		source := v.Metrics
 		v.Metrics = make(map[string]ConversationMetrics, len(source))
@@ -90,6 +91,7 @@ func CloneSnapshot(v Snapshot) Snapshot {
 	for i := range v.Providers {
 		v.Providers[i].Models = slices.Clone(v.Providers[i].Models)
 	}
+	v.Settings.Privacy = v.Settings.Privacy.Clone()
 	v.Settings.Shortcuts = slices.Clone(v.Settings.Shortcuts)
 	v.Settings.Subagents = CloneSubagentProfiles(v.Settings.Subagents)
 	v.Settings.Hooks = CloneHookRules(v.Settings.Hooks)

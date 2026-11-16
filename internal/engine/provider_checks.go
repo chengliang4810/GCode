@@ -59,7 +59,7 @@ func (e *Engine) startModelCheckLocked(modelID string) error {
 			break
 		}
 	}
-	gateway, err := e.client.Bind(provider, selected)
+	gateway, err := e.bindModelLocked(provider, selected)
 	if err != nil {
 		return err
 	}

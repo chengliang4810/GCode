@@ -1,7 +1,10 @@
 package contracts
 
+import "gcode/internal/privacy"
+
 func DefaultSettings() Settings {
 	settings := Settings{
+		Privacy:       privacy.DefaultSettings(),
 		Subagents:     DefaultSubagentProfiles(),
 		Appearance:    AppearanceSettings{RenderMath: true, MathFont: "Fira Math", MathScale: 100, Mode: "dark", ThemeID: "rcode-dark", LightThemeID: "rcode-light", DarkThemeID: "rcode-dark", Accent: "theme", EffortTheme: EffortThemePurple, Surface: "theme", Font: "Geist", FontSize: 14, CodeFont: "Geist Mono", CodeFontSize: 12, TerminalFont: "Geist Mono", TerminalFontSize: 13, TranscriptWidth: 736, BackgroundEffect: "none"},
 		General:       GeneralSettings{Language: "zh-CN", SendBehavior: "enter", ActiveTurnSendBehavior: "steer", StopWithEscape: true, ThreadNamingModel: "current-model"},

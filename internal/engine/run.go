@@ -253,7 +253,7 @@ func (e *Engine) startRunWithProvidersLocked(
 		return err
 	}
 	session.ReasoningLevel = model.ReasoningLabel(effort)
-	if _, err := e.client.Bind(provider, m); err != nil {
+	if _, err := e.bindModelLocked(provider, m); err != nil {
 		return err
 	}
 	if _, err := os.Stat(session.CWD); err != nil {

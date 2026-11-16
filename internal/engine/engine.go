@@ -22,6 +22,7 @@ import (
 	"gcode/internal/storage"
 	"gcode/internal/streamtext"
 	"gcode/internal/terminalhost"
+	"gcode/third_party/magpie/redact"
 )
 
 type Options struct {
@@ -70,6 +71,7 @@ type activeRun struct {
 }
 
 type Engine struct {
+	privacyModelJobs   map[string]bool
 	trajectoryMu       sync.Mutex
 	trajectoryIssues   map[string]error
 	toolGuard          ToolGuard
@@ -143,6 +145,7 @@ func Open(options Options) (*Engine, error) {
 	if options.Storage == nil {
 		return nil, errors.New("data storage is required")
 	}
+	redact.SetKeyPath(filepath.Join(options.Storage.ConfigDirectory(), "privacy-placeholder.key"))
 	client := options.Client
 	if client == nil {
 		client = model.NewClient()
@@ -197,6 +200,7 @@ func Open(options Options) (*Engine, error) {
 		}
 	}
 	e.refreshStorageLocked()
+	e.refreshPrivacyModelsLocked()
 	e.resources, err = readResourceCatalog(e.storage.ConfigDirectory())
 	if err != nil {
 		return nil, err

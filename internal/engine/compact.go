@@ -30,7 +30,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := e.client.Bind(provider, m); err != nil {
+	if _, err := e.bindModelLocked(provider, m); err != nil {
 		return err
 	}
 	history := model.CloneMessages(e.context[sessionID])

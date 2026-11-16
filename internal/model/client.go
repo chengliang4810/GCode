@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"gcode/internal/privacy"
 )
 
 // Client owns the shared outbound HTTP transport, not Agent execution state.
@@ -51,12 +53,14 @@ type adapter interface {
 // Gateway binds a frozen channel/model configuration to one protocol adapter.
 // Its Stream input and output contain no endpoint, credentials or protocol choice.
 type Gateway struct {
-	Observe  func(Invocation)
-	http     *http.Client
-	provider Provider
-	target   adapterTarget
-	adapter  adapter
-	retry    RetryPolicy
+	Observe       func(Invocation)
+	Privacy       privacy.Settings
+	PrivacyReport func(privacy.Report)
+	http          *http.Client
+	provider      Provider
+	target        adapterTarget
+	adapter       adapter
+	retry         RetryPolicy
 }
 
 func (c *Client) Bind(provider Provider, selected Model) (*Gateway, error) {
@@ -220,6 +224,10 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 	if err != nil {
 		return Result{}, err
 	}
+	body, err = g.maskRequest(ctx, body)
+	if err != nil {
+		return Result{}, err
+	}
 	endpoint, err := providerEndpoint(g.provider.BaseURL, g.adapter.path())
 	if err != nil {
 		return Result{}, err
@@ -227,6 +235,13 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 	requestID := rand.Text()
 	var diagnostics RequestDiagnostics
 	if g.Observe != nil {
+		if g.Privacy.Enabled {
+			// Fingerprint the bytes actually sent, rather than the unmasked
+			// adapter output, so cache diagnostics describe the wire request.
+			if err := json.Unmarshal(body, &payload); err != nil {
+				return Result{}, err
+			}
+		}
 		diagnostics = requestDiagnostics(payload, body, input)
 		diagnostics.TargetHash = g.target.scope
 	}
@@ -336,7 +351,7 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		return result, status, providerHTTPError(response, "model request failed", g.provider.APIKey)
 	}
 	streamStarted := time.Now()
-	result, callErr = decodeStream(response.Body, g.adapter.decoder(), emit)
+	result, callErr = g.decodePrivateStream(response.Body, emit)
 	if result.FirstTokenObserved {
 		result.FirstTokenLatency += streamStarted.Sub(started)
 	}

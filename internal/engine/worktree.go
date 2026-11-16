@@ -352,7 +352,7 @@ func (e *Engine) checkoutSend(ctx context.Context, command contracts.Command) er
 		e.mu.Unlock()
 		return err
 	}
-	if _, err := e.client.Bind(provider, selected); err != nil {
+	if _, err := e.bindModelLocked(provider, selected); err != nil {
 		e.mu.Unlock()
 		return err
 	}

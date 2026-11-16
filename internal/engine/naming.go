@@ -30,7 +30,7 @@ func (e *Engine) startNamingLocked(session contracts.Session, text string) {
 		e.publishLocked(contracts.Event{Kind: "session.naming.failed", SessionID: session.ID, Text: "The configured thread naming model is unavailable; the initial title was kept."})
 		return
 	}
-	gateway, err := e.client.Bind(provider, selected)
+	gateway, err := e.bindModelLocked(provider, selected)
 	if err != nil {
 		e.publishLocked(contracts.Event{Kind: "session.naming.failed", SessionID: session.ID, Text: "The configured thread naming model is invalid; the initial title was kept."})
 		return

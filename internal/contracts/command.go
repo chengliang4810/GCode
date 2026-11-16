@@ -32,6 +32,7 @@ func (c Command) Clone() Command {
 	c.Adjustment = copyPointer(c.Adjustment)
 	if c.Settings != nil {
 		v := *c.Settings
+		v.Privacy = v.Privacy.Clone()
 		v.Shortcuts = slices.Clone(v.Shortcuts)
 		v.Subagents = CloneSubagentProfiles(v.Subagents)
 		v.Hooks = CloneHookRules(v.Hooks)
@@ -117,6 +118,11 @@ func (c Command) Validate() error {
 		return errors.New("goal edit payload does not match command")
 	}
 	switch c.Kind {
+	case "privacy.model.download", "privacy.model.cancel", "privacy.model.remove":
+		if c.ID != "astrlink-guard" && c.ID != "privacy-filter" {
+			return errors.New("unknown local privacy model")
+		}
+		return nil
 	case "goal.edit":
 		if c.SessionID == "" || c.ID == "" || c.GoalEdit == nil {
 			return errors.New("a session, goal ID and edit payload are required")
@@ -249,6 +255,9 @@ func (c Command) Validate() error {
 	case "settings.update":
 		if c.Settings == nil {
 			return errors.New("settings payload is required")
+		}
+		if err := c.Settings.Privacy.Validate(); err != nil {
+			return err
 		}
 		if err := ValidateHookRules(c.Settings.Hooks); err != nil {
 			return err

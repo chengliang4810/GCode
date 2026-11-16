@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gcode/internal/model"
+	"gcode/internal/privacy"
 )
 
 const SchemaVersion = 1
@@ -20,6 +21,7 @@ const (
 )
 
 type Snapshot struct {
+	PrivacyModels       []privacy.ModelStatus          `json:"privacyModels"`
 	Metrics             map[string]ConversationMetrics `json:"metrics"`
 	ApplicationUsage    *ApplicationUsage              `json:"applicationUsage,omitempty"`
 	Plugins             PluginState                    `json:"plugins"`
@@ -327,6 +329,7 @@ type Provider struct {
 }
 
 type Settings struct {
+	Privacy         privacy.Settings        `json:"privacy"`
 	Hooks           []HookRule              `json:"hooks"`
 	Subagents       []SubagentProfile       `json:"subagents"`
 	ModelPicker     ModelPickerSettings     `json:"modelPicker"`

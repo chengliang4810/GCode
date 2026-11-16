@@ -58,6 +58,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	if strings.HasPrefix(command.Kind, "plugins.") {
 		return e.startPluginOperationLocked(command)
 	}
+	if strings.HasPrefix(command.Kind, "privacy.model.") {
+		return e.privacyModelCommandLocked(command)
+	}
 	if checkout != nil {
 		found := false
 		for _, project := range e.state.Projects {
@@ -237,6 +240,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	case "settings.update":
 		if command.Settings == nil {
 			return errors.New("settings are required")
+		}
+		if err := command.Settings.Privacy.Validate(); err != nil {
+			return err
 		}
 		if err := contracts.ValidateHookRules(command.Settings.Hooks); err != nil {
 			return err

@@ -94,7 +94,7 @@ func (m sessionModel) Stream(ctx context.Context, request model.Request, emit fu
 		e.mu.Unlock()
 		return model.Result{}, err
 	}
-	gateway, err := e.client.Bind(provider, selected)
+	gateway, err := e.bindModelLocked(provider, selected)
 	if err != nil {
 		e.mu.Unlock()
 		return model.Result{}, err
