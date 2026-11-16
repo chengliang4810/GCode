@@ -15,7 +15,7 @@ import (
 type settingOption struct{ value, label string }
 
 func (a *App) sections() []string {
-	s := []string{"General", "Appearance", "Notifications", "Devices", "Shortcuts"}
+	s := []string{"General", "Appearance", "Privacy", "Notifications", "Devices", "Shortcuts"}
 	if a.state.Runtime != nil {
 		s = append(s, "Model settings", "Marketplace", "Personalization", "Plugins", "Subagents", "Skills", "Commands", "Hooks", "MCP servers")
 	} else {
@@ -37,6 +37,8 @@ func settingsIcon(section string) string {
 		return "settings"
 	case "Appearance":
 		return "tuning"
+	case "Privacy":
+		return "settings"
 	case "Personalization":
 		return "global"
 	case "Notifications":
@@ -144,6 +146,8 @@ func (a *App) settingsView(c *ui.Context) {
 				a.generalSettings(c)
 			case "Appearance":
 				a.appearanceSettings(c)
+			case "Privacy":
+				a.privacySettings(c)
 			case "Personalization":
 				a.personalizationSettings(c)
 			case "Notifications":

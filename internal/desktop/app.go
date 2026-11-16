@@ -486,7 +486,7 @@ func (a *App) applyEvent(event contracts.Event) {
 	if event.Message != nil && !a.sessionScopeContains(event.SessionID) {
 		event.Message = nil
 	}
-	if event.Kind == "session.naming.failed" {
+	if event.Kind == "session.naming.failed" || event.Kind == "privacy.warning" {
 		a.notification(event.Text)
 	}
 	if event.Kind == "model.request.recorded" || event.Kind == "run.finished" {
