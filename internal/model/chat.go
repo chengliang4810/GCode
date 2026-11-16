@@ -59,7 +59,10 @@ func (chatAdapter) encode(r Request, target adapterTarget) (map[string]any, erro
 			item["reasoning_content"] = continuation.Reasoning
 		}
 		if len(m.Images) > 0 {
-			parts := []any{map[string]any{"type": "text", "text": m.Text}}
+			parts := []any{}
+			if m.Text != "" {
+				parts = append(parts, map[string]any{"type": "text", "text": m.Text})
+			}
 			for _, image := range m.Images {
 				parts = append(parts, map[string]any{
 					"type":      "image_url",

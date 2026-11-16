@@ -59,7 +59,10 @@ func (responsesAdapter) encode(r Request, target adapterTarget) (map[string]any,
 			if m.Role == "assistant" {
 				kind = "output_text"
 			}
-			content := []any{map[string]any{"type": kind, "text": m.Text}}
+			content := []any{}
+			if m.Text != "" {
+				content = append(content, map[string]any{"type": kind, "text": m.Text})
+			}
 			for _, image := range m.Images {
 				content = append(content, map[string]any{
 					"type": "input_image", "image_url": "data:" + image.MIME + ";base64," + image.Data,
