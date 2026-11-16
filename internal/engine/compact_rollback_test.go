@@ -57,12 +57,18 @@ func TestManualCompactionPersistenceFailureRestoresContextInBothModes(t *testing
 				t.Fatal("summary did not start")
 			}
 			indexPath := filepath.Join(core.storage.ConfigDirectory(), "engine.json")
-			if err := os.Remove(indexPath); err != nil {
-				t.Fatal(err)
-			}
-			if err := os.Mkdir(indexPath, 0700); err != nil {
-				t.Fatal(err)
-			}
+			// Hold the transaction gate while replacing the index: background
+			// project loading must not recreate it between Remove and Mkdir.
+			func() {
+				core.mu.Lock()
+				defer core.mu.Unlock()
+				if err := os.Remove(indexPath); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Mkdir(indexPath, 0700); err != nil {
+					t.Fatal(err)
+				}
+			}()
 			defer os.Remove(indexPath)
 			close(release)
 			state = waitSubagentState(t, core, runsFinished, sessionID)
