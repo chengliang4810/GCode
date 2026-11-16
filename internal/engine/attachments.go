@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gcode/internal/attachmentio"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
@@ -23,59 +24,47 @@ import (
 const resourcePrefix = "resource://managed/"
 
 func (e *Engine) ImportAttachments(ctx context.Context, request contracts.AttachmentImportRequest) ([]contracts.Attachment, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	files, err := attachmentio.Plan(request)
+	if err != nil {
+		return nil, err
+	}
 	request = request.Clone()
-	count := len(request.Paths)
-	if request.Clipboard != nil {
-		count++
-	}
-	if count < 1 || count > contracts.MaxAttachmentCount {
-		return nil, errors.New("select between 1 and 20 attachments")
-	}
 	var staged []struct {
 		name string
 		data []byte
 	}
-	var total int
-	for _, path := range request.Paths {
+	remaining := int64(contracts.MaxAttachmentBatchBytes)
+	if request.Clipboard != nil {
+		remaining -= int64(len(request.Clipboard.Data))
+	}
+	for _, file := range files {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		f, err := os.Open(path)
+		f, size, err := attachmentio.Open(file, remaining)
 		if err != nil {
 			return nil, err
 		}
-		info, statErr := f.Stat()
-		if statErr != nil || !info.Mode().IsRegular() {
-			_ = f.Close()
-			return nil, errors.New("attachment must be a regular file")
-		}
-		data, readErr := io.ReadAll(io.LimitReader(f, contracts.MaxAttachmentBytes+1))
+		data, readErr := attachmentio.Read(f, size, min(remaining, int64(contracts.MaxAttachmentBytes)))
 		_ = f.Close()
 		if readErr != nil {
 			return nil, readErr
 		}
-		if len(data) > contracts.MaxAttachmentBytes {
-			return nil, errors.New("attachment exceeds 24 MiB")
-		}
-		total += len(data)
+		remaining -= int64(len(data))
 		staged = append(staged, struct {
 			name string
 			data []byte
-		}{filepath.Base(path), data})
+		}{file.Name, data})
 	}
 	if request.Clipboard != nil {
 		data := request.Clipboard.Data
-		if len(data) == 0 || len(data) > contracts.MaxAttachmentBytes {
-			return nil, errors.New("invalid clipboard attachment size")
-		}
-		total += len(data)
 		staged = append(staged, struct {
 			name string
 			data []byte
 		}{request.Clipboard.Name, data})
-	}
-	if total > contracts.MaxAttachmentBatchBytes {
-		return nil, errors.New("attachment batch exceeds 96 MiB")
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()

@@ -54,13 +54,17 @@ func (c *Client) requestWithCursor(ctx context.Context, method, path string, bod
 	if err != nil {
 		return nil, err
 	}
-	request.Header.Set("Authorization", "Bearer "+c.token)
 	if cursor != "" {
 		request.Header.Set("Last-Event-ID", cursor)
 	}
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
+	return c.send(request)
+}
+
+func (c *Client) send(request *http.Request) (*http.Response, error) {
+	request.Header.Set("Authorization", "Bearer "+c.token)
 	response, err := c.http.Do(request)
 	if err != nil {
 		return nil, err

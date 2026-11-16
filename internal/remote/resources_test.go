@@ -2,9 +2,12 @@ package remote
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -67,15 +70,15 @@ func TestAttachmentBatchKeepsSourceSessionForEveryUpload(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		var request contracts.AttachmentImportRequest
-		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
 			t.Error(err)
-			http.Error(w, "invalid request", 400)
 			return
 		}
-		sessions = append(sessions, request.SessionID)
-		if request.Clipboard == nil || len(request.Paths) != 0 {
-			t.Error("remote attachment did not contain encoded bytes")
+		sessions = append(sessions, r.URL.Query().Get("sessionId"))
+		if r.Header.Get("Content-Type") != "application/octet-stream" ||
+			r.URL.Query().Get("name") == "" || len(data) == 0 {
+			t.Error("remote attachment did not stream binary bytes and metadata")
 		}
 		_ = json.NewEncoder(w).Encode([]contracts.Attachment{{ID: "uploaded"}})
 	}))
@@ -100,5 +103,117 @@ func TestAttachmentBatchKeepsSourceSessionForEveryUpload(t *testing.T) {
 		if session != "old-session" {
 			t.Fatalf("upload lost source session: %q", session)
 		}
+	}
+}
+
+type attachmentUploadCore struct {
+	contracts.Service
+	calls int
+	size  int
+}
+
+func (c *attachmentUploadCore) ImportAttachments(_ context.Context, request contracts.AttachmentImportRequest) ([]contracts.Attachment, error) {
+	c.calls++
+	c.size = len(request.Clipboard.Data)
+	return []contracts.Attachment{{ID: "uploaded", Name: request.Clipboard.Name}}, nil
+}
+
+type unreadUpload struct{ t *testing.T }
+
+func (r unreadUpload) Read([]byte) (int, error) {
+	r.t.Error("oversized upload body was read")
+	return 0, io.EOF
+}
+
+type generatedUpload struct{}
+
+func (generatedUpload) Read(data []byte) (int, error) {
+	for i := range data {
+		data[i] = 'x'
+	}
+	return len(data), nil
+}
+
+func TestAttachmentChunkedUploadRejectsActualOversize(t *testing.T) {
+	core := &attachmentUploadCore{}
+	token := strings.Repeat("upload-test", 3)
+	handler, err := (Server{Core: core, Token: token}).Handler()
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/v1/attachments?name=large.bin",
+		io.LimitReader(generatedUpload{}, contracts.MaxAttachmentBytes+1))
+	request.ContentLength = -1
+	request.Header.Set("Content-Type", "application/octet-stream")
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusRequestEntityTooLarge || core.calls != 0 {
+		t.Fatalf("chunked oversized upload reached import: status=%d calls=%d", response.Code, core.calls)
+	}
+}
+
+func TestAttachmentUploadEnforcesBinaryBoundaryBeforeImport(t *testing.T) {
+	for _, tc := range []struct {
+		name, contentType, body string
+		length                  int64
+		want                    int
+	}{
+		{"binary", "application/octet-stream", "binary\x00payload", 14, http.StatusOK},
+		{"unknown length", "application/octet-stream", "chunked", -1, http.StatusOK},
+		{"truncated", "application/octet-stream", "short", 20, http.StatusBadRequest},
+		{"empty", "application/octet-stream", "", 0, http.StatusBadRequest},
+		{"old JSON removed", "application/json", `{"clipboard":{"data":"eA=="}}`, -1, http.StatusUnsupportedMediaType},
+		{"oversized declaration", "application/octet-stream", "", contracts.MaxAttachmentBytes + 1, http.StatusRequestEntityTooLarge},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			core := &attachmentUploadCore{}
+			token := strings.Repeat("upload-test", 3)
+			handler, err := (Server{Core: core, Token: token}).Handler()
+			if err != nil {
+				t.Fatal(err)
+			}
+			var reader io.Reader = strings.NewReader(tc.body)
+			if tc.length > contracts.MaxAttachmentBytes {
+				reader = unreadUpload{t}
+			}
+			request := httptest.NewRequest(http.MethodPost, "/v1/attachments?"+url.Values{"name": {"测试报告.bin"}}.Encode(), reader)
+			request.ContentLength = tc.length
+			request.Header.Set("Content-Type", tc.contentType)
+			request.Header.Set("Authorization", "Bearer "+token)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+			if response.Code != tc.want || (tc.want == http.StatusOK) != (core.calls == 1) {
+				t.Fatalf("status=%d calls=%d body=%s", response.Code, core.calls, response.Body.String())
+			}
+		})
+	}
+}
+
+func TestAttachmentBatchRejectsOversizeBeforeAnyUpload(t *testing.T) {
+	var calls int
+	host := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { calls++ }))
+	defer host.Close()
+	client, err := NewClient(host.URL, strings.Repeat("upload-test", 3))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	var paths []string
+	for i := 0; i < 5; i++ {
+		path := filepath.Join(t.TempDir(), "large.bin")
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Truncate(contracts.MaxAttachmentBytes); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+		paths = append(paths, path)
+	}
+	_, err = client.ImportAttachments(t.Context(), contracts.AttachmentImportRequest{Paths: paths})
+	if err == nil || calls != 0 {
+		t.Fatalf("oversized batch uploaded data: %v calls=%d", err, calls)
 	}
 }

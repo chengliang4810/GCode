@@ -305,7 +305,7 @@ go run ./cmd/rcode --local
 | `POST /v1/directories` | 宿主目录选择数据 |
 | `POST /v1/directory-locations` | 宿主的可选位置（Home 与磁盘卷） |
 | `POST /v1/search` | 宿主项目搜索 |
-| `POST /v1/attachments` | 上传附件字节，不接受任意宿主路径 |
+| `POST /v1/attachments` | 单附件原始二进制上传（24 MiB），不接受 JSON/base64 或宿主路径 |
 | `GET /v1/resources?ref=...` | 读取托管附件 |
 | `GET /v1/terminals/{id}/stream` | 终端原始输出字节流，断开只分离视图 |
 | `POST /v1/terminals/{id}/input` | 终端原始输入字节，不创建临时视图 |
@@ -315,6 +315,13 @@ go run ./cmd/rcode --local
 | `POST /v1/provider-logo` | 由宿主抓取并返回供应商标识 |
 | `GET /v1/model-trajectory` | 宿主保存的调用轨迹 |
 | `GET /v1/application-usage` | 宿主本机应用用量统计 |
+
+附件上传使用 `Content-Type: application/octet-stream`，查询参数 `name`、
+可选 `mime` 和 `sessionId` 传递元数据。客户端先检查整个批次（最多 20 个、
+总计 96 MiB），再按文件逐个传输，不将全部文件编码成 JSON 或同时读入客户端内存。
+宿主在读取前检查声明长度，并对未知长度流执行相同的 24 MiB 上限；
+截断、超限或非法元数据不会交给核心导入。旧 JSON 上传格式直接拒绝。
+本机导入保持强类型 Go 调用，也先按文件元数据检查批次限额，再读取剩余额度内的正文。
 
 全部 API 要求 `Authorization: Bearer <token>`。移动客户端可以复用这套接口，
 当前仓库没有新增 Android/iOS 客户端，也没有完成手机实机验收。
