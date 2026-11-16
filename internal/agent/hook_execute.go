@@ -114,7 +114,8 @@ func (h *HookRunner) execute(ctx context.Context, timeout time.Duration, rule co
 	if rule.Async || rule.AsyncRewake {
 		// Decisions are too late to control the completed action. Keep only the
 		// two notification fields delivered at the next session boundary.
-		execution.Result = HookResult{Context: execution.Result.Context, SystemMessage: execution.Result.SystemMessage}
+		execution.Result = HookResult{Context: execution.Result.Context, SystemMessage: execution.Result.SystemMessage,
+			SuppressOutput: execution.Result.SuppressOutput}
 	}
 	return execution, nil
 }

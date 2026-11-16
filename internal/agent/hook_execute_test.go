@@ -189,6 +189,40 @@ func TestHookAsyncRewakeAndNotification(t *testing.T) {
 	}
 }
 
+func TestHookAsyncPreservesOutputSuppressionForReports(t *testing.T) {
+	for _, mode := range []string{"async", "asyncRewake"} {
+		t.Run(mode, func(t *testing.T) {
+			rule := testHookRule(t, contracts.HookPostToolUse, "output",
+				`{"suppressOutput":true,"systemMessage":"notice","hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"facts"}}`)
+			rule.Async, rule.AsyncRewake = mode == "async", mode == "asyncRewake"
+			var reported atomic.Bool
+			var delivered atomic.Bool
+			runner := NewHookRunner([]contracts.HookRule{rule}, func(execution HookExecution) error {
+				if !execution.Result.SuppressOutput || execution.Result.Context != "facts" {
+					t.Errorf("report lost background output policy: %+v", execution.Result)
+				}
+				reported.Store(true)
+				return nil
+			}, WithHookAsyncResult(func(_ context.Context, execution HookExecution) error {
+				if !execution.Result.SuppressOutput || execution.Result.SystemMessage != "notice" {
+					t.Errorf("background notification lost fields: %+v", execution.Result)
+				}
+				delivered.Store(true)
+				return nil
+			}))
+			if _, err := runner.Run(context.Background(), HookInput{Event: contracts.HookPostToolUse, CWD: t.TempDir()}); err != nil {
+				t.Fatal(err)
+			}
+			if err := runner.WaitBackground(); err != nil {
+				t.Fatal(err)
+			}
+			if !reported.Load() || !delivered.Load() {
+				t.Fatal("background report or context delivery missing")
+			}
+		})
+	}
+}
+
 func TestHookCommandExecFormEnvironmentAndEmptyArgs(t *testing.T) {
 	directory := t.TempDir()
 	input := HookInput{Event: contracts.HookSessionStart, CWD: directory, Effort: &HookEffort{Level: "high"}, EnvFile: filepath.Join(directory, "env")}
