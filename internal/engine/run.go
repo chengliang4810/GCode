@@ -20,9 +20,8 @@ import (
 )
 
 // messagePersistInterval bounds how often a running turn rewrites its
-// conversation. Durability is unchanged for completed turns: the run persists
-// before it settles, and a crash loses at most this window of execution
-// messages.
+// conversation. A host ticker flushes skipped records even while a tool is
+// waiting. This is a scheduling interval, not a hard bound on disk latency.
 const messagePersistInterval = 2 * time.Second
 
 func (e *Engine) sendLocked(send contracts.SendRequest) error {

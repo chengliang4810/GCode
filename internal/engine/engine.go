@@ -117,6 +117,7 @@ type Engine struct {
 	catalogCancel      context.CancelFunc
 	catalogDone        chan struct{}
 	maintenanceDone    chan struct{}
+	flushDone          chan struct{}
 	plugins            *plugins.Manager
 	pluginOperations   map[string]context.CancelFunc
 	pluginConfig       map[string]map[string]string
@@ -236,6 +237,8 @@ func Open(options Options) (*Engine, error) {
 		}
 	}
 	e.mu.Unlock()
+	e.flushDone = make(chan struct{})
+	go e.flushRunningConversations(ctx)
 	return e, nil
 }
 
@@ -338,6 +341,7 @@ func (e *Engine) Close() error {
 	e.hookBackground.Wait()
 	<-e.catalogDone
 	<-e.maintenanceDone
+	<-e.flushDone
 	e.mu.Lock()
 	// Flush available roots even when an unrelated historical disk vanished.
 	// Report any unsaved records after committing the roots that remain online.
