@@ -163,9 +163,11 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		e.state.Messages[sessionID] = append(e.state.Messages[sessionID], contracts.Message{ID: id("message"), SessionID: sessionID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: id("block"), Kind: "text", Text: label}}})
 		delete(e.runs, sessionID)
 		if persistErr := e.persistLocked(sessionID); persistErr != nil {
-			if hierarchicalContext {
-				e.context[sessionID], e.history[sessionID] = previousContext, previousHistory
-				e.contextMemories[sessionID] = previousMemory
+			e.context[sessionID], e.history[sessionID] = previousContext, previousHistory
+			e.contextMemories[sessionID] = previousMemory
+			e.state.Messages[sessionID][len(e.state.Messages[sessionID])-1].Blocks[0].Text = "Context compaction could not be saved: " + persistErr.Error()
+			if e.state.Settings.General.Language == "zh-CN" {
+				e.state.Messages[sessionID][len(e.state.Messages[sessionID])-1].Blocks[0].Text = "上下文压缩未保存：" + persistErr.Error()
 			}
 			for i := range e.state.Runs {
 				if e.state.Runs[i].ID == run.id {

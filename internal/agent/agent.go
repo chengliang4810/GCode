@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -283,24 +284,38 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				var compacted []model.Message
 				var nextMemory ContextMemory
 				var err error
+				excess := max(0, contextPressure(request, limits)-contextTokens(request))
+				compactCtx, cancelCompact := context.WithTimeout(ctx, 2*time.Minute)
 				if options.Memory != nil {
 					// Preserve any observed excess over our text estimate
 					// until a new real model response establishes a baseline.
-					excess := max(0, contextPressure(request, limits)-contextTokens(request))
-					compacted, nextMemory, err = CompactContext(ctx, options.Model, request, *options.Memory)
+					compacted, nextMemory, err = CompactContext(compactCtx, options.Model, request, *options.Memory)
 					// A single large segment may not reclaim enough space.
 					// Continue folding before sending the normal model step.
+					previousTokens := contextTokens(request)
 					for rounds := 1; err == nil && excess+contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted}) >= compactThreshold(limits); rounds++ {
-						if rounds >= 32 {
-							err = errors.New("context remains above budget after 32 folds; recent or protected content is too large")
+						currentTokens := contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted})
+						if rounds >= 16 || currentTokens >= previousTokens {
+							err = errors.New("context compaction cannot reach the model budget; reduce protected input or choose a model with a larger context window")
 							break
 						}
+						previousTokens = currentTokens
 						nextRequest := request
 						nextRequest.History = compacted
-						compacted, nextMemory, err = CompactContext(ctx, options.Model, nextRequest, nextMemory)
+						compacted, nextMemory, err = CompactContext(compactCtx, options.Model, nextRequest, nextMemory)
 					}
 				} else {
-					compacted, err = Compact(ctx, options.Model, request)
+					compacted, err = Compact(compactCtx, options.Model, request)
+				}
+				cancelCompact()
+				if err == nil {
+					estimated := excess + contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted})
+					if retained != nil {
+						estimated += estimateMessages([]model.Message{*retained})
+					}
+					if estimated >= compactThreshold(limits) {
+						err = errors.New("context compaction cannot reach the model budget; reduce protected input or choose a model with a larger context window")
+					}
 				}
 				if err != nil {
 					return err

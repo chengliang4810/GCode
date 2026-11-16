@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"unicode/utf8"
 
 	"gcode/internal/model"
 )
@@ -31,7 +30,7 @@ func promptHash(request model.Request) string {
 func estimateMessages(messages []model.Message) int {
 	characters := 0
 	for _, message := range messages {
-		characters += utf8.RuneCountInString(message.Text) + utf8.RuneCountInString(message.Reasoning)
+		characters += len(message.Text) + len(message.Reasoning)
 		for _, call := range message.Calls {
 			characters += len(call.Name) + len(call.Arguments)
 		}
@@ -44,7 +43,9 @@ func estimateMessages(messages []model.Message) int {
 }
 
 func contextTokens(request model.Request) int {
-	characters := utf8.RuneCountInString(request.System)
+	// UTF-8 bytes keep the fallback conservative for CJK and other multibyte
+	// text. Provider-reported usage remains the authoritative baseline.
+	characters := len(request.System)
 	for _, tool := range request.Tools {
 		parameters, _ := json.Marshal(tool.Parameters)
 		characters += len(tool.Description) + len(tool.Name) + len(parameters)

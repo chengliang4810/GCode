@@ -83,7 +83,7 @@ func TestRunKeepsOldToolResultsUnchangedBelowContextPressure(t *testing.T) {
 func TestCompactionUsesUpdatedContextWindowBetweenSteps(t *testing.T) {
 	window, normal, summaries, replacements := 0, 0, 0, 0
 	var history []model.Message
-	for range 12 {
+	for range 24 {
 		history = append(history, model.Message{Role: "user", Text: strings.Repeat("history ", 100), UserInput: true})
 	}
 	backend := testModel{stream: func(request model.Request) (model.Result, error) {
@@ -93,7 +93,9 @@ func TestCompactionUsesUpdatedContextWindowBetweenSteps(t *testing.T) {
 		}
 		normal++
 		if normal == 1 {
-			window = 100
+			// Lower the live capacity enough to trigger compaction while
+			// still allowing the protected tail and tool definitions to fit.
+			window = contextTokens(request) - 1000
 			return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{{
 				ID: "write", Name: "Write", Arguments: `{"file_path":"proof.txt","content":"done"}`,
 			}}}, Stop: model.StopTools}, nil

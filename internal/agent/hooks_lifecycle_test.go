@@ -190,13 +190,13 @@ func TestHookLifecycleStopFailureUsesPublicErrorType(t *testing.T) {
 }
 
 func TestHookLifecycleCompactionEventsSurroundActualSummary(t *testing.T) {
-	history := make([]model.Message, 6)
+	history := make([]model.Message, 20)
 	for i := range history {
 		history[i] = model.Message{Role: "user", Text: strings.Repeat("history", 200)}
 	}
 	calls := 0
 	var events []HookInput
-	err := Run(context.Background(), Options{ContextLimits: func() ContextLimits { return ContextLimits{Window: 100} }, Request: model.Request{History: history},
+	err := Run(context.Background(), Options{ContextLimits: func() ContextLimits { return ContextLimits{Window: 10000} }, Request: model.Request{History: history},
 		Model: testModel{stream: func(request model.Request) (model.Result, error) {
 			calls++
 			if request.ContextChange == "summary" {
