@@ -720,7 +720,9 @@ func waitSubagentState(
 	sessionIDs ...string,
 ) contracts.Snapshot {
 	t.Helper()
-	deadline := time.Now().Add(10 * time.Second)
+	// Child runs may start multiple hook/MCP helper processes. This is a
+	// settlement wait, not a ten-second performance requirement.
+	deadline := time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		state, err := core.Snapshot(context.Background(), sessionIDs...)
 		if err != nil {
@@ -732,6 +734,9 @@ func waitSubagentState(
 		time.Sleep(5 * time.Millisecond)
 	}
 	state, _ := core.Snapshot(context.Background(), sessionIDs...)
+	if ready(state) {
+		return state
+	}
 	t.Fatalf("subagent execution did not settle: %+v", state.Runs)
 	return state
 }

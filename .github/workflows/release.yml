@@ -93,6 +93,10 @@ jobs:
           go test -race $packages -count=1 -timeout 25m
       - name: Core regression checks
         run: go test ./internal/engine ./internal/desktop -count=1 -timeout 45m
+      - name: Core concurrency regressions
+        run: >-
+          go test -race ./internal/engine ./internal/desktop -count=1 -timeout 10m
+          -run 'Test(EventResume|RunningConversationFlushes|ProjectFileLoadingCancelsOnDeleteAndShutdown|ProjectFileRefreshDiscardsSupersededResults|ManualCompactionPersistenceFailure|GlobalInstructions|SettingsGlobalInstructions|WindowCloseStartsCleanup|BackgroundSubagentNotifiesParentAfterItsTurnEnds)'
       - name: Static checks
         run: |
           go vet ./...
