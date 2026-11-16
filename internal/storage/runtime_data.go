@@ -99,7 +99,7 @@ func ensureRuntimeDirectory(root *os.Root, name string) error {
 		current = path.Join(current, part)
 		info, err := root.Lstat(current)
 		if errors.Is(err, fs.ErrNotExist) {
-			if err = root.Mkdir(current, 0700); err != nil && !errors.Is(err, fs.ErrExist) {
+			if err = MkdirRoot(root, current, 0700); err != nil && !errors.Is(err, fs.ErrExist) {
 				return err
 			}
 			info, err = root.Lstat(current)

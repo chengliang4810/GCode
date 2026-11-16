@@ -65,7 +65,7 @@ func (e *Engine) trajectoryDirectory(session contracts.Session, create bool) (*o
 	}
 	defer folder.Close()
 	if create {
-		if err := folder.Mkdir("trajectory", 0700); err != nil && !errors.Is(err, os.ErrExist) {
+		if err := storage.MkdirRoot(folder, "trajectory", 0700); err != nil && !errors.Is(err, os.ErrExist) {
 			return nil, err
 		}
 	}
@@ -124,7 +124,7 @@ func (e *Engine) writeTrajectory(session contracts.Session, record contracts.Mod
 		if !trajectoryRecordOwned(folder, file, session.ID) {
 			continue
 		}
-		if err := folder.Remove(file.name); err != nil {
+		if err := storage.RemoveRoot(folder, file.name); err != nil {
 			return err
 		}
 		dropped = true
@@ -282,10 +282,10 @@ func (e *Engine) removeTrajectory(session contracts.Session) {
 	if err == nil {
 		for _, file := range files {
 			if trajectoryRecordOwned(folder, file, session.ID) {
-				_ = folder.Remove(file.name)
+				_ = storage.RemoveRoot(folder, file.name)
 			}
 		}
-		_ = folder.Remove("retention.json")
+		_ = storage.RemoveRoot(folder, "retention.json")
 	}
 	_ = folder.Close()
 	directory, err := e.storage.Resolve(session.StorageRootID)
@@ -295,7 +295,7 @@ func (e *Engine) removeTrajectory(session contracts.Session) {
 			defer root.Close()
 			name := filepath.ToSlash(filepath.Join("sessions", session.ID, "trajectory"))
 			if strings.HasPrefix(name, "sessions/") {
-				_ = root.Remove(name)
+				_ = storage.RemoveRoot(root, name)
 			}
 		}
 	}

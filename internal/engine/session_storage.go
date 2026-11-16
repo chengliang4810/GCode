@@ -434,7 +434,7 @@ func (e *Engine) removeSessionRecord(rootID, sessionID, record string) {
 		return
 	}
 	defer folder.Close()
-	_ = folder.Remove(record + ".json")
+	_ = storage.RemoveRoot(folder, record+".json")
 }
 
 func (e *Engine) cleanSessionRecords(rootID, sessionID, previous, current string) {
@@ -471,7 +471,7 @@ func (e *Engine) cleanSessionRecords(rootID, sessionID, previous, current string
 		return
 	}
 	if hex.EncodeToString(digest.Sum(nil)) == previous {
-		_ = folder.Remove(name)
+		_ = storage.RemoveRoot(folder, name)
 	}
 }
 
@@ -488,12 +488,12 @@ func (e *Engine) releaseEmptySessionDirectories(session contracts.Session) {
 	}
 	defer root.Close()
 	if parent, err := openRealDirectory(root, "sessions"); err == nil {
-		_ = parent.Remove(session.ID)
+		_ = storage.RemoveRoot(parent, session.ID)
 		_ = parent.Close()
 	}
 	if session.CWD == filepath.Join(directory, "workspaces", session.ID) {
 		if parent, err := openRealDirectory(root, "workspaces"); err == nil {
-			_ = parent.Remove(session.ID)
+			_ = storage.RemoveRoot(parent, session.ID)
 			_ = parent.Close()
 		}
 	}
@@ -573,7 +573,7 @@ func (e *Engine) reserveSessionLocked(rootID string) (string, string, error) {
 		return "", "", err
 	}
 	defer handle.Close()
-	if err := handle.Mkdir("sessions", 0700); err != nil && !errors.Is(err, os.ErrExist) {
+	if err := storage.MkdirRoot(handle, "sessions", 0700); err != nil && !errors.Is(err, os.ErrExist) {
 		return "", "", err
 	}
 	parent, err := openRealDirectory(handle, "sessions")
@@ -586,7 +586,7 @@ func (e *Engine) reserveSessionLocked(rootID string) (string, string, error) {
 		if e.sessionIndex(sessionID) >= 0 {
 			continue
 		}
-		if err := parent.Mkdir(sessionID, 0700); errors.Is(err, os.ErrExist) {
+		if err := storage.MkdirRoot(parent, sessionID, 0700); errors.Is(err, os.ErrExist) {
 			continue
 		} else if err != nil {
 			return "", "", err

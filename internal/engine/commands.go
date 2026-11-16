@@ -16,6 +16,7 @@ import (
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 	"gcode/internal/reorder"
+	"gcode/internal/storage"
 )
 
 func (e *Engine) Execute(ctx context.Context, command contracts.Command) (resultErr error) {
@@ -683,7 +684,7 @@ func (e *Engine) newSessionLocked(projectID, title, rootID string) (contracts.Se
 			return contracts.Session{}, err
 		}
 		defer handle.Close()
-		if err := handle.Mkdir("workspaces", 0700); err != nil && !errors.Is(err, os.ErrExist) {
+		if err := storage.MkdirRoot(handle, "workspaces", 0700); err != nil && !errors.Is(err, os.ErrExist) {
 			return contracts.Session{}, err
 		}
 		workspace, err := openRealDirectory(handle, "workspaces")
@@ -692,8 +693,8 @@ func (e *Engine) newSessionLocked(projectID, title, rootID string) (contracts.Se
 		}
 		defer workspace.Close()
 		cwd = filepath.Join(root, "workspaces", sessionID)
-		if err := workspace.Mkdir(sessionID, 0700); err != nil {
-			_ = handle.Remove(filepath.Join("sessions", sessionID))
+		if err := storage.MkdirRoot(workspace, sessionID, 0700); err != nil {
+			_ = storage.RemoveRoot(handle, filepath.Join("sessions", sessionID))
 			return contracts.Session{}, err
 		}
 	}

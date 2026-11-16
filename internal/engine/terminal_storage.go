@@ -254,7 +254,7 @@ func (e *Engine) openTerminalOutputRoot(rootID string, create bool) (*os.Root, e
 	}
 	defer root.Close()
 	if create {
-		if err := root.Mkdir("terminals", 0700); err != nil && !errors.Is(err, os.ErrExist) {
+		if err := storage.MkdirRoot(root, "terminals", 0700); err != nil && !errors.Is(err, os.ErrExist) {
 			return nil, err
 		}
 	}
@@ -303,5 +303,5 @@ func (e *Engine) removeTerminalOutput(rootID, ref string) {
 	}
 	defer folder.Close()
 	// 只清理已提交索引不再引用的一个应用记录，不递归清理整个运行根。
-	_ = folder.Remove(ref + ".json")
+	_ = storage.RemoveRoot(folder, ref+".json")
 }

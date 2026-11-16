@@ -160,10 +160,18 @@ func Open(options Options) (*Engine, error) {
 	if err := storage.PrepareRuntime(options.Storage); err != nil {
 		return nil, err
 	}
+	runtimeRoot, err := os.OpenRoot(options.Storage.Directory())
+	if err != nil {
+		return nil, err
+	}
 	for _, name := range []string{"workspaces", "uploads", "logs", "sessions"} {
-		if err := os.MkdirAll(filepath.Join(options.Storage.Directory(), name), 0700); err != nil {
+		if err := storage.MkdirRoot(runtimeRoot, name, 0700); err != nil && !errors.Is(err, os.ErrExist) {
+			_ = runtimeRoot.Close()
 			return nil, err
 		}
+	}
+	if err := runtimeRoot.Close(); err != nil {
+		return nil, err
 	}
 	e.state = contracts.Snapshot{SchemaVersion: contracts.SchemaVersion, Revision: 1, Settings: contracts.DefaultSettings(), Messages: map[string][]contracts.Message{}, ContextUsage: map[string]contracts.ContextUsage{}, Capabilities: contracts.Capabilities{Browser: true}, User: contracts.User{ID: "local", Name: "Local", Initials: "G"}, ModelCatalog: contracts.ModelCatalogState{State: contracts.CatalogEmpty}, Integrations: contracts.IntegrationState{ProvidersState: contracts.LoadReady}}
 	if err := e.loadPersistence(); err != nil {
