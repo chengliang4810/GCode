@@ -23,6 +23,9 @@ func (e *Engine) redactHookText(rule contracts.HookRule, text string) string {
 func (e *Engine) hookTextRedactor(rule contracts.HookRule) func(string) string {
 	e.mu.Lock()
 	secrets := make([]string, 0)
+	if token := e.state.Settings.General.WebSearch.Token; token != "" {
+		secrets = append(secrets, token)
+	}
 	for _, provider := range e.providers {
 		if provider.APIKey != "" {
 			secrets = append(secrets, provider.APIKey)
