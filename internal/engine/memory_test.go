@@ -83,7 +83,7 @@ func TestMemorySectionContainsDirectory(t *testing.T) {
 }
 
 func TestBasePromptSections(t *testing.T) {
-	for _, want := range []string{"# Harness", "# Simplicity & Surgical Changes", "# Change Discipline", "# Session-specific guidance", "# Context management", "Every changed line should trace directly to the user's request."} {
+	for _, want := range []string{"You are an agent working with the user toward their goals, using your own judgment along the way.", "<tools>", "<rules>", "Use Read to examine files", "Use Edit for targeted changes", "Use Write only for new files or complete rewrites", "unless replace_all is true"} {
 		if !strings.Contains(basePrompt, want) {
 			t.Fatalf("basePrompt missing %q", want)
 		}

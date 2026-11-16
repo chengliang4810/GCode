@@ -81,8 +81,7 @@ func memoryContextMessage(index string) model.Message {
 
 // memorySection renders the persistent-memory instructions for the system
 // prompt (the official English memory text; AGENTS.md replaces CLAUDE.md in
-// the do-not-save list, and recalled-memory trust lives in basePrompt's
-// Harness section). Only the directory is filled in at runtime.
+// the do-not-save list). Only the directory is filled in at runtime.
 func memorySection(dir string) string {
 	frontmatter := strings.Join([]string{
 		"```markdown",
