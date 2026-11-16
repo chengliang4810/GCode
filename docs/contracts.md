@@ -21,8 +21,11 @@ the core. MyGo schedules updates through `Window.Update`.
 A subscription begins with a complete snapshot. `message.changed` replaces one
 message; `message.delta` appends text or reasoning to a message block. Other state
 changes carry complete snapshots. A slow subscriber receives a fresh snapshot
-instead of an undetectable event gap. Remote reconnection starts from a fresh
-snapshot and then follows future events; there is no persisted event replay log.
+instead of an undetectable event gap. Remote reconnection sends `Last-Event-ID`
+and replays the bounded in-memory event window for the same host epoch, then sends
+an authoritative scoped snapshot. An expired cursor, oversized gap or restarted
+host skips replay and rebuilds from the snapshot; there is no cross-restart
+persistent event log.
 
 `SendRequest.requestId` correlates a new send with its `Run`; branch creation uses
 `Command.requestId` and `Session.creationRequestId`. A side chat forks a snapshot

@@ -11,10 +11,8 @@ the GPU control reproduces light rounding without yet binding actual UI adapters
 Full visual/native platform acceptance remains pending.
 Earlier sections retain their original source/executable and acceptance scope.
 The R17 phase recorded here used the adopted, unreleased `.9` tree: 1,864 files
-and 14 patches. The current framework is `rcode-native-ui.24` (MyGo v0.8.3):
-2,356 files, 16 patches and tree
-`e32652f3fe5699ea3c1e40a8fe4b832e96f1b9e6824f70bf7768bd0cc8760926`; see
-`mygo-patches.md`. Its pre-Cloud adoption had 2,931 formal audit inputs. The later Cloud
+and 14 patches. The current framework identity and patch list are recorded in
+`third_party/mygo.lock.json`; see `mygo-patches.md`. Its pre-Cloud adoption had 2,931 formal audit inputs. The later Cloud
 four-file adoption below has a separate source identity; that old input manifest
 and canonical packages are not relabeled to cover it. See
 `audit-tabstrip-tooltip-primitives.md` for exact identities and separate V5 evidence.
@@ -84,8 +82,8 @@ restrictions are not product-code defects.
 
 Reference: Zeron `ab189159f10cf8e63c0502be75a59bbc487e0eaf`.
 The R16 sealed build target was Go1.27.3 / MyGo0.6.4 + pinned `zeron-native-ui.6`,
-Windows11 amd64; macOS13+ amd64/arm64. The current framework is MyGo v0.8.3 +
-`rcode-native-ui.24` (2,356 files, 16 patches; see `mygo-patches.md`). The
+Windows11 amd64; macOS13+ amd64/arm64. The current framework identity is in
+`third_party/mygo.lock.json` (see `mygo-patches.md`). The
 reference is Zeron 0.2.128; the independent replica package version is 0.1.0.
 This report distinguishes implemented behavior, automated checks, native
 observations and comparison with the reference.

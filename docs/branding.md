@@ -58,10 +58,9 @@ Windows MyGo 安装包及签名更新包校验通过，产物位于 `output/gcod
 全仓 Go 测试、MyGo vet 和 Windows 打包/签名更新校验通过，
 产物位于 `output/gcode-icon-small/package/`。
 
-当前 MyGo 为 v0.8.3，本地补丁标识为 `rcode-native-ui.24`，源码树 SHA-256 记录于
-`third_party/mygo.lock.json`，
-共 2,356 文件、16 个补丁（行内链接选择、WebView 数据目录、文本选区、
-代码块制表符与分栏拖拽等）。
+当前 MyGo 版本、本地补丁标识、文件数量、源码树 SHA-256 及补丁清单以
+`third_party/mygo.lock.json` 为唯一当前身份入口；`scripts/frameworkpin/pin.go`
+校验同一身份，详见 [mygo-patches.md](mygo-patches.md)。
 桌面测试使用上游原生 `plugins/automation`，不再由本地
 补丁引入。`third_party/mygo.lock.json` 与 `scripts/frameworkpin/pin.go` 同步固定
 源码和补丁校验值。品牌替换没有重新授予历史视觉验收结论；原 UI 优化目标继续暂停。
