@@ -436,11 +436,6 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.sessionInfoProjection = sessionInfoProjection{}
 		a.linkFiles = nil
 		a.clearSessionDetailsLoading(s)
-		for sessionID := range a.trajectoryViews {
-			if !a.hasSession(sessionID) {
-				delete(a.trajectoryViews, sessionID)
-			}
-		}
 		a.refreshVisibleAppUsage()
 		a.refreshWallpaperColors()
 		a.restoreModelSelection()
@@ -478,6 +473,9 @@ func (a *App) apply(s contracts.Snapshot) {
 	a.selectCreatedProject()
 	a.reconcileLocalSends()
 	a.refreshSessionSubscription()
+	if applySnapshot {
+		a.pruneSessionUIState()
+	}
 }
 
 func (a *App) applyEvent(event contracts.Event) {
