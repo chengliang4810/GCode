@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"encoding/csv"
+	"fmt"
 	"image/png"
 	"math"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
@@ -26,6 +28,46 @@ const transcriptTableFixture = `| 支柱 | 当前状态 |
 
 [docs]: https://example.com/docs
 `
+
+func TestCollapsedUserTableDoesNotFloatScrollbarAboveComposer(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{380, 900} {
+			t.Run(fmt.Sprintf("dark=%t/width=%d", dark, width), func(t *testing.T) {
+				app := testApp(t, "default")
+				app.palette = design.Palette("rcode", dark)
+				source := "| Column 1 | Column 2 | Column 3 | Column 4 | Column 5 |\n|---|---|---|---|---|\n"
+				source += strings.Repeat("| long-cell-abcdefghijklmnopqrstuvwxyz | first | second | third | long-cell-abcdefghijklmnopqrstuvwxyz |\n", 24)
+				message := contracts.Message{ID: "user-table", SessionID: app.sessionID, Role: "user",
+					Blocks: []contracts.Block{{ID: "table", Kind: "text", Text: source}}}
+				var composer ui.Rect
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(app.palette.UI())
+					app.prepareTranscriptMarkdown(c)
+					ui.Column(c).Fill().Bind(&app.conversationViewport).Children(func() {
+						app.userMessage(c, message)
+						ui.Spacer(c).Grow(1)
+						ui.Box(c).FillWidth().Height(60).Bind(&app.composerSurface)
+					})
+					composer = app.composerSurface.Bounds(c)
+				}, width, 600)
+				tt.Advance(time.Second)
+				for range 3 {
+					tt.Frame()
+				}
+				if bar, ok := tt.Find("Scroll table horizontally"); ok && bar.Y < composer.Y && bar.Y+bar.H > composer.Y-40 {
+					t.Fatalf("collapsed user table leaked scrollbar above composer: bar=%+v composer=%+v", bar, composer)
+				}
+				if app.nestedMarkdownTable {
+					t.Fatal("user table changed the following assistant table scope")
+				}
+				if _, ok := tt.Find("Use conversation width"); ok {
+					t.Fatal("user table offered to expand outside its bubble")
+				}
+				writeTranscriptTableEvidence(t, tt, fmt.Sprintf("collapsed-user-table-%t-%d", dark, width))
+			})
+		}
+	}
+}
 
 func parsedTranscriptTable(t *testing.T, source string) transcriptTableData {
 	t.Helper()

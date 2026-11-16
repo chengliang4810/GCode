@@ -165,6 +165,81 @@ func TestDesktopLocalMarkdownTables(t *testing.T) {
 	}
 }
 
+func TestDesktopLocalCollapsedUserTableScrollbar(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		t.Run(appearance, func(t *testing.T) {
+			binary, artifacts := testPaths(t)
+			data := filepath.Join(artifacts, "data")
+			store, err := storage.Open(storage.Options{Directory: data})
+			if err != nil {
+				t.Fatal(err)
+			}
+			core, err := openExecutionFixture(t, engine.Options{Storage: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "session.create", Name: "Collapsed user table"}); err != nil {
+				t.Fatal(err)
+			}
+			snapshot, err := core.Snapshot(t.Context())
+			if err != nil {
+				t.Fatal(err)
+			}
+			sessionID := snapshot.Sessions[0].ID
+			settings := snapshot.Settings
+			settings.Appearance.ReduceMotion = true
+			if err := core.Execute(t.Context(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
+				t.Fatal(err)
+			}
+			if err := core.Close(); err != nil {
+				t.Fatal(err)
+			}
+			source := "| Column 1 | Column 2 | Column 3 | Column 4 | Column 5 |\n|---|---|---|---|---|\n"
+			source += strings.Repeat("| long-cell-abcdefghijklmnopqrstuvwxyz | first | second | third | long-cell-abcdefghijklmnopqrstuvwxyz |\n", 40)
+			editFixtureConversation(t, data, sessionID, func(_ *contracts.Session, messages *[]contracts.Message) {
+				*messages = []contracts.Message{
+					{ID: "folded-table", SessionID: sessionID, Role: "user",
+						Blocks: []contracts.Block{{ID: "user-table", Kind: "text", Text: source}}},
+					{ID: "continue", SessionID: sessionID, Role: "user",
+						Blocks: []contracts.Block{{ID: "continue-text", Kind: "text", Text: "继续呢"}}},
+				}
+			})
+			app := startApp(t, binary, artifacts, "collapsed-user-table", data,
+				"--local", "--appearance", appearance, "--language", "en", "--width", "900", "--height", "600")
+			app.act("back-to-conversations", "press", "")
+			app.act("sidebar-session:"+sessionID, "press", "")
+			app.await("folded user table stays inside its bubble", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				input, err := tree.findKey("input")
+				if err != nil {
+					return err
+				}
+				folded := false
+				for _, node := range tree.Nodes {
+					folded = folded || node.Label == "Expand message"
+					var key string
+					_ = json.Unmarshal(node.Key, &key)
+					if strings.HasPrefix(key, "table-expand-width:") {
+						return fmt.Errorf("user table can expand outside its bubble")
+					}
+					if strings.HasPrefix(key, "table-horizontal-scroll:") &&
+						node.Bounds.Y < input.Bounds.Y && node.Bounds.Y+node.Bounds.Height > input.Bounds.Y-60 {
+						return fmt.Errorf("user table scrollbar escaped above input: %+v", node.Bounds)
+					}
+				}
+				if !folded {
+					return fmt.Errorf("folded user message is not visible")
+				}
+				return nil
+			})
+			app.capture("folded-user-table")
+		})
+	}
+}
+
 func tableActionKeys(tree accessTree, prefix string) []string {
 	var keys []string
 	for _, node := range tree.Nodes {

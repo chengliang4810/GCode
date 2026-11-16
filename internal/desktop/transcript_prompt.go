@@ -18,6 +18,11 @@ type promptInlineRun struct {
 }
 
 func (a *App) userMarkdownBlock(c *ui.Context, document *parser.Document, index int) bool {
+	// User bubbles have their own width and may clip folded content. Their
+	// tables must not borrow the conversation width or escape as overlays.
+	nested := a.nestedMarkdownTable
+	a.nestedMarkdownTable = true
+	defer func() { a.nestedMarkdownTable = nested }()
 	if a.transcriptTableBlock(c, document, index) {
 		return true
 	}
