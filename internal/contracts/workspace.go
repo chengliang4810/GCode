@@ -2,6 +2,8 @@ package contracts
 
 import "time"
 
+const FileExternal = "external"
+
 type File struct {
 	Loaded    bool   `json:"loaded"`
 	ID        string `json:"id"`

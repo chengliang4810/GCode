@@ -1305,6 +1305,9 @@ func (a *App) setPanel(which int, open bool) {
 		}
 	case 2:
 		a.files = open
+		if open && !wasOpen {
+			a.workspace.RefreshFiles()
+		}
 	}
 	if open && (!wasOpen || !shown) {
 		a.panelOpened[which] = max(a.panelOpened[0], a.panelOpened[1], a.panelOpened[2]) + 1

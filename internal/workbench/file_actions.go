@@ -12,10 +12,23 @@ import (
 
 func (s *State) fileContext(c *ui.Context, f contracts.File, m *ui.Menu, host string) {
 	if f.Kind != "directory" && m.Item(tr(c, "Open")).Chosen() {
-		s.OpenFile(f.ID)
+		s.openExplorerFile(f)
+	}
+	if s.OnLinkConfig != nil {
+		config := s.OnLinkConfig(s.scopeID, "")
+		if config.Resolve != nil && config.Reveal != nil {
+			if destination, ok := config.Resolve(f.Path); ok && destination.Local {
+				if m.Item(tr(c, "Show in folder")).Chosen() {
+					config.Reveal(f.Path)
+				}
+			}
+		}
 	}
 	if m.Item(tr(c, "Copy path")).Chosen() {
 		c.Services().WriteClipboard(f.Path)
+	}
+	if s.sessionFiles.active {
+		return
 	}
 	m.Separator()
 	if f.Kind == "directory" {

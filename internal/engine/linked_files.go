@@ -15,9 +15,9 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"unicode/utf8"
 
 	"gcode/internal/contracts"
+	"gcode/internal/filepreview"
 
 	_ "golang.org/x/image/bmp"
 	_ "golang.org/x/image/tiff"
@@ -108,7 +108,7 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 	extension := strings.ToLower(filepath.Ext(absolute))
 	imageFormat := linkedImageFormat(extension)
 	limit := int64(linkedTextLimit)
-	if imageFormat != "" {
+	if imageFormat != "" || filepreview.External(absolute, nil) {
 		limit = contracts.MaxAttachmentBytes
 	}
 	if info.Size() > limit {
@@ -172,8 +172,14 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 		}
 	}
 	if imageFormat == "" {
-		if !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0 {
-			return result, errors.New("linked file is not UTF-8 text")
+		if filepreview.External(absolute, data) {
+			file.Kind = contracts.FileExternal
+			key, err := cacheLinkedFile(ctx, dataRoot, extension, data)
+			if err != nil {
+				return result, err
+			}
+			file.AssetRef = managedResourceRef(rootID, key)
+			return contracts.LinkedFileResult{File: file, AbsolutePath: filepath.ToSlash(absolute)}, nil
 		}
 		file.Content = string(data)
 	} else {
@@ -181,7 +187,7 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 			return result, err
 		}
 		file.Kind = "image"
-		key, err := cacheLinkedImage(ctx, dataRoot, extension, data)
+		key, err := cacheLinkedFile(ctx, dataRoot, extension, data)
 		if err != nil {
 			return result, err
 		}
@@ -219,7 +225,7 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 	return contracts.LinkedFileResult{File: file, AbsolutePath: filepath.ToSlash(absolute)}, nil
 }
 
-func cacheLinkedImage(ctx context.Context, directory, extension string, data []byte) (string, error) {
+func cacheLinkedFile(ctx context.Context, directory, extension string, data []byte) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
@@ -239,14 +245,14 @@ func cacheLinkedImage(ctx context.Context, directory, extension string, data []b
 			return false, err
 		}
 		if !info.Mode().IsRegular() || info.Size() != int64(len(data)) {
-			return false, errors.New("invalid cached linked image")
+			return false, errors.New("invalid cached linked file")
 		}
 		return true, nil
 	}
 	if present, err := exists(); present || err != nil {
 		return key, err
 	}
-	tempName := id("linked-image")
+	tempName := id("linked-file")
 	temp, err := root.OpenFile(tempName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
 		return "", err

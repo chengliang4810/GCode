@@ -9,6 +9,7 @@ import (
 
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
+	"gcode/internal/filepreview"
 	"gcode/internal/linktarget"
 
 	"github.com/egoist/mygo/ui"
@@ -119,6 +120,17 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 	if err != nil {
 		return err
 	}
+	if filepreview.External(target.Path, nil) && s.OnLinkConfig != nil {
+		config := s.OnLinkConfig(sessionID, "")
+		if config.Resolve != nil {
+			if destination, ok := config.Resolve(absolute); ok && destination.Local {
+				return s.openExternalFile(sessionID, contracts.LinkedFileResult{
+					File:         contracts.File{Name: path.Base(target.Path), Kind: contracts.FileExternal},
+					AbsolutePath: absolute,
+				})
+			}
+		}
+	}
 	if service, ok := s.backend.(contracts.LinkedFileService); ok {
 		ctx, cancel := context.WithCancel(s.ctx)
 		s.linkCancel = cancel
@@ -137,6 +149,12 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 				return
 			}
 			s.Error = ""
+			if result.File.Kind == contracts.FileExternal {
+				if err := s.openExternalFile(sessionID, result); err != nil {
+					s.Error = err.Error()
+				}
+				return
+			}
 			s.openDocument(result.File, sessionID, result.AbsolutePath, true)
 			s.navigateDocument(s.documents[result.File.ID], target)
 			s.choose("file", result.File.ID, result.File.Name)
@@ -176,6 +194,15 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 		return nil
 	}
 	return fmt.Errorf("linked file is unavailable: %s", target.Path)
+}
+
+func (s *State) openExternalFile(sessionID string, result contracts.LinkedFileResult) error {
+	if s.OnOpenExternalFile == nil {
+		return fmt.Errorf("system file opener is unavailable")
+	}
+	s.Error = ""
+	s.OnOpenExternalFile(sessionID, result)
+	return nil
 }
 
 func sameHostPath(a, b string) bool {

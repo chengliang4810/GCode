@@ -20,7 +20,7 @@ func (s *State) codeFont() ui.Font {
 }
 
 func (s *State) visibleFile(file contracts.File) bool {
-	if s.ProjectID != "" && file.ProjectID != s.ProjectID {
+	if file.ProjectID != s.ProjectID {
 		return false
 	}
 	if !s.snapshot.Settings.Files.ShowHidden {
@@ -38,7 +38,7 @@ func (s *State) filesIn(parent string) []contracts.File {
 		s.fileChildrenIndex = make(map[string][]contracts.File)
 		s.fileIndexProject = s.ProjectID
 		s.fileIndexHidden = s.snapshot.Settings.Files.ShowHidden
-		for _, file := range s.snapshot.Files {
+		for _, file := range s.explorerFiles() {
 			if s.visibleFile(file) {
 				s.fileChildrenIndex[file.ParentID] = append(s.fileChildrenIndex[file.ParentID], file)
 			}
@@ -59,8 +59,16 @@ func (s *State) filesIn(parent string) []contracts.File {
 }
 
 func (s *State) projectFilesStatus(c *ui.Context) {
+	if s.sessionFiles.active {
+		if s.sessionFiles.loading {
+			ui.Text(c, tr(c, "Loading project files…")).Padding(8)
+		} else if s.sessionFiles.error != "" {
+			ui.Text(c, tr(c, "File loading incomplete")+": "+s.sessionFiles.error).Padding(8)
+		}
+		return
+	}
 	for _, project := range s.snapshot.Projects {
-		if s.ProjectID != "" && project.ID != s.ProjectID {
+		if project.ID != s.ProjectID {
 			continue
 		}
 		switch project.FilesState {

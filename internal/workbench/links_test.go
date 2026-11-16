@@ -35,6 +35,71 @@ func (service *linkedTestService) ReadResource(_ context.Context, ref string) ([
 	return nil, fmt.Errorf("resource unavailable")
 }
 
+func TestUnsupportedFilesUseDefaultAppWithoutReplacingPreview(t *testing.T) {
+	for _, name := range []string{"report.xlsx", "slides.pptx", "manual.pdf", "video.mp4", "custom.unknown"} {
+		t.Run(name, func(t *testing.T) {
+			s := linkWorkspace(t)
+			service := &linkedTestService{result: contracts.LinkedFileResult{
+				File:         contracts.File{ID: "external", Name: name, Kind: contracts.FileExternal, AssetRef: "resource"},
+				AbsolutePath: "/workspace/" + name,
+			}}
+			s.backend = service
+			s.choose("file", "existing", "Existing text")
+			s.Error = "previous read error"
+			var opened string
+			s.OnOpenExternalFile = func(source string, result contracts.LinkedFileResult) {
+				if source != "root" {
+					t.Fatalf("source changed: %s", source)
+				}
+				opened = result.AbsolutePath
+			}
+			if err := s.OpenLink("root", name); err != nil {
+				t.Fatal(err)
+			}
+			if opened != "/workspace/"+name || s.Error != "" || len(s.tabs) != 1 || s.tabs[0].id != "existing" || len(s.documents) != 0 {
+				t.Fatalf("external open damaged preview or retained error: opened=%q error=%q tabs=%+v", opened, s.Error, s.tabs)
+			}
+		})
+	}
+}
+
+func TestLocalUnsupportedFileBypassesTextRead(t *testing.T) {
+	s := linkWorkspace(t)
+	service := &linkedTestService{err: fmt.Errorf("must not read as text")}
+	s.backend = service
+	s.OnLinkConfig = func(string, string) linkui.Config {
+		return linkui.Config{Resolve: func(raw string) (linkui.Destination, bool) {
+			return linkui.Destination{Kind: linktarget.File, Local: true}, true
+		}}
+	}
+	var opened string
+	s.OnOpenExternalFile = func(_ string, result contracts.LinkedFileResult) { opened = result.AbsolutePath }
+	if err := s.OpenLink("root", "report.xlsx"); err != nil {
+		t.Fatal(err)
+	}
+	if opened != "/workspace/report.xlsx" || service.request.Path != "" || len(s.tabs) != 0 {
+		t.Fatal("local unsupported file was read or opened in an editor tab")
+	}
+}
+
+func TestProjectCanvasUnsupportedFileUsesDefaultApp(t *testing.T) {
+	s := linkWorkspace(t)
+	s.SwitchSession("")
+	s.ProjectID = "project"
+	s.snapshot.Files = []contracts.File{{ID: "report", ProjectID: "project", Path: "report.xlsx", Name: "report.xlsx", Kind: "file"}}
+	var opened contracts.LinkedFileResult
+	s.OnOpenExternalFile = func(sessionID string, result contracts.LinkedFileResult) {
+		if sessionID != "" {
+			t.Fatal("project canvas invented a conversation")
+		}
+		opened = result
+	}
+	s.OpenFile("report")
+	if opened.AbsolutePath != "/workspace/report.xlsx" || len(s.tabs) != 0 || s.Error != "" {
+		t.Fatalf("project canvas did not open externally: %+v, %s", opened, s.Error)
+	}
+}
+
 func linkWorkspace(t *testing.T) *State {
 	t.Helper()
 	s := New(nil, nil)

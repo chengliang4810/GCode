@@ -13,6 +13,7 @@ import (
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/filepreview"
 	"gcode/internal/linktarget"
 	"gcode/internal/linkui"
 
@@ -55,68 +56,70 @@ type document struct {
 // committed backend snapshot, on the UI thread, before drawing. Dispatch may be
 // supplied by the application to execute commands asynchronously.
 type State struct {
-	win               *mygo.Window
-	backend           contracts.Service
-	ctx               context.Context
-	cancel            context.CancelFunc
-	closed            atomic.Bool
-	snapshot          contracts.Snapshot
-	scopeID           string
-	scopes            map[string]workspaceScope
-	tabs              []surface
-	active            int
-	tabScroll         ui.ScrollState
-	tabObserver       tabStripObserver
-	tabTooltip        tabTooltipState
-	revealTab         bool
-	systemDark        bool
-	documents         map[string]*document
-	diffs             map[string]*editor.DiffState
-	browsers          map[string]*browser
-	terminals         map[string]*terminalView
-	folders           map[string]*bool
-	fileChildrenIndex map[string][]contracts.File
-	fileIndexProject  string
-	fileIndexHidden   bool
-	fileSearch        string
-	search            fileSearchState
-	recentFiles       []string
-	pendingClose      string
-	Error             string
-	ProjectID         string
-	Dispatch          func(contracts.Command)
-	OnOpenSession     func(string)
-	OnSessionVisible  func(string)
-	OnSessionHidden   func(string)
-	OnCloseSession    func(string)
-	RenderSession     func(*ui.Context, string)
-	RenderTrajectory  func(*ui.Context, string)
-	RenderGoal        func(*ui.Context, string)
-	OnNewSideChat     func()
-	CanNewSideChat    func() bool
-	OnOpenSurface     func()
-	OnCloseSurface    func()
-	OnToggleExpand    func()
-	OnAnnotation      func(contracts.Annotation)
-	OnLinkConfig      func(sessionID, documentPath string) linkui.Config
-	nextAnnotation    uint32
-	nextBrowser       int
-	pendingTerminal   bool
-	pendingFile       string
-	historySearch     string
-	commitID          string
-	commitOpen        bool
-	fileActionOpen    bool
-	fileAction        string
-	fileActionID      string
-	fileActionName    string
-	fileActionHost    string
-	imageOpen         bool
-	imageID           string
-	imageViewer       ImageViewport
-	linkCancel        context.CancelFunc
-	linkGeneration    uint64
-	pendingNavigation *fileNavigation
+	win                *mygo.Window
+	backend            contracts.Service
+	ctx                context.Context
+	cancel             context.CancelFunc
+	closed             atomic.Bool
+	snapshot           contracts.Snapshot
+	scopeID            string
+	scopes             map[string]workspaceScope
+	tabs               []surface
+	active             int
+	tabScroll          ui.ScrollState
+	tabObserver        tabStripObserver
+	tabTooltip         tabTooltipState
+	revealTab          bool
+	systemDark         bool
+	documents          map[string]*document
+	diffs              map[string]*editor.DiffState
+	browsers           map[string]*browser
+	terminals          map[string]*terminalView
+	folders            map[string]*bool
+	fileChildrenIndex  map[string][]contracts.File
+	fileIndexProject   string
+	fileIndexHidden    bool
+	sessionFiles       sessionFileTree
+	fileSearch         string
+	search             fileSearchState
+	recentFiles        []string
+	pendingClose       string
+	Error              string
+	ProjectID          string
+	Dispatch           func(contracts.Command)
+	OnOpenSession      func(string)
+	OnOpenExternalFile func(string, contracts.LinkedFileResult)
+	OnSessionVisible   func(string)
+	OnSessionHidden    func(string)
+	OnCloseSession     func(string)
+	RenderSession      func(*ui.Context, string)
+	RenderTrajectory   func(*ui.Context, string)
+	RenderGoal         func(*ui.Context, string)
+	OnNewSideChat      func()
+	CanNewSideChat     func() bool
+	OnOpenSurface      func()
+	OnCloseSurface     func()
+	OnToggleExpand     func()
+	OnAnnotation       func(contracts.Annotation)
+	OnLinkConfig       func(sessionID, documentPath string) linkui.Config
+	nextAnnotation     uint32
+	nextBrowser        int
+	pendingTerminal    bool
+	pendingFile        string
+	historySearch      string
+	commitID           string
+	commitOpen         bool
+	fileActionOpen     bool
+	fileAction         string
+	fileActionID       string
+	fileActionName     string
+	fileActionHost     string
+	imageOpen          bool
+	imageID            string
+	imageViewer        ImageViewport
+	linkCancel         context.CancelFunc
+	linkGeneration     uint64
+	pendingNavigation  *fileNavigation
 }
 
 func New(win *mygo.Window, backend contracts.Service) *State {
@@ -141,6 +144,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 	}
 	s.snapshot = snapshot
 	s.fileChildrenIndex = nil
+	s.refreshSessionFiles()
 	for i := len(s.tabs) - 1; i >= 0; i-- {
 		if s.tabs[i].kind != "trajectory" && s.tabs[i].kind != "goal" {
 			continue
@@ -342,6 +346,26 @@ func (s *State) OpenFile(id string) {
 	s.cancelLink()
 	for _, f := range s.snapshot.Files {
 		if f.ID == id && f.Kind != "directory" {
+			if f.Kind == contracts.FileExternal || filepreview.External(f.Name, nil) {
+				if s.scopeID == "" {
+					root, err := s.projectRoot(contracts.Session{ProjectID: f.ProjectID})
+					if err == nil {
+						var absolute string
+						absolute, _, _, err = linktarget.ResolveFile(f.Path, root)
+						if err == nil {
+							err = s.openExternalFile("", contracts.LinkedFileResult{File: f, AbsolutePath: absolute})
+						}
+					}
+					if err != nil {
+						s.Error = err.Error()
+					}
+					return
+				}
+				if err := s.OpenLink(s.scopeID, f.Path); err != nil {
+					s.Error = err.Error()
+				}
+				return
+			}
 			if s.snapshot.Runtime != nil && !f.Loaded {
 				s.pendingFile = id
 				s.command(contracts.Command{Kind: "file.open", ID: id})
@@ -421,6 +445,7 @@ func (s *State) OpenSurface(kind string) {
 	case "changes":
 		s.choose(kind, "changes", "Changes")
 	case "files":
+		s.RefreshFiles()
 		s.choose("files", "files", "Files")
 	default:
 		s.choose("picker", "picker", "Workspace")
@@ -740,6 +765,9 @@ func (s *State) filesView(c *ui.Context, host string, controls *fileExplorerCont
 			}
 			ui.Scroll(c).Grow(1).FillWidth().Children(func() { ui.Tree(c, func() { s.fileChildren(c, "", host) }).Bind(&controls.tree).FillWidth() })
 		}).ContextMenu(func(m *ui.Menu) {
+			if s.sessionFiles.active {
+				return
+			}
 			if m.Item(tr(c, "New file…")).Chosen() {
 				s.requestFileAction("create", "", host)
 			}
@@ -764,14 +792,14 @@ func (s *State) fileChildrenLevel(c *ui.Context, parent, host string, depth int)
 		if f.Kind == "directory" {
 			open := s.folders[f.ID]
 			if open == nil {
-				v := true
+				v := false
 				open = &v
 				s.folders[f.ID] = open
 			}
 			row := ui.TreeItem(c, "", open, func() { s.fileChildrenLevel(c, f.ID, host, depth+1) }).Label(f.Name).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path, Directory: true}).OnClick(func() { *open = !*open }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m, host) })
 			s.styleFileRow(c, row, f, depth, *open, p)
 		} else {
-			row := ui.TreeItem(c, "", nil, nil).Label(f.Name).Selected(s.activeFile() == f.ID).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path}).OnClick(func() { s.OpenFile(f.ID) }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m, host) })
+			row := ui.TreeItem(c, "", nil, nil).Label(f.Name).Selected(s.activeFile() == f.ID).Drag(FileDrag{ID: f.ID, ProjectID: f.ProjectID, Path: f.Path}).OnClick(func() { s.openExplorerFile(f) }).ContextMenu(func(m *ui.Menu) { s.fileContext(c, f, m, host) })
 			s.styleFileRow(c, row, f, depth, false, p)
 		}
 	}

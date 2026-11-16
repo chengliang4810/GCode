@@ -125,7 +125,7 @@ func TestReadLinkedFileValidatesFilesAndCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = large.Close()
-	for _, path := range []string{"binary.bin", "nul.txt", "fake.png", "fake.svg", "multiple.svg", "doctype.svg", "large.txt", ".", "../escape.txt", "missing.txt"} {
+	for _, path := range []string{"fake.png", "fake.svg", "multiple.svg", "doctype.svg", "large.txt", ".", "../escape.txt", "missing.txt"} {
 		t.Run(path, func(t *testing.T) {
 			if _, err := core.ReadLinkedFile(t.Context(), contracts.LinkedFileRequest{SessionID: session.ID, Path: path}); err == nil {
 				t.Fatalf("accepted invalid linked file %q", path)
@@ -339,7 +339,7 @@ func TestCacheLinkedImagePublishesCompleteResourceOnce(t *testing.T) {
 	for range 12 {
 		workers.Go(func() {
 			<-release
-			key, err := cacheLinkedImage(t.Context(), directory, ".png", data)
+			key, err := cacheLinkedFile(t.Context(), directory, ".png", data)
 			if err != nil {
 				failures <- err
 				return

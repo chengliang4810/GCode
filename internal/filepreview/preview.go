@@ -1,0 +1,27 @@
+// Package filepreview identifies files that need a system application.
+package filepreview
+
+import (
+	"bytes"
+	"path"
+	"strings"
+	"unicode/utf8"
+)
+
+func External(name string, data []byte) bool {
+	switch strings.ToLower(path.Ext(name)) {
+	case ".pdf", ".doc", ".docx", ".docm", ".odt", ".rtf",
+		".xls", ".xlsx", ".xlsm", ".xlsb", ".ods", ".numbers",
+		".ppt", ".pptx", ".pptm", ".odp", ".key", ".pages",
+		".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz",
+		".mp3", ".wav", ".flac", ".m4a", ".ogg", ".mp4", ".mov", ".avi", ".mkv",
+		".aac", ".aiff", ".wma", ".opus", ".webm", ".m4v",
+		".heic", ".heif", ".avif", ".ico", ".psd", ".ai", ".eps", ".ps",
+		".ttf", ".otf", ".woff", ".woff2", ".eot",
+		".db", ".sqlite", ".sqlite3", ".epub", ".mobi", ".azw", ".azw3",
+		".dwg", ".dxf", ".stl", ".obj", ".fbx", ".blend", ".glb", ".gltf",
+		".exe", ".dll", ".dmg", ".pkg", ".iso", ".bin":
+		return true
+	}
+	return !utf8.Valid(data) || bytes.IndexByte(data, 0) >= 0
+}

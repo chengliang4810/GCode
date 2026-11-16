@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"gcode/internal/contracts"
+	"gcode/internal/filepreview"
 )
 
 func collectProjectFiles(ctx context.Context, project contracts.Project) ([]contracts.File, error) {
@@ -179,8 +180,10 @@ func executeFileCommand(command contracts.Command, project contracts.Project, fi
 		if len(data) > 16<<20 {
 			return result, errors.New("file exceeds the 16 MiB editor limit")
 		}
-		if !utf8.Valid(data) {
-			return result, errors.New("file is not UTF-8 text")
+		if filepreview.External(file.Name, data) {
+			file.Kind, file.Content, file.Loaded = contracts.FileExternal, "", true
+			result.file, result.updated = file, true
+			return result, nil
 		}
 		file.Content = string(data)
 		file.Version = fileVersion(data)

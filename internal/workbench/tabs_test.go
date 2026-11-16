@@ -991,6 +991,10 @@ func TestFileRenameUpdatesTabAndRetainsUnsavedBuffer(t *testing.T) {
 func TestExplorerFiltersHiddenAncestorsAndSortsDirectoriesFirst(t *testing.T) {
 	s, _, snapshot := testWorkspace(t)
 	snapshot.Files = []contracts.File{{ID: "z", Name: "z.go", Path: "z.go", Kind: "file"}, {ID: "folder", Name: "src", Path: "src", Kind: "directory"}, {ID: "a", Name: "a.go", Path: "a.go", Kind: "file"}, {ID: "hidden", Name: "config", Path: ".private/config", Kind: "file"}}
+	s.ProjectID = "one"
+	for i := range snapshot.Files {
+		snapshot.Files[i].ProjectID = s.ProjectID
+	}
 	snapshot.Settings.Files.ShowHidden = false
 	s.Update(snapshot)
 	got := s.filesIn("")
@@ -1031,26 +1035,27 @@ func TestExplorerDirectoryToggleAndRowGeometry(t *testing.T) {
 	if dir.ID == "" {
 		t.Fatal("fixture has no directory with children")
 	}
+	s.ProjectID = dir.ProjectID
 	tt := ui.NewTester(s.FilesView, 286, 600)
 	row, ok := tt.Find(dir.Name)
 	if !ok || row.H != 27 {
 		t.Fatalf("directory row differs from source geometry: %+v", row)
 	}
-	if _, ok := tt.Find(child.Name); !ok {
-		t.Fatal("expanded directory omitted children")
+	if _, ok := tt.Find(child.Name); ok {
+		t.Fatal("directory must start collapsed")
 	}
 	if err := tt.Click(dir.Name); err != nil {
 		t.Fatal(err)
 	}
-	if *s.folders[dir.ID] {
-		t.Fatal("clicking directory name did not collapse it")
-	}
-	if _, ok := tt.Find(child.Name); ok {
-		t.Fatal("collapsed directory retained child widgets")
-	}
-	tt.Key(0, ui.KeyRight)
 	if !*s.folders[dir.ID] {
-		t.Fatal("native Tree Right key did not expand directory")
+		t.Fatal("clicking directory name did not expand it")
+	}
+	if _, ok := tt.Find(child.Name); !ok {
+		t.Fatal("expanded directory omitted children")
+	}
+	tt.Key(0, ui.KeyLeft)
+	if *s.folders[dir.ID] {
+		t.Fatal("native Tree Left key did not collapse directory")
 	}
 }
 

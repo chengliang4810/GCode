@@ -57,6 +57,16 @@ func (s *State) refreshFileSearch() {
 	if strings.TrimSpace(s.fileSearch) == "" {
 		return
 	}
+	if s.sessionFiles.active {
+		query := strings.ToLower(strings.TrimSpace(s.fileSearch))
+		for _, file := range s.explorerFiles() {
+			if s.visibleFile(file) && strings.Contains(strings.ToLower(file.Path), query) {
+				s.search.result.Files = append(s.search.result.Files, contracts.FileSearchMatch{FileID: file.ID, Path: file.Path, Kind: file.Kind})
+			}
+		}
+		s.rebuildSearchRows()
+		return
+	}
 	service, ok := s.backend.(contracts.WorkspaceSearchService)
 	if !ok {
 		s.search.error = "Workspace search is unavailable"
@@ -103,7 +113,7 @@ func (s *State) refreshFileSearch() {
 }
 func (s *State) rebuildSearchRows() {
 	byID := map[string]contracts.File{}
-	for _, file := range s.snapshot.Files {
+	for _, file := range s.explorerFiles() {
 		if s.visibleFile(file) {
 			byID[file.ID] = file
 		}
@@ -149,7 +159,7 @@ func (s *State) activateFileSearch() {
 		s.rebuildSearchRows()
 		return
 	}
-	s.OpenFile(file.ID)
+	s.openExplorerFile(file)
 }
 func (s *State) fileSearchResults(c *ui.Context, host string, controls *fileExplorerControls) {
 	p := s.palette()

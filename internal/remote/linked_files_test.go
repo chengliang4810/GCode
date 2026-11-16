@@ -54,6 +54,10 @@ func TestRemoteLinkedFilesReadOwningHostAndAuthenticate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer client.Close()
+	listing, err := client.ListSessionFiles(t.Context(), contracts.SessionFilesRequest{SessionID: snapshot.Sessions[0].ID})
+	if err != nil || listing.Root != workspace || len(listing.Files) != 1 || listing.Files[0].Name != filepath.Base(path) {
+		t.Fatalf("remote session file listing = %+v, %v", listing, err)
+	}
 	events, err := client.Subscribe(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -104,6 +108,18 @@ func TestRemoteLinkedFilesReadOwningHostAndAuthenticate(t *testing.T) {
 	data, err := client.ReadResource(t.Context(), result.File.AssetRef)
 	if err != nil || !bytes.Equal(data, imageBytes.Bytes()) {
 		t.Fatalf("remote managed image = %d bytes, %v", len(data), err)
+	}
+	workbook := []byte("PK\x03\x04\x00remote workbook")
+	if err := os.WriteFile(filepath.Join(workspace, "report.xlsx"), workbook, 0600); err != nil {
+		t.Fatal(err)
+	}
+	external, err := client.ReadLinkedFile(t.Context(), contracts.LinkedFileRequest{SessionID: snapshot.Sessions[0].ID, Path: "report.xlsx"})
+	if err != nil || external.File.Kind != contracts.FileExternal {
+		t.Fatalf("remote workbook did not use external open: %+v %v", external, err)
+	}
+	data, err = client.ReadResource(t.Context(), external.File.AssetRef)
+	if err != nil || !bytes.Equal(data, workbook) {
+		t.Fatalf("remote external file download changed bytes: %v", err)
 	}
 	response, err := http.Post(host.URL+"/v1/linked-files/read", "application/json", strings.NewReader(`{"path":"`+filepath.ToSlash(path)+`"}`))
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 )
 
 func (a *App) configureWorkspaceLinks() {
+	a.workspace.OnOpenExternalFile = a.openExternalWorkspaceFile
 	a.workspace.OnLinkConfig = func(sessionID, documentPath string) linkui.Config {
 		return a.linkConfig(sessionID, documentPath, a.services)
 	}
@@ -95,28 +96,35 @@ func (a *App) linkConfig(sessionID, documentPath string, services ui.Services) l
 		}
 		return linktarget.Parse(raw)
 	}
+	sourceRoot := func() (contracts.Session, string, error) {
+		if sessionID == "" {
+			for _, project := range a.state.Projects {
+				if project.ID == a.projectID && project.Path != "" {
+					return contracts.Session{ProjectID: project.ID, DeviceID: project.DeviceID, CWD: project.Path}, project.Path, nil
+				}
+			}
+			return contracts.Session{}, "", fmt.Errorf("no project selected")
+		}
+		for _, source := range a.state.Sessions {
+			if source.ID == sessionID && !source.Archived && a.workspace.LinkSourceAvailable(sessionID) {
+				root, err := a.workspace.LinkRoot(sessionID)
+				return source, root, err
+			}
+		}
+		return contracts.Session{}, "", fmt.Errorf("link source conversation is unavailable")
+	}
 	resolve := func(raw string) (linkui.Destination, bool) {
 		target, err := parse(raw)
 		if err != nil {
 			return linkui.Destination{}, false
 		}
-		var source contracts.Session
-		for _, session := range a.state.Sessions {
-			if session.ID == sessionID && !session.Archived {
-				source = session
-				break
-			}
-		}
-		if source.ID == "" || !a.workspace.LinkSourceAvailable(sessionID) || target.Kind == linktarget.Anchor {
+		source, root, err := sourceRoot()
+		if err != nil || target.Kind == linktarget.Anchor {
 			return linkui.Destination{}, false
 		}
 		destination := linkui.Destination{Raw: raw, Tooltip: target.URL, Kind: target.Kind}
 		if target.Kind != linktarget.File {
 			return destination, true
-		}
-		root, err := a.workspace.LinkRoot(sessionID)
-		if err != nil {
-			return linkui.Destination{}, false
 		}
 		absolute, _, _, err := linktarget.ResolveFile(target.Path, root)
 		if err != nil {
@@ -175,7 +183,7 @@ func (a *App) linkConfig(sessionID, documentPath string, services ui.Services) l
 		if err != nil {
 			return "", false
 		}
-		root, err := a.workspace.LinkRoot(sessionID)
+		_, root, err := sourceRoot()
 		if err != nil {
 			return "", false
 		}
