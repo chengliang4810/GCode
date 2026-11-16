@@ -70,11 +70,12 @@ func TestPromptReferenceIconAlignsWithLabelInk(t *testing.T) {
 					if !ok {
 						t.Fatal("reference paragraph is missing")
 					}
+					frame := tt.Image()
 					bounds := func(left, right float32) image.Rectangle {
 						b := image.Rectangle{}
 						for y := int(row.Y); y < int(row.Y+row.H); y++ {
 							for x := int(left); x < int(right); x++ {
-								p := tt.Image().RGBAAt(x, y)
+								p := frame.RGBAAt(x, y)
 								dr := int(p.R) - int(a.palette.Background.R)
 								dg := int(p.G) - int(a.palette.Background.G)
 								db := int(p.B) - int(a.palette.Background.B)

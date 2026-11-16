@@ -82,7 +82,7 @@ func (a *App) chatView(c *ui.Context) {
 			}
 		})
 		if docked {
-			transcript := ui.Column(c).Key("chat-transcript").Grow(1).FillWidth().MinHeight(0)
+			transcript := ui.Column(c.Key("chat-transcript")).Grow(1).FillWidth().MinHeight(0)
 			if frame.Transcript < .999 && len(messages) == 0 {
 				transcript.Opacity(frame.Transcript)
 			}
@@ -200,8 +200,8 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 	heroWidth := composerOuterWidth(a.chatWidth-reserve, width, true)
 	threadWidth := composerOuterWidth(a.chatWidth-reserve, width, false)
 	outerWidth := heroWidth + (threadWidth-heroWidth)*frame.Amount
-	ui.Row(c).Key("main-composer").FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
-		block := ui.Column(c).Key("main-composer-block").FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
+	ui.Row(c.Key("main-composer")).FillWidth().Padding(0, reserve, 0, 0).Justify(ui.Center).Children(func() {
+		block := ui.Column(c.Key("main-composer-block")).FillWidth().MaxWidth(outerWidth).Padding(0, 16, 16, 16)
 		block.Children(func() {
 			a.queueRows(c, a.sessionID)
 			if a.questionComposer(c, a.sessionID, "main:"+a.sessionID) {
@@ -211,7 +211,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				// The blank canvas's target selectors leave before the pill
 				// travels; keeping them in one clipped container lets their
 				// height collapse with their opacity instead of jumping.
-				ui.Column(c).Key("composer-selectors").FillWidth().Height(20*selectors).Margin(0, 0, 8*selectors, 0).Clip().Children(func() {
+				ui.Column(c.Key("composer-selectors")).FillWidth().Height(20*selectors).Margin(0, 0, 8*selectors, 0).Clip().Children(func() {
 					ui.Row(c).FillWidth().Height(20).Padding(0, 10).Justify(ui.End).Gap(8).Opacity(selectors).Children(func() {
 						a.projectPicker(c)
 						a.devicePicker(c)
@@ -258,7 +258,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				onMention:   func(file workbench.FileDrag) { a.draft += " @" + file.Path },
 			})
 			ui.Box(c).Height(8).Shrink(0)
-			ui.Row(c).Key("composer-footer").FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
+			ui.Row(c.Key("composer-footer")).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 				ui.Row(c).Grow(1).MinWidth(0).AlignItems(ui.Center).Children(func() { a.composerFooterGit(c) })
 				a.conversationMetricsView(c, a.sessionID)
 				if footer := frame.Footer; footer > .001 {

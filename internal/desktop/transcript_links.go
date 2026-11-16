@@ -27,7 +27,7 @@ func (a *App) configureWorkspaceLinks() {
 // scope of its own while its blocks are rows: the list holds one scope, and a
 // selection crosses its blocks the way the reference's surface does.
 func (a *App) transcriptScope(c *ui.Context, pane string, build func()) {
-	root := ui.Column(c).Key("transcript-scope:" + pane).FillWidth().Grow(1).Selectable()
+	root := ui.Column(c.Key("transcript-scope:" + pane)).FillWidth().Grow(1).Selectable()
 	selection := linkui.BeginSelection(root)
 	if a.transcriptSelections == nil {
 		a.transcriptSelections = map[string]*linkui.Selection{}

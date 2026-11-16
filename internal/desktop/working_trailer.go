@@ -93,7 +93,7 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 		}
 		row := ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0)
 		row.Children(func() {
-			label := ui.Text(c, caption).Key("model-retry:" + sessionID).Tooltip(tooltip).
+			label := ui.Text(c.Key("model-retry:"+sessionID), caption).Tooltip(tooltip).
 				FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Muted)
 			if !a.reduceMotion(c) {
 				now := c.Now()

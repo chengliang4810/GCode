@@ -268,17 +268,17 @@ func (a *App) promptInput(c *ui.Context, input ui.Element, p composerSurfaceProp
 	}
 }
 
-func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.InputEvent, composing bool) bool {
-	if composing {
+func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mods ui.Modifiers) bool {
+	if s.state.Composing {
 		// IME confirmation belongs to the editor and must never send a draft.
-		return key.Key == ui.KeyEnter
+		return key == ui.KeyEnter
 	}
-	if s.open && key.Mods == 0 {
-		switch key.Key {
+	if s.open && mods == 0 {
+		switch key {
 		case ui.KeyUp, ui.KeyDown:
 			if count := len(s.choices); count > 0 {
 				delta := 1
-				if key.Key == ui.KeyUp {
+				if key == ui.KeyUp {
 					delta = -1
 				}
 				s.selected = (s.selected + delta + count) % count
@@ -295,14 +295,14 @@ func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.InputEve
 			return true
 		}
 	}
-	if key.Key == ui.KeyEscape && key.Mods == 0 && p.stopWithEscape && p.onStop != nil {
+	if key == ui.KeyEscape && mods == 0 && p.stopWithEscape && p.onStop != nil {
 		p.onStop()
 		return true
 	}
 	behavior := a.state.Settings.General.SendBehavior
 	shift := behavior == "shiftEnter" || behavior == "Shift+Enter"
 	mod := behavior == "modEnter" || behavior == "mod-enter"
-	if key.Key == ui.KeyEnter && ((!shift && !mod && key.Mods == 0) || (shift && key.Mods == ui.Shift) || (mod && key.Mods == ui.Cmd)) {
+	if key == ui.KeyEnter && ((!shift && !mod && mods == 0) || (shift && mods == ui.Shift) || (mod && mods == ui.Cmd)) {
 		s.raw = promptCanonical(s.doc.Text())
 		*p.draft = s.raw
 		if p.onSend(s.raw) {

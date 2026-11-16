@@ -579,7 +579,7 @@ func TestTabTooltipBlurRetainsSlotUntilUpOrUnheldMove(t *testing.T) {
 				c.SetTheme(s.palette().UI())
 				ui.Column(c).Fill().Children(func() {
 					s.TabStrip(c, false)
-					ui.ButtonBase(c).Key("other-press-owner").Label("Other press owner").Size(120, 24)
+					ui.ButtonBase(c.Key("other-press-owner")).Label("Other press owner").Size(120, 24)
 				})
 			}, 360, 100)
 			chip, _ := tt.Find(file.Name)

@@ -211,6 +211,22 @@ button, and Space toggles a focused check box, switch, toggle or radio
 button. A focused link, or an element with `Role(ui.RoleLink)`, takes Enter
 alone, as in a web page: Space scrolls the container around it.
 
+When the focus moves to an element by the keyboard or by the app (`Focus`,
+`AutoFocus`, a [handle](#persistent-focus)'s `Focus`, or a field bound with
+[`FocusBind`](#focus-bound-to-data)), the scroll containers around it scroll
+as little as shows it, as the web's `element.focus()` does, so keyboard
+navigation of your own keeps the focus in sight. It scrolls once, as the
+focus moves: calling `Focus` in every frame leaves the user's scrolling
+alone. A click focuses an element where it is, and so does `Focus` while
+a pointer button is held, as for a line that takes the focus from a press
+on its grip. To line it up otherwise, call `ScrollIntoView` with its
+options in the frame it takes the focus. To keep the scroll where it is,
+as the web's `focus({ preventScroll: true })`, pass `ui.FocusOptions`:
+`cell.Focus(ui.FocusOptions{PreventScroll: true})` gives the focus back to
+a cell of a grid when a dialog closes, without scrolling the grid. It holds
+through a field that gives the focus to its input. The zero options are
+those of `Focus()` without them.
+
 `TabStop(false)` makes an element focusable but out of Tab's order, as
 HTML's `tabindex="-1"`: it takes the focus from a click, from `Focus` and
 `AutoFocus`, and from assistive technology, while Tab and Shift+Tab pass
@@ -279,15 +295,17 @@ ui.TextInput(c.Key("search"), &app.query).Bind(&app.search)
 ```
 
 Declare `search ui.Handle` in your app state. `app.search.Focus()` requests
-focus and waits while the control is hidden. `CancelFocus()` cancels the
-request. `Focused(c)` and `FocusWithin(c)` read the control's identity before
+focus and waits while the control is hidden. `app.search.SelectAll()` does
+the same and selects all of the input's text, as Tab into it does, even when it
+has the focus already: a search box opened again selects its query, and typing
+replaces it. `CancelFocus()` cancels the request. `Focused(c)` and `FocusWithin(c)` read the control's identity before
 or after it is built. `c.Resolve(app.search)` returns only this pass's element.
 `app.search.Bounds(c)` reads its box from the committed frame, including
 between builds in an input callback. Closing a window cancels its focus
 request.
 
 A handle can bind in several windows. Queries take that window's Context;
-use `Focus(c)` or `CancelFocus(c)` to select a window explicitly. The
+use `Focus(c)`, `SelectAll(c)` or `CancelFocus(c)` to select a window explicitly. The
 no-argument focus form requires at most one open binding.
 
 ## Focus bound to data

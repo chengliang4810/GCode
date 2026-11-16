@@ -171,15 +171,22 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 		// move changes the size, so a press keeps *size for when there is
 		// room again.
 		dx, dy, held := handle.draggedBy()
-		if held && (dx != 0 || dy != 0) {
+		if !held {
+			if o, ok := handle.st.locals[splitOvershoot{}].(*float32); ok {
+				*o = 0
+			}
+		} else if dx != 0 || dy != 0 {
+			d := dx
 			switch {
 			case vertical:
-				set(shown+dy, false)
+				d = dy
 			case handle.rtl():
-				set(shown-dx, false)
-			default:
-				set(shown+dx, false)
+				d = -dx
 			}
+			o, _ := keepLocal(handle.st, splitOvershoot{}, func() float32 { return 0 })
+			want := shown + d + *o
+			*o = want - fitSplit(want, total, minPane)
+			set(want, false)
 		}
 		// resetTo puts first at the size SplitReset chose, in the split's
 		// own unit. Unlike set, it keeps a size the room cannot show, as
@@ -217,7 +224,7 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			length(div, 1)
 			handle.placeOn = div
 			if held {
-				div.Focus()
+				div.focus(false)
 			}
 			// The arrows move the line the way they point.
 			back, forth := div.arrows()
@@ -247,12 +254,12 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 			// applied above, before the panes built.
 			handle.afterInput(func() {
 				if reset != nil && reset.shownSet && handle.DoubleClicked() {
-					div.Focus()
+					div.focus(false)
 					resetTo(reset.shown)
 					return
 				}
 				if held {
-					div.Focus()
+					div.focus(false)
 				}
 			})
 			div.Draw(func(p *Painter, r Rect) {
@@ -271,6 +278,11 @@ func split(c *context, size *float32, first, second func(), vertical, inPercent 
 	})
 	return e
 }
+
+// splitOvershoot keys a split's handle's local value: how far the pointer
+// dragging the divider went past where the divider stopped, at a pane's
+// limit.
+type splitOvershoot struct{}
 
 // fitSplit clamps v, the first pane's size, to leave minPane on either side
 // of the divider in total, the room as last laid out (0 before the first

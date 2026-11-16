@@ -20,35 +20,35 @@ import (
 
 const (
 	ModulePath      = "github.com/egoist/mygo"
-	UpstreamVersion = "v0.8.3"
-	Revision        = "rcode-native-ui.26"
+	UpstreamVersion = "v0.9.1"
+	Revision        = "rcode-native-ui.27"
 	Replacement     = "./third_party/mygo"
-	UpstreamSum     = "h1:aTLEhS221YhsX+gKGNLQ5xEKMLCcYYr3pH9AkTwIRs4="
+	UpstreamSum     = "h1:vzMjSyahUjSk62+n+qmNXt8Bamyx1UNz359OyEDo/kg="
 
-	ExpectedTreeSHA256 = "1f780096bf2564ecde4951cafed09ba168820980e65664935f4a448c162b7781"
+	ExpectedTreeSHA256 = "765425e25c8b6fc49694769fef8da610be1900e3cba0b9118d21ef50b5cdda91"
 )
 
 // patchChain lists the reviewed local patches in application order over
-// upstream v0.8.3, ending with the pinned framework identity.
+// upstream v0.9.1, ending with the pinned framework identity.
 var patchChain = []Patch{
-	{Path: "patches/mygo-v0.8.3-01-motion.patch", SHA256: "1b660b425c2c9c81861fdbd8566eaa6147a3d1702dc402172fa88a28abdc0c6f"},
-	{Path: "patches/mygo-v0.8.3-02-markdown-line-height.patch", SHA256: "d9b86e5da49137a92beeeed104bffed7de1990ffe2cc6c8cf1dcde91624c8b6a"},
-	{Path: "patches/mygo-v0.8.3-03-snap-to-window.patch", SHA256: "fef1b3beaca20591c44fcf5fb0b175411746701b0d50eac83a78468017b42797"},
-	{Path: "patches/mygo-v0.8.3-04-input-display-text.patch", SHA256: "cb2463648088d31a154ca28e20e60e445a0813be392d5960fd5ff2899738768e"},
-	{Path: "patches/mygo-v0.8.3-05-windows-uia-provider.patch", SHA256: "79912ce654148454156d4096943164fa2b90c6fa467fdd22242e9e2f3a5d434a"},
-	{Path: "patches/mygo-v0.8.3-06-richtext-composer.patch", SHA256: "4d2e8d33adb348eccfc748959e9feef789e7881556341fee5b6699f47713c0c7"},
-	{Path: "patches/mygo-v0.8.3-08-inline-link-selection.patch", SHA256: "a9bebe568bbe18dd1a6714901711cb54cbd8e976f6ed476085eef200b66e15f7"},
-	{Path: "patches/mygo-v0.8.3-09-collapsible-animation.patch", SHA256: "abe31d972b3be24b21fd3c6b23192fca79dee1d9966ca8270658040ff412ec4e"},
-	{Path: "patches/mygo-v0.8.3-10-webview-data-directory.patch", SHA256: "cd468a33731157c7d322d06ee592c7d0ecf964da181c58bcbd12cb21bc0c9228"},
-	{Path: "patches/mygo-v0.8.3-11-windows-glyph-placement.patch", SHA256: "ac75b277499d0e8818caea72c075713999d65bb7a3cab665ae94d166a0379fc7"},
-	{Path: "patches/mygo-v0.8.3-12-rendering-parity.patch", SHA256: "c08be236ac8e0664b2fec31a3b089dbcafc790f7ad4fdbcaa565e590d0ca6933"},
-	{Path: "patches/mygo-v0.8.3-13-tooltip-primitives.patch", SHA256: "0a0ef73ecb35446417a5ef87dc9a63397dddcc6f3f56c2f3c230cd3e8b9cc7bd"},
-	{Path: "patches/mygo-v0.8.3-15-selection-spans.patch", SHA256: "5dc26170f679afd3488e414a3375bfe97a6f4ee79b8eed4508759348153674bf"},
-	{Path: "patches/mygo-v0.8.3-17-api-gen.patch", SHA256: "6feac1fc63a4a7e1a37c34623646c992f873a916e49f231da2d2a9270ab6d21a"},
-	{Path: "patches/mygo-v0.8.3-18-split-drag.patch", SHA256: "c21b2b2e181e513bf7acc9221067ba3fb487f2a7e00871f35b51c2158110a2c6"},
-	{Path: "patches/mygo-v0.8.3-19-patch-identity.patch", SHA256: "fc348d7bbda69047b3b77a9d3d0f16b85d059f75bb90dafc35031710199926f2"},
-	{Path: "patches/mygo-v0.8.3-20-richtext-clip.patch", SHA256: "db801aa78647d4d8527ed6b07b8c4a2ee594791522beb31321dbcfcf30c36434"},
-	{Path: "patches/mygo-v0.8.3-21-inline-code-size.patch", SHA256: "25dfa77b919e8c8c7d1fd1118c08d5c2a5b916d2ca5ee33bd67604e7c71fcf8a"},
+	{Path: "patches/mygo-v0.9.1-01-motion.patch", SHA256: "1f9c2963b066917fb5953b5b13f5b471f62b1b6bed60e29964a14bb81b5ca414"},
+	{Path: "patches/mygo-v0.9.1-02-markdown-line-height.patch", SHA256: "b699084b03da05e5d964527c6737b75166a9e6bec0bd0c8a511722ed48872d51"},
+	{Path: "patches/mygo-v0.9.1-03-snap-to-window.patch", SHA256: "92846ab187996d26464cb54e87cf75519259afe8b467220f76ea10ef466cc00f"},
+	{Path: "patches/mygo-v0.9.1-04-input-display-text.patch", SHA256: "002eabf55601dcd72eace90358887f4c2b069bd116c87301df0f80a36b399046"},
+	{Path: "patches/mygo-v0.9.1-05-windows-uia-provider.patch", SHA256: "49a62d232e4689b6ffea50e8380b5177a7283d55e3700dee2a6a340f6c3fc35e"},
+	{Path: "patches/mygo-v0.9.1-06-richtext-composer.patch", SHA256: "4409cffee820c56ef2141aab3b4731a48f0551d3485bb1b3f2a106753a1643de"},
+	{Path: "patches/mygo-v0.9.1-08-inline-link-selection.patch", SHA256: "2ee3d2a34c27c3af79eb09023f3b3b6c023a9d3b791d257d6cc43d483a6927e1"},
+	{Path: "patches/mygo-v0.9.1-09-collapsible-animation.patch", SHA256: "1445ade8f3e8455789f409bfe92ea29b8ef9eb377e1ca8a984f389f3be6f779e"},
+	{Path: "patches/mygo-v0.9.1-10-webview-data-directory.patch", SHA256: "68e7e5e5340120018bc9cff946fd323cc2f5c70472d1aec8061f43a7a1220007"},
+	{Path: "patches/mygo-v0.9.1-11-windows-glyph-placement.patch", SHA256: "38b1ac0e50e25a162ebc42220351a36e32e8393ed3956e9f6a63b4499005fe43"},
+	{Path: "patches/mygo-v0.9.1-12-rendering-parity.patch", SHA256: "abef284990cefee5421004dd86826c9729e49184651b9246de6c1dedd6b9cc43"},
+	{Path: "patches/mygo-v0.9.1-13-tooltip-primitives.patch", SHA256: "4e04cc9752589aea4986978dc247e45eec09b304f8f773a24dad341dadde3b3a"},
+	{Path: "patches/mygo-v0.9.1-15-selection-spans.patch", SHA256: "7c4b408e03ac91131e01fc9c38bc709b9fbca2dafd8815de262e7f4d6d3e1a86"},
+	{Path: "patches/mygo-v0.9.1-18-split-drag.patch", SHA256: "7df10a3892e503a2ffe1615cd760ab86adf26be8ffc37afbac7466008d7068dd"},
+	{Path: "patches/mygo-v0.9.1-20-richtext-clip.patch", SHA256: "ae1ecd5ef1e8264a5ab0a36ece2e409e882bd04b7dd1ef7a5fbc0d416e2ac40b"},
+	{Path: "patches/mygo-v0.9.1-21-inline-code-size.patch", SHA256: "471651d5f68beb08e256739ef45f55e9138d0153d716054f7ab3e476bd7ee3fc"},
+	{Path: "patches/mygo-v0.9.1-17-api-gen.patch", SHA256: "e35b0c35d5bcffaa97cc0c7a97530bf7c742a0642f48516f9979578c194ea1e9"},
+	{Path: "patches/mygo-v0.9.1-19-patch-identity.patch", SHA256: "641de0d6dcd546a9ae7dcff6d6fa86f5e25feb36f6107c7513960702918f764c"},
 }
 
 type Patch struct {

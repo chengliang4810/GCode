@@ -16,11 +16,11 @@ func TestEditorKeyHookSeesCurrentDocumentAndConsumesEnter(t *testing.T) {
 	tt := ui.NewTester(func(c *ui.Context) {
 		EditorBase(c, doc, EditorOptions{
 			State: &state, NoMarkdown: true,
-			OnKey: func(ev ui.InputEvent, composing bool) bool {
-				if ev.Key != ui.KeyEnter {
+			OnKey: func(key ui.Key, mods ui.Modifiers) bool {
+				if key != ui.KeyEnter {
 					return false
 				}
-				if composing {
+				if state.Composing {
 					return true
 				}
 				sent = doc.Text().String()
@@ -48,8 +48,8 @@ func TestEditorKeyHookLeavesCompositionUncommitted(t *testing.T) {
 	seen := false
 	v := view{doc: doc, caret: 1, selAnchor: 1, opts: EditorOptions{
 		State: &state,
-		OnKey: func(ev ui.InputEvent, composing bool) bool {
-			seen = composing && ev.Key == ui.KeyEnter
+		OnKey: func(key ui.Key, mods ui.Modifiers) bool {
+			seen = state.Composing && key == ui.KeyEnter
 			return seen
 		},
 	}}
@@ -72,8 +72,14 @@ func TestEditorPasteHookSupportsShortcutMenuAndFallthrough(t *testing.T) {
 	var state EditorState
 	tt := ui.NewTester(func(c *ui.Context) {
 		EditorBase(c, doc, EditorOptions{
-			State:   &state,
-			OnPaste: func() bool { calls++; return taken },
+			State: &state,
+			OnCommand: func(name string) bool {
+				if name != "paste" && name != "pasteAndMatchStyle" {
+					return false
+				}
+				calls++
+				return taken
+			},
 		}).Fill().AutoFocus()
 	}, 300, 100)
 	tt.SetClipboard("paste")

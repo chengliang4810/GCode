@@ -185,7 +185,7 @@ func TestRasterModeBitmapFlagsComeFromEngine(t *testing.T) {
 func rasterModeProbeAt(s *System, f *Font, subpixel bool, policy uint8) GlyphImage {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.glyphAt(f, 7, 2, 0, subpixel, 2, 4, 0, policy)
+	return s.glyphAt(f, 7, 2, 0, subpixel, 2, 4, 0, policy, 0, 0, nil)
 }
 
 func TestRasterModeThreeGlyphIdentities(t *testing.T) {

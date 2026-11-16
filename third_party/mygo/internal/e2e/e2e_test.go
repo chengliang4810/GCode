@@ -142,6 +142,10 @@ func TestMain(m *testing.M) {
 		automationApp()
 		return
 	}
+	if os.Getenv("MYGO_E2E_PROGRAM_NAME") == "1" {
+		programName()
+		return
+	}
 	mygo.Bind(Greeter{}, probe, streams, Bench{})
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +172,7 @@ func TestMain(m *testing.M) {
 	})
 	usePlugins(mux)
 	useBench(mux)
+	useSchemeStreams(mux)
 	if err := mygo.Protocol.Handle("app", mux); err != nil {
 		panic(err)
 	}
@@ -1020,8 +1025,10 @@ func TestVibrancyWindowControls(t *testing.T) {
 	prev := mygo.App.Menu()
 	defer mygo.App.SetMenu(prev)
 	mygo.App.SetMenu(mygo.NewMenu([]*mygo.MenuItem{{Label: "App", Submenu: []*mygo.MenuItem{{Label: "Item"}}}}))
+	// Transparency also selects the no-redirection path on Windows 10. Ask for
+	// the material alone so the check below tests whether backdrops are supported.
 	opts := mygo.WindowOptions{X: 40, Y: 40, Width: 360, Height: 200, TitleBarStyle: mygo.TitleBarHidden,
-		Vibrancy: mygo.VibrancyMica, Transparent: true}
+		Vibrancy: mygo.VibrancyMica}
 	a := newWindow(t, opts)
 	opts.X = 440
 	b := newWindow(t, opts)
@@ -1163,6 +1170,15 @@ func TestTrafficLightPosition(t *testing.T) {
 	w.Page().LoadHTML("<title>Traffic lights</title>", "")
 	eventually(t, "the page's title", func() bool { return w.Title() == "Traffic lights" })
 	placed("once the window takes the page's title")
+	// The title bar leaves as much room below the lights as above them, and
+	// the page hears where they end.
+	v, _ := mygo.EvalAs[[]float64](w.Page(), `(() => {
+		const s = getComputedStyle(document.documentElement);
+		return ["height", "controls-bottom"].map((k) => parseFloat(s.getPropertyValue("--mygo-titlebar-" + k)) || 0);
+	})()`)
+	if len(v) != 2 || v[1] == 0 || v[1] != v[0]-19 {
+		t.Errorf("title bar height and controls bottom %v, want the lights to end 19 above its bottom", v)
+	}
 	defer mygo.Theme.SetSource(mygo.Theme.Source())
 	if mygo.Theme.IsDark() {
 		mygo.Theme.SetSource(mygo.ThemeLight)
@@ -1305,6 +1321,28 @@ func TestDockedDevTools(t *testing.T) {
 	if place := dockedDevToolsPlace(w); place != "content" {
 		t.Errorf("docked inspector place = %q, want %q", place, "content")
 	}
+}
+
+// A minimized window is still visible, as Show and Hide set it, on every
+// platform (#1542): AppKit's isVisible is false for a window in the Dock.
+func TestMinimizedWindowIsVisible(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		t.Skip("Xvfb has no window manager to minimize windows")
+	}
+	w := newWindow(t, mygo.WindowOptions{Width: 400, Height: 300})
+	w.Minimize()
+	eventually(t, "the window minimized", w.IsMinimized)
+	if !w.IsVisible() {
+		t.Error("a minimized window is not visible")
+	}
+	w.Hide()
+	if w.IsVisible() {
+		t.Error("Hide left a minimized window visible")
+	}
+	w.Show()
+	eventually(t, "the window shown again", w.IsVisible)
+	w.Restore()
+	eventually(t, "the window restored", func() bool { return !w.IsMinimized() && w.IsVisible() })
 }
 
 func TestWindowGeometryAndState(t *testing.T) {
@@ -2225,6 +2263,14 @@ func TestPower(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		eventually(t, "the assertion to go", func() bool { return !strings.Contains(assertions(), reason) })
 	}
+	// KeepRunning keeps App Nap off, and the computer free to sleep: no
+	// assertion keeps it awake.
+	const running = "MyGo e2e keeps running"
+	release = mygo.Power.KeepRunning(running)
+	if runtime.GOOS == "darwin" && strings.Contains(assertions(), running) {
+		t.Error("KeepRunning keeps the computer awake")
+	}
+	release()
 	t.Logf("on battery: %v, idle: %v", mygo.Power.IsOnBattery(), mygo.Power.IdleTime())
 	if idle := mygo.Power.IdleTime(); idle < 0 || runtime.GOOS == "darwin" && idle == 0 {
 		t.Errorf("idle time = %v", idle)
@@ -2537,9 +2583,23 @@ func TestGlobalShortcutPortal(t *testing.T) {
 		}
 		t.Fatalf("%s was not reported", acc)
 	}
-	register("Ctrl+Shift+K")
+	// The desktop tells the keys it bound to a shortcut that asks.
+	keys := make(chan string, 8)
+	opts := mygo.GlobalShortcutOptions{Description: "Test the portal", OnKeys: func(k string) { keys <- k }}
+	if err := mygo.GlobalShortcut.RegisterWith("Ctrl+Shift+K", opts, func() { pressed <- "Ctrl+Shift+K" }); err != nil {
+		t.Fatal(err)
+	}
 	defer mygo.GlobalShortcut.UnregisterAll()
 	expect("Ctrl+Shift+K", "Control_L", "Shift_L", "k")
+	select {
+	case k := <-keys:
+		if k == "" {
+			t.Error("the desktop bound Ctrl+Shift+K and told no keys for it")
+		}
+		t.Logf("the desktop bound Ctrl+Shift+K to %q", k)
+	case <-time.After(wait.Guard):
+		t.Error("the keys the desktop bound were not told")
+	}
 	register("Alt+Shift+J")
 	expect("Alt+Shift+J", "Alt_L", "Shift_L", "j")
 	expect("Ctrl+Shift+K", "Control_L", "Shift_L", "k")
@@ -2996,10 +3056,10 @@ func TestHiddenTitleBar(t *testing.T) {
 	})
 	w.Page().LoadHTML("<p>hidden title bar</p>", "")
 	waitFor(t, w, "document.querySelector('p')")
-	room := func(win *mygo.Window) (r [3]string) {
+	room := func(win *mygo.Window) (r [4]string) {
 		v, _ := mygo.EvalAs[[]string](win.Page(), `(() => {
 			const s = getComputedStyle(document.documentElement);
-			return ["height", "inset-left", "inset-right"].map((k) => s.getPropertyValue("--mygo-titlebar-" + k).trim());
+			return ["height", "inset-left", "inset-right", "controls-bottom"].map((k) => s.getPropertyValue("--mygo-titlebar-" + k).trim());
 		})()`)
 		copy(r[:], v)
 		return r
@@ -3007,19 +3067,27 @@ func TestHiddenTitleBar(t *testing.T) {
 	shown := room(w)
 	switch runtime.GOOS {
 	case "windows":
-		if shown != [3]string{"40px", "0px", "138px"} {
-			t.Errorf("room = %q, want the title bar's height and three buttons 46 wide at the right", shown)
+		if shown != [4]string{"40px", "0px", "138px", "40px"} {
+			t.Errorf("room = %q, want the title bar's height and three buttons 46 wide at the right, as high as it", shown)
 		}
 	case "linux":
 		if shown[0] != "40px" {
 			t.Errorf("room = %q, want the title bar's height", shown)
 		}
+		if shown[3] != "0px" && shown[3] != shown[0] {
+			t.Errorf("room = %q, want the bars as high as the title bar", shown)
+		}
 		if shown[1] == "0px" && shown[2] == "0px" {
 			t.Log("the desktop's button layout names no buttons")
 		}
 	case "darwin":
-		if shown[0] == "0px" || shown[1] == "0px" || shown[2] != "0px" {
+		if shown[0] == "0px" || shown[1] == "0px" || shown[2] != "0px" || shown[3] == "0px" {
 			t.Errorf("room = %q, want the traffic lights at the left of the title bar", shown)
+		}
+		height, _ := strconv.ParseFloat(strings.TrimSuffix(shown[0], "px"), 64)
+		bottom, _ := strconv.ParseFloat(strings.TrimSuffix(shown[3], "px"), 64)
+		if bottom > height {
+			t.Errorf("room = %q, want the traffic lights to end within the title bar", shown)
 		}
 	}
 
@@ -3027,7 +3095,7 @@ func TestHiddenTitleBar(t *testing.T) {
 	plain := newWindow(t, mygo.WindowOptions{Width: 300, Height: 200})
 	plain.Page().LoadHTML("<p>title bar</p>", "")
 	waitFor(t, plain, "document.querySelector('p')")
-	if r := room(plain); r != ([3]string{}) {
+	if r := room(plain); r != ([4]string{}) {
 		t.Errorf("a window with its title bar: room = %q", r)
 	}
 
@@ -3062,7 +3130,7 @@ func TestHiddenTitleBar(t *testing.T) {
 		return // no window manager under Xvfb; the macOS animation is slow
 	}
 	w.SetFullScreen(true)
-	eventually(t, "no room for the controls in full screen", func() bool { return room(w) == [3]string{"0px", "0px", "0px"} })
+	eventually(t, "no room for the controls in full screen", func() bool { return room(w) == [4]string{"0px", "0px", "0px", "0px"} })
 	w.SetFullScreen(false)
 	eventually(t, "the room of the controls back", func() bool { return room(w) == shown })
 }

@@ -602,7 +602,7 @@ func (s *State) BodyBelow(c *ui.Context, top float32) { s.view(c, false, top) }
 func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 	s.syncAppearance(c)
 	p := s.palette()
-	container := ui.Column(c).Key("workspace:"+s.scopeID).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
+	container := ui.Column(c.Key("workspace:"+s.scopeID)).Label(tr(c, "Workspace surface")).Fill().MinWidth(0).Padding(top, 0, 0, 0).Background(design.PanelBackground(p, s.snapshot.Settings.Appearance.Surface)).TextColor(p.Text).Font(design.Font(s.snapshot.Settings.Appearance.Font))
 	if value, ok := ui.Drop[FileDrag](container); ok {
 		s.OpenFile(value.ID)
 	}

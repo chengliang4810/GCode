@@ -122,6 +122,8 @@ var (
 	procGetForegroundWindow           = user32.NewProc("GetForegroundWindow")
 	procNotifyWinEvent                = user32.NewProc("NotifyWinEvent")
 	procSetFocus                      = user32.NewProc("SetFocus")
+	procGetFocus                      = user32.NewProc("GetFocus")
+	procGetWindowThreadProcessId      = user32.NewProc("GetWindowThreadProcessId")
 	procEnableWindow                  = user32.NewProc("EnableWindow")
 	procGetWindowPlacement            = user32.NewProc("GetWindowPlacement")
 	procSetWindowPlacement            = user32.NewProc("SetWindowPlacement")
@@ -215,6 +217,7 @@ var (
 
 	// shlwapi
 	procSHCreateMemStream = shlwapi.NewProc("SHCreateMemStream")
+	procAssocQueryStringW = shlwapi.NewProc("AssocQueryStringW")
 
 	// dwmapi
 	procDwmSetWindowAttribute        = dwmapi.NewProc("DwmSetWindowAttribute")

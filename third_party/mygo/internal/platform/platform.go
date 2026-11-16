@@ -41,8 +41,10 @@ type Rect struct{ X, Y, Width, Height int }
 
 // TitleBar is the room the window controls take at the top of a window
 // with a hidden title bar, in DIPs: they sit in a band of Height along the
-// top edge, Left wide from the left edge and Right wide from the right.
-type TitleBar struct{ Height, Left, Right int }
+// top edge, Left wide from the left edge and Right wide from the right,
+// and end Bottom below the top edge, which is Height where they fill the
+// band.
+type TitleBar struct{ Height, Left, Right, Bottom int }
 
 // Color is an 8-bit RGBA color.
 type Color struct{ R, G, B, A uint8 }
@@ -111,8 +113,13 @@ type Backend interface {
 	// before Init, from any goroutine.
 	ReplaceFile(target, replacement string) error
 
-	NewTray(h TrayHandler) (Tray, error)
-	RegisterHotkey(id int, accelerator string) error
+	// NewTray makes a tray icon. id is TrayOptions.ID, which Linux needs
+	// as the icon is made; the other backends take it through Tray.SetID.
+	NewTray(id string, h TrayHandler) (Tray, error)
+	// RegisterHotkey makes accelerator a global shortcut. description says
+	// what it does, for desktops that show the app's shortcuts to the
+	// user; such desktops tell the keys they bound with HotkeyBound.
+	RegisterHotkey(id int, accelerator, description string) error
 	UnregisterHotkey(id int)
 
 	NotificationsSupported() bool
@@ -138,6 +145,16 @@ type Backend interface {
 // states keep with them.
 type WindowStateWindow interface {
 	WindowStateBounds() Rect
+}
+
+// InputRegionWindow is a window that takes the mouse only where its input
+// region is (macOS, Linux, Windows): SetInputRegion limits it to region,
+// in DIPs from the top-left corner of the content, and lets the mouse
+// through elsewhere; nil gives it all of the window, an empty region
+// none. SetIgnoreMouseEvents(true) wins over it. Apart from Window, so
+// that only apps setting a region link it.
+type InputRegionWindow interface {
+	SetInputRegion(region []Rect)
 }
 
 // WindowStateBackend restores windows at their pixels (Windows):
@@ -174,6 +191,11 @@ type AppOptions struct {
 	// DMABUFRenderer is "off" (or ""), "on" or "auto": whether WebKitGTK
 	// may draw with its DMA-BUF renderer. Only meaningful on Linux.
 	DMABUFRenderer string
+	// Background starts the app without bringing it to the front, as
+	// `mygo dev -background` asks. Only meaningful on macOS, where an
+	// executable that is no bundle is brought there as it starts; the
+	// core shows the windows without the focus everywhere.
+	Background bool
 	// WebViewDataDirectory overrides persistent WebView2 profile storage on Windows.
 	// Empty keeps the backend's default.
 	WebViewDataDirectory string
@@ -189,7 +211,8 @@ type AppHandler interface {
 	// proceed.
 	QuitRequested() bool
 	// Terminating is called right before the process is terminated by the
-	// OS (logout/shutdown); Run will not return.
+	// OS (logout/shutdown); Run will not return. The core runs the quit
+	// listeners then, unless a quit ran them, and finishes the app.
 	Terminating()
 	// Activated is called when the application is re-activated, e.g. by
 	// clicking its Dock icon.
@@ -210,6 +233,9 @@ type AppHandler interface {
 	// called, when it may have changed.
 	NetworkChanged(status NetworkStatus)
 	HotkeyPressed(id int)
+	// HotkeyBound reports the keys a desktop that binds global shortcuts
+	// for apps has for one, as it writes them, "" when it bound none.
+	HotkeyBound(id int, keys string)
 	NotificationClicked(id string)
 	// MediaCommand reports a media key or a remote command for what
 	// NowPlaying shows; position is where MediaSeek asks to go.
@@ -574,10 +600,16 @@ type Window interface {
 	Show()
 	ShowInactive()
 	Hide()
+	// IsVisible reports whether Show showed the window and Hide did not
+	// hide it since: a minimized window is visible (#1542).
 	IsVisible() bool
 	Focus()
 	Blur()
 	IsFocused() bool
+	// CornerRadius is the radius, in DIPs, the window's corners are
+	// rounded to on screen, or 0 when they are square or the system
+	// does not tell it.
+	CornerRadius() float64
 	Minimize()
 	IsMinimized() bool
 	Maximize()
@@ -593,6 +625,7 @@ type Window interface {
 	SetHasShadow(v bool)
 	HasShadow() bool
 	SetIgnoreMouseEvents(v bool)
+	IgnoresMouseEvents() bool
 	SetContentProtection(v bool)
 	SetVibrancy(material string)
 	// SetVibrancyTint tints the window's material, where it takes one
@@ -928,6 +961,14 @@ type WindowHandler interface {
 	// AuthRequested answers an HTTP authentication challenge of the page,
 	// or of what it loads.
 	AuthRequested(req AuthRequest) AuthResponse
+	// ClientCertificateRequested asks which client certificate to give a
+	// server that asks for one, of the page or of what it loads.
+	ClientCertificateRequested(req ClientCertificateRequest) ClientCertificateResponse
+	// HandlesClientCertificates tells whether the app answers client
+	// certificate challenges at all: a backend that lists certificates
+	// (macOS, whose keychain asks the user for them) lists them only
+	// while it does, and leaves the challenge to the web view otherwise.
+	HandlesClientCertificates() bool
 	// CertificateError asks whether to load what a server sent with a
 	// certificate that does not verify: false fails it, as without the
 	// call. A backend that verifies certificates itself to tell (macOS)
@@ -1039,6 +1080,16 @@ type Menu struct {
 	RightToLeft bool
 }
 
+// BadgeAlignment is where an item's badge sits in the column the badges of
+// its menu share.
+type BadgeAlignment string
+
+const (
+	BadgeAlignLeft   BadgeAlignment = "left"
+	BadgeAlignCenter BadgeAlignment = "center"
+	BadgeAlignRight  BadgeAlignment = "right"
+)
+
 // MenuItem is a snapshot of a menu item. ID identifies the public item the
 // native item was built from.
 type MenuItem struct {
@@ -1046,6 +1097,8 @@ type MenuItem struct {
 	Type        MenuItemType
 	Label       string
 	Subtitle    string
+	Badge       string
+	BadgeAlign  BadgeAlignment
 	Role        string
 	Accelerator string
 	Enabled     bool
@@ -1136,13 +1189,20 @@ type Dialogs interface {
 
 // Clipboard accesses the system clipboard.
 type Clipboard interface {
+	// WatchChanges observes clipboard changes without reading data. It does
+	// not report the initial contents. changed and the returned stop function
+	// run on the main thread; stop prevents later callbacks. Only one watch
+	// is active at a time. Unsupported backends return ErrUnsupported.
+	WatchChanges(changed func()) (stop func(), err error)
 	// Data reads copy accepted representations, so returned data outlives
 	// native ownership. Nil formats reads all; a missing explicit match is
 	// transfer.ErrFormat. WriteData takes an application-owned snapshot;
-	// released runs once when native providers are no longer needed, never
-	// after a failed write. Neither operation depends on a source window.
+	// concealed marks it as confidential for the clipboard managers that
+	// read the platform's mark; released runs once when native providers
+	// are no longer needed, never after a failed write. Neither operation
+	// depends on a source window.
 	ReadData(formats []transfer.Format) (transfer.Data, error)
-	WriteData(data transfer.Data, released func()) error
+	WriteData(data transfer.Data, concealed bool, released func()) error
 	Formats() []transfer.Format
 	// Flush materializes owned providers and asks the system to persist the
 	// data. Close drops any remaining owned providers at app shutdown.
@@ -1172,6 +1232,14 @@ type Shell interface {
 	OpenPath(path string) error
 	ShowItemInFolder(path string)
 	TrashItem(path string) error
+	// TrashItemResult moves the item at path to the trash and returns the
+	// path where it landed inside the trash directory. It is supported on
+	// macOS only; all other platforms return ("", ErrUnsupported).
+	TrashItemResult(path string) (string, error)
+	// PreviewItem shows the item at path in the Quick Look panel, the
+	// preview Finder opens with the space bar. It is supported on macOS
+	// only; all other platforms return ErrUnsupported.
+	PreviewItem(path string) error
 	Beep()
 	// FileIcon returns the icon the file manager shows for a file, a
 	// folder or an application, as a PNG image of size by size pixels.
@@ -1183,6 +1251,12 @@ type Shell interface {
 	// OpenApplication starts the application at Application.Path, or
 	// brings it to the front.
 	OpenApplication(path string) error
+	// DefaultApp returns the application the system would use to open
+	// url. url may be a web URL such as https://example.com, a file://
+	// URL, or any URL whose scheme is registered with the system. It
+	// is supported on macOS, Linux and Windows; other platforms return
+	// (Application{}, ErrUnsupported).
+	DefaultApp(url string) (Application, error)
 }
 
 // Application is an installed application (Backend.Applications): Path is
@@ -1294,6 +1368,10 @@ type Power interface {
 	// KeepAwake keeps the system, and with display the display, from
 	// sleeping while idle until release is called.
 	KeepAwake(display bool, reason string) (release func())
+	// KeepRunning keeps the system from slowing the app down while none
+	// of its windows shows, as macOS's App Nap does, until release is
+	// called; it leaves the system free to sleep when idle.
+	KeepRunning(reason string) (release func())
 	OnBattery() bool
 	IdleTime() time.Duration
 }

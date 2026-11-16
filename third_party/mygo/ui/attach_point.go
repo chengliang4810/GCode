@@ -11,7 +11,7 @@ package ui
 // text direction. Build in an Overlay to avoid ancestor clipping. This replaces
 // Attach/AttachTo positioning; SnapToWindow does not alter this placement.
 func (e *node) AttachAtPoint(x, y, gap float32) *node {
-	e.flags |= flagAbsolute
+	e.markAbsolute()
 	e.attach, e.popover = 0, nil
 	e.pointX, e.pointY, e.pointGap = x, y, max(gap, 0)
 	e.pointAttached = true

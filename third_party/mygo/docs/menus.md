@@ -47,6 +47,14 @@ A `MenuItem` has:
 - `Subtitle`, a second, smaller line under the label. macOS 14 and browsers
   show it so; earlier macOS, Windows and Linux show it after the label, as
   `Label — Subtitle`;
+- `Badge`, text at the trailing edge of the item, as a count or a latency,
+  and `BadgeAlign`, where it sits in the column the menu's badges share:
+  `BadgeAlignLeft`, `BadgeAlignCenter`, or `BadgeAlignRight` (the default).
+  macOS puts that column after the menu's longest label (and subtitle,
+  where that follows it), and draws the badges in a monospaced-digit font,
+  so a measure keeps its width as its digits change. The column moves when
+  a label, a badge or the visibility of an item changes. Other platforms
+  show the badge after the label and subtitle;
 - `ID`, to find the item with `Menu.ItemByID`;
 - `Role`, a built-in behavior with its label and accelerator.
 
@@ -106,8 +114,8 @@ the state the app gave them. An item the app disables stays disabled.
 ### Changing items
 
 Change items of a menu in use with their methods, so that the native menu
-follows: `SetLabel`, `SetEnabled`, `SetVisible`, `SetChecked`,
-`SetAccelerator`, `SetSubtitle` and `SetIcon`:
+follows: `SetLabel`, `SetBadge`, `SetBadgeAlign`, `SetEnabled`, `SetVisible`,
+`SetChecked`, `SetAccelerator`, `SetSubtitle` and `SetIcon`:
 
 ```go
 item := menu.ItemByID("sidebar")
@@ -474,7 +482,12 @@ On Linux tray icons use AppIndicator, which needs
 listener answers activation (with a release of the library that has the
 `activate` signal; older ones report no clicks), which GNOME's AppIndicator extension sends on
 a double click and which opens the menu on a single one after the double
-click time. `NewTray` returns an error without the library.
+click time. `NewTray` returns an error without the library. Template tray
+icons are white while the desktop prefers dark, with their alpha kept,
+and redraw when the settings portal's color scheme changes. `Tray.Dark`
+reads that desktop preference, independent of `Theme.SetSource`; without
+a portal it returns false. AppIndicator cannot report the panel's own
+theme, which can differ from the desktop's.
 
 Apps that live in the menu bar usually drop their Dock icon on macOS:
 

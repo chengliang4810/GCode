@@ -53,7 +53,7 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 	if p.hero {
 		radius = 26
 	}
-	composer := ui.Column(c).Key("native-composer").FillWidth().Shrink(0).Radius(radius)
+	composer := ui.Column(c.Key("native-composer")).FillWidth().Shrink(0).Radius(radius)
 	if p.surface != nil {
 		composer.Bind(p.surface)
 	}
@@ -133,7 +133,7 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 		}
 		// Both modes retain this body and the same keyed input. Only positions
 		// change, preserving the native editor's IME, undo, focus and selection.
-		body := ui.Column(c).Key("body").FillWidth().Shrink(0)
+		body := ui.Column(c.Key("body")).FillWidth().Shrink(0)
 		switch {
 		case morph:
 			// Mid-handoff the box is explicit; controls pinned to its bottom
@@ -147,12 +147,17 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 			services := c.Services()
 			options := richtext.EditorOptions{
 				Label: tr(c, p.inputLabel), Placeholder: tr(c, "Do anything…"), Font: font, NoMarkdown: true,
-				Theme:          &richtext.Theme{Text: a.palette.Text, Muted: a.palette.Faint, FixedLineHeight: lineHeight},
-				State:          &prompt.state,
-				OnKey:          func(key ui.InputEvent, composing bool) bool { return a.promptKey(p, prompt, key, composing) },
+				Theme: &richtext.Theme{Text: a.palette.Text, Muted: a.palette.Faint, FixedLineHeight: lineHeight},
+				State: &prompt.state,
+				OnKey: func(key ui.Key, mods ui.Modifiers) bool {
+					return a.promptKey(p, prompt, key, mods)
+				},
 				ContentPadding: [4]float32{compactPaddingY, 8, compactPaddingY, 8},
 			}
-			options.OnPaste = func() bool {
+			options.OnCommand = func(name string) bool {
+				if name != "paste" && name != "pasteAndMatchStyle" {
+					return false
+				}
 				if p.onPaste != nil && p.onPaste(services) {
 					return true
 				}
@@ -198,7 +203,7 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 				*p.focusPending = false
 			}
 			if expanded && !morph {
-				ui.Box(c).Key("action-space").Height(composerActionsHeight).Shrink(0)
+				ui.Box(c.Key("action-space")).Height(composerActionsHeight).Shrink(0)
 			}
 			c.Key(p.keyPrefix + "attach")
 			attach := ui.ButtonBase(c).Absolute().Left(inset).Bottom(actionBottom+2).Size(28, 28).Radius(14).Label(tr(c, p.attachLabel)).Tooltip(tr(c, p.attachLabel)).Center().TextColor(a.palette.Muted)
@@ -206,7 +211,7 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 				attach.Background(a.palette.Hover)
 			}
 			attach.Children(func() { icon(c, "paperclip", 18) }).OnClick(p.onChooseAttach)
-			ui.Row(c).Key("controls").Bind(&layout.controls).Absolute().Right(inset + 28 + 8).Bottom(actionBottom).Height(32).MinWidth(0).MaxWidth(width * .45).Gap(4).AlignItems(ui.Center).Children(func() {
+			ui.Row(c.Key("controls")).Bind(&layout.controls).Absolute().Right(inset + 28 + 8).Bottom(actionBottom).Height(32).MinWidth(0).MaxWidth(width * .45).Gap(4).AlignItems(ui.Center).Children(func() {
 				p.controls.modelTrigger(c)
 				p.controls.reasoningTrigger(c)
 			})

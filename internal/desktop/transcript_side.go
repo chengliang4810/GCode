@@ -160,7 +160,7 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 		conversation = []conversationRow{{Key: "side:" + sessionID + ":working", Message: -1}}
 	}
 	a.prepareTranscriptMarkdown(c)
-	root := ui.Column(c).Fill().Key("side-transcript:" + sessionID)
+	root := ui.Column(c.Key("side-transcript:" + sessionID)).Fill()
 	list := ui.Local(root, "messages", func() ui.ListState { return ui.ListState{FollowEnd: true} })
 	list.Key = func(i int) any { return conversation[i].Key }
 	a.transcriptListScope(c, root, list, sessionID, func() {

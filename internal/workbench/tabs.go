@@ -31,7 +31,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 	tips := s.tabTooltip.begin(c, s.scopeID, len(s.tabs))
 	// shell/tabs.rs supplies one 4px top inset over the transparent titlebar;
 	// its fixed expand button follows the scrolling chips and add-tab button.
-	ui.Row(c).Key("workspace-tabs:"+s.scopeID).Label(tr(c, "Workspace tabs")).FillWidth().Height(38).Shrink(0).Gap(4).Padding(4, 4, 0, 8).AlignItems(ui.Center).Clip().Children(func() {
+	ui.Row(c.Key("workspace-tabs:"+s.scopeID)).Label(tr(c, "Workspace tabs")).FillWidth().Height(38).Shrink(0).Gap(4).Padding(4, 4, 0, 8).AlignItems(ui.Center).Clip().Children(func() {
 		scroller := ui.ScrollHorizontal(c).Label(tr(c, "Scroll workspace tabs")).Grow(1).MinWidth(0).FillHeight().Gap(4).TrackScroll(&s.tabScroll).Scrollbars(false)
 		if design.Glass(p, s.snapshot.Settings.Appearance.Surface, c.Vibrancy()).A == 255 {
 			// TrackScroll commits these plain values during layout. Read them

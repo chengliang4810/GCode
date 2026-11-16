@@ -106,7 +106,7 @@ func (rt *engine) titleBar() TitleBar {
 	b := rt.host.titleBar()
 	if rt.zoomed() {
 		z := rt.contentZoom
-		b = TitleBar{Height: b.Height / z, Left: b.Left / z, Right: b.Right / z}
+		b = TitleBar{Height: b.Height / z, Left: b.Left / z, Right: b.Right / z, Bottom: b.Bottom / z}
 	}
 	return b
 }
@@ -117,6 +117,10 @@ func (rt *engine) windowAccess(t *platform.AccessTree) *platform.AccessTree {
 	if rt.zoomed() {
 		for i := range t.Nodes {
 			t.Nodes[i].Bounds = rt.toWindow(t.Nodes[i].Bounds)
+			for j := range t.Nodes[i].LineBoxes {
+				b := &t.Nodes[i].LineBoxes[j].Bounds
+				*b = rt.toWindow(*b)
+			}
 		}
 	}
 	return t

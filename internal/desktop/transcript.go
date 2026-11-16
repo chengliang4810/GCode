@@ -74,7 +74,7 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 	}()
 	// The row keeps its identity by the list row's key, so hover and its
 	// callbacks outlive a rebuild of the row's content.
-	wrapper := ui.Row(c).Key("row:" + row.Key).FillWidth().Justify(ui.Center)
+	wrapper := ui.Row(c.Key("row:" + row.Key)).FillWidth().Justify(ui.Center)
 	if row.User {
 		pane.cache.bindMessageRailRow(wrapper, index)
 	}
@@ -162,7 +162,7 @@ func (a *App) transcriptEntryHovered(pane, entryID string) bool {
 // accessibility state and reduced-motion handling. Only the source-specific
 // geometry, typography and connector rail are painted by the application.
 func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.Message) {
-	root := ui.Column(c).FillWidth().Margin(0, 0, 0, -activityLeadingInset).Key(row.ID)
+	root := ui.Column(c.Key(row.ID)).FillWidth().Margin(0, 0, 0, -activityLeadingInset)
 	open := ui.Local(root, "open", func() bool { return row.AutoOpen })
 	a.activityFold(row.ID, open, row.AutoOpen)
 	summary := a.activitySummary(row.Summary)
@@ -403,7 +403,7 @@ func (a *App) activityReadItem(c *ui.Context, id string, block contracts.Block, 
 	if tool.Failed() {
 		color = a.palette.Danger
 	}
-	root := ui.Column(c).FillWidth().Key(id)
+	root := ui.Column(c.Key(id)).FillWidth()
 	root.Draw(func(p *ui.Painter, r ui.Rect) { a.activityRail(p, r, continues, motion) })
 	root.Children(func() {
 		row := ui.Row(c).FillWidth().Justify(ui.Start).Label(tr(c, "Read") + ": " + tool.Path)
@@ -469,7 +469,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 		a.activityReadItem(c, id, block, continues, motion)
 		return
 	}
-	root := ui.Column(c).FillWidth().Key(id)
+	root := ui.Column(c.Key(id)).FillWidth()
 	open := ui.Local(root, "open", func() bool { return false })
 	a.activityFold(id, open, false)
 	label, detail, glyph := activityTitle(block)

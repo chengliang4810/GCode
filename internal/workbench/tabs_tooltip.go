@@ -211,7 +211,7 @@ func (s *State) renderTabTooltip(c *ui.Context, pass tabTooltipPass) {
 		width = 320
 	}
 	ui.Overlay(c, func() {
-		ui.Box(c).Key(tabTooltipCardKey{s.scopeID, s.tabTooltip.shown}).Role(ui.RoleTooltip).PassThrough().
+		ui.Box(c.Key(tabTooltipCardKey{s.scopeID, s.tabTooltip.shown})).Role(ui.RoleTooltip).PassThrough().
 			Bind(&owner.card).MaxWidth(width).Padding(6, 9).Radius(6).Border(1, p.Border).
 			Background(p.Input.Over(p.Background)).TextColor(p.Muted).Font(tabTooltipFontFamily()).FontWeight(400).
 			FontSize(size).FixedLineHeight(tabTooltipLineHeight(size, c.DeviceScale())).AttachAtPoint(owner.x, owner.y, 1).

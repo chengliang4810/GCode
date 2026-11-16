@@ -358,7 +358,7 @@ func (a *App) footerContextCard(c *ui.Context, usage contracts.ContextUsage) {
 			ui.Box(c).Grow(1)
 			ui.Text(c, footerContextSummary(usage, a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
 		})
-		ui.Box(c).Key("context-capacity-progress").Label("context-capacity-progress").FillWidth().Height(8).Radius(4).Background(a.palette.Faint.Alpha(.12)).Clip().Tooltip(footerContextDetails(usage, a.state.Settings.General.Language)).Draw(func(p *ui.Painter, bounds ui.Rect) {
+		ui.Box(c.Key("context-capacity-progress")).Label("context-capacity-progress").FillWidth().Height(8).Radius(4).Background(a.palette.Faint.Alpha(.12)).Clip().Tooltip(footerContextDetails(usage, a.state.Settings.General.Language)).Draw(func(p *ui.Painter, bounds ui.Rect) {
 			if !known || fraction <= 0 {
 				return
 			}

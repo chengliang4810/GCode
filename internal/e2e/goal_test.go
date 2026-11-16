@@ -189,6 +189,16 @@ func TestDesktopLocalGoalTodoStack(t *testing.T) {
 			app.act("goal-edit:"+sessionID, "press", "")
 			app.act("goal-editor-input:"+sessionID, "setValue", "Keep the unsaved goal draft")
 			app.act("workspace-close:goal:"+sessionID, "press", "")
+			app.await("goal editor has closed before reopening", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				if _, err := tree.findKey("goal-editor-input:" + sessionID); err == nil {
+					return fmt.Errorf("goal editor is still closing")
+				}
+				return nil
+			})
 			app.act("goal-edit:"+sessionID, "press", "")
 			editorValue := func(expected string) {
 				t.Helper()

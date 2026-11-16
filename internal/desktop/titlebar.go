@@ -121,7 +121,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 		}
 	}
 	surface, controls := titlebarWidths(columns.Right, columns.Files, viewport-columns.Sidebar-left-navigation-caption-gapBudget, caption)
-	row := ui.Row(c).Key("main-titlebar").Height(height).Shrink(0).FillWidth().Padding(0, caption, 0, left).AlignItems(ui.Center).DragWindow()
+	row := ui.Row(c.Key("main-titlebar")).Height(height).Shrink(0).FillWidth().Padding(0, caption, 0, left).AlignItems(ui.Center).DragWindow()
 	if overlay {
 		row.Absolute().Left(0).Right(0).Top(0)
 	}
@@ -196,7 +196,7 @@ func (a *App) captionControls(c *ui.Context, height float32) {
 	if maximized {
 		maximizeLabel = tr(c, "Restore window")
 	}
-	ui.Row(c).Key("window-caption-controls").Absolute().Top(0).Right(titlebarEdgeInset).Height(height).Padding(4, 0, 0, 0).Gap(titlebarControlGap).AlignItems(ui.Center).Children(func() {
+	ui.Row(c.Key("window-caption-controls")).Absolute().Top(0).Right(titlebarEdgeInset).Height(height).Padding(4, 0, 0, 0).Gap(titlebarControlGap).AlignItems(ui.Center).Children(func() {
 		c.Key("window-minimize")
 		iconButton(c, "caption-minimize", tr(c, "Minimize window")).Shrink(0).OnClick(func() {
 			if a.win != nil {
