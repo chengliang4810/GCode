@@ -272,7 +272,9 @@ func (e *Engine) commitPersistence(required ...string) (resultErr error) {
 				disk.Queue = append(disk.Queue, queued)
 			}
 		}
-		data, err := json.MarshalIndent(disk, "", "  ")
+		// Records are machine-owned JSON. Avoid a second full-body formatting
+		// pass and its allocations on every progress save.
+		data, err := json.Marshal(disk)
 		if err != nil {
 			return err
 		}
@@ -356,7 +358,7 @@ func (e *Engine) commitPersistence(required ...string) (resultErr error) {
 			}
 		}
 	}
-	index, err := json.MarshalIndent(diskState{Format: engineDiskFormat, Snapshot: durable, Providers: e.providers, Records: records}, "", "  ")
+	index, err := json.Marshal(diskState{Format: engineDiskFormat, Snapshot: durable, Providers: e.providers, Records: records})
 	if err != nil {
 		return err
 	}
@@ -415,7 +417,7 @@ func (e *Engine) writeSessionRecord(session contracts.Session, record string, da
 		return err
 	}
 	defer folder.Close()
-	// persistLocked supplies the bytes directly from json.MarshalIndent.
+	// persistLocked supplies the bytes directly from json.Marshal.
 	return storage.WriteBytesRoot(folder, record+".json", data)
 }
 
