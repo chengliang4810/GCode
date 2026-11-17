@@ -90,8 +90,8 @@ func TestUserSkillImportEditToggleAndDelete(t *testing.T) {
 	if strings.Contains(skillInstructions(root, ""), "documents") {
 		t.Fatal("disabled skill was advertised")
 	}
-	if _, err := expandPrompt(root, "", "/skill:documents"); err == nil {
-		t.Fatal("disabled skill remained callable")
+	if expanded, err := expandPrompt(root, "", "/skill:documents"); err != nil || expanded != "/skill:documents" {
+		t.Fatalf("disabled skill invocation = %q, %v; want the unexpanded prompt", expanded, err)
 	}
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "resource.skill.delete", ID: skill.ID}); err != nil {
 		t.Fatal(err)
@@ -129,8 +129,8 @@ func TestUserCommandsExpandArgumentsAndIgnoreProjectResources(t *testing.T) {
 	if strings.Contains(skillInstructions(root, project), "project-only") {
 		t.Fatal("project skill appeared in user-only catalog")
 	}
-	if _, err := expandPrompt(root, project, "/skill:project-only"); err == nil {
-		t.Fatal("project skill remained callable")
+	if expanded, err := expandPrompt(root, project, "/skill:project-only"); err != nil || expanded != "/skill:project-only" {
+		t.Fatalf("project skill invocation = %q, %v; want the unexpanded prompt", expanded, err)
 	}
 	command.Content = "No placeholder"
 	saveResource(t, core, "resource.command.save", &contracts.ResourceInput{Command: &command})
@@ -147,8 +147,8 @@ func TestUserCommandsExpandArgumentsAndIgnoreProjectResources(t *testing.T) {
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "resource.command.toggle", ID: command.ID, Enabled: false}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := expandPrompt(root, project, "/review"); err == nil {
-		t.Fatal("disabled command remained callable")
+	if expanded, err := expandPrompt(root, project, "/review"); err != nil || expanded != "/review" {
+		t.Fatalf("disabled command invocation = %q, %v; want the unexpanded prompt", expanded, err)
 	}
 	catalog, err := readResourceCatalog(root)
 	if err != nil || len(catalog.Commands) != 1 || catalog.Commands[0].ArgumentHint != "<file> <branch>" {
@@ -157,8 +157,8 @@ func TestUserCommandsExpandArgumentsAndIgnoreProjectResources(t *testing.T) {
 	if err := core.Execute(context.Background(), contracts.Command{Kind: "resource.command.delete", ID: command.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := expandPrompt(root, project, "/review"); err == nil {
-		t.Fatal("project prompt overrode a deleted user command")
+	if expanded, err := expandPrompt(root, project, "/review"); err != nil || strings.Contains(expanded, "PROJECT COMMAND") {
+		t.Fatalf("deleted command fell back to project prompt: %q %v", expanded, err)
 	}
 }
 

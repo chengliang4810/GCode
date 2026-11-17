@@ -20,7 +20,9 @@ func TestClaudeUserSkillSlashInvocation(t *testing.T) {
 		wantReject bool
 	}{
 		{name: "arguments", content: "Review $ARGUMENTS", enabled: true, want: "Review current changes"},
-		{name: "disabled", content: "Disabled instructions", wantReject: true},
+		// A disabled or unregistered skill leaves the prompt untouched so the
+		// message still reaches the model as ordinary text.
+		{name: "disabled", content: "Disabled instructions", want: "/review current changes"},
 		{
 			name: "model only", enabled: true, wantReject: true,
 			content: "---\nuser-invocable: false\n---\nModel-only instructions",

@@ -90,15 +90,32 @@ func promptResources(root, text string) (string, string, error) {
 	return contracts.PlainPrompt(text), strings.Join(additions, "\n\n"), nil
 }
 
-func expandCommand(root, cwd string, text string) (string, error) {
+// parseCommandInvocation reports the resource name of the command that opens
+// the prompt. A leading slash alone does not make a command: absolute paths,
+// paths and punctuated prose (for example "/Users/me/notes.md") stay ordinary
+// prompt text. Explicit skill, plugin and project qualifiers keep their
+// existing command semantics, including their own error reporting.
+func parseCommandInvocation(text string) (name, token string, ok bool) {
 	fields := strings.Fields(text)
 	if len(fields) == 0 || !strings.HasPrefix(fields[0], "/") {
+		return "", "", false
+	}
+	token = fields[0]
+	name = strings.TrimPrefix(token, "/")
+	if !strings.HasPrefix(name, "skill:") && !strings.Contains(name, ":") && !resourceIDPattern.MatchString(name) {
+		return "", "", false
+	}
+	return name, token, true
+}
+
+func expandCommand(root, cwd string, text string) (string, error) {
+	name, token, ok := parseCommandInvocation(text)
+	if !ok {
 		return text, nil
 	}
-	name := strings.TrimPrefix(fields[0], "/")
 	if name == "init" {
 		return "Inspect this workspace and create or update its AGENTS.md with concise, accurate build, test and development instructions. Read existing instructions first, preserve user-owned guidance, and verify every repository-specific claim.\n\n" +
-			strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(text), fields[0])), nil
+			strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(text), token)), nil
 	}
 	skill := strings.HasPrefix(name, "skill:")
 	// Plugin and project invocation metadata is expanded on the run worker
@@ -107,21 +124,20 @@ func expandCommand(root, cwd string, text string) (string, error) {
 		return text, nil
 	}
 	name = strings.TrimPrefix(name, "skill:")
-	if !resourceIDPattern.MatchString(name) {
-		return "", errors.New("invalid user command or skill name")
-	}
 	catalog, err := readResourceCatalog(root)
 	if err != nil {
 		return "", err
 	}
-	arguments := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(text), fields[0]))
+	arguments := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(text), token))
 	if skill {
 		for _, entry := range catalog.Skills {
 			if entry.ID == name && entry.Enabled {
 				return entry.Content + "\n\n" + arguments, nil
 			}
 		}
-		return "", errors.New("user skill not found or disabled")
+		// An unregistered name is prose, not a failed command: a leading slash
+		// must never keep a prompt from being sent.
+		return text, nil
 	}
 	if cwd != "" {
 		for _, path := range []string{filepath.Join(cwd, ".claude", "commands", name+".md"), filepath.Join(cwd, ".claude", "skills", name, "SKILL.md")} {
@@ -145,7 +161,7 @@ func expandCommand(root, cwd string, text string) (string, error) {
 			return text, nil
 		}
 	}
-	return "", errors.New("user command not found or disabled")
+	return text, nil
 }
 
 // Prompt preparation may read resource files and run command substitutions.

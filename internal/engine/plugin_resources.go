@@ -725,22 +725,19 @@ func (e *Engine) prepareRuntimeInput(ctx context.Context, message model.Message,
 		raw = message.Text
 	}
 	raw = strings.TrimSpace(contracts.PlainPrompt(raw))
-	fields := strings.Fields(raw)
-	if len(fields) == 0 || !strings.HasPrefix(fields[0], "/") {
+	name, token, ok := parseCommandInvocation(raw)
+	if !ok {
 		return message, nil
 	}
-	name := strings.TrimPrefix(fields[0], "/")
 	s, exists := r.skills[name]
 	if !exists {
-		if strings.Contains(name, ":") {
-			return message, errors.New("skill or command not found: " + name)
-		}
+		// Unregistered names stay plain prose instead of blocking the send.
 		return message, nil
 	}
 	if !s.component.Metadata.UserInvocable {
 		return message, errors.New("skill cannot be invoked as a user command: " + name)
 	}
-	arguments := strings.TrimSpace(strings.TrimPrefix(raw, fields[0]))
+	arguments := strings.TrimSpace(strings.TrimPrefix(raw, token))
 	if invoke != nil {
 		result, err := invoke(ctx, agent.HookInput{Event: contracts.HookUserPromptExpansion, Prompt: raw, Source: name})
 		if err != nil {

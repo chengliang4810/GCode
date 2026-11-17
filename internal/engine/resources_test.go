@@ -40,6 +40,43 @@ func TestPromptReferencesResolveHostResources(t *testing.T) {
 	}
 }
 
+func TestPromptWithLeadingAbsolutePathIsNotACommand(t *testing.T) {
+	root, cwd := t.TempDir(), t.TempDir()
+	for _, text := range []string{
+		"/Users/me/notes.md 帮我看看这个文件",
+		"/tmp/x.txt",
+		"/usr/local/bin 里有什么",
+		"/tmp 下有什么",
+		"/",
+		"/skill:../ghost",
+		"/bundle:deploy now",
+		"/review",
+		"/skill:review",
+	} {
+		prompt, err := expandPrompt(root, cwd, text)
+		if err != nil || prompt != text {
+			t.Fatalf("path-like prompt %q = %q, %v", text, prompt, err)
+		}
+		prepared, err := (&Engine{}).prepareRuntimeInput(
+			context.Background(),
+			model.Message{Role: "user", Text: text, SourceText: text},
+			contracts.Session{ID: "test", CWD: cwd}, &activeRun{id: "test-run"}, runtimeResources{}, nil, nil,
+		)
+		if err != nil || prepared.Text != text {
+			t.Fatalf("path-like prompt %q reached the run worker as %q, %v", text, prepared.Text, err)
+		}
+	}
+}
+
+func TestPromptRegisteredCommandStillExpands(t *testing.T) {
+	core, root := resourceCore(t)
+	command := contracts.UserCommand{ID: "review", Name: "review", Content: "Review $ARGUMENTS", Enabled: true}
+	saveResource(t, core, "resource.command.save", &contracts.ResourceInput{Command: &command})
+	if prompt, err := expandPrompt(root, "", "/review these changes"); err != nil || prompt != "Review these changes" {
+		t.Fatalf("registered command = %q, %v", prompt, err)
+	}
+}
+
 func TestPromptBuiltinAndInlineCommandSemantics(t *testing.T) {
 	ref := contracts.PromptReference{Kind: "command", ID: "init", Label: "Init"}
 	root := t.TempDir()

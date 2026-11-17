@@ -382,8 +382,6 @@ func TestWorktreeRejectedMessagesDoNotCreateCheckouts(t *testing.T) {
 		name, text, effort string
 		attachments        []contracts.Attachment
 	}{
-		{name: "missing command", text: "/does-not-exist"},
-		{name: "missing skill", text: "/skill:does-not-exist"},
 		{name: "missing attachment", text: "Read this", attachments: []contracts.Attachment{{ID: "missing"}}},
 		{name: "invalid effort", text: "Inspect", effort: "high"},
 		{name: "goal control without session", text: "/goal pause"},
