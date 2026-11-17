@@ -442,3 +442,122 @@ func TestBackgroundHookCommitsQueueAfterConversationBodyWasReleased(t *testing.T
 		t.Fatal("background hook result overwrote its conversation's saved history")
 	}
 }
+
+func TestAsyncHookCompletionCommitsRecordAfterConversationBodyWasReleased(t *testing.T) {
+	home := t.TempDir()
+	session, _ := seedViewedConversations(t, home)
+	core := openStorageTestCore(t, home)
+	defer core.Close()
+	program, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	core.mu.Lock()
+	sessionIndex := core.sessionIndex(session)
+	if sessionIndex < 0 {
+		core.mu.Unlock()
+		t.Fatal("seeded session is missing")
+	}
+	sessionMetadata := core.state.Sessions[sessionIndex]
+	core.mu.Unlock()
+	runner, invoke := core.runHookRunner(sessionMetadata, &activeRun{
+		id:      "async-hook-run",
+		pending: map[string]contracts.QueuedMessage{},
+	}, []contracts.HookRule{{
+		ID: "async-record", Event: contracts.HookStop, Type: "command", Command: program,
+		Args: []string{"-test.run=^TestEngineHookProcessHelper$", "--", "engine-hook-helper",
+			filepath.Join(home, "hook-input.json"), `{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"saved async hook"}}`},
+		Enabled: true, Async: true,
+	}})
+	if _, err := invoke(t.Context(), agent.HookInput{Event: contracts.HookStop}); err != nil {
+		t.Fatal(err)
+	}
+	if err := runner.WaitBackground(); err != nil {
+		t.Fatal(err)
+	}
+	view, err := core.Snapshot(t.Context(), session)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foundHook, foundQueue := false, false
+	for _, message := range view.Messages[session] {
+		for _, block := range message.Blocks {
+			if block.Kind == "hook" && block.Hook != nil && block.Hook.RuleID == "async-record" {
+				foundHook = true
+			}
+		}
+	}
+	for _, row := range view.Queue {
+		if row.SessionID == session && strings.Contains(row.Text, "saved async hook") {
+			foundQueue = true
+		}
+	}
+	if !foundHook || !foundQueue {
+		t.Fatalf("async hook completion was not committed with the released body: hook=%v queue=%v messages=%+v queueRows=%+v", foundHook, foundQueue, view.Messages[session], view.Queue)
+	}
+}
+
+func TestLateAsyncHookAfterSessionDeleteDoesNotRecreateState(t *testing.T) {
+	home := t.TempDir()
+	session, _ := seedViewedConversations(t, home)
+	core := openStorageTestCore(t, home)
+	defer core.Close()
+	startedPath := filepath.Join(home, "hook-started")
+	releasePath := filepath.Join(home, "hook-release")
+	program, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	core.mu.Lock()
+	sessionIndex := core.sessionIndex(session)
+	if sessionIndex < 0 {
+		core.mu.Unlock()
+		t.Fatal("seeded session is missing")
+	}
+	sessionMetadata := core.state.Sessions[sessionIndex]
+	core.mu.Unlock()
+	runner, invoke := core.runHookRunner(sessionMetadata, &activeRun{
+		id:      "late-hook-run",
+		pending: map[string]contracts.QueuedMessage{},
+	}, []contracts.HookRule{{
+		ID: "late-record", Event: contracts.HookStop, Type: "command", Command: program,
+		Args: []string{"-test.run=^TestEngineHookProcessHelper$", "--", "engine-hook-helper",
+			filepath.Join(home, "hook-input.json"), `{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"late hook"}}`, "", startedPath, releasePath},
+		Enabled: true, Async: true,
+	}})
+	if _, err := invoke(t.Context(), agent.HookInput{Event: contracts.HookStop}); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := os.Stat(startedPath); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("asynchronous hook did not start")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "session.delete", ID: session}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(releasePath, []byte("release"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := runner.WaitBackground(); err != nil {
+		t.Fatal(err)
+	}
+	core.mu.Lock()
+	defer core.mu.Unlock()
+	if core.sessionIndex(session) >= 0 {
+		t.Fatal("deleted session was recreated by its late hook")
+	}
+	if _, ok := core.state.Messages[session]; ok {
+		t.Fatal("late hook recreated an orphan message map")
+	}
+	for _, row := range core.state.Queue {
+		if row.SessionID == session {
+			t.Fatal("late hook recreated an orphan queue row")
+		}
+	}
+}

@@ -48,6 +48,19 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		}
 		e.mu.Lock()
 		defer e.mu.Unlock()
+		defer e.evictIdleSessionsLocked()
+		if e.sessionIndex(session.ID) < 0 {
+			// The session may have been deleted while the asynchronous hook was
+			// still running. Its late result has no owner and must be dropped.
+			return nil
+		}
+		// An asynchronous hook may finish after the run has settled and the
+		// conversation body has been evicted. Load the committed body before
+		// appending the completion record so a later queue update cannot replace
+		// it with the older disk snapshot.
+		if err := e.ensureSessionDataLocked(session.ID); err != nil {
+			return err
+		}
 		goalCleared := false
 		if !execution.Rule.Async && !execution.Rule.AsyncRewake && execution.Input.Event == contracts.HookUserPromptSubmit &&
 			(execution.Result.Deny || execution.Result.Continue != nil && !*execution.Result.Continue) {

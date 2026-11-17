@@ -36,6 +36,17 @@ func TestEngineHookProcessHelper(t *testing.T) {
 				os.Exit(0)
 			}
 		}
+		if len(os.Args) > at+5 && os.Args[at+5] != "" {
+			_ = os.WriteFile(os.Args[at+5], []byte("started"), 0600)
+		}
+		if len(os.Args) > at+6 && os.Args[at+6] != "" {
+			for {
+				if _, err := os.Stat(os.Args[at+6]); err == nil {
+					break
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+		}
 		fmt.Print(os.Args[at+3])
 	}
 	os.Exit(0)
