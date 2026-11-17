@@ -6,12 +6,69 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"gcode/internal/model"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
 )
+
+const compiledToolSchemaCacheLimit = 64
+
+var compiledToolSchemas = struct {
+	sync.Mutex
+	entries map[string]*jsonschema.Schema
+	order   []string
+}{entries: make(map[string]*jsonschema.Schema, compiledToolSchemaCacheLimit)}
+
+func compileToolSchema(name string, parameters map[string]any) (*jsonschema.Schema, error) {
+	// JSON encoding gives mutable definitions a content key, so a changed
+	// definition cannot reuse a stale compiled schema. The small FIFO bound
+	// keeps dynamically supplied tool definitions from growing this process
+	// global without limit.
+	encoded, err := json.Marshal(parameters)
+	if err != nil {
+		return nil, fmt.Errorf("%s 工具 Schema 无法编码", name)
+	}
+	key := string(encoded)
+	compiledToolSchemas.Lock()
+	schema := compiledToolSchemas.entries[key]
+	compiledToolSchemas.Unlock()
+	if schema != nil {
+		return schema, nil
+	}
+
+	schemaValue, err := jsonschema.UnmarshalJSON(bytes.NewReader(encoded))
+	if err != nil {
+		return nil, fmt.Errorf("%s 工具 Schema 无法解析", name)
+	}
+	compiler := jsonschema.NewCompiler()
+	compiler.UseLoader(jsonschema.SchemeURLLoader{})
+	const location = "urn:gcode:tool"
+	if err := compiler.AddResource(location, schemaValue); err != nil {
+		return nil, fmt.Errorf("%s 工具 Schema 无法加载", name)
+	}
+	schema, err = compiler.Compile(location)
+	if err != nil {
+		return nil, fmt.Errorf("%s 工具 Schema 无效", name)
+	}
+
+	compiledToolSchemas.Lock()
+	if existing := compiledToolSchemas.entries[key]; existing != nil {
+		schema = existing
+	} else {
+		if len(compiledToolSchemas.order) >= compiledToolSchemaCacheLimit {
+			oldest := compiledToolSchemas.order[0]
+			delete(compiledToolSchemas.entries, oldest)
+			compiledToolSchemas.order = compiledToolSchemas.order[1:]
+		}
+		compiledToolSchemas.entries[key] = schema
+		compiledToolSchemas.order = append(compiledToolSchemas.order, key)
+	}
+	compiledToolSchemas.Unlock()
+	return schema, nil
+}
 
 // PrepareToolArguments validates before any tool effect. Only Agent's explicitly
 // supported string booleans are normalized; other fields retain their JSON types.
@@ -44,25 +101,11 @@ func PrepareToolArguments(def model.Tool, raw json.RawMessage) (json.RawMessage,
 		}
 	}
 	if len(def.Parameters) > 0 {
-		// Definitions contain typed Go slices; round-trip to JSON values for
-		// the schema compiler. External refs must never read host files or URLs.
-		encoded, err := json.Marshal(def.Parameters)
+		// Definitions contain typed Go slices; compile once per stable schema
+		// definition. External refs must never read host files or URLs.
+		schema, err := compileToolSchema(def.Name, def.Parameters)
 		if err != nil {
-			return nil, fmt.Errorf("%s 工具 Schema 无法编码", def.Name)
-		}
-		schemaValue, err := jsonschema.UnmarshalJSON(bytes.NewReader(encoded))
-		if err != nil {
-			return nil, fmt.Errorf("%s 工具 Schema 无法解析", def.Name)
-		}
-		compiler := jsonschema.NewCompiler()
-		compiler.UseLoader(jsonschema.SchemeURLLoader{})
-		const location = "urn:gcode:tool"
-		if err := compiler.AddResource(location, schemaValue); err != nil {
-			return nil, fmt.Errorf("%s 工具 Schema 无法加载", def.Name)
-		}
-		schema, err := compiler.Compile(location)
-		if err != nil {
-			return nil, fmt.Errorf("%s 工具 Schema 无效", def.Name)
+			return nil, err
 		}
 		if err := schema.Validate(value); err != nil {
 			var validation *jsonschema.ValidationError

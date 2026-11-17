@@ -3,7 +3,9 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"gcode/internal/model"
@@ -100,6 +102,71 @@ func TestToolSchemaNestedConstraintsAndNoGeneralCoercion(t *testing.T) {
 		if err == nil || strings.Contains(err.Error(), "secret") {
 			t.Fatalf("invalid input accepted or value leaked: %v", err)
 		}
+	}
+}
+
+func TestToolSchemaCacheTracksDefinitionChanges(t *testing.T) {
+	parameters := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"value": map[string]any{"type": "string"},
+		},
+	}
+	def := model.Tool{Name: "Mutable", Parameters: parameters}
+	if _, err := PrepareToolArguments(def, json.RawMessage(`{"value":"ok"}`)); err != nil {
+		t.Fatal(err)
+	}
+	parameters["properties"].(map[string]any)["value"] = map[string]any{"type": "integer"}
+	if _, err := PrepareToolArguments(def, json.RawMessage(`{"value":"stale"}`)); err == nil || !strings.Contains(err.Error(), "value 参数类型错误") {
+		t.Fatalf("changed definition reused stale schema: %v", err)
+	}
+}
+
+func TestToolSchemaCacheConcurrentValidation(t *testing.T) {
+	def := model.Tool{Name: "Concurrent", Parameters: map[string]any{
+		"type": "object", "properties": map[string]any{
+			"value": map[string]any{"type": "integer"},
+		},
+	}}
+	const workers = 16
+	var group sync.WaitGroup
+	errs := make(chan error, workers)
+	for range workers {
+		group.Add(1)
+		go func() {
+			defer group.Done()
+			for range 50 {
+				if _, err := PrepareToolArguments(def, json.RawMessage(`{"value":1}`)); err != nil {
+					errs <- err
+					return
+				}
+			}
+		}()
+	}
+	group.Wait()
+	close(errs)
+	for err := range errs {
+		t.Fatal(err)
+	}
+}
+
+func TestToolSchemaCacheHasBoundedCapacity(t *testing.T) {
+	for i := 0; i < compiledToolSchemaCacheLimit+8; i++ {
+		property := fmt.Sprintf("field_%d", i)
+		def := model.Tool{Name: "Bounded", Parameters: map[string]any{
+			"type": "object", "properties": map[string]any{
+				property: map[string]any{"type": "string"},
+			},
+		}}
+		if _, err := PrepareToolArguments(def, json.RawMessage(`{"`+property+`":"ok"}`)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	compiledToolSchemas.Lock()
+	entries, order := len(compiledToolSchemas.entries), len(compiledToolSchemas.order)
+	compiledToolSchemas.Unlock()
+	if entries > compiledToolSchemaCacheLimit || order > compiledToolSchemaCacheLimit {
+		t.Fatalf("schema cache exceeded bound: entries=%d order=%d limit=%d", entries, order, compiledToolSchemaCacheLimit)
 	}
 }
 
