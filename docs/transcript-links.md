@@ -76,6 +76,30 @@ Windows 路径按自身语法处理，不依赖 UI 客户端的操作系统。
 反斜杠和损坏的 percent escape；拒绝后不会回退到系统 opener。
 只有用户地址栏输入可补全 `https://`。
 
+## 内置文件预览
+
+2026-11-17：对话里的 `.html`/`.htm`/`.xhtml`/`.pdf` 文件链接（含正文行内文件名和
+文件工具栏）不再打开源码编辑器或系统应用，而是在右侧内置浏览器标签中渲染。
+`filepreview.Builtin` 是唯一分类入口，`contracts.FilePreview` 是这些文件在
+`LinkedFileResult` 中的 kind；`.svg` 仍走原生图片视图，`.md` 仍是 Markdown 预览，
+行号链接（`:12`、`#L12C5` 等）始终打开源码编辑器并定位，因为没有可定位的行。
+
+预览标签没有地址栏输入、网页标注和外部打开动作：头部只读显示来源宿主路径与本地
+文档标题（标题来自页面自身，与文件名相同时省略），刷新按钮重新读取同一个文件。
+同一路径重复点击复用已有标签。WebView 只允许页面自身加载的 `file:`/`about:`
+文档和普通 HTTP(S) 导航，其余 scheme 被拒绝。
+
+HTML 的相对样式表、脚本和图片基于文档目录解析：本机路径直接交给 WebView 读取
+同一目录，因此相对资源可用；远程宿主的文件先通过 `ReadLinkedFile` 下载到客户端
+私有临时目录再加载，不读取本机同名路径，也不使用宿主路径。下载只包含目标文件
+本身，远程 HTML 的相对资源不在下载范围内，因此远程预览不会带上宿主目录里的
+配套样式或图片。
+
+PDF 由平台 WebView 内建渲染（macOS WKWebView、Windows WebView2 支持，
+Linux WebKitGTK 取决于系统组件）。自动化只能证明预览标签创建了 WebView、
+地址正确且没有加载错误；WebView 像素不在桌面端到端测试的截图范围内，
+PDF 实际排版需人工确认。
+
 ## 浏览器初始页
 
 新建 Browser 标签现在显示原生空地址页，地址栏为空并可输入。
@@ -91,7 +115,9 @@ Windows 路径按自身语法处理，不依赖 UI 客户端的操作系统。
 `TestDesktopLocalTranscriptLinks` 使用真实本机核心、真实临时文件、
 本地 HTTP 模型夹具和页面服务器，在独立 profile 中运行浅色/深色原生窗口：
 检查空白浏览器、Markdown 默认预览、预览相对导航、中文/emoji 后字符列定位、
-PNG/SVG 和侧栏网页加载，同时检查中央草稿及会话保持。
+PNG/SVG、内置 HTML/PDF 文件预览和侧栏网页加载，同时检查中央草稿及会话保持。
+内置预览断言 WebView 已创建、标签标题为文件名、HTML 文档标题出现且没有网页
+地址栏或加载错误；PDF 布局与 WebView 像素不作为自动化验收项。
 实际运行证据路径记录在 [桌面测试](desktop-testing.md)。
 最终 Windows 原生深浅主题记录为
 `output/transcript-links-committed/20261030-170830-1054252519/evidence.json`，

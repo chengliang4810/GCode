@@ -150,7 +150,11 @@ the source host. The request retains `sessionId` and the target path; relative
 paths belong only to that session's CWD. Results contain a typed `File` and its
 canonical host `absolutePath`. Existing owned project files retain their IDs
 and editability; other files are read-only. Image results use managed resource
-references read through `ResourceService`. Desktop calls the local core directly;
+references read through `ResourceService`. `File.Kind` distinguishes `file`,
+`image`, `preview` and `external`: `preview` marks renderable documents
+(HTML/PDF) that the client opens in its embedded browser instead of a text
+editor or a system application, and those results carry no inline text.
+Desktop calls the local core directly;
 remote clients use the authenticated linked-file adapter. UI callbacks retain
 the source session and reject stale workspace results. New browser tabs start
 with an empty address. `Settings.General.OpenLinksExternally` defaults false;
