@@ -17,6 +17,7 @@ import (
 
 func (a *App) configureWorkspaceLinks() {
 	a.workspace.OnOpenExternalFile = a.openExternalWorkspaceFile
+	a.workspace.OnOpenFilePreview = a.openPreviewWorkspaceFile
 	a.workspace.OnLinkConfig = func(sessionID, documentPath string) linkui.Config {
 		return a.linkConfig(sessionID, documentPath, a.services)
 	}

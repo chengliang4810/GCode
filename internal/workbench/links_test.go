@@ -36,7 +36,7 @@ func (service *linkedTestService) ReadResource(_ context.Context, ref string) ([
 }
 
 func TestUnsupportedFilesUseDefaultAppWithoutReplacingPreview(t *testing.T) {
-	for _, name := range []string{"report.xlsx", "slides.pptx", "manual.pdf", "video.mp4", "custom.unknown"} {
+	for _, name := range []string{"report.xlsx", "slides.pptx", "video.mp4", "custom.unknown"} {
 		t.Run(name, func(t *testing.T) {
 			s := linkWorkspace(t)
 			service := &linkedTestService{result: contracts.LinkedFileResult{
@@ -97,6 +97,96 @@ func TestProjectCanvasUnsupportedFileUsesDefaultApp(t *testing.T) {
 	s.OpenFile("report")
 	if opened.AbsolutePath != "/workspace/report.xlsx" || len(s.tabs) != 0 || s.Error != "" {
 		t.Fatalf("project canvas did not open externally: %+v, %s", opened, s.Error)
+	}
+}
+
+// A renderable document keeps its bytes out of the editor and opens the embedded
+// browser through the host's path resolution.
+func TestRenderableFilesOpenEmbeddedPreview(t *testing.T) {
+	for _, name := range []string{"index.html", "PAGE.HTM", "manual.pdf"} {
+		t.Run(name, func(t *testing.T) {
+			s := linkWorkspace(t)
+			service := &linkedTestService{err: fmt.Errorf("preview must not read as text")}
+			s.backend = service
+			s.OnLinkConfig = func(string, string) linkui.Config {
+				return linkui.Config{Resolve: func(string) (linkui.Destination, bool) {
+					return linkui.Destination{Kind: linktarget.File, Local: true}, true
+				}}
+			}
+			var opened contracts.LinkedFileResult
+			s.OnOpenFilePreview = func(source string, result contracts.LinkedFileResult) {
+				if source != "root" {
+					t.Fatalf("source changed: %s", source)
+				}
+				opened = result
+			}
+			if err := s.OpenLink("root", name); err != nil {
+				t.Fatal(err)
+			}
+			if opened.AbsolutePath != "/workspace/"+name || opened.File.Kind != contracts.FilePreview ||
+				service.request.Path != "" || s.Error != "" || len(s.tabs) != 0 {
+				t.Fatalf("renderable file did not reach the preview: %+v error=%q tabs=%+v", opened, s.Error, s.tabs)
+			}
+		})
+	}
+}
+
+// A line target still addresses source text rather than the rendered document.
+func TestRenderableFileLineTargetOpensSource(t *testing.T) {
+	s := linkWorkspace(t)
+	s.backend = &linkedTestService{result: contracts.LinkedFileResult{
+		File:         contracts.File{ID: "source", Name: "index.html", Path: "/workspace/index.html", Content: "<html>\n<body>\n</body>\n</html>", Loaded: true, ReadOnly: true},
+		AbsolutePath: "/workspace/index.html",
+	}}
+	s.OnOpenFilePreview = func(string, contracts.LinkedFileResult) { t.Fatal("a line target opened a rendered preview") }
+	if err := s.OpenLink("root", "index.html:2"); err != nil {
+		t.Fatal(err)
+	}
+	d := s.documents["source"]
+	if d == nil || d.preview || d.editor.Cursor() != len("<html>\n") || s.ActiveKind() != "file" {
+		t.Fatalf("line target did not reveal the source: %#v", d)
+	}
+}
+
+// The host supplies a local path, so the preview surface renders it with the
+// embedded browser and reuses the tab when the same file opens again.
+func TestFilePreviewSurfaceReusesBrowserTabAndShowsPath(t *testing.T) {
+	s := linkWorkspace(t)
+	if err := s.OpenFilePreview("/workspace/报告.html", "报告.html"); err != nil {
+		t.Fatal(err)
+	}
+	if s.TabCount() != 1 || s.ActiveKind() != "browser" {
+		t.Fatalf("preview did not open a browser surface: %+v", s.tabs)
+	}
+	b := s.browsers[s.tabs[0].id]
+	if b == nil || b.file != "/workspace/报告.html" || b.data.Title != "报告.html" || b.view != nil {
+		t.Fatalf("preview surface is wrong: %#v", b)
+	}
+	tt := ui.NewTester(s.View, 700, 500)
+	if !tt.HasText("/workspace/报告.html") {
+		t.Fatal("preview header does not show the host path")
+	}
+	if tt.HasText("Enter URL") || tt.HasText("Annotate an element") || tt.HasText("Open in default browser") {
+		t.Fatal("preview header kept browser-only controls")
+	}
+	for _, address := range []string{"file:///workspace/报告.html#part", "https://example.com/docs"} {
+		if !b.allowsNavigation(address) {
+			t.Fatalf("preview refused the document's own navigation: %q", address)
+		}
+	}
+	for _, address := range []string{"gcode:settings", "javascript:alert(1)", ""} {
+		if b.allowsNavigation(address) {
+			t.Fatalf("preview accepted an unreachable scheme: %q", address)
+		}
+	}
+	if (&browser{}).allowsNavigation("file:///workspace/index.html") {
+		t.Fatal("a web browser surface accepted a local file")
+	}
+	if err := s.OpenFilePreview("/workspace/报告.html", "报告.html"); err != nil || s.TabCount() != 1 {
+		t.Fatalf("second open duplicated the preview: %d %v", s.TabCount(), err)
+	}
+	if err := s.OpenFilePreview("报告.html", ""); err == nil {
+		t.Fatal("relative path was accepted")
 	}
 }
 

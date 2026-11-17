@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -20,20 +21,8 @@ func (a *App) openExternalWorkspaceFile(sessionID string, result contracts.Linke
 	}
 	a.errorText = ""
 	a.backgroundTask(func() func() {
-		resolved := result
-		var err error
-		if !destination.Local && resolved.File.AssetRef == "" {
-			reader, available := a.service.(contracts.LinkedFileService)
-			if !available {
-				err = errors.New("file download is unavailable")
-			} else {
-				resolved, err = reader.ReadLinkedFile(a.ctx, contracts.LinkedFileRequest{SessionID: sessionID, Path: result.AbsolutePath})
-			}
-		}
 		var path string
-		if err == nil {
-			path, err = externalFilePath(a.ctx, a.service, resolved, destination.Local)
-		}
+		path, err := resolveWorkspaceFile(a.ctx, a.service, sessionID, result, destination.Local)
 		if err == nil {
 			err = mygo.Shell.OpenPath(path)
 		}
@@ -43,6 +32,51 @@ func (a *App) openExternalWorkspaceFile(sessionID string, result contracts.Linke
 			}
 		}
 	})
+}
+
+// openPreviewWorkspaceFile opens a renderable file, such as HTML or PDF, in the
+// embedded browser. The preview never claims a remote host path is local: its
+// resource is downloaded first.
+func (a *App) openPreviewWorkspaceFile(sessionID string, result contracts.LinkedFileResult) {
+	config := a.linkConfig(sessionID, "", a.services)
+	destination, ok := config.Resolve(result.AbsolutePath)
+	if !ok {
+		a.errorText = "Cannot resolve file"
+		return
+	}
+	name := result.File.Name
+	if name == "" {
+		name = path.Base(result.AbsolutePath)
+	}
+	a.errorText = ""
+	a.backgroundTask(func() func() {
+		path, err := resolveWorkspaceFile(a.ctx, a.service, sessionID, result, destination.Local)
+		return func() {
+			if err == nil {
+				err = a.workspace.OpenFilePreview(path, name)
+			}
+			if err != nil {
+				a.errorText = err.Error()
+			}
+		}
+	})
+}
+
+// resolveWorkspaceFile returns a path this machine can read. It downloads the
+// host's resource when the earlier read carried no bytes.
+func resolveWorkspaceFile(ctx context.Context, service contracts.Service, sessionID string, result contracts.LinkedFileResult, local bool) (string, error) {
+	if local || result.File.AssetRef != "" {
+		return externalFilePath(ctx, service, result, local)
+	}
+	reader, available := service.(contracts.LinkedFileService)
+	if !available {
+		return "", errors.New("file download is unavailable")
+	}
+	resolved, err := reader.ReadLinkedFile(ctx, contracts.LinkedFileRequest{SessionID: sessionID, Path: result.AbsolutePath})
+	if err != nil {
+		return "", err
+	}
+	return externalFilePath(ctx, service, resolved, local)
 }
 
 // Local files open in place. A remote host's path is never opened on the client;

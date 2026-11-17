@@ -89,6 +89,9 @@ type State struct {
 	Dispatch           func(contracts.Command)
 	OnOpenSession      func(string)
 	OnOpenExternalFile func(string, contracts.LinkedFileResult)
+	// OnOpenFilePreview supplies the local path for a previewable file; a remote
+	// host's resource is downloaded before the preview opens.
+	OnOpenFilePreview func(string, contracts.LinkedFileResult)
 	OnSessionVisible   func(string)
 	OnSessionHidden    func(string)
 	OnCloseSession     func(string)
@@ -346,24 +349,12 @@ func (s *State) OpenFile(id string) {
 	s.cancelLink()
 	for _, f := range s.snapshot.Files {
 		if f.ID == id && f.Kind != "directory" {
+			if filepreview.Builtin(f.Name) {
+				s.openUnrenderedFile(f, s.openPreviewFile)
+				return
+			}
 			if f.Kind == contracts.FileExternal || filepreview.External(f.Name, nil) {
-				if s.scopeID == "" {
-					root, err := s.projectRoot(contracts.Session{ProjectID: f.ProjectID})
-					if err == nil {
-						var absolute string
-						absolute, _, _, err = linktarget.ResolveFile(f.Path, root)
-						if err == nil {
-							err = s.openExternalFile("", contracts.LinkedFileResult{File: f, AbsolutePath: absolute})
-						}
-					}
-					if err != nil {
-						s.Error = err.Error()
-					}
-					return
-				}
-				if err := s.OpenLink(s.scopeID, f.Path); err != nil {
-					s.Error = err.Error()
-				}
+				s.openUnrenderedFile(f, s.openExternalFile)
 				return
 			}
 			if s.snapshot.Runtime != nil && !f.Loaded {
@@ -377,6 +368,28 @@ func (s *State) OpenFile(id string) {
 			s.choose("file", id, f.Name)
 			return
 		}
+	}
+}
+
+// openUnrenderedFile opens a project file this workspace cannot show as text.
+// The current conversation resolves its path; without one, project root does.
+func (s *State) openUnrenderedFile(f contracts.File, open func(string, contracts.LinkedFileResult) error) {
+	if s.scopeID != "" {
+		if err := s.OpenLink(s.scopeID, f.Path); err != nil {
+			s.Error = err.Error()
+		}
+		return
+	}
+	root, err := s.projectRoot(contracts.Session{ProjectID: f.ProjectID})
+	if err == nil {
+		var absolute string
+		absolute, _, _, err = linktarget.ResolveFile(f.Path, root)
+		if err == nil {
+			err = open("", contracts.LinkedFileResult{File: f, AbsolutePath: absolute})
+		}
+	}
+	if err != nil {
+		s.Error = err.Error()
 	}
 }
 

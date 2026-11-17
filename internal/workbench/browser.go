@@ -2,19 +2,27 @@ package workbench
 
 import (
 	"fmt"
-	"gcode/internal/design"
-	"gcode/internal/linktarget"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
+	"gcode/internal/design"
+	"gcode/internal/linktarget"
 
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
 
 type browser struct {
-	data         contracts.BrowserTab
+	data contracts.BrowserTab
+	// file is the absolute path of a host file this surface renders itself
+	// instead of loading a web address.
+	file         string
+	// pageTitle is the document's own title. A preview keeps the file name as
+	// its tab title but shows the document title beside the path.
+	pageTitle    string
 	address      string
 	view         *mygo.WebView
 	off          []func()
@@ -46,6 +54,39 @@ func NormalizeURL(raw string) (string, error) {
 
 func (s *State) OpenBrowser(address string) { s.openBrowser(address) }
 
+// OpenFilePreview renders a host file with the embedded browser. HTML keeps the
+// document's own relative resources; PDF uses the platform webview's viewer.
+func (s *State) OpenFilePreview(absolute, name string) error {
+	if s.closed.Load() {
+		return nil
+	}
+	if absolute == "" || !filepath.IsAbs(absolute) {
+		return fmt.Errorf("file preview needs an absolute path")
+	}
+	if name == "" {
+		name = filepath.Base(absolute)
+	}
+	for id, b := range s.browsers {
+		if b.file != "" && sameHostPath(b.file, absolute) {
+			s.choose("browser", id, b.data.Title)
+			return nil
+		}
+	}
+	s.nextBrowser++
+	id := fmt.Sprintf("browser-%d", s.nextBrowser)
+	b := &browser{
+		data:      contracts.BrowserTab{ID: id, URL: absolute, Title: name},
+		file:      absolute,
+		address:   absolute,
+		zoom:      1,
+		focusBody: true,
+	}
+	s.browsers[id] = b
+	s.choose("browser", id, name)
+	s.createBrowserView(b)
+	return nil
+}
+
 func (s *State) openBrowser(address string) {
 	if s.closed.Load() {
 		return
@@ -68,7 +109,7 @@ func (s *State) openBrowser(address string) {
 }
 
 func (s *State) createBrowserView(b *browser) {
-	if s.win == nil || b.data.URL == "" {
+	if s.win == nil || b.data.URL == "" && b.file == "" {
 		return
 	}
 	b.data.Loading = true
@@ -94,6 +135,12 @@ func (s *State) createBrowserView(b *browser) {
 			e.PreventDefault()
 			title := e.Title
 			update(func() {
+				if b.file != "" {
+					// A preview keeps the file name so the tab stays findable,
+					// but the document's own title still describes the page.
+					b.pageTitle = title
+					return
+				}
 				b.data.Title = title
 				for i := range s.tabs {
 					if s.tabs[i].id == b.data.ID {
@@ -105,8 +152,10 @@ func (s *State) createBrowserView(b *browser) {
 		page.OnDidNavigate(func(address string) {
 			update(func() {
 				b.stopAnnotation()
-				b.data.URL = address
-				b.address = address
+				if b.file == "" {
+					b.data.URL = address
+					b.address = address
+				}
 				b.data.Loading = page.IsLoading()
 				b.data.CanGoBack = page.CanGoBack()
 				b.data.CanGoForward = page.CanGoForward()
@@ -125,17 +174,37 @@ func (s *State) createBrowserView(b *browser) {
 			update(func() { b.stopAnnotation(); b.data.Loading = false; b.data.Error = description })
 		}),
 		page.OnWillNavigate(func(e *mygo.NavigateEvent) {
-			if _, err := NormalizeURL(e.URL); err != nil {
+			if !b.allowsNavigation(e.URL) {
 				e.PreventDefault()
 				return
 			}
 			update(func() { b.stopAnnotation(); b.data.Loading = true; b.data.Error = "" })
 		}),
 	)
+	if b.file != "" {
+		if err := page.LoadFile(b.file); err != nil {
+			b.data.Loading = false
+			b.data.Error = err.Error()
+		}
+		return
+	}
 	if err := page.LoadURL(b.data.URL); err != nil {
 		b.data.Loading = false
 		b.data.Error = err.Error()
 	}
+}
+
+// allowsNavigation accepts public HTTP(S) addresses. A file preview also follows
+// the file URLs its own document loads, but the address bar stays HTTP-only.
+func (b *browser) allowsNavigation(address string) bool {
+	if _, err := NormalizeURL(address); err == nil {
+		return true
+	}
+	if b.file == "" {
+		return false
+	}
+	lower := strings.ToLower(strings.TrimSpace(address))
+	return strings.HasPrefix(lower, "file:") || strings.HasPrefix(lower, "about:")
 }
 
 func (b *browser) close() {
@@ -163,7 +232,6 @@ func (s *State) browserView(c *ui.Context, id string) {
 	if b.annotation != nil {
 		c.OnShortcut(0, ui.KeyEscape, b.stopAnnotation)
 	}
-	services := c.Services()
 	ui.Row(c).Height(38).Padding(0, 8).Gap(4).AlignItems(ui.Center).BorderWidth(1, 0, 1, 0).BorderColor(p.Border).Background(p.Shell).Children(func() {
 		ui.ButtonBase(c.Key("browser-back:"+id)).Label(tr(c, "Back")).Disabled(!b.data.CanGoBack).Size(24, 24).Tooltip(tr(c, "Back")).OnClick(func() {
 			if b.view != nil {
@@ -179,16 +247,35 @@ func (s *State) browserView(c *ui.Context, id string) {
 				b.view.Page().GoForward()
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("arrow-right")).Size(14, 14).TextColor(p.Muted) })
-		ui.ButtonBase(c.Key("browser-reload:"+id)).Label(tr(c, "Reload page")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
+		ui.ButtonBase(c.Key("browser-reload:"+id)).Label(tr(c, "Reload page")).Disabled(b.data.URL == "" && b.file == "").Size(24, 24).Radius(6).Tooltip(tr(c, "Reload page")).OnClick(func() {
 			if b.view != nil {
 				b.stopAnnotation()
 				b.data.Loading = true
+				if b.file != "" {
+					b.data.Error = ""
+					if err := b.view.Page().LoadFile(b.file); err != nil {
+						b.data.Loading = false
+						b.data.Error = err.Error()
+					}
+					return
+				}
 				b.view.Page().Reload()
 			} else {
 				s.navigateBrowser(b)
 			}
 		}).Children(func() { ui.Icon(c, assets.Icon("refresh")).Size(14, 14).TextColor(p.Muted) })
 		ui.Row(c).Grow(1).Height(24).Padding(0, 8).Gap(6).AlignItems(ui.Center).Radius(6).Background(sourceInk(p.Dark, .035)).Children(func() {
+			if b.file != "" {
+				// A preview shows the host path the file was opened from; it is
+				// not an editable address.
+				ui.Icon(c, assets.Icon(previewIcon(b.file))).Size(12, 12).TextColor(p.Faint)
+				label := b.file
+				if b.pageTitle != "" && b.pageTitle != filepath.Base(b.file) {
+					label = b.file + " — " + b.pageTitle
+				}
+				ui.Text(c, label).FontSize(design.TextSize(c, design.TextBase)).TextColor(p.Muted).SingleLine().TruncateMiddle().Shrink(1).MinWidth(0).Tooltip(label)
+				return
+			}
 			ui.Icon(c, assets.Icon("globe")).Size(12, 12).TextColor(p.Faint)
 			in := ui.TextInputBase(c.Key("browser-address:"+id), &b.address).Bind(&b.addressInput).Label(tr(c, "Website address")).Placeholder(tr(c, "Enter URL")).Grow(1).FontSize(design.TextSize(c, design.TextBase)).OnSubmit(func() { s.navigateBrowser(b) })
 			if b.focusAddress {
@@ -199,18 +286,21 @@ func (s *State) browserView(c *ui.Context, id string) {
 				ui.ButtonBase(c.Key("browser-go:"+id)).Label(tr(c, "Go to address")).Size(18, 18).Radius(4).OnClick(func() { s.navigateBrowser(b) }).Children(func() { ui.Icon(c, assets.Icon("return")).Size(12, 12).TextColor(p.Muted) })
 			}
 		})
-		label := "Annotate an element"
-		if b.annotation != nil {
-			label = "Stop annotating"
+		if b.file == "" {
+			services := c.Services()
+			label := "Annotate an element"
+			if b.annotation != nil {
+				label = "Stop annotating"
+			}
+			button := ui.ButtonBase(c.Key("browser-annotate:"+id)).Label(tr(c, label)).Tooltip(tr(c, label)).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
+			color := p.Muted
+			if b.annotation != nil {
+				button.Background(sourceInk(p.Dark, .1))
+				color = p.Accent
+			}
+			button.Children(func() { ui.Icon(c, assets.Icon("cursor-square")).Size(14, 14).TextColor(color) })
+			ui.ButtonBase(c.Key("browser-external:"+id)).Label(tr(c, "Open in default browser")).Tooltip(tr(c, "Open in default browser")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
 		}
-		button := ui.ButtonBase(c.Key("browser-annotate:"+id)).Label(tr(c, label)).Tooltip(tr(c, label)).Size(24, 24).Radius(6).Disabled(b.view == nil || b.data.Loading || b.data.Error != "" || s.OnAnnotation == nil).OnClick(func() { s.toggleAnnotation(b) })
-		color := p.Muted
-		if b.annotation != nil {
-			button.Background(sourceInk(p.Dark, .1))
-			color = p.Accent
-		}
-		button.Children(func() { ui.Icon(c, assets.Icon("cursor-square")).Size(14, 14).TextColor(color) })
-		ui.ButtonBase(c.Key("browser-external:"+id)).Label(tr(c, "Open in default browser")).Tooltip(tr(c, "Open in default browser")).Disabled(b.data.URL == "").Size(24, 24).Radius(6).OnClick(func() { services.OpenURL(b.data.URL) }).Children(func() { ui.Icon(c, assets.Icon("arrow-up-right")).Size(14, 14).TextColor(p.Muted) })
 	})
 	if b.data.Error != "" {
 		ui.Column(c).Grow(1).FillWidth().Center().Gap(12).Children(func() {
@@ -240,6 +330,20 @@ func (s *State) navigateBrowser(b *browser) {
 		return
 	}
 	b.stopAnnotation()
+	if b.file != "" {
+		b.focusBody = true
+		b.data.Error = ""
+		if b.view == nil {
+			s.createBrowserView(b)
+			return
+		}
+		b.data.Loading = true
+		if err := b.view.Page().LoadFile(b.file); err != nil {
+			b.data.Loading = false
+			b.data.Error = err.Error()
+		}
+		return
+	}
 	address, err := NormalizeURL(b.address)
 	if err != nil {
 		b.data.Error = err.Error()
@@ -260,4 +364,15 @@ func (s *State) navigateBrowser(b *browser) {
 			b.data.Loading = false
 		}
 	}
+}
+
+// previewIcon selects the tab's identity inside the preview header.
+func previewIcon(name string) string {
+	switch strings.ToLower(path.Ext(name)) {
+	case ".pdf":
+		return "document"
+	case ".html", ".htm", ".xhtml":
+		return "file-code"
+	}
+	return "document"
 }

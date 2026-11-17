@@ -120,6 +120,19 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 	if err != nil {
 		return err
 	}
+	// Line and column targets address source text, so only a whole-file target
+	// previews a document the embedded browser can render.
+	if target.Line == 0 && filepreview.Builtin(target.Path) && s.OnLinkConfig != nil {
+		config := s.OnLinkConfig(sessionID, "")
+		if config.Resolve != nil {
+			if destination, ok := config.Resolve(absolute); ok && destination.Local {
+				return s.openPreviewFile(sessionID, contracts.LinkedFileResult{
+					File:         contracts.File{Name: path.Base(absolute), Path: target.Path, Kind: contracts.FilePreview},
+					AbsolutePath: absolute,
+				})
+			}
+		}
+	}
 	if filepreview.External(target.Path, nil) && s.OnLinkConfig != nil {
 		config := s.OnLinkConfig(sessionID, "")
 		if config.Resolve != nil {
@@ -149,8 +162,12 @@ func (s *State) openLinkTarget(sessionID string, target linktarget.Target) error
 				return
 			}
 			s.Error = ""
-			if result.File.Kind == contracts.FileExternal {
-				if err := s.openExternalFile(sessionID, result); err != nil {
+			if result.File.Kind == contracts.FileExternal || result.File.Kind == contracts.FilePreview {
+				open := s.openExternalFile
+				if result.File.Kind == contracts.FilePreview {
+					open = s.openPreviewFile
+				}
+				if err := open(sessionID, result); err != nil {
 					s.Error = err.Error()
 				}
 				return
@@ -202,6 +219,17 @@ func (s *State) openExternalFile(sessionID string, result contracts.LinkedFileRe
 	}
 	s.Error = ""
 	s.OnOpenExternalFile(sessionID, result)
+	return nil
+}
+
+// openPreviewFile lets the host resolve a previewable file: a local path stays in
+// place and a remote host's resource is downloaded before the preview opens.
+func (s *State) openPreviewFile(sessionID string, result contracts.LinkedFileResult) error {
+	if s.OnOpenFilePreview == nil {
+		return fmt.Errorf("file preview is unavailable")
+	}
+	s.Error = ""
+	s.OnOpenFilePreview(sessionID, result)
 	return nil
 }
 
