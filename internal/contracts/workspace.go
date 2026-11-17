@@ -2,7 +2,12 @@ package contracts
 
 import "time"
 
-const FileExternal = "external"
+// File kinds beyond an editable "file": "image" keeps a bitmap view, FilePreview
+// is rendered by the embedded browser, and FileExternal needs a system application.
+const (
+	FileExternal = "external"
+	FilePreview  = "preview"
+)
 
 type File struct {
 	Loaded    bool   `json:"loaded"`

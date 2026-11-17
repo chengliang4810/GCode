@@ -180,8 +180,11 @@ func executeFileCommand(command contracts.Command, project contracts.Project, fi
 		if len(data) > 16<<20 {
 			return result, errors.New("file exceeds the 16 MiB editor limit")
 		}
-		if filepreview.External(file.Name, data) {
+		if filepreview.Builtin(file.Name) || filepreview.External(file.Name, data) {
 			file.Kind, file.Content, file.Loaded = contracts.FileExternal, "", true
+			if filepreview.Builtin(file.Name) {
+				file.Kind = contracts.FilePreview
+			}
 			result.file, result.updated = file, true
 			return result, nil
 		}

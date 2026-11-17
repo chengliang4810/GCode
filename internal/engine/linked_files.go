@@ -108,7 +108,7 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 	extension := strings.ToLower(filepath.Ext(absolute))
 	imageFormat := linkedImageFormat(extension)
 	limit := int64(linkedTextLimit)
-	if imageFormat != "" || filepreview.External(absolute, nil) {
+	if imageFormat != "" || filepreview.Builtin(absolute) || filepreview.External(absolute, nil) {
 		limit = contracts.MaxAttachmentBytes
 	}
 	if info.Size() > limit {
@@ -172,8 +172,11 @@ func (e *Engine) ReadLinkedFile(ctx context.Context, request contracts.LinkedFil
 		}
 	}
 	if imageFormat == "" {
-		if filepreview.External(absolute, data) {
+		if filepreview.Builtin(absolute) || filepreview.External(absolute, data) {
 			file.Kind = contracts.FileExternal
+			if filepreview.Builtin(absolute) {
+				file.Kind = contracts.FilePreview
+			}
 			key, err := cacheLinkedFile(ctx, dataRoot, extension, data)
 			if err != nil {
 				return result, err
