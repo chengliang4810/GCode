@@ -76,7 +76,18 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 			}))
 			defer page.Close()
 			pageURL := page.URL + "/links-proof"
-			reply := fmt.Sprintf("[Open README](README.MARKDOWN)\n\n[Missing file](missing-file.txt) · [UTF-8 text](缺口说明.txt)\n\n[Source line](<%s:3:8>)\n\n[PNG image](image.png)\n\n[SVG image](icon.svg)\n\n[Local web page](%s)",
+			const pageHTML = `<!doctype html><html><head><title>NATIVE PREVIEW DOCUMENT</title><link rel="stylesheet" href="preview.css"><link rel="icon" href="data:,"></head><body><h1>Embedded HTML preview</h1><img src="preview.png"><p class="relative">Relative stylesheet and image load beside the document.</p></body></html>`
+			for name, contents := range map[string][]byte{
+				"preview.html":  []byte(pageHTML),
+				"preview.css":   []byte("h1 { color: #c23668; } p.relative { font-size: 14px; }"),
+				"preview.png":   pngData.Bytes(),
+				"manual.pdf":    minimalPDF("NATIVE PDF PREVIEW"),
+			} {
+				if err := os.WriteFile(filepath.Join(workspace, name), contents, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			reply := fmt.Sprintf("[Open README](README.MARKDOWN)\n\n[Missing file](missing-file.txt) · [UTF-8 text](缺口说明.txt)\n\n[Source line](<%s:3:8>)\n\n[PNG image](image.png)\n\n[SVG image](icon.svg)\n\n[Rendered page](preview.html)\n\n[PDF report](manual.pdf)\n\n[Local web page](%s)",
 				filepath.ToSlash(sourcePath), pageURL)
 			var modelRequests atomic.Int32
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -337,6 +348,43 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 				app.capture(strings.ToLower(strings.Fields(name)[0]) + "-native-image")
 				app.assertLinkDraft(draft)
 			}
+			for _, test := range []struct {
+				label, file, capture, title string
+			}{
+				{"Rendered page", "preview.html", "html-file-preview", "NATIVE PREVIEW DOCUMENT"},
+				{"PDF report", "manual.pdf", "pdf-file-preview", ""},
+			} {
+				app.pressLinkLabel("link", test.label)
+				app.await(test.label+" renders in the embedded browser", func() error {
+					tree, err := app.linkTree()
+					if err != nil {
+						return err
+					}
+					var webview, tab, address, title bool
+					for _, node := range tree.Nodes {
+						if node.Label == "This page could not be loaded." {
+							return fmt.Errorf("preview reported a load error")
+						}
+						// A preview has no editable address: the header shows the
+						// host path and keeps the file name as the tab title.
+						if node.Label == "Website address" || node.Label == "Enter URL" || node.Label == "Open in default browser" {
+							return fmt.Errorf("preview kept the web browser controls")
+						}
+						address = address || strings.Contains(node.Label, test.file)
+						if test.title != "" && strings.Contains(node.Label, test.title) {
+							title = true
+						}
+						webview = webview || node.WebView
+						tab = tab || node.Role == "tab" && node.Label == test.file
+					}
+					if !webview || !tab || !address || !title && test.title != "" {
+						return fmt.Errorf("%s preview WebView=%t tab=%t hostPath=%t title=%t", test.file, webview, tab, address, title)
+					}
+					return nil
+				})
+				app.capture(test.capture)
+				app.assertLinkDraft(draft)
+			}
 			app.pressLinkLabel("link", "Local web page")
 			app.await("URL opens the loopback page in the native browser pane", func() error {
 				tree, err := app.linkTree()
@@ -370,6 +418,7 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 			if err := storage.WriteJSON(filepath.Join(artifacts, "link-result.json"), map[string]any{
 				"sessionId": sessionID, "appearance": appearance, "providerRequests": modelRequests.Load(),
 				"loopbackPageRequests": pageRequests.Load(), "sourceSelectionRunes": selection,
+				"previewFiles": []string{"preview.html", "manual.pdf"}, "previewWebViews": 2,
 				"realLocalCore": true, "externalProvider": false, "blankBrowserURL": "",
 			}); err != nil {
 				t.Fatal(err)
@@ -453,4 +502,34 @@ func (app *nativeApp) assertLinkSource(content string, selection int) {
 		}
 		return fmt.Errorf("native source editor is missing")
 	})
+}
+
+// minimalPDF builds a one-page document so a platform WebView renders the file
+// instead of reporting damaged content; byte offsets are computed, not guessed.
+func minimalPDF(title string) []byte {
+	objects := []string{
+		"<< /Type /Catalog /Pages 2 0 R >>",
+		"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+		"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 120] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+		fmt.Sprintf("<< /Length %d >>\nstream\n%s\nendstream", len(pdfContent(title)), pdfContent(title)),
+		"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+	}
+	var out bytes.Buffer
+	out.WriteString("%PDF-1.4\n")
+	offsets := make([]int, len(objects))
+	for i, body := range objects {
+		offsets[i] = out.Len()
+		fmt.Fprintf(&out, "%d 0 obj\n%s\nendobj\n", i+1, body)
+	}
+	xref := out.Len()
+	fmt.Fprintf(&out, "xref\n0 %d\n0000000000 65535 f \n", len(objects)+1)
+	for _, offset := range offsets {
+		fmt.Fprintf(&out, "000000%04d 00000 n \n", offset)
+	}
+	fmt.Fprintf(&out, "trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", len(objects)+1, xref)
+	return out.Bytes()
+}
+
+func pdfContent(title string) string {
+	return fmt.Sprintf("BT /F1 18 Tf 20 70 Td (%s) Tj ET", title)
 }
