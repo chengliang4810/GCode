@@ -1879,7 +1879,7 @@ func wordTail(s string) int {
 		i--
 	}
 	w := s[i:]
-	if w == "" || len(w) > maxKind+9 || !(w[0] >= 'A' && w[0] <= 'Z') {
+	if w == "" || len(w) > maxKind+9 || !isLetter(w[0]) {
 		return 0
 	}
 	u := strings.ToUpper(w)
