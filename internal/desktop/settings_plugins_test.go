@@ -50,7 +50,8 @@ func pluginUIFixture(t *testing.T) (*App, *pluginUIService) {
 			{ID: "community", Name: "Community", Source: "owner/community", Kind: "github", State: "ready"},
 		},
 		Catalog: []contracts.PluginCatalogItem{
-			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill", Components: []string{"skills"}, Issues: []contracts.PluginIssue{{Message: "Fixture dependency issue"}}},
+			{ID: "fixture@official", Name: "fixture", Marketplace: "official", Description: "Fixture search skill",
+				Author: "Plugin author", Category: "review", Components: []string{"skills"}, Issues: []contracts.PluginIssue{{Message: "Fixture dependency issue"}}},
 		},
 		Installed: []contracts.InstalledPlugin{
 			{ID: "fixture@official", CatalogID: "fixture@official", Name: "fixture", Marketplace: "official", Enabled: true,
@@ -160,6 +161,13 @@ func TestPluginSettingsFiltersAndSources(t *testing.T) {
 	official, found := tt.Find("Official")
 	if !ok || !found || all.X >= official.X {
 		t.Fatal("All must be the first marketplace tab")
+	}
+	for _, other := range []string{"search", "skill", "author", "review"} {
+		app.capabilityUI.plugins.query = other
+		tt.Frame()
+		if _, ok := tt.Find("Plugin details fixture"); ok {
+			t.Fatalf("catalog search %q matched a non-name field", other)
+		}
 	}
 	app.capabilityUI.plugins.query = "missing"
 	tt.Frame()

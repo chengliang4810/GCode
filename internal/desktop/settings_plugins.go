@@ -128,7 +128,10 @@ func (a *App) pluginCatalog(c *ui.Context) {
 		if s.marketplace != "" && item.Marketplace != s.marketplace && item.Marketplace != filterName {
 			continue
 		}
-		if matchesResource(query, item.Name, item.Description, item.Author, item.Category) {
+		// Catalog search matches plugin names only. Description words repeat across a
+		// marketplace ("code review", "workflow"), so matching them buries the plugin
+		// whose name actually matches under hundreds of unrelated results.
+		if matchesResource(query, item.Name) {
 			items = append(items, item)
 		}
 	}
