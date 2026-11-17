@@ -65,6 +65,9 @@ func TestLocalSendShowsBubbleBeforeCoreAccepts(t *testing.T) {
 					if !tt.HasText(command.Send.Text) || !tt.HasText("notes.txt") {
 						t.Fatal("first frame omitted the pending bubble or attachment")
 					}
+					if _, ok := tt.Find("send-status:" + command.Send.RequestID); ok {
+						t.Fatal("pending bubble showed a sending status row")
+					}
 					bubbles := requestMessages(a, session, command.Send.RequestID)
 					if len(bubbles) != 1 || len(bubbles[0].Blocks) != 2 {
 						t.Fatalf("pending message = %+v", bubbles)

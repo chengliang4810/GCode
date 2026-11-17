@@ -237,11 +237,11 @@ func (a *App) localSendStatus(c *ui.Context, message contracts.Message) {
 	if send == nil || message.ID != send.message.ID && !strings.HasSuffix(message.ID, ":"+send.message.ID) {
 		return
 	}
-	ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-		if send.failure == "" {
-			ui.Text(c, tr(c, "Sending…")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			return
-		}
+	// An in-flight send keeps the bubble as written; only a failure needs a row.
+	if send.failure == "" {
+		return
+	}
+	ui.Row(c.Key("send-status:"+message.RequestID)).Gap(8).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, tr(c, "Send failed")).Tooltip(send.failure).
 			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
 		textButton(c.Key("retry-send:"+message.RequestID), tr(c, "Retry")).OnClick(func() { a.retryLocalSend(message.RequestID) })

@@ -33,6 +33,8 @@ func activityWord(sessionID string, seconds int64) string {
 }
 
 func (a *App) workingState(sessionID string) (word, elapsed string, visible bool) {
+	// A plain in-flight send owns only its bubble; queueing and steering stay
+	// in the trailer because those need an explanation, not "sending" itself.
 	if pending, ok := a.pendingSends[sessionID]; ok {
 		if pending.Steer {
 			return "Steering the running response", "", true
@@ -40,7 +42,7 @@ func (a *App) workingState(sessionID string) (word, elapsed string, visible bool
 		if pending.Queued {
 			return "Queued — will send automatically", "", true
 		}
-		return "Sending…", "", true
+		return "", "", false
 	}
 	if side := a.sideComposers[sessionID]; side != nil && side.Pending != nil {
 		if side.Pending.Steer {
@@ -49,7 +51,7 @@ func (a *App) workingState(sessionID string) (word, elapsed string, visible bool
 		if side.Pending.Queued {
 			return "Queued — will send automatically", "", true
 		}
-		return "Sending…", "", true
+		return "", "", false
 	}
 	var session contracts.Session
 	for _, candidate := range a.state.Sessions {
