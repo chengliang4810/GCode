@@ -1,5 +1,14 @@
 # 桌面测试
 
+2026-11-17 内置文件预览：`TestDesktopLocalTranscriptLinks` 增加本地 HTML
+（含相对样式表与图片）和一页 PDF 的链接夹具，断言预览标签建立 WebView、
+标题为文件名、HTML 文档标题出现，且没有网页地址栏或加载错误；
+`TestDesktopLocalGeneratedFileLink` 同步通过。深浅主题原生窗口均通过，
+证据为 `output/desktop-e2e/20261117-211311-3976921256/`。
+截图由 MyGo `CapturePage` 捕获，不含嵌入 WebView 的像素，因此 PDF 实际排版
+仍需人工确认；本机核心读取真实临时文件，模型回复使用本地 HTTP 夹具，
+不代表真实供应商或远程宿主验收。语义与边界见 [正文与文件预览链接](transcript-links.md)。
+
 2026-11-16 清理说明：旧 `output/` 运行日志、截图与构建产物已删除，
 下文带日期的路径仅是历史运行位置，不能作为当前仍存在的原始证据。有效回归测试与测试入口继续保留。
 
