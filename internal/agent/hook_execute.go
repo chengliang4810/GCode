@@ -9,6 +9,7 @@ import (
 	"io"
 	"maps"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -328,7 +329,7 @@ func (h *HookRunner) executeHookHTTP(ctx context.Context, rule contracts.HookRul
 		})
 		request.Header.Set(key, value)
 	}
-	response, err := h.http.Do(request)
+	response, err := h.hookHTTPClient().Do(request)
 	if err != nil {
 		return HookEvaluation{}, err
 	}
@@ -345,6 +346,64 @@ func (h *HookRunner) executeHookHTTP(ctx context.Context, rule contracts.HookRul
 		return result, fmt.Errorf("HTTP hook returned status %d", response.StatusCode)
 	}
 	return result, nil
+}
+
+// hookHTTPClient preserves injected transport settings while restricting hook
+// redirects to the configured origin before the next request is sent.
+func (h *HookRunner) hookHTTPClient() *http.Client {
+	client := http.Client{}
+	if h.http != nil {
+		client = *h.http
+	}
+	checkRedirect := client.CheckRedirect
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		if len(via) != 0 {
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+			previous := via[len(via)-1]
+			if previous == nil || previous.URL == nil || req == nil || req.URL == nil {
+				return errors.New("HTTP hook redirect crosses origin")
+			}
+			previousURL := *previous.URL
+			if checkRedirect != nil {
+				if err := checkRedirect(req, via); err != nil {
+					return err
+				}
+			}
+			if !sameHookOrigin(&previousURL, req.URL) {
+				return errors.New("HTTP hook redirect crosses origin")
+			}
+			return nil
+		}
+		if checkRedirect != nil {
+			return checkRedirect(req, via)
+		}
+		return nil
+	}
+	return &client
+}
+
+func sameHookOrigin(left, right *url.URL) bool {
+	if left == nil || right == nil || !strings.EqualFold(left.Scheme, right.Scheme) ||
+		!strings.EqualFold(left.Hostname(), right.Hostname()) {
+		return false
+	}
+	return hookOriginPort(left) == hookOriginPort(right)
+}
+
+func hookOriginPort(value *url.URL) string {
+	if port := value.Port(); port != "" {
+		return port
+	}
+	switch strings.ToLower(value.Scheme) {
+	case "http":
+		return "80"
+	case "https":
+		return "443"
+	default:
+		return ""
+	}
 }
 
 func asyncHookJSON(text string) string {

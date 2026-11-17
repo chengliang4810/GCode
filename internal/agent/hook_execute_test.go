@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -60,6 +64,198 @@ func TestHookHTTPTransmitsJSONAndRestrictsEnvironment(t *testing.T) {
 	result, err := runner.Run(context.Background(), HookInput{Event: contracts.HookPreToolUse, SessionID: "session", ToolName: "Bash", ToolInput: json.RawMessage(`{"command":"pwd"}`)})
 	if err != nil || !result.Deny || received.SessionID != "session" || received.ToolName != "Bash" {
 		t.Fatalf("%+v %+v %v", result, received, err)
+	}
+}
+
+func TestHookHTTPAllowsSameOriginRedirect(t *testing.T) {
+	var got http.Header
+	var body string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/target" {
+			got = r.Header.Clone()
+			data, _ := io.ReadAll(r.Body)
+			body = string(data)
+			_, _ = w.Write([]byte(`{}`))
+			return
+		}
+		w.Header().Set("Location", "/target")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}))
+	defer server.Close()
+
+	var execution HookExecution
+	runner := NewHookRunner([]contracts.HookRule{{
+		ID: "redirect", Event: contracts.HookPreToolUse, Type: "http", URL: server.URL, Enabled: true,
+		Headers: map[string]string{"Authorization": "Bearer private", "X-Hook-Secret": "custom"},
+	}}, func(value HookExecution) error {
+		execution = value
+		return nil
+	})
+	_, err := runner.Run(context.Background(), HookInput{
+		Event: contracts.HookPreToolUse, SessionID: "session", ToolName: "Read", ToolInput: json.RawMessage(`{"path":"body-private"}`),
+	})
+	if err != nil || execution.Err != nil {
+		t.Fatalf("same-origin redirect failed: run=%v execution=%v", err, execution.Err)
+	}
+	if got.Get("Authorization") != "Bearer private" || got.Get("X-Hook-Secret") != "custom" || !strings.Contains(body, "body-private") {
+		t.Fatalf("same-origin redirect lost request data: headers=%v body=%q", got, body)
+	}
+}
+
+func TestHookHTTPRejectsCrossOriginRedirect(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		client func(*httptest.Server) *http.Client
+	}{
+		{name: "different port"},
+		{name: "https downgrade", client: func(server *httptest.Server) *http.Client {
+			return server.Client()
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var destinationReached atomic.Bool
+			destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				destinationReached.Store(true)
+				_, _ = w.Write([]byte(`{}`))
+			}))
+			defer destination.Close()
+
+			var origin *httptest.Server
+			if test.name == "https downgrade" {
+				origin = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Location", destination.URL)
+					w.WriteHeader(http.StatusTemporaryRedirect)
+				}))
+			} else {
+				origin = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Location", destination.URL)
+					w.WriteHeader(http.StatusTemporaryRedirect)
+				}))
+			}
+			defer origin.Close()
+
+			var execution HookExecution
+			rule := contracts.HookRule{
+				ID: "redirect", Event: contracts.HookPreToolUse, Type: "http", URL: origin.URL, Enabled: true,
+				Headers: map[string]string{"X-Hook-Secret": "custom"},
+			}
+			options := []HookRunnerOption{}
+			if test.client != nil {
+				options = append(options, WithHookHTTPClient(test.client(origin)))
+			}
+			runner := NewHookRunner([]contracts.HookRule{rule}, func(value HookExecution) error {
+				execution = value
+				return nil
+			}, options...)
+			_, err := runner.Run(context.Background(), HookInput{Event: contracts.HookPreToolUse, ToolInput: json.RawMessage(`{"path":"body-private"}`)})
+			if err != nil || execution.Err == nil || !strings.Contains(execution.Err.Error(), "crosses origin") {
+				t.Fatalf("cross-origin redirect was not rejected: run=%v execution=%v", err, execution.Err)
+			}
+			if destinationReached.Load() {
+				t.Fatal("cross-origin redirect sent the hook request")
+			}
+		})
+	}
+}
+
+func TestHookHTTPRejectsDifferentHostnameRedirect(t *testing.T) {
+	var destinationReached atomic.Bool
+	var destinationBody string
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		destinationReached.Store(true)
+		data, _ := io.ReadAll(r.Body)
+		destinationBody = string(data)
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer destination.Close()
+	destinationPort := strconv.Itoa(destination.Listener.Addr().(*net.TCPAddr).Port)
+	destinationURL := strings.Replace(destination.URL, "127.0.0.1", "localhost", 1)
+
+	origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Location", destinationURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}))
+	defer origin.Close()
+	originPort := strconv.Itoa(origin.Listener.Addr().(*net.TCPAddr).Port)
+	transport := &http.Transport{DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+		host, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, err
+		}
+		if host == "localhost" && port == destinationPort {
+			address = destination.Listener.Addr().String()
+		} else if host == "127.0.0.1" && port == originPort {
+			address = origin.Listener.Addr().String()
+		}
+		return (&net.Dialer{}).DialContext(ctx, network, address)
+	}}
+
+	var execution HookExecution
+	runner := NewHookRunner([]contracts.HookRule{{
+		ID: "redirect", Event: contracts.HookPreToolUse, Type: "http", URL: origin.URL, Enabled: true,
+		Headers: map[string]string{"X-Hook-Secret": "custom"},
+	}}, func(value HookExecution) error {
+		execution = value
+		return nil
+	}, WithHookHTTPClient(&http.Client{Transport: transport}))
+	_, err := runner.Run(context.Background(), HookInput{Event: contracts.HookPreToolUse, ToolInput: json.RawMessage(`{"path":"body-private"}`)})
+	if err != nil || execution.Err == nil || !strings.Contains(execution.Err.Error(), "crosses origin") {
+		t.Fatalf("different-host redirect was not rejected: run=%v execution=%v", err, execution.Err)
+	}
+	if destinationReached.Load() || destinationBody != "" {
+		t.Fatalf("different-host redirect sent request data: reached=%t body=%q", destinationReached.Load(), destinationBody)
+	}
+}
+
+func TestHookHTTPBoundsSameOriginRedirects(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Location", r.URL.Path)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}))
+	defer server.Close()
+
+	var execution HookExecution
+	runner := NewHookRunner([]contracts.HookRule{{
+		ID: "loop", Event: contracts.HookPreToolUse, Type: "http", URL: server.URL + "/loop", Enabled: true,
+	}}, func(value HookExecution) error {
+		execution = value
+		return nil
+	})
+	_, err := runner.Run(context.Background(), HookInput{Event: contracts.HookPreToolUse})
+	if err != nil || execution.Err == nil || !strings.Contains(execution.Err.Error(), "stopped after 10 redirects") {
+		t.Fatalf("same-origin redirect loop was not bounded: run=%v execution=%v", err, execution.Err)
+	}
+	if requests.Load() > 10 {
+		t.Fatalf("same-origin redirect loop sent %d requests", requests.Load())
+	}
+}
+
+func TestSameHookOrigin(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		left, right string
+		want        bool
+	}{
+		{name: "same origin", left: "https://example.test", right: "https://example.test:443", want: true},
+		{name: "different port", left: "https://example.test:8443", right: "https://example.test:443", want: false},
+		{name: "https downgrade", left: "https://example.test", right: "http://example.test", want: false},
+		{name: "different host", left: "https://example.test", right: "https://other.test", want: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			left, err := url.Parse(test.left)
+			if err != nil {
+				t.Fatal(err)
+			}
+			right, err := url.Parse(test.right)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := sameHookOrigin(left, right); got != test.want {
+				t.Fatalf("sameHookOrigin(%q, %q)=%t, want %t", test.left, test.right, got, test.want)
+			}
+		})
 	}
 }
 

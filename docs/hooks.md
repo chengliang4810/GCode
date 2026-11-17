@@ -18,6 +18,8 @@ Hook 的外部事件与 JSON 契约遵循 [Claude Code 公开规范](https://cod
   包括 `args: []` 的无参数执行。没有 `process` 类型。
 - `http`：向 `url` POST 同一个事件对象。只接受 2xx JSON 响应；响应上限 1 MiB。
   `headers` 仅展开 `allowedEnvVars` 允许的环境变量，其余变量为空。
+  自动重定向只允许保持完整 origin 的跳转，即 scheme、hostname 和有效端口都相同；跨主机、跨端口、scheme 变化（包括 HTTPS 降级）在下一次请求发送前失败，因而不会转发自定义 Header 或重放 POST 正文。
+  同 origin 最多跟随 10 次重定向。
 - `prompt`、`agent`：通过宿主注入的 `HookEvaluator` 使用实际对话模型执行。
   输出为 `{"ok":true}` 或 `{"ok":false,"reason":"..."}`。
   `$ARGUMENTS` 替换为事件 JSON；未写占位符时追加到提示尾部。
