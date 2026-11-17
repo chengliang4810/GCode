@@ -65,6 +65,26 @@ func TestComposerPromptPickerKeyboardAndDismissal(t *testing.T) {
 	}
 }
 
+func TestComposerPromptSendsTextWithoutMatchingChoice(t *testing.T) {
+	a := testApp(t, "default")
+	sends, stops := 0, 0
+	tt := promptTester(t, a, 600, &sends, &stops)
+	if err := tt.Click("Draft"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Type("/tmp/notes.txt")
+	if !a.prompt.open || len(a.prompt.choices) != 0 {
+		t.Fatalf("path query state: open=%v choices=%+v", a.prompt.open, a.prompt.choices)
+	}
+	tt.Key(0, ui.KeyEnter)
+	if sends != 1 || a.draft == "" || !strings.HasPrefix(a.draft, "/tmp/notes.txt") {
+		t.Fatalf("unmatched prompt: sends=%d draft=%q", sends, a.draft)
+	}
+	if a.prompt.open {
+		t.Fatal("unmatched picker stayed open after sending")
+	}
+}
+
 func TestComposerPromptAtomicUndoAndSameNameIdentity(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.UserResources.Skills = []contracts.UserSkill{

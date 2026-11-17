@@ -286,10 +286,18 @@ func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mod
 			}
 			return true
 		case ui.KeyEnter, ui.KeyTab:
-			if len(s.choices) > 0 {
+			switch {
+			case len(s.choices) > 0:
 				a.completePrompt(s, s.choices[s.selected], p.draft)
+				return true
+			case key == ui.KeyTab:
+				// Tab keeps its editing meaning once the query matches nothing.
+				return true
+			default:
+				// Nothing to complete: a complete prompt such as an absolute
+				// path must still be sendable without dismissing the picker.
+				s.dismissed, s.open = s.signature(), false
 			}
-			return true
 		case ui.KeyEscape:
 			s.dismissed, s.open = s.signature(), false
 			return true
