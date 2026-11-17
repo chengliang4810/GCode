@@ -11,6 +11,7 @@ import (
 	"gcode/internal/i18n"
 	localize "gcode/internal/i18n/view"
 	"gcode/internal/privacy"
+	"gcode/third_party/magpie/redact"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -82,6 +83,34 @@ func TestPrivacyWordsSaveOnBlurAndActionSelectionPersists(t *testing.T) {
 	snapshot, _ = backend.Snapshot(t.Context())
 	if snapshot.Settings.Privacy.Actions["API_KEY"] != "block" {
 		t.Fatal("action selector lost its bound edit")
+	}
+}
+
+func TestPrivacyActionsIncludeEveryBuiltInKind(t *testing.T) {
+	app, _ := settingsTestApp(t)
+	tester := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		app.privacyActions(c)
+	}, 1200, 1800)
+
+	for _, kind := range append([]string{"TERM", "CUSTOM"}, redact.BuiltInKinds()...) {
+		if _, ok := tester.Find("Choose " + kind); !ok {
+			t.Fatalf("privacy action selector is missing built-in kind %q", kind)
+		}
+	}
+}
+
+func TestPrivacySettingsStayWithinSharedControlBoundary(t *testing.T) {
+	source, err := os.ReadFile("settings_privacy.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	violations, err := inspectSettingsControls("settings_privacy.go", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, violation := range violations {
+		t.Errorf("%s: %s", violation.position, violation.message)
 	}
 }
 

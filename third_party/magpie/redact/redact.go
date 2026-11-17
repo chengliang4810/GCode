@@ -249,6 +249,40 @@ var rules = append([]rule{
 	{kind: "BANK_CARD", re: lazyre.New(`[3-6]\d{3}(?:[ -]?\d{4}){2,3}(?:[ -]?\d{1,3})?`), bound: alnum, ok: luhn, cat: catPersonal},
 }, append(moreRules, cryptoRules...)...)
 
+var builtInKinds = func() []string {
+	seen := map[string]bool{}
+	add := func(kind string) {
+		if kind != "" {
+			seen[kind] = true
+		}
+	}
+	for _, rule := range rules {
+		add(rule.kind)
+		for _, kind := range rule.groups {
+			add(kind)
+		}
+	}
+	for _, kind := range modelKinds {
+		add(kind)
+	}
+	for _, category := range Categories {
+		for _, kind := range category.Kinds {
+			add(kind)
+		}
+	}
+	kinds := make([]string, 0, len(seen))
+	for kind := range seen {
+		kinds = append(kinds, kind)
+	}
+	slices.Sort(kinds)
+	return kinds
+}()
+
+// BuiltInKinds returns every kind emitted by the built-in recognizers and
+// local model. Callers receive a new slice so settings pages cannot mutate
+// the recognizer's registry.
+func BuiltInKinds() []string { return slices.Clone(builtInKinds) }
+
 // cjkPasswordNames are what a password is called in Chinese, Japanese and
 // Korean.
 var cjkPasswordNames = []string{"密码", "密碼", "口令", "PIN码", "PIN碼", "PIN 码", "安全码", "安全碼", "パスワード", "暗証番号", "비밀번호", "암호", "비번"}

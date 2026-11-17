@@ -208,7 +208,12 @@ func (a *App) privacyRules(c *ui.Context) {
 func (a *App) privacyActions(c *ui.Context) {
 	sectionTitle(c, tr(c, "Detection actions"))
 	ui.Text(c, tr(c, "Mask restores values in replies. Warn sends original values and shows a warning. Block stops the entire request.")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-	kinds := []string{"API_KEY", "PRIVATE_KEY", "TOKEN", "SECRET", "PASSWORD", "EMAIL", "PHONE", "ID_CARD", "BANK_CARD", "TERM", "CUSTOM", "SSN", "PASSPORT", "IBAN", "BIRTHDAY", "MAC", "SERIAL", "USERNAME", "HOSTNAME", "IP", "BUCKET", "PERSON", "ADDRESS", "ACCOUNT"}
+	kinds := []string{"TERM", "CUSTOM"}
+	for _, kind := range redact.BuiltInKinds() {
+		if !slices.Contains(kinds, kind) {
+			kinds = append(kinds, kind)
+		}
+	}
 	for _, rule := range a.state.Settings.Privacy.Rules {
 		if !slices.Contains(kinds, rule.Kind) {
 			kinds = append(kinds, rule.Kind)
