@@ -15,7 +15,41 @@ import (
 	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
+	"gcode/internal/privacy"
 )
+
+func TestLiveModelContextLimitsTracksPrivacyPolicy(t *testing.T) {
+	provider := model.Provider{ID: "provider", Name: "fixture", Protocol: model.Chat, BaseURL: "http://fixture",
+		Models: []model.Model{{ID: "model", ContextWindow: 100000}, {ID: "other", ContextWindow: 100000}}}
+	core := &Engine{state: contracts.Snapshot{Settings: contracts.DefaultSettings(), Sessions: []contracts.Session{{ID: "session", ModelID: "provider/model"}}}}
+	run := &activeRun{selection: contracts.ModelSelection{ModelID: "provider/model"}, providers: []model.Provider{provider}}
+	bound := sessionModel{core: core, sessionID: "session", run: run}
+
+	base := bound.contextLimits().ModelKey
+	core.state.Settings.Privacy = privacy.Settings{Words: []string{"unused while disabled"}}
+	if got := bound.contextLimits().ModelKey; got != base {
+		t.Fatal("disabled privacy settings changed the live model context key")
+	}
+	core.state.Settings.Privacy = privacy.Settings{Enabled: true, Secrets: true, Words: []string{"private"}}
+	enabled := bound.contextLimits().ModelKey
+	if enabled == base {
+		t.Fatal("enabling privacy did not change the live model context key")
+	}
+	core.state.Settings.Privacy.Words[0] = "other-private"
+	changed := bound.contextLimits().ModelKey
+	if changed == enabled {
+		t.Fatal("privacy policy change did not change the live model context key")
+	}
+	core.state.Settings.Privacy = privacy.Settings{Enabled: true, Secrets: true, Words: []string{"other-private"}}
+	if got := bound.contextLimits().ModelKey; got != changed {
+		t.Fatal("equivalent privacy policy changed the live model context key")
+	}
+
+	run.selection.ModelID = "provider/other"
+	if got := bound.contextLimits().ModelKey; got == changed {
+		t.Fatal("model change did not change the live model context key")
+	}
+}
 
 func TestInternalFeedbackKeepsAcceptedTaskModelUntilUserInput(t *testing.T) {
 	var mu sync.Mutex

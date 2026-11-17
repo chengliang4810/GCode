@@ -2,8 +2,6 @@ package model
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,12 +17,7 @@ import (
 // made with other masking choices. The caller owns the Gateway until Stream.
 func (g *Gateway) SetPrivacy(settings privacy.Settings) {
 	g.Privacy = settings.Clone()
-	g.target.scope = continuationScope(g.provider, g.target.model)
-	if settings.Enabled {
-		data, _ := json.Marshal(settings)
-		hash := sha256.Sum256(append([]byte(g.target.scope), data...))
-		g.target.scope = hex.EncodeToString(hash[:])
-	}
+	g.target.scope = privacyScope(continuationScope(g.provider, g.target.model), g.Privacy)
 }
 
 func (g *Gateway) maskRequest(ctx context.Context, body []byte) (out []byte, err error) {

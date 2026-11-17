@@ -1,5 +1,13 @@
 package model
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+
+	"gcode/internal/privacy"
+)
+
 // Prompt is the small, durable request prefix used by manual compaction. It
 // owns definitions only; it does not duplicate history or retain tool objects.
 type Prompt struct {
@@ -39,10 +47,22 @@ func clonePromptValue(value any) any {
 	}
 }
 
-// ContextKey invalidates usage anchors when the selected tokenizer or effort
-// changes. Credentials remain inside a one-way account/model scope digest.
-func ContextKey(provider Provider, selected Model, effort string) string {
-	return continuationScope(provider, selected) + ":" + effort
+// ContextKey invalidates usage anchors when the selected tokenizer, effort or
+// effective privacy policy changes. Credentials and the policy remain inside a
+// one-way scope digest.
+func ContextKey(provider Provider, selected Model, effort string, settings privacy.Settings) string {
+	return privacyScope(continuationScope(provider, selected)+":"+effort, settings)
+}
+
+func privacyScope(scope string, settings privacy.Settings) string {
+	if !settings.Enabled {
+		return scope
+	}
+	// Notifications only control local UI feedback, not masking or replay.
+	settings.Notify = false
+	data, _ := json.Marshal(settings)
+	sum := sha256.Sum256(append([]byte(scope), data...))
+	return hex.EncodeToString(sum[:])
 }
 
 // OutputLimit is the value actually sent by the protocol adapter. Zero means

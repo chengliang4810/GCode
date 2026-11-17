@@ -75,7 +75,7 @@ func (m sessionModel) contextLimits() agent.ContextLimits {
 	session, provider, selected, _ := m.selectionLocked()
 	// Invalid configuration is reported at the request boundary.
 	effort, _ := selected.ResolveEffort(session.ReasoningLevel)
-	return agent.ContextLimits{Window: selected.ContextWindow, MaxOutput: selected.OutputLimit(provider.Protocol), ModelKey: model.ContextKey(provider, selected, effort)}
+	return agent.ContextLimits{Window: selected.ContextWindow, MaxOutput: selected.OutputLimit(provider.Protocol), ModelKey: model.ContextKey(provider, selected, effort, m.core.state.Settings.Privacy)}
 }
 
 func (m sessionModel) Stream(ctx context.Context, request model.Request, emit func(model.Delta) error) (model.Result, error) {
