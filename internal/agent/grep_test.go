@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 	"unicode/utf8"
 )
 
@@ -207,6 +209,52 @@ func TestGrepMultilineCountsLinesInsteadOfRegexOccurrences(t *testing.T) {
 				t.Fatalf("dense matching lines were lost: %q", output.Text)
 			}
 		})
+	}
+}
+
+func TestGrepMultilineZeroWidthMatchesMarkExpectedLines(t *testing.T) {
+	root := t.TempDir()
+	writeSearchFixture(t, root, map[string]string{"lines.txt": "one\ntwo\nthree\n"})
+	for _, pattern := range []string{"^", "$"} {
+		t.Run(pattern, func(t *testing.T) {
+			raw, err := json.Marshal(map[string]any{
+				"pattern": pattern, "multiline": true, "output_mode": "count", "path": "lines.txt",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			output, err := (grepTool{}).Execute(context.Background(), root, raw)
+			if err != nil || output.Text != "lines.txt:3\nTotal: 3" {
+				t.Fatalf("zero-width multiline match mapped lines incorrectly: %q %v", output.Text, err)
+			}
+		})
+	}
+}
+
+type cancelAfterChecksContext struct {
+	checks atomic.Int32
+	after  int32
+}
+
+func (c *cancelAfterChecksContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (c *cancelAfterChecksContext) Done() <-chan struct{}       { return nil }
+func (c *cancelAfterChecksContext) Value(any) any               { return nil }
+func (c *cancelAfterChecksContext) Err() error {
+	if c.checks.Add(1) > c.after {
+		return context.Canceled
+	}
+	return nil
+}
+
+func TestGrepMultilineChecksCancellationWhileMappingLines(t *testing.T) {
+	search := grepSearch{
+		ctx:     &cancelAfterChecksContext{after: 2},
+		args:    grepInput{Multiline: true},
+		literal: "a",
+	}
+	_, _, err := search.lines(strings.Repeat("a\n", 512))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("multiline line mapping ignored cancellation: %v", err)
 	}
 }
 

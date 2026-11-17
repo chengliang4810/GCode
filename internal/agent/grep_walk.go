@@ -127,6 +127,11 @@ func runGrep(ctx context.Context, cwd, root string, args grepInput, before, afte
 			}(i)
 		}
 		group.Wait()
+		for i := start; i < end; i++ {
+			if results[i].err != nil {
+				return results[i].err
+			}
+		}
 		if err := ctx.Err(); err != nil {
 			return err
 		}
@@ -206,6 +211,7 @@ type grepFile struct {
 	count   int
 	matched bool
 	skipped int
+	err     error
 }
 
 // file searches one file.
@@ -248,7 +254,11 @@ func (g *grepSearch) file(file searchFile) grepFile {
 		}
 		return result
 	}
-	lines, matched := g.lines(text)
+	lines, matched, err := g.lines(text)
+	if err != nil {
+		result.err = err
+		return result
+	}
 	hits := 0
 	for _, hit := range matched {
 		if hit {
@@ -382,7 +392,7 @@ func (g *grepSearch) content(display string, lines []string, matched []bool) []s
 
 // lines splits the text of a file into its lines and marks the ones that
 // match. A multiline match marks every line it reaches.
-func (g *grepSearch) lines(text string) ([]string, []bool) {
+func (g *grepSearch) lines(text string) ([]string, []bool, error) {
 	// Windows line endings end their lines as any other does.
 	body := strings.ReplaceAll(text, "\r\n", "\n")
 	body = strings.TrimSuffix(body, "\n")
@@ -390,22 +400,59 @@ func (g *grepSearch) lines(text string) ([]string, []bool) {
 	matched := make([]bool, len(lines))
 	if !g.args.Multiline {
 		for i, line := range lines {
+			if i&255 == 0 {
+				if err := g.ctx.Err(); err != nil {
+					return nil, nil, err
+				}
+			}
 			matched[i] = g.matches(line)
 		}
-		return lines, matched
+		return lines, matched, nil
 	}
-	for _, at := range g.findAll(body) {
+	matches, err := g.findAll(body)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(matches) == 0 {
+		return lines, matched, nil
+	}
+	// Matches are returned in order. A single forward pass over newline
+	// offsets keeps line mapping linear instead of rescanning the prefix for
+	// every match. That matters for dense multiline searches.
+	newlines := make([]int, 0, max(0, len(lines)-1))
+	for i := 0; i < len(body); i++ {
+		if body[i] == '\n' {
+			newlines = append(newlines, i)
+		}
+	}
+	startLine, endLine := 0, 0
+	for matchIndex, at := range matches {
+		if matchIndex&255 == 0 {
+			if err := g.ctx.Err(); err != nil {
+				return nil, nil, err
+			}
+		}
 		start, end := at[0], at[1]
-		first := strings.Count(body[:start], "\n")
-		last := first
+		for startLine < len(newlines) && newlines[startLine] < start {
+			startLine++
+		}
+		first, last := startLine, startLine
 		if end > start {
-			last = strings.Count(body[:end-1], "\n")
+			for endLine < len(newlines) && newlines[endLine] < end-1 {
+				endLine++
+			}
+			last = endLine
 		}
 		for l := first; l <= last && l < len(lines); l++ {
+			if l&255 == 0 {
+				if err := g.ctx.Err(); err != nil {
+					return nil, nil, err
+				}
+			}
 			matched[l] = true
 		}
 	}
-	return lines, matched
+	return lines, matched, nil
 }
 
 // matches reports whether the text holds the pattern.
@@ -416,18 +463,27 @@ func (g *grepSearch) matches(text string) bool {
 	return g.expression.MatchString(text)
 }
 
-// findAll returns the places the pattern holds in the text.
-func (g *grepSearch) findAll(text string) [][2]int {
+// findAll returns the places the pattern holds in the text, or the context
+// error observed while collecting a dense literal match set.
+func (g *grepSearch) findAll(text string) ([][2]int, error) {
 	if g.literal == "" {
 		places := g.expression.FindAllStringIndex(text, -1)
+		if err := g.ctx.Err(); err != nil {
+			return nil, err
+		}
 		out := make([][2]int, len(places))
 		for i, place := range places {
 			out[i] = [2]int{place[0], place[1]}
 		}
-		return out
+		return out, nil
 	}
 	var out [][2]int
-	for at := 0; at < len(text); {
+	for matches, at := 0, 0; at < len(text); matches++ {
+		if matches&255 == 0 {
+			if err := g.ctx.Err(); err != nil {
+				return nil, err
+			}
+		}
 		index := strings.Index(text[at:], g.literal)
 		if index < 0 {
 			break
@@ -435,5 +491,5 @@ func (g *grepSearch) findAll(text string) [][2]int {
 		out = append(out, [2]int{at + index, at + index + len(g.literal)})
 		at += index + len(g.literal)
 	}
-	return out
+	return out, nil
 }
