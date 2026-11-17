@@ -1,6 +1,8 @@
 package i18n
 
 import (
+	"bytes"
+	"encoding/json"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -13,6 +15,39 @@ import (
 	"testing"
 	"time"
 )
+
+func TestCatalogHasUniqueKeys(t *testing.T) {
+	data, err := catalogs.ReadFile("zh-CN.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if token, err := decoder.Token(); err != nil || token != json.Delim('{') {
+		t.Fatalf("catalog must be an object: token=%v err=%v", token, err)
+	}
+	seen := make(map[string]bool)
+	for decoder.More() {
+		token, err := decoder.Token()
+		if err != nil {
+			t.Fatal(err)
+		}
+		key, ok := token.(string)
+		if !ok {
+			t.Fatalf("invalid catalog key: %v", token)
+		}
+		if seen[key] {
+			t.Errorf("duplicate translation key: %q", key)
+		}
+		seen[key] = true
+		var value string
+		if err := decoder.Decode(&value); err != nil {
+			t.Fatalf("translation %q: %v", key, err)
+		}
+	}
+	if _, err := decoder.Token(); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestLanguageDefaultsAndFallback(t *testing.T) {
 	for _, language := range []string{"", "zh", "zh-Hans", "zh-CN", "unsupported"} {
