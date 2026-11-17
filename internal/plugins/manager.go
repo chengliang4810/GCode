@@ -255,12 +255,12 @@ func (m *Manager) prepareCatalog(ctx context.Context, source MarketplaceSource) 
 			return Catalog{}, fmt.Errorf("invalid or duplicate plugin name %q", entry.Name)
 		}
 		seen[entry.Name] = true
+		if err := validateMarketplacePluginSource(source.Source, entry.Source); err != nil {
+			return Catalog{}, fmt.Errorf("plugin %q: %w", entry.Name, err)
+		}
 		if entry.Source.Relative != "" {
 			if !strings.HasPrefix(entry.Source.Relative, "./") {
 				return Catalog{}, errors.New("relative plugin sources must start with ./")
-			}
-			if source.Source.Source == "url" || source.Source.Source == "file" || source.Source.Source == "settings" {
-				return Catalog{}, errors.New("URL/file/inline marketplaces require remote plugin sources")
 			}
 			relative := entry.Source.Relative
 			if marketplace.Metadata.PluginRoot != "" {
@@ -309,10 +309,23 @@ func (m *Manager) prepare(ctx context.Context, marketplace, name string, constra
 	if catalog == nil || entry == nil {
 		return Installation{}, fmt.Errorf("plugin %s@%s not found in refreshed catalogs", name, marketplace)
 	}
+	var marketplaceSource Source
+	foundMarketplaceSource := false
 	for _, source := range m.data.Sources {
-		if source.ID == catalog.SourceID && !source.Enabled {
-			return Installation{}, errors.New("marketplace source is disabled")
+		if source.ID == catalog.SourceID {
+			foundMarketplaceSource = true
+			if !source.Enabled {
+				return Installation{}, errors.New("marketplace source is disabled")
+			}
+			marketplaceSource = source.Source
+			break
 		}
+	}
+	if !foundMarketplaceSource {
+		return Installation{}, fmt.Errorf("marketplace source %q is not registered", catalog.SourceID)
+	}
+	if err := validateMarketplacePluginSource(marketplaceSource, entry.Source); err != nil {
+		return Installation{}, fmt.Errorf("plugin %q: %w", name, err)
 	}
 	stage, err := m.stage()
 	if err != nil {

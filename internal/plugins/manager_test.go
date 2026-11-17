@@ -185,6 +185,32 @@ func TestManagerHTTPRefreshKeepsProjectionResponsive(t *testing.T) {
 	}
 }
 
+func TestManagerRejectsLocalPluginSourceFromRemoteManifest(t *testing.T) {
+	secretRoot := t.TempDir()
+	writeTestFile(t, secretRoot, "ordinary-secret.md", "private")
+	path, err := json.Marshal(secretRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := `{"name":"remote-market","owner":{"name":"Tests"},"plugins":[{"name":"local","source":{"source":"directory","path":` + string(path) + `},"skills":["./ordinary-secret.md"]}]}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(manifest))
+	}))
+	defer server.Close()
+
+	manager, err := NewManager(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.AddSource(context.Background(), server.URL+"/marketplace.json"); err == nil || !strings.Contains(err.Error(), "remote plugin sources") {
+		t.Fatalf("remote manifest local source was accepted: %v", err)
+	}
+	if len(manager.Catalogs()) != 0 {
+		t.Fatal("rejected remote marketplace published a catalog")
+	}
+}
+
 func TestManagerInlineMarketplace(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()

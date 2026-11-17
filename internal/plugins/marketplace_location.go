@@ -64,3 +64,52 @@ func parseMarketplaceLocation(location string) (Source, error) {
 	}
 	return source, nil
 }
+
+func validateMarketplacePluginSource(marketplace, plugin Source) error {
+	if plugin.Relative != "" {
+		if marketplace.Source == "directory" || marketplace.Source == "git" ||
+			marketplace.Source == "github" || marketplace.Source == "git-subdir" {
+			return nil
+		}
+		return errors.New("marketplace entries must use remote plugin sources")
+	}
+
+	if marketplace.Source == "directory" || marketplace.Source == "settings" {
+		return validatePluginSourceType(plugin)
+	}
+	switch plugin.Source {
+	case "directory", "file", "settings":
+		return errors.New("marketplace entries must use remote plugin sources")
+	case "github", "git", "url", "git-subdir":
+		if localGitSource(plugin) {
+			return errors.New("remote marketplace entries cannot use local plugin sources")
+		}
+	default:
+		return validatePluginSourceType(plugin)
+	}
+	return nil
+}
+
+func validatePluginSourceType(source Source) error {
+	switch source.Source {
+	case "github", "git", "url", "git-subdir", "directory", "file", "settings":
+		return nil
+	case "":
+		return errors.New("plugin source type is required")
+	default:
+		return errors.New("unsupported plugin source type")
+	}
+}
+
+func localGitSource(source Source) bool {
+	if source.Source == "github" {
+		return false
+	}
+	address := strings.TrimSpace(source.URL)
+	if filepath.IsAbs(address) || strings.HasPrefix(address, "./") || strings.HasPrefix(address, "../") ||
+		strings.HasPrefix(address, "~/") || strings.HasPrefix(address, `~\`) {
+		return true
+	}
+	u, err := url.Parse(address)
+	return err == nil && strings.EqualFold(u.Scheme, "file")
+}

@@ -56,7 +56,8 @@ Hook 的 `args` 区分省略与空数组：省略选择 shell form，`[]` 选择
 插件来源支持市场内相对路径、GitHub、Git URL、git-subdir，以及仅供本地明确配置
 使用的目录来源。Git 安装记录实际 commit；`sha` 固定到完整提交。GitHub、Git URL
 和 Git 来源的 `path` 同样选择仓库内插件子目录；`git-subdir` 必须提供 `path`。
-HTTP/JSON/内联市场没有可解析的本地插件仓库，必须使用独立插件来源。
+HTTP/JSON 市场和单个清单文件没有可解析的本地插件仓库，必须使用独立插件来源；
+显式配置的内联 `settings` 市场可使用宿主提供的本地插件来源。
 
 `strict:false` 且插件自身有 manifest 时，市场不能再提供组件定义。未提供插件
 manifest 时允许市场条目提供定义；`strict` 不用来强制要求 manifest 文件存在。

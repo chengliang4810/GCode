@@ -43,6 +43,63 @@ func TestMarketplaceLocationDetection(t *testing.T) {
 	}
 }
 
+func TestValidateMarketplacePluginSource(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		marketplace Source
+		plugin      Source
+		wantErr     bool
+	}{
+		{
+			name:        "remote directory source",
+			marketplace: Source{Source: "url"},
+			plugin:      Source{Source: "directory", Path: "/tmp/plugin"},
+			wantErr:     true,
+		},
+		{
+			name:        "remote file source",
+			marketplace: Source{Source: "file"},
+			plugin:      Source{Source: "file", Path: "/tmp/plugin.json"},
+			wantErr:     true,
+		},
+		{
+			name:        "remote local git path",
+			marketplace: Source{Source: "git"},
+			plugin:      Source{Source: "git", URL: "/tmp/plugin.git"},
+			wantErr:     true,
+		},
+		{
+			name:        "remote file git URL",
+			marketplace: Source{Source: "url"},
+			plugin:      Source{Source: "git-subdir", URL: "file:///tmp/plugin.git", Path: "plugin"},
+			wantErr:     true,
+		},
+		{
+			name:        "remote git source",
+			marketplace: Source{Source: "url"},
+			plugin:      Source{Source: "git", URL: "https://example.invalid/plugin.git"},
+		},
+		{
+			name:        "local directory source",
+			marketplace: Source{Source: "directory"},
+			plugin:      Source{Source: "directory", Path: "/tmp/plugin"},
+		},
+		{
+			name:        "unknown source type",
+			marketplace: Source{Source: "url"},
+			plugin:      Source{Source: "unknown"},
+			wantErr:     true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateMarketplacePluginSource(test.marketplace, test.plugin)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("validateMarketplacePluginSource() error=%v, wantErr=%t", err, test.wantErr)
+			}
+		})
+	}
+}
+
 func TestManagerAddSourceLoadsNameAndCatalogAtomically(t *testing.T) {
 	ctx := context.Background()
 	manager, err := NewManager(t.TempDir())
