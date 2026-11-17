@@ -322,6 +322,56 @@ func TestConfigurationAndResolvedRootLocksAreDistinct(t *testing.T) {
 	}
 }
 
+func TestHistoricalSelectionSaveFailureReleasesNewRootLock(t *testing.T) {
+	home := t.TempDir()
+	s := mustOpen(t, Options{Home: home})
+	originalID := s.ActiveRootID()
+	if err := s.RequestDirectory(filepath.Join(home, "active")); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	s = mustOpen(t, Options{Home: home})
+	old, ok := s.Root(originalID)
+	if !ok {
+		t.Fatal("historical root registration disappeared")
+	}
+	locationPath := filepath.Join(s.ConfigDirectory(), locationFile)
+	locationData, err := os.ReadFile(locationPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(locationPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(locationPath, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.RequestDirectory(old.Directory); err == nil {
+		t.Fatal("location write fault did not fail historical selection")
+	}
+	if s.ActiveRootID() == old.ID || s.Pending() != "" {
+		t.Fatalf("failed selection changed registry state: active=%q pending=%q", s.ActiveRootID(), s.Pending())
+	}
+	if s.rootLocks[old.ID] != nil {
+		t.Fatal("failed selection retained a root lock acquired by the failed request")
+	}
+	probe, err := lockAt(old.Directory, rootLockFile)
+	if err != nil {
+		t.Fatalf("failed selection did not release the newly acquired root lock: %v", err)
+	}
+	if err := probe.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(locationPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(locationPath, locationData, 0600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestExplicitProfileIsIndependentAndSaveRejectsReservedPaths(t *testing.T) {
 	home := t.TempDir()
 	profile := filepath.Join(home, "profile")

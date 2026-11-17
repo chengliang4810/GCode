@@ -264,15 +264,25 @@ func (s *Store) RequestDirectory(path string) error {
 		if !samePath(root.Directory, target) {
 			continue
 		}
+		wasLocked := false
 		if root.ID == next.ActiveRootID {
 			next.PendingRootID = ""
 		} else {
+			wasLocked = s.rootLocks[root.ID] != nil
 			if _, err = s.resolveLocked(root.ID); err != nil {
 				return err
 			}
 			next.PendingRootID = root.ID
 		}
 		if err = s.saveLocation(next); err != nil {
+			if root.ID != next.ActiveRootID && !wasLocked {
+				if lock := s.rootLocks[root.ID]; lock != nil {
+					delete(s.rootLocks, root.ID)
+					if closeErr := lock.Close(); closeErr != nil {
+						return errors.Join(err, closeErr)
+					}
+				}
+			}
 			return err
 		}
 		s.location, s.changeError = next, ""
