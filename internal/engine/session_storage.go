@@ -473,7 +473,10 @@ func (e *Engine) cleanSessionRecords(rootID, sessionID, previous, current string
 		return
 	}
 	if hex.EncodeToString(digest.Sum(nil)) == previous {
-		_ = storage.RemoveRoot(folder, name)
+		// The new record and index are already durable. This is best-effort
+		// garbage collection: a crash may retain an unreferenced predecessor,
+		// but cannot lose committed data. It needs no additional directory sync.
+		_ = folder.Remove(name)
 	}
 }
 

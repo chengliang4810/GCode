@@ -374,6 +374,44 @@ func TestSessionRecordCleanupLeavesUnknownRecords(t *testing.T) {
 	}
 }
 
+func TestSessionRecordCleanupPreservesModifiedPredecessorAndCurrentContent(t *testing.T) {
+	for _, modified := range []bool{false, true} {
+		t.Run(map[bool]string{false: "owned", true: "modified"}[modified], func(t *testing.T) {
+			core := openStorageTestCore(t, t.TempDir())
+			defer core.Close()
+			core.mu.Lock()
+			defer core.mu.Unlock()
+			session := newTestSession(t, core, "", "cleanup")
+			if err := core.persistLocked(session.ID); err != nil {
+				t.Fatal(err)
+			}
+			previous := core.sessionRecords[session.ID]
+			path := filepath.Join(core.storage.Directory(), "sessions", session.ID, previous+".json")
+			if modified {
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(path, append(data, '\n'), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			const body = "正文更新 <>& \"引号\"\n换行 😀 \u2028"
+			core.history[session.ID] = []model.Message{{Role: "user", Text: body}}
+			if err := core.persistLocked(session.ID); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := os.Stat(path); modified && err != nil || !modified && !os.IsNotExist(err) {
+				t.Fatalf("unexpected predecessor cleanup: modified=%v err=%v", modified, err)
+			}
+			disk, err := core.readSessionDisk(session, core.sessionRecords[session.ID])
+			if err != nil || len(disk.History) != 1 || disk.History[0].Text != body {
+				t.Fatalf("current record lost content after cleanup: %v", err)
+			}
+		})
+	}
+}
+
 func TestSessionDirectoriesCannotEscapeRuntimeRoot(t *testing.T) {
 	for _, name := range []string{"sessions", "workspaces"} {
 		t.Run(name, func(t *testing.T) {
