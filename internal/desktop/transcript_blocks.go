@@ -37,11 +37,6 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 		markdown.View(c, fence+b.Language+"\n"+b.Text+"\n"+fence, &a.md)
 	case "error":
 		a.activityTextDetail(c, b, false)
-	case "hook":
-		if b.Hook != nil {
-			a.activityItem(c, "hook:"+m.SessionID+":"+b.ID, b, false, false,
-				activityRowMotion{progress: 1, content: 1, incoming: 1, settled: true})
-		}
 	case "question":
 		if b.Question != nil {
 			q := b.Question

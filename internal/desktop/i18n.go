@@ -70,6 +70,7 @@ func (a *App) activitySummary(summary contracts.ActivitySummary) string {
 		key   string
 	}{
 		{summary.Thoughts, "Thought %d times"}, {summary.Notes, "%d progress updates"},
+		{summary.Hooks, "Ran %d hooks"},
 		{summary.Commands, "Ran %d commands"}, {summary.EditedFiles, "Edited %d files"},
 		{summary.Reads, "Read %d files"}, {summary.Searches, "Searched %d times"},
 		{summary.Fetches, "Fetched %d pages"}, {summary.Todos, "Updated %d todos"},

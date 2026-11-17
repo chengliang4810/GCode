@@ -35,7 +35,7 @@ func TestHookRecordSnapshotClonesAndRoundTripsWithoutBecomingReply(t *testing.T)
 		t.Fatalf("lost typed hook record: %+v", block)
 	}
 	summary := SummarizeActivity([]Block{block})
-	if summary.ToolCalls != 0 || summary.Notes != 0 {
+	if summary.ToolCalls != 0 || summary.Notes != 0 || summary.Hooks != 1 || summary.Label() != "Ran 1 hook" {
 		t.Fatalf("host hook counted as model work: %+v", summary)
 	}
 	if strings.Contains(string(data), `"text":"context"`) {

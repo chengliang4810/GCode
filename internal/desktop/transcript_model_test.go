@@ -90,6 +90,67 @@ func TestTranscriptRowsPreserveActivityAndNarrationOrder(t *testing.T) {
 	}
 }
 
+func TestTranscriptHooksJoinToolsAndReasoningInActivityGroups(t *testing.T) {
+	start := contracts.Block{ID: "start", Kind: "hook", Hook: &contracts.HookRecord{
+		Name: "startup", Event: contracts.HookSessionStart, Status: "completed",
+	}}
+	stop := contracts.Block{ID: "stop", Kind: "hook", Hook: &contracts.HookRecord{
+		Name: "stop", Event: contracts.HookStop, Status: "completed",
+	}}
+	blocks := []contracts.Block{
+		start,
+		{ID: "thought", Kind: "reasoning", Text: "Inspect"},
+		{ID: "read", Kind: "tool", Tool: &contracts.ToolCall{ID: "read", Kind: contracts.ToolReadFile}},
+		{ID: "reply", Kind: "text", Text: "Done"},
+		stop,
+	}
+	for _, test := range []struct {
+		name               string
+		compact, streaming bool
+		want               []string
+	}{
+		{"normal", false, false, []string{"start/thought/read", "reply", "stop"}},
+		{"compact", true, false, []string{"start/thought/read/stop", "reply"}},
+		{"normal streaming", false, true, []string{"start/thought/read", "reply", "stop"}},
+		{"compact streaming", true, true, []string{"start/thought/read/reply/stop"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			entries := transcriptEntries([]contracts.Message{
+				{ID: "startup-message", Role: "assistant", TurnID: "turn", Blocks: blocks[:1]},
+				{ID: "reply-message", Role: "assistant", TurnID: "turn", Blocks: blocks[1:], Streaming: test.streaming},
+			})
+			if len(entries) != 1 {
+				t.Fatal("same-turn hook messages did not join the reply")
+			}
+			rows := transcriptRows(entries[0], test.compact)
+			var got []string
+			hooks, tools := 0, 0
+			for _, row := range rows {
+				if len(row.Activity) == 0 {
+					if row.Block.Hook != nil {
+						t.Fatal("hook rendered outside an activity group")
+					}
+					got = append(got, row.Block.ID)
+					continue
+				}
+				var ids []string
+				for _, block := range row.Activity {
+					ids = append(ids, block.ID)
+				}
+				got = append(got, strings.Join(ids, "/"))
+				hooks += row.Summary.Hooks
+				tools += row.Summary.ToolCalls
+			}
+			if !reflect.DeepEqual(got, test.want) || hooks != 2 || tools != 1 {
+				t.Fatalf("hook grouping or tool count incorrect: rows=%v hooks=%d tools=%d", got, hooks, tools)
+			}
+			if rows[0].ID != "startup-message:activity:start" {
+				t.Fatal("hook group lost its identity across continuation messages")
+			}
+		})
+	}
+}
+
 func TestTranscriptLiveTailAndCallResultIdentity(t *testing.T) {
 	m := contracts.Message{ID: "entry", Streaming: true, Blocks: []contracts.Block{
 		{ID: "first", Kind: "toolCall", Tool: &contracts.ToolCall{ID: "cmd", Kind: contracts.ToolExec, Status: "working"}},

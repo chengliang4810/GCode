@@ -27,6 +27,16 @@ func TestTranscriptHookDisclosureAcrossLayouts(t *testing.T) {
 						{ID: "text", Kind: "text", Text: "Reply only."},
 					}}
 					tt := transcriptTester(t, a, &m, width, 900, dark)
+					group := "Activity: Ran 1 hook"
+					if _, ok := tt.Find(group); !ok {
+						t.Fatal("hook did not create an activity group")
+					}
+					if tt.HasText("superpowers@superpowers-marketplace") {
+						t.Fatal("hook row escaped its collapsed activity group")
+					}
+					if err := tt.Click(group); err != nil {
+						t.Fatal(err)
+					}
 					label := "Hook: superpowers@superpowers-marketplace · SessionStart · Completed"
 					header, ok := tt.Find(label)
 					if !ok || header.W > float32(width) || header.H != activityRowHeight {
@@ -76,6 +86,7 @@ func TestTranscriptHookDisclosureAcrossLayouts(t *testing.T) {
 func TestTranscriptHookStatusAndFoldState(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Settings.General.Language = "zh-CN"
+	a.state.Settings.General.CompactMode = false
 	m := contracts.Message{ID: "reply", SessionID: "chat", Role: "assistant", Streaming: true, Blocks: []contracts.Block{
 		{ID: "denied", Kind: "hook", Hook: &contracts.HookRecord{
 			Name: "policy", Event: contracts.HookPreToolUse, Status: "blocked", Details: "POLICY_REASON",

@@ -32,6 +32,10 @@ func TestDesktopLocalHookRecords(t *testing.T) {
 			if err := os.MkdirAll(workspace, 0700); err != nil {
 				t.Fatal(err)
 			}
+			proofPath := filepath.Join(workspace, "hook-proof.txt")
+			if err := os.WriteFile(proofPath, []byte("NATIVE_READ_PROOF"), 0600); err != nil {
+				t.Fatal(err)
+			}
 			var contextText strings.Builder
 			contextText.WriteString("NATIVE_HOOK_CONTEXT\n")
 			for i := range 80 {
@@ -66,9 +70,16 @@ func TestDesktopLocalHookRecords(t *testing.T) {
 				if !injected {
 					t.Error("startup context no longer reaches the model")
 				}
-				requests.Add(1)
+				number := requests.Add(1)
 				w.Header().Set("Content-Type", "text/event-stream")
-				fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"Native hook reply.\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+				if number == 1 {
+					fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"read-proof\",\"function\":{\"name\":\"Read\",\"arguments\":\"{\\\"file_path\\\":\\\"hook-proof.txt\\\"}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n")
+				} else {
+					if number != 2 || !strings.Contains(string(body), "NATIVE_READ_PROOF") {
+						t.Error("provider did not receive the real read result")
+					}
+					fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"Native hook reply.\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+				}
 			}))
 			defer server.Close()
 			store, err := storage.Open(storage.Options{Directory: data})
@@ -136,8 +147,11 @@ func TestDesktopLocalHookRecords(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var startID, stopID string
+			var entryID, startID, stopID string
 			for _, message := range snapshot.Messages[sessionID] {
+				if entryID == "" && message.Role == "assistant" {
+					entryID = message.ID
+				}
 				for _, block := range message.Blocks {
 					if hook := block.Hook; hook != nil {
 						if hook.Status != "completed" || hook.ExitCode == nil || *hook.ExitCode != 0 || block.Text != "" {
@@ -152,7 +166,7 @@ func TestDesktopLocalHookRecords(t *testing.T) {
 					}
 				}
 			}
-			if startID == "" || stopID == "" || requests.Load() != 1 {
+			if startID == "" || stopID == "" || requests.Load() != 2 {
 				t.Fatalf("missing real hooks or unexpected requests: start=%q stop=%q requests=%d", startID, stopID, requests.Load())
 			}
 			if err := core.Close(); err != nil {
@@ -162,33 +176,63 @@ func TestDesktopLocalHookRecords(t *testing.T) {
 				"--language", "en", "--width", "900", "--height", "880")
 			app.act("back-to-conversations", "press", "")
 			app.act("sidebar-session:"+sessionID, "press", "")
-			startToggle := "activity-item-toggle:hook:" + sessionID + ":" + startID
-			stopToggle := "activity-item-toggle:hook:" + sessionID + ":" + stopID
-			app.waitKey(startToggle)
-			app.waitKey(stopToggle)
+			groupID := entryID + ":activity:" + startID
+			stopGroupID := entryID + ":activity:" + stopID
+			if settings.General.CompactMode {
+				stopGroupID = groupID
+			}
+			groupToggle := "activity-toggle:" + groupID
+			startToggle := "activity-item-toggle:" + groupID + ":" + startID
+			stopToggle := "activity-item-toggle:" + stopGroupID + ":" + stopID
+			app.waitKey(groupToggle)
+			app.waitKey("activity-toggle:" + stopGroupID)
 			app.await("hook output starts collapsed after reopening", func() error {
 				tree, err := app.client.tree()
 				if err != nil {
 					return err
 				}
-				for _, text := range []string{"Native hook reply.", "SessionStart", "Completed", "Native stop"} {
+				for _, text := range []string{"Native hook reply."} {
 					if !activityTreeContains(tree, text) {
 						return fmt.Errorf("missing %q", text)
 					}
 				}
-				for _, text := range []string{"NATIVE_HOOK_CONTEXT", "NATIVE_STOP_NOTICE"} {
+				for _, text := range []string{"Native startup", "Native stop", "NATIVE_HOOK_CONTEXT", "NATIVE_STOP_NOTICE"} {
 					if activityTreeContains(tree, text) {
 						return fmt.Errorf("hook details expanded without user action: %q", text)
+					}
+				}
+				for _, node := range tree.Nodes {
+					var key string
+					if json.Unmarshal(node.Key, &key) == nil && strings.HasPrefix(key, "activity-item-toggle:hook:") {
+						return fmt.Errorf("hook still rendered outside its activity group")
 					}
 				}
 				return nil
 			})
 			app.capture("hook-records-collapsed")
+			app.act(groupToggle, "press", "")
+			app.waitKey(startToggle)
+			app.await("hook and real Read share the activity group", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				if !activityTreeContains(tree, "SessionStart") || !activityTreeContains(tree, "Open file: "+proofPath) ||
+					activityTreeContains(tree, "NATIVE_HOOK_CONTEXT") {
+					return fmt.Errorf("group does not contain the hook and Read with closed hook details")
+				}
+				return nil
+			})
+			app.capture("hook-and-read-group-expanded")
 			app.act(startToggle, "press", "")
-			app.assertActivityScroll("activity-detail-viewport:hook:"+sessionID+":"+startID,
+			app.assertActivityScroll("activity-detail-viewport:"+groupID+":"+startID,
 				startToggle, "NATIVE_HOOK_TAIL", 24*14*1.5)
 			app.capture("startup-output-expanded-tail")
 			app.act(startToggle, "press", "")
+			if stopGroupID != groupID {
+				app.act("activity-toggle:"+stopGroupID, "press", "")
+			}
+			app.waitKey(stopToggle)
 			app.act(stopToggle, "press", "")
 			app.await("Stop hook notice is available in details", func() error {
 				tree, err := app.client.tree()

@@ -93,6 +93,7 @@ type ActivitySummary struct {
 	Thoughts    int `json:"thoughts"`
 	Notes       int `json:"notes"`
 	Subagents   int `json:"subagents"`
+	Hooks       int `json:"hooks"`
 }
 
 func SummarizeActivity(blocks []Block) ActivitySummary {
@@ -136,6 +137,10 @@ func SummarizeActivity(blocks []Block) ActivitySummary {
 		}
 		seen[block.ID] = true
 		switch block.Kind {
+		case "hook":
+			if block.Hook != nil {
+				summary.Hooks++
+			}
 		case "reasoning":
 			if strings.TrimSpace(block.Text) != "" {
 				summary.Thoughts++
@@ -226,6 +231,9 @@ func (s ActivitySummary) Label() string {
 		segments = append(segments, fmt.Sprintf("%d progress updates", s.Notes))
 	}
 	baseStart := len(segments)
+	if s.Hooks > 0 {
+		segments = append(segments, "ran "+plural(s.Hooks, "hook", "hooks"))
+	}
 	if s.Commands > 0 {
 		segments = append(segments, "ran "+plural(s.Commands, "command", "commands"))
 	}

@@ -129,7 +129,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 			}
 			block = contracts.Block{ID: block.ID, Kind: "error", Text: block.Tool.Output}
 		}
-		ordinary := block.Tool != nil || block.Kind == "reasoning"
+		ordinary := block.Tool != nil || block.Hook != nil || block.Kind == "reasoning"
 		note := compact && block.Kind == "text" && (replyStart < 0 || i < replyStart)
 		spawn := compact && block.Subagent != nil
 		if ordinary || note || spawn {
