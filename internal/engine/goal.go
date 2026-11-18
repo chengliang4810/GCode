@@ -184,13 +184,28 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 }
 
 func (e *Engine) goalTextLocked(send contracts.SendRequest, checkout *checkoutResult) (bool, error) {
-	if len(send.Attachments) > 0 {
-		return false, nil
+	// Selected commands are explicit intent wherever the composer inserts them.
+	// Keep ordinary /goal text subject to the leading slash-command syntax.
+	prompt := send.Text
+	var body strings.Builder
+	selectedGoal := false
+	for _, part := range contracts.ParsePrompt(send.Text) {
+		if part.Reference != nil && part.Reference.Kind == "command" && part.Reference.ID == "goal" {
+			selectedGoal = true
+			continue
+		}
+		body.WriteString(send.Text[part.Start:part.End])
 	}
-	text := strings.TrimSpace(contracts.PlainPrompt(send.Text))
+	if selectedGoal {
+		prompt = "/goal " + strings.TrimSpace(body.String())
+	}
+	text := strings.TrimSpace(contracts.PlainPrompt(prompt))
 	fields := strings.Fields(text)
 	if len(fields) == 0 || fields[0] != "/goal" {
 		return false, nil
+	}
+	if len(send.Attachments) > 0 {
+		return true, errors.New("goal commands do not support attachments")
 	}
 	remainder := strings.TrimSpace(strings.TrimPrefix(text, "/goal"))
 	index := e.sessionIndex(send.SessionID)
@@ -214,7 +229,7 @@ func (e *Engine) goalTextLocked(send contracts.SendRequest, checkout *checkoutRe
 	}
 	input := &contracts.GoalInput{Objective: remainder, InputText: send.Text}
 	var objective strings.Builder
-	for _, part := range contracts.ParsePrompt(send.Text) {
+	for _, part := range contracts.ParsePrompt(prompt) {
 		if part.Reference != nil && part.Reference.Kind != "command" {
 			input.References = append(input.References, *part.Reference)
 			objective.WriteString(part.Reference.Label)

@@ -18,6 +18,62 @@ import (
 	"gcode/internal/storage"
 )
 
+func TestGoalCommandAttachmentsReturnError(t *testing.T) {
+	for _, text := range []string{"/goal Inspect the project", "Inspect the project [Goal](gcode://command/goal)"} {
+		t.Run(text, func(t *testing.T) {
+			core := &Engine{}
+			handled, err := core.goalTextLocked(contracts.SendRequest{
+				Text: text, Attachments: []contracts.Attachment{{}},
+			}, nil)
+			if !handled || err == nil || !strings.Contains(err.Error(), "attachments") {
+				t.Fatalf("goal silently fell through: handled=%v err=%v", handled, err)
+			}
+		})
+	}
+}
+
+func TestGoalSelectedCommandPosition(t *testing.T) {
+	for _, tc := range []struct {
+		name, text, objective string
+	}{
+		{"leading", "[Goal](gcode://command/goal) Inspect the project", "Inspect the project"},
+		{"middle", "Inspect [Goal](gcode://command/goal) the project", "Inspect  the project"},
+		{"trailing", "使用子Agent排查项目中的问题 [Goal](gcode://command/goal)", "使用子Agent排查项目中的问题"},
+		{"ordinary mention", "Explain /goal syntax", ""},
+		{"ordinary trailing", "Inspect the project /goal", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if isGoalVerification(subagentRequest(t, r)) {
+					goalResponse(w, model.Chat, `{"passed":true,"reason":"Checked"}`, nil, true)
+				} else {
+					goalResponse(w, model.Chat, "Checked the project", nil, true)
+				}
+			}))
+			sendGoal(t, core, tc.text)
+			summary, err := core.Snapshot(t.Context())
+			if err != nil || len(summary.Sessions) != 1 {
+				t.Fatalf("session missing: %+v, %v", summary.Sessions, err)
+			}
+			state := waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
+			goal := state.Sessions[0].Goal
+			if tc.objective == "" {
+				if goal != nil {
+					t.Fatalf("ordinary text created a goal: %+v", goal)
+				}
+				return
+			}
+			if goal == nil || goal.Objective != tc.objective || goal.Status != contracts.GoalComplete {
+				t.Fatalf("selected goal was not executed: %+v", goal)
+			}
+			messages := state.Messages[summary.Sessions[0].ID]
+			if len(messages) == 0 || messages[0].Blocks[0].Text != tc.text {
+				t.Fatal("goal recognition changed the displayed user input")
+			}
+		})
+	}
+}
+
 func TestGoalExecutesVerifiesAndContinuesAcrossProtocols(t *testing.T) {
 	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
 		t.Run(string(protocol), func(t *testing.T) {

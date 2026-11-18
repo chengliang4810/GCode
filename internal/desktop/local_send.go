@@ -78,7 +78,7 @@ func (a *App) projectedMessages(sessionID string) []contracts.Message {
 	// boundary instead of waiting for the next turn, so it reads as a message
 	// in the conversation rather than as a row waiting in the queue.
 	for _, queued := range a.state.Queue {
-		if queued.SessionID != sessionID || queued.Delivery != "steer" ||
+		if queued.SessionID != sessionID || !isUserQueuedMessage(queued) || queued.Delivery != "steer" ||
 			slices.ContainsFunc(messages, func(m contracts.Message) bool { return m.ID == queued.ID }) {
 			continue
 		}
@@ -241,7 +241,7 @@ func (a *App) localSendStatus(c *ui.Context, message contracts.Message) {
 	if send.failure == "" {
 		return
 	}
-	ui.Row(c.Key("send-status:"+message.RequestID)).Gap(8).AlignItems(ui.Center).Children(func() {
+	ui.Row(c.Key("send-status:" + message.RequestID)).Gap(8).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, tr(c, "Send failed")).Tooltip(send.failure).
 			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
 		textButton(c.Key("retry-send:"+message.RequestID), tr(c, "Retry")).OnClick(func() { a.retryLocalSend(message.RequestID) })

@@ -13,6 +13,11 @@ type queueRowDrag struct {
 	ID        string
 }
 
+// Runtime results are model inputs, not user-authored queue rows.
+func isUserQueuedMessage(queued contracts.QueuedMessage) bool {
+	return queued.Source != "subagent" && queued.Source != "hook"
+}
+
 // queueRows draws the queued messages above the composer. A row can be
 // dragged before or after another row of the same session; Send now stops the
 // live run and sends the row at once. Editing takes the row back into the
@@ -21,7 +26,7 @@ type queueRowDrag struct {
 func (a *App) queueRows(c *ui.Context, sessionID string) {
 	real := a.state.Runtime != nil
 	for _, queued := range a.state.Queue {
-		if queued.SessionID != sessionID || queued.Delivery == "steer" {
+		if queued.SessionID != sessionID || !isUserQueuedMessage(queued) || queued.Delivery == "steer" {
 			continue
 		}
 		q := queued
