@@ -43,3 +43,11 @@ offline in `licenses/`. The original texts take precedence over this index.
 See `licenses/README.md` for versions and scope, `licenses/OPEN-ITEMS.md` for
 unresolved attribution or distribution items, and `licenses/manifest.json` for
 the SHA-256 inventory. This notice does not imply endorsement by the named projects.
+
+- Dynamic Island character artwork and event sounds: Cindy, Copyright 2026 XD Inc.,
+  Apache-2.0, from local reference commit c591eaa0feb2d6e45591effa6786b6fefe5c00d7.
+  Character files are unmodified; MP3 sounds were converted to mono 24 kHz PCM WAV.
+  Original LICENSE and NOTICE, plus the upstream Code Island MIT attribution,
+  are in `licenses/cindy/` and embedded beside the assets. No endorsement is implied.
+
+- Automation schedule parsing: github.com/robfig/cron/v3 v3.0.1, MIT; original license is in `licenses/go/cron-MIT.txt`.

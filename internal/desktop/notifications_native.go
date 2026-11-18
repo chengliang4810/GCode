@@ -3,7 +3,9 @@ package desktop
 import (
 	"context"
 	"errors"
+	"gcode/internal/assets"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/egoist/mygo"
@@ -17,10 +19,17 @@ func (nativeNotificationSink) Deliver(ctx context.Context, notice desktopNotice)
 		return err
 	}
 	if notice.Sound {
-		player := sessionNotificationSound(notice.Kind).Play()
+		sound, err := islandNotificationSound(notice.Kind, notice.SoundChoice)
+		if err != nil {
+			if notice.Desktop {
+				return errors.Join(err, showDesktopNotice(ctx, notice))
+			}
+			return err
+		}
+		player := sound.Play()
 		// Closing the window stops a sound already in flight, too.
 		stop := context.AfterFunc(ctx, player.Close)
-		timer := time.NewTimer(350 * time.Millisecond)
+		timer := time.NewTimer(player.Duration() + 50*time.Millisecond)
 		select {
 		case <-ctx.Done():
 			timer.Stop()
@@ -78,4 +87,25 @@ func sessionNotificationSound(kind notificationKind) *audio.Sound {
 		samples[index] = float32(.13 * envelope * math.Sin(2*math.Pi*frequency*t))
 	}
 	return audio.NewSound(rate, 1, samples)
+}
+
+var islandSoundCache sync.Map
+
+func islandNotificationSound(kind notificationKind, choice string) (*audio.Sound, error) {
+	if choice == "" {
+		return sessionNotificationSound(kind), nil
+	}
+	if sound, ok := islandSoundCache.Load(choice); ok {
+		return sound.(*audio.Sound), nil
+	}
+	data, err := assets.IslandSound(choice)
+	if err != nil {
+		return nil, err
+	}
+	sound, err := audio.DecodeSound(data)
+	if err != nil {
+		return nil, err
+	}
+	value, _ := islandSoundCache.LoadOrStore(choice, sound)
+	return value.(*audio.Sound), nil
 }

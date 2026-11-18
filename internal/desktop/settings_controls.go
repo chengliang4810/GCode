@@ -972,3 +972,22 @@ func (a *App) controlSwitch(c *ui.Context, value *bool, label string, disabled b
 	})
 	return b
 }
+
+// controlIslandCard is the dark companion's full-width navigation target.
+func controlIslandCard(c *ui.Context, label string) ui.Element {
+	b := ui.ButtonBase(c).Label(label).Padding(design.IslandCardPadding).Radius(design.IslandCardRadius).
+		Border(1, c.Theme().Border).Background(c.Theme().Surface).Justify(ui.Start)
+	if b.Hovered() {
+		b.Background(c.Theme().SurfaceHover)
+	}
+	return b
+}
+
+func controlIslandCompact(c *ui.Context, label string) ui.Element {
+	b := ui.ButtonBase(c).Label(label).Fill().Padding(0, 12).Radius(0, 0, design.IslandRadius, design.IslandRadius).
+		TextColor(c.Theme().Text).Justify(ui.Center)
+	if b.Hovered() {
+		b.Background(c.Theme().Surface)
+	}
+	return b
+}

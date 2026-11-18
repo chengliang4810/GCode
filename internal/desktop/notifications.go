@@ -13,6 +13,8 @@ import (
 type notificationKind string
 
 const (
+	notificationStarted   notificationKind = "started"
+	notificationSelected  notificationKind = "selected"
 	notificationCompleted notificationKind = "completed"
 	notificationQuestion  notificationKind = "question"
 	notificationError     notificationKind = "error"
@@ -24,6 +26,7 @@ type desktopNotice struct {
 	ID, Title, Body string
 	Kind            notificationKind
 	Desktop, Sound  bool
+	SoundChoice     string
 }
 
 type notificationSink interface {
@@ -103,6 +106,8 @@ func (n *desktopNotifications) Observe(snapshot contracts.Snapshot, focused bool
 			continue
 		}
 		switch run.Status {
+		case "running":
+			n.emit(snapshot.Settings, focused, session.ID, session.Title, notificationStarted)
 		case "completed":
 			n.emit(snapshot.Settings, focused, session.ID, session.Title, notificationCompleted)
 			terminalSessions[session.ID] = true
@@ -185,6 +190,24 @@ func (n *desktopNotifications) emit(settings contracts.Settings, focused bool, s
 	prefs := settings.Notifications
 	sound := prefs.Sound && (kind == notificationCompleted && prefs.Completion || kind == notificationQuestion && prefs.Questions || kind == notificationError && prefs.Errors)
 	desktop := prefs.Enabled && (!focused || prefs.WhenFocused)
+	if kind == notificationStarted || kind == notificationSelected {
+		desktop = false
+		sound = false
+	}
+	choice := ""
+	if settings.AgentIsland && sessionID != "remote-connection" {
+		desktop = false
+		if settings.Island.SoundEnabled {
+			choice = islandSoundChoice(settings.Island, kind)
+			switch choice {
+			case "none":
+				sound = false
+			case "":
+			default:
+				sound = true
+			}
+		}
+	}
 	if !desktop && !sound || n.queue == nil {
 		return
 	}
@@ -201,7 +224,7 @@ func (n *desktopNotifications) emit(settings contracts.Settings, focused bool, s
 	}
 	notice := desktopNotice{
 		ID: "rcode-session-" + sessionID, Title: "GCode · " + i18n.In(settings.General.Language, title),
-		Body: body, Kind: kind, Desktop: desktop, Sound: sound,
+		Body: body, Kind: kind, Desktop: desktop, Sound: sound, SoundChoice: choice,
 	}
 	select {
 	case n.queue <- notice:

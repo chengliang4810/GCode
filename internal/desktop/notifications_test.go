@@ -255,3 +255,43 @@ func TestDesktopNotificationsAppliedBusinessSnapshotReachesDelivery(t *testing.T
 		t.Fatal("reapplying the same business revision repeated a notification")
 	}
 }
+
+func TestDesktopNotificationsIslandRoutingAndCustomSounds(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		kind    notificationKind
+		choice  string
+		enabled bool
+		want    bool
+	}{
+		{"custom completion", notificationCompleted, "gem-collect", true, true},
+		{"silent completion", notificationCompleted, "none", true, false},
+		{"custom start", notificationStarted, "startup-chime", true, true},
+		{"events disabled", notificationStarted, "startup-chime", false, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			n := &desktopNotifications{queue: make(chan desktopNotice, 4)}
+			prefs := contracts.Settings{AgentIsland: true, Notifications: contracts.NotificationSettings{Enabled: true}, Island: contracts.AgentIslandSettings{SoundEnabled: test.enabled, CompleteSound: test.choice, StartSound: test.choice}}
+			n.emit(prefs, false, "session", "Review", test.kind)
+			select {
+			case notice := <-n.queue:
+				if !test.want || notice.Desktop || !notice.Sound || notice.SoundChoice != test.choice {
+					t.Fatalf("unexpected delivery %+v", notice)
+				}
+			default:
+				if test.want {
+					t.Fatal("custom event sound was lost")
+				}
+			}
+			n.emit(prefs, false, "remote-connection", "", notificationError)
+			select {
+			case notice := <-n.queue:
+				if !notice.Desktop {
+					t.Fatal("island suppressed the connection error banner")
+				}
+			default:
+				t.Fatal("connection error banner lost")
+			}
+		})
+	}
+}

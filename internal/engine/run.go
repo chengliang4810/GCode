@@ -775,6 +775,8 @@ func (e *Engine) startRunWithProvidersLocked(
 		if index >= 0 {
 			e.state.Sessions[index].Status = contracts.Idle
 			e.state.Sessions[index].LastOutcome = "completed"
+			e.state.Sessions[index].Unread = true
+			e.state.Sessions[index].UpdatedAt = time.Now()
 			if runErr != nil {
 				e.state.Sessions[index].LastOutcome = "failed"
 				if errors.Is(runErr, context.Canceled) {

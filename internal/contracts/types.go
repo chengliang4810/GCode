@@ -330,7 +330,22 @@ type Provider struct {
 	Models  []string `json:"models"`
 }
 
+// AgentIslandSettings contains only user preferences; task state remains in the core.
+type AgentIslandSettings struct {
+	SubtleReminders bool   `json:"subtleReminders"`
+	DisplayTarget   string `json:"displayTarget"`
+	Mascot          string `json:"mascot"`
+	SoundEnabled    bool   `json:"soundEnabled"`
+	StartSound      string `json:"startSound"`
+	AttentionSound  string `json:"attentionSound"`
+	CompleteSound   string `json:"completeSound"`
+	ErrorSound      string `json:"errorSound"`
+	SelectSound     string `json:"selectSound"`
+}
+
 type Settings struct {
+	Island          AgentIslandSettings     `json:"island"`
+	AgentIsland     bool                    `json:"agentIsland"`
 	Privacy         privacy.Settings        `json:"privacy"`
 	Hooks           []HookRule              `json:"hooks"`
 	Subagents       []SubagentProfile       `json:"subagents"`

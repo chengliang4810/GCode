@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "15072b77c3ae1efafa26464efadec3a64c6435e83e5e69c596fd6c8e461cd309",
+  "noticeSha256": "342085840b7dfc11dce93ccd58769b48ec22757bea74af91fe63ffd82587c91e",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -19,6 +19,24 @@
       "bytes": 1036,
       "sha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3",
       "source": "internal/assets/data/artifacts/notices/image-thumbnail.MIT (verbatim supplied source text)"
+    },
+    {
+      "path": "cindy/Code-Island-MIT.txt",
+      "bytes": 1417,
+      "sha256": "89089560eaac9fbf4d0e611f6fe2854b891d5ded5898dc5e4a825f82d1ff681c",
+      "source": "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/docs/legal/notices/THIRD-PARTY-NOTICES.txt Code Island section"
+    },
+    {
+      "path": "cindy/LICENSE.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "source": "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/LICENSE (local reference checkout)"
+    },
+    {
+      "path": "cindy/NOTICE.txt",
+      "bytes": 282,
+      "sha256": "77ad73b2535cd4011ed8b509aa51d7c745ae5a6f411370d8f94337562c03cd97",
+      "source": "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/NOTICE (local reference checkout)"
     },
     {
       "path": "fonts/GUST-FONT-LICENSE.txt",
@@ -85,6 +103,12 @@
       "bytes": 1303,
       "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
       "source": "go1.27.3 selected toolchain/PATENTS"
+    },
+    {
+      "path": "go/cron-MIT.txt",
+      "bytes": 1092,
+      "sha256": "8f650581478707182f3306d9a86676d4e03e2d4edc868344378cf4d6fe6c927a",
+      "source": "github.com/robfig/cron/v3@v3.0.1/LICENSE (local module cache)"
     },
     {
       "path": "go/fyne-ico-LICENSE-reader.txt",

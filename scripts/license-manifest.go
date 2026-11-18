@@ -23,6 +23,11 @@ const uucode = "https://raw.githubusercontent.com/jacobsandlund/uucode/9d5552455
 const wuffs = "https://raw.githubusercontent.com/google/wuffs-mirror-release-c/7411f488fe2e2c205c3d3b3d28638b7356522930/"
 
 var origins = map[string]string{
+	"go/cron-MIT.txt":           "github.com/robfig/cron/v3@v3.0.1/LICENSE (local module cache)",
+	"cindy/LICENSE.txt":         "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/LICENSE (local reference checkout)",
+	"cindy/NOTICE.txt":          "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/NOTICE (local reference checkout)",
+	"cindy/Code-Island-MIT.txt": "Cindy@c591eaa0feb2d6e45591effa6786b6fefe5c00d7/docs/legal/notices/THIRD-PARTY-NOTICES.txt Code Island section",
+
 	"icons/Lobe-Icons-MIT.txt":                           "https://raw.githubusercontent.com/lobehub/lobe-icons/9d10f0e9ea1b1491a5cf72a169861a29c8fdd83b/LICENSE (verbatim source)",
 	"go/fyne-image-LICENSE.txt":                          "github.com/fyne-io/image@v0.1.1/LICENSE (local module cache)",
 	"go/fyne-ico-LICENSE-reader.txt":                     "github.com/fyne-io/image@v0.1.1/ico/LICENSE-reader (local module cache)",

@@ -26,6 +26,7 @@ import (
 )
 
 type App struct {
+	island                agentIslandState
 	automationUI          automationPageState
 	sessionInfoProjection sessionInfoProjection
 	math                  mathViewState
@@ -319,6 +320,23 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.configureWorkspaceLinks()
 	a.refreshSessionSubscription()
 	a.notifications.Start(a.ctx, nativeNotificationSink{})
+	a.syncAgentIsland()
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-a.ctx.Done():
+				return
+			case <-ticker.C:
+				win.Update(func() {
+					if !a.closed {
+						a.syncAgentIsland()
+					}
+				})
+			}
+		}
+	}()
 	go func() {
 		for {
 			select {
@@ -374,6 +392,7 @@ func (a *App) startClose() {
 		saveInstructions := a.agentsDraft != a.agentsSaved
 		instructionsDone := a.agentsSaveDone
 		a.closed = true
+		a.closeIslandWindows()
 		if a.sessionSubscriptionCancel != nil {
 			a.sessionSubscriptionCancel()
 			a.sessionSubscriptionCancel = nil
@@ -433,6 +452,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.syncAgentIsland()
 		a.sessionInfoProjection = sessionInfoProjection{}
 		a.linkFiles = nil
 		a.clearSessionDetailsLoading(s)
@@ -818,6 +838,7 @@ func (a *App) selectSession(id string) {
 	}
 	a.setSelectedSession(id, false)
 	a.route = "chat"
+	a.markSessionRead(id)
 }
 
 // Background reconciliation changes the chat selection without navigating.
