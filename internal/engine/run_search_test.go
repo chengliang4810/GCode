@@ -101,13 +101,18 @@ func TestSearchToolsRoundTripThroughThreeProtocols(t *testing.T) {
 				t.Fatalf("conversation was not created: %+v, %v", summary.Sessions, err)
 			}
 			sid := summary.Sessions[0].ID
+			releaseView := pinSessionView(t, core, sid)
+			defer releaseView()
 			after := waitIdle(t, core, sid)
 			after, err = core.Snapshot(ctx, sid)
 			if err != nil {
 				t.Fatal(err)
 			}
+			core.mu.Lock()
+			historyCount := len(core.history[sid])
+			core.mu.Unlock()
 			if requests.Load() != 3 || after.Sessions[0].LastOutcome != "completed" ||
-				len(core.history[sid]) != 6 {
+				historyCount != 6 {
 				t.Fatalf("search round trip failed: %+v", after.Runs)
 			}
 			kinds := map[string]contracts.ToolKind{}

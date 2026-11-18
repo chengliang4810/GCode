@@ -283,7 +283,12 @@ func TestRestartAndModelSwitchPreserveScopedContinuation(t *testing.T) {
 					t.Fatalf("step %d sent incorrect continuation: %s", step, body)
 				}
 			}
-			if len(core.history[sid]) != 8 || core.history[sid][1].Continuation == nil {
+			releaseView := pinSessionView(t, core, sid)
+			defer releaseView()
+			core.mu.Lock()
+			history := model.CloneMessages(core.history[sid])
+			core.mu.Unlock()
+			if len(history) != 8 || history[1].Continuation == nil {
 				t.Fatal("restart or model switch discarded original execution history")
 			}
 		})
