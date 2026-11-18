@@ -14,7 +14,7 @@ func TestToolPresentationDecodesReadableFieldsAndPreservesArguments(t *testing.T
 		name, tool, args, command, summary string
 	}{
 		{"command", "Bash", `{"command":"go test ./...","timeout":60}`, "go test ./...", "Bash"},
-		{"search", "Grep", `{"pattern":"func main","path":"src"}`, "", "func main · src"},
+		{"search", "Grep", `{"pattern":"func main","path":"src"}`, "", "func main, src"},
 		{"Glob", "Glob", `{"pattern":"**/*.go"}`, "", "**/*.go"},
 		{"directory", "ListDirectory", `{"path":"src"}`, "", "src"},
 		{"invalid", "Bash", `{"command":`, "", "Bash"},
@@ -26,7 +26,7 @@ func TestToolPresentationDecodesReadableFieldsAndPreservesArguments(t *testing.T
 		{"agent", "Agent", `{"description":"Inspect layout","prompt":"Check the controls"}`, "Check the controls", "Inspect layout"},
 		{"fetch", "WebFetch", `{"url":"https://example.test/docs"}`, "", "https://example.test/docs"},
 		{"web", "WebSearch", `{"query":"Go documentation"}`, "", "Go documentation"},
-		{"mcp", "mcp__files__read_text", `{"path":"README.md"}`, "", "files · read_text"},
+		{"mcp", "mcp__files__read_text", `{"path":"README.md"}`, "", "files: read_text"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			started := time.Now()
@@ -65,7 +65,7 @@ func TestToolPresentationKeepsMCPDisplayNamesAndUpdatedInputs(t *testing.T) {
 	current := ""
 	for _, event := range []agent.Event{
 		{Kind: "message.start"},
-		{Kind: "tool.start", Call: call, DisplayName: "文件服务 · 读取文本"},
+		{Kind: "tool.start", Call: call, DisplayName: "文件服务: 读取文本"},
 		{Kind: "tool.input.changed", Call: model.Call{ID: call.ID, Name: call.Name, Arguments: `{"path":"second.md"}`}},
 	} {
 		if err := core.applyAgentEventLocked("session", "run", &current, event); err != nil {
@@ -73,7 +73,7 @@ func TestToolPresentationKeepsMCPDisplayNamesAndUpdatedInputs(t *testing.T) {
 		}
 	}
 	got := core.state.Messages["session"][0].Blocks[0].Tool
-	if got.Kind != contracts.ToolMCP || got.Summary != "文件服务 · 读取文本" ||
+	if got.Kind != contracts.ToolMCP || got.Summary != "文件服务: 读取文本" ||
 		got.Args != `{"path":"second.md"}` {
 		t.Fatalf("hook input change lost display metadata: %+v", got)
 	}

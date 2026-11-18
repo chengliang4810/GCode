@@ -46,7 +46,7 @@ func TestReferenceArtifactsPresentAndRethemed(t *testing.T) {
 			}
 		}
 	}
-	for _, kind := range []string{"text", "reasoning", "code", "tool", "todo", "subagent", "question", "permission", "attachment", "image", "math", "diagram"} {
+	for _, kind := range []string{"text", "reasoning", "code", "tool", "todo", "subagent", "question", "attachment", "image", "math", "diagram"} {
 		if !kinds[kind] {
 			t.Fatalf("showcase misses %s", kind)
 		}

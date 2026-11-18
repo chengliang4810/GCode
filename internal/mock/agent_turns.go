@@ -78,7 +78,7 @@ func reconcileAgentTurns(snapshot *contracts.Snapshot, opts Options) {
 		for _, turnID := range order {
 			group := groups[turnID]
 			index, exists := indices[turnID]
-			run := contracts.Run{ID: turnID, SessionID: sid, Status: "completed", FinishReason: "stop", StartedAt: group[0].CreatedAt}
+			run := contracts.Run{ID: turnID, SessionID: sid, Status: "completed", FinishReason: contracts.FinishReasonStop, StartedAt: group[0].CreatedAt}
 			if exists {
 				run = snapshot.Runs[index]
 			}
@@ -96,7 +96,7 @@ func reconcileAgentTurns(snapshot *contracts.Snapshot, opts Options) {
 					if block.Tool != nil && block.Tool.FinishedAt != nil && block.Tool.FinishedAt.After(end) {
 						end = *block.Tool.FinishedAt
 					}
-					waiting = waiting || (block.Question != nil && !block.Question.Resolved) || (block.Permission != nil && block.Permission.Answer == "")
+					waiting = waiting || (block.Question != nil && !block.Question.Resolved)
 					if block.Kind == "error" {
 						failed = true
 						run.Error = block.Text
@@ -122,7 +122,7 @@ func reconcileAgentTurns(snapshot *contracts.Snapshot, opts Options) {
 			}
 			if failed {
 				run.Status = "failed"
-				run.FinishReason = "error"
+				run.FinishReason = contracts.FinishReasonError
 			}
 			run.Summary = contracts.SummarizeActivity(contracts.TurnActivity(group, turnID))
 			if exists {

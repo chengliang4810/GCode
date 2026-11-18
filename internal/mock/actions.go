@@ -174,7 +174,7 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 				for ri := range s.state.Runs {
 					if s.state.Runs[ri].ID == active.id {
 						s.state.Runs[ri].Status = "interrupted"
-						s.state.Runs[ri].FinishReason = "archived"
+						s.state.Runs[ri].FinishReason = contracts.FinishReasonCanceled
 						s.state.Runs[ri].FinishedAt = &now
 					}
 				}
@@ -196,7 +196,7 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 		for ri := range s.state.Runs {
 			if s.state.Runs[ri].SessionID == v.ID && (s.state.Runs[ri].Status == "running" || s.state.Runs[ri].Status == "awaitingInput") {
 				s.state.Runs[ri].Status = "interrupted"
-				s.state.Runs[ri].FinishReason = "archived"
+				s.state.Runs[ri].FinishReason = contracts.FinishReasonCanceled
 				end := s.finishRunTimingLocked(v.ID, s.state.Runs[ri].ID)
 				s.state.Runs[ri].FinishedAt = &end
 			}
@@ -208,9 +208,6 @@ func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) e
 				b := &ms[mi].Blocks[bi]
 				if b.Question != nil && !b.Question.Resolved {
 					b.Question.Resolved = true
-				}
-				if b.Permission != nil && b.Permission.Answer == "" {
-					b.Permission.Answer = "Cancelled"
 				}
 			}
 		}
@@ -364,7 +361,7 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 	}
 	req = clone(req)
 	req.Text = strings.TrimSpace(req.Text)
-	if req.Text == "" && len(req.Attachments) == 0 && len(req.Annotations) == 0 {
+	if req.ReplaceMessageID == "" && req.Text == "" && len(req.Attachments) == 0 && len(req.Annotations) == 0 {
 		return contracts.Run{}, errors.New("message is empty")
 	}
 	for i := range req.Annotations {
@@ -374,6 +371,19 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 	if s.closed {
 		s.mu.Unlock()
 		return contracts.Run{}, ErrClosed
+	}
+	if req.ReplaceMessageID != "" {
+		i := s.sessionIndexLocked(req.SessionID)
+		if i < 0 || req.RequestID == "" || req.Checkout != nil || req.Delivery != "" {
+			s.mu.Unlock()
+			return contracts.Run{}, errors.New("invalid message replacement")
+		}
+		for _, run := range s.state.Runs {
+			if run.SessionID == req.SessionID && run.RequestID == req.RequestID {
+				s.mu.Unlock()
+				return run, nil
+			}
+		}
 	}
 	if existing := s.sessionIndexLocked(req.SessionID); req.SessionID != "" && existing >= 0 {
 		// Draft selections cannot migrate an established conversation, even
@@ -452,6 +462,28 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 	if s.state.Sessions[i].Archived {
 		s.mu.Unlock()
 		return contracts.Run{}, errors.New("restore the archived session before sending")
+	}
+	if req.ReplaceMessageID != "" {
+		messages := s.state.Messages[req.SessionID]
+		at := contracts.InterruptedTurnMessage(s.state.Sessions[i], messages, s.state.Runs)
+		if at < 0 || messages[at].ID != req.ReplaceMessageID {
+			s.mu.Unlock()
+			return contracts.Run{}, errors.New("only the last stopped message can be edited")
+		}
+		req.Attachments, req.Annotations = nil, nil
+		for _, block := range messages[at].Blocks {
+			if block.Attachment != nil {
+				req.Attachments = append(req.Attachments, *block.Attachment)
+			}
+			if block.Annotation != nil {
+				req.Annotations = append(req.Annotations, *block.Annotation)
+			}
+		}
+		if req.Text == "" && len(req.Attachments) == 0 && len(req.Annotations) == 0 {
+			s.mu.Unlock()
+			return contracts.Run{}, errors.New("message is empty")
+		}
+		s.state.Messages[req.SessionID] = messages[:at:at]
 	}
 	if s.state.Sessions[i].Status == contracts.Working || s.state.Sessions[i].Status == contracts.AwaitingInput {
 		current := s.state.Sessions[i]
@@ -574,17 +606,6 @@ func (s *Server) startContinuationLocked(i int, req contracts.SendRequest, addUs
 	ctx, cancel := context.WithCancel(context.Background())
 	s.runs[session.ID] = activeRun{id: run.ID, cancel: cancel}
 	s.publishLocked("run.started", session.ID, run.ID, req.RequestID, "")
-	if turnID == "" && strings.Contains(strings.ToLower(req.Text), "permission") {
-		ms := s.state.Messages[session.ID]
-		last := &ms[len(ms)-1]
-		last.Streaming = false
-		last.Blocks = []contracts.Block{{ID: s.idLocked("block"), Kind: "permission", Permission: &contracts.Permission{ID: s.idLocked("permission"), Title: "Run project checks", Description: "Allow the agent to run the project's test suite?", Command: "go test ./..."}}}
-		s.state.Messages[session.ID] = ms
-		session.Status = contracts.AwaitingInput
-		s.state.Runs[len(s.state.Runs)-1].Status = "awaitingInput"
-		s.publishLocked("request.created", session.ID, run.ID, req.RequestID, "")
-		return run
-	}
 	if turnID == "" && strings.Contains(strings.ToLower(req.Text), "question") {
 		ms := s.state.Messages[session.ID]
 		last := &ms[len(ms)-1]
@@ -640,11 +661,11 @@ func (s *Server) advanceRun(sessionID, runID, text string, done bool) bool {
 		for i := range s.state.Runs {
 			if s.state.Runs[i].ID == runID {
 				s.state.Runs[i].Status = "completed"
-				s.state.Runs[i].FinishReason = "stop"
+				s.state.Runs[i].FinishReason = contracts.FinishReasonStop
 				s.state.Runs[i].FinishedAt = &now
 				if s.state.Runs[i].Error != "" {
 					s.state.Runs[i].Status = "failed"
-					s.state.Runs[i].FinishReason = "toolFailed"
+					s.state.Runs[i].FinishReason = contracts.FinishReasonError
 				}
 			}
 		}
@@ -700,7 +721,7 @@ func (s *Server) Stop(ctx context.Context, sessionID string) error {
 		for ri := range s.state.Runs {
 			if s.state.Runs[ri].ID == r.id {
 				s.state.Runs[ri].Status = "interrupted"
-				s.state.Runs[ri].FinishReason = "userStopped"
+				s.state.Runs[ri].FinishReason = contracts.FinishReasonUserStop
 				s.state.Runs[ri].FinishedAt = &now
 			}
 		}
@@ -709,7 +730,7 @@ func (s *Server) Stop(ctx context.Context, sessionID string) error {
 	for ri := range s.state.Runs {
 		if s.state.Runs[ri].SessionID == sessionID && (s.state.Runs[ri].Status == "running" || s.state.Runs[ri].Status == "awaitingInput") {
 			s.state.Runs[ri].Status = "interrupted"
-			s.state.Runs[ri].FinishReason = "userStopped"
+			s.state.Runs[ri].FinishReason = contracts.FinishReasonUserStop
 			end := s.finishRunTimingLocked(sessionID, s.state.Runs[ri].ID)
 			s.state.Runs[ri].FinishedAt = &end
 		}
@@ -721,9 +742,6 @@ func (s *Server) Stop(ctx context.Context, sessionID string) error {
 			b := &ms[mi].Blocks[bi]
 			if b.Question != nil && !b.Question.Resolved {
 				b.Question.Resolved = true
-			}
-			if b.Permission != nil && b.Permission.Answer == "" {
-				b.Permission.Answer = "Cancelled"
 			}
 		}
 	}
@@ -807,14 +825,13 @@ func (s *Server) answer(ctx context.Context, id, answer string, answers []contra
 		for mi := range ms {
 			for bi := range ms[mi].Blocks {
 				b := &ms[mi].Blocks[bi]
-				if (b.Question != nil && b.Question.ID == id) || (b.Permission != nil && b.Permission.ID == id) {
+				if b.Question != nil && b.Question.ID == id {
 					if owner := s.sessionIndexLocked(sid); owner >= 0 && s.state.Sessions[owner].Archived {
 						s.mu.Unlock()
 						return errors.New("restore the archived session before answering")
 					}
 				}
 				match := false
-				denied := false
 				if b.Question != nil && b.Question.ID == id {
 					if b.Question.Resolved {
 						s.mu.Unlock()
@@ -826,19 +843,6 @@ func (s *Server) answer(ctx context.Context, id, answer string, answers []contra
 					}
 					b.Question.Answers = contracts.CloneQuestionAnswers(answers)
 					b.Question.Resolved = true
-					match = true
-				}
-				if b.Permission != nil && b.Permission.ID == id {
-					if b.Permission.Answer != "" {
-						s.mu.Unlock()
-						return errors.New("permission has already been answered")
-					}
-					if answer != "Allow once" && answer != "Always allow" && answer != "Deny" {
-						s.mu.Unlock()
-						return errors.New("invalid permission answer")
-					}
-					denied = answer == "Deny"
-					b.Permission.Answer = answer
 					match = true
 				}
 				if match {
@@ -860,21 +864,7 @@ func (s *Server) answer(ctx context.Context, id, answer string, answers []contra
 						}
 					}
 					s.publishLocked("request.answered", sid, "", id, answer)
-					if denied {
-						for ri := range s.state.Runs {
-							if s.state.Runs[ri].ID == ms[mi].TurnID {
-								s.state.Runs[ri].Status = "interrupted"
-								s.state.Runs[ri].FinishReason = "permissionDenied"
-								end := s.finishRunTimingLocked(sid, s.state.Runs[ri].ID)
-								s.state.Runs[ri].FinishedAt = &end
-							}
-						}
-						if si >= 0 {
-							s.state.Sessions[si].LastOutcome = "interrupted"
-						}
-						s.state.Messages[sid] = append(s.state.Messages[sid], contracts.Message{ID: s.idLocked("message"), SessionID: sid, TurnID: ms[mi].TurnID, ContinuationOf: ms[mi].ID, Role: "assistant", CreatedAt: s.opts.Now().UTC(), Blocks: []contracts.Block{{ID: s.idLocked("block"), Kind: "text", Text: "I won’t run that command. You can continue with another approach."}}})
-						s.publishLocked("permission.denied", sid, "", id, answer)
-					} else if si >= 0 {
+					if si >= 0 {
 						s.startContinuationLocked(si, contracts.SendRequest{SessionID: sid, Text: "Continue with " + answer}, false, ms[mi].TurnID, ms[mi].ID)
 					}
 					s.mu.Unlock()

@@ -29,12 +29,13 @@ func (e *Engine) sendLocked(send contracts.SendRequest) error {
 }
 
 func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *checkoutResult) error {
+	replacing := send.ReplaceMessageID != ""
 	for _, refs := range e.state.RepoRefs {
 		if refs.Scope.ProjectID == send.ProjectID && refs.Switching != "" {
 			return errors.New("wait for the project's branch switch to finish")
 		}
 	}
-	if strings.TrimSpace(contracts.PlainPrompt(send.Text)) == "/compact" {
+	if !replacing && strings.TrimSpace(contracts.PlainPrompt(send.Text)) == "/compact" {
 		return e.compactLocked(send.SessionID, send.RequestID)
 	}
 	if send.Delivery != "" && send.Delivery != "follow-up" && send.Delivery != "steer" {
@@ -52,11 +53,18 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 			}
 		}
 	}
-	if handled, err := e.goalTextLocked(send, checkout); handled {
-		if err == nil && checkout != nil {
-			checkout.accepted = true
+	if !replacing {
+		if handled, err := e.goalTextLocked(send, checkout); handled {
+			if err == nil && checkout != nil {
+				checkout.accepted = true
+			}
+			return err
 		}
-		return err
+	}
+	if replacing {
+		if err := e.replaceInterruptedTurnLocked(&send); err != nil {
+			return err
+		}
 	}
 	if strings.TrimSpace(send.Text) == "" && len(send.Attachments) == 0 {
 		return errors.New("message is empty")
@@ -293,7 +301,7 @@ func (e *Engine) startRunWithProvidersLocked(
 		now := time.Now()
 		goal.ActiveSince, goal.LastSeenAt, goal.UpdatedAt = &now, now, now
 	}
-	e.state.Runs = append(e.state.Runs, contracts.Run{ID: run.id, SessionID: session.ID, RequestID: requestID, Status: "running", StartedAt: time.Now()})
+	e.state.Runs = append(e.state.Runs, contracts.Run{ID: run.id, SessionID: session.ID, RequestID: requestID, Status: contracts.RunStatusRunning, StartedAt: time.Now()})
 	e.history[session.ID] = closeInterruptedCalls(e.history[session.ID])
 	e.context[session.ID] = closeInterruptedCalls(e.context[session.ID])
 	run.sideChatHistory = throughLatestHumanInput(e.history[session.ID])
@@ -789,16 +797,26 @@ func (e *Engine) startRunWithProvidersLocked(
 		for i := range e.state.Runs {
 			r := &e.state.Runs[i]
 			if r.ID == run.id {
+				// message.stop presets the reason while the run stops. Read it
+				// before this settlement overwrites it, so a user stop stays
+				// distinguishable from every other cancellation.
+				requested := r.FinishReason
 				now := time.Now()
 				r.FinishedAt = &now
 				r.DurationMS = now.Sub(r.StartedAt).Milliseconds()
-				r.Status = "completed"
+				r.Status = contracts.RunStatusCompleted
+				r.FinishReason = contracts.FinishReasonStop
 				r.OutputFile = run.outputFile
 				if runErr != nil {
-					r.Status = "failed"
+					r.Status = contracts.RunStatusFailed
+					r.FinishReason = contracts.FinishReasonError
 					r.Error = runErr.Error()
 					if errors.Is(runErr, context.Canceled) {
-						r.Status = "interrupted"
+						r.Status = contracts.RunStatusInterrupted
+						r.FinishReason = contracts.FinishReasonCanceled
+						if requested == contracts.FinishReasonUserStop {
+							r.FinishReason = contracts.FinishReasonUserStop
+						}
 					}
 				}
 			}
@@ -846,7 +864,8 @@ func (e *Engine) startRunWithProvidersLocked(
 			runErr = errors.Join(runErr, fmt.Errorf("cannot save execution history: %w", persistErr))
 			for i := range e.state.Runs {
 				if e.state.Runs[i].ID == run.id {
-					e.state.Runs[i].Status = "failed"
+					e.state.Runs[i].Status = contracts.RunStatusFailed
+					e.state.Runs[i].FinishReason = contracts.FinishReasonError
 					e.state.Runs[i].Error = runErr.Error()
 				}
 			}
@@ -1034,7 +1053,13 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 					block.Tool.Status = "failed"
 				}
 				block.Tool.FinishedAt = &now
-				block.Tool.Diff = e.finishEditLocked(sessionID, event.Call)
+				// A file edit and a patch block show their own change; an exec
+				// block keeps its redirected writes in the change list only, so
+				// the engine never reports a command as a file edit.
+				changes := e.finishToolChangesLocked(sessionID, event.Call)
+				if len(changes) > 0 && carriesToolDiff(block.Tool.Kind) {
+					block.Tool.Diff = &changes[0]
+				}
 				if block.Tool.Kind == contracts.ToolReadFile {
 					block.Tool.ReadLines = readLineCount(event.Data)
 				}

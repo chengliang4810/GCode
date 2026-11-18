@@ -58,7 +58,7 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		}
 	case contracts.ToolMCP:
 		service, operation, _ := strings.Cut(strings.TrimPrefix(call.Name, "mcp__"), "__")
-		tool.Summary = service + " · " + operation
+		tool.Summary = service + ": " + operation
 	case contracts.ToolTodo:
 		if update, err := agent.ParseTodoUpdate(json.RawMessage(call.Arguments)); err == nil {
 			tool.Summary = todoProgress(update)
@@ -68,7 +68,7 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 	case contracts.ToolSearch:
 		tool.Summary = args.Pattern
 		if args.Path != "" {
-			tool.Summary += " · " + args.Path
+			tool.Summary += ", " + args.Path
 		}
 	case contracts.ToolGlob:
 		tool.Summary = args.Pattern

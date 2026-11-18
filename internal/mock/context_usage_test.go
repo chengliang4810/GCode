@@ -243,9 +243,9 @@ func TestContextUsageQueuedRunTakesOwnershipAfterFinalReport(t *testing.T) {
 	}
 }
 
-func TestContextUsagePermissionContinuationKeepsProviderSession(t *testing.T) {
+func TestContextUsageQuestionContinuationKeepsProviderSession(t *testing.T) {
 	s := newTestServer(t, Options{TokenInterval: time.Hour})
-	run, err := s.Send(context.Background(), contracts.SendRequest{SessionID: "chat-0", Text: "Request permission to inspect checks", ModelID: "claude-opus-4-6"})
+	run, err := s.Send(context.Background(), contracts.SendRequest{SessionID: "chat-0", Text: "Request a question about checks", ModelID: "claude-opus-4-6"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -254,22 +254,23 @@ func TestContextUsagePermissionContinuationKeepsProviderSession(t *testing.T) {
 		t.Fatal("waiting provider report rejected")
 	}
 	snapshot := snapshotForSessions(t, s, "chat-0")
-	permissionID := ""
+	var question *contracts.Question
 	for _, message := range snapshot.Messages["chat-0"] {
 		for _, block := range message.Blocks {
-			if block.Permission != nil && message.TurnID == run.ID {
-				permissionID = block.Permission.ID
+			if block.Question != nil && message.TurnID == run.ID {
+				question = block.Question
 			}
 		}
 	}
-	if permissionID == "" {
-		t.Fatal("permission fixture was not produced")
+	if question == nil || len(question.Pages) == 0 || len(question.Pages[0].Options) == 0 {
+		t.Fatal("question fixture was not produced")
 	}
-	if err := s.Answer(context.Background(), permissionID, "Allow once"); err != nil {
+	option := question.Pages[0].Options[0].Label
+	if err := s.answer(context.Background(), question.ID, option, []contracts.QuestionAnswer{{Options: []string{option}}}); err != nil {
 		t.Fatal(err)
 	}
 	if contextGeneration(s, "chat-0") != generation {
-		t.Fatal("same-turn permission continuation created a new provider source")
+		t.Fatal("same-turn question continuation created a new provider source")
 	}
 	if !reportContext(s, "chat-0", run.ID, generation, contracts.ContextUsage{Tokens: contextCount(16000)}) {
 		t.Fatal("continuation stopped accepting the original provider's reports")

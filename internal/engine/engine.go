@@ -129,6 +129,10 @@ type Engine struct {
 	pluginOperations   map[string]context.CancelFunc
 	pluginConfig       map[string]map[string]string
 	sessionHookOnce    map[string]*agent.HookOnceState
+	// hookApprovals is this engine's memory of "always allow in this session"
+	// grants: host memory, never session data, and never shared with another
+	// engine in the same process.
+	hookApprovals      hookPermissionApprovals
 	sessionStarted     map[string]bool
 	sessionTools       map[string]*sessionToolSet
 	projectScans       map[string]*projectScan

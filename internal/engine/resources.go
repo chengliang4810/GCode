@@ -140,7 +140,11 @@ func expandCommand(root, cwd string, text string) (string, error) {
 		return text, nil
 	}
 	if cwd != "" {
-		for _, path := range []string{filepath.Join(cwd, ".claude", "commands", name+".md"), filepath.Join(cwd, ".claude", "skills", name, "SKILL.md")} {
+		for _, path := range []string{
+			filepath.Join(cwd, ".claude", "commands", name+".md"),
+			filepath.Join(cwd, ".claude", "skills", name, "SKILL.md"),
+			filepath.Join(cwd, ".agents", "skills", name, "SKILL.md"),
+		} {
 			if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
 				return text, nil
 			}

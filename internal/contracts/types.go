@@ -172,7 +172,6 @@ type Block struct {
 	Language   string      `json:"language,omitempty"`
 	Tool       *ToolCall   `json:"tool,omitempty"`
 	Question   *Question   `json:"question,omitempty"`
-	Permission *Permission `json:"permission,omitempty"`
 	Todos      []Todo      `json:"todos,omitempty"`
 	Subagent   *Subagent   `json:"subagent,omitempty"`
 	Attachment *Attachment `json:"attachment,omitempty"`
@@ -224,13 +223,6 @@ type QuestionAnswer struct {
 	Options []string `json:"options,omitempty"`
 	Text    string   `json:"text,omitempty"`
 }
-type Permission struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Command     string `json:"command"`
-	Answer      string `json:"answer"`
-}
 type Todo struct {
 	ID     string `json:"id"`
 	Text   string `json:"text"`
@@ -274,6 +266,26 @@ type Usage struct {
 	ContextLimit  int     `json:"contextLimit"`
 	Cost          float64 `json:"cost"`
 }
+
+// Run status values. Stopping is transient: it only exists between an accepted
+// stop request and the run settling, so clients must not assume they observe it.
+const (
+	RunStatusRunning     = "running"
+	RunStatusStopping    = "stopping"
+	RunStatusCompleted   = "completed"
+	RunStatusFailed      = "failed"
+	RunStatusInterrupted = "interrupted"
+)
+
+// Finish reasons explain why a run settled. Canceled covers every cancellation
+// the user did not request for that run, such as host shutdown or archive.
+const (
+	FinishReasonStop     = "stop"
+	FinishReasonUserStop = "userStop"
+	FinishReasonCanceled = "canceled"
+	FinishReasonError    = "error"
+)
+
 type Run struct {
 	RequestID    string          `json:"requestId,omitempty"`
 	DurationMS   int64           `json:"durationMs"`
@@ -513,19 +525,20 @@ type Event struct {
 	Snapshot      *Snapshot `json:"snapshot,omitempty"`
 }
 type SendRequest struct {
-	Delivery       string        `json:"delivery"`
-	Checkout       *CheckoutPlan `json:"checkout,omitempty"`
-	Annotations    []Annotation  `json:"annotations,omitempty"`
-	DeviceID       string        `json:"deviceId,omitempty"`
-	Branch         string        `json:"branch,omitempty"`
-	WorktreeID     string        `json:"worktreeId,omitempty"`
-	ProjectID      string        `json:"projectId,omitempty"`
-	SessionID      string        `json:"sessionId"`
-	Text           string        `json:"text"`
-	ModelID        string        `json:"modelId"`
-	ReasoningLevel string        `json:"reasoningLevel"`
-	Attachments    []Attachment  `json:"attachments"`
-	RequestID      string        `json:"requestId"`
+	ReplaceMessageID string        `json:"replaceMessageId,omitempty"`
+	Delivery         string        `json:"delivery"`
+	Checkout         *CheckoutPlan `json:"checkout,omitempty"`
+	Annotations      []Annotation  `json:"annotations,omitempty"`
+	DeviceID         string        `json:"deviceId,omitempty"`
+	Branch           string        `json:"branch,omitempty"`
+	WorktreeID       string        `json:"worktreeId,omitempty"`
+	ProjectID        string        `json:"projectId,omitempty"`
+	SessionID        string        `json:"sessionId"`
+	Text             string        `json:"text"`
+	ModelID          string        `json:"modelId"`
+	ReasoningLevel   string        `json:"reasoningLevel"`
+	Attachments      []Attachment  `json:"attachments"`
+	RequestID        string        `json:"requestId"`
 }
 type SessionUpdate struct {
 	ReasoningLevel *string `json:"reasoningLevel,omitempty"`

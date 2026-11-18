@@ -706,7 +706,8 @@ func runsFinished(state contracts.Snapshot) bool {
 		return false
 	}
 	for _, run := range state.Runs {
-		if run.Status == "running" {
+		// A stop request publishes stopping before the turn settles.
+		if run.Status == contracts.RunStatusRunning || run.Status == contracts.RunStatusStopping {
 			return false
 		}
 	}

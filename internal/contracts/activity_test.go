@@ -20,7 +20,7 @@ func TestActivitySummaryUsesInvocationIdentityAndUniqueEditedPaths(t *testing.T)
 	if summary.ToolCalls != 8 || summary.Commands != 1 || summary.Reads != 2 || summary.EditedFiles != 2 || summary.Searches != 1 || summary.Failed != 1 || summary.Other != 1 || summary.Subagents != 1 {
 		t.Fatalf("incorrect activity counts: %+v", summary)
 	}
-	want := "Thought process · Ran 1 command · edited 2 files · read 2 files · searched 1 time · called 1 tool · 1 failed"
+	want := "Thought process, Ran 1 command, edited 2 files, read 2 files, searched 1 time, called 1 tool, 1 failed"
 	if summary.Label() != want {
 		t.Fatalf("label=%q, want %q", summary.Label(), want)
 	}

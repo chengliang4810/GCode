@@ -10,8 +10,11 @@ import (
 	"net"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 )
+
+const RetryWaitingForNetwork = "waiting_for_network"
 
 type Failure struct {
 	Reason     string
@@ -30,8 +33,19 @@ var failureRules = []func(error) (Failure, bool){
 	providerBusinessFailure,
 	httpFailure,
 	toolCallFailure,
+	unreachableNetworkFailure,
 	streamFailure,
 	networkFailure,
+}
+
+func unreachableNetworkFailure(err error) (Failure, bool) {
+	var dns *net.DNSError
+	var op *net.OpError
+	unreachable := errors.Is(err, syscall.ENETDOWN) || errors.Is(err, syscall.ENETUNREACH) ||
+		errors.Is(err, syscall.EHOSTUNREACH)
+	dialTimeout := errors.As(err, &op) && op.Op == "dial" && op.Timeout()
+	dnsUnavailable := errors.As(err, &dns) && !dns.IsNotFound && (dns.IsTimeout || dns.IsTemporary)
+	return Failure{Reason: RetryWaitingForNetwork, Retryable: true}, unreachable || dialTimeout || dnsUnavailable
 }
 
 func streamLimitFailure(err error) (Failure, bool) {

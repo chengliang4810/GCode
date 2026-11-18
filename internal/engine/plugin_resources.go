@@ -225,45 +225,8 @@ func buildRuntimeResources(configRoot, runtimeRoot, cwd, sessionID string, bundl
 		}
 		r.skills[c.Name] = runtimeSkill{name: c.Name, component: component}
 	}
-	// Project resources override personal and plugin resources by their observable name.
-	for _, kind := range []string{"skills", "commands", "agents"} {
-		directory := filepath.Join(cwd, ".claude", kind)
-		err := filepath.WalkDir(directory, func(path string, entry os.DirEntry, walkErr error) error {
-			if errors.Is(walkErr, os.ErrNotExist) {
-				return nil
-			}
-			if walkErr != nil {
-				return walkErr
-			}
-			if entry.Type()&os.ModeSymlink != 0 {
-				return errors.New("project resource symbolic links are not allowed")
-			}
-			if entry.IsDir() {
-				return nil
-			}
-			if kind == "skills" && entry.Name() != "SKILL.md" || kind != "skills" && !strings.HasSuffix(entry.Name(), ".md") {
-				return nil
-			}
-			c, err := plugins.ParseMarkdown(path)
-			if err != nil {
-				return err
-			}
-			relative, _ := filepath.Rel(directory, path)
-			pathIdentity := strings.TrimSuffix(filepath.ToSlash(relative), ".md")
-			if kind == "skills" {
-				pathIdentity = filepath.Base(filepath.Dir(relative))
-			}
-			c.Name = plugins.ComponentName(kind, "", pathIdentity, c.Metadata.Name)
-			if kind == "agents" {
-				r.profiles = append(r.profiles, contracts.SubagentProfile{ID: c.Name, Name: c.Name, Description: c.Metadata.Description, Prompt: c.Content, Tools: frontmatterTools(c.Frontmatter["tools"]), DisallowedTools: frontmatterTools(c.Frontmatter["disallowedTools"])})
-			} else {
-				r.skills[c.Name] = runtimeSkill{name: c.Name, component: c}
-			}
-			return nil
-		})
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return r, err
-		}
+	if err := r.loadProjectResources(cwd); err != nil {
+		return r, err
 	}
 	// Built-ins, plugin/project definitions, then explicit user profiles.
 	all := contracts.DefaultSubagentProfiles()
@@ -277,6 +240,62 @@ func buildRuntimeResources(configRoot, runtimeRoot, cwd, sessionID string, bundl
 	}
 	r.profiles = all
 	return r, nil
+}
+
+func (r *runtimeResources) loadProjectResources(cwd string) error {
+	if cwd == "" {
+		return nil
+	}
+	// Project resources override personal and plugin resources, with the
+	// existing .claude names taking precedence over .agents on collisions.
+	for _, source := range []struct{ root, kind string }{
+		{".agents", "skills"},
+		{".claude", "skills"},
+		{".claude", "commands"},
+		{".claude", "agents"},
+	} {
+		directory := filepath.Join(cwd, source.root, source.kind)
+		if info, err := os.Lstat(filepath.Dir(directory)); err == nil && info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("project resource symbolic links are not allowed: %s", filepath.Dir(directory))
+		}
+		err := filepath.WalkDir(directory, func(path string, entry os.DirEntry, walkErr error) error {
+			if errors.Is(walkErr, os.ErrNotExist) {
+				return nil
+			}
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.Type()&os.ModeSymlink != 0 {
+				return errors.New("project resource symbolic links are not allowed")
+			}
+			if entry.IsDir() {
+				return nil
+			}
+			if source.kind == "skills" && entry.Name() != "SKILL.md" || source.kind != "skills" && !strings.HasSuffix(entry.Name(), ".md") {
+				return nil
+			}
+			c, err := plugins.ParseMarkdown(path)
+			if err != nil {
+				return err
+			}
+			relative, _ := filepath.Rel(directory, path)
+			pathIdentity := strings.TrimSuffix(filepath.ToSlash(relative), ".md")
+			if source.kind == "skills" {
+				pathIdentity = filepath.Base(filepath.Dir(relative))
+			}
+			c.Name = plugins.ComponentName(source.kind, "", pathIdentity, c.Metadata.Name)
+			if source.kind == "agents" {
+				r.profiles = append(r.profiles, contracts.SubagentProfile{ID: c.Name, Name: c.Name, Description: c.Metadata.Description, Prompt: c.Content, Tools: frontmatterTools(c.Frontmatter["tools"]), DisallowedTools: frontmatterTools(c.Frontmatter["disallowedTools"])})
+			} else {
+				r.skills[c.Name] = runtimeSkill{name: c.Name, component: c}
+			}
+			return nil
+		})
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+	}
+	return nil
 }
 
 func frontmatterTools(value any) []string {

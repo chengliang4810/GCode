@@ -65,8 +65,10 @@ func (disk persistedSnapshot) restore(defaults contracts.Snapshot) contracts.Sna
 	defaults.Terminals = disk.Terminals
 	defaults.Runs = disk.Runs
 	for i := range defaults.Runs {
-		if defaults.Runs[i].Status == "running" {
-			defaults.Runs[i].Status = "interrupted"
+		// A stopping run never settles on its own once the host is gone, so it
+		// is normalized exactly like a running one.
+		if defaults.Runs[i].Status == contracts.RunStatusRunning || defaults.Runs[i].Status == contracts.RunStatusStopping {
+			defaults.Runs[i].Status = contracts.RunStatusInterrupted
 			defaults.Runs[i].FinishReason = "engineRestarted"
 		}
 	}

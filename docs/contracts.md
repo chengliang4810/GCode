@@ -264,6 +264,38 @@ Project resources and old prompts/mcp.json formats are not loaded.
 See [user settings](user-settings.md) for runtime semantics and verification limits.
 
 
+## 运行状态与结束原因
+
+`Run.Status` 的取值（常量在 `internal/contracts`：`RunStatusRunning` 等）：
+
+| 值 | 含义 |
+| --- | --- |
+| `running` | 已接受，模型调用、工具执行或等待回答仍在进行 |
+| `stopping` | 已接受用户停止请求、尚未收尾的瞬时态 |
+| `completed` | 正常结束 |
+| `failed` | 以错误结束，`Run.Error` 说明原因 |
+| `interrupted` | 被取消后结束：用户停止、宿主关闭、会话归档等 |
+
+`Run.FinishReason` 的取值（`FinishReasonStop` / `FinishReasonUserStop` /
+`FinishReasonCanceled` / `FinishReasonError`）：
+
+| 值 | 含义 |
+| --- | --- |
+| `stop` | 正常完成 |
+| `userStop` | 用户在界面上明确停止本次运行 |
+| `canceled` | 非用户停止的取消，例如宿主关闭、会话归档 |
+| `error` | 运行失败 |
+
+`message.stop` 在取消之前先把该 `Run` 置为 `stopping`、`FinishReason` 预置为
+`userStop`；收尾时 `stopping` 变为 `interrupted` 且 `userStop` 保留。其他取消路径收尾为
+`interrupted` + `canceled`，失败为 `failed` + `error`，正常完成为 `completed` + `stop`。
+`stopping` 是否被观察到取决于「停止请求已接受」到「运行收尾」之间的窗口，客户端不得
+假设一定会看到它；判断「用户停止」只读收尾后的 `FinishReason`。`goal.pause` 仍走目标
+暂停，不产生 `stopping`。上下文压缩有自己的记录结算，不写 `finishReason`。
+会话 `LastOutcome` 保持 `completed` / `failed` / `interrupted`
+三值，不新增状态。确定性 mock 场景当前写 `userStopped`、`applicationClosed` 等 fixture
+取值，与本节引擎取值不同，待 UI 侧读取方式对齐。
+
 ## 持久化执行统计
 
 `Snapshot.Metrics` 是由宿主核心维护的强类型汇总，包含每个会话的 `Own`、`Total`、

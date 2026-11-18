@@ -212,6 +212,10 @@ func (c Command) Validate() error {
 	if c.Send != nil && c.Kind != "message.send" {
 		return errors.New("send payload does not match command")
 	}
+	if s := c.Send; s != nil && s.ReplaceMessageID != "" &&
+		(s.SessionID == "" || s.RequestID == "" || s.Delivery != "" || s.Checkout != nil) {
+		return errors.New("message replacement requires an existing session and a new request")
+	}
 	if c.Settings != nil && c.Kind != "settings.update" {
 		return errors.New("settings payload does not match command")
 	}

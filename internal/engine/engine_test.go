@@ -334,7 +334,9 @@ func waitIdle(t *testing.T, core *Engine, sessionIDs ...string) contracts.Snapsh
 				continue
 			}
 			last = *event.Snapshot
-			if len(last.Runs) == 0 || last.Runs[len(last.Runs)-1].Status == "running" {
+			// Stopping is still live: a stop request only settles the run once
+			// the turn ends, so it must not count as idle.
+			if len(last.Runs) == 0 || last.Runs[len(last.Runs)-1].Status == contracts.RunStatusRunning || last.Runs[len(last.Runs)-1].Status == contracts.RunStatusStopping {
 				continue
 			}
 			// Re-read once after the completion event to synchronize with the producer
@@ -343,7 +345,7 @@ func waitIdle(t *testing.T, core *Engine, sessionIDs ...string) contracts.Snapsh
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(last.Runs) > 0 && last.Runs[len(last.Runs)-1].Status != "running" {
+			if len(last.Runs) > 0 && last.Runs[len(last.Runs)-1].Status != contracts.RunStatusRunning && last.Runs[len(last.Runs)-1].Status != contracts.RunStatusStopping {
 				return last
 			}
 		case <-ctx.Done():

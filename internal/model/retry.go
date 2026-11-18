@@ -21,8 +21,9 @@ type RetryStatus struct {
 	HTTPStatus int    `json:"httpStatus,omitempty"`
 }
 
-// RetryPolicy owns the single budget shared by HTTP, transport and stream
-// failures. Wait is injectable for deterministic tests; nil uses a cancelable timer.
+// RetryPolicy controls backoff and the ordinary failure budget. Network
+// unavailability uses the same backoff without spending that budget.
+// Wait is injectable for deterministic tests; nil uses a cancelable timer.
 type RetryPolicy struct {
 	MaxRetries int
 	BaseDelay  time.Duration

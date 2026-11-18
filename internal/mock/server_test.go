@@ -423,31 +423,15 @@ func TestTerminalHasNoCommandExecution(t *testing.T) {
 	}
 }
 
-func TestStoppedRequestsCannotResumeAndDenyDoesNotRun(t *testing.T) {
+func TestStoppedRequestsCannotResume(t *testing.T) {
 	t.Run("cancelled", func(t *testing.T) {
-		s := newTestServer(t, Options{Scenario: "permissions"})
+		s := newTestServer(t, Options{Scenario: "questions"})
 		ctx := context.Background()
 		if err := s.Stop(ctx, "chat-0"); err != nil {
 			t.Fatal(err)
 		}
-		if err := s.Answer(ctx, "permission-tests", "Allow once"); err == nil {
+		if err := s.Answer(ctx, "question-layout", "Keep the current layout"); err == nil {
 			t.Fatal("cancelled request resumed a stopped run")
-		}
-	})
-	t.Run("denied", func(t *testing.T) {
-		s := newTestServer(t, Options{Scenario: "permissions"})
-		ctx := context.Background()
-		before := snapshotForSessions(t, s, "chat-0")
-		if err := s.Answer(ctx, "permission-tests", "Deny"); err != nil {
-			t.Fatal(err)
-		}
-		v := snapshotForSessions(t, s, "chat-0")
-		if v.Sessions[0].Status != contracts.Idle || len(v.Runs) != len(before.Runs) {
-			t.Fatal("denying a command started work")
-		}
-		last := v.Messages["chat-0"][len(v.Messages["chat-0"])-1]
-		if !strings.Contains(last.Blocks[0].Text, "won’t run") {
-			t.Fatal("denial was not acknowledged")
 		}
 	})
 }

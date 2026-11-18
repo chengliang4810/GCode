@@ -41,8 +41,14 @@ func (e *Engine) reconcileSessionLocked(sessionID string) {
 	}
 	for i := range e.state.Runs {
 		run := &e.state.Runs[i]
-		if run.SessionID == sessionID && run.Status == "running" {
-			run.Status = "interrupted"
+		if run.SessionID != sessionID {
+			continue
+		}
+		// A stopping run lost its executor when the host stopped, so it settles
+		// the same way a running one does instead of waiting for a stop that
+		// will never arrive.
+		if run.Status == contracts.RunStatusRunning || run.Status == contracts.RunStatusStopping {
+			run.Status = contracts.RunStatusInterrupted
 			run.FinishReason = "engineRestarted"
 			dirty = true
 		}

@@ -22,7 +22,7 @@ type probeTool struct {
 type failingImageTool struct{}
 
 func TestToolStartCarriesDisplayMetadataWithoutChangingCallIdentity(t *testing.T) {
-	tool := probeTool{name: "mcp__files__read", displayName: "文件服务 · 读取文件", execute: func(context.Context) error { return nil }}
+	tool := probeTool{name: "mcp__files__read", displayName: "文件服务: 读取文件", execute: func(context.Context) error { return nil }}
 	var started Event
 	err := executeTools(t.Context(), Options{Emit: func(event Event) error {
 		if event.Kind == "tool.start" {

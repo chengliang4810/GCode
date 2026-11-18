@@ -245,8 +245,9 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 		diagnostics = requestDiagnostics(payload, body, input)
 		diagnostics.TargetHash = g.target.scope
 	}
-	// One budget covers transport, HTTP status and incomplete streams. Only a
-	// complete response is returned to the Agent, which owns tool execution.
+	// Network unavailability has separate backoff and does not spend the
+	// ordinary retry budget. The Agent only receives a complete response.
+	retries, networkRetries := 0, 0
 	for attempt := 0; ; attempt++ {
 		if err := ctx.Err(); err != nil {
 			return result, err
@@ -271,16 +272,26 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 			return result, consumerErr
 		}
 		failure := ClassifyFailure(err)
-		if err == nil || !failure.Retryable || attempt >= g.retry.MaxRetries {
+		waiting := failure.Reason == RetryWaitingForNetwork
+		if err == nil || !failure.Retryable || (!waiting && retries >= g.retry.MaxRetries) {
 			return result, err
 		}
+		var retry int
+		if waiting {
+			networkRetries = min(networkRetries+1, 32)
+			retry = networkRetries
+		} else {
+			networkRetries = 0
+			retries++
+			retry = retries
+		}
 		if emit != nil {
-			state := &RetryStatus{Attempt: attempt + 1, MaxRetries: g.retry.MaxRetries, Reason: failure.Reason, HTTPStatus: failure.HTTPStatus}
+			state := &RetryStatus{Attempt: retry, MaxRetries: g.retry.MaxRetries, Reason: failure.Reason, HTTPStatus: failure.HTTPStatus}
 			if emitErr := emit(Delta{Retry: state}); emitErr != nil {
 				return result, emitErr
 			}
 		}
-		if waitErr := g.retry.wait(ctx, g.retry.delay(attempt+1, failure.RetryAfter)); waitErr != nil {
+		if waitErr := g.retry.wait(ctx, g.retry.delay(retry, failure.RetryAfter)); waitErr != nil {
 			return result, waitErr
 		}
 	}

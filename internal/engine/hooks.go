@@ -36,6 +36,13 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 		}
 		return text
 	}
+	// Approval memory is host memory, never session data: the request path needs
+	// this host's scope and the owning session to record and reuse a grant.
+	approvalScope := e.hookPermissionApprovalScope()
+	permissionOptions := options
+	permissionOptions.Approvals = &e.hookApprovals
+	permissionOptions.ApprovalScope = approvalScope
+	permissionOptions.SessionID = session.ID
 	runner := agent.NewHookRunner(rules, func(execution agent.HookExecution) error {
 		redact := e.hookTextRedactor(execution.Rule)
 		redactionsMu.Lock()
@@ -108,7 +115,13 @@ func (e *Engine) runHookRunner(session contracts.Session, run *activeRun, rules 
 					input.ToolInput = json.RawMessage(redactAll(string(input.ToolInput)))
 				}
 			}
-			return hookRuntimePermission(options)(ctx, input, reason)
+			if !e.hookPermissionSessionUsable(session.ID) {
+				// A deleted or archived conversation keeps no approval memory and
+				// cannot answer a permission question, so it fails closed.
+				return false, nil
+			}
+			e.pruneHookPermissionApprovals(approvalScope)
+			return hookRuntimePermission(permissionOptions)(ctx, input, reason)
 		}),
 		agent.WithHookAsyncResult(func(_ context.Context, execution agent.HookExecution) error {
 			return e.queueHookResult(session.ID, execution, false)
@@ -231,3 +244,34 @@ func (e *Engine) rejectHookInputLocked(sessionID, inputID string, run *activeRun
 // shutdown can join them.
 func (e *Engine) BackgroundStarted()  { e.hookBackground.Add(1) }
 func (e *Engine) BackgroundFinished() { e.hookBackground.Done() }
+
+// hookPermissionApprovalScope identifies this host's in-memory approval memory,
+// so two hosts in one process (tests, a second data directory) cannot inherit
+// each other's session grants.
+func (e *Engine) hookPermissionApprovalScope() string { return e.storage.Directory() }
+
+// hookPermissionSessionUsable reports whether a session may still answer for or
+// reuse an approval. Deletion drops per-session hook state directly in
+// commands.go, which this change does not touch, so the request path checks
+// liveness instead and fails closed.
+func (e *Engine) hookPermissionSessionUsable(sessionID string) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	index := e.sessionIndex(sessionID)
+	return index >= 0 && !e.state.Sessions[index].Archived
+}
+
+// pruneHookPermissionApprovals drops the records of sessions that no longer
+// exist or are archived. It runs on the request path for the same reason as the
+// liveness check above: no in-memory grant may outlive its conversation.
+func (e *Engine) pruneHookPermissionApprovals(scope string) {
+	e.mu.Lock()
+	alive := make([]string, 0, len(e.state.Sessions))
+	for _, session := range e.state.Sessions {
+		if !session.Archived {
+			alive = append(alive, session.ID)
+		}
+	}
+	e.mu.Unlock()
+	e.hookApprovals.retain(scope, alive)
+}

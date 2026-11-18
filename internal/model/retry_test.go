@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -33,6 +35,59 @@ func retryGateway(t *testing.T, transport http.RoundTripper) *Gateway {
 
 func retryResponse(status int, body string) *http.Response {
 	return &http.Response{StatusCode: status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}
+}
+
+func TestRetryWaitsForNetworkBeyondOrdinaryBudget(t *testing.T) {
+	attempts := 0
+	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {
+		attempts++
+		switch {
+		case attempts <= 12:
+			return nil, syscall.ENETUNREACH
+		case attempts == 13:
+			return retryResponse(503, `{"error":{"message":"busy"}}`), nil
+		default:
+			return retryResponse(200, "data: {\"choices\":[{\"delta\":{\"content\":\"recovered\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"), nil
+		}
+	}))
+	gateway.retry.MaxRetries = 1
+	var states []RetryStatus
+	result, err := gateway.Stream(t.Context(), Request{}, func(delta Delta) error {
+		if delta.Retry != nil {
+			states = append(states, *delta.Retry)
+		}
+		return nil
+	})
+	if err != nil || result.Message.Text != "recovered" || attempts != 14 || len(states) != 13 {
+		t.Fatalf("recovery failed: attempts=%d states=%+v result=%+v err=%v", attempts, states, result, err)
+	}
+	for _, state := range states[:12] {
+		if state.Reason != RetryWaitingForNetwork {
+			t.Fatalf("expected network wait: %+v", state)
+		}
+	}
+	if state := states[12]; state.Reason != "server" || state.Attempt != 1 {
+		t.Fatalf("network wait spent ordinary retry budget: %+v", state)
+	}
+}
+
+func TestRetryNetworkWaitCanBeCancelled(t *testing.T) {
+	attempts := 0
+	gateway := retryGateway(t, retryTransport(func(*http.Request) (*http.Response, error) {
+		attempts++
+		return nil, syscall.ENETDOWN
+	}))
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	_, err := gateway.Stream(ctx, Request{}, func(delta Delta) error {
+		if delta.Retry != nil && delta.Retry.Reason == RetryWaitingForNetwork {
+			cancel()
+		}
+		return nil
+	})
+	if !errors.Is(err, context.Canceled) || attempts != 1 {
+		t.Fatalf("cancel during network wait: attempts=%d err=%v", attempts, err)
+	}
 }
 
 func TestRetryMixedFailuresShareOneRequestAndBudget(t *testing.T) {
@@ -247,6 +302,10 @@ func TestRetryFailureClassification(t *testing.T) {
 	}{
 		{"cancel", context.Canceled, "cancelled", false},
 		{"transport deadline", context.DeadlineExceeded, "timeout", true},
+		{"dial deadline", &net.OpError{Op: "dial", Err: context.DeadlineExceeded}, RetryWaitingForNetwork, true},
+		{"transient DNS", &net.DNSError{IsTemporary: true}, RetryWaitingForNetwork, true},
+		{"unknown host", &url.Error{Err: &net.DNSError{IsNotFound: true}}, "network", true},
+		{"connection refused", &url.Error{Err: syscall.ECONNREFUSED}, "network", true},
 		{"certificate", providerConnectionError("connect", x509.UnknownAuthorityError{}, ""), "tls", false},
 		{"auth", &ProviderError{HTTPStatus: 401}, "authentication", false},
 		{"bad parameters", &ProviderError{HTTPStatus: 400}, "invalid_request", false},

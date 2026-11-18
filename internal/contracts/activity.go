@@ -204,7 +204,7 @@ func TurnActivity(messages []Message, turnID string) []Block {
 		for _, block := range message.Blocks {
 			blocks = append(blocks, block)
 			switch block.Kind {
-			case "reasoning", "tool", "toolCall", "toolResult", "todo", "todos", "subagent", "permission", "question":
+			case "reasoning", "tool", "toolCall", "toolResult", "todo", "todos", "subagent", "question":
 				last = len(blocks) - 1
 			}
 		}
@@ -261,7 +261,7 @@ func (s ActivitySummary) Label() string {
 	if baseStart < len(segments) && segments[baseStart] != "" {
 		segments[baseStart] = strings.ToUpper(segments[baseStart][:1]) + segments[baseStart][1:]
 	}
-	label := strings.Join(segments, " · ")
+	label := strings.Join(segments, ", ")
 	if label != "" {
 		label = strings.ToUpper(label[:1]) + label[1:]
 	}

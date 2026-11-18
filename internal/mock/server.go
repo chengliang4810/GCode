@@ -461,6 +461,13 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 		}
 		_, err := s.CreateProject(ctx, c.Name, c.Path)
 		return err
+	case "project.delete":
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.state.Projects = slices.DeleteFunc(s.state.Projects, func(p contracts.Project) bool { return p.ID == c.ID })
+		s.state.Files = slices.DeleteFunc(s.state.Files, func(f contracts.File) bool { return f.ProjectID == c.ID })
+		s.publishLocked("project.deleted", "", "", "", "")
+		return nil
 	case "settings.update":
 		if c.Settings == nil {
 			return errors.New("settings payload is required")

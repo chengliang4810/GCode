@@ -79,12 +79,6 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 						b.Question.Resolved = true
 					}
 				}
-				if b.Permission != nil {
-					b.Permission.ID = s.idLocked("permission")
-					if b.Permission.Answer == "" {
-						b.Permission.Answer = "Cancelled"
-					}
-				}
 				if b.Tool != nil && b.Tool.Status == "working" {
 					b.Tool.Status = "interrupted"
 					end := s.opts.Now().UTC()

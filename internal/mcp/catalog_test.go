@@ -12,9 +12,9 @@ func TestToolDisplayTitlesKeepProtocolIdentity(t *testing.T) {
 	for _, test := range []struct {
 		name, title, annotation, want string
 	}{
-		{"title", "读取文件", "annotation title", "文件服务 · 读取文件"},
-		{"annotation", "", "读取文本", "文件服务 · 读取文本"},
-		{"name", "", "", "文件服务 · read_text"},
+		{"title", "读取文件", "annotation title", "文件服务: 读取文件"},
+		{"annotation", "", "读取文本", "文件服务: 读取文本"},
+		{"name", "", "", "文件服务: read_text"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			called := ""

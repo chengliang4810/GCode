@@ -182,10 +182,6 @@ func CloneBlocks(src []Block) []Block {
 			v.Answers = CloneQuestionAnswers(v.Answers)
 			b.Question = &v
 		}
-		if b.Permission != nil {
-			v := *b.Permission
-			b.Permission = &v
-		}
 		b.Todos = slices.Clone(b.Todos)
 		if b.Subagent != nil {
 			v := *b.Subagent

@@ -118,7 +118,7 @@ func TestDefaultAgentTasksHaveDistinctTracesAndTruthfulSummaries(t *testing.T) {
 }
 
 func TestAgentScenesAndForkKeepTurnOwnership(t *testing.T) {
-	for _, scenario := range []string{"default", "transcript", "showcase", "loading", "questions", "permissions", "error", "stress"} {
+	for _, scenario := range []string{"default", "transcript", "showcase", "loading", "questions", "error", "stress"} {
 		t.Run(scenario, func(t *testing.T) {
 			s := newTestServer(t, Options{Scenario: scenario})
 			snapshot := snapshotWithAllSessions(t, s)

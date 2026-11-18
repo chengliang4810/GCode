@@ -277,7 +277,7 @@ func (todoWriteTool) Execute(_ context.Context, _ string, raw json.RawMessage) (
 		return model.ToolOutput{}, err
 	}
 	rendered, counts := renderTodos(update.Todos)
-	return model.ToolOutput{Text: fmt.Sprintf("%s\n\n%d completed · %d in progress · %d pending", rendered, counts[0], counts[1], counts[2])}, nil
+	return model.ToolOutput{Text: fmt.Sprintf("%s\n\n%d completed, %d in progress, %d pending", rendered, counts[0], counts[1], counts[2])}, nil
 }
 
 // renderTodos formats the tool result the model reads back, in list order.

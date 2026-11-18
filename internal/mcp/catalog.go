@@ -157,10 +157,10 @@ func (c *Client) Tools(ctx context.Context) (listedTools []RemoteTool, resultErr
 			}
 			service := c.config.Name
 			if c.config.Plugin != "" {
-				service = c.config.Plugin + " · " + service
+				service = c.config.Plugin + ": " + service
 			}
 			tools = append(tools, RemoteTool{client: c, original: tool.Name, headers: headers, definition: model.Tool{
-				Name: name, DisplayName: c.scrub(service + " · " + title),
+				Name: name, DisplayName: c.scrub(service + ": " + title),
 				Description: c.scrub(tool.Description), Parameters: tool.Schema,
 			}})
 		}

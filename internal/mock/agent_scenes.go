@@ -50,7 +50,7 @@ func taskBlocks(task agentTask, project, before, after string) []contracts.Block
 		blocks = append(blocks, failed, contracts.Block{Kind: "reasoning", Text: "The assertion reproduces the lost destination. I’ll preserve local paths while retaining the external-URL guard."})
 	}
 	if task.review {
-		blocks = append(blocks, toolBlock(contracts.ToolMCP, "GitHub", "Read pull request #412 discussion", "pull_request_read #412", "", "PR #412 · Refine the workspace layout\nBuild: success\nTests: success\nReview: pending\n1 existing comment"))
+		blocks = append(blocks, toolBlock(contracts.ToolMCP, "GitHub", "Read pull request #412 discussion", "pull_request_read #412", "", "PR #412: Refine the workspace layout\nBuild: success\nTests: success\nReview: pending\n1 existing comment"))
 		blocks = append(blocks, contracts.Block{Kind: "subagent", Subagent: &contracts.Subagent{SessionID: "agent-pr-412", Name: "Explorer", Task: "Review keyboard focus when closing the right pane", Status: "completed", Summary: "Reviewed the previous-focus fallback without changing files."}})
 		blocks = append(blocks, toolBlock(contracts.ToolSearch, "Grep", "Inspect comment revision and line identity", "rg -n 'revision|line|side' internal/review", task.path, before))
 		return blocks

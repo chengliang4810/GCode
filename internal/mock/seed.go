@@ -161,7 +161,6 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "showcase-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{
 			{ID: "showcase-code", Kind: "code", Language: "go", Text: "type Workspace struct {\n    SidebarWidth float64\n    ContentWidth float64\n}\n"},
 			{ID: "showcase-question", Kind: "question", Question: fixtureQuestion("question-showcase", "Which panel should open first?", "Files", "Changes", "Browser")},
-			{ID: "showcase-permission", Kind: "permission", Permission: &contracts.Permission{ID: "permission-showcase", Title: "Run project checks", Description: "Allow this command in the current workspace?", Command: "go test ./...", Answer: "Allow once"}},
 			{ID: "showcase-attachment", Kind: "attachment", Attachment: &contracts.Attachment{ID: "attachment-readme", Name: "README.md", MIME: "text/markdown", Size: 512, AssetRef: "file-readme", Status: "ready"}},
 			{ID: "showcase-image", Kind: "image", Attachment: &contracts.Attachment{ID: "attachment-icon", Name: "GCode.png", MIME: "image/png", Width: 1024, Height: 1024, AssetRef: "asset://app-icon.png", Status: "ready"}},
 			{ID: "showcase-math", Kind: "math", Artifact: artifactFor("math", s.Settings.Appearance)},
@@ -194,9 +193,6 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 	case "questions":
 		s.Sessions[0].Status = contracts.AwaitingInput
 		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "question-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: "question-block", Kind: "question", Question: fixtureQuestion("question-layout", "Which layout should we use?", "Keep the current layout", "Use a wider workspace", "Compare both approaches")}}})
-	case "permissions":
-		s.Sessions[0].Status = contracts.AwaitingInput
-		s.Messages["chat-0"] = append(s.Messages["chat-0"], contracts.Message{ID: "permission-message", SessionID: "chat-0", Role: "assistant", CreatedAt: opts.Now().UTC(), Blocks: []contracts.Block{{ID: "permission-block", Kind: "permission", Permission: &contracts.Permission{ID: "permission-tests", Title: "Run project checks", Description: "Allow the agent to run the project's test suite?", Command: "go test ./..."}}}})
 	case "stress":
 		for i := len(s.Sessions); i < 1000; i++ {
 			id := fmt.Sprintf("stress-%d", i)

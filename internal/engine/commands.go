@@ -180,6 +180,35 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 					Kind: "goal.pause", SessionID: command.SessionID, ID: goal.ID,
 				})
 			}
+			// A stop is only visible while the run settles. Publish the request
+			// on the run record first: the status names the phase and the finish
+			// reason survives settlement, so a user stop stays distinguishable
+			// from any other cancellation.
+			// Context compaction owns its own record settlement and writes no
+			// finish reason, so it keeps plain cancellation.
+			stopped := false
+			if !run.compacting {
+				for i := range e.state.Runs {
+					record := &e.state.Runs[i]
+					if record.ID != run.id {
+						continue
+					}
+					record.FinishReason = contracts.FinishReasonUserStop
+					// Automation settlement copies the run status into its own
+					// record. A transient phase would settle that record with a
+					// status that never ends, so automation runs keep their own
+					// status until they finish.
+					if !e.automationOwnsRunLocked(*record) {
+						record.Status = contracts.RunStatusStopping
+						stopped = true
+					}
+				}
+			}
+			if stopped {
+				// Subscribers must see the request before the run can settle;
+				// the lock keeps settlement from interleaving with the mark.
+				e.publishLocked(contracts.Event{Kind: "state.changed", SessionID: command.SessionID})
+			}
 			run.cancel()
 		}
 		return nil
@@ -655,6 +684,21 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	}
 	e.publishLocked(contracts.Event{Kind: "state.changed"})
 	return nil
+}
+
+// automationOwnsRunLocked reports whether a live automation attempt owns the
+// run record. Automation settlement copies the run status into its own record,
+// so it must not observe a transient phase that never ends.
+func (e *Engine) automationOwnsRunLocked(record contracts.Run) bool {
+	if record.RequestID == "" {
+		return false
+	}
+	for _, attempt := range e.state.AutomationRuns {
+		if attempt.ID == record.RequestID && attempt.Status == "running" {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *Engine) newSessionLocked(projectID, title, rootID string) (contracts.Session, error) {

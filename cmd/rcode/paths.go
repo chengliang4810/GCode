@@ -10,7 +10,7 @@ import (
 
 func validScenario(scenario string) bool {
 	switch scenario {
-	case "", "default", "empty", "loading", "live", "transcript", "error", "offline", "questions", "permissions", "stress", "showcase":
+	case "", "default", "empty", "loading", "live", "transcript", "error", "offline", "questions", "stress", "showcase":
 		return true
 	default:
 		return false
