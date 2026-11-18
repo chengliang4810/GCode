@@ -69,6 +69,18 @@ func TestValidateMarketplacePluginSource(t *testing.T) {
 			wantErr:     true,
 		},
 		{
+			name:        "remote Windows git path",
+			marketplace: Source{Source: "git"},
+			plugin:      Source{Source: "git", URL: `C:\plugins\demo.git`},
+			wantErr:     true,
+		},
+		{
+			name:        "remote rooted Windows git path",
+			marketplace: Source{Source: "url"},
+			plugin:      Source{Source: "git", URL: `\plugins\demo.git`},
+			wantErr:     true,
+		},
+		{
 			name:        "remote file git URL",
 			marketplace: Source{Source: "url"},
 			plugin:      Source{Source: "git-subdir", URL: "file:///tmp/plugin.git", Path: "plugin"},

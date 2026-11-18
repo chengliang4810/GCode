@@ -106,7 +106,8 @@ func localGitSource(source Source) bool {
 		return false
 	}
 	address := strings.TrimSpace(source.URL)
-	if filepath.IsAbs(address) || strings.HasPrefix(address, "./") || strings.HasPrefix(address, "../") ||
+	if filepath.IsAbs(address) || strings.HasPrefix(address, "/") || strings.HasPrefix(address, `\`) ||
+		(len(address) >= 2 && address[1] == ':') || strings.HasPrefix(address, "./") || strings.HasPrefix(address, "../") ||
 		strings.HasPrefix(address, "~/") || strings.HasPrefix(address, `~\`) {
 		return true
 	}
