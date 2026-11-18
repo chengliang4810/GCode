@@ -204,7 +204,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 				}
 				app.hoverMetric(replyScope + ":usage")
 				app.waitKey(replyScope + ":usage-panel")
-				if label := app.waitKey(replyScope + ":model").Label; !strings.Contains(label, "Local fixture · "+wantModel) {
+				if label := app.waitKey(replyScope + ":model").Label; !strings.Contains(label, "Local fixture, "+wantModel) {
 					t.Fatalf("saved provider/model missing: %s", label)
 				}
 				if label := app.waitKey(replyScope + ":cache-hit").Label; !strings.Contains(label, expectedCache) {
@@ -243,7 +243,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 				}
 			}
 			hint := app.waitKey("usage-value-" + time.Now().Format("2006-01-02")).Label
-			if !strings.Contains(hint, "Local fixture/alpha · 120") || !strings.Contains(hint, "Local fixture/beta · 120") {
+			if !strings.Contains(hint, "Local fixture/alpha, 120") || !strings.Contains(hint, "Local fixture/beta, 120") {
 				t.Fatalf("usage trend tooltip lost provider/model names: %s", hint)
 			}
 			app.capture("usage-7d")

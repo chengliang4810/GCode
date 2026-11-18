@@ -57,19 +57,23 @@ func TestConversationMetricsIncludeOnlyOwnedWork(t *testing.T) {
 	}}
 	publishMetricsFixture(a)
 	reply := a.metricsFor("main", "first")
-	if reply.totals.Requests != 4 || reply.totals.Input+reply.totals.Output != 270 ||
-		len(reply.models) != 3 || reply.generationDuration != 4*time.Second {
+	if reply.totals.Requests != 2 || reply.totals.Input+reply.totals.Output != 230 ||
+		len(reply.models) != 1 || reply.generationDuration != 2*time.Second {
 		t.Fatalf("reply scope or multi-model totals: %+v", reply)
 	}
 	if reply.wallDuration != 10*time.Second {
 		t.Fatalf("reply wall time counted overlapping subagent runs: %v", reply.wallDuration)
 	}
 	total := a.metricsFor("main", "")
-	if total.totals.Requests != 7 || total.totals.Input+total.totals.Output != 572 || total.generationDuration != 15*time.Second {
-		t.Fatalf("conversation counted a side chat/fork or omitted maintenance: %+v", total)
+	if total.totals.Requests != 4 || total.totals.Input+total.totals.Output != 522 || total.generationDuration != 12*time.Second {
+		t.Fatalf("conversation counted another session or omitted maintenance: %+v", total)
 	}
 	if total.wallDuration != 25*time.Second {
 		t.Fatalf("conversation wall time counted a side chat/fork or double counted parallel runs: %v", total.wallDuration)
+	}
+	child := a.metricsFor("child", "")
+	if child.totals.Requests != 1 || child.totals.Input+child.totals.Output != 20 || child.wallDuration != 3*time.Second {
+		t.Fatalf("child footer should show its own work, excluding nested agents: %+v", child)
 	}
 }
 
@@ -124,17 +128,17 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 		request contracts.ModelRequest
 		run     time.Duration
 		zeroRun bool
-		want    string
+		want    []string
 	}{
 		{name: "unknown failed request"},
-		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: "0 Token"},
-		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: "12 Token"},
-		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: "0 rounds 1 steps · Time taken —"},
-		{name: "wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, run: 2500 * time.Millisecond, want: "0 rounds 1 steps · Time taken 2s"},
-		{name: "known zero wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, zeroRun: true, want: "0 rounds 1 steps · Time taken 0s"},
+		{name: "reported zero", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, want: []string{"0 Token"}},
+		{name: "partial usage", request: contracts.ModelRequest{Usage: model.Usage{Input: 12}}, want: []string{"12 Token"}},
+		{name: "generation time only", request: contracts.ModelRequest{DecodeDuration: time.Second}, want: []string{"0 rounds 1 steps", "Time taken —"}},
+		{name: "wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, run: 2500 * time.Millisecond, want: []string{"0 rounds 1 steps", "Time taken 2s"}},
+		{name: "known zero wall time", request: contracts.ModelRequest{Usage: model.Usage{Known: true}}, zeroRun: true, want: []string{"0 rounds 1 steps", "Time taken 0s"}},
 		{name: "negative generation time", request: contracts.ModelRequest{DecodeDuration: -time.Second}},
 		{name: "cache without usable denominator", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true}}},
-		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: "20 Token · Cache hit 50.0%"},
+		{name: "cache", request: contracts.ModelRequest{Usage: model.Usage{CacheKnown: true, Input: 20, Cached: 10}}, want: []string{"20 Token", "Cache hit 50.0%"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := testApp(t, "default")
@@ -156,14 +160,16 @@ func TestConversationMetricsVisibilityFollowsUsefulData(t *testing.T) {
 			}
 			a.state.Revision++ // The core publishes new accounting with a new revision.
 			tt.Frame()
-			if tc.want == "" {
+			if len(tc.want) == 0 {
 				if len(tt.Texts()) != 0 {
 					t.Fatalf("unknown data exposed placeholder metrics: %v", tt.Texts())
 				}
 				return
 			}
-			if !tt.HasText(tc.want) {
-				t.Fatalf("first useful data did not reveal metrics: %v", tt.Texts())
+			for _, want := range tc.want {
+				if !tt.HasText(want) {
+					t.Fatalf("first useful data did not reveal %q: %v", want, tt.Texts())
+				}
 			}
 			a.state.ModelRequests = append(a.state.ModelRequests, contracts.ModelRequest{SessionID: sessionID})
 			a.state.Revision++
@@ -251,7 +257,7 @@ func TestConversationMetricsElapsedSecondsAndStableDigits(t *testing.T) {
 								}
 								reading := a.t("Time taken") + " " + duration
 								if !reply {
-									reading = fmt.Sprintf(a.t("%d rounds %d steps"), 2, 47) + " · " + reading
+									reading = fmt.Sprintf(a.t("%d rounds %d steps"), 2, 47) + ", " + reading
 								}
 								bounds, ok := tt.Find(a.t("Time taken") + ": " + reading)
 								if !ok {
@@ -302,8 +308,8 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 				t.Fatalf("reply footer must show copy, usage, time, date: copy=%+v usage=%+v time=%+v date=%+v",
 					copyButton, usage, timing, dateText)
 			}
-			conversationTime, timeOK := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1s")
-			conversationUsage, usageOK := tt.Find("Conversation usage: 120 Token · Cache hit 50.0%")
+			conversationTime, timeOK := tt.Find("Time taken: 1 rounds 1 steps, Time taken 1s")
+			conversationUsage, usageOK := tt.Find("Conversation usage: 120 Token, Cache hit 50.0%")
 			if !timeOK || !usageOK || conversationTime.X+conversationTime.W > conversationUsage.X {
 				t.Fatalf("composer footer must show time before usage: time=%+v usage=%+v", conversationTime, conversationUsage)
 			}
@@ -312,7 +318,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 			}
 			tt.Move(usage.X+usage.W/2, usage.Y+usage.H/2)
 			tt.Advance(time.Second)
-			if !tt.HasText("Custom provider · family/model") || !tt.HasText("50.0%") {
+			if !tt.HasText("Custom provider") || !tt.HasText("family/model") || !tt.HasText("50.0%") {
 				t.Fatalf("full reply panel missing fields: %v", tt.Texts())
 			}
 			if tt.HasText("Cache count coverage") || tt.HasText("1/1 requests") {
@@ -323,7 +329,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 			} else {
 				tt.Move(panel.X+2, panel.Y+2)
 				tt.Advance(time.Second)
-				if !tt.HasText("Custom provider · family/model") {
+				if !tt.HasText("Custom provider") || !tt.HasText("family/model") {
 					t.Fatal("moving into the usage panel closed it")
 				}
 			}
@@ -333,7 +339,7 @@ func TestConversationMetricsFooterThemesAndNarrowWidth(t *testing.T) {
 			}
 			tt.Move(float32(width-1), 699)
 			tt.Advance(time.Second)
-			conversationTime, ok := tt.Find("Time taken: 1 rounds 1 steps · Time taken 1s")
+			conversationTime, ok := tt.Find("Time taken: 1 rounds 1 steps, Time taken 1s")
 			if !ok {
 				t.Fatal("conversation time trigger missing")
 			}
@@ -372,7 +378,7 @@ func TestConversationMetricsMultiModelPanelUpdatesAndMissingTiming(t *testing.T)
 	if err := tt.Click("Turn usage: Usage 360 Token"); err != nil {
 		t.Fatal(err)
 	}
-	for _, text := range []string{"Provider A · family/model", "Provider B · family/model", "50.0%", "—"} {
+	for _, text := range []string{"Provider A", "Provider B", "family/model", "50.0%", "—"} {
 		if !tt.HasText(text) {
 			t.Fatalf("multi-model or missing-cache detail omitted %q: %v", text, tt.Texts())
 		}

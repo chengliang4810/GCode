@@ -98,12 +98,12 @@ func footerContextDetails(usage contracts.ContextUsage, language ...string) stri
 			if *usage.Window > *usage.Tokens {
 				remaining = *usage.Window - *usage.Tokens
 			}
-			return i18n.In(lang, "%s / %s tokens\n%s tokens remaining", footerCount(*usage.Tokens), footerCount(*usage.Window), footerCount(remaining))
+			return i18n.In(lang, "%s / %s Token\n%s Token remaining", footerCount(*usage.Tokens), footerCount(*usage.Window), footerCount(remaining))
 		}
-		return i18n.In(lang, "%s token capacity\nWaiting for context usage", footerCount(*usage.Window))
+		return i18n.In(lang, "%s Token capacity\nWaiting for context usage", footerCount(*usage.Window))
 	}
 	if usage.Tokens != nil {
-		return i18n.In(lang, "%s tokens used\nContext limit not reported", footerCount(*usage.Tokens))
+		return i18n.In(lang, "%s Token used\nContext limit not reported", footerCount(*usage.Tokens))
 	}
 	return i18n.In(lang, "Context usage not reported by this harness yet")
 }
@@ -356,7 +356,7 @@ func (a *App) footerContextCard(c *ui.Context, usage contracts.ContextUsage) {
 		ui.Row(c).FillWidth().Height(24).AlignItems(ui.Center).Gap(12).Children(func() {
 			ui.Text(c, tr(c, "Context window")).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Text)
 			ui.Box(c).Grow(1)
-			ui.Text(c, footerContextSummary(usage, a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
+			ui.Text(c, footerContextSummary(usage, a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine().FontFeatures("tnum")
 		})
 		ui.Box(c.Key("context-capacity-progress")).Label("context-capacity-progress").FillWidth().Height(8).Radius(4).Background(a.palette.Faint.Alpha(.12)).Clip().Tooltip(footerContextDetails(usage, a.state.Settings.General.Language)).Draw(func(p *ui.Painter, bounds ui.Rect) {
 			if !known || fraction <= 0 {
@@ -369,7 +369,7 @@ func (a *App) footerContextCard(c *ui.Context, usage contracts.ContextUsage) {
 }
 
 func (a *App) footerRing(c *ui.Context, label, value string, fraction float64, arc, text ui.Color, open bool) ui.Element {
-	button := ui.ButtonBase(c).Height(24).Padding(0, 6).Radius(6).Gap(5).AlignItems(ui.Center).Label(tr(c, label)).TextColor(text)
+	button := ui.ButtonBase(c).Height(max(24, design.TextSize(c, design.TextSmall)*1.5)).Padding(0, 6).Radius(design.Controls().ButtonRadius).Gap(5).AlignItems(ui.Center).Label(tr(c, label)).TextColor(text)
 	if value != "" {
 		button.Tooltip(tr(c, label) + ": " + tr(c, value))
 	}
@@ -387,7 +387,7 @@ func (a *App) footerRing(c *ui.Context, label, value string, fraction float64, a
 			paintFooterArc(p, bounds, max(0, min(1, fraction)), arc)
 		})
 		if value != "" {
-			ui.Text(c, value).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+			ui.Text(c, value).FontSize(design.TextSize(c, design.TextSmall)).SingleLine().FontFeatures("tnum")
 		}
 	})
 	return button
@@ -420,7 +420,7 @@ func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label 
 			panel.AttachTo(anchor, ui.AnchorTopEnd, ui.AnchorBottomEnd).SnapToWindow(8)
 		}
 		if !a.frosted(c) {
-			panel.Shadow(0, 10, 30, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 12, -4, ui.RGBA(0, 0, 0, .1))
+			panel = design.OverlayShadow(panel)
 		}
 		a.floatingSurface(c, panel, 12)
 		if width > 0 {
@@ -431,7 +431,7 @@ func (a *App) footerPopover(c *ui.Context, anchor ui.Element, open *bool, label 
 }
 
 func (a *App) footerHeading(c *ui.Context, label string) {
-	size := design.TextSize(c, design.TextXS)
+	size := design.TextSize(c, design.TextSmall)
 	ui.Text(c, trackedHeading(tr(c, label))).Padding(6, 8, 4, 8).FontSize(size).FixedLineHeight(a.footerTextHeight(size)).TextColor(a.palette.Muted).FontWeight(500)
 }
 
@@ -493,14 +493,8 @@ func (a *App) footerAccountsCard(c *ui.Context, state *composerUsageState) {
 							ui.Text(c, account.Plan).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 						if account.InUse {
-							if account.Plan != "" {
-								ui.Text(c, "·").TextColor(a.palette.Muted.Alpha(.3))
-							}
 							ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Accent)
 						} else if len(account.Usage) == 0 && account.UsageError != "" {
-							if account.Plan != "" {
-								ui.Text(c, "·").TextColor(a.palette.Muted.Alpha(.3))
-							}
 							ui.Text(c, account.UsageError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 					})
@@ -551,7 +545,7 @@ func footerAccountResets(windows []contracts.UsageWindow, now time.Time, languag
 		}
 		parts = append(parts, label)
 	}
-	return strings.Join(parts, " · ")
+	return strings.Join(parts, ", ")
 }
 
 func (a *App) footerUsageMeter(c *ui.Context, window contracts.UsageWindow) {
@@ -575,6 +569,6 @@ func (a *App) footerUsageMeter(c *ui.Context, window contracts.UsageWindow) {
 				ui.Box(c).Width(88 * float32(max(.015, fraction))).Height(4).Radius(2).Background(color.Alpha(alpha))
 			}
 		})
-		ui.Text(c, footerAccountPercent(fraction)).Width(34).Shrink(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).TextColor(textColor)
+		ui.Text(c, footerAccountPercent(fraction)).Width(34).Shrink(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).TextColor(textColor).FontFeatures("tnum")
 	})
 }

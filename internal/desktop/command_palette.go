@@ -40,6 +40,20 @@ type paletteRow struct {
 
 var paletteTabs = [...]string{"All", "Threads", "Commands", "Files"}
 
+// The palette panel is the outer corner every row inside it derives from:
+// R_inner = max(0, R_outer − the padding between them), on the 4 px step the
+// shared spacing uses. The panel itself is not padded; each row is inset by
+// its own container.
+const (
+	paletteRadius float32 = 16
+	// The tab row pads 6 from the panel: 16 − 6 = 10 → 8.
+	paletteTabRadius float32 = 8
+	// The list pads 8 from the panel: 16 − 8 = 8.
+	paletteRowRadius float32 = 8
+	// The footer pads 7 from the panel: 16 − 7 = 9 → 8.
+	paletteChipRadius float32 = 8
+)
+
 func paletteShortcut(combo string) string {
 	if runtime.GOOS != "darwin" {
 		return strings.ReplaceAll(strings.ReplaceAll(combo, "Mod+", "Ctrl+"), "Cmd+", "Ctrl+")
@@ -61,7 +75,9 @@ func paletteShortcut(combo string) string {
 }
 func (a *App) paletteKeyHint(c *ui.Context, key, label string) {
 	ui.Row(c).Gap(5).AlignItems(ui.Center).Children(func() {
-		ui.Row(c).Height(22).Padding(0, 5).Gap(4).Radius(5).AlignItems(ui.Center).Background(sourcePaletteInk(a.palette.Dark, .05)).Children(func() {
+		// The chip sits in the footer row, 7 from the panel's edge, so its
+		// corners stay concentric with the panel's 16: 16 − 7 = 9 → 8.
+		ui.Row(c).Height(22).Padding(0, 5).Gap(4).Radius(paletteChipRadius).AlignItems(ui.Center).Background(sourcePaletteInk(a.palette.Dark, .05)).Children(func() {
 			switch key {
 			case "↑ ↓":
 				ui.Icon(c, assets.Icon("arrow-up")).Size(12.5, 12.5).TextColor(a.palette.Muted)
@@ -72,7 +88,7 @@ func (a *App) paletteKeyHint(c *ui.Context, key, label string) {
 				ui.Text(c, key).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			}
 		})
-		ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Muted)
+		ui.Text(c, tr(c, label)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 	})
 }
 func sourcePaletteInk(dark bool, alpha float32) ui.Color {
@@ -401,7 +417,7 @@ func (a *App) commandPalette(c *ui.Context) {
 		maxResults := max(float32(100), min(float32(360), height-180))
 		top := max(float32(54), (height-maxResults-120)/2)
 		back.Background(paletteScrim(a.palette.Dark)).Justify(ui.Start).Padding(top, 0, 0)
-		panel.Label(tr(c, "Command palette")).Width(min(560, width-32)).Radius(16).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
+		panel.Label(tr(c, "Command palette")).Width(min(560, width-32)).Radius(paletteRadius).Border(1, a.palette.Border).Background(a.palette.Raised).Clip()
 		ui.Column(c).FillWidth().Children(func() {
 			var input ui.Element
 			ui.Row(c).Height(44).Padding(8, 16).Gap(10).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
@@ -418,7 +434,7 @@ func (a *App) commandPalette(c *ui.Context) {
 			}
 			ui.Row(c).Padding(6, 12).Gap(4).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 				for i, title := range paletteTabs {
-					row := ui.ButtonBase(c.Key(fmt.Sprintf("command-tab-%d", i))).Label(tr(c, "Command tab: ")+tr(c, title)).Padding(4, 8).Height(26).Radius(6).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
+					row := ui.ButtonBase(c.Key(fmt.Sprintf("command-tab-%d", i))).Label(tr(c, "Command tab: ")+tr(c, title)).Padding(4, 8).Height(max(26, design.TextSize(c, design.TextBase)*1.5+8)).Radius(paletteTabRadius).Gap(6).AlignItems(ui.Center).OnClick(func() { changeTab(i) })
 					if p.tab == i {
 						row.Background(sourcePaletteWash(a.palette.Dark, .1))
 					}
@@ -519,7 +535,7 @@ func (a *App) paletteResultRow(c *ui.Context, row paletteRow, index int, selecte
 	if row.session != nil {
 		height = paletteSessionHeight(*row.session, a.state.Settings)
 	}
-	button := ui.ButtonBase(c.Key(row.key)).Label(tr(c, "Command: ")+a.paletteRowTitle(row)).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(10).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
+	button := ui.ButtonBase(c.Key(row.key)).Label(tr(c, "Command: ")+a.paletteRowTitle(row)).FillWidth().MinWidth(0).Height(height).Padding(4, 8).Gap(8).Radius(paletteRowRadius).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() { a.commands.selected = index; execute() })
 	button.HandleInput(func(event ui.InputEvent) bool {
 		if event.Kind == ui.InputPointerMove && event.Button < 0 {
 			a.commands.selected = index

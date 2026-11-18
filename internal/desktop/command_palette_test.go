@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"math"
 	"strings"
 	"testing"
 
@@ -147,6 +148,30 @@ func TestCommandPaletteEvidence(t *testing.T) {
 				name = "dark"
 			}
 			captureWorkbenchAudit(t, tt, "palette-"+name+"-"+strings.ToLower(paletteTabs[tab]))
+		}
+	}
+}
+
+// The palette's rows keep their corners concentric with the panel they sit
+// in: the inner radius is the panel's radius minus the padding between them,
+// on the 4 px step the shared spacing uses.
+func TestCommandPaletteRowRadiiStayConcentricWithThePanel(t *testing.T) {
+	for _, testCase := range []struct {
+		name    string
+		padding float32
+		radius  float32
+	}{
+		{"tab row", 6, paletteTabRadius},
+		{"result row", 8, paletteRowRadius},
+		{"footer chip", 7, paletteChipRadius},
+	} {
+		// The inner radius may not exceed the derived one: a larger corner
+		// would bulge past the outer corner it sits in.
+		derived := paletteRadius - testCase.padding
+		want := float32(4) * float32(math.Floor(float64(derived)/4))
+		if testCase.radius != want {
+			t.Errorf("%s radius %g, want %g (panel %g − padding %g)",
+				testCase.name, testCase.radius, want, paletteRadius, testCase.padding)
 		}
 	}
 }

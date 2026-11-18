@@ -216,7 +216,7 @@ Stop/SubagentStop 的阻止或附加上下文会继续执行，连续最多 8 �
 输入框 `/`、`@`、`$` 候选与引用的发送、排队和渲染语义见
 [输入框命令与资源引用](prompt-references.md)。
 
-原有 `mcp.json`、`prompts/` 及项目 `.agents/skills`、`.agents/prompts`、
+原有 `mcp.json`、`prompts/` 及项目 `.agents/prompts`、
 `.gcode/mcp.json` 不再作为资源来源，没有旧配置解析或迁移。
 用户根和项目根 AGENTS.md 仍是工程指令来源；这不是项目级设置维护。
 个性化页面的全局指令通过核心服务后台读写，远程模式修改远程宿主的 AGENTS.md，
@@ -250,7 +250,9 @@ ZCode 当前代码与其诊断文档有两处明确不一致：
 
 参考的命令服务列表先项目后用户，而 CLI 实际发现先用户后项目。
 当前按 Claude 公开规则解析项目 `.claude/skills`、`.claude/commands`、
-`.claude/agents`，项目同名资源覆盖个人资源；插件资源使用插件命名空间。
+`.claude/agents`。项目 `.agents/skills` 也使用同一技能加载机制；
+同名项目技能以 `.claude/skills` 为准，项目同名资源覆盖个人资源。
+插件资源使用插件命名空间。
 旧文档中的“只有用户级目录”“不支持动态 shell”“七个事件”和一基参数占位
 已经不符合本次实现，上文已同步修正。历史验收日期下的结果仍只对应当时版本。
 

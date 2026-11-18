@@ -61,7 +61,7 @@ func TestSemanticToolsRenderReadableActivity(t *testing.T) {
 							Args: `{"query":"Go documentation"}`, Output: "Documentation result",
 						}},
 						{"Call tool", "调用工具", "File contents", contracts.ToolCall{
-							Kind: contracts.ToolMCP, Name: "mcp__files__read_text", Summary: "文件服务 · 读取文本",
+							Kind: contracts.ToolMCP, Name: "mcp__files__read_text", Summary: "文件服务: 读取文本",
 							Args: `{"path":"README.md"}`, Output: "File contents",
 						}},
 						{"Start agent", "启动智能体", "provider is unavailable", contracts.ToolCall{
@@ -201,6 +201,66 @@ func TestGoalDetailShowsEmptyStateAndPreservesReadErrors(t *testing.T) {
 	}, 1, 1)
 	if source.output != "cannot read goal" || source.args != "{}" {
 		t.Fatal("failed read concealed its error or original parameters")
+	}
+}
+
+// A cancelled tool call finished nothing, so its row says so without turning
+// the whole row into a failure colour.
+func TestInterruptedToolRowLabelsItsState(t *testing.T) {
+	for _, language := range []string{"en", "zh-CN"} {
+		for _, status := range []string{"interrupted", "completed"} {
+			t.Run(language+"/"+status, func(t *testing.T) {
+				a := testApp(t, "default")
+				a.state.Settings.General.Language = language
+				a.palette = design.Palette("rcode", true)
+				tool := contracts.ToolCall{Kind: contracts.ToolEditFile, Status: status, Path: "/workspace/file.go"}
+				block := contracts.Block{ID: "interrupted-row", Kind: "tool", Tool: &tool}
+				tt := ui.NewTester(func(c *ui.Context) {
+					localize.Set(c, language)
+					c.SetTheme(a.palette.UI())
+					c.DisableAnimations()
+					ui.Column(c).Fill().Children(func() {
+						a.activityItem(c, "interrupted-row", block, false, false, activityRowMotion{settled: true})
+					})
+				}, 600, 200)
+				want := "Interrupted"
+				if language == "zh-CN" {
+					want = "已中断"
+				}
+				_, labelled := tt.Find(want)
+				hasLabel := tt.HasText(want)
+				if status == "interrupted" {
+					if !labelled || !hasLabel {
+						t.Fatalf("interrupted tool row missing its state label: %v", tt.Texts())
+					}
+					return
+				}
+				if labelled || hasLabel {
+					t.Fatal("a completed tool row claimed to be interrupted")
+				}
+			})
+		}
+	}
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{360, 900} {
+			t.Run(fmt.Sprintf("dark-%t-%d", dark, width), func(t *testing.T) {
+				a := testApp(t, "default")
+				a.palette = design.Palette("rcode", dark)
+				tool := contracts.ToolCall{Kind: contracts.ToolEditFile, Status: "interrupted", Path: "/workspace/internal/a_very_long_file_name.go"}
+				block := contracts.Block{ID: "interrupted-narrow", Kind: "tool", Tool: &tool}
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(a.palette.UI())
+					c.DisableAnimations()
+					ui.Column(c).Fill().Children(func() {
+						a.activityItem(c, "interrupted-narrow", block, false, false, activityRowMotion{settled: true})
+					})
+				}, width, 120)
+				label, ok := tt.Find("Interrupted")
+				if !ok || label.X+label.W > float32(width) || label.H > activityRowHeight+1 {
+					t.Fatalf("interrupted label left the row: %+v width=%d", label, width)
+				}
+			})
+		}
 	}
 }
 

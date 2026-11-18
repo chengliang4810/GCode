@@ -106,56 +106,37 @@ func TestNavigationPreservesDraftAndStaleSnapshots(t *testing.T) {
 		t.Fatal("back failed")
 	}
 }
-func TestQuestionAndPermissionAnswers(t *testing.T) {
-	for _, scenario := range []string{"questions", "permissions"} {
-		t.Run(scenario, func(t *testing.T) {
-			a := testApp(t, scenario)
-			a.selectSession("chat-0")
-			tt := ui.NewTester(a.View, 1320, 880)
-			if scenario == "questions" {
-				for _, m := range a.state.Messages[a.sessionID] {
-					for _, b := range m.Blocks {
-						if b.Question != nil && len(b.Question.Pages) > 0 {
-							option := b.Question.Pages[0].Options[0].Label
-							if err := tt.Click(option); err != nil {
-								t.Fatal(err)
-							}
-							tt.Advance(questionAutoAdvance)
-							state, _ := a.service.Snapshot(context.Background(), a.sessionID)
-							answer := ""
-							for _, message := range state.Messages[a.sessionID] {
-								for _, block := range message.Blocks {
-									if block.Question != nil {
-										if len(block.Question.Answers) > 0 {
-											answer = block.Question.Answers[0].Options[0]
-										}
-									}
-								}
-							}
-							if answer != option {
-								t.Fatalf("answer %q, want %q", answer, option)
-							}
-							return
-						}
-					}
-				}
-				t.Fatal("question scene missing")
-			} else {
-				if err := tt.Click("Allow once"); err != nil {
+func TestQuestionAnswers(t *testing.T) {
+	a := testApp(t, "questions")
+	a.selectSession("chat-0")
+	tt := ui.NewTester(a.View, 1320, 880)
+	for _, m := range a.state.Messages[a.sessionID] {
+		for _, b := range m.Blocks {
+			if b.Question != nil && len(b.Question.Pages) > 0 {
+				option := b.Question.Pages[0].Options[0].Label
+				if err := tt.Click(option); err != nil {
 					t.Fatal(err)
 				}
+				tt.Advance(questionAutoAdvance)
 				state, _ := a.service.Snapshot(context.Background(), a.sessionID)
+				answer := ""
 				for _, message := range state.Messages[a.sessionID] {
 					for _, block := range message.Blocks {
-						if block.Permission != nil && block.Permission.Answer == "Allow once" {
-							return
+						if block.Question != nil {
+							if len(block.Question.Answers) > 0 {
+								answer = block.Question.Answers[0].Options[0]
+							}
 						}
 					}
 				}
-				t.Fatal("permission not saved")
+				if answer != option {
+					t.Fatalf("answer %q, want %q", answer, option)
+				}
+				return
 			}
-		})
+		}
 	}
+	t.Fatal("question scene missing")
 }
 func TestComposerAndPanelAtSizes(t *testing.T) {
 	for _, size := range [][2]int{{900, 600}, {1320, 880}, {1600, 1000}} {

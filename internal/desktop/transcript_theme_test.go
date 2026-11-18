@@ -21,7 +21,7 @@ func TestTranscriptTypographyFollowsUIAndIndependentCodeSizes(t *testing.T) {
 				app.prepareTranscriptMarkdown(c)
 				theme := app.md.Theme
 				if theme.InlineCodeSize != 1 || app.userMD.Theme.InlineCodeSize != 1 {
-					t.Fatal("inline code must follow surrounding text in assistant and user messages")
+					t.Fatal("inline code must match surrounding text size in assistant and user messages")
 				}
 				if theme.FontSize != size || theme.FixedLineHeight != size*1.75 {
 					t.Fatalf("chat font differs from preference: %+v", theme)

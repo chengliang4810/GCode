@@ -3,6 +3,7 @@ package desktop
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -449,7 +450,7 @@ func activityReadSummary(c *ui.Context, tool contracts.ToolCall) string {
 		return firstLine(tool.Output)
 	}
 	if tool.ReadLines > 0 {
-		return "· " + fmt.Sprintf(tr(c, "%d lines"), tool.ReadLines)
+		return fmt.Sprintf(tr(c, "%d lines"), tool.ReadLines)
 	}
 	return ""
 }
@@ -502,7 +503,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 		}
 		accessibleLabel := tr(c, label) + ": " + accessibleDetail
 		if block.Hook != nil {
-			accessibleLabel += " · " + string(block.Hook.Event) + " · " + tr(c, hookStatusLabel(block.Hook.Status))
+			accessibleLabel += ", " + string(block.Hook.Event) + ", " + tr(c, hookStatusLabel(block.Hook.Status))
 		}
 		if change != nil {
 			accessibleLabel += fmt.Sprintf(" +%d -%d", change.Additions, change.Deletions)
@@ -541,6 +542,12 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 						FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
 					ui.Text(c, tr(c, hookStatusLabel(block.Hook.Status))).Shrink(0).
 						FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
+				}
+				if tool := block.Tool; tool != nil && tool.Status == "interrupted" {
+					// A cancelled call keeps the row's own ink; the label alone
+					// says it stopped early instead of finishing.
+					ui.Text(c.Key("activity-interrupted:"+id), tr(c, "Interrupted")).Shrink(0).
+						FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 				}
 				progress := parts.Progress()
 				tile := ui.Box(c.Key("activity-chevron:"+id)).Size(18, 18).Shrink(0)
@@ -678,6 +685,31 @@ type activityDiffCache struct {
 	state        editor.DiffState
 }
 
+// replyRetryable reports whether the reply's own turn ended failed or
+// interrupted, which is when the engine can run that turn again from the tool
+// results it already has.
+func (a *App) replyRetryable(message contracts.Message) bool {
+	if message.Role != "assistant" || message.SessionID == "" {
+		return false
+	}
+	run, ok := a.latestRun(message.SessionID)
+	if !ok {
+		return false
+	}
+	// A turn id names the run the reply belongs to; without one the session's
+	// recorded outcome is the only evidence that the latest run is that turn.
+	if message.TurnID != "" {
+		if run.ID != message.TurnID {
+			return false
+		}
+	} else if !slices.ContainsFunc(a.state.Sessions, func(session contracts.Session) bool {
+		return session.ID == message.SessionID && (session.LastOutcome == "failed" || session.LastOutcome == "interrupted")
+	}) {
+		return false
+	}
+	return run.Status == runStatusFailed || run.Status == runStatusInterrupted
+}
+
 func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered bool) {
 	services := c.Services()
 	ui.Row(c).FillWidth().MinHeight(max(16, design.TextSize(c, design.TextSmall)*1.5)).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
@@ -694,7 +726,14 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 				services.WriteClipboard(strings.Join(text, "\n\n"))
 			}).Children(func() { icon(c, "copy", 12) })
 			metricsOpen = a.replyMetricsView(c, message)
-			ui.Text(c.Key("message-date:"+message.ID), date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
+			if a.replyRetryable(message) {
+				// A reply whose own turn failed or was interrupted can be asked
+				// for again; the engine reuses the tool results it already has.
+				iconButton(c.Key("retry-message:"+message.ID), "refresh", tr(c, "Retry response")).Disabled(a.sessionRunInFlight(message.SessionID)).OnClick(func() {
+					a.dispatch(contracts.Command{Kind: "message.retry", SessionID: message.SessionID})
+				})
+			}
+			ui.Text(c.Key("message-date:"+message.ID), date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		})
 		if !hovered && !metricsOpen {
 			row.Opacity(0)

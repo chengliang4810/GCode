@@ -133,7 +133,7 @@ func readableDetailSource(c *ui.Context, block contracts.Block, live bool) activ
 			lines := []string{
 				fmt.Sprintf(tr(c, "Goal: %s"), goal.Objective),
 				fmt.Sprintf(tr(c, "Status: %s"), tr(c, goalStatusLabel(goal.Status))),
-				fmt.Sprintf(tr(c, "Tokens used: %d"), goal.TokensUsed),
+				fmt.Sprintf(tr(c, "Token used: %d"), goal.TokensUsed),
 			}
 			if goal.TokenBudget != nil {
 				lines = append(lines, fmt.Sprintf(tr(c, "Token budget: %d"), *goal.TokenBudget))

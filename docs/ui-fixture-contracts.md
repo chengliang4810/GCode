@@ -91,17 +91,20 @@ work on this flag stay open between rounds.
 | code | text, language |
 | tool | tool |
 | question | question |
-| permission | permission |
 | todo | todos |
 | subagent | subagent |
 | attachment, image | attachment |
 | math, diagram | artifact |
 | annotation | annotation |
 
-Question/permission answers are recorded once. Stopping or archiving a waiting
-session records cancellation and prevents an old request from resuming it.
-Permission denial settles the wait without starting another run. Browser HTML
+Question answers are recorded once. Stopping or archiving a waiting session
+records cancellation and prevents an old request from resuming it. Browser HTML
 and styles are inert annotation data, never executed as application markup.
+
+Tool approval is not a transcript block. A hook that returns
+`permissionDecision: "ask"` turns into a question request (header `Permission`,
+options `Allow`/`Deny`) through the same `request.answer` channel, so the
+approval prompt uses the question card and needs no second payload type.
 
 Math and Mermaid artifacts carry source, vector resource reference, width, height
 and baseline. `tools/reference-artifacts` exports the fixed scene from original
@@ -118,8 +121,8 @@ The source rules are in `proto/src/agent.rs`, `proto/src/view.rs:770` and
 `ui/src/transcript.rs:1365,2166` at the pinned reference. Ordered messages and
 blocks form the timeline; there is no second presentation-event store.
 `Message.turnId` identifies `Run.id`. `continuationOf` names the preceding
-assistant entry in the same turn. Answering a question or granting permission
-continues that turn; denying permission settles it without a second run.
+assistant entry in the same turn. Answering a question continues that turn;
+answering a hook permission question with `Deny` settles it without a second run.
 
 `ToolCall.kind` explicitly distinguishes `exec`, `readFile`, `writeFile`,
 `editFile`, `applyPatch`, `search`, `glob`, `webFetch`, `webSearch`, `todo`, `mcp`
@@ -368,7 +371,7 @@ again before commit. IDs not present in the current snapshot return errors.
 | message.send | send: SendRequest; empty sessionId atomically creates then sends; projectId envelope fills missing send.projectId |
 | message.stop, message.retry | sessionId; retry retains configuration without duplicating prompt |
 | queue.remove, queue.update | id; update uses text; removes or edits queued send |
-| request.answer | id, questionAnswers for a whole question request; text for permission decisions; records once and continues or denies wait |
+| request.answer | id, questionAnswers for a whole question request; records once and continues or denies the wait |
 | file.create | projectId, relative path (name shorthand), text; enabled means directory |
 | file.rename | id, name; renames descendants while retaining stable identities |
 | file.delete | id; removes directory descendants after read-only preflight |

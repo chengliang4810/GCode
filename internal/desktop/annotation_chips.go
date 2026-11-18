@@ -16,7 +16,7 @@ func (a *App) annotationChips(c *ui.Context) {
 	hovered := uint32(0)
 	for i, annotation := range a.annotations {
 		index, item := i, annotation
-		chip := ui.Row(c).Padding(4, 7).Gap(5).Radius(7).Border(1, a.palette.Border).Tooltip(item.Title + " · " + item.Element)
+		chip := ui.Row(c).Padding(4, 7).Gap(5).Radius(7).Border(1, a.palette.Border).Tooltip(item.Title + ", " + item.Element)
 		if chip.Hovered() {
 			hovered = item.Index
 		}

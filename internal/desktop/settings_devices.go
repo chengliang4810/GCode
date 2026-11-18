@@ -64,14 +64,14 @@ func (a *App) deviceRow(c *ui.Context, d contracts.Device) {
 		presence = "Online"
 	}
 	if d.Version != "" {
-		meta += " · v" + d.Version
+		meta += ", v" + d.Version
 	}
 	if !d.Current && d.Platform == "cloud" {
-		meta += " · " + tr(c, presence)
+		meta += ", " + tr(c, presence)
 	} else if !d.Current && presence == "Online" {
-		meta += " · " + tr(c, "Online")
+		meta += ", " + tr(c, "Online")
 	} else if !d.Current {
-		meta += tr(c, " · Last seen ") + deviceLastSeen(d.LastSeen, a.state.Integrations.ObservedAt, a.state.Settings.General.Language)
+		meta += ", " + i18n.In(a.state.Settings.General.Language, "Last seen %s", deviceLastSeen(d.LastSeen, a.state.Integrations.ObservedAt, a.state.Settings.General.Language))
 	}
 	services := c.Services()
 	a.settingsDataRow(c, a.deviceDisplayName(d), meta, func() {

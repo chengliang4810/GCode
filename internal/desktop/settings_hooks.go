@@ -55,7 +55,7 @@ func (a *App) hookSettings(c *ui.Context) {
 			continue
 		}
 		found++
-		detail := string(hook.Event) + " · " + hook.Type
+		detail := string(hook.Event) + ", " + hook.Type
 		a.resourceRow(c, "hook-"+hook.ID, title, detail, hook.Enabled, func() { a.editHook(&hook) }, func() {
 			a.state.Settings.Hooks = contracts.CloneHookRules(a.state.Settings.Hooks)
 			for i := range a.state.Settings.Hooks {

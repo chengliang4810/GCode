@@ -193,6 +193,17 @@ func (a *App) restoreSessionView(id string) {
 	a.messages = v.Messages
 }
 func (a *App) commandFinished(cmd contracts.Command, err error) {
+	if cmd.Send != nil && cmd.Send.ReplaceMessageID != "" {
+		if state := &a.interruptedEditor; state.requestID == cmd.Send.RequestID {
+			state.requestID = ""
+			if err == nil {
+				*state = interruptedEditorState{}
+			} else {
+				state.err = err.Error()
+			}
+		}
+		return
+	}
 	a.localSendFinished(cmd, err)
 	if a.questionCommandFinished(cmd, err) {
 		return

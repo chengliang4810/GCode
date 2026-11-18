@@ -23,7 +23,7 @@ remain independent.
 | Sidebar/projects | shell/sidebar_sections.rs, sidebar_pins.rs, spaces.rs | detailed/compact, icons, hover, pin/reorder, groups, search/filter, archive, remote |
 | New session | shell.rs, composer_dock.rs | project/device/ref/worktree selectors, create project, background crop/effects |
 | Composer | composer.rs, pickers.rs | IME, multiline, attachment wrap, models/reasoning, queue/edit, send/stop/retry |
-| Transcript | transcript.rs, markdown/, tool_images.rs | rich text, code/table/math/diagram, reasoning/tools/questions/permissions/todo/subagents, images, selection, streaming and anchored scroll |
+| Transcript | transcript.rs, markdown/, tool_images.rs | rich text, code/table/math/diagram, reasoning/tools/questions/todo/subagents, images, selection, streaming and anchored scroll |
 | Files | files/ | tree/search/context menus, edit/rename/save/readonly/conflict, tabs, code/Markdown/image preview |
 | Git | changes.rs, history.rs | changes/diff/comment/history/refs/commit, empty/error |
 | Terminal | terminal/ | mock Conn, ANSI output, input, tabs, selection, search, resize, long scrollback |

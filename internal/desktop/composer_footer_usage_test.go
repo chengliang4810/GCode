@@ -49,10 +49,10 @@ func TestFooterContextDetailsKeepUnknownZeroAndOverCapacity(t *testing.T) {
 		want  string
 	}{
 		{contracts.ContextUsage{}, "Context usage not reported by this harness yet"},
-		{contracts.ContextUsage{Tokens: footerNumber(0)}, "0 tokens used\nContext limit not reported"},
-		{contracts.ContextUsage{Window: footerNumber(200000)}, "200,000 token capacity\nWaiting for context usage"},
-		{contracts.ContextUsage{Tokens: footerNumber(0), Window: footerNumber(200000)}, "0 / 200,000 tokens\n200,000 tokens remaining"},
-		{contracts.ContextUsage{Tokens: footerNumber(240000), Window: footerNumber(200000)}, "240,000 / 200,000 tokens\n0 tokens remaining"},
+		{contracts.ContextUsage{Tokens: footerNumber(0)}, "0 Token used\nContext limit not reported"},
+		{contracts.ContextUsage{Window: footerNumber(200000)}, "200,000 Token capacity\nWaiting for context usage"},
+		{contracts.ContextUsage{Tokens: footerNumber(0), Window: footerNumber(200000)}, "0 / 200,000 Token\n200,000 Token remaining"},
+		{contracts.ContextUsage{Tokens: footerNumber(240000), Window: footerNumber(200000)}, "240,000 / 200,000 Token\n0 Token remaining"},
 	} {
 		if got := footerContextDetails(tc.usage); got != tc.want {
 			t.Errorf("details = %q, want %q", got, tc.want)
@@ -252,12 +252,15 @@ func TestFooterUsagePopoversSnapOnlyAtActualWindowOverflow(t *testing.T) {
 		width, height        float32
 		cases                []windowCase
 	}{
-		{"accounts", "Account usage", "Account usage menu", 400, 128, []windowCase{
-			{"ordinary", 840, 560, 384, 378},
-			{"three-pixel-gap-is-not-overflow", 459, 560, 3, 378},
-			{"exact-left-edge-is-not-overflow", 456, 560, 0, 378},
-			{"one-pixel-overflow-snaps", 455, 560, 8, 378},
-			{"wide-card-visible-region-starts-at-eight", 360, 560, 8, 378},
+		// The accounts card is content-sized: its height follows the heading's
+		// fixed line height at TextSmall (12px × 1.618, snapped to the physical
+		// grid) plus four account rows, so it is not a spacing token.
+		{"accounts", "Account usage", "Account usage menu", 400, 131, []windowCase{
+			{"ordinary", 840, 560, 384, 375},
+			{"three-pixel-gap-is-not-overflow", 459, 560, 3, 375},
+			{"exact-left-edge-is-not-overflow", 456, 560, 0, 375},
+			{"one-pixel-overflow-snaps", 455, 560, 8, 375},
+			{"wide-card-visible-region-starts-at-eight", 360, 560, 8, 375},
 			{"above-card-shifts-down-without-flipping", 840, 140, 384, 8},
 			{"tall-card-visible-region-starts-at-eight", 840, 80, 384, 8},
 		}},
@@ -434,7 +437,7 @@ func TestFooterResetTooltipAndAccountNameMatchSource(t *testing.T) {
 		{Label: "Session", ResetsAt: now.Add(time.Hour)}, {Label: "Week", ResetsAt: now.Add(48 * time.Hour)},
 		{Label: "Month", ResetsAt: now.Add(30 * 24 * time.Hour)}, {Label: "Unknown"},
 	}
-	want := "Session: resets " + windows[0].ResetsAt.Local().Format("3:04 PM") + " · Week: resets " + windows[1].ResetsAt.Local().Format("Mon") + " · Month: resets " + windows[2].ResetsAt.Local().Format("Jan 2") + " · Unknown"
+	want := "Session: resets " + windows[0].ResetsAt.Local().Format("3:04 PM") + ", Week: resets " + windows[1].ResetsAt.Local().Format("Mon") + ", Month: resets " + windows[2].ResetsAt.Local().Format("Jan 2") + ", Unknown"
 	if got := footerAccountResets(windows, now); got != want {
 		t.Fatalf("tooltip = %q", got)
 	}

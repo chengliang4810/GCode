@@ -61,6 +61,7 @@ type App struct {
 	questionForms       map[string]*questionFormState
 	todoPanels          map[string]*todoPanelState
 	goalEditors         map[string]*goalEditorState
+	interruptedEditor   interruptedEditorState
 	goalActions         map[string]bool
 	background          backgroundSettingsState
 	pickAttachmentFiles func() ([]string, error)
@@ -115,6 +116,9 @@ type App struct {
 	sessionSubscriptionGeneration uint64
 	sessionSubscriptionScope      []string
 	sessionDetailsLoading         map[string]bool
+	// sessionDetailsLoadingSince is when each pending detail load was first
+	// marked, so a cached or fast switch never flashes the loading state.
+	sessionDetailsLoadingSince map[string]time.Time
 	// captionButtons reports that the window hides its native caption
 	// controls, so the title bar draws the shared SVG ones instead.
 	captionButtons                                          bool
@@ -469,6 +473,11 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.prefetchMedia(snapshotMediaRefs(s))
 		a.workspace.Update(s)
 		a.bottom.Update(s)
+		if a.sessionID == "" && a.projectID != "" {
+			if _, found := a.footerGitProject(); !found {
+				a.clearComposerProject()
+			}
+		}
 		if languageChanged {
 			a.syncNativeLanguage()
 		}
@@ -526,7 +535,7 @@ func (a *App) applyEvent(event contracts.Event) {
 		a.streamText = nil
 		a.apply(*event.Snapshot)
 	} else if event.Revision > a.state.Revision && (event.Message != nil || event.Kind == "message.delta") {
-		delete(a.sessionDetailsLoading, event.SessionID)
+		a.sessionDetailsLoaded(event.SessionID)
 		// Streaming updates copy only the affected message, never serialize or
 		// clone the entire conversation history between the Go core and UI.
 		s := a.state
@@ -1101,6 +1110,7 @@ func (a *App) View(c *ui.Context) {
 	a.sessionInfo(c)
 	a.overlays(c)
 	a.sessionDeleteDialog(c)
+	a.projectRemoveDialog(c)
 	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
 	if a.toast != "" && time.Now().Before(a.toastUntil) {

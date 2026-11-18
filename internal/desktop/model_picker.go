@@ -83,7 +83,7 @@ func (a *composerController) reasoningChoice() reasoningChoiceState {
 	}
 	effort.selected = max(0, slices.Index(effort.levels, value))
 	if a.state.Runtime != nil && value != "" && !slices.Contains(effort.levels, value) {
-		effort.unavailable = a.t("Unavailable") + " · " + value
+		effort.unavailable = a.t("Unavailable") + ": " + value
 	}
 	return effort
 }
@@ -283,12 +283,18 @@ func (a *composerController) reasoningPopover(c *ui.Context, anchor ui.Element) 
 	return ui.PopoverBase(c, anchor, &a.effortMenu, func(panel ui.Element) {
 		budget, below := composerMenuPlacement(c, panel, anchor, a.sessionID == "", false)
 		placeComposerSelector(panel, anchor, below)
-		panel.Label(tr(c, a.controlLabel("Reasoning picker"))).Width(256).MaxHeight(budget).Padding(4).Radius(12).FontWeight(500).Clip()
+		// The panel carries the overlay shadow and clips nothing, so the shadow
+		// is not cut at the card's edge. The card inside it keeps the rounding,
+		// the padding and the clip the scrolling content needs.
+		panel.Label(tr(c, a.controlLabel("Reasoning picker"))).Width(256).MaxHeight(budget).Radius(12).FontWeight(500)
 		if !a.frosted(c) {
-			panel.Shadow(0, 8, 24, -3, ui.RGBA(0, 0, 0, .12))
+			panel = design.OverlayShadow(panel)
 		}
-		a.floatingSurface(c, panel, 12)
-		ui.Scroll(c).FillWidth().MaxHeight(max(float32(0), budget-10)).Focusable().KeepFocus().AutoFocus().Children(func() { a.effortPanel(c) })
+		card := ui.Column(c).FillWidth().MaxHeight(budget).Padding(4).Radius(12).Clip()
+		a.floatingSurface(c, card, 12)
+		card.Children(func() {
+			ui.Scroll(c).FillWidth().MaxHeight(max(float32(0), budget-10)).Focusable().KeepFocus().AutoFocus().Children(func() { a.effortPanel(c) })
+		})
 	})
 }
 
@@ -299,12 +305,16 @@ func (a *composerController) modelOptionsPanel(c *ui.Context) {
 	if fastOption.ID != "" {
 		ui.Row(c).Height(32).FillWidth().Padding(0, 8).Justify(ui.End).Children(func() {
 			if fastOption.ID != "" {
-				glyph, hint := "fast-tier", "Fast mode off · Turn on"
+				glyph, hint := "fast-tier", "Fast mode off — turn it on"
 				color := a.palette.Muted
 				if fast {
-					glyph, hint, color = "fast-tier-bold", "Fast mode on · Turn off", a.palette.Accent
+					glyph, hint, color = "fast-tier-bold", "Fast mode on — turn it off", a.palette.Accent
 				}
-				button := ui.ToggleBase(c, &fast).Size(28, 28).Radius(7).Role(ui.RoleButton).Label(tr(c, a.controlLabel("Fast mode"))).Tooltip(tr(c, hint)).Center().TextColor(color)
+				// The fast-mode control is one of the composer's circular 28px
+				// icon buttons, so its corner is half the target — the same
+				// shape the attach and send buttons use beside the input.
+				const fastButtonSize float32 = 28
+				button := ui.ToggleBase(c, &fast).Size(fastButtonSize, fastButtonSize).Radius(fastButtonSize / 2).Role(ui.RoleButton).Label(tr(c, a.controlLabel("Fast mode"))).Tooltip(tr(c, hint)).Center().TextColor(color)
 				if button.Hovered() {
 					button.Background(a.palette.Hover)
 				}
@@ -466,12 +476,10 @@ func modelThumbPlate(c *ui.Context, palette design.Tokens, effort design.EffortP
 func (a *composerController) reasoningSliderMaterial(c *ui.Context, paint effortSliderPaint) {
 	palette := a.modelPopupPalette(c)
 	effort := a.effortPalette()
-	if palette.Dark {
-		// GPUI paints the whole drop beneath this translucent rail. MyGo's
-		// Shadow deliberately cuts out its casting box, so retain the full
-		// source shadow as a blurred underlay rather than changing its tint.
-		ui.Box(c).Absolute().Left(0).Right(0).Top(5).Height(28).Radius(14).Background(ui.Hex("#000000").Alpha(.16)).Blur(2)
-	}
+	// The source lays a drop under this translucent rail, where it shows through
+	// the rail's own fill. MyGo's Shadow shows only outside the box that casts
+	// it, so it cannot: the rail keeps its rim and inset lighting and casts no
+	// drop, rather than a blurred plate standing in for one.
 	modelRailPlate(c, palette.Dark).Absolute().Left(0).Right(0).Top(4).Height(28)
 	ui.Box(c).Absolute().Left(22).Right(22).Top(0).Bottom(0).Children(func() {
 		modelEffortPlate(c, palette, effort, paint).Absolute().Left(-22).RightPercent(100*(1-paint.fraction)).Margin(0, -14, 0, 0).Top(4).Height(28)
@@ -608,16 +616,25 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	if a.hasModelOptions() {
 		optionHeight = 120
 	}
-	height := min(float32(max(1, min(7, len(rows))))*34+8+searchHeight+optionHeight, budget)
+	// One list row is a 32px row plus the list's 2px gap; the estimate rounds
+	// that up onto the 4px geometry grid, so a full list is never budgeted
+	// shorter than it draws.
+	height := min(float32(max(1, min(7, len(rows))))*36+8+searchHeight+optionHeight, budget)
 	if a.state.ModelCatalog.State != contracts.CatalogReady && a.state.ModelCatalog.State != "" {
 		height = min(float32(180), budget)
 	}
-	card := func(element ui.Element) ui.Element {
-		element = element.Padding(4).Radius(12).Clip()
+	// A card is an overlay surface: the wrapper casts the overlay shadow and
+	// clips nothing, the card inside it keeps the rounding, the padding and the
+	// clip of the scrolled content.
+	card := func(key any) (wrapper, surface ui.Element) {
+		wrapper = ui.Box(c).Radius(12)
 		if !a.frosted(c) {
-			element = element.Shadow(0, 8, 24, -3, ui.RGBA(0, 0, 0, .12))
+			wrapper = design.OverlayShadow(wrapper)
 		}
-		return a.floatingSurface(c, element, 12)
+		wrapper.Children(func() {
+			surface = a.floatingSurface(c, ui.Column(c.Key(key)).Fill().Padding(4).Radius(12).Clip(), 12)
+		})
+		return wrapper, surface
 	}
 	providerID := a.modelProvider
 	if providerID == "" {
@@ -625,8 +642,10 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	}
 	var providerCard, activeProvider ui.Element
 	providers := func() {
-		providerCard = card(ui.Column(c.Key("model-provider-menu"))).Width(providerWidth).Height(leftHeight).Shrink(0)
-		providerCard.Children(func() {
+		var surface ui.Element
+		providerCard, surface = card("model-provider-menu")
+		providerCard.Width(providerWidth).Height(leftHeight).Shrink(0)
+		surface.Children(func() {
 			ui.Scroll(c).Grow(1).MinHeight(0).FillWidth().Gap(2).Children(func() {
 				for _, provider := range a.state.Providers {
 					if a.modelProviderOffered(provider) {
@@ -645,7 +664,8 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		})
 	}
 	models := func() {
-		modelCard := card(ui.Column(c.Key("model-list-menu"))).Width(modelWidth).Height(height)
+		modelCard, surface := card("model-list-menu")
+		modelCard.Width(modelWidth).Height(height)
 		// Measure only scalar geometry across frames. The browsed row may move
 		// inside its scroll rail; clamp the submenu above the trigger independently.
 		providerBounds, rowBounds := providerCard.Bounds(), activeProvider.Bounds()
@@ -661,7 +681,8 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		} else {
 			modelCard.AttachTo(providerCard, ui.AnchorTopEnd, ui.AnchorTopStart).Left(modelPickerGap)
 		}
-		modelCard.Margin(offset, 0, 0, 0).SnapToWindow(8).Children(func() {
+		modelCard.Margin(offset, 0, 0, 0).SnapToWindow(8)
+		surface.Children(func() {
 			if a.modelCatalogState(c, max(float32(0), height-10)) {
 				return
 			}

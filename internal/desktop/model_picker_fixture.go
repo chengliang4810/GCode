@@ -150,7 +150,7 @@ func (f *ModelPickerFixture) View(c *ui.Context) {
 	// anchor row, gap16. The page header itself uses an additional 8px inset.
 	ui.Column(c).Fill().Padding(24).Justify(ui.End).Gap(16).Children(func() {
 		ui.Row(c).Bind(&f.header).Label("Fixture header").FillWidth().Padding(0, 8).Height(26).AlignItems(ui.Baseline).Gap(10).Children(func() {
-			ui.Text(c, "Model picker · "+f.appearance).FontSize(design.TextSize(c, design.TextTitle)).FontWeight(500).FixedLineHeight(26)
+			ui.Text(c, "Model picker: "+f.appearance).FontSize(design.TextSize(c, design.TextTitle)).FontWeight(500).FixedLineHeight(26)
 		})
 		ui.Row(c).Bind(&f.row).Label("Fixture trigger row").FillWidth().Height(48).AlignItems(ui.Center).Children(func() {
 			// The reference's Pickers root is a min-width-zero flex row. Its

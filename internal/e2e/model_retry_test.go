@@ -133,7 +133,7 @@ func TestDesktopLocalModelRetry(t *testing.T) {
 					return err
 				}
 				for _, node := range tree.Nodes {
-					if node.Role == "tooltip" && node.Label == "重新连接中... 3/10 · HTTP 503" {
+					if node.Role == "tooltip" && node.Label == "重新连接中... 3/10, HTTP 503" {
 						return nil
 					}
 				}

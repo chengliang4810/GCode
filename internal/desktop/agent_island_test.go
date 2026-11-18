@@ -26,6 +26,9 @@ func TestAgentIslandProjectionPriorityAndDismissal(t *testing.T) {
 			{ID: "read", Status: contracts.Idle, UpdatedAt: now},
 			{ID: "old", Status: contracts.Idle, Unread: true, UpdatedAt: now.Add(-25 * time.Hour)},
 			{ID: "archived", Status: contracts.Working, Archived: true, UpdatedAt: now},
+			{ID: "child", ParentSessionID: "working", SubagentType: "general", Status: contracts.AwaitingInput, UpdatedAt: now},
+			{ID: "child-done", ParentSessionID: "working", SubagentType: "general", Status: contracts.Idle, Unread: true, UpdatedAt: now},
+			{ID: "side", ParentSessionID: "working", SideChat: true, Status: contracts.Working, UpdatedAt: now},
 		},
 	}
 	for _, s := range state.Sessions {
@@ -55,6 +58,55 @@ func TestAgentIslandProjectionPriorityAndDismissal(t *testing.T) {
 	state.Runs = append(state.Runs, contracts.Run{ID: "done-next", SessionID: "done", Status: "completed", StartedAt: now})
 	if len(islandEntries(state, now, dismissed)) != 4 {
 		t.Fatal("dismissing one completion hid a later result")
+	}
+}
+
+func TestAgentIslandInterruptedIsNotACompletion(t *testing.T) {
+	now := time.Now()
+	state := contracts.Snapshot{
+		Sessions: []contracts.Session{
+			{ID: "stopped", Title: "Stopped task", Status: contracts.Idle, Unread: true, UpdatedAt: now},
+			{ID: "done", Title: "Done task", Status: contracts.Idle, Unread: true, UpdatedAt: now},
+		},
+		Runs: []contracts.Run{
+			{ID: "stopped-run", SessionID: "stopped", Status: "interrupted", StartedAt: now.Add(-time.Minute)},
+			{ID: "done-run", SessionID: "done", Status: "completed", StartedAt: now.Add(-time.Minute)},
+		},
+	}
+	entries := islandEntries(state, now, nil)
+	if len(entries) != 2 {
+		t.Fatalf("entries=%+v", entries)
+	}
+	phases := map[string]islandEntry{}
+	for _, entry := range entries {
+		phases[entry.SessionID] = entry
+	}
+	if got := phases["stopped"].Phase; got != "interrupted" {
+		t.Fatalf("interrupted phase=%q", got)
+	}
+	if got := phases["stopped"].Detail; got != "Interrupted" {
+		t.Fatalf("interrupted detail=%q", got)
+	}
+	if got := phases["done"].Phase; got != "completed" {
+		t.Fatalf("completed phase=%q", got)
+	}
+	if islandRank("interrupted") <= islandRank("running") || islandRank("interrupted") >= islandRank("completed") {
+		t.Fatal("interrupted must rank between running and completed")
+	}
+	a, _ := settingsTestApp(t)
+	sessionID := a.state.Sessions[0].ID
+	a.state.Sessions = []contracts.Session{{ID: sessionID, Title: "Stopped task", Status: contracts.Idle, Unread: true, UpdatedAt: now}}
+	a.state.Runs = []contracts.Run{{ID: "stopped-run", SessionID: sessionID, Status: "interrupted", StartedAt: now.Add(-65 * time.Second)}}
+	a.island.Expanded = true
+	tt := ui.NewTester(a.agentIslandView, 360, 400)
+	if !tt.HasText("Interrupted") {
+		t.Fatalf("interrupted detail missing: %v", tt.Texts())
+	}
+	if tt.HasText("Completed") {
+		t.Fatal("an interrupted run was reported as completed")
+	}
+	if _, ok := tt.Find("Dismiss"); !ok {
+		t.Fatal("interrupted entry must offer dismissal, not a stop action")
 	}
 }
 

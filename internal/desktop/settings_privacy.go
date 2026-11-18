@@ -288,10 +288,10 @@ func (a *App) privacyLocalModels(c *ui.Context) {
 				state = fmt.Sprintf("%s %.1f / %.1f MB", tr(c, "Downloading"), float64(status.Done)/1e6, float64(status.Total)/1e6)
 			}
 			if status.Error != "" {
-				state += " · " + status.Error
+				state += ", " + status.Error
 			}
 			line(c)
-			a.settingsDataRow(c, name, fmt.Sprintf("%.1f MB · %s", float64(status.Size)/1e6, state), func() {
+			a.settingsDataRow(c, name, fmt.Sprintf("%.1f MB, %s", float64(status.Size)/1e6, state), func() {
 				if status.Downloading {
 					textButton(c.Key("privacy-model-cancel-"+status.Model), tr(c, "Cancel download")).OnClick(func() {
 						a.dispatch(contracts.Command{Kind: "privacy.model.cancel", ID: status.Model})

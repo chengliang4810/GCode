@@ -46,8 +46,10 @@ func islandRank(phase string) int {
 		return 1
 	case "running":
 		return 2
-	default:
+	case "interrupted":
 		return 3
+	default:
+		return 4
 	}
 }
 
@@ -62,7 +64,7 @@ func islandEntries(state contracts.Snapshot, now time.Time, dismissed map[string
 	}
 	entries := []islandEntry{}
 	for _, session := range state.Sessions {
-		if session.Archived {
+		if session.Archived || session.SubagentType != "" || session.SideChat {
 			continue
 		}
 		run, ok := latest[session.ID]
@@ -80,11 +82,12 @@ func islandEntries(state contracts.Snapshot, now time.Time, dismissed map[string
 				continue
 			}
 			entry.Phase, entry.Detail = "completed", "Completed"
+			// A turn that never finished is not a completion: it keeps its own
+			// phase so both the colour and the reminder stay neutral.
 			if run.Status == "failed" || session.Status == contracts.Errored {
 				entry.Phase, entry.Detail = "error", "Failed"
-			}
-			if run.Status == "interrupted" {
-				entry.Detail = "Interrupted"
+			} else if run.Status == "interrupted" {
+				entry.Phase, entry.Detail = "interrupted", "Interrupted"
 			}
 		}
 		entries = append(entries, entry)
@@ -132,7 +135,7 @@ func (a *App) syncAgentIsland() {
 		}
 		area := display.Bounds
 		window := mygo.NewWindow(mygo.WindowOptions{
-			Title: "GCode · " + a.t("Dynamic Island"), Width: 210, Height: 28,
+			Title: "GCode: " + a.t("Dynamic Island"), Width: 210, Height: 28,
 			X: area.X + (area.Width-210)/2, Y: area.Y,
 			Frameless: true, Panel: true, AlwaysOnTop: true, SkipTaskbar: true, DisableResize: true,
 			DisableMinimize: true, DisableMaximize: true, UseContentSize: true,
@@ -369,9 +372,15 @@ func (a *App) renderAgentIsland(c *ui.Context, displayID int64, trackPointer boo
 	c.SetTheme(islandTheme())
 	c.Root().Background(ui.Transparent)
 	entries := islandEntries(a.state, time.Now(), a.island.Dismissed)
-	label := tr(c, "No active tasks")
+	detail, count := tr(c, "No active tasks"), ""
 	if len(entries) > 0 {
-		label = fmt.Sprintf("%s · %d", tr(c, entries[0].Detail), len(entries))
+		detail, count = tr(c, entries[0].Detail), fmt.Sprint(len(entries))
+	}
+	// The compact row draws the detail and the count as separate texts; the
+	// accessible name joins them because a label is one string.
+	label := detail
+	if count != "" {
+		label = detail + ", " + count
 	}
 	expanded := a.island.Expanded || a.island.HoverExpanded
 	radius := design.IslandRadius(expanded)
@@ -387,15 +396,20 @@ func (a *App) renderAgentIsland(c *ui.Context, displayID int64, trackPointer boo
 					a.islandMascot(c, 16)
 					if len(entries) > 0 {
 						color := c.Theme().Success
-						if entries[0].Phase == "needs-interaction" {
+						switch entries[0].Phase {
+						case "needs-interaction":
 							color = c.Theme().Warning
-						}
-						if entries[0].Phase == "error" {
+						case "error":
 							color = c.Theme().Danger
+						case "interrupted":
+							color = c.Theme().TextMuted
 						}
 						ui.Box(c).Size(5, 5).Radius(3).Background(color)
 					}
-					ui.Text(c, label).FontSize(11).SingleLine()
+					ui.Text(c, detail).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+					if count != "" {
+						ui.Text(c, count).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+					}
 				})
 			})
 			return

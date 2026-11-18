@@ -27,6 +27,13 @@ func TestSubagentSideTranscriptIsReadOnlyAndPreservesMainDraft(t *testing.T) {
 	app.state.Messages["chat-0"] = []contracts.Message{{ID: "parent", SessionID: "chat-0", Role: "assistant", Blocks: []contracts.Block{
 		{ID: "child", Kind: "subagent", Subagent: &contracts.Subagent{ID: "child", SessionID: child.ID, Name: "Schema reviewer", Status: "completed"}},
 	}}}
+	if app.state.Metrics == nil {
+		app.state.Metrics = make(map[string]contracts.ConversationMetrics)
+	}
+	app.state.Metrics[child.ID] = contracts.ConversationMetrics{
+		Own:   contracts.ExecutionMetrics{Totals: contracts.ModelRequestTotals{Requests: 1, Input: 47}},
+		Total: contracts.ExecutionMetrics{Totals: contracts.ModelRequestTotals{Requests: 2, Input: 99}},
+	}
 	stabilizeFixtureSnapshot(t, app, child.ID)
 	app.workspace.Update(app.state)
 	tt := ui.NewTester(app.View, 1320, 880)
@@ -34,12 +41,15 @@ func TestSubagentSideTranscriptIsReadOnlyAndPreservesMainDraft(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Advance(300 * time.Millisecond)
+	if !tt.HasText("47 Token") || tt.HasText("99 Token") {
+		t.Fatalf("child footer did not show its own usage: %v", tt.Texts())
+	}
 	for _, label := range []string{"Message to " + child.Title, "Send message to " + child.Title, "Attach files to " + child.Title} {
 		if _, ok := tt.Find(label); ok {
 			t.Fatalf("read-only child exposed %q", label)
 		}
 	}
-	if !tt.HasText("The fixture uses schemaVersion 1") || !tt.HasText("user/model · Max") || app.sessionID != "chat-0" || app.draft != "Keep the central draft" {
+	if !tt.HasText("The fixture uses schemaVersion 1") || !tt.HasText("user/model") || !tt.HasText("Max") || app.sessionID != "chat-0" || app.draft != "Keep the central draft" {
 		t.Fatal("child transcript did not preserve the actual transcript and main draft")
 	}
 	state := app.sideComposer(child.ID)

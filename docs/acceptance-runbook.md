@@ -62,7 +62,7 @@ client size, DPI, appearance, scene, locale and input method.
 1. Create a session, choose a model and effort, type Chinese composition,
    select a candidate with Enter, paste multiline text and an image, drag files,
    send, stop, retry, queue, edit and remove queued messages.
-2. Exercise questions and permissions, then switch sessions during output and
+2. Exercise questions, then switch sessions during output and
    during an attachment import. Check draft ownership, unread state, archive,
    restore, pin, group collapse, search and keyboard focus.
 3. Open files, edit/save/close, trigger read-only and version-conflict states,

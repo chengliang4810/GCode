@@ -148,6 +148,7 @@ macOS 设置标题栏侧栏动效修复的原生记录位于
 
 | 用例 | 实际路径 |
 | --- | --- |
+| `TestDesktopLocalComposerHistory` | 原生窗口 + 私有 `--local` 真实核心重开两条存档会话；英文浅色 1320×880、中文深色 900×880；通过 MyGo 键盘事件验证按时间切换用户输入、忽略助手回复、保留多行文本、恢复未发送草稿及隔离会话；不请求模型。侧对话、资源引用和候选优先级由组件测试验证。通过证据（macOS）：`output/desktop-e2e/20261118-161553-357807106/evidence.json` |
 | `TestDesktopLocalMessageRail` | 原生窗口 + 私有 `--local` 真实核心重开持久化历史夹具；深浅主题、中英文、1320/900 宽度；刻度几何、悬停预览、点击和键盘定位、当前刻度、单轮/窄区隐藏、会话切换与草稿保留；不请求模型。运行状态与证据见 `message-rail.md` |
 | `TestDesktopLocalTranscriptScrollbarEdge` | 原生窗口 + 私有 `--local` 核心与持久化历史；深浅主题 1500×800，信息卡开关及右侧工作区打开时滚动视口贴对话面板右缘，右缘滚轮、返回最新与草稿保留；不请求模型 |
 | `TestDesktopLocalProjectCreationWithIgnoredArtifacts` | 原生项目选择器添加实际 GCode checkout；独立进程、配置和 socket；验证登记成功、后台文件列表完成、未跟踪验收缓存被忽略及重启后项目仍可见；无模型调用。最新证据 `output/project-create-async-native/20261030-200639-2897047696/evidence.json` |

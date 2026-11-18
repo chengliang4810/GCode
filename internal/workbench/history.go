@@ -188,7 +188,10 @@ func (s *State) historyView(c *ui.Context) {
 			}
 			ui.Text(c, commit.Subject).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
 			ui.Text(c, commit.SHA).Font("Geist Mono").FontSize(design.TextSize(c, design.TextSmall)).Selectable()
-			ui.Text(c, commit.Author+" · "+tr(c, date(c, commit.AuthoredAt, "Jan 2, 2006 15:04")))
+			ui.Row(c).Gap(6).AlignItems(ui.Center).Children(func() {
+				ui.Text(c, commit.Author)
+				ui.Text(c, tr(c, date(c, commit.AuthoredAt, "Jan 2, 2006 15:04")))
+			})
 			ui.Text(c, tr(c, "Parents: ")+tr(c, strings.Join(commit.Parents, ", "))).FontSize(design.TextSize(c, design.TextSmall)).Selectable()
 			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
 				ui.Button(c, tr(c, "Copy SHA")).OnClick(func() { c.Services().WriteClipboard(commit.SHA) })

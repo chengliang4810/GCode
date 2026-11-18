@@ -143,23 +143,28 @@ func (a *composerController) restoreModelSelection() {
 	}
 }
 
+// modelSkeletonPeriod is the shared breathing cycle of every ghost row.
+const modelSkeletonPeriod = 2 * time.Second
+
 // Ghost labels follow popover.rs::skeleton_menu_rows. Layout and timing use
 // native boxes and the window clock; no task is started from rendering.
 func (a *composerController) modelSkeleton(c *ui.Context) {
 	root := ui.Column(c).FillWidth().Padding(6, 4).Gap(8)
 	start := ui.Local(root, "pulse-start", func() time.Time { return c.Now() })
-	phase := float64(c.Now().Sub(*start)) / float64(2400*time.Millisecond)
+	// A dense list breathes in lockstep: every ghost shares one phase over a
+	// two-second cycle, so the rows read as one placeholder instead of a wave.
+	phase := float64(c.Now().Sub(*start)) / float64(modelSkeletonPeriod)
+	opacity := float32(.55)
+	if !a.reduceMotion(c) {
+		opacity = .35 + .4*float32((1-math.Cos(2*math.Pi*phase))/2)
+	}
 	root.Children(func() {
 		widths := [4]float32{42, 58, 48, 66}
 		for i := 0; i < 5; i++ {
-			opacity := float32(.55)
-			if !a.reduceMotion(c) {
-				opacity = .35 + .4*float32((1-math.Cos(2*math.Pi*(phase-float64(i)*.08)))/2)
-			}
 			ui.Box(c).Height(14).WidthPercent(widths[i%4]).Radius(7).Background(a.palette.Text.Alpha(.05)).Opacity(opacity)
 		}
 	})
 	if !a.reduceMotion(c) {
-		c.After(time.Second / 60)
+		c.After(time.Second / 30)
 	}
 }

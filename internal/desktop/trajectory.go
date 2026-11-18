@@ -143,7 +143,7 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 			FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted)
 		if state.data.Truncated {
 			ui.Text(c, tr(c, "Some older or oversized trace content was omitted.")).FillWidth().
-				FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Warning)
+				FontSize(design.TextSize(c, design.TextSmall)).LineHeight(1.5).TextColor(p.Warning)
 		}
 		ui.Scroll(c.Key("trajectory-timeline:" + sessionID)).Grow(1).FillWidth().Gap(10).Children(func() {
 			for i, record := range state.data.Records {
@@ -153,7 +153,7 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 				key := fmt.Sprintf("%s-%d", record.ID, record.Attempt)
 				ui.Column(c.Key("trajectory-call:" + key)).FillWidth().Padding(10).Gap(8).Radius(8).Background(p.Card).Children(func() {
 					defaultOpen := query != "" || i == len(state.data.Records)-1
-					a.trajectoryDisclosure(c, state, key, fmt.Sprintf("%02d · %s · %s", i+1, record.ModelID, a.trajectorySourceLabel(record.Source)), defaultOpen, func() {
+					a.trajectoryDisclosure(c, state, key, fmt.Sprintf("%02d. %s — %s", i+1, record.ModelID, a.trajectorySourceLabel(record.Source)), defaultOpen, func() {
 						status := tr(c, "Running")
 						if record.CompletedAt != nil {
 							status = tr(c, "Completed")
@@ -171,9 +171,9 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 						if record.Attempt > 1 {
 							metadata = append(metadata, fmt.Sprintf(tr(c, "Attempt %d"), record.Attempt))
 						}
-						ui.Text(c, strings.Join(metadata, " · ")).
+						ui.Text(c, strings.Join(metadata, ", ")).
 							FillWidth().FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted)
-						ui.Text(c, string(record.Protocol)+" · "+record.TurnID).FillWidth().
+						ui.Text(c, string(record.Protocol)+" — "+record.TurnID).FillWidth().
 							FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted).Selectable()
 						a.trajectoryDisclosure(c, state, key+":request", tr(c, "Request"), true, func() {
 							if record.System != "" {
@@ -196,12 +196,12 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 						if response := record.Response; response != nil {
 							usage := response.Usage
 							if usage.Known {
-								ui.Text(c.Key("trajectory-usage:"+key), fmt.Sprintf(tr(c, "Input %d · Output %d · Cached %d"),
-									usage.Input, usage.Output, usage.Cached)).FillWidth().FontSize(design.TextSize(c, design.TextSmall))
+								ui.Text(c.Key("trajectory-usage:"+key), fmt.Sprintf(tr(c, "Input %d, output %d, cached %d"),
+									usage.Input, usage.Output, usage.Cached)).FillWidth().FontSize(design.TextSize(c, design.TextSmall)).FontFeatures("tnum")
 							} else {
 								ui.Text(c, tr(c, "Usage unavailable or incomplete")).TextColor(p.Muted)
 							}
-							a.trajectoryDisclosure(c, state, key+":response", tr(c, "Response")+" · "+string(response.Stop), true, func() {
+							a.trajectoryDisclosure(c, state, key+":response", tr(c, "Response")+" — "+string(response.Stop), true, func() {
 								if response.Message.Reasoning != "" {
 									a.trajectoryText(c, state, key+":reasoning", "Reasoning", response.Message.Reasoning, false)
 								}

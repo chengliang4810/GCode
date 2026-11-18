@@ -170,7 +170,7 @@ func (a *App) cloudUsage(c *ui.Context, v contracts.CloudSettingsState) {
 						height = 88 * float32(max(.04, day.Credits/peak))
 						color = a.palette.Accent.Alpha(.85)
 					}
-					ui.Box(c).Grow(1).MinWidth(1).Height(height).Radius(2).Background(color).Tooltip(tr(c, date(c, day.Day, "Jan 2")) + " · " + tr(c, integrationCredits(day.Credits)) + tr(c, " credits"))
+					ui.Box(c).Grow(1).MinWidth(1).Height(height).Radius(2).Background(color).Tooltip(tr(c, date(c, day.Day, "Jan 2")) + ", " + fmt.Sprintf(tr(c, "%s credits"), integrationCredits(day.Credits)))
 				}
 			})
 			ui.Row(c).FillWidth().Children(func() {

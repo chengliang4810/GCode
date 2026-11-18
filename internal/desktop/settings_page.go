@@ -17,15 +17,5 @@ func settingsPageContent(c *ui.Context) ui.Element {
 }
 
 func settingsPageHeading(c *ui.Context, section string) ui.Element {
-	s := design.SettingsPage()
-	size, lineHeight := s.HeadingSize, s.HeadingLineHeight
-	if width, _ := c.Size(); width >= s.WideBreakpoint {
-		size = s.WideHeadingSize
-		lineHeight = s.WideHeadingLineHeight
-	}
-	return ui.Text(c, tr(c, section)).
-		Label(tr(c, "Settings page heading")+": "+tr(c, section)).
-		FontSize(design.TextSize(c, size)).FontWeight(s.HeadingWeight).
-		LineHeight(lineHeight/size).
-		Margin(0, s.HeadingInset, s.HeadingBottomMargin, s.HeadingInset)
+	return design.SettingsPage().Heading(c, tr(c, section), tr(c, "Settings page heading")+": "+tr(c, section))
 }

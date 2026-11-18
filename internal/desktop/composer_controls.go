@@ -158,7 +158,7 @@ func (a *composerController) modelTrigger(c *ui.Context) (anchor, panel ui.Eleme
 	if model := a.selectedModel(); model.ID != "" {
 		identity := model.Label
 		if provider := a.selectedProvider(); provider.Name != "" {
-			identity = provider.Name + " · " + model.Label
+			identity = provider.Name + ", " + model.Label
 		}
 		button.Value(identity).Tooltip(identity)
 	}

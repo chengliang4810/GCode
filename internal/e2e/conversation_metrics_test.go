@@ -190,7 +190,7 @@ func TestDesktopLocalConversationMetricsPanels(t *testing.T) {
 			app.hoverMetric(scope + ":usage")
 			panel := app.waitKey(scope + ":usage-panel")
 			trigger := app.waitKey(scope + ":usage")
-			for key, want := range map[string]string{"input": "9.2万 Token", "cached": "2万 Token", "output": "1.6千 Token", "cache-hit": "34.0%", "model": "Metrics fixture · model"} {
+			for key, want := range map[string]string{"input": "9.2万 Token", "cached": "2万 Token", "output": "1.6千 Token", "cache-hit": "34.0%", "model": "Metrics fixture, model"} {
 				if got := app.waitKey(scope + ":" + key).Label; !strings.Contains(got, want) {
 					t.Fatalf("%s: %s; want %s", key, got, want)
 				}

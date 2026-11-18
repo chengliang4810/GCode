@@ -136,7 +136,7 @@ func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hov
 		if hovered {
 			inlineIconButton(c, "archive-minimalistic", tr(c, "Archive session")+" "+session.ID).Tooltip(tr(c, "Archive session")).OnClick(func() { a.archiveSidebarSession(session.ID) })
 		} else {
-			ui.Text(c, relativeAge(session.UpdatedAt, a.now(), a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint)
+			ui.Text(c, relativeAge(session.UpdatedAt, a.now(), a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 		}
 	})
 }

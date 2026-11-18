@@ -196,7 +196,8 @@ JSON 仍使用临时文件与原子替换；Windows 有界重试不会先删除�
   不自动重放可能已经发生的写入或命令。用户可以检查现状后重试。
 
 自动读取用户根与项目根的 `AGENTS.md`。用户导入的技能与命令仍来自托管资源目录；
-运行 worker 另加载当前项目 `.claude/skills`、`.claude/commands`、`.claude/agents` 和
+运行 worker 另加载会话工作目录的 `.agents/skills`、`.claude/skills`、
+`.claude/commands`、`.claude/agents` 和
 已启用插件资源。插件技能/命令用 `/插件名:资源名` 或 `Skill` 的精确名称调用，
 用户 `/skill:ID` 与现有用户命令继续按各自资源身份解析。
 原生引用候选与运行目录的范围不同，见 [输入框引用](prompt-references.md)。

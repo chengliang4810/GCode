@@ -135,6 +135,26 @@ func (a *App) sessionDeleteDialog(c *ui.Context) {
 	})
 }
 
+func (a *App) projectRemoveDialog(c *ui.Context) {
+	ui.DialogBase(c.Key("project-remove-dialog"), &a.sidebarUI.removeProjectOpen, func(back, panel ui.Element) {
+		back.Background(ui.RGBA(0, 0, 0, .35))
+		panel.Width(400).Padding(24).Radius(12).Label(tr(c, "Remove project"))
+		a.floatingSurface(c, panel, 12)
+		ui.Column(c).Gap(16).Children(func() {
+			ui.Text(c, tr(c, "Remove project")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
+			ui.Text(c, a.sidebarUI.removeProject.Name).FillWidth()
+			ui.Text(c, tr(c, "This only removes the project from the list. Files and chats are kept.")).FillWidth().TextColor(a.palette.Muted)
+			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
+				textButton(c.Key("project-remove-cancel"), tr(c, "Cancel")).OnClick(func() { a.sidebarUI.removeProjectOpen = false })
+				dangerButton(c.Key("project-remove-confirm"), tr(c, "Remove")).OnClick(func() {
+					a.sidebarUI.removeProjectOpen = false
+					a.dispatch(contracts.Command{Kind: "project.delete", ID: a.sidebarUI.removeProject.ID})
+				})
+			})
+		})
+	})
+}
+
 // reorderSidebarRows handles a native list drop. Pinned rows keep the pin
 // order path; project rows reorder inside their project, while group-view
 // conversations may also join the group under the pointer.

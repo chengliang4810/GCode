@@ -169,7 +169,7 @@ func (a *App) backgroundSettings(c *ui.Context) {
 		if p.Background != "" {
 			meta = p.BackgroundName
 			if state.LoadError != "" && !state.Loading {
-				meta = "Image unavailable · Choose a replacement or remove it."
+				meta = "Image unavailable. Choose a replacement or remove it."
 			}
 		}
 		a.settingsRow(c, "New thread background", meta, func() {

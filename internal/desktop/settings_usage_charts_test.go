@@ -80,14 +80,14 @@ func TestUsageChartsDisplayProviderAndModel(t *testing.T) {
 						}
 					}
 					for _, label := range []string{
-						"第一供应商/family/model · 200 " + tokens + " · 66.7%",
-						"第二供应商/family/model · 100 " + tokens + " · 33.3%",
+						"第一供应商/family/model, 200 " + tokens + ", 66.7%",
+						"第二供应商/family/model, 100 " + tokens + ", 33.3%",
 					} {
 						if _, ok := tt.Find(label); !ok {
 							t.Fatalf("model share identity or accounting is wrong: %q", label)
 						}
 					}
-					hint := fmt.Sprintf("%s · 300 %s\n第一供应商/family/model · 200\n第二供应商/family/model · 100", appusage.Date(now), tokens)
+					hint := fmt.Sprintf("%s, 300 %s\n第一供应商/family/model, 200\n第二供应商/family/model, 100", appusage.Date(now), tokens)
 					if _, ok := tt.Find(hint); !ok {
 						t.Fatalf("trend tooltip is missing resolved model names: %q", hint)
 					}
@@ -98,5 +98,28 @@ func TestUsageChartsDisplayProviderAndModel(t *testing.T) {
 				})
 			}
 		}
+	}
+}
+
+func TestUsageChartSeriesUseOneAccentAndNeutralSteps(t *testing.T) {
+	a := testApp(t, "default")
+	ui.NewTester(a.View, 1320, 880)
+	seen := map[[4]uint8]bool{}
+	for i := 0; i < 6; i++ {
+		color := a.usageChartColor(i)
+		if seen[[4]uint8{color.R, color.G, color.B, color.A}] {
+			t.Fatalf("series %d repeats an earlier color", i)
+		}
+		seen[[4]uint8{color.R, color.G, color.B, color.A}] = true
+	}
+	// Semantic colors stay out of the series palette: they mean states.
+	for i := 0; i < 6; i++ {
+		color := a.usageChartColor(i)
+		if color == a.palette.Success || color == a.palette.Warning || color == a.palette.Danger {
+			t.Fatalf("series %d uses a semantic color", i)
+		}
+	}
+	if a.usageChartColor(0) != a.palette.Accent {
+		t.Fatal("the first series is not the accent color")
 	}
 }

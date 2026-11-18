@@ -157,10 +157,10 @@ func TestRuntimeComposerDefaultsAndUnavailableReasoning(t *testing.T) {
 	if app.reasoning != "removed-level" {
 		t.Fatal("rendering silently replaced the saved reasoning")
 	}
-	if tt.HasText("Unavailable · removed-level") || tt.HasText("removed-level") {
+	if tt.HasText("Unavailable: removed-level") || tt.HasText("removed-level") {
 		t.Fatal("model trigger displayed an unavailable reasoning summary")
 	}
-	if got := app.centralControls().reasoningChoice().label(); got != "Unavailable · removed-level" {
+	if got := app.centralControls().reasoningChoice().label(); got != "Unavailable: removed-level" {
 		t.Fatalf("compact reasoning misrepresented an unavailable level: %q", got)
 	}
 	app.reasoning = "High"

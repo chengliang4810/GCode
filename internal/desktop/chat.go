@@ -87,9 +87,15 @@ func (a *App) chatView(c *ui.Context) {
 				transcript.Opacity(frame.Transcript)
 			}
 			transcript.Children(func() {
+				if a.sessionDetailsLoadingPlaceholder(c, a.sessionID) && !a.hasLocalSend(a.sessionID) {
+					// A load younger than the reveal delay keeps the resting
+					// layout; the scheduled repaint decides whether it stays.
+					ui.Spacer(c).Grow(1)
+					return
+				}
 				if a.sessionDetailsAreLoading(a.sessionID) && !a.hasLocalSend(a.sessionID) {
 					ui.Spacer(c).Grow(1)
-					ui.Row(c).FillWidth().Justify(ui.Center).Children(func() {
+					ui.Row(c).FillWidth().Justify(ui.Center).Opacity(a.sessionDetailsLoadingOpacity(c, a.sessionID)).Children(func() {
 						ui.Spinner(c.Key("conversation-loading")).Label(tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
 					})
 					ui.Spacer(c).Grow(1)
@@ -135,6 +141,7 @@ func (a *App) chatView(c *ui.Context) {
 		}
 		ui.Box(c).Height(composerBottomInset)
 	})
+	a.interruptedMessageDialog(c)
 }
 
 // userMessage renders a user message's bubble: its blocks, attachments and
@@ -147,6 +154,7 @@ func (a *App) userMessage(c *ui.Context, m contracts.Message) {
 		bubble = ui.Hex("#ffffff").Alpha(.08)
 	}
 	ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+		a.interruptedMessageAction(c, m)
 		maxWidth := min(float32(a.state.Settings.Appearance.TranscriptWidth), a.chatWidth) * .8
 		if maxWidth <= 0 {
 			maxWidth = 590
@@ -219,7 +227,10 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				})
 			}
 			running := a.currentSession().Status == contracts.Working
-			canSend := !a.pendingNew && !a.composerFooterGitBusy() && a.modelID != "" && (a.sessionID != "" || !a.modelNoAgents()) && a.attachmentImports[a.attachmentScope()] == 0 && composerHasContent(a.draft, len(a.attachments)+len(a.annotations))
+			// One source for the button, the key and the inline hint: the
+			// reason the send path itself would refuse this draft.
+			reason := a.sendBlockReason()
+			canSend := reason == "" && composerHasContent(a.draft, len(a.attachments)+len(a.annotations))
 			// The reference's SendButtonMode: Stop only with an empty
 			// composer; typing during a run sends by the setting.
 			mode := composerSend
@@ -232,9 +243,15 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				mode = composerSteer
 			}
 			a.composerAttachedPanels(c, a.currentSession(), "main")
+			// A stop request already sent is reflected in the button itself, so
+			// a second press cannot ask for the same stop again.
+			stopLabel := "Stop response"
+			if a.sessionRunStopping(a.sessionID) {
+				stopLabel = tr(c, "Stopping…")
+			}
 			a.nativeComposerSurface(c, composerSurfaceProps{
 				draft: &a.draft, input: &a.composer, surface: &a.composerSurface, controls: a.centralControls(),
-				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: "Stop response",
+				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: stopLabel,
 				steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
 				running:        running,
 				stopWithEscape: a.state.Settings.General.StopWithEscape,
@@ -242,6 +259,9 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				hero:           hero,
 				handoff:        a.composerHandoff,
 				widthHint:      max(0, outerWidth-32),
+				// The key refuses with the same reason the button shows as
+				// disabled, so a blocked Enter explains itself below the pill.
+				sendBlockReason: reason,
 				renderStaged: func() {
 					if len(a.attachments) > 0 || len(a.annotations) > 0 {
 						ui.Row(c).Wrap().Padding(12, 16, 0, 16).Gap(6).Children(func() {
@@ -257,6 +277,12 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				onFilesDrop: func(paths []string) { a.importAttachments(contracts.AttachmentImportRequest{Paths: paths}) },
 				onMention:   func(file workbench.FileDrag) { a.draft += " @" + file.Path },
 			})
+			// The blocked send says why under the pill and above the footer.
+			// It collapses again the frame the reason is gone.
+			if hint := a.sendBlockedHint(&a.prompt, reason); hint != "" {
+				ui.Text(c.Key("composer-send-hint"), tr(c, hint)).FontSize(design.TextSize(c, design.TextSmall)).
+					TextColor(a.palette.Muted).Margin(6, 2, 0, 14).SingleLine()
+			}
 			ui.Box(c).Height(8).Shrink(0)
 			ui.Row(c.Key("composer-footer")).FillWidth().Height(composerFooterHeight).Margin(0, 0, -8, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 				ui.Row(c).Grow(1).MinWidth(0).AlignItems(ui.Center).Children(func() { a.composerFooterGit(c) })
@@ -268,6 +294,28 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 		})
 	})
 }
+
+// sendBlockReason names why the send path would refuse this draft, in the same
+// order send() checks them. An empty draft is not a refusal worth explaining:
+// there is nothing to send.
+func (a *App) sendBlockReason() string {
+	switch {
+	case a.pendingNew:
+		return "Entering a name for the new session."
+	case a.attachmentImports[a.attachmentScope()] > 0:
+		return "Finish importing the attachment before sending."
+	case a.composerFooterGitBusy():
+		return "Wait for the running save to finish."
+	case a.modelID == "":
+		return "Choose a model before sending."
+	case a.sessionID == "" && a.modelNoAgents():
+		return "Open a conversation before sending."
+	case !composerHasContent(a.draft, len(a.attachments)+len(a.annotations)):
+		return ""
+	}
+	return ""
+}
+
 func (a *App) projectPicker(c *ui.Context) {
 	group := controlComposerTargetGroup(c.Key("composer-project-picker-group"))
 	clearable := !a.projectMenu && a.sessionID == "" && !a.pendingNew && a.projectID != "" && (group.Hovered() || group.FocusWithin())

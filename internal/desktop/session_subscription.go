@@ -4,9 +4,20 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"time"
 
 	"gcode/internal/contracts"
+	"github.com/egoist/mygo/ui"
 )
+
+// sessionDetailsRevealDelay keeps a detail load that settles quickly from
+// flashing the pane's loading state: a cached or fast session switch fills
+// the layout instead of showing a spinner that vanishes.
+const sessionDetailsRevealDelay = 150 * time.Millisecond
+
+// sessionDetailsRevealFade is how long the revealed loading state takes to
+// reach full opacity, so the spinner arrives instead of popping in.
+const sessionDetailsRevealFade = 120 * time.Millisecond
 
 type sessionScopeCapture struct {
 	scope      []string
@@ -75,7 +86,7 @@ func (a *App) releaseUnrequestedSessionProjections(scope []string) {
 	}
 	for id := range a.sessionDetailsLoading {
 		if !requested[id] {
-			delete(a.sessionDetailsLoading, id)
+			a.sessionDetailsLoaded(id)
 		}
 	}
 	for id, view := range a.trajectoryViews {
@@ -101,15 +112,76 @@ func (a *App) markSessionDetailsLoading(scope []string) {
 	if a.sessionDetailsLoading == nil {
 		a.sessionDetailsLoading = make(map[string]bool)
 	}
-	for _, id := range scope {
-		if _, loaded := a.state.Messages[id]; !loaded {
-			a.sessionDetailsLoading[id] = true
+	if a.sessionDetailsLoadingSince == nil {
+		a.sessionDetailsLoadingSince = make(map[string]time.Time)
+	}
+	// A mark pruned elsewhere drops its timestamp here too, so the reveal
+	// times cannot outlive the loads they describe.
+	for id := range a.sessionDetailsLoadingSince {
+		if !a.sessionDetailsLoading[id] {
+			delete(a.sessionDetailsLoadingSince, id)
 		}
+	}
+	for _, id := range scope {
+		if _, loaded := a.state.Messages[id]; loaded || a.sessionDetailsLoading[id] {
+			continue
+		}
+		now := a.now().UTC()
+		a.sessionDetailsLoading[id] = true
+		a.sessionDetailsLoadingSince[id] = now
 	}
 }
 
+// sessionDetailsLoaded drops the pending marks of one session, whose detail
+// load just settled or failed.
+func (a *App) sessionDetailsLoaded(id string) {
+	delete(a.sessionDetailsLoading, id)
+	delete(a.sessionDetailsLoadingSince, id)
+}
+
 func (a *App) sessionDetailsAreLoading(id string) bool {
-	return id != "" && a.sessionDetailsLoading[id]
+	return id != "" && a.sessionDetailsLoading[id] && !a.sessionDetailsLoadingPending(id)
+}
+
+// sessionDetailsLoadingPending reports a detail load that is still younger
+// than the reveal delay: the panes keep their resting layout and ask for the
+// frame that shows the spinner once the delay is over.
+func (a *App) sessionDetailsLoadingPending(id string) bool {
+	if id == "" || !a.sessionDetailsLoading[id] {
+		return false
+	}
+	since, marked := a.sessionDetailsLoadingSince[id]
+	if !marked {
+		// A mark without a timestamp has waited as long as the old state did.
+		return false
+	}
+	return a.now().UTC().Sub(since) < sessionDetailsRevealDelay
+}
+
+// sessionDetailsLoadingPlaceholder reports whether the pane must still hold
+// its resting layout this frame. It schedules the repaint that reveals the
+// loading state, so the decision stays in one place for every transcript.
+func (a *App) sessionDetailsLoadingPlaceholder(c *ui.Context, id string) bool {
+	if !a.sessionDetailsLoadingPending(id) {
+		return false
+	}
+	since := a.sessionDetailsLoadingSince[id]
+	c.After(max(sessionDetailsRevealDelay-a.now().UTC().Sub(since), time.Millisecond))
+	return true
+}
+
+// sessionDetailsLoadingOpacity fades the revealed loading state in from the
+// same mark, and keeps repainting until it is opaque.
+func (a *App) sessionDetailsLoadingOpacity(c *ui.Context, id string) float32 {
+	since, marked := a.sessionDetailsLoadingSince[id]
+	if !marked {
+		return 1
+	}
+	opacity := activityRevealProgress(since.Add(sessionDetailsRevealDelay), a.now().UTC(), a.reduceMotion(c), sessionDetailsRevealFade, activityRowRevealEase)
+	if opacity < 1 {
+		c.After(activityMotionFrame)
+	}
+	return opacity
 }
 
 func (a *App) clearSessionDetailsLoading(snapshot contracts.Snapshot) {
@@ -123,14 +195,14 @@ func (a *App) clearSessionDetailsLoading(snapshot contracts.Snapshot) {
 	if a.sessionSubscriptionGeneration > 0 {
 		for id := range a.sessionDetailsLoading {
 			if a.sessionScopeContains(id) {
-				delete(a.sessionDetailsLoading, id)
+				a.sessionDetailsLoaded(id)
 			}
 		}
 		return
 	}
 	for id := range a.sessionDetailsLoading {
 		if _, ok := snapshot.Messages[id]; ok || slices.ContainsFunc(snapshot.Sessions, func(session contracts.Session) bool { return session.ID == id }) {
-			delete(a.sessionDetailsLoading, id)
+			a.sessionDetailsLoaded(id)
 		}
 	}
 }
@@ -182,7 +254,7 @@ func (a *App) refreshSessionSubscription() {
 		snapshot, err := a.service.Snapshot(a.ctx, scope...)
 		if err != nil {
 			for _, id := range scope {
-				delete(a.sessionDetailsLoading, id)
+				a.sessionDetailsLoaded(id)
 			}
 			a.errorText = err.Error()
 			return
@@ -206,7 +278,7 @@ func (a *App) refreshSessionSubscription() {
 				}
 				a.sessionSubscriptionCancel = nil
 				for _, id := range captured {
-					delete(a.sessionDetailsLoading, id)
+					a.sessionDetailsLoaded(id)
 				}
 				a.errorText = err.Error()
 			})

@@ -56,14 +56,14 @@ func (a *App) goalUsageText(goal *contracts.SessionGoal) string {
 	used := footerCount(uint64(max(int64(0), goal.TokensUsed)))
 	if goal.UnknownUsageCount > 0 {
 		if goal.TokenBudget != nil {
-			return i18n.In(a.state.Settings.General.Language, "At least %s / %s tokens · Usage incomplete", used, footerCount(uint64(max(int64(0), *goal.TokenBudget))))
+			return i18n.In(a.state.Settings.General.Language, "At least %s / %s Token. Usage incomplete.", used, footerCount(uint64(max(int64(0), *goal.TokenBudget))))
 		}
-		return i18n.In(a.state.Settings.General.Language, "At least %s tokens · Usage incomplete", used)
+		return i18n.In(a.state.Settings.General.Language, "At least %s Token. Usage incomplete.", used)
 	}
 	if goal.TokenBudget != nil {
-		return i18n.In(a.state.Settings.General.Language, "%s / %s tokens", used, footerCount(uint64(max(int64(0), *goal.TokenBudget))))
+		return i18n.In(a.state.Settings.General.Language, "%s / %s Token", used, footerCount(uint64(max(int64(0), *goal.TokenBudget))))
 	}
-	return i18n.In(a.state.Settings.General.Language, "%s tokens used", used)
+	return i18n.In(a.state.Settings.General.Language, "%s Token used", used)
 }
 
 func (a *App) updateGoal(command contracts.Command) {
@@ -111,8 +111,8 @@ func (a *App) goalBanner(c *ui.Context, session contracts.Session) {
 		row.Children(func() {
 			icon(c, "goal", 13)
 			ui.Text(c, tr(c, goalHeaderLabel(goal.Status))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500)
-			ui.Text(c.Key("goal-objective:"+session.ID), goal.Objective).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).Tooltip(goal.Objective + " · " + fmt.Sprintf(tr(c, "Round %d"), goal.Iteration))
-			ui.Text(c.Key("goal-duration:"+session.ID), "· "+i18n.Duration(a.state.Settings.General.Language, goalElapsed(goal, a.now()))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
+			ui.Text(c.Key("goal-objective:"+session.ID), goal.Objective).Grow(1).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).Tooltip(goal.Objective + ", " + fmt.Sprintf(tr(c, "Round %d"), goal.Iteration))
+			ui.Text(c.Key("goal-duration:"+session.ID), i18n.Duration(a.state.Settings.General.Language, goalElapsed(goal, a.now()))).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 			pending := a.goalActions[session.ID]
 			inlineIconButton(c.Key("goal-clear:"+session.ID), "trash-bin-minimalistic", tr(c, "Clear goal")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.clear", SessionID: session.ID, ID: goal.ID}) })
 			switch goal.Status {

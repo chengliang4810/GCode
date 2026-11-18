@@ -94,7 +94,7 @@ func thoughtBlock(doc *parser.Document, index, indent int, out *[]thoughtLine) {
 			var runs thoughtLine
 			for cell := range doc.Children(row) {
 				if len(runs) > 0 {
-					runs = append(runs, thoughtRun{text: " · "})
+					runs = append(runs, thoughtRun{text: " │ "})
 				}
 				runs = append(runs, thoughtInlines(doc.Inlines(cell), thoughtStyle{bold: doc.Block(row).Header})...)
 			}

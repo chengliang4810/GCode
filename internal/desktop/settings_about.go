@@ -24,7 +24,7 @@ func (a *App) aboutSettings(c *ui.Context) {
 					{"native", "Native desktop, built for coding", "Native Go UI with chat, files, terminal, and Git."},
 					{"agents", "Goal-driven collaboration", "Subagents work together on multi-step coding tasks."},
 					{"data", "Your data, local or self-hosted", "Local conversations, no account required. Self-hosting supported."},
-					{"usage", "Transparent usage", "See tokens, cache hits, and output speed."},
+					{"usage", "Transparent usage", "See Token, cache hits, and output speed."},
 					{"source", "Open source, in your hands", "Read, build, and customize the source."},
 				} {
 					ui.Column(c.Key("about-feature-" + feature.key)).Width(240).Grow(1).Gap(4).Children(func() {

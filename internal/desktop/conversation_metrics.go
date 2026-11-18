@@ -27,9 +27,10 @@ type conversationMetrics struct {
 // The core owns and persists all aggregates. Rendering reads a typed projection;
 // only an active wall clock depends on the current time.
 func (a *App) metricsFor(sessionID, turnID string) conversationMetrics {
-	saved := a.state.Metrics[sessionID].Total
+	metrics := a.state.Metrics[sessionID]
+	saved := metrics.Own
 	if turnID != "" {
-		saved = a.state.Metrics[sessionID].Turns[turnID]
+		saved = metrics.OwnTurns[turnID]
 	}
 	now := time.Time{}
 	if !saved.RunningSince.IsZero() {
@@ -135,10 +136,10 @@ func (a *App) metricsGroup(c *ui.Context, scope string, stats conversationMetric
 	tokens := a.metricTokens(c, t.Input+t.Output, t.UnknownUsage > 0 || t.Unrecorded)
 	counts := fmt.Sprintf(tr(c, "%d rounds %d steps"), stats.turns, t.Requests)
 	duration := metricDuration(stats.wallDuration, stats.wallKnown)
-	timeReading := counts + " · " + tr(c, "Time taken") + " " + duration
-	usageReading := tokens
+	timeReading := []string{counts, tr(c, "Time taken") + " " + duration}
+	usageReading := []string{tokens}
 	if _, known := t.CacheHitFraction(); known {
-		usageReading += " · " + fmt.Sprintf(tr(c, "Cache hit %s"), metricCache(t))
+		usageReading = append(usageReading, fmt.Sprintf(tr(c, "Cache hit %s"), metricCache(t)))
 	}
 	hovered := false
 	group.Children(func() {
@@ -146,16 +147,16 @@ func (a *App) metricsGroup(c *ui.Context, scope string, stats conversationMetric
 			reading, label, glyph, kind := usageReading, tr(c, "Conversation usage"), "metrics-database", "usage"
 			if reply {
 				label = tr(c, "Turn usage")
-				reading = tr(c, "Usage") + " " + tokens
+				reading = []string{tr(c, "Usage") + " " + tokens}
 			}
 			if timing {
 				reading, label, glyph, kind = timeReading, tr(c, "Time taken"), "clock-circle", "time"
 				if reply {
-					reading = tr(c, "Time taken") + " " + duration
+					reading = []string{tr(c, "Time taken") + " " + duration}
 				}
 			}
 			selected := state.open && state.timing == timing
-			trigger := controlMetricButton(c.Key(scope+":"+kind), glyph, label+": "+reading, reading, selected)
+			trigger := controlMetricButton(c.Key(scope+":"+kind), glyph, label+": "+strings.Join(reading, ", "), reading, selected)
 			pointer := trigger.Hovered()
 			if pointer {
 				hovered = true
@@ -209,18 +210,15 @@ func (a *App) metricsUsagePanel(c *ui.Context, scope string, stats conversationM
 		title = tr(c, "Turn usage")
 	}
 	controlMetricHeading(c, "metrics-database", title, a.metricTokens(c, t.Input+t.Output, t.UnknownUsage > 0 || t.Unrecorded))
-	field := func(key, label, value string) {
-		controlMetricField(c.Key(scope+":"+key), tr(c, label), value)
-	}
 	if reply && len(stats.models) == 1 {
-		field("model", "Provider / model", stats.models[0].Provider+" · "+stats.models[0].ModelID)
+		controlMetricField(c.Key(scope+":model"), tr(c, "Provider / model"), stats.models[0].Provider, stats.models[0].ModelID)
 	}
 	a.metricsUsageFields(c, scope, t)
 	if reply && len(stats.models) > 1 {
 		for i, entry := range stats.models {
 			ui.Box(c).FillWidth().Height(design.Controls().BorderWidth).Background(c.Theme().Border)
 			modelScope := fmt.Sprintf("%s:model-%d", scope, i)
-			controlMetricField(c.Key(modelScope), tr(c, "Provider / model"), entry.Provider+" · "+entry.ModelID)
+			controlMetricField(c.Key(modelScope), tr(c, "Provider / model"), entry.Provider, entry.ModelID)
 			a.metricsUsageFields(c, modelScope, entry.Totals)
 		}
 	}
@@ -237,9 +235,9 @@ func (a *App) metricsUsageFields(c *ui.Context, scope string, t contracts.ModelR
 		}
 		controlMetricField(c.Key(scope+":"+key), tr(c, label), a.metricTokens(c, count, unknown)).Tooltip(exact)
 	}
-	tokens("input", "Input tokens", t.Input, t.UnknownUsage > 0 || t.Unrecorded)
+	tokens("input", "Input Token", t.Input, t.UnknownUsage > 0 || t.Unrecorded)
 	tokens("cached", "Cache read", t.CacheReadTokens, t.CacheRequests == 0)
-	tokens("output", "Output tokens", t.Output, t.UnknownUsage > 0 || t.Unrecorded)
+	tokens("output", "Output Token", t.Output, t.UnknownUsage > 0 || t.Unrecorded)
 	field("cache-hit", "Cache hit rate", metricCache(t))
 }
 

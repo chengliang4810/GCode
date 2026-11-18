@@ -186,7 +186,7 @@ func TestDesktopLocalSemanticToolLabels(t *testing.T) {
 					}
 				}
 			}
-			if requests.Load() != 11 || len(tools) != 10 || tools["mcp__files__read_text"].Summary != "files · 读取文本" {
+			if requests.Load() != 11 || len(tools) != 10 || tools["mcp__files__read_text"].Summary != "files: 读取文本" {
 				t.Fatalf("real tool projections were not retained: requests=%d tools=%v", requests.Load(), tools)
 			}
 			for name, tool := range tools {
@@ -211,7 +211,7 @@ func TestDesktopLocalSemanticToolLabels(t *testing.T) {
 					return err
 				}
 				for _, text := range []string{"读取任务结果: 后台校验", "停止任务: 后台校验", "读取目标:", "列出目录: .",
-					"读取网页:", "使用技能: fixture-review", "搜索网页: local documentation", "调用工具: files · 读取文本", "启动智能体: 调查界面"} {
+					"读取网页:", "使用技能: fixture-review", "搜索网页: local documentation", "调用工具: files: 读取文本", "启动智能体: 调查界面"} {
 					if !activityTreeContains(tree, text) {
 						return fmt.Errorf("missing native semantic label %q", text)
 					}

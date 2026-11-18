@@ -133,7 +133,7 @@ func (a *App) goalEditorView(c *ui.Context, sessionID string) {
 			// Keep the existing usage and verification information available
 			// without adding it to the reference's compact attached header.
 			ui.Column(c).FillWidth().Margin(16, 0).Gap(8).Children(func() {
-				ui.Text(c, tr(c, goalStatusLabel(goal.Status))+" · "+fmt.Sprintf(tr(c, "Round %d"), goal.Iteration)).
+				ui.Text(c, tr(c, goalStatusLabel(goal.Status))+", "+fmt.Sprintf(tr(c, "Round %d"), goal.Iteration)).
 					FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				ui.Text(c, a.goalUsageText(goal)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				if goal.Reason != "" {
@@ -148,7 +148,7 @@ func (a *App) goalEditorView(c *ui.Context, sessionID string) {
 					if last.Passed {
 						result = "Passed"
 					}
-					ui.Text(c, fmt.Sprintf(tr(c, "Verification · Round %d · %s"), last.Iteration, tr(c, result))).TextColor(a.palette.Muted)
+					ui.Text(c, fmt.Sprintf(tr(c, "Verification, round %d: %s"), last.Iteration, tr(c, result))).TextColor(a.palette.Muted)
 					if last.Reason != "" && last.Reason != goal.Reason {
 						ui.Text(c, last.Reason).FillWidth()
 					}

@@ -57,7 +57,9 @@ func providerLogo(c *ui.Context, logo string, size float32) {
 }
 
 func menuChoice(c *ui.Context, label string, selected bool, action func()) {
-	b := ui.ButtonBase(c).FillWidth().Padding(7, 10).Radius(6).Label(label).Justify(ui.Start)
+	// A menu row is a popup's inner row, so it keeps the popup's concentric
+	// option radius rather than a page-local corner.
+	b := ui.ButtonBase(c).FillWidth().Padding(7, 10).Radius(design.Controls().OptionRadius).Label(label).Justify(ui.Start)
 	if selected {
 		b.Background(c.Theme().SurfacePressed)
 	} else if b.Hovered() {

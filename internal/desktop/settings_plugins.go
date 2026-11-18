@@ -65,15 +65,19 @@ func (a *App) pluginOperations(c *ui.Context) {
 		if operation.Error != "" {
 			stateLabel = "Failed"
 		}
-		text := tr(c, labels[operation.Kind]) + " · " + operation.TargetID + " · " + tr(c, stateLabel)
+		parts := []string{tr(c, labels[operation.Kind]), operation.TargetID, tr(c, stateLabel)}
 		if operation.Error != "" {
-			text += " · " + operation.Error
+			parts = append(parts, operation.Error)
 		}
 		color := a.palette.Muted
 		if operation.Error != "" {
 			color = a.palette.Danger
 		}
-		ui.Text(c, text).FontSize(design.TextSize(c, design.TextSmall)).TextColor(color).Selectable()
+		ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {
+			for _, part := range parts {
+				ui.Text(c, part).FontSize(design.TextSize(c, design.TextSmall)).TextColor(color).Selectable()
+			}
+		})
 	}
 }
 
@@ -86,8 +90,14 @@ func pluginBusy(state contracts.PluginState, id string) bool {
 	return false
 }
 
+// pluginSummaryParts keeps each metadata value as its own element so the row
+// gap divides them.
+func pluginSummaryParts(parts ...string) []string {
+	return slices.DeleteFunc(parts, func(part string) bool { return strings.TrimSpace(part) == "" })
+}
+
 func pluginSummary(parts ...string) string {
-	return strings.Join(slices.DeleteFunc(parts, func(part string) bool { return strings.TrimSpace(part) == "" }), " · ")
+	return strings.Join(pluginSummaryParts(parts...), ", ")
 }
 
 func (a *App) pluginAction(c *ui.Context, key, label, kind, id string) {
@@ -161,8 +171,11 @@ func (a *App) pluginCatalog(c *ui.Context) {
 				ui.Column(c).FillWidth().MinWidth(0).Gap(8).Children(func() {
 					ui.Text(c, item.Name).FillWidth().SingleLine().FontWeight(600)
 					ui.Text(c, item.Description).FillWidth().SingleLine().TextColor(a.palette.Muted)
-					ui.Text(c, pluginSummary(item.Marketplace, item.Version)).FillWidth().SingleLine().
-						FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {
+						for _, part := range pluginSummaryParts(item.Marketplace, item.Version) {
+							ui.Text(c, part).SingleLine().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+						}
+					})
 				})
 			}).OnClick(func() { s.detailsID, s.detailsOpen = item.ID, true })
 		}
@@ -214,7 +227,11 @@ func (a *App) pluginCatalogDialog(c *ui.Context) {
 
 func (a *App) pluginDetails(c *ui.Context, components []string, issues []contracts.PluginIssue) {
 	if len(components) > 0 {
-		ui.Text(c, strings.Join(components, " · ")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+		ui.Row(c).FillWidth().Wrap().Gap(6).Children(func() {
+			for _, component := range components {
+				ui.Text(c, component).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			}
+		})
 	}
 	for _, issue := range issues {
 		location := issue.Component
@@ -284,7 +301,10 @@ func (a *App) pluginSources(c *ui.Context) {
 			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 			ui.Text(c, source.Name).FontWeight(600)
 			ui.Text(c, source.Source).TextColor(a.palette.Muted).Selectable()
-			ui.Text(c, fmt.Sprintf("%s · %d", source.State, source.PluginCount)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			ui.Row(c).Gap(6).Children(func() {
+				ui.Text(c, source.State).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+				ui.Text(c, fmt.Sprint(source.PluginCount)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			})
 			if source.Error != "" {
 				ui.Text(c, source.Error).TextColor(a.palette.Danger).Selectable()
 			}
@@ -310,8 +330,11 @@ func (a *App) pluginInstalled(c *ui.Context) {
 		ui.Column(c.Key("plugin-installed-"+installed.ID)).FillWidth().Gap(8).Padding(12, 0).
 			BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
 			ui.Text(c, installed.Name).FontWeight(600)
-			detail := pluginSummary(installed.Marketplace, installed.Version)
-			ui.Text(c, detail).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Selectable()
+			ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {
+				for _, part := range pluginSummaryParts(installed.Marketplace, installed.Version) {
+					ui.Text(c, part).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Selectable()
+				}
+			})
 			a.pluginDetails(c, installed.Components, installed.Issues)
 			ui.Row(c).FillWidth().Gap(8).Children(func() {
 				enabled := installed.Enabled

@@ -95,8 +95,8 @@ func (a *App) appUsageSettings(c *ui.Context) {
 	summary := state.report.Summary
 	ui.Row(c).FillWidth().Wrap().Background(a.palette.Card).Radius(12).Children(func() {
 		for _, item := range []struct{ key, label, value string }{
-			{"usage-total", "Total tokens", compactUsage(summary.Total)},
-			{"usage-peak", "Peak daily tokens", compactUsage(summary.Peak)},
+			{"usage-total", "Total Token", compactUsage(summary.Total)},
+			{"usage-peak", "Peak daily Token", compactUsage(summary.Peak)},
 			{"usage-longest-session", "Longest session", a.usageDuration(summary.LongestSessionMS)},
 			{"usage-current-streak", "Current streak", a.usageDays(summary.CurrentStreak)},
 			{"usage-longest-streak", "Longest streak", a.usageDays(summary.LongestStreak)},
@@ -106,7 +106,7 @@ func (a *App) appUsageSettings(c *ui.Context) {
 				minWidth = 260
 			}
 			ui.Column(c).Grow(1).MinWidth(minWidth).Padding(12).Gap(6).AlignItems(ui.Center).Children(func() {
-				ui.Text(c.Key(item.key), item.value).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500)
+				ui.Text(c.Key(item.key), item.value).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500).FontFeatures("tnum")
 				ui.Text(c, tr(c, item.label)).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall))
 			})
 		}
@@ -132,7 +132,7 @@ func (a *App) appUsageSettings(c *ui.Context) {
 	a.appUsageModels(c, models)
 	if summary.UnknownModelTokens > 0 {
 		ui.Text(c, tr(c, "Requests without a recorded model are grouped as Unknown model.")).
-			FillWidth().FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+			FillWidth().FontSize(design.TextSize(c, design.TextSmall)).LineHeight(1.5).TextColor(a.palette.Muted)
 	}
 	ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
 		secondaryButton(c.Key("usage-refresh"), tr(c, "Refresh")).Disabled(state.loading).OnClick(a.refreshAppUsage)

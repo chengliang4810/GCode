@@ -56,7 +56,9 @@ func controlButton(c *ui.Context, label string, variant buttonVariant) ui.Elemen
 	case buttonDanger:
 		b.TextColor(t.Danger)
 		if b.Hovered() {
-			b.Background(t.Danger.Alpha(.1))
+			// The hover wash is the theme's own muted danger tone: an alpha
+			// overlay on the surface would carry no theme guarantee.
+			b.Background(design.SemanticTonesFor(t).DangerMuted.Alpha(.1))
 		}
 	case buttonCaptionClose:
 		if b.Hovered() {
@@ -441,10 +443,20 @@ func controlHorizontalScrollbar(c *ui.Context, value *float64, maximum, viewport
 	fraction := float32(*value) / max(float32(1), maximum)
 	bar := ui.SliderBase(c, value, 0, float64(max(float32(1), maximum))).Step(1).
 		Height(s.ScrollbarHeight).Padding(0, thumb/2).FocusRing(false)
+	focused := bar.FocusVisible()
 	bar.Draw(func(p *ui.Painter, r ui.Rect) {
 		p.Fill(ui.Rect{X: r.X, Y: r.Y + (r.H-8)/2, W: r.W, H: 8}, t.Text.Alpha(.04), 4)
 		x := r.X + max(float32(0), r.W-thumb)*min(float32(1), max(float32(0), fraction))
 		p.Fill(ui.Rect{X: x, Y: r.Y + (r.H-10)/2, W: min(thumb, r.W), H: 10}, t.Text.Alpha(.25), 5)
+	})
+	// The bar hides the native ring to paint its own thumb, so the keyboard
+	// focus rings the thumb itself, inside the row it occupies.
+	bar.DrawOver(func(p *ui.Painter, r ui.Rect) {
+		if !focused {
+			return
+		}
+		x := r.X + max(float32(0), r.W-thumb)*min(float32(1), max(float32(0), fraction))
+		p.FocusRing(ui.Rect{X: x, Y: r.Y + (r.H-10)/2, W: min(thumb, r.W), H: 10}, [4]float32{5, 5, 5, 5})
 	})
 	return bar
 }
@@ -548,7 +560,7 @@ func (a *App) controlSessionAgent(c *ui.Context, title, status, duration string)
 	case "Failed":
 		color = a.palette.Danger
 	}
-	reading := tr(c, status) + " · " + tr(c, "Time taken") + " " + duration
+	reading := tr(c, status) + ", " + tr(c, "Time taken") + " " + duration
 	return controlRowButton(c).FillWidth().Label(title).Tooltip(reading).
 		Gap(design.Controls().ButtonGap).Children(func() {
 		size := design.Controls().IconSize
@@ -573,7 +585,7 @@ func (a *App) controlSessionAgent(c *ui.Context, title, status, duration string)
 		ui.Text(c, title).SingleLine().Grow(1).MinWidth(0).
 			FontSize(design.TextSize(c, design.TextBase))
 		ui.Text(c, duration).SingleLine().Shrink(0).
-			TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextXS)).FontFeatures("tnum")
+			TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall)).FontFeatures("tnum")
 	})
 }
 
@@ -744,10 +756,10 @@ func controlMessageRailPreview(c *ui.Context, prompt, reply, count string) ui.El
 	card.Children(func() {
 		ui.Text(c, prompt).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().Text).FillWidth()
 		if reply != "" {
-			ui.Text(c, reply).FontSize(design.TextSize(c, design.TextXS)).TextColor(c.Theme().TextMuted).FillWidth()
+			ui.Text(c, reply).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted).FillWidth()
 		}
 		if count != "" {
-			ui.Text(c, count).FontSize(design.TextSize(c, design.TextXS)).TextColor(c.Theme().TextMuted)
+			ui.Text(c, count).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted)
 		}
 	})
 	return card
@@ -808,7 +820,9 @@ func controlResourceBadge(c *ui.Context, label string) ui.Element {
 		Radius(s.OptionRadius).Background(c.Theme().SurfaceHover).TextColor(c.Theme().TextMuted)
 }
 
-func controlMetricButton(c *ui.Context, glyph, label, reading string, open bool) ui.Element {
+// controlMetricButton takes the reading in parts: each part is its own text
+// element, so the shared gap divides them instead of an inline separator.
+func controlMetricButton(c *ui.Context, glyph, label string, reading []string, open bool) ui.Element {
 	s, t := design.Metrics(), c.Theme()
 	b := ui.ButtonBase(c).MinHeight(s.Height).Padding(s.PaddingY, s.PaddingX).
 		Radius(s.Radius).Gap(s.Gap).AlignItems(ui.Center).MinWidth(0).Shrink(1).
@@ -821,7 +835,9 @@ func controlMetricButton(c *ui.Context, glyph, label, reading string, open bool)
 	}
 	return b.Children(func() {
 		icon(c, glyph, s.IconSize)
-		ui.Text(c, reading).SingleLine().MinWidth(0).FontFeatures("tnum")
+		for _, part := range reading {
+			ui.Text(c, part).SingleLine().MinWidth(0).FontFeatures("tnum")
+		}
 	})
 }
 
@@ -840,10 +856,20 @@ func controlMetricHeading(c *ui.Context, glyph, title, value string) {
 	ui.Box(c).FillWidth().Height(design.Controls().BorderWidth).Background(c.Theme().Border)
 }
 
-func controlMetricField(c *ui.Context, label, value string) ui.Element {
-	return ui.Row(c).FillWidth().Gap(design.Controls().ButtonGap).Label(label + ": " + value).Tooltip(value).Children(func() {
+// controlMetricField takes one value per element so a provider and its model
+// stay separate texts divided by the shared gap.
+func controlMetricField(c *ui.Context, label string, values ...string) ui.Element {
+	joined := strings.Join(values, ", ")
+	return ui.Row(c).FillWidth().Gap(design.Controls().ButtonGap).Label(label + ": " + joined).Tooltip(joined).Children(func() {
 		ui.Text(c, label).FontSize(design.TextSize(c, design.TextSmall)).TextColor(c.Theme().TextMuted).Shrink(0)
-		ui.Text(c, value).Grow(1).MinWidth(0).TextAlign(ui.End).FontSize(design.TextSize(c, design.TextBase)).Selectable().FontFeatures("tnum")
+		for i, value := range values {
+			text := ui.Text(c, value).MinWidth(0).SingleLine().FontSize(design.TextSize(c, design.TextBase)).Selectable().FontFeatures("tnum")
+			if i == len(values)-1 {
+				text = text.Grow(1).TextAlign(ui.End)
+			} else {
+				text = text.Shrink(0)
+			}
+		}
 	})
 }
 
@@ -853,9 +879,9 @@ func controlDiffStats(c *ui.Context, additions, deletions int) ui.Element {
 	return ui.Row(c).Label(fmt.Sprintf("+%d -%d", additions, deletions)).
 		Gap(design.Controls().ButtonGap).Shrink(0).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, fmt.Sprintf("+%d", additions)).SingleLine().
-			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success)
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success).FontFeatures("tnum")
 		ui.Text(c, fmt.Sprintf("-%d", deletions)).SingleLine().
-			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger)
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger).FontFeatures("tnum")
 	})
 }
 

@@ -202,7 +202,7 @@ func (a *App) mcpSettings(c *ui.Context) {
 			detail = server.URL
 		}
 		if server.Test.State != "" {
-			detail += " · " + a.t(server.Test.State)
+			detail += ", " + a.t(server.Test.State)
 		}
 		a.resourceRow(c, "mcp-"+server.ID, server.Name, detail, server.Enabled,
 			func() { a.editMCP(&server) },

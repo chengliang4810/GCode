@@ -801,6 +801,52 @@ func tabStripTester(s *State, width int, expanded bool) *ui.Tester {
 	}, width, 80)
 }
 
+// TabStrip's hover animation follows the same appearance settings the app's
+// shared motion guard reads. A headless workspace has no native window, so the
+// pause-in-background clause cannot fire there and stays false.
+func TestTabStripMotionGuardFollowsAppearanceSettings(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		appearance contracts.AppearanceSettings
+		system     bool
+		want       bool
+	}{
+		{name: "system-no-reduce", appearance: contracts.AppearanceSettings{MotionPreference: "system"}, want: false},
+		{name: "system-reduce", appearance: contracts.AppearanceSettings{MotionPreference: "system"}, system: true, want: true},
+		{name: "setting-reduce-motion", appearance: contracts.AppearanceSettings{MotionPreference: "system", ReduceMotion: true}, want: true},
+		{name: "preference-on", appearance: contracts.AppearanceSettings{MotionPreference: "on"}, want: true},
+		{name: "preference-reduced", appearance: contracts.AppearanceSettings{MotionPreference: "Reduced"}, want: true},
+		{name: "preference-reduce", appearance: contracts.AppearanceSettings{MotionPreference: "reduce"}, want: true},
+		{name: "preference-full", appearance: contracts.AppearanceSettings{MotionPreference: "full"}, system: true, want: false},
+		{name: "preference-off", appearance: contracts.AppearanceSettings{MotionPreference: "off"}, system: true, want: false},
+		// No window means no background: the pause clause must not decide.
+		{name: "pause-without-window", appearance: contracts.AppearanceSettings{MotionPreference: "system", PauseInBackground: true}, want: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s, _, snapshot := testWorkspace(t)
+			snapshot.Settings.Appearance = test.appearance
+			s.Update(snapshot)
+			got, checked := false, false
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(s.palette().UI())
+				got, checked = s.reduceMotion(c), true
+				ui.Column(c).Fill().Children(func() { s.TabStrip(c, false) })
+			}, 360, 80)
+			tt.SetPreferences(ui.Preferences{ReduceMotion: test.system})
+			tt.Frame()
+			if !checked {
+				t.Fatal("the motion guard was never evaluated")
+			}
+			if got != test.want {
+				t.Fatalf("reduce motion = %t, want %t", got, test.want)
+			}
+			if _, ok := tt.Find("Workspace tabs"); !ok {
+				t.Fatal("the tab strip did not render")
+			}
+		})
+	}
+}
+
 func captureTabStripGeometry(t *testing.T, geometry any) {
 	t.Helper()
 	dir := os.Getenv("RCODE_TABSTRIP_AUDIT_DIR")

@@ -84,7 +84,7 @@ func (a *App) openMenuPanel() {
 			Vibrancy: mygo.VibrancyPopover, Content: ui.View(a.menuPanelView),
 		})
 		s.Window = window
-		window.SetTitle("GCode · " + a.t("Tasks and usage"))
+		window.SetTitle("GCode — " + a.t("Tasks and usage"))
 		window.OnClose(func(event *mygo.CloseEvent) {
 			if !a.closed && s.Window == window {
 				event.PreventDefault()
@@ -171,7 +171,7 @@ func (a *App) menuPanelView(c *ui.Context) {
 		})
 		ui.Column(c).FillWidth().Gap(6).Children(func() {
 			ui.Text(c, tr(c, "Your work, at a glance")).FontSize(design.TextSize(c, spec.Heading)).Bold()
-			ui.Text(c, fmt.Sprintf(tr(c, "%d active · %d unread"), len(active), len(unread))).TextColor(theme.TextMuted)
+			ui.Text(c, fmt.Sprintf(tr(c, "%d active, %d unread"), len(active), len(unread))).TextColor(theme.TextMuted).FontFeatures("tnum")
 		})
 		ui.Row(c).FillWidth().Gap(4).Children(func() {
 			for _, tab := range []struct{ key, label string }{{"", "Unread"}, {"active", "In progress"}, {"today", "Usage today"}} {
@@ -190,8 +190,8 @@ func (a *App) menuPanelView(c *ui.Context) {
 					return
 				}
 				ui.Text(c, compactUsage(today.Tokens)).FontSize(design.TextSize(c, spec.Metric)).Bold().FontFeatures("tnum")
-				ui.Text(c, tr(c, "Tokens today")).TextColor(theme.TextMuted)
-				ui.Text(c, fmt.Sprintf(tr(c, "%d turns, %d tools"), today.Turns, today.Tools)).TextColor(theme.TextMuted)
+				ui.Text(c, tr(c, "Token today")).TextColor(theme.TextMuted)
+				ui.Text(c, fmt.Sprintf(tr(c, "%d turns, %d tools"), today.Turns, today.Tools)).TextColor(theme.TextMuted).FontFeatures("tnum")
 				for _, model := range appusage.Models([]appusage.Day{today}) {
 					ui.Row(c).FillWidth().Gap(8).Children(func() {
 						ui.Text(c, a.usageModelName(model.ID)).Grow(1).SingleLine()
@@ -232,12 +232,12 @@ func (a *App) menuPanelView(c *ui.Context) {
 		controlTileButton(c.Key("menubar-usage-summary"), false).FillWidth().Label(tr(c, "Open usage statistics")).OnClick(func() { a.menuPanelNavigate("settings/Usage statistics") }).Children(func() {
 			ui.Row(c).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
 				ui.Column(c).Grow(1).Gap(5).Children(func() {
-					ui.Text(c, tr(c, "Last 30 days · current host")).TextColor(theme.TextMuted)
+					ui.Text(c, tr(c, "Last 30 days on this host")).TextColor(theme.TextMuted)
 					value := "—"
 					if !a.appUsage.generated.IsZero() && a.appUsage.errorText == "" {
 						value = compactUsage(total)
 					}
-					ui.Text(c, value+" "+tr(c, "Tokens")).Bold()
+					ui.Text(c, value+" "+tr(c, "Tokens")).Bold().FontFeatures("tnum")
 				})
 				menuUsageTrend(c, trend, theme.Accent)
 				icon(c, "alt-arrow-right", 14)
@@ -260,11 +260,11 @@ func (a *App) menuPanelUpdated(c *ui.Context) string {
 	if a.appUsage.generated.IsZero() {
 		return tr(c, "Not refreshed")
 	}
-	return tr(c, "Updated") + " · " + i18n.Date(a.state.Settings.General.Language, a.appUsage.generated.Local(), "15:04")
+	return fmt.Sprintf(tr(c, "Updated at %s"), i18n.Date(a.state.Settings.General.Language, a.appUsage.generated.Local(), "15:04"))
 }
 
 func menuUsageTrend(c *ui.Context, values [30]int64, color ui.Color) {
-	ui.Box(c.Key("menubar-usage-trend")).Size(80, 32).Label(tr(c, "30-day token trend")).Draw(func(p *ui.Painter, r ui.Rect) {
+	ui.Box(c.Key("menubar-usage-trend")).Size(80, 32).Label(tr(c, "30-day Token trend")).Draw(func(p *ui.Painter, r ui.Rect) {
 		var peak int64
 		for _, value := range values {
 			peak = max(peak, value)
@@ -319,7 +319,7 @@ func (a *App) refreshMenuBarUsage() {
 
 func (a *App) menuBarSettings(c *ui.Context) {
 	a.settingsCard(c, func() {
-		a.settingsRow(c, "Show tasks and usage in menu bar", "Unread results, active tasks and token usage.", func() {
+		a.settingsRow(c, "Show tasks and usage in menu bar", "Unread results, active tasks and Token usage.", func() {
 			ui.Row(c).Gap(8).Children(func() {
 				iconButton(c.Key("menubar-preview"), "widget", tr(c, "Open menu bar panel")).Disabled(!a.state.Settings.MenuBar).OnClick(a.openMenuPanel)
 				a.controlSwitch(c.Key("menubar-enabled"), &a.state.Settings.MenuBar, tr(c, "Toggle ")+tr(c, "Show tasks and usage in menu bar"), false, func(bool) { a.syncMenuBar(); a.saveSettings() })

@@ -300,3 +300,23 @@ func TestQuestionComposerSidePaneKeepsBothMessageDrafts(t *testing.T) {
 		t.Fatal("side message editor was not restored")
 	}
 }
+
+// The panel takes the keyboard focus before its own controls do, so number
+// keys and Enter reach it: it hides the native ring and must show its own,
+// around the frosted surface, or the keyboard focus is invisible.
+func TestQuestionPanelDrawsItsOwnFocusRing(t *testing.T) {
+	app, _, _ := questionComposerFixture(t)
+	tt := ui.NewTester(app.View, 1320, 880)
+	panel, ok := tt.Find("Question panel")
+	if !ok {
+		t.Fatal("question panel is missing")
+	}
+	accent := app.palette.Accent
+	y := int(panel.Y + panel.H/2)
+	for x := int(panel.X) - 4; x <= int(panel.X)+1; x++ {
+		if pixel := tt.Image().RGBAAt(x, y); pixel.R == accent.R && pixel.G == accent.G && pixel.B == accent.B {
+			return
+		}
+	}
+	t.Fatalf("question panel draws no focus ring at x=%.0f y=%d, want the accent %v", panel.X, y, accent)
+}

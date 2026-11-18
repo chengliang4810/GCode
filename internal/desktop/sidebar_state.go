@@ -18,6 +18,8 @@ type sidebarState struct {
 	focusRename           bool
 	deleteID              string
 	deleteOpen            bool
+	removeProject         contracts.Project
+	removeProjectOpen     bool
 	projectsClosed        bool
 	conversationsClosed   bool
 	limits                map[string]int

@@ -65,7 +65,9 @@ func (a *App) integrationError(c *ui.Context, message, kind string, request *con
 func (a *App) integrationLoading(c *ui.Context, label string) {
 	ui.Column(c).FillWidth().Padding(16).Gap(8).Label(tr(c, label)).Children(func() {
 		for _, width := range []float32{44, 66, 52} {
-			ui.Box(c).Height(13).WidthPercent(width).Radius(6).Background(a.palette.Text.Alpha(.07))
+			// A loading placeholder is a small rounded bar, so it takes the
+			// shared button corner rather than a page-local number.
+			ui.Box(c).Height(13).WidthPercent(width).Radius(design.Controls().ButtonRadius).Background(a.palette.Text.Alpha(.07))
 		}
 	})
 }

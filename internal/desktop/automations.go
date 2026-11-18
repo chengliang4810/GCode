@@ -138,7 +138,7 @@ func (a *App) automationPage(c *ui.Context) {
 						controlTileButton(c.Key("automation-select-"+job.ID), selected != nil && selected.ID == job.ID).FillWidth().Label(job.Name).OnClick(func() { s.SelectedID = job.ID }).Children(func() {
 							ui.Column(c).FillWidth().Gap(6).Children(func() {
 								ui.Text(c, job.Name).Bold().SingleLine()
-								ui.Text(c, a.automationSummary(c, job)).TextColor(c.Theme().TextMuted).SingleLine()
+								ui.Row(c).Gap(8).Children(func() { automationSummaryTexts(c, a.automationSummary(c, job)...) })
 							})
 						})
 					}
@@ -162,7 +162,9 @@ func (a *App) automationPage(c *ui.Context) {
 				job := *selected
 				ui.Column(c.Key("automation-" + job.ID)).FillWidth().Gap(12).Children(func() {
 					ui.Text(c, job.Name).Bold().Wrap()
-					ui.Text(c, a.automationSummary(c, job)+" · "+job.ModelID).TextColor(c.Theme().TextMuted).Wrap()
+					ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {
+						automationSummaryTexts(c, slices.Concat(a.automationSummary(c, job), []string{job.ModelID})...)
+					})
 					ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {
 						buttonWithIcon(c.Key("automation-run-"+job.ID), tr(c, "Run now"), "action-play", buttonPlain).Disabled(s.Busy).OnClick(func() { a.automationAction(contracts.Command{Kind: "automation.run", ID: job.ID}, nil) })
 						textButton(c.Key("automation-edit-"+job.ID), tr(c, "Edit")).Disabled(s.Busy).OnClick(func() { a.editAutomation(&job) })
@@ -226,24 +228,32 @@ func (a *App) automationPage(c *ui.Context) {
 	a.settingsEditorDialog(c, "automation-editor-dialog", title, &s.Open, s.Busy, 800, s.Error, func() { a.automationForm(c) }, func() { a.automationFormActions(c) })
 }
 
-func (a *App) automationSummary(c *ui.Context, job contracts.Automation) string {
+// automationSummary returns the schedule reading in parts so the caller renders
+// one text per part and the row gap divides them.
+func (a *App) automationSummary(c *ui.Context, job contracts.Automation) []string {
 	if !job.Enabled {
-		return tr(c, "Paused")
+		return []string{tr(c, "Paused")}
 	}
 	if !job.NextAt.IsZero() {
 		loc, err := time.LoadLocation(job.Timezone)
 		if err != nil {
 			loc = time.Local
 		}
-		return tr(c, "Next run") + " · " + job.NextAt.In(loc).Format("01-02 15:04")
+		return []string{tr(c, "Next run"), job.NextAt.In(loc).Format("01-02 15:04")}
 	}
 	switch job.Mode {
 	case "cron":
-		return job.Cron + " · " + job.Timezone
+		return []string{job.Cron, job.Timezone}
 	case "interval":
-		return tr(c, "After completion") + " · " + i18n.Duration(a.state.Settings.General.Language, job.IntervalSeconds*1000)
+		return []string{tr(c, "After completion"), i18n.Duration(a.state.Settings.General.Language, job.IntervalSeconds*1000)}
 	default:
-		return tr(c, "Manual")
+		return []string{tr(c, "Manual")}
+	}
+}
+
+func automationSummaryTexts(c *ui.Context, parts ...string) {
+	for _, part := range parts {
+		ui.Text(c, part).TextColor(c.Theme().TextMuted)
 	}
 }
 

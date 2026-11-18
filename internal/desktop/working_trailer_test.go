@@ -27,7 +27,12 @@ func TestWorkingRetryVisibilityThresholdAndReset(t *testing.T) {
 			}
 			session := &a.state.Sessions[index]
 			session.Status = contracts.Working
-			tt := ui.NewTester(func(c *ui.Context) { a.View(c) }, 900, 600)
+			tt := ui.NewTester(func(c *ui.Context) { a.View(c) }, 650, 600)
+			session.ModelRetry = &model.RetryStatus{Attempt: 1, Reason: model.RetryWaitingForNetwork}
+			tt.Frame()
+			if !tt.HasText("等待网络") {
+				t.Fatal("network wait not visible on the first retry")
+			}
 			for _, attempt := range []int{1, 2, 3, 10} {
 				session.ModelRetry = &model.RetryStatus{Attempt: attempt, MaxRetries: 10, HTTPStatus: 503}
 				tt.Frame()
@@ -42,7 +47,7 @@ func TestWorkingRetryVisibilityThresholdAndReset(t *testing.T) {
 			}
 			session.ModelRetry = nil
 			tt.Frame()
-			if tt.HasText("重新连接中... 10/10") {
+			if tt.HasText("重新连接中... 10/10") || tt.HasText("等待网络") {
 				t.Fatal("successful stream retained retry status")
 			}
 			session.ModelRetry = &model.RetryStatus{Attempt: 3, MaxRetries: 10}
@@ -225,5 +230,34 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 				t.Fatal("failed side send retained progress or discarded its draft/error")
 			}
 		})
+	}
+}
+
+func TestToolPhaseLabelPrefersTheRunDescription(t *testing.T) {
+	a := testApp(t, "dispatcher")
+	a.selectSession("chat-0")
+	started := time.Date(2026, 10, 28, 8, 0, 0, 0, time.UTC)
+	a.now = func() time.Time { return started.Add(5 * time.Second) }
+	for i := range a.state.Sessions {
+		if a.state.Sessions[i].ID == "chat-0" {
+			a.state.Sessions[i].Status = contracts.Working
+		}
+	}
+	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "exec-turn", SessionID: "chat-0", StartedAt: started, Status: "running"})
+	a.state.Messages["chat-0"] = append(a.state.Messages["chat-0"], contracts.Message{
+		ID: "exec-message", SessionID: "chat-0", TurnID: "exec-turn", Role: "assistant",
+		Blocks: []contracts.Block{{ID: "exec-block", Kind: "tool", Tool: &contracts.ToolCall{
+			ID: "exec-call", Kind: contracts.ToolExec, Name: "Bash", Status: "running", StartedAt: started,
+			Command: "go test ./internal/desktop -run TestThing -count=1", Summary: "Run the desktop tests",
+		}}},
+	})
+	tt := ui.NewTester(a.View, 1320, 880)
+	if !tt.HasText("Running Run the desktop tests") {
+		t.Fatal("exec phase did not use the run description")
+	}
+	// The command itself never reaches the caption: a long command line would
+	// push the status row past the transcript width.
+	if tt.HasText("go test ./internal/desktop") {
+		t.Fatal("exec phase leaked the raw command line")
 	}
 }

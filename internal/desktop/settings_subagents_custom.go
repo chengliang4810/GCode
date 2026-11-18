@@ -31,7 +31,10 @@ func (a *App) customSubagentToolbar(c *ui.Context) string {
 				count++
 			}
 		}
-		ui.Text(c, fmt.Sprintf("%s · %d", tr(c, "Custom subagents"), count)).Grow(1).FontWeight(500)
+		ui.Row(c).Grow(1).Gap(6).AlignItems(ui.Center).Children(func() {
+			ui.Text(c, tr(c, "Custom subagents")).FontWeight(500)
+			ui.Text(c, fmt.Sprint(count)).FontWeight(500)
+		})
 		controlTextInput(c.Key("resource-search-Subagents"), query).Width(240).MinWidth(120).
 			Label(tr(c, "Search Subagents")).Placeholder(tr(c, "Search"))
 		iconButton(c.Key("refresh-subagents"), "refresh", tr(c, "Refresh")).Disabled(busy).
@@ -53,12 +56,12 @@ func (a *App) customSubagentModelLabel(profile contracts.SubagentProfile) string
 		if candidate.ID == profile.Model.ModelID {
 			label := a.runtimeModelLabel(candidate)
 			if profile.Model.Reasoning != "" {
-				label += " · " + a.t(profile.Model.Reasoning)
+				label += ", " + a.t(profile.Model.Reasoning)
 			}
 			return label
 		}
 	}
-	return a.t("Unavailable") + " · " + profile.Model.ModelID
+	return a.t("Unavailable") + ", " + profile.Model.ModelID
 }
 
 func (a *App) customSubagentList(c *ui.Context, query string) {
@@ -204,11 +207,14 @@ func (a *App) customSubagentReasoning(c *ui.Context) {
 	}
 	sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
 	label := state.subagentReasoning
-	if !slices.Contains(selected.ReasoningLevels, label) {
-		label = tr(c, "Unavailable") + " · " + label
-	}
+	unavailable := !slices.Contains(selected.ReasoningLevels, label)
 	sel.Trigger.Label(tr(c, "Subagent reasoning level")).OnChange(func() { delete(state.subagentFieldErrors, "model") }).Children(func() {
-		ui.Text(c, tr(c, label)).Grow(1)
+		ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
+			if unavailable {
+				ui.Text(c, tr(c, "Unavailable")).Shrink(0)
+			}
+			ui.Text(c, tr(c, label)).MinWidth(0).SingleLine()
+		})
 		icon(c, "alt-arrow-down", 13)
 	})
 	sel.Popup(func(panel ui.Element) {

@@ -162,7 +162,7 @@ The final commands and release hashes must be refreshed after every final
 source change; release verification records the actual toolchain versions.
 
 Tests exercise settings pages and30 palettes, control persistence/search,
-IME composition not sending, new-session send, question/permission answers,
+IME composition not sending, new-session send, question answers,
 draft preservation/stale snapshots, viewport bounds, file save/conflict/close,
 terminal transport, URL policy, cancellation/queues/persistence/ownership,
 source assets and all210 vector references. The image comparison tool rejects

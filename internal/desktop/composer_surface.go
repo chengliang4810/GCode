@@ -32,7 +32,10 @@ type composerSurfaceProps struct {
 	steerLabel, queueLabel                        string
 	sendMode                                      composerSendMode
 	canSend, running, autofocus                   bool
-	hero                                          bool
+	// sendBlockReason is the i18n key for why a send cannot go through this
+	// frame; empty when the composer can send or has nothing to say.
+	sendBlockReason string
+	hero            bool
 	// handoff carries the blank-canvas route the composer is leaving while
 	// its dock clock runs; zero Amount means the pill is at rest.
 	handoff                composerHandoff
@@ -117,7 +120,8 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 		layout.lastWidth, layout.lastDraft, layout.lastControls = width, *p.draft, controlKey
 		layout.lastWidthHint = p.widthHint
 	}
-	inset, actionBottom := float32(8), float32(7.5)
+	// Collapsed bottoms sit on the 4px grid; the expanded route already did.
+	inset, actionBottom := float32(8), float32(8)
 	if expanded {
 		inset, actionBottom = 12, 8
 	}
@@ -147,11 +151,8 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 			services := c.Services()
 			options := richtext.EditorOptions{
 				Label: tr(c, p.inputLabel), Placeholder: tr(c, "Do anything…"), Font: font, NoMarkdown: true,
-				Theme: &richtext.Theme{Text: a.palette.Text, Muted: a.palette.Faint, FixedLineHeight: lineHeight},
-				State: &prompt.state,
-				OnKey: func(key ui.Key, mods ui.Modifiers) bool {
-					return a.promptKey(p, prompt, key, mods)
-				},
+				Theme:          &richtext.Theme{Text: a.palette.Text, Muted: a.palette.Faint, FixedLineHeight: lineHeight},
+				State:          &prompt.state,
 				ContentPadding: [4]float32{compactPaddingY, 8, compactPaddingY, 8},
 			}
 			options.OnCommand = func(name string) bool {
@@ -175,6 +176,10 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 				options.ContentPadding = geometry.content
 			case expanded:
 				options.ContentPadding = [4]float32{16, 16, 4, 16}
+			}
+			inputTextWidth := p.input.Bounds(c).W - options.ContentPadding[1] - options.ContentPadding[3]
+			options.OnKey = func(key ui.Key, mods ui.Modifiers) bool {
+				return a.promptKey(p, prompt, key, mods, font, inputTextWidth)
 			}
 			input := richtext.EditorBase(c, prompt.doc, options).Bind(p.input).MinWidth(0).FocusRing(false)
 			a.promptInput(c, input, p, prompt)
@@ -228,6 +233,10 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 			button := ui.ButtonBase(c).Absolute().Right(inset).Bottom(actionBottom+2).Size(28, 28).Radius(14).Label(tr(c, label)).Tooltip(tr(c, label)).Center().Background(a.palette.Text).TextColor(a.palette.Background)
 			button.Children(func() {
 				if p.sendMode == composerStop {
+					// The stop control is a block, not a circle: its corner
+					// stays well under half its 11px size so it keeps the
+					// square silhouette that reads as "stop" against the
+					// button's own round 28px target.
 					ui.Box(c).Size(11, 11).Radius(3).Background(a.palette.Background)
 				} else {
 					icon(c, "arrow-up", 14)

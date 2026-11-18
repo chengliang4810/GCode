@@ -430,7 +430,7 @@ func (a *App) composerFooterGit(c *ui.Context) {
 }
 
 func footerGitLabel(c *ui.Context, p design.Tokens, glyph, text, label string, maxWidth float32) {
-	row := ui.Row(c).Height(20).MinWidth(0).Shrink(1).Padding(0, 8).Gap(6).AlignItems(ui.Center).TextColor(p.Muted.Alpha(.6)).Label(tr(c, label))
+	row := ui.Row(c).Height(max(20, design.TextSize(c, design.TextBase)*1.5)).MinWidth(0).Shrink(1).Padding(0, 8).Gap(6).AlignItems(ui.Center).TextColor(p.Muted.Alpha(.6)).Label(tr(c, label))
 	if maxWidth > 0 {
 		row.MaxWidth(maxWidth)
 	}
@@ -441,7 +441,7 @@ func footerGitLabel(c *ui.Context, p design.Tokens, glyph, text, label string, m
 }
 
 func (a *App) footerGitTrigger(c *ui.Context, glyph, text, label string, open bool) ui.Element {
-	b := ui.ButtonBase(c.Key(label)).Height(20).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(6).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label)).Value(text)
+	b := ui.ButtonBase(c.Key(label)).Height(max(20, design.TextSize(c, design.TextBase)*1.5)).MinWidth(0).MaxWidth(280).Shrink(1).Padding(0, 8).Gap(6).Radius(design.Controls().ButtonRadius).AlignItems(ui.Center).TextColor(a.palette.Muted.Alpha(.7)).Label(tr(c, label)).Value(text)
 	if open || b.Hovered() {
 		b.Background(a.palette.Hover)
 	}
@@ -459,7 +459,7 @@ func (a *App) footerGitPopoverCard(c *ui.Context, panel ui.Element) {
 	palette := a.centralControls().modelPopupPalette(c)
 	panel.Padding(4).Gap(2).Radius(12).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(palette.Text).Clip()
 	if !a.frosted(c) {
-		panel.Shadow(0, 10, 2*15, -3, ui.RGBA(0, 0, 0, .1)).Shadow(0, 4, 2*6, -4, ui.RGBA(0, 0, 0, .1))
+		design.OverlayShadow(panel)
 	}
 	a.floatingSurface(c, panel, 12)
 }
@@ -586,13 +586,13 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 								tag = "switching…"
 							}
 							if tag != "" {
-								ui.Text(c, tr(c, tag)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Muted)
+								ui.Text(c, tr(c, tag)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 							}
 						})
 					}
 				})
 				if len(rows) > 300 {
-					ui.Text(c, fmt.Sprintf(tr(c, "Showing 300 of %d refs"), len(rows))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Faint).Padding(4, 8)
+					ui.Text(c, fmt.Sprintf(tr(c, "Showing 300 of %d refs"), len(rows))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Padding(4, 8)
 				}
 			}
 		} else if refError == "" {

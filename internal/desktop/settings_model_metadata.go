@@ -25,9 +25,9 @@ func (a *App) modelMetadataFields(c *ui.Context) {
 			controlTextInput(c.Key("context"), &draft.context).FillWidth().MinWidth(0).
 				Label(tr(c, "Context window")).OnChange(a.cancelModelMetadataLookup)
 		})
-		a.modelMetadataField(c, "Maximum output tokens", func() {
+		a.modelMetadataField(c, "Maximum output Token", func() {
 			controlTextInput(c.Key("output"), &draft.output).FillWidth().MinWidth(0).
-				Label(tr(c, "Maximum output tokens")).OnChange(a.cancelModelMetadataLookup)
+				Label(tr(c, "Maximum output Token")).OnChange(a.cancelModelMetadataLookup)
 		})
 		a.modelMetadataField(c, "Input types", func() {
 			ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {

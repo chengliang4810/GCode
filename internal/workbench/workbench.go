@@ -73,6 +73,7 @@ type State struct {
 	systemDark         bool
 	documents          map[string]*document
 	diffs              map[string]*editor.DiffState
+	fileChanges        []fileChange
 	browsers           map[string]*browser
 	terminals          map[string]*terminalView
 	folders            map[string]*bool
@@ -146,6 +147,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 		return
 	}
 	s.snapshot = snapshot
+	s.fileChanges = nil
 	s.fileChildrenIndex = nil
 	s.refreshSessionFiles()
 	for i := len(s.tabs) - 1; i >= 0; i-- {
@@ -397,17 +399,13 @@ func (s *State) OpenChange(id string) {
 	if s.closed.Load() {
 		return
 	}
-	for _, ch := range s.snapshot.Changes {
-		if ch.ID == id {
-			if s.diffs[id] == nil {
-				old, newText := editor.NewBuffer(ch.OldContent), editor.NewBuffer(ch.NewContent)
-				old.SetLanguage(editor.LanguageFor(ch.Path))
-				newText.SetLanguage(editor.LanguageFor(ch.Path))
-				s.diffs[id] = &editor.DiffState{Old: old, New: newText, Layout: editor.DiffUnified}
-			}
-			s.choose("diff", id, path.Base(ch.Path))
-			return
+	if ch := s.fileChange(id); ch != nil {
+		if s.diffs[id] == nil {
+			s.diffs[id] = ch.diff()
+		} else {
+			ch.refreshDiff(s.diffs[id])
 		}
+		s.choose("diff", id, path.Base(ch.Path))
 	}
 }
 
@@ -1051,6 +1049,9 @@ func (s *State) diffView(c *ui.Context, id string) {
 	if d == nil {
 		return
 	}
+	if ch := s.fileChange(id); ch != nil {
+		ch.refreshDiff(d)
+	}
 	ui.Row(c).Height(34).Padding(4, 12).AlignItems(ui.Center).Gap(8).Children(func() {
 		ui.Text(c, tr(c, "Changes")).TextColor(s.palette().Muted)
 		ui.Spacer(c)
@@ -1066,19 +1067,24 @@ func (s *State) changesView(c *ui.Context) {
 	p := s.palette()
 	ui.Scroll(c).Grow(1).FillWidth().Padding(16).Children(func() {
 		ui.Text(c, tr(c, "Changes")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600).Margin(0, 0, 16, 0)
-		for _, ch := range s.snapshot.Changes {
-			if s.ProjectID != "" && ch.ProjectID != s.ProjectID {
+		visible := false
+		changes := s.groupedChanges()
+		for i := range changes {
+			ch := &changes[i]
+			if ch.OldContent == ch.NewContent || (s.ProjectID != "" && ch.ProjectID != s.ProjectID) {
 				continue
 			}
+			visible = true
+			added, deleted := ch.stats()
 			c.Key(ch.ID)
 			ui.ButtonBase(c).Label(ch.Path).FillWidth().Padding(10, 8).Radius(6).OnClick(func() { s.OpenChange(ch.ID) }).Children(func() {
 				ui.Icon(c, assets.Icon("file-code")).Size(16, 16)
 				ui.Text(c, ch.Path).Grow(1).SingleLine()
-				ui.Text(c, fmt.Sprintf(tr(c, "+%d"), ch.Additions)).TextColor(p.Success)
-				ui.Text(c, fmt.Sprintf(tr(c, "−%d"), ch.Deletions)).TextColor(p.Danger)
+				ui.Text(c, fmt.Sprintf(tr(c, "+%d"), added)).TextColor(p.Success)
+				ui.Text(c, fmt.Sprintf(tr(c, "−%d"), deleted)).TextColor(p.Danger)
 			})
 		}
-		if len(s.snapshot.Changes) == 0 {
+		if !visible {
 			ui.Text(c, tr(c, "No changes")).TextColor(p.Muted)
 		}
 	})

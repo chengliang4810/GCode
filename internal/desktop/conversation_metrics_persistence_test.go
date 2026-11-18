@@ -93,7 +93,7 @@ func TestSavedMetricsFollowSameRevisionDetails(t *testing.T) {
 // Reading them must not need a client-side reconstruction or depend on revision.
 func TestMetricsReadSavedSummaryWithoutExecutionRecords(t *testing.T) {
 	a := &App{state: contracts.Snapshot{Metrics: map[string]contracts.ConversationMetrics{
-		"session": {Total: contracts.ExecutionMetrics{Totals: contracts.ModelRequestTotals{Requests: 2, Input: 100}, WallKnown: true, WallDuration: 5 * time.Second}, Turns: map[string]contracts.ExecutionMetrics{
+		"session": {Own: contracts.ExecutionMetrics{Totals: contracts.ModelRequestTotals{Requests: 2, Input: 100}, WallKnown: true, WallDuration: 5 * time.Second}, OwnTurns: map[string]contracts.ExecutionMetrics{
 			"turn": {Totals: contracts.ModelRequestTotals{Requests: 1, Input: 50}, WallKnown: true, WallDuration: 2 * time.Second},
 		}},
 	}}}
@@ -112,16 +112,16 @@ func TestActiveSavedMetricsRefreshClockWithoutOtherUIWork(t *testing.T) {
 	a := testApp(t, "default")
 	now := a.now()
 	a.now = func() time.Time { return now }
-	a.state.Metrics = map[string]contracts.ConversationMetrics{"clock": {Total: contracts.ExecutionMetrics{
+	a.state.Metrics = map[string]contracts.ConversationMetrics{"clock": {Own: contracts.ExecutionMetrics{
 		Totals: contracts.ModelRequestTotals{Requests: 1}, WallKnown: true, RunningSince: now.Add(-2 * time.Second),
 	}}}
 	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(a.palette.UI()); a.conversationMetricsView(c, "clock") }, 700, 100)
-	if !tt.HasText("0 rounds 1 steps · Time taken 2s") {
+	if !tt.HasText("0 rounds 1 steps") || !tt.HasText("Time taken 2s") {
 		t.Fatalf("missing initial saved clock: %v", tt.Texts())
 	}
 	now = now.Add(3 * time.Second)
 	tt.Advance(time.Second)
-	if !tt.HasText("0 rounds 1 steps · Time taken 5s") {
+	if !tt.HasText("0 rounds 1 steps") || !tt.HasText("Time taken 5s") {
 		t.Fatal("active saved clock depended on another UI event")
 	}
 }

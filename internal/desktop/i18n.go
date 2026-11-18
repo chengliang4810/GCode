@@ -80,7 +80,7 @@ func (a *App) activitySummary(summary contracts.ActivitySummary) string {
 			parts = append(parts, i18n.In(a.state.Settings.General.Language, item.key, item.count))
 		}
 	}
-	return strings.Join(parts, " · ")
+	return strings.Join(parts, ", ")
 }
 
 func (a *App) annotationLabel(index uint32) string {

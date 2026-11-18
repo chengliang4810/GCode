@@ -264,7 +264,7 @@ func (a *App) settingsChoice(c *ui.Context, label string, value *string, options
 						})
 					}
 					if matches == 0 {
-						ui.Text(c, tr(c, "No matching fonts")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Faint).Padding(6, 8)
+						ui.Text(c, tr(c, "No matching fonts")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted).Padding(6, 8)
 					}
 				})
 			})
@@ -539,7 +539,10 @@ func (a *App) appearanceSettings(c *ui.Context) {
 			}
 			controlPreviewButton(c.Key("appearance-mode-"+choice.value), tr(c, "Appearance ")+tr(c, choice.label)).Grow(1).MinWidth(0).OnClick(func() { p.Mode = choice.value; p.ThemeID = ""; a.saveSettings() }).Children(func() {
 				ui.Column(c).FillWidth().Gap(8).Children(func() {
-					preview := ui.Box(c).FillWidth().Height(148).Radius(6).Border(1, border).Clip()
+					// The miniature sits inside controlPreviewButton, which rounds
+					// its own corner with TileRadius and pads nothing, so the
+					// preview shares that radius instead of a page-local 6.
+					preview := ui.Box(c).FillWidth().Height(148).Radius(design.Controls().TileRadius).Border(1, border).Clip()
 					light := design.ApplyAccent(design.Palette(p.LightThemeID, false), p.Accent)
 					dark := design.ApplyAccent(design.Palette(p.DarkThemeID, true), p.Accent)
 					preview.Draw(func(painter *ui.Painter, r ui.Rect) {
@@ -641,7 +644,7 @@ func (a *App) appearanceSettings(c *ui.Context) {
 			a.settingsSizeChoice(c, "Interface font size", &p.FontSize, []float64{12, 13, 14, 15, 16, 18, 20})
 		})
 		line(c)
-		a.settingsRow(c, "Terminal font", "Terminal output · monospace only", func() {
+		a.settingsRow(c, "Terminal font", "Terminal output is monospace only", func() {
 			a.settingsChoice(c, "Terminal font", &p.TerminalFont, settingsFontOptions(true), nil)
 			a.settingsSizeChoice(c, "Terminal font size", &p.TerminalFontSize, fontSizeValues())
 		})

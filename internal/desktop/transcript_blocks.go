@@ -51,25 +51,6 @@ func (a *App) transcriptBlock(c *ui.Context, m contracts.Message, b contracts.Bl
 				ui.Text(c, value).SingleLine().Grow(1).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			})
 		}
-	case "permission":
-		if b.Permission != nil {
-			p := b.Permission
-			ui.Column(c).Padding(16).Radius(10).Border(1, a.palette.Border).Gap(10).Children(func() {
-				ui.Text(c, p.Title).FontWeight(600)
-				ui.Text(c, p.Description).TextColor(a.palette.Muted)
-				ui.Text(c, p.Command).Font(design.MonoFont(a.state.Settings.Appearance.CodeFont)).FontSize(float32(a.state.Settings.Appearance.CodeFontSize)).Selectable()
-				if p.Answer == "" {
-					ui.Row(c).Gap(8).Children(func() {
-						for _, v := range []string{"Allow once", "Always allow", "Deny"} {
-							answer := v
-							textButton(c, tr(c, v)).OnClick(func() { a.dispatch(contracts.Command{Kind: "request.answer", ID: p.ID, Text: answer}) })
-						}
-					})
-				} else {
-					ui.Text(c, p.Answer).TextColor(a.palette.Muted)
-				}
-			})
-		}
 	case "subagent":
 		if b.Subagent != nil {
 			a.transcriptSubagent(c, *b.Subagent)

@@ -65,7 +65,7 @@ func TestDesktopLocalMenuBarPanel(t *testing.T) {
 					return err
 				}
 				for _, window := range result.Windows {
-					if strings.HasPrefix(window.Title, "GCode · ") && window.Kind == "content" {
+					if strings.HasPrefix(window.Title, "GCode: ") && window.Kind == "content" {
 						if window.Visible {
 							panel = window.ID
 							return nil
@@ -147,7 +147,7 @@ func TestDesktopLocalMenuBarPanel(t *testing.T) {
 					return err
 				}
 				for _, node := range tree.Nodes {
-					if node.Label == "Tokens today" || node.Label == "今日 Token" {
+					if node.Label == "Token today" || node.Label == "今日 Token" {
 						return nil
 					}
 				}

@@ -12,6 +12,10 @@ import (
 
 const questionAutoAdvance = 220 * time.Millisecond
 
+// questionPanelRadius is the frosted question panel's corner radius. The
+// focus ring follows it, so the two stay concentric.
+const questionPanelRadius float32 = 22
+
 // The panel borrows the composer's place, never its message draft. Each pane
 // keeps its own answer edits across navigation until the core resolves them.
 type questionFormState struct {
@@ -161,11 +165,23 @@ func (a *App) questionComposer(c *ui.Context, sessionID, scope string) bool {
 	}
 	panel := ui.Column(c.Key("question-panel")).Bind(&state.Root).Label(tr(c, "Question panel")).Role(ui.RoleGroup).
 		Focusable().FocusRing(false).FillWidth().Shrink(0)
+	// The panel holds the number keys and Enter, so it takes the focus before
+	// its own controls do and must show it: a keyboard user has to see where
+	// the keys land. The ring is drawn around the frosted surface, so it uses
+	// the surface's radius.
+	focused := state.FocusPending
 	if state.FocusPending {
 		state.Root.Focus(c)
 		state.FocusPending = false
 	}
-	panel = a.frostedComposer(c, panel, 22)
+	focused = focused || panel.FocusWithin()
+	panel.DrawOver(func(p *ui.Painter, r ui.Rect) {
+		if !focused {
+			return
+		}
+		p.FocusRing(r, [4]float32{questionPanelRadius, questionPanelRadius, questionPanelRadius, questionPanelRadius})
+	})
+	panel = a.frostedComposer(c, panel, questionPanelRadius)
 	// Keep the footer reachable when descriptions or previews are long.
 	_, viewportHeight := c.Size()
 	maxBody := max(float32(100), min(float32(420), viewportHeight*.6-70))

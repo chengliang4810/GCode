@@ -1,6 +1,8 @@
 package workbench
 
 import (
+	"math"
+	"strings"
 	"time"
 
 	"gcode/internal/assets"
@@ -11,6 +13,15 @@ import (
 
 type tabDrag struct{ Kind, ID string }
 
+const (
+	tabWidth        float32 = 112
+	maxFileTabWidth float32 = 240
+	tabPadding      float32 = 4
+	tabGap          float32 = 3
+	tabIconSlot     float32 = 18
+	tabCloseSlot    float32 = 18
+)
+
 func (s *State) syncAppearance(c *ui.Context) {
 	s.systemDark = c.Theme().Dark
 	for _, terminal := range s.terminals {
@@ -18,8 +29,31 @@ func (s *State) syncAppearance(c *ui.Context) {
 	}
 }
 
+// reduceMotion is the workspace's copy of the app's shared motion guard: an
+// appearance setting that asks for less motion, a window paused in the
+// background, or an explicit preference, and otherwise the desktop's own
+// setting. The workspace reads the settings it is given rather than importing
+// the desktop package.
+func (s *State) reduceMotion(c *ui.Context) bool {
+	appearance := s.snapshot.Settings.Appearance
+	if appearance.ReduceMotion {
+		return true
+	}
+	if appearance.PauseInBackground && s.win != nil && !s.win.IsFocused() {
+		return true
+	}
+	switch strings.ToLower(appearance.MotionPreference) {
+	case "reduced", "reduce", "on":
+		return true
+	case "full", "off":
+		return false
+	default:
+		return c.Preferences().ReduceMotion
+	}
+}
+
 // TabStrip uses the official TabsBase focus and keyboard model inside a native
-// horizontal scroller. Chips keep the reference's 112×24 geometry at overflow.
+// horizontal scroller. File chips grow to fit their title up to a width limit.
 func (s *State) TabStrip(c *ui.Context, expanded bool) {
 	// Consume only the request this pass can render. A synchronous menu
 	// choice below may select a new tab after the chips were already built;
@@ -28,6 +62,8 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 	s.revealTab = false
 	s.syncAppearance(c)
 	p := s.palette()
+	reduceMotion := s.reduceMotion(c)
+	fontSize := design.TextSize(c, design.TextBase)
 	tips := s.tabTooltip.begin(c, s.scopeID, len(s.tabs))
 	// shell/tabs.rs supplies one 4px top inset over the transparent titlebar;
 	// its fixed expand button follows the scrolling chips and add-tab button.
@@ -49,13 +85,22 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 			move := false
 			parts.List.Gap(4).Children(func() {
 				for i, tab := range s.tabs {
+					title := s.tabTitle(tab)
+					b := s.browsers[tab.id]
+					fileTab := tab.kind == "file" || (tab.kind == "browser" && b != nil && b.file != "")
+					width := tabWidth
+					if fileTab {
+						textWidth, _ := c.MeasureText(0, ui.Span{Text: title, Size: fontSize})
+						const chromeWidth = 2*tabPadding + 2*tabGap + tabIconSlot + tabCloseSlot
+						width = min(maxFileTabWidth, max(tabWidth, float32(math.Ceil(float64(textWidth)))+chromeWidth))
+					}
 					// Keep close beside the semantic tab: MyGo treats tabs as
 					// accessibility leaves and would hide a nested button.
-					slot := ui.Box(c.Key("workspace-tab-slot:"+tab.kind+":"+tab.id)).Size(112, 24).Shrink(0)
+					slot := ui.Box(c.Key("workspace-tab-slot:"+tab.kind+":"+tab.id)).Size(width, 24).Shrink(0)
 					slot.Children(func() {
 						c.Key(tab.kind + ":" + tab.id)
 						detail := s.tabDetail(tab)
-						chip := parts.Tab(i).Label(s.tabTitle(tab)).Description(detail).Width(112).Height(24).Padding(0, 4).Gap(3).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
+						chip := parts.Tab(i).Label(title).Description(detail).Width(width).Height(24).Padding(0, tabPadding).Gap(tabGap).Radius(6).Drag(tabDrag{tab.kind, tab.id}).OnClick(func() { s.selectTab(i) })
 						s.tabObserver.bind("chip", tab.id, chip)
 						s.tabTooltip.observe(c, &tips, i, false, detail, chip, slot.Hovered())
 						selected := i == s.active
@@ -80,7 +125,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 							}
 						})
 						chip.Children(func() {
-							ui.Box(c).Size(18, 18).Shrink(0).Center().Children(func() {
+							ui.Box(c).Size(tabIconSlot, tabIconSlot).Shrink(0).Center().Children(func() {
 								if tab.kind == "file" && s.documents[tab.id] != nil {
 									icon := ui.Image(c, sourceFileIcon(s.documents[tab.id].file, false, p.Dark)).Size(14, 14)
 									if !selected {
@@ -97,10 +142,13 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 							if selected {
 								color = p.Text
 							}
-							ui.Text(c, s.tabTitle(tab)).SingleLine().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).TextColor(color)
-							ui.Spacer(c).Width(18).Shrink(0)
+							label := ui.Text(c, title).SingleLine().Grow(1).MinWidth(0).FontSize(fontSize).TextColor(color)
+							if fileTab {
+								label.TruncateMiddle()
+							}
+							ui.Box(c).Width(tabCloseSlot).Shrink(0)
 						})
-						close := ui.ButtonBase(c.Key("workspace-close:"+tab.kind+":"+tab.id)).Label(tr(c, "Close tab ")+s.tabTitle(tab)).Description(tr(c, "Close tab")).Absolute().Right(4).Top(3).Size(18, 18).Radius(4).OnClick(func() { s.closeTab(i) })
+						close := ui.ButtonBase(c.Key("workspace-close:"+tab.kind+":"+tab.id)).Label(tr(c, "Close tab ")+title).Description(tr(c, "Close tab")).Absolute().Right(tabPadding).Top(3).Size(tabCloseSlot, tabCloseSlot).Radius(4).OnClick(func() { s.closeTab(i) })
 						s.tabTooltip.observe(c, &tips, i, true, tr(c, "Close tab"), close, close.Hovered())
 						close.Children(func() {
 							if chip.Hovered() || close.Hovered() || close.FocusVisible() {
@@ -115,7 +163,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 			// Keep the menu button outside the TabsBase focus group, while
 			// including it in the same scrolling content as the chips.
 			if len(s.tabs) > 0 {
-				plus := tabStripButton(c, "add-surface", "New surface", "New tab", "plus", 24, 13, p)
+				plus := tabStripButton(c, "add-surface", "New surface", "New tab", "plus", 24, 13, p, reduceMotion)
 				s.tabObserver.bind("plus", "", plus)
 				plus.Menu(func(menu *ui.Menu) {
 					if s.OnNewSideChat != nil && s.scopeID != "" {
@@ -147,7 +195,7 @@ func (s *State) TabStrip(c *ui.Context, expanded bool) {
 			if expanded {
 				icon, tooltip = "collapse-arrows", "Collapse panel"
 			}
-			expand := tabStripButton(c, "expand-workspace", "Expand workspace", tooltip, icon, 28, 16, p).OnClick(s.OnToggleExpand)
+			expand := tabStripButton(c, "expand-workspace", "Expand workspace", tooltip, icon, 28, 16, p, reduceMotion).OnClick(s.OnToggleExpand)
 			s.tabObserver.bind("expand", "", expand)
 		}
 	})
@@ -167,7 +215,7 @@ func paintTabStripFades(painter *ui.Painter, r ui.Rect, background ui.Color, lef
 	})
 }
 
-func tabStripButton(c *ui.Context, key, label, tooltip, icon string, size, glyphSize float32, p design.Tokens) ui.Element {
+func tabStripButton(c *ui.Context, key, label, tooltip, icon string, size, glyphSize float32, p design.Tokens, reduceMotion bool) ui.Element {
 	c.Key(key)
 	button := ui.ButtonBase(c).Label(tr(c, label)).Tooltip(tr(c, tooltip)).Size(size, size).Shrink(0).Radius(6).Center()
 	alpha := float32(0)
@@ -179,7 +227,7 @@ func tabStripButton(c *ui.Context, key, label, tooltip, icon string, size, glyph
 	if p.Dark {
 		wash = ui.RGBA(235, 235, 235, alpha)
 	}
-	if c.Preferences().ReduceMotion {
+	if reduceMotion {
 		button.Background(wash)
 	} else {
 		button.Background(button.AnimateColor("hover", wash, ui.Animation{Duration: 150 * time.Millisecond, Ease: ui.CubicBezier(.4, 0, .2, 1)}))

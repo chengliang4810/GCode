@@ -37,7 +37,7 @@ func TestTranscriptHookDisclosureAcrossLayouts(t *testing.T) {
 					if err := tt.Click(group); err != nil {
 						t.Fatal(err)
 					}
-					label := "Hook: superpowers@superpowers-marketplace · SessionStart · Completed"
+					label := "Hook: superpowers@superpowers-marketplace, SessionStart, Completed"
 					header, ok := tt.Find(label)
 					if !ok || header.W > float32(width) || header.H != activityRowHeight {
 						t.Fatalf("missing or overflowing hook summary: %+v", header)
@@ -83,6 +83,40 @@ func TestTranscriptHookDisclosureAcrossLayouts(t *testing.T) {
 	}
 }
 
+// A hook record without a known outcome must not be reported as a success.
+func TestTranscriptHookUnknownStatusIsNotCompleted(t *testing.T) {
+	for _, status := range []string{"", "mystery"} {
+		if label := hookStatusLabel(status); label != "—" {
+			t.Fatalf("status %q labelled %q", status, label)
+		}
+	}
+	if label := hookStatusLabel("completed"); label != "Completed" {
+		t.Fatalf("success labelled %q", label)
+	}
+	a := testApp(t, "default")
+	a.state.Settings.General.Language = "en"
+	m := contracts.Message{ID: "reply", SessionID: "chat", Role: "assistant", Blocks: []contracts.Block{
+		{ID: "silent", Kind: "hook", Hook: &contracts.HookRecord{Name: "silent", Event: contracts.HookStop}},
+		{ID: "text", Kind: "text", Text: "Reply only."},
+	}}
+	a.palette = design.Palette("rcode", true)
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.DisableAnimations()
+		c.SetTheme(a.palette.UI())
+		localize.Set(c, a.state.Settings.General.Language)
+		ui.Column(c).Fill().Children(func() { a.transcriptMessageForTest(c, m) })
+	}, 600, 800)
+	if err := tt.Click("Activity: Ran 1 hook"); err != nil {
+		t.Fatal(err)
+	}
+	if tt.HasText("Completed") {
+		t.Fatal("a hook with no status was reported as completed")
+	}
+	if !tt.HasText("—") {
+		t.Fatalf("neutral placeholder missing: %v", tt.Texts())
+	}
+}
+
 func TestTranscriptHookStatusAndFoldState(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Settings.General.Language = "zh-CN"
@@ -107,7 +141,7 @@ func TestTranscriptHookStatusAndFoldState(t *testing.T) {
 			t.Fatalf("missing localized hook status %q", label)
 		}
 	}
-	denied := "钩子: policy · PreToolUse · 已阻止"
+	denied := "钩子: policy, PreToolUse, 已阻止"
 	if err := tt.Click(denied); err != nil {
 		t.Fatal(err)
 	}

@@ -61,7 +61,7 @@ func TestMenuBarViewsAndActions(t *testing.T) {
 					if tab == "In progress" && !tt.HasText("Approval needed") {
 						t.Fatal("active task absent")
 					}
-					if tab == "Usage today" && !tt.HasText(app.t("Tokens today")) {
+					if tab == "Usage today" && !tt.HasText(app.t("Token today")) {
 						t.Fatal("usage absent")
 					}
 					if dir := os.Getenv("GCODE_FEATURE_EVIDENCE"); dir != "" {

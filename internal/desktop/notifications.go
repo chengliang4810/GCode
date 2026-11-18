@@ -223,7 +223,7 @@ func (n *desktopNotifications) emit(settings contracts.Settings, focused bool, s
 		body = i18n.In(settings.General.Language, "Remote connection lost")
 	}
 	notice := desktopNotice{
-		ID: "rcode-session-" + sessionID, Title: "GCode · " + i18n.In(settings.General.Language, title),
+		ID: "rcode-session-" + sessionID, Title: "GCode: " + i18n.In(settings.General.Language, title),
 		Body: body, Kind: kind, Desktop: desktop, Sound: sound, SoundChoice: choice,
 	}
 	select {

@@ -41,6 +41,31 @@ func (a *App) visibleSessions() []contracts.Session {
 	return result
 }
 
+// sidebarActivity is the single state a folded group exposes. A conversation
+// waiting for approval blocks the user's work, so it outranks an error, which
+// in turn outranks plain activity.
+type sidebarActivity int
+
+const (
+	sidebarActivityNone sidebarActivity = iota
+	sidebarActivityWorking
+	sidebarActivityErrored
+	sidebarActivityAwaiting
+)
+
+// Label is the message key naming this state; an empty key means no badge.
+func (activity sidebarActivity) Label() string {
+	switch activity {
+	case sidebarActivityAwaiting:
+		return "Waiting for your approval"
+	case sidebarActivityErrored:
+		return "Failed"
+	case sidebarActivityWorking:
+		return "Running"
+	}
+	return ""
+}
+
 type sidebarRow struct {
 	Key, Header, ProjectID string
 	Group                  string
@@ -48,7 +73,7 @@ type sidebarRow struct {
 	Count                  int
 	More                   bool
 	Empty                  bool
-	Working                bool
+	Activity               sidebarActivity
 	Project                bool
 	SessionGroup           bool
 	Inset                  bool
@@ -74,11 +99,11 @@ func (a *App) sidebarRows() []sidebarRow {
 func (a *App) projectSidebarRows() []sidebarRow {
 	rows := []sidebarRow{}
 	byProject := make(map[string][]contracts.Session)
-	working := make(map[string]bool)
+	activity := make(map[string]sidebarActivity)
 	// Runtime activity is independent of search, pinning and list pagination.
 	for _, session := range a.state.Sessions {
-		if !session.Archived && session.Status == contracts.Working {
-			working[session.ProjectID] = true
+		if !session.Archived {
+			activity[session.ProjectID] = max(activity[session.ProjectID], foldedActivity(session))
 		}
 	}
 	var pinned, unassigned []contracts.Session
@@ -109,7 +134,7 @@ func (a *App) projectSidebarRows() []sidebarRow {
 			slices.SortStableFunc(sessions, contracts.CompareProjectSessions)
 			rows = append(rows, sidebarRow{
 				Key: "sidebar-project:" + project.ID, Header: project.Name, ProjectID: project.ID,
-				Group: key, Project: true, Count: len(sessions), Working: working[project.ID],
+				Group: key, Project: true, Count: len(sessions), Activity: activity[project.ID],
 			})
 			if !a.expanded[key] {
 				rows = a.appendSidebarConversations(rows, key, sessions, false)
@@ -121,6 +146,21 @@ func (a *App) projectSidebarRows() []sidebarRow {
 		rows = a.appendSidebarConversations(rows, "conversations", unassigned, false)
 	}
 	return rows
+}
+
+// foldedActivity maps one conversation's status onto the state a folded group
+// can show. Only the three actionable states aggregate; idle sessions leave
+// the group quiet.
+func foldedActivity(session contracts.Session) sidebarActivity {
+	switch session.Status {
+	case contracts.AwaitingInput:
+		return sidebarActivityAwaiting
+	case contracts.Errored:
+		return sidebarActivityErrored
+	case contracts.Working:
+		return sidebarActivityWorking
+	}
+	return sidebarActivityNone
 }
 
 // groupedSidebarRows mirrors ZCode's group view: pinned conversations stay on

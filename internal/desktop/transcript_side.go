@@ -162,8 +162,12 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 		a.sessionStorageNotice(c, session)
 		pane := transcriptPane{cache: cache, scope: "side:" + sessionID, session: sessionID}
 		a.transcriptScope(c, pane.scope, func() {
-			if a.sessionDetailsAreLoading(sessionID) && !a.hasLocalSend(sessionID) {
-				ui.Column(c).Grow(1).FillWidth().AlignItems(ui.Center).Justify(ui.Center).Children(func() {
+			if a.sessionDetailsLoadingPlaceholder(c, sessionID) && !a.hasLocalSend(sessionID) {
+				// A load younger than the reveal delay keeps the resting
+				// layout; the scheduled repaint decides whether it stays.
+				ui.Column(c).Grow(1).FillWidth()
+			} else if a.sessionDetailsAreLoading(sessionID) && !a.hasLocalSend(sessionID) {
+				ui.Column(c).Grow(1).FillWidth().AlignItems(ui.Center).Justify(ui.Center).Opacity(a.sessionDetailsLoadingOpacity(c, sessionID)).Children(func() {
 					ui.Text(c, tr(c, "Loading conversation…")).TextColor(a.palette.Muted)
 				})
 			} else {
@@ -180,14 +184,20 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 						label = a.runtimeModelLabel(candidate)
 					}
 				}
-				if session.ReasoningLevel != "" {
-					label += " · " + tr(c, session.ReasoningLevel)
-				}
-				ui.Text(c, label).Grow(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+				ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
+					ui.Text(c, label).Shrink(1).SingleLine().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+					if session.ReasoningLevel != "" {
+						ui.Text(c, tr(c, session.ReasoningLevel)).Shrink(0).SingleLine().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+					}
+				})
 				if session.Status == contracts.Working || session.Status == contracts.AwaitingInput {
 					textButton(c, tr(c, "Stop response")).Label(tr(c, "Stop response in ") + session.Title).OnClick(func() { a.stopSideMessage(session.ID) })
 				}
 			})
+			ui.Row(c).FillWidth().Height(composerFooterHeight).Justify(ui.End).Padding(0, 16).Children(func() {
+				a.conversationMetricsView(c, session.ID)
+			})
+			ui.Box(c).Height(composerBottomInset)
 			return
 		}
 		a.sideQueuedMessages(c, sessionID, state)

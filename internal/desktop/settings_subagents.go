@@ -185,11 +185,14 @@ func (a *App) subagentSettingsForm(c *ui.Context) {
 				if len(selected.ReasoningLevels) > 0 {
 					sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
 					label := state.subagentReasoning
-					if !slices.Contains(selected.ReasoningLevels, label) {
-						label = tr(c, "Unavailable") + " · " + label
-					}
+					unavailable := !slices.Contains(selected.ReasoningLevels, label)
 					sel.Trigger.Label(tr(c, "Subagent reasoning level")).FillWidth().Children(func() {
-						ui.Text(c, tr(c, label)).Grow(1)
+						ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
+							if unavailable {
+								ui.Text(c, tr(c, "Unavailable")).Shrink(0)
+							}
+							ui.Text(c, tr(c, label)).MinWidth(0).SingleLine()
+						})
 						icon(c, "alt-arrow-down", 13)
 					})
 					sel.Popup(func(panel ui.Element) {
@@ -213,15 +216,21 @@ func (a *App) subagentModelPicker(c *ui.Context) {
 	state := &a.runtimeUI
 	selected := a.subagentSelectedModel()
 	label := tr(c, "Default main model")
+	unavailable := false
 	if state.subagentModel != "" {
-		label = tr(c, "Unavailable") + " · " + state.subagentModel
+		label, unavailable = state.subagentModel, true
 		if selected.ID != "" {
-			label = a.runtimeModelLabel(selected)
+			label, unavailable = a.runtimeModelLabel(selected), false
 		}
 	}
 	sel := controlSelect(c.Key("subagent-model"), &state.subagentModel)
 	sel.Trigger.Label(tr(c, "Subagent model")).FillWidth().OnChange(a.subagentModelChanged).Children(func() {
-		ui.Text(c, label).Grow(1).SingleLine()
+		ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
+			if unavailable {
+				ui.Text(c, tr(c, "Unavailable")).Shrink(0)
+			}
+			ui.Text(c, label).MinWidth(0).SingleLine()
+		})
 		icon(c, "alt-arrow-down", 13)
 	})
 	sel.Popup(func(panel ui.Element) {

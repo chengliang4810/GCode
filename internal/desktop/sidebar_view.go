@@ -127,7 +127,7 @@ func (a *App) sidebarNavigation(c *ui.Context) {
 			for _, shortcut := range a.state.Settings.Shortcuts {
 				if shortcut.ID == "newSession" {
 					ui.Text(c.Key("sidebar-new-shortcut"), paletteShortcut(shortcut.Keys)).
-						FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Faint)
+						FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 					break
 				}
 			}
@@ -220,8 +220,8 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 	// no separate chevron.
 	container.Children(func() {
 		button := controlSidebarProjectToggle(c.Key(row.Key), row.Header).Expanded(!closed)
-		if closed && row.Working {
-			button.Label(row.Header + " · " + tr(c, "Running"))
+		if closed && row.Activity != sidebarActivityNone {
+			button.Label(row.Header + ", " + tr(c, row.Activity.Label()))
 		}
 		button.OnClick(func() {
 			a.expanded[row.Group] = !a.expanded[row.Group]
@@ -234,16 +234,21 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 				icon(c, folder, design.Sidebar().IconSize)
 			}
 			ui.Text(c, row.Header).SingleLine().MinWidth(0).Grow(1)
-			if closed && row.Working {
-				ui.Box(c.Key("sidebar-project-working:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).Shrink(0).Center().Label(tr(c, "Running")).Tooltip(tr(c, "Running")).Children(func() {
-					ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
-				})
+			if closed {
+				a.sidebarProjectActivity(c, row)
 			}
 			if offline {
 				ui.Box(c).Label(tr(c, "Device offline")).Children(func() { icon(c, "wifi-off", 12) })
 			}
 		})
 		if found && showNewConversation {
+			inlineIconButton(c.Key("sidebar-project-actions:"+row.ProjectID), "more-horizontal", tr(c, "Project actions")).
+				Menu(func(menu *ui.Menu) {
+					if menu.Item(tr(c, "Remove project")).Chosen() {
+						a.sidebarUI.removeProject = project
+						a.sidebarUI.removeProjectOpen = true
+					}
+				})
 			inlineIconButton(c.Key("sidebar-project-new-conversation:"+row.ProjectID), "pen-new-square",
 				fmt.Sprintf(tr(c, "New conversation in %s"), row.Header)).
 				OnClick(func() { a.newProjectConversation(row.ProjectID) })
@@ -262,6 +267,27 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 			})
 		})
 	}
+}
+
+// sidebarProjectActivity shows a folded group's single aggregated state in the
+// same trailing slot conversation rows reserve for it, using those rows' own
+// glyphs and semantic colours.
+func (a *App) sidebarProjectActivity(c *ui.Context, row sidebarRow) {
+	if row.Activity == sidebarActivityNone {
+		return
+	}
+	label := tr(c, row.Activity.Label())
+	ui.Box(c.Key("sidebar-project-activity:"+row.ProjectID)).Size(design.Sidebar().IconSize, design.Sidebar().IconSize).
+		Shrink(0).Center().Label(label).Tooltip(label).Children(func() {
+		switch row.Activity {
+		case sidebarActivityAwaiting:
+			ui.Box(c).Size(6, 6).Radius(3).Background(a.palette.Warning)
+		case sidebarActivityErrored:
+			ui.Box(c).TextColor(a.palette.Danger).Children(func() { icon(c, "close-circle", 12) })
+		default:
+			ui.Spinner(c).Size(12, 12).TextColor(a.palette.Accent)
+		}
+	})
 }
 
 func (a *App) sidebarConversationContent(c *ui.Context, row sidebarRow) {

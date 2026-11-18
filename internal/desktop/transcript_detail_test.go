@@ -117,7 +117,7 @@ func TestTodoToolDetailShowsCurrentStatusInsteadOfJSON(t *testing.T) {
 	if got := strings.Join(lines, "\n"); got != "[x] Build\n[~] Verify\n[ ] Deliver\n\nUpdated task list" {
 		t.Fatalf("todo tool detail lost status or output: %q", got)
 	}
-	block.Tool.Output = "[x] Build\n[~] Verify\n[ ] Deliver\n\n1 completed · 1 in progress · 1 pending"
+	block.Tool.Output = "[x] Build\n[~] Verify\n[ ] Deliver\n\n1 completed, 1 in progress, 1 pending"
 	lines = nil
 	for _, line := range detailLines(detailSource(block, false)) {
 		var text strings.Builder

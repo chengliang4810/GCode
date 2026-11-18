@@ -113,7 +113,7 @@ func (a *App) sidebarHeader(c *ui.Context, row sidebarRow, index int) {
 			ui.Text(c, a.sidebarHeaderText(row)).FontSize(design.TextSize(c, design.TextBase)).FontWeight(500)
 		}
 		if closed && !timeline {
-			ui.Text(c, fmt.Sprint(row.Count)).FontSize(design.TextSize(c, design.TextXS)).Font("Geist Mono").Padding(0, 4).Radius(4).Background(a.palette.Hover)
+			ui.Text(c, fmt.Sprint(row.Count)).FontSize(design.TextSize(c, design.TextSmall)).Font("Geist Mono").Padding(0, 4).Radius(4).Background(a.palette.Hover)
 		}
 		ui.Spacer(c)
 		if timeline {

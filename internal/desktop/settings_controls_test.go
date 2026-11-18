@@ -290,3 +290,49 @@ func TestSettingsControlsSliderReservesNativeTickHeight(t *testing.T) {
 		}
 	}
 }
+
+// A shared danger button washes with the theme's own muted tone. The native
+// theme does not carry that role, so the bridge has to resolve it from the
+// running palette, whatever accent the user picked.
+func TestDangerButtonResolvesTheThemesMutedTone(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, accent := range []string{"theme", "blue"} {
+			app, _ := runtimeSettingsTestApp(t)
+			app.palette = design.ApplyAccent(design.Palette("rcode", dark), accent)
+			tones := design.SemanticTonesFor(app.palette.UI())
+			if tones.Danger != app.palette.Danger || tones.DangerMuted != app.palette.DangerMuted {
+				t.Fatalf("dark=%v accent=%s: danger %v/%v, want the palette's %v/%v", dark, accent,
+					tones.Danger, tones.DangerMuted, app.palette.Danger, app.palette.DangerMuted)
+			}
+		}
+	}
+}
+
+// The horizontal scrollbar hides the native ring to paint its own thumb, so
+// the keyboard focus has to ring that thumb: without it the focused control
+// shows nothing.
+func TestHorizontalScrollbarRingsItsThumb(t *testing.T) {
+	app, _ := runtimeSettingsTestApp(t)
+	value := float64(0)
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		ui.Column(c).Fill().Padding(16).Children(func() {
+			controlHorizontalScrollbar(c.Key("scroll"), &value, 100, 200).FillWidth().Label("Scroll table horizontally")
+		})
+	}, 400, 80)
+	tt.Key(0, ui.KeyTab)
+	tt.Frame()
+	bar, ok := tt.Find("Scroll table horizontally")
+	if !ok {
+		t.Fatal("scrollbar is missing")
+	}
+	accent := app.palette.Accent
+	// The ring's top edge runs above the thumb, inside the bar's own row.
+	x := int(bar.X) + 40
+	for y := int(bar.Y); y <= int(bar.Y)+4; y++ {
+		if pixel := tt.Image().RGBAAt(x, y); pixel.R == accent.R && pixel.G == accent.G && pixel.B == accent.B {
+			return
+		}
+	}
+	t.Fatalf("scrollbar draws no focus ring above its thumb at x=%d, want the accent %v", x, accent)
+}

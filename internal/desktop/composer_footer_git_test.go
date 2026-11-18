@@ -62,8 +62,13 @@ func TestComposerFooterNewWorktreeMenuAndSend(t *testing.T) {
 	tt := ui.NewTester(a.View, 1320, 880)
 	checkout, _ := tt.Find("Select checkout")
 	ref, _ := tt.Find("Select ref")
-	if checkout.X >= ref.X || checkout.H != 20 || ref.H != 20 {
-		t.Fatalf("source checkout/ref order or height lost: checkout=%+v ref=%+v", checkout, ref)
+	base := float32(a.state.Settings.Appearance.FontSize)
+	if base <= 0 {
+		base = design.UIFontSize
+	}
+	wantHeight := max(float32(20), (design.TextBase+base-design.UIFontSize)*1.5)
+	if checkout.X >= ref.X || checkout.H != wantHeight || ref.H != wantHeight {
+		t.Fatalf("source checkout/ref order or height lost: checkout=%+v ref=%+v wantHeight=%g", checkout, ref, wantHeight)
 	}
 	footerGitClick(t, tt, "Select checkout")
 	tt.Key(0, ui.KeyDown)

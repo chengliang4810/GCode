@@ -108,9 +108,14 @@ func TestGoalBannerUsesAuthoritativeStateAndRoutesCommands(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Advance(time.Second)
-	for _, text := range []string{"1,200 / 5,000 tokens", "The integration test still fails", "Next: Fix event ordering", "Verification · Round 2 · Needs more work"} {
+	for _, text := range []string{"1,200 / 5,000 Token", "The integration test still fails", "Next: Fix event ordering", "Verification, round 2: Needs more work"} {
 		if !tt.HasText(text) {
 			t.Fatalf("goal details omitted %q", text)
+		}
+	}
+	for _, text := range tt.Texts() {
+		if (strings.HasPrefix(text, "Verification") || strings.HasPrefix(text, "At least")) && strings.Contains(text, "·") {
+			t.Fatalf("goal details used a separator dot: %q", text)
 		}
 	}
 	if err := tt.Click("Pause goal"); err != nil {
@@ -162,7 +167,7 @@ func TestGoalBudgetAndIncompleteUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	tt.Advance(time.Second)
-	if !tt.HasText("At least 0 / 3,000 tokens · Usage incomplete") || !tt.HasText("Budget reached") || !tt.HasText(goal.Reason) {
+	if !tt.HasText("At least 0 / 3,000 Token. Usage incomplete.") || !tt.HasText("Budget reached") || !tt.HasText(goal.Reason) {
 		t.Fatal("budget state hid missing usage or its stopping reason")
 	}
 	if _, ok := tt.Find("Resume goal"); ok {
@@ -269,8 +274,13 @@ func TestGoalHeaderDurationPreservesWholeSeconds(t *testing.T) {
 				c.SetTheme(a.palette.UI())
 				a.goalBanner(c, session)
 			}, 900, 200)
-			if !tt.HasText("· " + test.want) {
+			if !tt.HasText(test.want) {
 				t.Fatalf("goal header omitted whole-second duration: %v", tt.Texts())
+			}
+			for _, text := range tt.Texts() {
+				if strings.Contains(text, "·") {
+					t.Fatalf("goal header used a separator dot: %q", text)
+				}
 			}
 		})
 	}

@@ -171,13 +171,12 @@ func TestTranscriptCompactKeepsRequestsAndFinalImagesInDocumentOrder(t *testing.
 	m := contracts.Message{ID: "entry", Blocks: []contracts.Block{
 		{ID: "question", Kind: "question", Question: &contracts.Question{ID: "question"}},
 		{ID: "thought", Kind: "reasoning", Text: "Check"},
-		{ID: "permission", Kind: "permission", Permission: &contracts.Permission{ID: "permission"}},
 		{ID: "run", Kind: "tool", Tool: &contracts.ToolCall{ID: "run", Kind: contracts.ToolExec}},
 		{ID: "reply", Kind: "text", Text: "Here is the preview."},
 		{ID: "image", Kind: "image", Attachment: &contracts.Attachment{ID: "image"}},
 	}}
 	rows := transcriptRows(m, true)
-	if len(rows) != 5 || rows[0].Block.ID != "question" || len(rows[1].Activity) != 2 || rows[2].Block.ID != "permission" || rows[3].Block.ID != "reply" || rows[4].Block.ID != "image" {
+	if len(rows) != 4 || rows[0].Block.ID != "question" || len(rows[1].Activity) != 2 || rows[2].Block.ID != "reply" || rows[3].Block.ID != "image" {
 		t.Fatalf("compact order: %+v", rows)
 	}
 }
@@ -284,7 +283,7 @@ func TestThoughtFlattenUsesSourceRecordLayout(t *testing.T) {
 		}
 	}
 	got := strings.Join(text, "\n")
-	for _, want := range []string{"Check the panel", "• Read main.go", "• Keep focus", "│ Avoid a new control.", "File · Result", "main.go · pass"} {
+	for _, want := range []string{"Check the panel", "• Read main.go", "• Keep focus", "│ Avoid a new control.", "File │ Result", "main.go │ pass"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %q in %q", want, got)
 		}

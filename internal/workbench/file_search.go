@@ -175,7 +175,7 @@ func (s *State) fileSearchResults(c *ui.Context, host string, controls *fileExpl
 		return
 	}
 	if len(q.result.Files) >= 200 {
-		ui.Text(c, tr(c, "Showing the first 200 matches")).Padding(5, 10).FontSize(design.TextSize(c, design.TextXS)).TextColor(p.Faint)
+		ui.Text(c, tr(c, "Showing the first 200 matches")).Padding(5, 10).FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted)
 	}
 	controls.list.Key = func(i int) any { return q.rows[i].ID }
 	controls.list.Label = func(i int) string { return q.rows[i].Name }

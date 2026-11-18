@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"unicode"
 
@@ -23,6 +24,7 @@ type promptEditor struct {
 	scope, raw     string
 	doc            *richtext.Document
 	state          richtext.EditorState
+	history        promptHistory
 	start, end     int
 	query, trigger string
 	dismissed      string
@@ -31,6 +33,10 @@ type promptEditor struct {
 	choices        []promptChoice
 	list           ui.ListState
 	panel          ui.Handle
+	// blockedReason is the inline reason the send key last met. It holds only
+	// while the composer still reports that reason, so fixing the condition
+	// clears it on the next snapshot without a timer or a toast.
+	blockedReason string
 }
 
 func promptDisplay(raw string) string {
@@ -110,6 +116,7 @@ func (a *App) syncPrompt(s *promptEditor, raw string) {
 	}
 	s.raw = raw
 	s.state = richtext.EditorState{}
+	s.history = promptHistory{}
 }
 
 func promptMeasureSpans(s *promptEditor, display string) []ui.Span {
@@ -268,7 +275,7 @@ func (a *App) promptInput(c *ui.Context, input ui.Element, p composerSurfaceProp
 	}
 }
 
-func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mods ui.Modifiers) bool {
+func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mods ui.Modifiers, font ui.Font, textWidth float32) bool {
 	if s.state.Composing {
 		// IME confirmation belongs to the editor and must never send a draft.
 		return key == ui.KeyEnter
@@ -283,8 +290,8 @@ func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mod
 				}
 				s.selected = (s.selected + delta + count) % count
 				s.list.ScrollIntoView(s.selected)
+				return true
 			}
-			return true
 		case ui.KeyEnter, ui.KeyTab:
 			switch {
 			case len(s.choices) > 0:
@@ -303,22 +310,49 @@ func (a *App) promptKey(p composerSurfaceProps, s *promptEditor, key ui.Key, mod
 			return true
 		}
 	}
-	if key == ui.KeyEscape && mods == 0 && p.stopWithEscape && p.onStop != nil {
+	if mods == 0 && (key == ui.KeyUp || key == ui.KeyDown) {
+		return a.browsePromptHistory(s, p.draft, key, font, textWidth)
+	}
+	if key == ui.KeyEscape && mods == 0 && p.stopWithEscape && p.running && p.onStop != nil {
 		p.onStop()
 		return true
 	}
 	behavior := a.state.Settings.General.SendBehavior
 	shift := behavior == "shiftEnter" || behavior == "Shift+Enter"
 	mod := behavior == "modEnter" || behavior == "mod-enter"
-	if key == ui.KeyEnter && ((!shift && !mod && mods == 0) || (shift && mods == ui.Shift) || (mod && mods == ui.Cmd)) {
+	if key == ui.KeyEnter && ((!shift && !mod && mods == 0) || (shift && mods == ui.Shift) || (mod && modEnterAccepted(mods, runtime.GOOS))) {
 		s.raw = promptCanonical(s.doc.Text())
 		*p.draft = s.raw
 		if p.onSend(s.raw) {
+			s.blockedReason = ""
 			a.syncPrompt(s, *p.draft)
+		} else {
+			// The send path refused: keep the draft and say why instead of
+			// leaving the key silent.
+			s.blockedReason = p.sendBlockReason
 		}
 		return true
 	}
 	return false
+}
+
+// modEnterAccepted reports whether the held modifiers submit in modEnter mode:
+// Command on macOS and Control elsewhere, as the setting names them.
+func modEnterAccepted(mods ui.Modifiers, goos string) bool {
+	if goos == "darwin" {
+		return mods == ui.Super
+	}
+	return mods == ui.Ctrl
+}
+
+// sendBlockedHint is the reason to show under the composer, if any. The frame
+// that finds the reason gone drops it, so a correction hides it by itself.
+func (a *App) sendBlockedHint(s *promptEditor, reason string) string {
+	if reason != "" && s.blockedReason == reason {
+		return reason
+	}
+	s.blockedReason = ""
+	return ""
 }
 
 func (a *App) promptPanel(c *ui.Context, anchor ui.Element, p composerSurfaceProps, s *promptEditor) {

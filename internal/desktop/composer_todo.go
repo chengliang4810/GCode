@@ -172,7 +172,7 @@ func (a *App) todoTray(c *ui.Context, session contracts.Session, scope string) {
 			controlAttachedToggle(c.Key(key+":toggle"), tr(c, label)).Value(fmt.Sprintf("%d/%d", summary.done, summary.total)).Grow(1).MinWidth(0).Children(func() {
 				icon(c, "checklist", s.GlyphSize)
 				ui.Text(c, tr(c, "Todo")).SingleLine().FontWeight(500)
-				ui.Text(c.Key(key+":count"), fmt.Sprintf("%d/%d", summary.done, summary.total)).SingleLine().TextColor(a.palette.Faint)
+				ui.Text(c.Key(key+":count"), fmt.Sprintf("%d/%d", summary.done, summary.total)).SingleLine().TextColor(a.palette.Muted)
 				if i := summary.headline(); !state.expanded && i >= 0 {
 					ui.Text(c.Key(key+":headline"), state.write.Items[i].Text).Grow(1).MinWidth(0).SingleLine().TextColor(a.palette.Muted)
 				} else {
@@ -214,7 +214,7 @@ func (a *App) todoTray(c *ui.Context, session contracts.Session, scope string) {
 					}
 					controlAttachedToggle(c.Key(key+":fold-"+side), fmt.Sprintf(tr(c, action), count)).FillWidth().Children(func() {
 						icon(c, glyph, 12)
-						ui.Text(c, fmt.Sprintf(tr(c, noun), count)).TextColor(a.palette.Faint)
+						ui.Text(c, fmt.Sprintf(tr(c, noun), count)).TextColor(a.palette.Muted)
 					}).OnClick(func() { *open = !*open })
 				}
 				if start > 0 {

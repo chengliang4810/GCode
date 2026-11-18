@@ -71,7 +71,7 @@
 
 | 编号 | 小项 | 当前结果 | 验证 |
 | --- | --- | --- | --- |
-| T01 | 标签固定 112×24 DIP，间距 4 DIP | 已按 source 移植，不缩成拥挤文字 | `TestOverflowTabsKeepFixedGeometryAndKeyboardReveal` |
+| T01 | 标签高 24 DIP，间距 4 DIP | 其他标签固定 112 DIP；文件及本地预览标签按名称在 112–240 DIP 内调整，超长名称中间省略 | `TestOverflowTabsKeepFixedGeometryAndKeyboardReveal`、`TestTabStripFitsFileNames` |
 | T02 | 溢出时水平滚动，加号随标签滚动、展开按钮固定 | R11 按冻结 source 修正顺序与位置；旧“加号独立固定”结论为历史 | `TestOverflowTabsKeepFixedGeometryAndKeyboardReveal`、`TestTabStripControlsKeepIdentityAndExpandSlotAtOverflow` |
 | T03 | 新建/切换/键盘选择主动显示选中标签 | 已接 `ScrollIntoView`，不是每帧强制吸回 | End 键和自主滚轮测试 |
 | T04 | Left/Right/Home/End 的官方焦点选择行为 | 使用 `TabsBase`；End 与选中标签显露通过 | 同上 |

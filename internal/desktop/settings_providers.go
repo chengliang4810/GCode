@@ -265,7 +265,8 @@ func (a *App) providerAccounts(c *ui.Context, p contracts.Provider, d contracts.
 			iconButton(c, "refresh", tr(c, "Refresh accounts")).OnClick(func() { a.dispatch(a.integrationCommand("provider.accounts.refresh", p.ID)) })
 		})
 		if d.Warning != "" {
-			ui.Text(c, d.Warning).TextColor(a.palette.Danger)
+			// A recoverable notice, not a failure: it warns, it does not fail.
+			ui.Text(c, d.Warning).TextColor(a.palette.Warning)
 		}
 		if d.AccountNote != "" {
 			ui.Text(c, d.AccountNote).TextColor(a.palette.Muted).Margin(4, 0, 0, 0)
@@ -384,17 +385,19 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 					break
 				}
 				fraction := max(0, min(1, window.UsedPercent/100))
-				color := a.palette.Muted
+				// The reading keeps the semantic color; the bar is filled with
+				// the theme's own muted tone of it, not an alpha overlay.
+				color, fill := a.palette.Muted, a.palette.Muted.Alpha(.8)
 				if fraction >= .95 {
-					color = a.palette.Danger
+					color, fill = a.palette.Danger, a.palette.DangerMuted
 				} else if fraction >= .80 {
-					color = a.palette.Warning
+					color, fill = a.palette.Warning, a.palette.WarningMuted
 				}
 				ui.Row(c).Height(16).Gap(8).AlignItems(ui.Center).Tooltip(tr(c, window.Label) + tr(c, ": resets ") + tr(c, date(c, window.ResetsAt.Local(), "Mon 3:04 PM"))).Children(func() {
 					ui.Text(c, window.Label).Width(52).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted).SingleLine()
 					ui.Box(c).Width(88).Height(4).Radius(2).Background(a.palette.Text.Alpha(.08)).Children(func() {
 						if fraction > 0 {
-							ui.Box(c).Width(88 * float32(max(.015, fraction))).Height(4).Radius(2).Background(color.Alpha(.8))
+							ui.Box(c).Width(88 * float32(max(.015, fraction))).Height(4).Radius(2).Background(fill)
 						}
 					})
 					ui.Text(c, fmt.Sprintf(tr(c, "%.0f%%"), window.UsedPercent)).Width(34).FontSize(design.TextSize(c, design.TextBase)).TextColor(color).TextAlign(ui.End)

@@ -194,7 +194,7 @@ func testDesktopSameNameProviderSwitch(t *testing.T, appearance string) {
 		}
 		return fmt.Errorf("second provider not persisted")
 	})
-	if identity := app.waitKey("model-trigger").Value; identity != "provider-1 · same-name" {
+	if identity := app.waitKey("model-trigger").Value; identity != "provider-1, same-name" {
 		t.Fatalf("same-name models lack visible provider identity: %s", identity)
 	}
 	// Hover the button to verify the identity is available to sighted users too.
@@ -210,7 +210,7 @@ func testDesktopSameNameProviderSwitch(t *testing.T, appearance string) {
 			return err
 		}
 		for _, candidate := range tree.Nodes {
-			if candidate.Role == "tooltip" && candidate.Label == "provider-1 · same-name" {
+			if candidate.Role == "tooltip" && candidate.Label == "provider-1, same-name" {
 				return nil
 			}
 		}

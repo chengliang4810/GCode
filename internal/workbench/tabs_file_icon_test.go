@@ -2,11 +2,100 @@ package workbench
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestTabStripFitsFileNames(t *testing.T) {
+	for _, tc := range []struct {
+		name, mode, fileName string
+		width                int
+		font, scale          float32
+		middle               bool
+	}{
+		{"short-markdown", "light", "SKILL.md", 280, 20, 2, false},
+		{"html-preview", "dark", "preview-report.html", 280, 20, 2, false},
+		{"long-go-file", "dark", "session_persistence_test.go", 520, 14, 1, false},
+		{"cjk-file", "light", "\u4f1a\u8bdd\u6062\u590d\u62a5\u544a.md", 280, 18, 1, false},
+		{"over-limit", "dark", "desktop-session-persistence-recovery-investigation-notes.md", 320, 18, 2, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, _, snapshot := testWorkspace(t)
+			name := tc.fileName
+			path := filepath.Join(t.TempDir(), name)
+			snapshot.Settings.Appearance.Mode = tc.mode
+			snapshot.Settings.Appearance.ThemeID = "rcode-" + tc.mode
+			snapshot.Files = append(snapshot.Files, contracts.File{ID: "name-fit", Name: name, Path: path, Loaded: true})
+			s.Update(snapshot)
+			s.OnToggleExpand = func() {}
+			if tc.name == "html-preview" {
+				if err := s.OpenFilePreview(path, name); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				s.OpenFile("name-fit")
+			}
+			theme := s.palette().UI()
+			theme.FontSize = tc.font
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(theme)
+				ui.Column(c).Fill().Children(func() { s.TabStrip(c, false) })
+			}, tc.width, 80)
+			tt.SetScale(tc.scale)
+			chip, ok := tt.Find(name)
+			if !ok {
+				t.Fatalf("missing file tab %q", name)
+			}
+			close, ok := tt.Find("Close tab " + name)
+			if !ok || close.X+close.W > chip.X+chip.W {
+				t.Fatalf("close control is not inside its file tab: close=%+v chip=%+v", close, chip)
+			}
+			x, y := int((chip.X+25)*tc.scale), int(chip.Y*tc.scale)
+			plate := tt.Image().RGBAAt(x-1, y+int(12*tc.scale))
+			room := close.X - (chip.X + 25) - 3
+			var textWidth float32
+			ref := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(theme)
+				c.Root().Background(ui.RGB(plate.R, plate.G, plate.B))
+				size := design.TextSize(c, design.TextBase)
+				textWidth, _ = c.MeasureText(0, ui.Span{Text: name, Size: size})
+				ui.Row(c).Height(24).Children(func() {
+					label := ui.Text(c, name).FontSize(size).TextColor(s.palette().Text).SingleLine()
+					if tc.middle {
+						label.Width(room).TruncateMiddle()
+					}
+				})
+			}, tc.width, 24)
+			ref.SetScale(tc.scale)
+			if !tc.middle && room < textWidth {
+				t.Fatalf("file name %q needs %.2f DIP, label only has %.2f DIP", name, textWidth, room)
+			}
+			if tc.middle && (room >= textWidth || chip.W != 240) {
+				t.Fatalf("over-limit file should be elided in a 240 DIP tab: text=%.2f room=%.2f chip=%+v", textWidth, room, chip)
+			}
+			got, want := tt.Image(), ref.Image()
+			for py := 0; py < want.Bounds().Dy(); py++ {
+				for px := 0; px < int(min(room, textWidth+1)*tc.scale); px++ {
+					if got.RGBAAt(x+px, y+py) != want.RGBAAt(px, py) {
+						t.Fatalf("tab did not render name %q as expected at pixel (%d,%d)", name, px, py)
+					}
+				}
+			}
+			if tc.middle {
+				tt.Move(chip.X+10, chip.Y+chip.H/2)
+				tt.Advance(time.Second)
+				if !tt.HasText(path) {
+					t.Fatalf("elided tab lost its full path tooltip: %v", tt.Texts())
+				}
+			}
+		})
+	}
+}
 
 func TestTabStripFileImageOpacityFollowsSelection(t *testing.T) {
 	for _, dark := range []bool{false, true} {

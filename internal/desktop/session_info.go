@@ -69,8 +69,8 @@ func (a *App) sessionInfo(c *ui.Context) {
 				ui.ButtonBase(c.Key("session-info-branch-changes")).FillWidth().Padding(6, 9).Gap(8).Justify(ui.Start).Label(tr(c, "Branch changes")).OnClick(func() { a.setPanel(1, true); a.workspace.OpenSurface("changes") }).Children(func() {
 					icon(c, "git-branch", 16)
 					ui.Text(c, s.Branch).FontSize(design.TextSize(c, design.TextBase)).SingleLine().Grow(1)
-					ui.Text(c, fmt.Sprintf(tr(c, "+%d"), adds)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Success)
-					ui.Text(c, fmt.Sprintf(tr(c, "−%d"), dels)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Danger)
+					ui.Text(c, fmt.Sprintf(tr(c, "+%d"), adds)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Success)
+					ui.Text(c, fmt.Sprintf(tr(c, "−%d"), dels)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
 				})
 			})
 			agents := a.sessionAgents(s.ID)
@@ -78,7 +78,7 @@ func (a *App) sessionInfo(c *ui.Context) {
 				return
 			}
 			ui.Column(c).FillWidth().Radius(10).Background(a.palette.Overlay.Alpha(.85)).Border(1, a.palette.Border).Padding(10, 0).Children(func() {
-				ui.Text(c, tr(c, "Agents")).FontSize(design.TextSize(c, design.TextXS)).LetterSpacing(.8).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
+				ui.Text(c, tr(c, "Agents")).FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
 				ended := 0
 				for _, child := range agents {
 					if child.Status == contracts.Working {
