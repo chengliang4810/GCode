@@ -3,6 +3,7 @@ package workbench
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -152,18 +153,19 @@ func TestRenderableFileLineTargetOpensSource(t *testing.T) {
 // embedded browser and reuses the tab when the same file opens again.
 func TestFilePreviewSurfaceReusesBrowserTabAndShowsPath(t *testing.T) {
 	s := linkWorkspace(t)
-	if err := s.OpenFilePreview("/workspace/报告.html", "报告.html"); err != nil {
+	path := filepath.Join(t.TempDir(), "报告.html")
+	if err := s.OpenFilePreview(path, "报告.html"); err != nil {
 		t.Fatal(err)
 	}
 	if s.TabCount() != 1 || s.ActiveKind() != "browser" {
 		t.Fatalf("preview did not open a browser surface: %+v", s.tabs)
 	}
 	b := s.browsers[s.tabs[0].id]
-	if b == nil || b.file != "/workspace/报告.html" || b.data.Title != "报告.html" || b.view != nil {
+	if b == nil || b.file != path || b.data.Title != "报告.html" || b.view != nil {
 		t.Fatalf("preview surface is wrong: %#v", b)
 	}
 	tt := ui.NewTester(s.View, 700, 500)
-	if !tt.HasText("/workspace/报告.html") {
+	if !tt.HasText(path) {
 		t.Fatal("preview header does not show the host path")
 	}
 	if tt.HasText("Enter URL") || tt.HasText("Annotate an element") || tt.HasText("Open in default browser") {
@@ -182,7 +184,7 @@ func TestFilePreviewSurfaceReusesBrowserTabAndShowsPath(t *testing.T) {
 	if (&browser{}).allowsNavigation("file:///workspace/index.html") {
 		t.Fatal("a web browser surface accepted a local file")
 	}
-	if err := s.OpenFilePreview("/workspace/报告.html", "报告.html"); err != nil || s.TabCount() != 1 {
+	if err := s.OpenFilePreview(path, "报告.html"); err != nil || s.TabCount() != 1 {
 		t.Fatalf("second open duplicated the preview: %d %v", s.TabCount(), err)
 	}
 	if err := s.OpenFilePreview("报告.html", ""); err == nil {
