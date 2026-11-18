@@ -313,7 +313,7 @@ func (a *App) appUsageModels(c *ui.Context, models []appusage.Model) {
 						start += angle
 					}
 				}).Children(func() {
-				ui.Text(c, compactUsage(total)).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500)
+				ui.Text(c, compactUsage(total)).FontSize(design.TextSize(c, design.TextXL)).FontWeight(500).FontFeatures("tnum")
 				ui.Text(c, tr(c, "Tokens")).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextSmall))
 			})
 			ui.Column(c.Key("usage-model-list")).Grow(1).MinWidth(180).Gap(12).Children(func() {
@@ -325,7 +325,7 @@ func (a *App) appUsageModels(c *ui.Context, models []appusage.Model) {
 							ui.Box(c).Size(9, 9).Radius(2).Background(a.usageChartColor(i))
 							ui.Column(c).Grow(1).MinWidth(0).Gap(3).Children(func() {
 								ui.Text(c, name).SingleLine()
-								ui.Text(c, compactUsage(model.Tokens)+" "+tr(c, "Tokens")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+								ui.Text(c, compactUsage(model.Tokens)+" "+tr(c, "Tokens")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 							})
 							ui.Text(c, fmt.Sprintf("%.1f%%", 100*float64(model.Tokens)/float64(total))).TextColor(a.palette.Muted)
 						})

@@ -136,6 +136,11 @@ type App struct {
 	sidebar, files, right, terminal                         bool
 	sidebarWidth, filesWidth, rightWidth, terminalHeight    float32
 	sidebarResize, terminalResize, rightResize, filesResize splitResize
+	// dragOrigin keeps the pane sizes a live drag started from, so Escape can
+	// put them back; dragMovedFrame says a divider moved this frame, which is
+	// what keeps that origin alive.
+	dragOrigin      paneDragOrigin
+	dragMovedFrame  bool
 	paneSaveAt                                              time.Time
 	paneDirty                                               paneDirty
 	draft, search, paletteQuery, errorText, toast           string
@@ -995,6 +1000,8 @@ func (a *App) notification(s string) { a.toast = s; a.toastUntil = time.Now().Ad
 
 func (a *App) View(c *ui.Context) {
 	localize.Set(c, a.state.Settings.General.Language)
+	a.dragMovedFrame = false
+	defer func() { a.endPaneDragFrame(a.dragMovedFrame) }()
 	a.syncCloudSettingsPage()
 	a.services = c.Services()
 	a.configureMotion(c)
@@ -1087,6 +1094,7 @@ func (a *App) View(c *ui.Context) {
 				ui.Split(c, &a.sidebarContentWidth, func() { a.panelContentBox(c, 0, func() { a.sidebarView(c) }) }, func() { a.mainView(c) }).Fill()
 				a.sidebarSplit = a.sidebarContentWidth
 				if a.sidebarContentWidth != before {
+					a.beginPaneDrag()
 					// The split applied this frame's pointer move before it
 					// built the panes. The size carries the bounce painted
 					// this frame: take it back out so the width the app
@@ -1172,6 +1180,7 @@ func (a *App) mainView(c *ui.Context) {
 				before := topHeight
 				ui.SplitVertical(c, &topHeight, func() { a.chatView(c) }, func() { ui.Column(c).Label(tr(c, "Bottom terminal")).Fill().Children(func() { a.bottom.View(c) }) }).Grow(1).FillWidth()
 				if topHeight != before {
+					a.beginPaneDrag()
 					requested := topHeight - a.terminalResize.painted
 					topHeight = a.terminalResize.observe(c, requested, minTop, maxTop, reduced)
 					a.terminalHeight = max(design.TerminalMin, min(height*design.TerminalMaxFraction, height-38-topHeight))
@@ -1209,6 +1218,7 @@ func (a *App) mainView(c *ui.Context) {
 				before := chatWidth
 				ui.Split(c, &chatWidth, conversation, workspaceView).Grow(1).FillWidth()
 				if chatWidth != before {
+					a.beginPaneDrag()
 					requested := chatWidth - a.rightResize.painted
 					chatWidth = a.rightResize.observe(c, requested, design.ChatMin, maxChat, reduced)
 					a.rightWidth = max(design.RightMin, min(columns.Chat+columns.Right-design.ChatMin, columns.Chat+columns.Right-chatWidth))
@@ -1244,6 +1254,7 @@ func (a *App) mainView(c *ui.Context) {
 				before := firstWidth
 				ui.Split(c, &firstWidth, content, func() { a.workspace.FilesDockBelow(c, band) }).Grow(1).FillWidth()
 				if firstWidth != before {
+					a.beginPaneDrag()
 					requested := firstWidth - a.filesResize.painted
 					firstWidth = a.filesResize.observe(c, requested, minFirst, maxFirst, reduced)
 					a.filesWidth = max(design.FilesMin, min(design.FilesMax, available-firstWidth))

@@ -812,16 +812,16 @@ todo 计数与明细、运行耗时。`composer_footer_git.go` 的 “Showing 30
 | TYPE-2 字号无下限 | 夹到 `MinTextSize=12` | 已修 | f3f0506 |
 | TYPE-3 代码/终端 8px | **豁免**（用户内容渲染，非界面文案） | 不采纳 | — |
 | TYPE-4 硬编码 11px | 改令牌 | 已修 | c4b2b19 |
-| TYPE-5 tnum | 补 11 处；少数整句说明判为不加 | 已修 | c4b2b19 |
+| TYPE-5 tnum | 补 11 处 + 图表读数、`%d matches`；少数整句说明判为不加 | 已修 | c4b2b19、本轮 |
 | TYPE-6 默认行高 ≈1.2 | 多行说明补 1.5（全局默认不动） | 已修 | c4b2b19 |
 | TYPE-7 `.Balance()` | 设置页标题共享入口启用 | 已修 | f3f0506 |
 | GEO-1 阴影被裁 + 伪阴影 | wrapper 承载阴影、删自绘模糊 | 已修 | f3f0506 |
-| GEO-2/3 固定高度削顶 | 四行高改随字号计算；`transcript.go` 徽章仍固定 22 | 部分已修 | c4b2b19 |
+| GEO-2/3 固定高度削顶 | 四处行高与活动文件徽章都改为随字号计算 | 已修 | c4b2b19、本轮 |
 | GEO-4 阴影参数不一 | 统一 `OverlayShadow` | 已修 | f3f0506 |
 | GEO-5 圆角不统一 | 同心推导 + 令牌化 + 圆形按钮区分 | 已修 | f3f0506、e6a9126 |
 | GEO-6 间距 4 倍数 | 令牌层对齐（按钮 32、Tile 8、开关 44×28）；页面级 Gap 判为内容间距不改 | 已修 | f3f0506 |
 | GEO-7 source wash 四处 | 收敛到 `design.Wash` | 已修 | e6a9126 |
-| COLOR-1 发送键不用强调色 | 见 INT-7（主操作与状态点共存为已决取舍） | 待做 | — |
+| COLOR-1 发送键不用强调色 | 发送键改用 `Accent`/`AccentOn`；**用户确认强调色可同时用于主操作与状态点** | 已修 | 本轮 |
 | COLOR-2 状态点用 Accent | **不改**（运行态需一眼可见） | 不实施 | §9.2 |
 | COLOR-3 浮岛恒深色 | **豁免**（常驻悬浮窗需深底） | 不实施 | §10 D5 |
 | COLOR-4 `active` 不随强调色 | 只换色相保留主题 alpha + 210 组矩阵测试 | 已修 | f3f0506 |
@@ -830,12 +830,12 @@ todo 计数与明细、运行耗时。`composer_footer_git.go` 的 “Showing 30
 | COLOR-7 不可见分隔符 | 分隔符本身已删 | 已修 | c4b2b19 |
 | COLOR-8 10px+Faint 对比度 | Faint 不再承载文字（21/30 主题不达标，已量化） | 已修 | c4b2b19、e6a9126 |
 | INT-1 Enter 绕过 canSend | 单一 `sendBlockReason` + 行内提示 | 已修 | c4b2b19 |
-| INT-2 CJK 500ms 守卫 | 未做，需真机确认是否真的误发 | 待真机 | §6 |
-| INT-3 组字快照过期 | 未做（与 INT-2 同源） | 待真机 | — |
+| INT-2 CJK 500ms 守卫 | **用户确认本机拼音下未复现误发**；不引入丢弃窗口（会误杀正常发送） | 不实施 | 本轮 |
+| INT-3 组字快照过期 | 与 INT-2 同源，随其不实施 | 不实施 | — |
 | INT-4 Esc 无条件停止 | 加 `running` 条件 | 已修 | c4b2b19 |
 | INT-5 跟随阈值 40px | **不采纳**（原生列表会「拽不住」） | 不采纳 | §10 D12 |
-| INT-6 分栏无 18%/82% 吸附 | 未做 | 待做 | — |
-| INT-7 主按钮缺三态 | 与 COLOR-1 同批 | 待做 | — |
+| INT-6 分栏吸附与 Escape 复位 | 吸附**不采纳**（用户决定）；Escape 还原已实现（拖拽中按 Esc 恢复四栏持久化尺寸，拖拽结束即失效） | 部分已修 | 本轮 |
+| INT-7 主按钮缺三态 | 发送键补 Hover/Pressed，发送中显示转圈；停止键保持中性墨色 | 已修 | 本轮 |
 | INT-8 焦点环不可见 | `DrawOver` 自绘环（问题面板、滚动条） | 已修 | c4b2b19 |
 | STATE-1 审批卡死链 | 删除 UI、字段与 fixture | 已修 | 71a6c0a |
 | STATE-2 装饰阶段词 | 按真实事件派生，命令类优先 description | 已修 | c4b2b19 |
@@ -867,3 +867,24 @@ GEO-3 的 `transcript.go` 徽章固定高度、以及第 6 节列出的全部真
 说明：工作树里同时存在并行会话的两个功能（编辑最后一条已停止消息、输入历史、文件变更），
 它们与本次改动共享 `chat.go`、`app.go`、`composer_prompt.go`、`composer_surface.go` 等文件，
 **无法按文件拆分**，因此随 `c4b2b19` 一并提交，并在该提交正文中注明。
+
+## 14. 最后一轮：发送键、分栏 Escape 与三处补齐
+
+- **COLOR-1 / INT-7（用户确认「允许强调色同时用于主操作与状态点」）**：
+  `composerActionInk(a, mode)` 返回动作控件的底色与字色——发送态取 `Accent`/`AccentOn`，
+  停止态保持 `Text`/`Background`，于是强调色在全界面只标「一个动作 + 运行指示」，
+  停止不被误读为主操作。发送键补 `Hovered`/`Pressed`（都走 `AccentStrong`），
+  发送中（`pendingSendInFlight`）在按钮内显示 12px 转圈，而不是只把按钮变灰。
+  测试：`TestSendButtonCarriesTheAccentAndStopsWithoutIt`、`TestPendingSendSpinsTheActionControl`。
+- **INT-6 部分实施（用户决定：不吸附、要 Escape 还原）**：
+  `paneDragOrigin` 在分隔条开始移动的当帧记录四栏的持久化尺寸；
+  拖拽中按 Escape → `cancelPaneDrag` 把四栏尺寸写回并安排保存；
+  拖拽结束（下一帧没有任何分隔条移动）→ `endPaneDragFrame` 清掉记录，
+  所以 Escape 只还原「正在进行的那次拖拽」，不会把很久以前的尺寸翻出来。
+  吸附按决定不实现。测试三条：还原、无拖拽时不动作、拖拽结束后过期。
+  这也顺带修掉了「拖过界会在拖拽中途卸载分隔条」造成的无法回退问题。
+- **三处补齐**：活动文件徽章高度改为 `max(22, TextBase×1.5)`（内文是 `TextBase`、
+  上下内边距为 0，所以不额外加 padding——子 Agent 核对了 `Padding` 的四参顺序后修正了我的初稿）；
+  图表总额与按模型读数补 `tnum`；`%d matches` 补 `tnum`。
+- **INT-2 / INT-3 不实施**：用户在本机拼音输入下未复现「选词补发的 Enter 触发发送」，
+  故不引入 500ms 丢弃窗口——在未复现的情况下加守卫会误杀「选词后立刻按 Enter」的合法发送。

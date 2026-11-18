@@ -297,3 +297,59 @@ func TestPaneSaveKeepsWidthsTheUserDidNotDrag(t *testing.T) {
 		t.Fatalf("the dragged width did not reach the store: %g", recorder.saved[0].SidebarWidth)
 	}
 }
+
+func TestEscapeRestoresTheWidthsADragStartedFrom(t *testing.T) {
+	a := testApp(t, "default")
+	a.state.Settings.SidebarWidth = 240
+	a.sidebarWidth, a.sidebarContentWidth = 240, 240
+	tt := ui.NewTester(a.View, 1320, 880)
+	tt.Frame()
+	// A drag that pushed the sidebar past its minimum closed the column; its
+	// origin is the widths the drag started from, so Escape reopens it there.
+	a.state.Settings.SidebarWidth = 240
+	a.beginPaneDrag()
+	a.sidebarWidth = design.SidebarMin
+	a.state.Settings.SidebarWidth = float64(design.SidebarMin)
+	a.setPanel(0, false)
+	if !a.cancelPaneDrag(nil) {
+		t.Fatal("a live drag was not restorable")
+	}
+	if got := a.state.Settings.SidebarWidth; got != 240 {
+		t.Fatalf("sidebar width after escape = %v, want 240", got)
+	}
+	tt.Frame()
+	if a.sidebarWidth != 240 {
+		t.Fatalf("sidebar width did not return: %v", a.sidebarWidth)
+	}
+}
+
+func TestEscapeWithoutADragLeavesPanesAlone(t *testing.T) {
+	a := testApp(t, "default")
+	a.state.Settings.SidebarWidth = 240
+	tt := ui.NewTester(a.View, 1320, 880)
+	tt.Frame()
+	if a.cancelPaneDrag(nil) {
+		t.Fatal("escape claimed a drag that never started")
+	}
+	if got := a.state.Settings.SidebarWidth; got != 240 {
+		t.Fatalf("idle escape moved the sidebar to %v", got)
+	}
+}
+
+func TestADragOriginExpiresWithTheFrameThatMovedIt(t *testing.T) {
+	a := testApp(t, "default")
+	a.beginPaneDrag()
+	if !a.dragOrigin.known {
+		t.Fatal("a moving divider did not record its origin")
+	}
+	// The pointer stopped moving: the next frame drops the origin, so Escape
+	// cannot restore a size from a drag that ended earlier.
+	a.dragMovedFrame = false
+	a.endPaneDragFrame(a.dragMovedFrame)
+	if a.dragOrigin.known {
+		t.Fatal("a finished drag kept its origin")
+	}
+	if a.cancelPaneDrag(nil) {
+		t.Fatal("escape restored a drag that had already ended")
+	}
+}

@@ -569,7 +569,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 
 func (a *App) activityFileBadge(c *ui.Context, key, path string, color ui.Color) {
 	file, open := a.activityFileContext(path)
-	badge := ui.ButtonBase(c).Height(22).MinWidth(0).Shrink(1).Padding(0, 6, 0, 1).Gap(2).Radius(5).Background(a.activityInk(.06)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Tooltip(path).Label(tr(c, "Open file: ") + path)
+	badge := ui.ButtonBase(c).Height(max(22, design.TextSize(c, design.TextBase)*1.5)).MinWidth(0).Shrink(1).Padding(0, 6, 0, 1).Gap(2).Radius(5).Background(a.activityInk(.06)).TextColor(color).AlignItems(ui.Center).Justify(ui.Start).Tooltip(path).Label(tr(c, "Open file: ") + path)
 	if key != "" {
 		badge.Key(key)
 	}

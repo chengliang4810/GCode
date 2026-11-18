@@ -47,6 +47,9 @@ type composerSurfaceProps struct {
 	onFilesDrop            func([]string)
 	onMention              func(workbench.FileDrag)
 	stopWithEscape         bool
+	// sending is a message the app already accepted and is still delivering:
+	// the button spins instead of only turning grey.
+	sending bool
 	focusPending           *bool
 }
 
@@ -230,14 +233,30 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 				label = p.queueLabel
 			}
 			c.Key(p.keyPrefix + "send")
-			button := ui.ButtonBase(c).Absolute().Right(inset).Bottom(actionBottom+2).Size(28, 28).Radius(14).Label(tr(c, label)).Tooltip(tr(c, label)).Center().Background(a.palette.Text).TextColor(a.palette.Background)
+			// The send control is the one primary action of the window, so it
+			// carries the accent and its hover/pressed states. The stop control
+			// keeps the plain ink: stopping is not a primary action, and the
+			// accent already marks both the action and the run indicators.
+			primary := p.sendMode != composerStop
+			tint, ink := composerActionInk(a, p.sendMode).tint, composerActionInk(a, p.sendMode).ink
+			button := ui.ButtonBase(c).Absolute().Right(inset).Bottom(actionBottom+2).Size(28, 28).Radius(14).Label(tr(c, label)).Tooltip(tr(c, label)).Center().Background(tint).TextColor(ink)
+			if primary && button.Hovered() {
+				button.Background(a.palette.AccentStrong)
+			}
+			if primary && button.Pressed() {
+				button.Background(a.palette.AccentStrong)
+			}
 			button.Children(func() {
+				// A send already in flight spins in the button instead of only
+				// greying it out, so the click is answered where it landed.
 				if p.sendMode == composerStop {
 					// The stop control is a block, not a circle: its corner
 					// stays well under half its 11px size so it keeps the
 					// square silhouette that reads as "stop" against the
 					// button's own round 28px target.
 					ui.Box(c).Size(11, 11).Radius(3).Background(a.palette.Background)
+				} else if p.sending {
+					ui.Spinner(c).Size(12, 12).TextColor(ink)
 				} else {
 					icon(c, "arrow-up", 14)
 				}
@@ -278,4 +297,28 @@ func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {
 
 func composerHasContent(draft string, staged int) bool {
 	return strings.TrimSpace(draft) != "" || staged > 0
+}
+
+// pendingSendInFlight reports a primary send the app accepted and has not yet
+// seen acknowledged: the composer button spins for it rather than only
+// greying out, so a click that landed is visibly answered.
+func (a *App) pendingSendInFlight() bool {
+	if a.sessionID == "" {
+		return false
+	}
+	pending, ok := a.pendingSends[a.sessionID]
+	return ok && !pending.Queued
+}
+
+// composerActionInk is the fill and glyph color of the composer's action
+// control. The send control is the window's primary action and takes the
+// accent pair; the stop control keeps the plain ink, so the accent still marks
+// one thing.
+type composerActionStyle struct{ tint, ink ui.Color }
+
+func composerActionInk(a *App, mode composerSendMode) composerActionStyle {
+	if mode == composerStop {
+		return composerActionStyle{tint: a.palette.Text, ink: a.palette.Background}
+	}
+	return composerActionStyle{tint: a.palette.Accent, ink: a.palette.AccentOn}
 }

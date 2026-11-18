@@ -22,8 +22,18 @@ func (a *App) chatView(c *ui.Context) {
 	for _, side := range a.sideComposers {
 		composerFocused = composerFocused || side.Input.Focused(c)
 	}
-	if a.state.Settings.General.StopWithEscape && !composerFocused {
-		c.OnShortcut(0, ui.KeyEscape, a.stopRun)
+	if !composerFocused {
+		// Escape cancels a live pane drag before it is a request to stop the
+		// run: a drag that crossed a limit must be undoable without asking the
+		// engine to end a turn the user never meant to touch.
+		c.OnShortcut(0, ui.KeyEscape, func() {
+			if a.cancelPaneDrag(c) {
+				return
+			}
+			if a.state.Settings.General.StopWithEscape {
+				a.stopRun()
+			}
+		})
 	}
 	messages := a.transcriptCache.entriesFor(a.state.Revision, a.sessionID, a.projectedMessages(a.sessionID), a.state.Settings.General.CompactMode)
 	rows := a.transcriptCache.conversationFor(messages, a.state.Settings.General.CompactMode)
@@ -68,7 +78,7 @@ func (a *App) chatView(c *ui.Context) {
 				ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
 					ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)
 					matches := a.conversationMatches(&a.transcriptCache, messages, rows, a.conversationQuery)
-					ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					ui.Text(c, fmt.Sprintf(tr(c, "%d matches"), len(matches))).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 					move := func(delta int) {
 						if len(matches) > 0 {
 							a.findIndex = (a.findIndex + delta + len(matches)) % len(matches)
@@ -254,6 +264,7 @@ func (a *App) composerView(c *ui.Context, hero bool) {
 				inputLabel: "Message", attachLabel: "Attach files", sendLabel: "Send message", stopLabel: stopLabel,
 				steerLabel: "Steer the running response", queueLabel: "Queue for the next turn", sendMode: mode,
 				running:        running,
+				sending:        a.pendingSendInFlight(),
 				stopWithEscape: a.state.Settings.General.StopWithEscape,
 				canSend:        canSend,
 				hero:           hero,

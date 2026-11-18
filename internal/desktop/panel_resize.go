@@ -37,6 +37,66 @@ type splitResize struct {
 	bounced resizeEdge
 	started time.Time
 	painted float32
+	// dragging is true on a frame whose pointer move changed the size, so
+	// Escape knows a drag is in flight.
+	dragging bool
+}
+
+// paneDragOrigin is where the persisted pane sizes were when the drag that is
+// in flight started. Escape puts them back, so a drag that crossed a limit
+// leaves no trace on the pane or on the settings it saves.
+type paneDragOrigin struct {
+	sidebar, right, terminal, files float32
+	known                           bool
+}
+
+// beginPaneDrag records the sizes a drag starts from, once.
+func (a *App) beginPaneDrag() {
+	a.dragMovedFrame = true
+	if a.dragOrigin.known {
+		return
+	}
+	a.dragOrigin = paneDragOrigin{
+		sidebar:  float32(a.state.Settings.SidebarWidth),
+		right:    float32(a.state.Settings.RightPaneWidth),
+		terminal: float32(a.state.Settings.TerminalHeight),
+		files:    float32(a.state.Settings.FilesWidth),
+		known:    true,
+	}
+}
+
+// endPaneDragFrame clears a drag whose pointer stopped moving: Escape restores
+// the drag still in flight, never a size from an earlier one.
+func (a *App) endPaneDragFrame(moved bool) {
+	if !moved {
+		a.dragOrigin = paneDragOrigin{}
+	}
+}
+
+// cancelPaneDrag puts every pane a live drag moved back where that drag
+// started, for Escape. It reports whether any pane had a drag to cancel.
+func (a *App) cancelPaneDrag(c *ui.Context) bool {
+	origin := a.dragOrigin
+	if !origin.known {
+		return false
+	}
+	a.dragOrigin = paneDragOrigin{}
+	a.sidebarResize.dragging = false
+	a.rightResize.dragging = false
+	a.terminalResize.dragging = false
+	a.filesResize.dragging = false
+	a.sidebarWidth, a.sidebarContentWidth = origin.sidebar, origin.sidebar
+	a.rightWidth = origin.right
+	a.terminalHeight = origin.terminal
+	a.filesWidth = origin.files
+	a.state.Settings.SidebarWidth = float64(origin.sidebar)
+	a.state.Settings.RightPaneWidth = float64(origin.right)
+	a.state.Settings.TerminalHeight = float64(origin.terminal)
+	a.state.Settings.FilesWidth = float64(origin.files)
+	if c != nil {
+		a.schedulePaneSave(c, paneSidebar|paneRight|paneTerminal|paneFiles)
+	}
+	return true
 }
 
 // paint is the size the divider shows this frame: the size the app keeps,
@@ -67,6 +127,7 @@ func (r *splitResize) observe(c *ui.Context, requested, minimum, maximum float32
 	case requested > maximum:
 		edge = resizeEdgeMax
 	}
+	r.dragging = true
 	previous := r.held
 	r.held = edge
 	if edge != resizeEdgeNone && edge != previous && !reduced {
