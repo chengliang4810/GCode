@@ -171,7 +171,9 @@ func BuildRecords(records map[string][]contracts.UsageRecord, runs []contracts.R
 			day = Day{Date: date, Models: make(map[string]int64)}
 		}
 		day.Tokens += tokens
-		day.Models[record.ModelID] += tokens
+		if tokens > 0 {
+			day.Models[record.ModelID] += tokens
+		}
 		if record.Role == "assistant" && record.TurnID != "" && !turns[record.TurnID] {
 			day.Turns++
 			turns[record.TurnID] = true

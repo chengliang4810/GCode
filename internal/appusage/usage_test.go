@@ -151,3 +151,19 @@ func TestContractReportRoundTripPreservesChartData(t *testing.T) {
 		t.Fatalf("contract report round trip changed chart data:\n got=%+v\nwant=%+v", got, want)
 	}
 }
+
+func TestZeroUsageRecordsDoNotCreateModelGroups(t *testing.T) {
+	now := time.Now()
+	report := BuildRecords(map[string][]contracts.UsageRecord{"session": {
+		{ID: "user", Role: "user", CreatedAt: now},
+		{ID: "tool", Role: "assistant", TurnID: "turn", CreatedAt: now, ToolCount: 2},
+		{ID: "reply", Role: "assistant", TurnID: "turn", CreatedAt: now, ModelID: "provider/model", Usage: contracts.Usage{InputTokens: 100, OutputTokens: 20}},
+	}}, nil, now)
+	day := report.Days[Date(now)]
+	if _, ok := day.Models[""]; ok {
+		t.Fatal("zero-token metadata created an unknown model group")
+	}
+	if len(day.Models) != 1 || day.Models["provider/model"] != 120 || day.Tools != 2 || day.Turns != 1 || day.Tokens != 120 {
+		t.Fatalf("usage or activity counts changed: %+v", day)
+	}
+}
