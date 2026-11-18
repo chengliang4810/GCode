@@ -15,6 +15,7 @@ import (
 )
 
 func (a *App) editHook(hook *contracts.HookRule) {
+	a.errorText = ""
 	s := &a.capabilityUI
 	s.hookOpen = true
 	s.hook = contracts.HookRule{ID: "hook-" + rand.Text(), Event: contracts.HookPreToolUse, Type: "command", Enabled: true, TimeoutSeconds: 30}
@@ -43,10 +44,6 @@ func (a *App) editHook(hook *contracts.HookRule) {
 }
 
 func (a *App) hookSettings(c *ui.Context) {
-	if a.capabilityUI.hookOpen {
-		a.hookSettingsForm(c)
-		return
-	}
 	query := a.capabilityToolbar(c, "Hooks", "Add hook", func() { a.editHook(nil) })
 	found := 0
 	for _, hook := range a.state.Settings.Hooks {
@@ -74,6 +71,7 @@ func (a *App) hookSettings(c *ui.Context) {
 	if found == 0 {
 		ui.Text(c, tr(c, "No hooks")).TextColor(a.palette.Muted)
 	}
+	a.hookSettingsForm(c)
 }
 
 func (a *App) hookSettingsForm(c *ui.Context) {
@@ -82,8 +80,7 @@ func (a *App) hookSettingsForm(c *ui.Context) {
 	if slices.ContainsFunc(a.state.Settings.Hooks, func(hook contracts.HookRule) bool { return hook.ID == s.hook.ID }) {
 		title = "Edit hook"
 	}
-	a.settingsFormHeader(c, "Hooks", title, func() { s.hookOpen = false })
-	a.resourceEditor(c, "hook-editor", func() {
+	a.resourceEditor(c, "hook-editor", title, &s.hookOpen, s.pendingHookSave != nil, 760, func() {
 		resourceText(c, "hook-name", "Hook name", &s.hook.Name)
 		options := make([]settingOption, 0, len(contracts.HookEvents()))
 		for _, candidate := range contracts.HookEvents() {
@@ -162,7 +159,6 @@ func (a *App) hookSettingsForm(c *ui.Context) {
 		}
 		a.state.Settings.Hooks = hooks
 		s.pendingHookSave = &contracts.CloneHookRules([]contracts.HookRule{hook})[0]
-		s.hookOpen = false
 		a.saveSettings()
 	})
 }

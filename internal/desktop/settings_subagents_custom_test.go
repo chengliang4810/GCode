@@ -154,7 +154,7 @@ func TestCustomSubagentEditorLayoutAcrossWindowsAndThemes(t *testing.T) {
 			bounds := map[string]ui.Rect{}
 			for _, key := range []string{"Subagent name", "Subagent model", "Subagent reasoning level", "Subagent description", "Tool access", "Subagent prompt", "Save", "Cancel"} {
 				rect, ok := tt.Find(app.t(key))
-				if !ok || rect.W <= 0 || rect.H <= 0 || rect.X < 256 ||
+				if !ok || rect.W <= 0 || rect.H <= 0 || rect.X < 20 ||
 					rect.X+rect.W > float32(test.width) || rect.Y < 38 || rect.Y+rect.H > 1000 {
 					t.Fatalf("%s is missing or clipped: %+v", key, rect)
 				}

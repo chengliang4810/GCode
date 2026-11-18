@@ -141,69 +141,55 @@ func (a *App) customSubagentForm(c *ui.Context) {
 	if state.subagentExisting {
 		title = "Edit subagent"
 	}
-	ui.Column(c).FillWidth().Disabled(busy).Children(func() {
-		a.settingsFormHeader(c, "Subagents", title, func() { state.subagentOpen = false })
-	})
-	a.settingsCard(c, func() {
-		ui.Column(c.Key("custom-subagent-form")).FillWidth().Padding(16).Gap(18).Children(func() {
-			ui.Column(c).FillWidth().Gap(18).Disabled(busy).Children(func() {
-				// The top row contains identity and execution settings. Flex wrapping
-				// follows the available content width, including the settings sidebar.
-				ui.Row(c.Key("subagent-identity-fields")).FillWidth().Wrap().Gap(16).AlignItems(ui.Start).Children(func() {
-					ui.Column(c).Basis(220).Grow(1).MinWidth(180).Children(func() {
-						a.customSubagentField(c, "Name", "name", func() {
-							controlTextInput(c.Key("subagent-name"), &state.subagent.Name).FillWidth().
-								Label(tr(c, "Subagent name")).Placeholder(tr(c, "Name")).
-								OnChange(func() { delete(state.subagentFieldErrors, "name") })
+	a.settingsEditorDialog(c, "subagent-editor-dialog", title, &state.subagentOpen, busy, 800, "", func() {
+		a.settingsCard(c, func() {
+			ui.Column(c.Key("custom-subagent-form")).FillWidth().Padding(16).Gap(18).Children(func() {
+				ui.Column(c).FillWidth().Gap(18).Disabled(busy).Children(func() {
+					// The top row contains identity and execution settings. Flex wrapping
+					// follows the available content width, including the settings sidebar.
+					ui.Row(c.Key("subagent-identity-fields")).FillWidth().Wrap().Gap(16).AlignItems(ui.Start).Children(func() {
+						ui.Column(c).Basis(220).Grow(1).MinWidth(180).Children(func() {
+							a.customSubagentField(c, "Name", "name", func() {
+								controlTextInput(c.Key("subagent-name"), &state.subagent.Name).FillWidth().
+									Label(tr(c, "Subagent name")).Placeholder(tr(c, "Name")).
+									OnChange(func() { delete(state.subagentFieldErrors, "name") })
+							})
 						})
-					})
-					ui.Column(c).Basis(320).Grow(2).MinWidth(180).Children(func() {
-						a.customSubagentField(c, "Model", "model", func() {
-							ui.Row(c.Key("subagent-execution-fields")).FillWidth().Wrap().Gap(8).Children(func() {
-								ui.Column(c).Basis(200).Grow(1).MinWidth(124).Children(func() { a.subagentModelPicker(c) })
-								a.customSubagentReasoning(c)
+						ui.Column(c).Basis(320).Grow(2).MinWidth(180).Children(func() {
+							a.customSubagentField(c, "Model", "model", func() {
+								ui.Row(c.Key("subagent-execution-fields")).FillWidth().Wrap().Gap(8).Children(func() {
+									ui.Column(c).Basis(200).Grow(1).MinWidth(124).Children(func() { a.subagentModelPicker(c) })
+									a.customSubagentReasoning(c)
+								})
 							})
 						})
 					})
-				})
-				a.customSubagentField(c, "Description", "description", func() {
-					controlTextInput(c.Key("subagent-description"), &state.subagent.Description).FillWidth().
-						Label(tr(c, "Subagent description")).Placeholder(tr(c, "Subagent description")).
-						OnChange(func() { delete(state.subagentFieldErrors, "description") })
-				})
-				a.customSubagentField(c, "Available tools", "tools", func() { a.customSubagentToolPicker(c) })
-				a.customSubagentField(c, "System prompt", "prompt", func() {
-					controlTextArea(c.Key("subagent-prompt"), &state.subagent.Prompt).FillWidth().Height(140).
-						Label(tr(c, "Subagent prompt")).Placeholder(tr(c, "Subagent prompt")).
-						OnChange(func() { delete(state.subagentFieldErrors, "prompt") })
-				})
-				ui.Row(c.Key("subagent-project-instructions")).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, tr(c, "Use project instructions")).Grow(1)
-					useProject := !state.subagent.SkipProjectInstructions
-					a.controlSwitch(c.Key("subagent-project-instructions-toggle"), &useProject, tr(c, "Use project instructions"), busy, func(value bool) {
-						state.subagent.SkipProjectInstructions = !value
+					a.customSubagentField(c, "Description", "description", func() {
+						controlTextInput(c.Key("subagent-description"), &state.subagent.Description).FillWidth().
+							Label(tr(c, "Subagent description")).Placeholder(tr(c, "Subagent description")).
+							OnChange(func() { delete(state.subagentFieldErrors, "description") })
+					})
+					a.customSubagentField(c, "Available tools", "tools", func() { a.customSubagentToolPicker(c) })
+					a.customSubagentField(c, "System prompt", "prompt", func() {
+						controlTextArea(c.Key("subagent-prompt"), &state.subagent.Prompt).FillWidth().Height(140).
+							Label(tr(c, "Subagent prompt")).Placeholder(tr(c, "Subagent prompt")).
+							OnChange(func() { delete(state.subagentFieldErrors, "prompt") })
+					})
+					ui.Row(c.Key("subagent-project-instructions")).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
+						ui.Text(c, tr(c, "Use project instructions")).Grow(1)
+						useProject := !state.subagent.SkipProjectInstructions
+						a.controlSwitch(c.Key("subagent-project-instructions-toggle"), &useProject, tr(c, "Use project instructions"), busy, func(value bool) {
+							state.subagent.SkipProjectInstructions = !value
+						})
 					})
 				})
-			})
-			if state.subagentError != "" {
-				ui.Text(c, state.subagentError).FillWidth().TextColor(a.palette.Danger)
-			}
-			ui.Row(c.Key("subagent-form-actions")).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
-				if state.subagentExisting {
-					buttonWithIcon(c.Key("delete-subagent"), tr(c, "Remove"), "trash-bin-minimalistic", buttonDanger).
-						Label(tr(c, "Remove subagent") + " " + state.subagent.Name).Disabled(busy).
-						OnClick(func() { a.confirmSettingsRemoval("subagent", state.subagent.ID, state.subagent.Name) })
+				if state.subagentError != "" {
+					ui.Text(c, state.subagentError).FillWidth().TextColor(a.palette.Danger)
 				}
-				ui.Spacer(c)
-				caption := tr(c, "Save")
-				if busy {
-					caption = tr(c, "Saving…")
-				}
-				primaryButton(c.Key("save-subagent"), caption).Label(tr(c, "Save")).Disabled(busy).OnClick(a.saveCustomSubagent)
-				textButton(c.Key("cancel-subagent"), tr(c, "Cancel")).Disabled(busy).OnClick(func() { state.subagentOpen = false })
+
 			})
 		})
-	})
+	}, func() { a.customSubagentActions(c) })
 }
 
 func (a *App) customSubagentReasoning(c *ui.Context) {
@@ -347,4 +333,23 @@ func (a *App) customSubagentCommandFinished(command contracts.Command, err error
 	if closeAfter && state.subagent.ID == profileID {
 		state.subagentOpen = false
 	}
+}
+
+func (a *App) customSubagentActions(c *ui.Context) {
+	state := &a.runtimeUI
+	busy := state.subagentPendingID != ""
+	ui.Row(c.Key("subagent-form-actions")).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
+		if state.subagentExisting {
+			buttonWithIcon(c.Key("delete-subagent"), tr(c, "Remove"), "trash-bin-minimalistic", buttonDanger).
+				Label(tr(c, "Remove subagent") + " " + state.subagent.Name).Disabled(busy).
+				OnClick(func() { a.confirmSettingsRemoval("subagent", state.subagent.ID, state.subagent.Name) })
+		}
+		ui.Spacer(c)
+		caption := tr(c, "Save")
+		if busy {
+			caption = tr(c, "Saving…")
+		}
+		primaryButton(c.Key("save-subagent"), caption).Label(tr(c, "Save")).Disabled(busy).OnClick(a.saveCustomSubagent)
+		textButton(c.Key("cancel-subagent"), tr(c, "Cancel")).Disabled(busy).OnClick(func() { state.subagentOpen = false })
+	})
 }

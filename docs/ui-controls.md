@@ -240,6 +240,12 @@ Windows 窗口通过 `mygo.WindowOptions.HideWindowButtons` 隐藏系统标题�
 `TestDesktopWindowCaptionControls`，证据位于
 `output/native-tests/20261101-023437-2195741834/`。
 
+## 新增与编辑弹窗
+
+默认交互及供应商设置例外以 `AGENTS.md` 为准。实现复用 `settings_dialogs.go` 的
+`settingsEditorDialog`：正文位于内部滚动区，操作按钮通过固定底栏传入；
+保存期间禁用输入和操作，并阻止 Esc、背景点击及关闭按钮丢弃待保存草稿。
+
 ## 表单字段标签
 
 自定义子代理表单的字段标签使用与字号成比例的固定行高（1.5 倍），避免 macOS

@@ -15,6 +15,7 @@ import (
 )
 
 type capabilitySettingsState struct {
+	editorPending                          *contracts.Command
 	plugins                                pluginSettingsState
 	queries                                map[string]*string
 	mcpOpen, mcpJSONMode                   bool
@@ -82,14 +83,15 @@ func (a *App) resourceRow(c *ui.Context, id, title, detail string, enabled bool,
 	})
 }
 
-func (a *App) resourceEditor(c *ui.Context, key string, draw func(), save func()) {
-	ui.Column(c.Key(key)).FillWidth().Padding(16).Gap(10).Radius(10).Border(1, a.palette.Border).Children(func() {
-		draw()
+func (a *App) resourceEditor(c *ui.Context, key, title string, open *bool, busy bool, width float32, draw func(), save func()) {
+	a.settingsEditorDialog(c, key+"-dialog", title, open, busy, width, a.errorText, draw, func() {
 		ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {
-			textButton(c, tr(c, "Cancel")).OnClick(func() {
-				a.capabilityUI.mcpOpen, a.capabilityUI.skillOpen, a.capabilityUI.commandOpen, a.capabilityUI.hookOpen = false, false, false, false
-			})
-			primaryButton(c, tr(c, "Save")).OnClick(save)
+			textButton(c.Key("editor-cancel"), tr(c, "Cancel")).OnClick(func() { *open = false })
+			caption := tr(c, "Save")
+			if busy {
+				caption = tr(c, "Saving…")
+			}
+			primaryButton(c.Key("editor-save"), caption).Label(tr(c, "Save")).OnClick(save)
 		})
 	})
 }
@@ -131,6 +133,7 @@ func parseStringArgs(value string) ([]string, error) {
 }
 
 func (a *App) editMCP(server *contracts.MCPServer) {
+	a.errorText = ""
 	s := &a.capabilityUI
 	s.mcpOpen, s.mcpJSONMode = true, false
 	s.mcp = contracts.MCPServerInput{ID: "mcp-" + rand.Text(), Transport: "stdio", Enabled: true}
@@ -187,10 +190,6 @@ func (a *App) mcpDraft() (contracts.MCPServerInput, error) {
 }
 
 func (a *App) mcpSettings(c *ui.Context) {
-	if a.capabilityUI.mcpOpen {
-		a.mcpSettingsForm(c)
-		return
-	}
 	query := a.capabilityToolbar(c, "MCP servers", "Add MCP server", func() { a.editMCP(nil) }, func() { a.openSettingsImport("mcp") })
 	found := 0
 	for _, server := range a.state.UserResources.MCPServers {
@@ -237,6 +236,7 @@ func (a *App) mcpSettings(c *ui.Context) {
 	if found == 0 {
 		ui.Text(c, tr(c, "No MCP servers")).TextColor(a.palette.Muted)
 	}
+	a.mcpSettingsForm(c)
 }
 
 func (a *App) mcpSettingsForm(c *ui.Context) {
@@ -245,8 +245,7 @@ func (a *App) mcpSettingsForm(c *ui.Context) {
 	if slices.ContainsFunc(a.state.UserResources.MCPServers, func(server contracts.MCPServer) bool { return server.ID == s.mcp.ID }) {
 		title = "Edit MCP server"
 	}
-	a.settingsFormHeader(c, "MCP servers", title, func() { s.mcpOpen = false })
-	a.resourceEditor(c, "mcp-editor", func() {
+	a.resourceEditor(c, "mcp-editor", title, &s.mcpOpen, s.editorPending != nil, 760, func() {
 		textButton(c, tr(c, "Edit JSON")).OnClick(func() {
 			if !s.mcpJSONMode {
 				value, err := a.mcpDraft()
@@ -305,9 +304,7 @@ func (a *App) mcpSettingsForm(c *ui.Context) {
 			a.errorText = err.Error()
 			return
 		}
-		s.mcpOpen = false
-		s.mcpEnv, s.mcpHeaders, s.mcpJSON = "", "", ""
-		a.dispatch(contracts.Command{Kind: "resource.mcp.save", Resource: &contracts.ResourceInput{MCP: &value}})
+		a.saveResourceEditor(contracts.Command{Kind: "resource.mcp.save", Resource: &contracts.ResourceInput{MCP: &value}})
 	})
 }
 
@@ -346,6 +343,7 @@ func (a *App) credentialKeys(c *ui.Context, key string, keys []string, removed *
 }
 
 func (a *App) editCommand(command *contracts.UserCommand) {
+	a.errorText = ""
 	s := &a.capabilityUI
 	s.commandOpen = true
 	s.command = contracts.UserCommand{ID: "command-" + rand.Text(), Enabled: true}
@@ -354,20 +352,32 @@ func (a *App) editCommand(command *contracts.UserCommand) {
 	}
 }
 
-// Reopen only the draft that failed. A late response must not replace a newer
-// editor, and credential values are recovered only from the submitted command,
-// never from the public snapshot.
+// Editors stay open until their submitted command settles. Failed saves keep
+// their private draft, including credentials, out of the public snapshot.
 func (a *App) capabilityCommandFinished(command contracts.Command, err error) {
 	a.pluginSourceCommandFinished(command, err)
 	a.customSubagentCommandFinished(command, err)
 	s := &a.capabilityUI
+	if pending := s.editorPending; pending != nil && command.Kind == pending.Kind && reflect.DeepEqual(command.Resource, pending.Resource) {
+		s.editorPending = nil
+		if err == nil {
+			switch command.Kind {
+			case "resource.mcp.save":
+				s.mcpOpen = false
+				s.mcpEnv, s.mcpHeaders, s.mcpJSON = "", "", ""
+			case "resource.command.save":
+				s.commandOpen = false
+			}
+		}
+		return
+	}
 	if command.Kind == "settings.update" && command.Settings != nil {
 		if pending := s.pendingHookSave; pending != nil {
 			for _, rule := range command.Settings.Hooks {
 				if reflect.DeepEqual(rule, *pending) {
 					s.pendingHookSave = nil
-					if err != nil && s.hook.ID == pending.ID {
-						s.hookOpen = true
+					if s.hook.ID == pending.ID {
+						s.hookOpen = err != nil
 					}
 					break
 				}
@@ -377,8 +387,8 @@ func (a *App) capabilityCommandFinished(command contracts.Command, err error) {
 			for _, profile := range command.Settings.Subagents {
 				if reflect.DeepEqual(profile, *pending) {
 					s.pendingSubagentSave = nil
-					if err != nil && a.runtimeUI.subagent.ID == pending.ID {
-						a.runtimeUI.subagentOpen = true
+					if a.runtimeUI.subagent.ID == pending.ID {
+						a.runtimeUI.subagentOpen = err != nil
 					}
 					break
 				}
@@ -389,27 +399,6 @@ func (a *App) capabilityCommandFinished(command contracts.Command, err error) {
 		return
 	}
 	switch command.Kind {
-	case "resource.mcp.save":
-		if command.Resource.MCP != nil && command.Resource.MCP.ID == s.mcp.ID {
-			value := *command.Resource.MCP
-			s.mcp = value
-			s.mcpOpen, s.mcpJSONMode = true, false
-			args, _ := json.Marshal(value.Args)
-			s.mcpArgs = string(args)
-			if value.Args == nil {
-				s.mcpArgs = "[]"
-			}
-			env, _ := json.Marshal(value.Env)
-			s.mcpEnv = string(env)
-			if value.Env == nil {
-				s.mcpEnv = ""
-			}
-			headers, _ := json.Marshal(value.Headers)
-			s.mcpHeaders = string(headers)
-			if value.Headers == nil {
-				s.mcpHeaders = ""
-			}
-		}
 	case "resource.skill.save":
 		if command.Resource.Skill != nil && command.Resource.Skill.ID == s.skill.ID {
 			s.skillOpen = true
@@ -418,18 +407,11 @@ func (a *App) capabilityCommandFinished(command contracts.Command, err error) {
 		if command.Resource.Skill != nil && command.Resource.Skill.ID == s.skill.ID {
 			s.skillImportOpen = true
 		}
-	case "resource.command.save":
-		if command.Resource.Command != nil && command.Resource.Command.ID == s.command.ID {
-			s.commandOpen = true
-		}
+
 	}
 }
 
 func (a *App) commandSettings(c *ui.Context) {
-	if a.capabilityUI.commandOpen {
-		a.commandSettingsForm(c)
-		return
-	}
 	query := a.capabilityToolbar(c, "Commands", "Add command", func() { a.editCommand(nil) }, func() { a.openSettingsImport("command") })
 	found := 0
 	for _, command := range a.state.UserResources.Commands {
@@ -444,6 +426,7 @@ func (a *App) commandSettings(c *ui.Context) {
 	if found == 0 {
 		ui.Text(c, tr(c, "No commands")).TextColor(a.palette.Muted)
 	}
+	a.commandSettingsForm(c)
 }
 
 func (a *App) commandSettingsForm(c *ui.Context) {
@@ -452,15 +435,24 @@ func (a *App) commandSettingsForm(c *ui.Context) {
 	if slices.ContainsFunc(a.state.UserResources.Commands, func(command contracts.UserCommand) bool { return command.ID == s.command.ID }) {
 		title = "Edit command"
 	}
-	a.settingsFormHeader(c, "Commands", title, func() { s.commandOpen = false })
-	a.resourceEditor(c, "command-editor", func() {
+	a.resourceEditor(c, "command-editor", title, &s.commandOpen, s.editorPending != nil, 760, func() {
 		resourceText(c, "command-name", "Command name", &s.command.Name)
 		resourceText(c, "command-description", "Description", &s.command.Description)
 		resourceText(c, "command-argument-hint", "Argument hint", &s.command.ArgumentHint)
 		controlTextArea(c.Key("command-content"), &s.command.Content).FillWidth().Height(260).Label(tr(c, "Command prompt")).Placeholder(tr(c, "Command prompt"))
 	}, func() {
 		value := s.command
-		s.commandOpen = false
-		a.dispatch(contracts.Command{Kind: "resource.command.save", Resource: &contracts.ResourceInput{Command: &value}})
+		a.saveResourceEditor(contracts.Command{Kind: "resource.command.save", Resource: &contracts.ResourceInput{Command: &value}})
 	})
+}
+
+func (a *App) saveResourceEditor(command contracts.Command) {
+	s := &a.capabilityUI
+	if s.editorPending != nil {
+		return
+	}
+	frozen := command.Clone()
+	s.editorPending = &frozen
+	a.errorText = ""
+	a.dispatch(frozen)
 }

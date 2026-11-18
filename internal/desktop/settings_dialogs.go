@@ -18,15 +18,17 @@ func (a *App) settingsDialog(c *ui.Context, key, title string, open *bool, width
 	a.settingsDialogWithFooter(c, key, title, open, width, draw, nil)
 }
 
-func (a *App) settingsDialogWithFooter(c *ui.Context, key, title string, open *bool, width float32, draw, footer func()) {
+func (a *App) settingsDialogWithFooter(c *ui.Context, key, title string, open *bool, width float32, draw, footer func(), saving ...bool) {
 	w, h := c.Size()
-	ui.DialogBase(c.Key(key), open, func(backdrop, panel ui.Element) {
+	busy := len(saving) > 0 && saving[0]
+	visible := *open
+	ui.DialogBase(c.Key(key), &visible, func(backdrop, panel ui.Element) {
 		backdrop.Background(ui.RGBA(0, 0, 0, .45))
 		panel.Width(min(width, w-40)).MaxHeight(h - 40).Padding(20).Gap(16).Radius(12).Label(tr(c, title))
 		a.floatingSurface(c, panel, 12)
 		ui.Row(c).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
 			ui.Text(c, tr(c, title)).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
-			iconButton(c.Key("dialog-close"), "close", tr(c, "Close dialog")).OnClick(func() { *open = false })
+			iconButton(c.Key("dialog-close"), "close", tr(c, "Close dialog")).Disabled(busy).OnClick(func() { *open = false })
 		})
 		reserve := float32(160)
 		if footer != nil {
@@ -38,14 +40,9 @@ func (a *App) settingsDialogWithFooter(c *ui.Context, key, title string, open *b
 			footer()
 		}
 	})
-}
-
-func (a *App) settingsFormHeader(c *ui.Context, section, title string, close func()) {
-	ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
-		textButton(c, tr(c, section)).Label(tr(c, "Back to list")).OnClick(close)
-		ui.Text(c, "›").TextColor(a.palette.Muted)
-		ui.Text(c, tr(c, title)).MinWidth(0).SingleLine()
-	})
+	if !busy && !visible {
+		*open = false
+	}
 }
 
 func (a *App) confirmSettingsRemoval(kind, id, name string) {
@@ -130,4 +127,14 @@ func (a *App) selectSettingsSection(section string) {
 	if section == "Usage statistics" {
 		a.refreshAppUsage()
 	}
+}
+
+func (a *App) settingsEditorDialog(c *ui.Context, key, title string, open *bool, busy bool, width float32, errorText string, draw, footer func()) {
+	actions := func() { ui.Column(c).FillWidth().Disabled(busy).Children(footer) }
+	a.settingsDialogWithFooter(c, key, title, open, width, func() {
+		ui.Column(c).FillWidth().Gap(12).Disabled(busy).Children(draw)
+		if errorText != "" {
+			ui.Text(c, errorText).FillWidth().Wrap().TextColor(a.palette.Danger)
+		}
+	}, actions, busy)
 }

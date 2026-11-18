@@ -35,7 +35,7 @@ func TestResourceDraftParsingRejectsInvalidJSON(t *testing.T) {
 	}
 }
 
-func TestSettingsFormsReplaceListAndReturnWithoutLosingDraft(t *testing.T) {
+func TestSettingsFormsUseModalAndPreserveBackgroundList(t *testing.T) {
 	for _, test := range []struct {
 		section, add, field, edit, editTitle string
 		draw                                 func(*App, *ui.Context)
@@ -83,11 +83,14 @@ func TestSettingsFormsReplaceListAndReturnWithoutLosingDraft(t *testing.T) {
 			}
 			assertForm := func() {
 				t.Helper()
-				if _, ok := tt.Find("Search " + test.section); ok {
-					t.Fatal("form was appended below the list toolbar")
+				if _, ok := tt.Find("Search " + test.section); !ok {
+					t.Fatal("opening the modal removed the background list")
 				}
-				if _, ok := tt.Find("Refresh"); ok {
-					t.Fatal("list refresh action remains in the form")
+				if _, ok := tt.AccessByRole(ui.RoleDialog, test.add); !ok {
+					t.Fatal("editor has no modal dialog")
+				}
+				if _, ok := tt.AccessByRole(ui.RoleTextField, "Search "+test.section); ok {
+					t.Fatal("background search is still accessible while modal is open")
 				}
 				if _, ok := tt.Find(test.field); !ok || !tt.HasText(test.add) {
 					t.Fatal("form is missing its fields or create title")
@@ -98,7 +101,7 @@ func TestSettingsFormsReplaceListAndReturnWithoutLosingDraft(t *testing.T) {
 			assertForm()
 			test.fill(app)
 			tt.Frame()
-			click("Back to list")
+			click("Close dialog")
 			assertList()
 			click(test.add)
 			assertForm()
@@ -113,10 +116,10 @@ func TestSettingsFormsReplaceListAndReturnWithoutLosingDraft(t *testing.T) {
 			}
 			assertList()
 			click(test.edit)
-			if _, ok := tt.Find("Search " + test.section); ok || !tt.HasText(test.editTitle) {
-				t.Fatal("existing row did not open the full edit page")
+			if _, ok := tt.AccessByRole(ui.RoleDialog, test.editTitle); !ok {
+				t.Fatal("existing row did not open an edit modal")
 			}
-			click("Back to list")
+			click("Close dialog")
 			assertList()
 		})
 	}
@@ -304,7 +307,7 @@ func TestResourceSaveFailureRetainsCurrentDraft(t *testing.T) {
 	}
 }
 
-func TestMCPFullPageJSONValidationRetainsEditor(t *testing.T) {
+func TestMCPModalJSONValidationRetainsEditor(t *testing.T) {
 	app, _ := runtimeSettingsTestApp(t)
 	app.editMCP(nil)
 	app.capabilityUI.mcp.Name = "json-editor"
@@ -320,14 +323,15 @@ func TestMCPFullPageJSONValidationRetainsEditor(t *testing.T) {
 	tt.Frame()
 	for _, action := range []string{"Edit JSON", "Save"} {
 		app.errorText = ""
+		tt.Frame()
 		if err := tt.Click(action); err != nil {
 			t.Fatal(err)
 		}
 		if app.errorText == "" || !app.capabilityUI.mcpOpen || !app.capabilityUI.mcpJSONMode || app.capabilityUI.mcpJSON != `{"name":` {
 			t.Fatalf("%s discarded the invalid JSON draft", action)
 		}
-		if _, ok := tt.Find("Search MCP servers"); ok {
-			t.Fatal("invalid draft returned to the list")
+		if _, ok := tt.AccessByRole(ui.RoleDialog, "Add MCP server"); !ok {
+			t.Fatal("invalid JSON closed the modal")
 		}
 	}
 	if err := tt.Click("Cancel"); err != nil {

@@ -11,6 +11,7 @@ import (
 )
 
 func (a *App) editSubagent(profile *contracts.SubagentProfile) {
+	a.errorText = ""
 	state := &a.runtimeUI
 	if state.subagentPendingID != "" {
 		return
@@ -63,14 +64,7 @@ func (a *App) subagentSelectionValid() bool {
 }
 
 func (a *App) subagentSettings(c *ui.Context) {
-	if a.runtimeUI.subagentOpen {
-		if contracts.IsBuiltinSubagent(a.runtimeUI.subagent.ID) {
-			a.subagentSettingsForm(c)
-		} else {
-			a.customSubagentForm(c)
-		}
-		return
-	}
+
 	query := a.customSubagentToolbar(c)
 	a.customSubagentList(c, query)
 	for _, profile := range contracts.EffectiveSubagentProfiles(a.state.Settings.Subagents) {
@@ -105,6 +99,13 @@ func (a *App) subagentSettings(c *ui.Context) {
 				})
 			}
 		})
+	}
+	if a.runtimeUI.subagentOpen {
+		if contracts.IsBuiltinSubagent(a.runtimeUI.subagent.ID) {
+			a.subagentSettingsForm(c)
+		} else {
+			a.customSubagentForm(c)
+		}
 	}
 }
 
@@ -141,95 +142,71 @@ func (a *App) subagentSettingsForm(c *ui.Context) {
 	if state.subagentExisting {
 		title = "Edit subagent"
 	}
-	a.settingsFormHeader(c, "Subagents", title, func() { state.subagentOpen = false })
-	a.settingsCard(c, func() {
-		ui.Column(c).FillWidth().Padding(16).Gap(10).Children(func() {
-			controlTextInput(c.Key("subagent-name"), &state.subagent.Name).Label(tr(c, "Subagent name")).Placeholder(tr(c, "Name"))
-			controlTextInput(c.Key("subagent-description"), &state.subagent.Description).Label(tr(c, "Subagent description")).Placeholder(tr(c, "Description"))
-			controlTextArea(c.Key("subagent-prompt"), &state.subagent.Prompt).Label(tr(c, "Subagent prompt")).Placeholder(tr(c, "Prompt")).Height(140)
-			useProject := !state.subagent.SkipProjectInstructions
-			controlCheckbox(c.Key("subagent-project-instructions"), &useProject, tr(c, "Use project instructions")).OnClick(func() { state.subagent.SkipProjectInstructions = !useProject })
-			ui.Text(c, tr(c, "Available tools")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
-			all := len(state.subagent.Tools) == 0
-			controlCheckbox(c.Key("subagent-all-tools"), &all, tr(c, "All default tools")).OnClick(func() {
-				if all {
-					state.subagent.Tools = nil
-				} else {
-					state.subagent.Tools = []string{"Read", "ListDirectory", "Glob", "Grep"}
-				}
-			})
-			tools := []string{"Read", "ListDirectory", "Glob", "Grep", "Bash", "Write", "Edit", "AskUserQuestion"}
-			if contracts.IsReadOnlySubagent(state.subagent.ID) {
-				tools = tools[:4]
-				ui.Text(c, tr(c, "This built-in agent can only inspect files.")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			}
-			for _, group := range [][]string{tools[:4], tools[4:]} {
-				ui.Row(c).Gap(12).Children(func() {
-					for _, name := range group {
-						enabled := len(state.subagent.Tools) == 0 || slices.Contains(state.subagent.Tools, name)
-						controlCheckbox(c.Key("subagent-tool-"+name), &enabled, name).Label(tr(c, "Available tools") + " " + name).Disabled(all).OnClick(func() {
-							if enabled {
-								if !slices.Contains(state.subagent.Tools, name) {
-									state.subagent.Tools = append(state.subagent.Tools, name)
-								}
-							} else if len(state.subagent.Tools) > 1 {
-								state.subagent.Tools = slices.DeleteFunc(state.subagent.Tools, func(candidate string) bool { return candidate == name })
-							}
-						})
+	a.settingsEditorDialog(c, "subagent-editor-dialog", title, &state.subagentOpen, a.capabilityUI.pendingSubagentSave != nil, 800, a.errorText, func() {
+		a.settingsCard(c, func() {
+			ui.Column(c).FillWidth().Padding(16).Gap(10).Children(func() {
+				controlTextInput(c.Key("subagent-name"), &state.subagent.Name).Label(tr(c, "Subagent name")).Placeholder(tr(c, "Name"))
+				controlTextInput(c.Key("subagent-description"), &state.subagent.Description).Label(tr(c, "Subagent description")).Placeholder(tr(c, "Description"))
+				controlTextArea(c.Key("subagent-prompt"), &state.subagent.Prompt).Label(tr(c, "Subagent prompt")).Placeholder(tr(c, "Prompt")).Height(140)
+				useProject := !state.subagent.SkipProjectInstructions
+				controlCheckbox(c.Key("subagent-project-instructions"), &useProject, tr(c, "Use project instructions")).OnClick(func() { state.subagent.SkipProjectInstructions = !useProject })
+				ui.Text(c, tr(c, "Available tools")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+				all := len(state.subagent.Tools) == 0
+				controlCheckbox(c.Key("subagent-all-tools"), &all, tr(c, "All default tools")).OnClick(func() {
+					if all {
+						state.subagent.Tools = nil
+					} else {
+						state.subagent.Tools = []string{"Read", "ListDirectory", "Glob", "Grep"}
 					}
 				})
-			}
-			a.subagentModelPicker(c)
-			selected := a.subagentSelectedModel()
-			if len(selected.ReasoningLevels) > 0 {
-				sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
-				label := state.subagentReasoning
-				if !slices.Contains(selected.ReasoningLevels, label) {
-					label = tr(c, "Unavailable") + " · " + label
+				tools := []string{"Read", "ListDirectory", "Glob", "Grep", "Bash", "Write", "Edit", "AskUserQuestion"}
+				if contracts.IsReadOnlySubagent(state.subagent.ID) {
+					tools = tools[:4]
+					ui.Text(c, tr(c, "This built-in agent can only inspect files.")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 				}
-				sel.Trigger.Label(tr(c, "Subagent reasoning level")).FillWidth().Children(func() {
-					ui.Text(c, tr(c, label)).Grow(1)
-					icon(c, "alt-arrow-down", 13)
-				})
-				sel.Popup(func(panel ui.Element) {
-					controlSelectPopup(c, panel).Children(func() {
-						for _, level := range selected.ReasoningLevels {
-							controlSelectItem(c, sel.Item(level)).Label(tr(c, "Subagent reasoning level") + " " + level).Children(func() { ui.Text(c, tr(c, level)) })
+				for _, group := range [][]string{tools[:4], tools[4:]} {
+					ui.Row(c).Gap(12).Children(func() {
+						for _, name := range group {
+							enabled := len(state.subagent.Tools) == 0 || slices.Contains(state.subagent.Tools, name)
+							controlCheckbox(c.Key("subagent-tool-"+name), &enabled, name).Label(tr(c, "Available tools") + " " + name).Disabled(all).OnClick(func() {
+								if enabled {
+									if !slices.Contains(state.subagent.Tools, name) {
+										state.subagent.Tools = append(state.subagent.Tools, name)
+									}
+								} else if len(state.subagent.Tools) > 1 {
+									state.subagent.Tools = slices.DeleteFunc(state.subagent.Tools, func(candidate string) bool { return candidate == name })
+								}
+							})
 						}
 					})
-				})
-			}
-			if !a.subagentSelectionValid() {
-				ui.Text(c, tr(c, "The configured model or reasoning level is unavailable.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
-			}
-			ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {
-				textButton(c, tr(c, "Cancel")).OnClick(func() { state.subagentOpen = false })
-				primaryButton(c, tr(c, "Save")).Disabled(strings.TrimSpace(state.subagent.Name) == "" || strings.TrimSpace(state.subagent.Description) == "" || !a.subagentSelectionValid()).OnClick(func() {
-					profile := state.subagent
-					profile.Name, profile.Description, profile.Prompt = strings.TrimSpace(profile.Name), strings.TrimSpace(profile.Description), strings.TrimSpace(profile.Prompt)
-					profile.Model = nil
-					if state.subagentModel != "" {
-						profile.Model = &contracts.ModelSelection{ModelID: state.subagentModel, Reasoning: state.subagentReasoning}
+				}
+				a.subagentModelPicker(c)
+				selected := a.subagentSelectedModel()
+				if len(selected.ReasoningLevels) > 0 {
+					sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
+					label := state.subagentReasoning
+					if !slices.Contains(selected.ReasoningLevels, label) {
+						label = tr(c, "Unavailable") + " · " + label
 					}
-					profiles := contracts.CloneSubagentProfiles(a.state.Settings.Subagents)
-					index := slices.IndexFunc(profiles, func(candidate contracts.SubagentProfile) bool { return candidate.ID == profile.ID })
-					if index >= 0 {
-						profiles[index] = profile
-					} else {
-						profiles = append(profiles, profile)
-					}
-					if err := contracts.ValidateSubagentProfiles(profiles); err != nil {
-						a.errorText = err.Error()
-						return
-					}
-					a.state.Settings.Subagents = profiles
-					a.capabilityUI.pendingSubagentSave = &contracts.CloneSubagentProfiles([]contracts.SubagentProfile{profile})[0]
-					state.subagentOpen = false
-					a.saveSettings()
-				})
+					sel.Trigger.Label(tr(c, "Subagent reasoning level")).FillWidth().Children(func() {
+						ui.Text(c, tr(c, label)).Grow(1)
+						icon(c, "alt-arrow-down", 13)
+					})
+					sel.Popup(func(panel ui.Element) {
+						controlSelectPopup(c, panel).Children(func() {
+							for _, level := range selected.ReasoningLevels {
+								controlSelectItem(c, sel.Item(level)).Label(tr(c, "Subagent reasoning level") + " " + level).Children(func() { ui.Text(c, tr(c, level)) })
+							}
+						})
+					})
+				}
+				if !a.subagentSelectionValid() {
+					ui.Text(c, tr(c, "The configured model or reasoning level is unavailable.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+				}
+
 			})
 		})
-	})
+	}, func() { a.subagentFormActions(c) })
 }
 
 func (a *App) subagentModelPicker(c *ui.Context) {
@@ -262,6 +239,35 @@ func (a *App) subagentModelPicker(c *ui.Context) {
 					})
 				}
 			})
+		})
+	})
+}
+
+func (a *App) subagentFormActions(c *ui.Context) {
+	state := &a.runtimeUI
+	ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {
+		textButton(c, tr(c, "Cancel")).OnClick(func() { state.subagentOpen = false })
+		primaryButton(c, tr(c, "Save")).Disabled(strings.TrimSpace(state.subagent.Name) == "" || strings.TrimSpace(state.subagent.Description) == "" || !a.subagentSelectionValid()).OnClick(func() {
+			profile := state.subagent
+			profile.Name, profile.Description, profile.Prompt = strings.TrimSpace(profile.Name), strings.TrimSpace(profile.Description), strings.TrimSpace(profile.Prompt)
+			profile.Model = nil
+			if state.subagentModel != "" {
+				profile.Model = &contracts.ModelSelection{ModelID: state.subagentModel, Reasoning: state.subagentReasoning}
+			}
+			profiles := contracts.CloneSubagentProfiles(a.state.Settings.Subagents)
+			index := slices.IndexFunc(profiles, func(candidate contracts.SubagentProfile) bool { return candidate.ID == profile.ID })
+			if index >= 0 {
+				profiles[index] = profile
+			} else {
+				profiles = append(profiles, profile)
+			}
+			if err := contracts.ValidateSubagentProfiles(profiles); err != nil {
+				a.errorText = err.Error()
+				return
+			}
+			a.state.Settings.Subagents = profiles
+			a.capabilityUI.pendingSubagentSave = &contracts.CloneSubagentProfiles([]contracts.SubagentProfile{profile})[0]
+			a.saveSettings()
 		})
 	})
 }
