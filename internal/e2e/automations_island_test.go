@@ -200,27 +200,26 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 				return nil
 			})
 			assertIslandBounds(298, 32)
-			// Explicit window routing keeps the test independent of keyboard focus.
-			if err := app.client.call("act", map[string]any{"window": islandID, "key": "island-expand", "action": "press"}, nil); err != nil {
+			move := func(x, y int) {
+				t.Helper()
+				if err := app.client.call("input", map[string]any{"window": islandID, "events": []map[string]any{{"type": "pointerMove", "x": x, "y": y}}}, nil); err != nil {
+					t.Fatal(err)
+				}
+			}
+			move(149, 16)
+			assertIslandBounds(440, 168)
+			var expandedTree accessTree
+			if err := app.client.call("tree", map[string]any{"window": islandID}, &expandedTree); err != nil {
 				t.Fatal(err)
 			}
-			app.await("expanded island close control", func() error {
-				var tree accessTree
-				if err := app.client.call("tree", map[string]any{"window": islandID}, &tree); err != nil {
-					return err
-				}
-				for _, node := range tree.Nodes {
-					var key string
-					_ = json.Unmarshal(node.Key, &key)
-					if key == "island-close" {
-						return nil
-					}
-				}
-				return fmt.Errorf("close control not built yet")
-			})
-			if err := app.client.call("act", map[string]any{"window": islandID, "key": "island-close", "action": "press"}, nil); err != nil {
-				t.Fatal(err)
+			if _, err := expandedTree.findKey("island-close"); err == nil {
+				t.Fatal("the island must not provide a close control")
 			}
+			move(200, 100)
+			assertIslandBounds(440, 168)
+			move(500, 200)
+			assertIslandBounds(298, 32)
+			app.act("island-enabled", "press", "")
 			app.waitChecked("island-enabled", false)
 			app.stop()
 		})

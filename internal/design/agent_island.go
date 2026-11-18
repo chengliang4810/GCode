@@ -15,7 +15,13 @@ func IslandGeometry(expanded bool, count int) (width, height int) {
 }
 
 const (
-	IslandRadius      float32 = 20
 	IslandCardRadius  float32 = 12
 	IslandCardPadding float32 = 14
 )
+
+func IslandRadius(expanded bool) float32 {
+	if expanded {
+		return 24
+	}
+	return 12
+}

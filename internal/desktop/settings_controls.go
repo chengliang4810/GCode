@@ -984,7 +984,7 @@ func controlIslandCard(c *ui.Context, label string) ui.Element {
 }
 
 func controlIslandCompact(c *ui.Context, label string) ui.Element {
-	b := ui.ButtonBase(c).Label(label).Fill().Padding(0, 12).Radius(0, 0, design.IslandRadius, design.IslandRadius).
+	b := ui.ButtonBase(c).Label(label).Fill().Padding(0, 12).Radius(0, 0, design.IslandRadius(false), design.IslandRadius(false)).
 		TextColor(c.Theme().Text).Justify(ui.Center)
 	if b.Hovered() {
 		b.Background(c.Theme().Surface)
