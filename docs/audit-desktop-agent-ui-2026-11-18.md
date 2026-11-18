@@ -888,3 +888,44 @@ GEO-3 的 `transcript.go` 徽章固定高度、以及第 6 节列出的全部真
   图表总额与按模型读数补 `tnum`；`%d matches` 补 `tnum`。
 - **INT-2 / INT-3 不实施**：用户在本机拼音输入下未复现「选词补发的 Enter 触发发送」，
   故不引入 500ms 丢弃窗口——在未复现的情况下加守卫会误杀「选词后立刻按 Enter」的合法发送。
+
+## 15. 真机验收（2026-11-19）
+
+用 `go run ./scripts/desktop-e2e` 驱动真实原生窗口，逐项核对第 6 节的待验收项。
+
+### 15.1 通过的项
+
+| 验收项 | 方式 | 结果 |
+| --- | --- | --- |
+| 三档字号无削顶（GEO-2/3） | `TestDesktopLocalTypography` 在 12/14/20px × 深浅六组，断言设置页标题高度 = (字号+10)×4/3 | 6/6 PASS；20px 下设置页标题、说明段落、开关与选择框均无裁切 |
+| 浮层阴影未被裁切（GEO-1） | `TestDesktopLocalModelPickerLayout` 截图 | 推理弹层、模型列表、供应商子菜单四周均有完整柔和投影，不再被卡片边缘切断；自绘伪阴影已不存在 |
+| 强调色发送键 | 同上截图 | 发送键为强调色圆形按钮，停止键仍为中性墨色 |
+| 提问卡（删审批卡的回归） | `TestDesktopLocalQuestionComposer` 深浅 | PASS，问题卡与回答通道正常 |
+| 模型重试（阶段词与重连） | `TestDesktopLocalModelRetry` 深浅 | PASS |
+| 工具语义标签 | `TestDesktopLocalSemanticToolLabels` 深浅 | PASS |
+| 活动折叠动效 | `TestDesktopLocalTranscriptFoldMotion` 深浅 | PASS |
+
+### 15.2 验收中发现并修掉的问题
+
+**完成的思考行朗读的是块 ID 而不是内容**（既有缺陷，非本轮引入）：
+`transcript.go` 的活动行无障碍标签对 reasoning 块固定用 `block.ID`，
+屏幕阅读器读到的是 `Thought process: block-d6brl64w…` 这种无意义串，
+而不是思考的第一行。既有 e2e `TestDesktopLocalTranscriptActivity` 正是为此而写，
+它在基线提交 `5080c5e` 上**同样失败**（light/dark 都失败，基线已复现）。
+现改为：**仍在流式输出的思考块用块 ID**（标签每 token 变化会造成朗读抖动），
+**已完成的思考块用首行预览**；`transcript_test.go` 的点击目标随之更新。
+修完 `TestDesktopLocalTranscriptActivity` 深浅均 PASS。
+
+### 15.3 判定为环境抖动而非回归
+
+`TestDesktopLocalPanelDragToClose` 在机器并发负载下失败两次（一次「Files explorer 宽度为 0」、
+一次「窗口里找不到 titlebar-files」），在空闲状态下**连跑两次全部通过**；
+基线提交上同一用例通过。对照结论：属资源竞争导致的启动竞态，非本轮改动引入。
+
+### 15.4 仍未验收的项
+
+- **对比度取样**：Faint 已不再承载文字（21/30 主题低于 AA 的问题从源头消除），
+  但「实际合成色的对比度」仍需逐主题取样，当前只有主题色值的静态推算。
+- **骨架屏观感**：模型目录加载骨架已改为 2.0s 锁步 30fps，但需要一次真实的加载过程截图；
+  `TestDesktopLocalModelPickerLayout` 的模型列表场景未覆盖加载态。
+- **CJK 组字**：用户确认本机拼音下未复现误发，500ms 守卫按决定不实施。

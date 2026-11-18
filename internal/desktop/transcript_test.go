@@ -77,7 +77,9 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 	if !labelOK || !badgeOK || readLabel.X-header.X != 56 || readBadge.X < readLabel.X+readLabel.W {
 		t.Fatalf("read label starts at %v, badge at %v: want source 48+8 gutter before the file name", readLabel.X-header.X, readBadge.X)
 	}
-	if err := tt.Click("Thought process: thought-1"); err != nil {
+	// A settled thought names its first line, so the row can be found by what
+	// it says; a thought still streaming names its block instead.
+	if err := tt.Click("Thought process: I’ll read the layout contract, then run the regression check."); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("I’ll read the layout contract") || !tt.HasText("Keep the existing geometry.") {
