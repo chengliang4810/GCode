@@ -160,7 +160,9 @@ func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.
 	if _, ok := tt.Find("Activity detail"); !ok {
 		t.Fatal("completion discarded manual expansion")
 	}
-	if err := tt.Click("Thought process: thought"); err != nil {
+	// Once the thought settles its row is named by its first line, and the
+	// name stays the same whether the row is open or shut.
+	if err := tt.Click("Thought process: First line"); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("First line") || tt.HasText("Latest update") {

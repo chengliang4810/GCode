@@ -913,8 +913,10 @@ GEO-3 的 `transcript.go` 徽章固定高度、以及第 6 节列出的全部真
 而不是思考的第一行。既有 e2e `TestDesktopLocalTranscriptActivity` 正是为此而写，
 它在基线提交 `5080c5e` 上**同样失败**（light/dark 都失败，基线已复现）。
 现改为：**仍在流式输出的思考块用块 ID**（标签每 token 变化会造成朗读抖动），
-**已完成的思考块用首行预览**；`transcript_test.go` 的点击目标随之更新。
-修完 `TestDesktopLocalTranscriptActivity` 深浅均 PASS。
+**已完成的思考块用首行预览**，且**开合之间名称不变**（行名不该随着展开而改变）。
+三处单元测试的点击目标随之更新（`transcript_test.go`、`transcript_motion_test.go`、
+`transcript_detail_test.go`）。修完 `TestDesktopLocalTranscriptActivity` 深浅均 PASS，
+`./internal/desktop` 全量 181s 绿。
 
 ### 15.3 判定为环境抖动而非回归
 

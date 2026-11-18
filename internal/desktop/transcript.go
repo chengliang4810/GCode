@@ -498,12 +498,17 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	root.Children(func() {
 		parts := ui.CollapsibleBaseWithAnimation(c.Key("activity-item-toggle:"+id), open, activityFoldAnimation)
 		accessibleDetail := firstNonempty(detail, block.ID)
-		if block.Kind == "reasoning" && live {
+		if block.Kind == "reasoning" {
 			// A reasoning row that is still streaming keeps its block id as the
 			// accessible detail: the preview line changes with every token, and
 			// a label that churns is worse than one that names the block. Once
-			// the thought settles, the detail is its first line.
-			accessibleDetail = block.ID
+			// it settles, the name is its first line, whether the row is open or
+			// shut: a row's name must not change as it expands.
+			if live {
+				accessibleDetail = block.ID
+			} else {
+				accessibleDetail = firstNonempty(reasoningPreview(block.Text, false), block.ID)
+			}
 		}
 		accessibleLabel := tr(c, label) + ": " + accessibleDetail
 		if block.Hook != nil {
