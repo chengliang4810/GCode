@@ -1,0 +1,97 @@
+diff --git a/ui/editor/difflayout.go b/ui/editor/difflayout.go
+index 65a7c1d..b6903b2 100644
+--- a/ui/editor/difflayout.go
++++ b/ui/editor/difflayout.go
+@@ -10,20 +10,21 @@ import (
+ 
+ // diffPrepared is what the blocks and hidden lines were made of.
+ type diffPrepared struct {
+-	version  uint64
+-	expandV  int
+-	layout   DiffLayout
+-	context  int
+-	anns     uint64 // the annotations' sides, lines and heights, hashed
+-	wrapsA   uint64
+-	wrapsB   uint64
+-	lh       float32
+-	wrap     bool
+-	expAll   bool
+-	inline   DiffInline
+-	nOld     int
+-	nNew     int
+-	editable bool // which shows the line after a final newline (shownLines)
++	version      uint64
++	expandV      int
++	layout       DiffLayout
++	context      int
++	anns         uint64 // the annotations' sides, lines and heights, hashed
++	wrapsA       uint64
++	wrapsB       uint64
++	lh           float32
++	wrap         bool
++	noSeparators bool
++	expAll       bool
++	inline       DiffInline
++	nOld         int
++	nNew         int
++	editable     bool // which shows the line after a final newline (shownLines)
+ }
+ 
+ // diffGap is a run of unchanged lines between hunks, from the old line
+@@ -52,7 +53,7 @@ func (d *DiffState) prepare() {
+ 	viewB := &edB.view
+ 	key := diffPrepared{version: d.model.version, expandV: d.expandV, layout: d.Layout, context: d.context(), anns: annotationsKey(d.Annotations),
+ 		wrapsA: viewA.heights.wraps.version, wrapsB: viewB.heights.wraps.version, lh: viewB.lineHeight, wrap: d.Wrap,
+-		expAll: d.ExpandUnchanged, inline: d.Inline, nOld: viewA.text.LineCount(), nNew: viewB.text.LineCount(), editable: d.Editable}
++		noSeparators: d.NoSeparators, expAll: d.ExpandUnchanged, inline: d.Inline, nOld: viewA.text.LineCount(), nNew: viewB.text.LineCount(), editable: d.Editable}
+ 	if d.prepared == key {
+ 		return
+ 	}
+@@ -84,6 +85,9 @@ func (d *DiffState) prepare() {
+ 		}
+ 		hideA = append(hideA, lineSpan{g.hideA, g.hideA + g.hidden - 1})
+ 		hideB = append(hideB, lineSpan{g.hideB, g.hideB + g.hidden - 1})
++		if d.NoSeparators {
++			continue
++		}
+ 		sep := func(n, from, total int) block {
+ 			b := block{kind: blockSeparator, height: diffSeparatorHeight, from: from, to: from + g.hidden, hunk: gi, id: g.a}
+ 			if from+g.hidden < total {
+diff --git a/ui/editor/diffview.go b/ui/editor/diffview.go
+index 227b8de..4161dd7 100644
+--- a/ui/editor/diffview.go
++++ b/ui/editor/diffview.go
+@@ -44,6 +44,8 @@ type DiffState struct {
+ 	// when 0, none when negative; the others collapse into separators
+ 	// that expand them, ExpansionLines (100 when 0) a click, all of them
+ 	// with Shift. ExpandUnchanged shows them all.
++	// NoSeparators hides collapsed-line controls and their reserved space.
++	NoSeparators    bool
+ 	ContextLines    int
+ 	ExpansionLines  int
+ 	ExpandUnchanged bool
+diff --git a/ui/editor/diffview_test.go b/ui/editor/diffview_test.go
+index 8e685a8..ca4c802 100644
+--- a/ui/editor/diffview_test.go
++++ b/ui/editor/diffview_test.go
+@@ -1624,3 +1624,20 @@ func TestDiffLargeTypingWhileComparing(t *testing.T) {
+ 		t.Fatalf("hunks %v, want %v", got, want)
+ 	}
+ }
++
++func TestDiffViewerNoSeparators(t *testing.T) {
++	for _, layout := range []DiffLayout{DiffSplit, DiffUnified} {
++		d := &DiffState{Old: NewBuffer(strings.Repeat("before\n", 20) + "old\n" + strings.Repeat("after\n", 20)), New: NewBuffer(strings.Repeat("before\n", 20) + "new\n" + strings.Repeat("after\n", 20)), Layout: layout}
++		tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 900, 500)
++		tt.Frame()
++		withSeparators := d.eds[1].view.heights.total()
++		d.NoSeparators = true
++		tt.Frame()
++		if got := d.eds[1].view.heights.total(); got != withSeparators-2*diffSeparatorHeight {
++			t.Fatalf("layout %v: height %v, want %v", layout, got, withSeparators-2*diffSeparatorHeight)
++		}
++		if len(d.gapList) != 2 || d.gapList[0].hidden != 17 || d.gapList[1].hidden != 17 {
++			t.Fatalf("hidden context changed: %+v", d.gapList)
++		}
++	}
++}

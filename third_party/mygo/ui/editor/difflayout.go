@@ -10,20 +10,21 @@ import (
 
 // diffPrepared is what the blocks and hidden lines were made of.
 type diffPrepared struct {
-	version  uint64
-	expandV  int
-	layout   DiffLayout
-	context  int
-	anns     uint64 // the annotations' sides, lines and heights, hashed
-	wrapsA   uint64
-	wrapsB   uint64
-	lh       float32
-	wrap     bool
-	expAll   bool
-	inline   DiffInline
-	nOld     int
-	nNew     int
-	editable bool // which shows the line after a final newline (shownLines)
+	version      uint64
+	expandV      int
+	layout       DiffLayout
+	context      int
+	anns         uint64 // the annotations' sides, lines and heights, hashed
+	wrapsA       uint64
+	wrapsB       uint64
+	lh           float32
+	wrap         bool
+	noSeparators bool
+	expAll       bool
+	inline       DiffInline
+	nOld         int
+	nNew         int
+	editable     bool // which shows the line after a final newline (shownLines)
 }
 
 // diffGap is a run of unchanged lines between hunks, from the old line
@@ -52,7 +53,7 @@ func (d *DiffState) prepare() {
 	viewB := &edB.view
 	key := diffPrepared{version: d.model.version, expandV: d.expandV, layout: d.Layout, context: d.context(), anns: annotationsKey(d.Annotations),
 		wrapsA: viewA.heights.wraps.version, wrapsB: viewB.heights.wraps.version, lh: viewB.lineHeight, wrap: d.Wrap,
-		expAll: d.ExpandUnchanged, inline: d.Inline, nOld: viewA.text.LineCount(), nNew: viewB.text.LineCount(), editable: d.Editable}
+		noSeparators: d.NoSeparators, expAll: d.ExpandUnchanged, inline: d.Inline, nOld: viewA.text.LineCount(), nNew: viewB.text.LineCount(), editable: d.Editable}
 	if d.prepared == key {
 		return
 	}
@@ -84,6 +85,9 @@ func (d *DiffState) prepare() {
 		}
 		hideA = append(hideA, lineSpan{g.hideA, g.hideA + g.hidden - 1})
 		hideB = append(hideB, lineSpan{g.hideB, g.hideB + g.hidden - 1})
+		if d.NoSeparators {
+			continue
+		}
 		sep := func(n, from, total int) block {
 			b := block{kind: blockSeparator, height: diffSeparatorHeight, from: from, to: from + g.hidden, hunk: gi, id: g.a}
 			if from+g.hidden < total {

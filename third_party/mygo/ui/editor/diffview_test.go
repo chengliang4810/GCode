@@ -1624,3 +1624,20 @@ func TestDiffLargeTypingWhileComparing(t *testing.T) {
 		t.Fatalf("hunks %v, want %v", got, want)
 	}
 }
+
+func TestDiffViewerNoSeparators(t *testing.T) {
+	for _, layout := range []DiffLayout{DiffSplit, DiffUnified} {
+		d := &DiffState{Old: NewBuffer(strings.Repeat("before\n", 20) + "old\n" + strings.Repeat("after\n", 20)), New: NewBuffer(strings.Repeat("before\n", 20) + "new\n" + strings.Repeat("after\n", 20)), Layout: layout}
+		tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 900, 500)
+		tt.Frame()
+		withSeparators := d.eds[1].view.heights.total()
+		d.NoSeparators = true
+		tt.Frame()
+		if got := d.eds[1].view.heights.total(); got != withSeparators-2*diffSeparatorHeight {
+			t.Fatalf("layout %v: height %v, want %v", layout, got, withSeparators-2*diffSeparatorHeight)
+		}
+		if len(d.gapList) != 2 || d.gapList[0].hidden != 17 || d.gapList[1].hidden != 17 {
+			t.Fatalf("hidden context changed: %+v", d.gapList)
+		}
+	}
+}

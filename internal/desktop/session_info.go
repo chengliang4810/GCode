@@ -66,7 +66,7 @@ func (a *App) sessionInfo(c *ui.Context) {
 				a.infoRow(c, "project-default", a.projectNameFor(s.ProjectID))
 				a.sessionAgents(s.ID)
 				adds, dels := a.sessionInfoProjection.additions, a.sessionInfoProjection.deletions
-				ui.ButtonBase(c).FillWidth().Padding(6, 9).Gap(8).Justify(ui.Start).Label(tr(c, "Branch changes")).OnClick(func() { a.setPanel(1, true); a.workspace.OpenSurface("changes") }).Children(func() {
+				ui.ButtonBase(c.Key("session-info-branch-changes")).FillWidth().Padding(6, 9).Gap(8).Justify(ui.Start).Label(tr(c, "Branch changes")).OnClick(func() { a.setPanel(1, true); a.workspace.OpenSurface("changes") }).Children(func() {
 					icon(c, "git-branch", 16)
 					ui.Text(c, s.Branch).FontSize(design.TextSize(c, design.TextBase)).SingleLine().Grow(1)
 					ui.Text(c, fmt.Sprintf(tr(c, "+%d"), adds)).FontSize(design.TextSize(c, design.TextXS)).TextColor(a.palette.Success)

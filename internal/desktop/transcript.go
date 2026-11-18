@@ -651,10 +651,10 @@ func (a *App) activityDetail(c *ui.Context, block contracts.Block, live bool) {
 func (a *App) activityDiff(c *ui.Context, tool contracts.ToolCall) {
 	change := *tool.Diff
 	lineHeight := float32(a.state.Settings.Appearance.CodeFontSize) * 1.5
-	container := ui.ScrollBoth(c.Key("activity-diff-viewport:"+tool.ID)).FillWidth().
+	container := ui.Scroll(c.Key("activity-diff-viewport:"+tool.ID)).FillWidth().
 		MaxHeight(activityDetailLines*lineHeight+12).Padding(6, 0).Label(tr(c, "Activity diff"))
 	cache := ui.Local(container, "diff", func() activityDiffCache {
-		return activityDiffCache{old: change.OldContent, current: change.NewContent, state: editor.DiffState{Old: editor.NewBuffer(change.OldContent), New: editor.NewBuffer(change.NewContent), Layout: editor.DiffUnified, FitContent: true, Wrap: false, NoLineNumbers: true}}
+		return activityDiffCache{old: change.OldContent, current: change.NewContent, state: editor.DiffState{Old: editor.NewBuffer(change.OldContent), New: editor.NewBuffer(change.NewContent), Layout: editor.DiffUnified, FitContent: true, Wrap: false, NoLineNumbers: true, NoSeparators: true}}
 	})
 	if cache.old != change.OldContent {
 		cache.old = change.OldContent
@@ -669,14 +669,7 @@ func (a *App) activityDiff(c *ui.Context, tool contracts.ToolCall) {
 	state.LineHeight = 1.5
 	state.Theme = &editor.Theme{Text: a.palette.Muted, Background: ui.Color{}, Added: a.palette.Success, Deleted: a.palette.Danger}
 	container.Children(func() {
-		source := detailSource(contracts.Block{Tool: &tool}, false)
-		font := design.MonoFont(a.state.Settings.Appearance.CodeFont)
-		size := float32(a.state.Settings.Appearance.CodeFontSize)
-		for _, line := range detailLines(source) {
-			ui.RichText(c, detailSpans(line, font, size, a.palette.Faint)...).
-				SingleLine().Height(lineHeight).FontSize(size).Selectable()
-		}
-		editor.DiffView(c, state).FillWidth()
+		editor.DiffView(c, state).FillWidth().Label(tr(c, "Change details"))
 	})
 }
 

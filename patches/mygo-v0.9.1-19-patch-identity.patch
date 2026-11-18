@@ -22,7 +22,7 @@ index 0000000..c7e6cb5
 +// These values are also recorded in the executable's Go linker settings.
 +// Development builds keep sourcePatchSHA256 empty; release verification rejects
 +// such builds and requires the complete fixed identity.
-+var sourcePatchRevision = "rcode-native-ui.27"
++var sourcePatchRevision = "rcode-native-ui.28"
 +var sourcePatchSHA256 string
 +var sourcePatchIdentity string
 +
@@ -32,7 +32,7 @@ index 0000000..c7e6cb5
 +}
 +
 +func init() {
-+	if sourcePatchRevision != "rcode-native-ui.27" {
++	if sourcePatchRevision != "rcode-native-ui.28" {
 +		panic("mygo: unexpected local patch revision: " + sourcePatchRevision)
 +	}
 +	if sourcePatchSHA256 != "" {

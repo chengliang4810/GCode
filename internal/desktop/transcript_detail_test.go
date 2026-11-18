@@ -379,3 +379,45 @@ func TestTranscriptDetailKeepsAllArgumentsAlongsideReadableCommand(t *testing.T)
 		}
 	}
 }
+
+func TestActivityDiffFillsViewportWidth(t *testing.T) {
+	for _, width := range []int{420, 900, 1600} {
+		for _, dark := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%d-dark-%t", width, dark), func(t *testing.T) {
+				a := testApp(t, "default")
+				a.palette = design.Palette("rcode", dark)
+				block := contracts.Block{ID: "edit", Tool: &contracts.ToolCall{Kind: contracts.ToolEditFile, Status: "completed", Path: "file.go", Diff: &contracts.Change{OldContent: "old\n", NewContent: "new\n"}}}
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(a.palette.UI())
+					c.DisableAnimations()
+					ui.Column(c).Fill().Children(func() {
+						a.activityItem(c, "edit-row", block, false, false, activityRowMotion{settled: true})
+					})
+				}, width, 400)
+				if err := tt.Click("Edit"); err != nil {
+					t.Fatal(err)
+				}
+				viewport, ok := tt.Find("Activity diff")
+				if !ok {
+					t.Fatal("missing diff viewport")
+				}
+				view, ok := tt.Find("Change details")
+				if !ok {
+					t.Fatal("missing diff view")
+				}
+				if viewport.X+viewport.W < float32(width)-1 || view.X+view.W < viewport.X+viewport.W-16 {
+					t.Fatalf("diff does not fill available width: viewport=%+v view=%+v width=%d", viewport, view, width)
+				}
+				block.Tool.Diff.OldContent = "old " + strings.Repeat("wide content ", 200) + "\n"
+				block.Tool.Diff.NewContent = "new " + strings.Repeat("wide content ", 200) + "\n"
+				tt.Frame()
+				pixels := append([]byte(nil), tt.Image().Pix...)
+				tt.Scroll(viewport.X+viewport.W/2, viewport.Y+viewport.H/2, 500, 0)
+				if bytes.Equal(pixels, tt.Image().Pix) {
+					t.Fatal("long diff lines cannot scroll horizontally")
+				}
+
+			})
+		}
+	}
+}

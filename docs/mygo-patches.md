@@ -1,7 +1,7 @@
 # MyGo v0.9.1 固定补丁
 
 2026-11-16：从官方 v0.8.3 升级到 **v0.9.1**（提交 `13a0b3e7b3e161454889ff8e1bbf16ab6ffbbe0d`），
-本地修订为 `rcode-native-ui.27`。使用经 Go 模块校验的上游源码，
+本地修订为 `rcode-native-ui.28`。使用经 Go 模块校验的上游源码，
 `go.mod` 仅替换至 `./third_party/mygo`。旧补丁文件已删除，可从 Git 历史追溯。
 
 ## 补丁核对与应用顺序
@@ -28,7 +28,7 @@
 | 15 | [富文本裁切](../patches/mygo-v0.9.1-20-richtext-clip.patch) | 保留编辑区绘制裁切与像素回归。 |
 | 16 | [行内代码字号](../patches/mygo-v0.9.1-21-inline-code-size.patch) | 保留行内代码与代码块独立字号。 |
 | 17 | [生成 API](../patches/mygo-v0.9.1-17-api-gen.patch) | 基于 v0.9.1 重新生成最终 API 包装，仅生成一次。 |
-| 18 | [构建身份](../patches/mygo-v0.9.1-19-patch-identity.patch) | 直接固定 v0.9.1 / rcode-native-ui.27，删除中间旧版本身份。 |
+| 18 | [构建身份](../patches/mygo-v0.9.1-19-patch-identity.patch) | 直接固定 v0.9.1 / rcode-native-ui.28，删除中间旧版本身份。 |
 
 ## 身份与重放
 
@@ -58,3 +58,5 @@ Ghostty 原生库清单与许可证原文经逐字比较保持不变。
 
 验证结果见 [升级验证](mygo-upgrade-2026-11-16.md)，实际安装状态见交付记录；编译、组件回归、原生窗口、
 Windows 交叉编译分别记录，不以交叉编译代替 Windows 原生验收。
+
+2026-11-17：新增 [差异隐藏折叠条](../patches/mygo-v0.9.1-22-diff-no-separators.patch)补丁，`DiffState.NoSeparators` 隐藏未修改行数控件及其布局占位，保留默认上下文与其他差异视图原有行为。

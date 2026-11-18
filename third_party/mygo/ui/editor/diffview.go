@@ -44,6 +44,8 @@ type DiffState struct {
 	// when 0, none when negative; the others collapse into separators
 	// that expand them, ExpansionLines (100 when 0) a click, all of them
 	// with Shift. ExpandUnchanged shows them all.
+	// NoSeparators hides collapsed-line controls and their reserved space.
+	NoSeparators    bool
 	ContextLines    int
 	ExpansionLines  int
 	ExpandUnchanged bool
