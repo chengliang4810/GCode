@@ -101,7 +101,12 @@ jobs:
         run: |
           go vet ./...
           go vet -tags=e2e ./...
-          go tool mygo vet .
+      - name: Native UI static checks
+        # Match the packaging scripts: the UI analyzer does not need CoreML's
+        # CGO types. Native code remains covered by the race and Go vet steps.
+        env:
+          CGO_ENABLED: "0"
+        run: go tool mygo vet .
       - name: Format checks
         shell: bash
         run: test -z "$(gofmt -l cmd internal scripts)"
