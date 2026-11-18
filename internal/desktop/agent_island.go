@@ -97,7 +97,7 @@ func islandEntries(state contracts.Snapshot, now time.Time, dismissed map[string
 }
 
 func (a *App) syncAgentIsland() {
-	if a.win == nil || a.closed {
+	if a.win == nil || a.win.ID() == 0 || a.closed {
 		return
 	}
 	s := &a.island
