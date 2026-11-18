@@ -92,37 +92,37 @@ type State struct {
 	// OnOpenFilePreview supplies the local path for a previewable file; a remote
 	// host's resource is downloaded before the preview opens.
 	OnOpenFilePreview func(string, contracts.LinkedFileResult)
-	OnSessionVisible   func(string)
-	OnSessionHidden    func(string)
-	OnCloseSession     func(string)
-	RenderSession      func(*ui.Context, string)
-	RenderTrajectory   func(*ui.Context, string)
-	RenderGoal         func(*ui.Context, string)
-	OnNewSideChat      func()
-	CanNewSideChat     func() bool
-	OnOpenSurface      func()
-	OnCloseSurface     func()
-	OnToggleExpand     func()
-	OnAnnotation       func(contracts.Annotation)
-	OnLinkConfig       func(sessionID, documentPath string) linkui.Config
-	nextAnnotation     uint32
-	nextBrowser        int
-	pendingTerminal    bool
-	pendingFile        string
-	historySearch      string
-	commitID           string
-	commitOpen         bool
-	fileActionOpen     bool
-	fileAction         string
-	fileActionID       string
-	fileActionName     string
-	fileActionHost     string
-	imageOpen          bool
-	imageID            string
-	imageViewer        ImageViewport
-	linkCancel         context.CancelFunc
-	linkGeneration     uint64
-	pendingNavigation  *fileNavigation
+	OnSessionVisible  func(string)
+	OnSessionHidden   func(string)
+	OnCloseSession    func(string)
+	RenderSession     func(*ui.Context, string)
+	RenderTrajectory  func(*ui.Context, string)
+	RenderGoal        func(*ui.Context, string)
+	OnNewSideChat     func()
+	CanNewSideChat    func() bool
+	OnOpenSurface     func()
+	OnCloseSurface    func()
+	OnToggleExpand    func()
+	OnAnnotation      func(contracts.Annotation)
+	OnLinkConfig      func(sessionID, documentPath string) linkui.Config
+	nextAnnotation    uint32
+	nextBrowser       int
+	pendingTerminal   bool
+	pendingFile       string
+	historySearch     string
+	commitID          string
+	commitOpen        bool
+	fileActionOpen    bool
+	fileAction        string
+	fileActionID      string
+	fileActionName    string
+	fileActionHost    string
+	imageOpen         bool
+	imageID           string
+	imageViewer       ImageViewport
+	linkCancel        context.CancelFunc
+	linkGeneration    uint64
+	pendingNavigation *fileNavigation
 }
 
 func New(win *mygo.Window, backend contracts.Service) *State {

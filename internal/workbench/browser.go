@@ -19,7 +19,7 @@ type browser struct {
 	data contracts.BrowserTab
 	// file is the absolute path of a host file this surface renders itself
 	// instead of loading a web address.
-	file         string
+	file string
 	// pageTitle is the document's own title. A preview keeps the file name as
 	// its tab title but shows the document title beside the path.
 	pageTitle    string

@@ -78,10 +78,10 @@ func TestDesktopLocalTranscriptLinks(t *testing.T) {
 			pageURL := page.URL + "/links-proof"
 			const pageHTML = `<!doctype html><html><head><title>NATIVE PREVIEW DOCUMENT</title><link rel="stylesheet" href="preview.css"><link rel="icon" href="data:,"></head><body><h1>Embedded HTML preview</h1><img src="preview.png"><p class="relative">Relative stylesheet and image load beside the document.</p></body></html>`
 			for name, contents := range map[string][]byte{
-				"preview.html":  []byte(pageHTML),
-				"preview.css":   []byte("h1 { color: #c23668; } p.relative { font-size: 14px; }"),
-				"preview.png":   pngData.Bytes(),
-				"manual.pdf":    minimalPDF("NATIVE PDF PREVIEW"),
+				"preview.html": []byte(pageHTML),
+				"preview.css":  []byte("h1 { color: #c23668; } p.relative { font-size: 14px; }"),
+				"preview.png":  pngData.Bytes(),
+				"manual.pdf":   minimalPDF("NATIVE PDF PREVIEW"),
 			} {
 				if err := os.WriteFile(filepath.Join(workspace, name), contents, 0600); err != nil {
 					t.Fatal(err)

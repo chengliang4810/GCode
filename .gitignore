@@ -10,3 +10,6 @@
 /gcode
 /gcode.exe
 mygo-update.key
+
+# Local investigation overlays and rendered scratch evidence.
+/tmp/
