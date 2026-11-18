@@ -21,6 +21,8 @@ const (
 )
 
 type Snapshot struct {
+	Automations         []Automation                   `json:"automations"`
+	AutomationRuns      []AutomationRun                `json:"automationRuns"`
 	PrivacyModels       []privacy.ModelStatus          `json:"privacyModels"`
 	Metrics             map[string]ConversationMetrics `json:"metrics"`
 	ApplicationUsage    *ApplicationUsage              `json:"applicationUsage,omitempty"`
@@ -527,6 +529,7 @@ type SessionUpdate struct {
 
 // Command is a typed action envelope used by the application coordinator.
 type Command struct {
+	Automation      *Automation           `json:"automation,omitempty"`
 	QuestionAnswers []QuestionAnswer      `json:"questionAnswers,omitempty"`
 	Plugin          *PluginInput          `json:"plugin,omitempty"`
 	Resource        *ResourceInput        `json:"resource,omitempty"`

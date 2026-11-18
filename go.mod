@@ -25,6 +25,7 @@ require (
 	github.com/go-text/typesetting v0.3.5 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/ulikunitz/xz v0.5.15 // indirect
 	go.digitalxero.dev/rpm v0.3.4 // indirect
 	golang.org/x/crypto v0.57.0 // indirect

@@ -10,6 +10,8 @@ import (
 // CloneSnapshot deliberately shares only immutable strings and time values.
 // This avoids serializing thousands of historical messages on each UI update.
 func CloneSnapshot(v Snapshot) Snapshot {
+	v.Automations = slices.Clone(v.Automations)
+	v.AutomationRuns = slices.Clone(v.AutomationRuns)
 	v.PrivacyModels = slices.Clone(v.PrivacyModels)
 	if v.Metrics != nil {
 		source := v.Metrics

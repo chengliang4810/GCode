@@ -139,6 +139,8 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		}
 	}()
 	switch command.Kind {
+	case "automation.save", "automation.toggle", "automation.delete", "automation.run", "automation.fire":
+		return e.automationCommandLocked(command)
 	case "provider.test":
 		return e.startModelCheckLocked(command.ID)
 	case "provider.models.fetch":

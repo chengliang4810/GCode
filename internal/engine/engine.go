@@ -122,6 +122,7 @@ type Engine struct {
 	catalog            *modelcatalog.Cache
 	catalogCancel      context.CancelFunc
 	catalogDone        chan struct{}
+	automationDone     chan struct{}
 	maintenanceDone    chan struct{}
 	flushDone          chan struct{}
 	plugins            *plugins.Manager
@@ -183,6 +184,9 @@ func Open(options Options) (*Engine, error) {
 	}
 	for i := range e.state.Sessions {
 		e.state.Sessions[i].ModelRetry = nil
+	}
+	if err := e.recoverAutomationsLocked(time.Now()); err != nil {
+		return nil, err
 	}
 	e.loadStandaloneTerminals()
 	hostname, _ := os.Hostname()
@@ -258,6 +262,8 @@ func Open(options Options) (*Engine, error) {
 	e.mu.Unlock()
 	e.flushDone = make(chan struct{})
 	go e.flushRunningConversations(ctx)
+	e.automationDone = make(chan struct{})
+	go e.runAutomationScheduler()
 	return e, nil
 }
 
@@ -405,6 +411,7 @@ func (e *Engine) Close() error {
 	<-e.catalogDone
 	<-e.maintenanceDone
 	<-e.flushDone
+	<-e.automationDone
 	e.mu.Lock()
 	// Flush available roots even when an unrelated historical disk vanished.
 	// Report any unsaved records after committing the roots that remain online.
