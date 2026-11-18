@@ -1373,6 +1373,8 @@
   "interrupted": "已中断",
   "Stop": "停止",
   "Create a session": "创建新对话",
+  "Session behavior": "对话方式",
+  "Trigger settings": "触发设置",
   "Bind existing session": "绑定已有对话",
   "Settings navigation": "设置导航",
   "Model": "模型",

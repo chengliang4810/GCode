@@ -317,7 +317,7 @@ func (a *App) resourceSelect(c *ui.Context, key, label string, value *string, op
 			break
 		}
 	}
-	sel.Trigger.FillWidth().Label(tr(c, label)).Children(func() { ui.Text(c, tr(c, display)).Grow(1); icon(c, "alt-arrow-down", 13) })
+	sel.Trigger.FillWidth().Label(tr(c, label)).Children(func() { ui.Text(c, tr(c, display)).Grow(1).MinWidth(0).SingleLine(); icon(c, "alt-arrow-down", 13) })
 	sel.Popup(func(panel ui.Element) {
 		controlSelectPopup(c, panel).Children(func() {
 			for _, option := range options {

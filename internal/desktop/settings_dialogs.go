@@ -25,7 +25,7 @@ func (a *App) settingsDialogWithFooter(c *ui.Context, key, title string, open *b
 	ui.DialogBase(c.Key(key), &visible, func(backdrop, panel ui.Element) {
 		backdrop.Background(ui.RGBA(0, 0, 0, .45))
 		panel.Width(min(width, w-40)).MaxHeight(h - 40).Padding(20).Gap(16).Radius(12).Label(tr(c, title))
-		a.floatingSurface(c, panel, 12)
+		panel.Background(design.FloatingSurface(a.palette, "opaque", false)).Border(1, a.palette.Border)
 		ui.Row(c).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
 			ui.Text(c, tr(c, title)).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
 			iconButton(c.Key("dialog-close"), "close", tr(c, "Close dialog")).Disabled(busy).OnClick(func() { *open = false })

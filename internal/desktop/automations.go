@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"gcode/internal/i18n"
 	"github.com/egoist/mygo/ui"
 )
@@ -250,18 +251,18 @@ func (a *App) automationForm(c *ui.Context) {
 	s := &a.automationUI
 	d := &s.Draft
 	resourceText(c, "automation-name", "Automation name", &d.Name)
-	ui.Text(c, tr(c, "Prompt"))
-	controlTextArea(c.Key("automation-prompt"), &d.Prompt).Height(140).FillWidth().Label(tr(c, "Automation prompt"))
+	ui.Column(c).FillWidth().Gap(4).Children(func() {
+		ui.Text(c, tr(c, "Prompt")).TextColor(a.palette.Muted)
+		controlTextArea(c.Key("automation-prompt"), &d.Prompt).Height(140).FillWidth().Label(tr(c, "Automation prompt"))
+	})
 	projects := []settingOption{{"", "No project"}}
 	for _, p := range a.state.Projects {
 		projects = append(projects, settingOption{p.ID, p.Name})
 	}
-	a.automationSelect(c, "automation-project", "Project", &d.ProjectID, projects)
 	models := []settingOption{}
 	for _, m := range a.state.Models {
-		models = append(models, settingOption{m.ID, m.ID})
+		models = append(models, settingOption{m.ID, m.Label})
 	}
-	a.automationSelect(c, "automation-model", "Model", &d.ModelID, models)
 	levels := []settingOption{{"", "Default"}}
 	for _, m := range a.state.Models {
 		if m.ID == d.ModelID {
@@ -270,27 +271,53 @@ func (a *App) automationForm(c *ui.Context) {
 			}
 		}
 	}
-	a.automationSelect(c, "automation-reasoning", "Reasoning effort", &d.ReasoningLevel, levels)
+	ui.Row(c.Key("automation-context-fields")).FillWidth().Wrap().Gap(12).Children(func() {
+		automationField(c, 160, func() { a.automationSelect(c, "automation-project", "Project", &d.ProjectID, projects) })
+		automationField(c, 220, func() { a.automationSelect(c, "automation-model", "Model", &d.ModelID, models) })
+		automationField(c, 150, func() { a.automationSelect(c, "automation-reasoning", "Reasoning effort", &d.ReasoningLevel, levels) })
+	})
 	targets := []settingOption{{"", "Create a session"}}
 	for _, session := range a.state.Sessions {
 		if !session.Archived && session.SubagentType == "" {
 			targets = append(targets, settingOption{session.ID, session.Title})
 		}
 	}
-	a.automationSelect(c, "automation-target", "Bind existing session", &d.TargetSessionID, targets)
-	a.automationSelect(c, "automation-mode", "Schedule", &d.Mode, []settingOption{{"cron", "Cron"}, {"interval", "After completion"}, {"manual", "Manual"}})
-	if d.Mode == "cron" {
-		resourceText(c, "automation-cron", "Cron expression (five fields)", &d.Cron)
-		resourceText(c, "automation-timezone", "Timezone", &d.Timezone)
-		ui.Text(c, tr(c, "Example: 0 9 * * 1-5 runs at 09:00 on weekdays.")).Wrap()
-	}
-	if d.Mode == "interval" {
-		resourceText(c, "automation-interval", "Interval in seconds (minimum 60)", &s.Interval)
-	}
-	controlCheckbox(c.Key("automation-once"), &d.Once, tr(c, "Run once"))
-	controlCheckbox(c.Key("automation-continuous"), &d.Continuous, tr(c, "Continue the same session"))
-	controlCheckbox(c.Key("automation-enabled"), &d.Enabled, tr(c, "Enabled"))
+	automationSection(c, "Session behavior", func() {
+		a.automationSelect(c, "automation-target", "Bind existing session", &d.TargetSessionID, targets)
+		controlCheckbox(c.Key("automation-continuous"), &d.Continuous, tr(c, "Continue the same session"))
+	})
+	automationSection(c, "Trigger settings", func() {
+		ui.Row(c.Key("automation-trigger-fields")).FillWidth().Wrap().Gap(12).Children(func() {
+			automationField(c, 150, func() {
+				a.automationSelect(c, "automation-mode", "Schedule", &d.Mode, []settingOption{{"cron", "Cron"}, {"interval", "After completion"}, {"manual", "Manual"}})
+			})
+			switch d.Mode {
+			case "cron":
+				automationField(c, 200, func() { resourceText(c, "automation-cron", "Cron expression (five fields)", &d.Cron) })
+				automationField(c, 150, func() { resourceText(c, "automation-timezone", "Timezone", &d.Timezone) })
+			case "interval":
+				automationField(c, 230, func() { resourceText(c, "automation-interval", "Interval in seconds (minimum 60)", &s.Interval) })
+			}
+		})
+		if d.Mode == "cron" {
+			ui.Text(c, tr(c, "Example: 0 9 * * 1-5 runs at 09:00 on weekdays.")).Wrap().TextColor(a.palette.Muted)
+		}
+		ui.Row(c).FillWidth().Wrap().Gap(12).Children(func() {
+			controlCheckbox(c.Key("automation-once"), &d.Once, tr(c, "Run once"))
+			controlCheckbox(c.Key("automation-enabled"), &d.Enabled, tr(c, "Enabled"))
+		})
+	})
+}
 
+func automationField(c *ui.Context, basis float32, draw func()) {
+	ui.Column(c).Basis(basis).Grow(1).MinWidth(0).Children(draw)
+}
+
+func automationSection(c *ui.Context, title string, draw func()) {
+	ui.Column(c.Key(title)).FillWidth().Padding(8, 0, 0, 0).Gap(8).Children(func() {
+		ui.Text(c, tr(c, title)).FontSize(design.TextSize(c, design.TextBase)).FontWeight(600)
+		draw()
+	})
 }
 
 func (a *App) automationSelect(c *ui.Context, key, label string, value *string, options []settingOption) {
