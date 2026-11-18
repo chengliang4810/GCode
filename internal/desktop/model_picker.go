@@ -818,11 +818,11 @@ func (a *composerController) modelSearchInput(c *ui.Context) {
 }
 
 func modelSelectionColor(palette design.Tokens) ui.Color {
-	wash := ui.Hex("#1a1a1a").Alpha(.06)
+	alpha := float32(.06)
 	if palette.Dark {
-		wash = ui.Hex("#ebebeb").Alpha(.11)
+		alpha = .11
 	}
-	return wash.Over(palette.Dialog)
+	return design.Wash(palette.Dark, alpha).Over(palette.Dialog)
 }
 
 type modelRow struct {

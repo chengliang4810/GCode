@@ -18,19 +18,16 @@ func (a *App) aboutSettings(c *ui.Context) {
 				ui.Text(c, tr(c, "GCode means “Go Code” — an invitation to start coding — and also stands for Go, the language it is built with.")).
 					FontSize(design.TextSize(c, design.TextBase)).TextColor(c.Theme().TextMuted)
 			})
-			ui.Row(c.Key("about-features")).FillWidth().Label(tr(c, "GCode features")).Wrap().AlignItems(ui.Start).Gap(16).Children(func() {
-				for _, feature := range []struct{ key, title, description string }{
-					{"models", "Choose any provider", "Three model protocols. Connect cloud or local models."},
-					{"native", "Native desktop, built for coding", "Native Go UI with chat, files, terminal, and Git."},
-					{"agents", "Goal-driven collaboration", "Subagents work together on multi-step coding tasks."},
-					{"data", "Your data, local or self-hosted", "Local conversations, no account required. Self-hosting supported."},
-					{"usage", "Transparent usage", "See Token, cache hits, and output speed."},
-					{"source", "Open source, in your hands", "Read, build, and customize the source."},
+			// Capabilities stay one line each: the about page states what the
+			// build is, and the settings pages themselves explain how it works.
+			ui.Column(c.Key("about-features")).FillWidth().Label(tr(c, "GCode capabilities")).Gap(4).Children(func() {
+				for _, key := range []string{
+					"Three model protocols: OpenAI Chat Completions, OpenAI Responses and Anthropic Messages, with providers you configure yourself.",
+					"Native desktop UI over the same Go core: chat, files, terminal, Git and subagents.",
+					"Local conversations by default; the core also runs headless on a server you own.",
 				} {
-					ui.Column(c.Key("about-feature-" + feature.key)).Width(240).Grow(1).Gap(4).Children(func() {
-						ui.Text(c, tr(c, feature.title)).FontSize(design.TextSize(c, design.TextBase)).FontWeight(600)
-						ui.Text(c, tr(c, feature.description)).FontSize(design.TextSize(c, design.TextBase)).TextColor(c.Theme().TextMuted)
-					})
+					ui.Text(c.Key("about-capability-"+key[:12]), tr(c, key)).
+						FontSize(design.TextSize(c, design.TextBase)).TextColor(c.Theme().TextMuted).LineHeight(1.5)
 				}
 			})
 		})

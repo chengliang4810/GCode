@@ -3,7 +3,6 @@ package desktop
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
 	"time"
 
@@ -447,7 +446,9 @@ func TestFooterResetTooltipAndAccountNameMatchSource(t *testing.T) {
 	if got := footerAccountName(contracts.ProviderAccount{Email: "Email", DisplayName: "Name"}); got != "Email" {
 		t.Fatal(got)
 	}
-	if got := trackedHeading("Context window"); strings.ReplaceAll(got, "\u200a", "") != "CONTEXT WINDOW" {
+	// The heading keeps its own case: hierarchy comes from weight and gray, not
+	// from an all-caps micro label with widened letters.
+	if got := trackedHeading("Context window"); got != "Context window" {
 		t.Fatal(got)
 	}
 }

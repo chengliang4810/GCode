@@ -239,7 +239,7 @@
     `);
     root.innerHTML += `<div class="box"></div><div class="flag"></div>
       <div class="hint enter"><span class="dot"></span><span class="title">Select an element</span><span class="sep"></span>
-      <span class="keys"><b>Shift</b>-click to add&ensp;·&ensp;<b>Esc</b> to finish</span></div>`;
+      <span class="keys"><b>Shift</b>-click to add,&ensp;<b>Esc</b> to finish</span></div>`;
     ui = { box: root.querySelector('.box'), flag: root.querySelector('.flag'), hint: root.querySelector('.hint'), title: root.querySelector('.title') };
     requestAnimationFrame(() => ui && ui.hint.classList.remove('enter'));
     const cursor = document.createElement('style');

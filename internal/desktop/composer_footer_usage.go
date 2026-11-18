@@ -445,8 +445,10 @@ func (a *App) footerTextHeight(size float32) float32 {
 	return float32(math.Ceil(float64(size*1.618034*scale)-.5)) / scale
 }
 
+// A tracked heading is gone: the interface tells hierarchy through weight and
+// gray, and an all-caps micro label with widened letters only imitates it.
 func trackedHeading(label string) string {
-	return strings.Join(strings.Split(strings.ToUpper(label), ""), "\u200a")
+	return strings.TrimSpace(label)
 }
 
 func footerTextWidth(c *ui.Context, text string, size float32, weight int) float32 {

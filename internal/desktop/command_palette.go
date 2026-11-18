@@ -98,10 +98,7 @@ func sourcePaletteInk(dark bool, alpha float32) ui.Color {
 	return ui.RGBA(0, 0, 0, alpha)
 }
 func sourcePaletteWash(dark bool, alpha float32) ui.Color {
-	if dark {
-		return ui.RGBA(235, 235, 235, alpha)
-	}
-	return ui.RGBA(26, 26, 26, alpha)
+	return design.Wash(dark, alpha)
 }
 func paletteSelection(dark bool) ui.Color {
 	alpha := float32(.06)

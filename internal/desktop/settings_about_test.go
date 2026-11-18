@@ -49,12 +49,22 @@ func TestSettingsAboutNavigationLinksAndUpdates(t *testing.T) {
 					if !ok || !tt.HasText(app.t("GCode means “Go Code” — an invitation to start coding — and also stands for Go, the language it is built with.")) {
 						t.Fatal("grouped introduction or GCode name meaning is missing")
 					}
-					for _, title := range []string{"Choose any provider", "Native desktop, built for coding", "Goal-driven collaboration", "Your data, local or self-hosted", "Transparent usage", "Open source, in your hands"} {
-						bounds, ok := tt.Find(app.t(title))
+					// Capabilities are one line each inside the introduction card:
+					// the page states what the build is, not a marketing grid.
+					capabilities := []string{
+						"Three model protocols: OpenAI Chat Completions, OpenAI Responses and Anthropic Messages, with providers you configure yourself.",
+						"Native desktop UI over the same Go core: chat, files, terminal, Git and subagents.",
+						"Local conversations by default; the core also runs headless on a server you own.",
+					}
+					for _, line := range capabilities {
+						bounds, ok := tt.Find(app.t(line))
 						if !ok || bounds.X < introduction.X || bounds.X+bounds.W > introduction.X+introduction.W ||
 							bounds.Y < introduction.Y || bounds.Y+bounds.H > introduction.Y+introduction.H {
-							t.Fatalf("About feature %q missing or outside its card: %+v, card=%+v", title, bounds, introduction)
+							t.Fatalf("About capability missing or outside its card: %+v, card=%+v", bounds, introduction)
 						}
+					}
+					if tt.HasText(app.t("Choose any provider")) {
+						t.Fatal("About still renders the marketing feature grid")
 					}
 					for _, label := range []string{"View on GitHub", "Star on GitHub", "Check for updates…"} {
 						bounds, ok := tt.Find(app.t(label))

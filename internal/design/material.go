@@ -106,10 +106,17 @@ func ComposerBorder(t Tokens, preference string, supported bool) ui.Color {
 // column paints over the shell glass, so the column reads as its own
 // surface without a card of its own (crates/ui/src/shell.rs).
 func SidebarTone(t Tokens) ui.Color {
-	if t.Dark {
-		return ui.Hex("#ebebeb").Alpha(.05)
+	return Wash(t.Dark, .05)
+}
+
+// Wash is the one ink a surface lays over another to read as its own layer: a
+// wash, not a color of its own. Callers pass only the alpha their surface
+// needs, so the tint cannot drift apart between panels.
+func Wash(dark bool, alpha float32) ui.Color {
+	if dark {
+		return ui.Hex("#ebebeb").Alpha(alpha)
 	}
-	return ui.Hex("#1a1a1a").Alpha(.05)
+	return ui.Hex("#1a1a1a").Alpha(alpha)
 }
 
 // FloatingSurface follows popover.rs::surface_bg: the tint a popover, a
