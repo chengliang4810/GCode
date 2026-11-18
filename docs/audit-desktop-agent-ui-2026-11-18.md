@@ -929,3 +929,26 @@ GEO-3 的 `transcript.go` 徽章固定高度、以及第 6 节列出的全部真
 - **骨架屏观感**：模型目录加载骨架已改为 2.0s 锁步 30fps，但需要一次真实的加载过程截图；
   `TestDesktopLocalModelPickerLayout` 的模型列表场景未覆盖加载态。
 - **CJK 组字**：用户确认本机拼音下未复现误发，500ms 守卫按决定不实施。
+
+### 15.5 全量 e2e 扫描与基线对照
+
+全量 `go run ./scripts/desktop-e2e`（68 个用例）跑完：**162 个子用例通过，11 个顶层用例失败**。
+把失败的那批拿到基线提交 `5080c5e` 上重跑，逐条对照：
+
+| 用例 | 基线 | 本轮 | 判定 |
+| --- | --- | --- | --- |
+| `TestDesktopLocalMenuBarPanel` | PASS | FAIL → 已修 | **本轮引入**：菜单栏窗口标题前缀写成 `GCode — `，而 e2e 期望 `GCode: `；已统一为 `GCode: `（与灵动岛、通知一致），重跑 PASS |
+| `TestDesktopLocalComposerConversationWidth` | FAIL | FAIL | 既有失败：`composer_width_test.go` 仍期待会话信息卡上的 `Fork chat` 按钮，而该按钮在 `6f0f9f0`（2026-11-13）已被移除，词条 `Fork chat` 只剩在 i18n 里无人引用 |
+| `TestDesktopLocalPromptReferences` | FAIL | FAIL | 既有失败：provider 未收到展开后的命令与技能 |
+| `TestDesktopLocalRepositoryRefsRefresh` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalSmartModelConfiguration` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalProjectCreationWithIgnoredArtifacts` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalApplicationUsage` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalCallTrajectory` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalTodoWrite` | FAIL | FAIL | 既有失败 |
+| `TestDesktopLocalTranscriptFoldMotion` | FAIL | FAIL（单独跑时 PASS） | 既有失败，且在高负载下不稳定 |
+| `TestDesktopScenarioSidebarAlignment` | FAIL | FAIL | 既有失败 |
+
+**结论**：11 个失败中 10 个在基线上同样失败，属于仓库既有缺陷，与本轮改动无关；
+唯一的本轮回归（菜单栏标题）已修复并复验。既有失败的清单与首因已记录，
+建议单开一轮排查，不与规范整改混在一起。

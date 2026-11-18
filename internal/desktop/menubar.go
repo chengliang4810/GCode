@@ -84,7 +84,7 @@ func (a *App) openMenuPanel() {
 			Vibrancy: mygo.VibrancyPopover, Content: ui.View(a.menuPanelView),
 		})
 		s.Window = window
-		window.SetTitle("GCode — " + a.t("Tasks and usage"))
+		window.SetTitle("GCode: " + a.t("Tasks and usage"))
 		window.OnClose(func(event *mygo.CloseEvent) {
 			if !a.closed && s.Window == window {
 				event.PreventDefault()
