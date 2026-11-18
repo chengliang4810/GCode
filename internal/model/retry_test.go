@@ -117,6 +117,86 @@ func TestRetryInvalidToolCallWithoutPublishingAnyCalls(t *testing.T) {
 	}
 }
 
+func TestRetryChatToolCallIndexConflict(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		indexField string
+		exhaust    bool
+	}{
+		{name: "repeated index recovers", indexField: `"index":0,`},
+		{name: "omitted index recovers"},
+		{name: "repeated index exhausts budget", indexField: `"index":0,`, exhaust: true},
+		{name: "omitted index exhausts budget", exhaust: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			bad := `data: {"choices":[{"delta":{"tool_calls":[{` + test.indexField + `"id":"call-a","function":{"name":"Read","arguments":"{\"path\":\"a\"}"}},{` + test.indexField + `"id":"call-b","function":{"name":"Read","arguments":"{\"path\":\"b\"}"}}]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":12,"completion_tokens":7}}` + "\n\ndata: [DONE]\n\n"
+			good := `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-a","function":{"name":"Read","arguments":"{\"path\":\"a\"}"}},{"index":1,"id":"call-b","function":{"name":"Read","arguments":"{\"path\":\"b\"}"}}]},"finish_reason":"tool_calls"}]}` + "\n\ndata: [DONE]\n\n"
+			var payloads []string
+			gateway := retryGateway(t, retryTransport(func(request *http.Request) (*http.Response, error) {
+				body, _ := io.ReadAll(request.Body)
+				payloads = append(payloads, string(body))
+				if len(payloads) == 1 || test.exhaust {
+					return retryResponse(http.StatusOK, bad), nil
+				}
+				return retryResponse(http.StatusOK, good), nil
+			}))
+			gateway.retry.MaxRetries = 2
+			var attempts []Result
+			var retries []RetryStatus
+			var traces []Invocation
+			gateway.Observe = func(trace Invocation) {
+				if trace.CompletedAt != nil {
+					traces = append(traces, trace)
+				}
+			}
+			result, err := gateway.StreamWithAttempts(t.Context(), Request{History: []Message{{Role: "user", Text: "original"}}},
+				func(delta Delta) error {
+					if delta.Retry != nil {
+						retries = append(retries, *delta.Retry)
+					}
+					return nil
+				}, func(result Result) error { attempts = append(attempts, result); return nil })
+			wantAttempts := 2
+			if test.exhaust {
+				wantAttempts = 3
+				if err == nil || len(result.Message.Calls) != 0 {
+					t.Fatalf("exhausted conflict was accepted: calls=%v err=%v", result.Message.Calls, err)
+				}
+			} else if err != nil || !reflect.DeepEqual(result.Message.Calls, []Call{
+				{ID: "call-a", Name: "Read", Arguments: `{"path":"a"}`},
+				{ID: "call-b", Name: "Read", Arguments: `{"path":"b"}`},
+			}) {
+				t.Fatalf("conflict did not recover independent calls: calls=%v err=%v", result.Message.Calls, err)
+			}
+			if len(payloads) != wantAttempts || len(attempts) != wantAttempts || len(traces) != wantAttempts || len(retries) != wantAttempts-1 {
+				t.Fatalf("unexpected retry counts: requests=%d attempts=%d traces=%d retries=%d", len(payloads), len(attempts), len(traces), len(retries))
+			}
+			for i, payload := range payloads {
+				if payload != payloads[0] {
+					t.Fatal("retry changed the accepted request")
+				}
+				if i == wantAttempts-1 && !test.exhaust {
+					continue
+				}
+				if len(attempts[i].Message.Calls) != 0 || attempts[i].Usage.Input != 12 || attempts[i].Usage.Output != 7 {
+					t.Fatal("rejected response published calls or lost usage")
+				}
+				invalid := traces[i].InvalidToolCall
+				if invalid == nil || invalid.Field != "index" || invalid.Call.ID != "call-b" ||
+					!strings.Contains(invalid.Problem, "call-a") {
+					t.Fatalf("conflict lost its diagnostic identity: %+v", invalid)
+				}
+			}
+			for i, retry := range retries {
+				if retry.Reason != "invalid_tool_call" || retry.Attempt != i+1 || retry.MaxRetries != 2 {
+					t.Fatalf("conflict bypassed the shared retry budget: %+v", retry)
+				}
+			}
+		})
+	}
+}
+
 func TestRetryDoesNotRepeatOversizedStream(t *testing.T) {
 	calls, retries := 0, 0
 	body := "data: " + strings.Repeat("x", maxStreamEventBytes) + "\n\n"

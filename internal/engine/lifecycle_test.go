@@ -55,16 +55,25 @@ func TestGeneratedConversationIDsAreLowercase(t *testing.T) {
 }
 
 func TestInterruptedReplyRetriesWithoutRepeatingCompletedTools(t *testing.T) {
-	testReplyRetriesWithoutRepeatingCompletedTools(t, false)
+	testReplyRetriesWithoutRepeatingCompletedTools(t, "interrupted")
 }
 
 func TestInvalidToolCallRetriesWithoutRepeatingCompletedTools(t *testing.T) {
-	testReplyRetriesWithoutRepeatingCompletedTools(t, true)
+	testReplyRetriesWithoutRepeatingCompletedTools(t, "invalid call")
 }
 
-func testReplyRetriesWithoutRepeatingCompletedTools(t *testing.T, invalidToolCall bool) {
+func TestConflictingToolCallIndexRetriesWithoutRepeatingCompletedTools(t *testing.T) {
+	testReplyRetriesWithoutRepeatingCompletedTools(t, "index conflict")
+}
+
+func testReplyRetriesWithoutRepeatingCompletedTools(t *testing.T, failure string) {
 	t.Helper()
+	invalidToolCall := failure == "invalid call"
+	indexConflict := failure == "index conflict"
 	for _, protocol := range []model.Protocol{model.Chat, model.Responses, model.Messages} {
+		if indexConflict && protocol != model.Chat {
+			continue
+		}
 		t.Run(string(protocol), func(t *testing.T) {
 			var requests atomic.Int32
 			provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -90,17 +99,23 @@ func testReplyRetriesWithoutRepeatingCompletedTools(t *testing.T, invalidToolCal
 					if attempt < 3 {
 						delta := map[string]any{"tool_calls": []any{map[string]any{"index": 0, "id": callID, "function": map[string]any{"name": "Write", "arguments": arguments}}}}
 						choice := map[string]any{"delta": delta}
-						if attempt == 1 || invalidToolCall {
+						if attempt == 1 || invalidToolCall || indexConflict {
 							choice["finish_reason"] = "tool_calls"
 						}
 						if attempt == 2 {
 							delta["content"] = "discarded partial"
+							if indexConflict {
+								delta["tool_calls"] = append(delta["tool_calls"].([]any), map[string]any{
+									"index": 0, "id": "Call_Conflict",
+									"function": map[string]any{"name": "Write", "arguments": arguments},
+								})
+							}
 						}
 						sendSSE(w, map[string]any{"choices": []any{choice}})
 					} else {
 						fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"RECOVERED_OK\"},\"finish_reason\":\"stop\"}]}\n\n")
 					}
-					if attempt != 2 || invalidToolCall {
+					if attempt != 2 || invalidToolCall || indexConflict {
 						fmt.Fprint(w, "data: [DONE]\n\n")
 					}
 				case model.Responses:

@@ -196,10 +196,16 @@ func (d *chatDecoder) consume(payload string) (Delta, error) {
 				d.calls[change.Index] = call
 			}
 			// A reused index would silently merge two calls into one, executing a
-			// single call with concatenated arguments. Compatible gateways that
-			// omit or repeat the index must fail loudly instead.
+			// single call with concatenated arguments. Reject the whole attempt
+			// as an invalid call so the shared retry budget can recover it.
 			if change.ID != "" && call.ID != "" && call.ID != change.ID {
-				return Delta{}, fmt.Errorf("model stream reused tool call index %d for call ids %q and %q", change.Index, call.ID, change.ID)
+				return Delta{}, &ToolCallError{
+					Index: change.Index,
+					Call:  Call{ID: change.ID, Name: change.Function.Name, Arguments: change.Function.Arguments},
+					Field: "index",
+					Problem: fmt.Sprintf("%d is shared by call ids %q and %q",
+						change.Index, call.ID, change.ID),
+				}
 			}
 			if change.ID != "" {
 				call.ID = change.ID
