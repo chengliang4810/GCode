@@ -310,3 +310,116 @@ func TestWithoutContextMemoryRemovesSavedModePrompt(t *testing.T) {
 		t.Fatal("disabled manual compaction retained mode tools or changed the saved prompt", got)
 	}
 }
+
+func TestContextMemorySplitExchangeErrorIdentifiesEndAndSafeRange(t *testing.T) {
+	history := contextMemoryHistory()
+	history[1].Calls = append(history[1].Calls, model.Call{ID: "second", Name: "Read", Arguments: `{}`})
+	history = append(history[:3:3], append([]model.Message{{Role: "tool", CallID: "second", Text: strings.Repeat("second result ", 100)}}, history[3:]...)...)
+	AssignContextRefs(history)
+	request := model.Request{History: history}
+	state := ContextMemory{}
+	commits := 0
+	tools := contextMemoryTools(&request, &state, func(view []model.Message, next ContextMemory) error {
+		commits++
+		request.History = view
+		state = next
+		return nil
+	})
+	args, _ := json.Marshal(map[string]string{"start_ref": history[1].ContextRef, "end_ref": history[2].ContextRef, "summary": "Both files were inspected; no changes yet."})
+	_, err := tools[1].Execute(t.Context(), "", args)
+	if err == nil || !strings.Contains(err.Error(), "end_ref") || !strings.Contains(err.Error(), "tool exchange") || !strings.Contains(err.Error(), history[3].ContextRef) {
+		t.Fatalf("split exchange has no actionable end boundary: %v", err)
+	}
+	if commits != 0 || len(state.Blocks) != 0 || !reflect.DeepEqual(request.History, history) {
+		t.Fatal("rejected range changed context")
+	}
+	out, err := tools[0].Execute(t.Context(), "", json.RawMessage(`{}`))
+	if err != nil || !strings.Contains(out.Text, "Safe range:") {
+		t.Fatalf("status omitted concrete safe ranges: %s %v", out.Text, err)
+	}
+	args, _ = json.Marshal(map[string]string{"start_ref": history[1].ContextRef, "end_ref": history[3].ContextRef, "summary": "Both files were inspected; no changes yet."})
+	if _, err := tools[1].Execute(t.Context(), "", args); err != nil {
+		t.Fatal("corrected complete exchange failed:", err)
+	}
+	if commits != 1 || len(state.Blocks) != 1 || !reflect.DeepEqual(state.Blocks[0].Originals, history[1:4]) {
+		t.Fatal("corrected fold lost complete tool exchange")
+	}
+}
+
+func TestContextStatusSafeRangeCrossesPageAndProtectsRecentExchange(t *testing.T) {
+	history := make([]model.Message, 51)
+	for i := range history {
+		history[i] = model.Message{Role: "assistant", Text: strings.Repeat("historical work ", 100), ContextRef: fmt.Sprintf("m_%d", i)}
+	}
+	history[0].Role = "user"
+	history[1].Role, history[1].UserInput = "user", true
+	for _, start := range []int{38, 41} {
+		history[start].Calls = []model.Call{{ID: fmt.Sprintf("a%d", start), Name: "Read"}, {ID: fmt.Sprintf("b%d", start), Name: "Read"}}
+		history[start+1].Role, history[start+1].CallID = "tool", history[start].Calls[0].ID
+		history[start+2].Role, history[start+2].CallID = "tool", history[start].Calls[1].ID
+	}
+	request := model.Request{History: history}
+	state := ContextMemory{}
+	tools := contextMemoryTools(&request, &state, func([]model.Message, ContextMemory) error { t.Fatal("status must not commit"); return nil })
+	out, err := tools[0].Execute(t.Context(), "", json.RawMessage(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.Text, `Safe range: start_ref="m_2" end_ref="m_40"`) || !strings.Contains(out.Text, "Next offset: 40") {
+		t.Fatalf("pagination hid the complete safe exchange: %s", out.Text)
+	}
+	spans := contextFoldRanges(history)
+	if len(spans) != 1 || spans[0] != (contextFoldRange{2, 41}) {
+		t.Fatalf("wrong safe range: %+v", spans)
+	}
+	if err := contextRangeError(history, spans[0].start, spans[0].end); err != nil {
+		t.Fatal("advertised unsafe range:", err)
+	}
+	if err := contextRangeError(history, 5, 40); err == nil || !strings.Contains(err.Error(), `end_ref="m_40"`) {
+		t.Fatal("missing precise correction:", err)
+	}
+}
+
+func TestContextMemoryRangeDiagnosticsAndSafeRanges(t *testing.T) {
+	history := contextMemoryHistory()
+	for _, test := range []struct {
+		name       string
+		start, end int
+		want       string
+	}{
+		{"missing start", -1, 3, "start_ref was not found"},
+		{"missing end", 1, -1, "end_ref was not found"},
+		{"first message", 0, 3, "protected first message"},
+		{"reversed", 3, 1, "at or after start_ref"},
+		{"orphan result", 2, 4, "start_ref"},
+		{"recent messages", 1, len(history) - 2, "protected recent messages"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			err := contextRangeError(history, test.start, test.end)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("diagnostic=%v want %q", err, test.want)
+			}
+		})
+	}
+	history[10].UserInput = true
+	history[len(history)-1].UserInput = false
+	spans := contextFoldRanges(history)
+	if len(spans) != 2 {
+		t.Fatalf("latest input must split eligible ranges: %+v", spans)
+	}
+	for _, span := range spans {
+		if err := contextRangeError(history, span.start, span.end); err != nil {
+			t.Fatal("advertised unsafe range:", err)
+		}
+	}
+	if err := contextRangeError(history, 1, 11); err == nil || !strings.Contains(err.Error(), "latest human input") {
+		t.Fatal("missing protected input diagnostic:", err)
+	}
+	short := model.Request{History: history[:8]}
+	state := ContextMemory{}
+	tools := contextMemoryTools(&short, &state, func([]model.Message, ContextMemory) error { return nil })
+	out, err := tools[0].Execute(t.Context(), "", json.RawMessage(`{}`))
+	if err != nil || !strings.Contains(out.Text, "No safe range is available") || strings.Contains(out.Text, "Safe range:") {
+		t.Fatalf("short history advertised compression: %s %v", out.Text, err)
+	}
+}

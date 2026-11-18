@@ -135,6 +135,67 @@ func contextBoundary(history []model.Message, at int) bool {
 	return len(history[at-1].Calls) == 0
 }
 
+type contextFoldRange struct{ start, end int }
+
+// Ranges use exclusive ends internally; tool-facing references are inclusive.
+func contextFoldRanges(history []model.Message) []contextFoldRange {
+	limit := foldableEnd(history)
+	var ranges []contextFoldRange
+	add := func(start, end int) {
+		for start < end && !contextBoundary(history, start) {
+			start++
+		}
+		for end > start && !contextBoundary(history, end) {
+			end--
+		}
+		if start < end {
+			ranges = append(ranges, contextFoldRange{start, end})
+		}
+	}
+	if latest := latestContextInput(history); latest >= 1 && latest < limit {
+		add(1, latest)
+		add(latest+1, limit)
+	} else {
+		add(1, limit)
+	}
+	return ranges
+}
+
+func contextRangeError(history []model.Message, start, end int) error {
+	switch {
+	case start < 0:
+		return errors.New("start_ref was not found; inspect ContextStatus for current references")
+	case end < 0:
+		return errors.New("end_ref was not found; inspect ContextStatus for current references")
+	case start >= len(history) || end > len(history):
+		return errors.New("range is outside the visible history; inspect ContextStatus")
+	case start == 0:
+		return errors.New("start_ref includes the protected first message; select a safe range from ContextStatus")
+	case end <= start:
+		return errors.New("end_ref must be at or after start_ref; both references are inclusive")
+	}
+	latest := latestContextInput(history)
+	if latest >= start && latest < end {
+		return fmt.Errorf("range includes the latest human input %q; select a safe range on one side of it from ContextStatus", history[latest].ContextRef)
+	}
+	limit := foldableEnd(history)
+	if end > limit {
+		return errors.New("end_ref includes the protected recent messages; keep at least eight recent messages and select a safe range from ContextStatus")
+	}
+	if !contextBoundary(history, start) {
+		return fmt.Errorf("start_ref %q splits a tool exchange; start at its assistant tool-call message, using a safe range from ContextStatus", history[start].ContextRef)
+	}
+	if !contextBoundary(history, end) {
+		for candidate := end + 1; candidate <= limit; candidate++ {
+			if contextBoundary(history, candidate) && !(latest >= start && latest < candidate) {
+				return fmt.Errorf("end_ref %q splits a tool exchange; include all its results with end_ref=%q and update the summary to cover them", history[end-1].ContextRef, history[candidate-1].ContextRef)
+			}
+		}
+		return fmt.Errorf("end_ref %q splits a tool exchange that cannot be extended within the protected boundaries; choose an earlier complete exchange from ContextStatus", history[end-1].ContextRef)
+	}
+	return nil
+}
+
 func contextBlock(state ContextMemory, ref string) *ContextBlock {
 	for i := range state.Blocks {
 		if state.Blocks[i].ID == ref {
@@ -146,10 +207,8 @@ func contextBlock(state ContextMemory, ref string) *ContextBlock {
 
 func foldContext(history []model.Message, state ContextMemory, start, end int, summary string) ([]model.Message, ContextMemory, error) {
 	summary = strings.TrimSpace(summary)
-	if start < 1 || end > foldableEnd(history) || end <= start ||
-		!contextBoundary(history, start) || !contextBoundary(history, end) ||
-		(latestContextInput(history) >= start && latestContextInput(history) < end) {
-		return nil, state, errors.New("range must exclude the first message, latest human input and eight recent messages, and contain complete tool exchanges")
+	if err := contextRangeError(history, start, end); err != nil {
+		return nil, state, err
 	}
 	if summary == "" || len([]rune(summary)) > 8000 {
 		return nil, state, errors.New("summary must contain 1–8000 characters")
@@ -290,7 +349,14 @@ func contextMemoryTools(request *model.Request, state *ContextMemory, commit fun
 				return model.ToolOutput{}, errors.New("offset is outside history")
 			}
 			var out strings.Builder
-			fmt.Fprintf(&out, "%d visible messages; %d archive blocks; candidate indexes [1,%d), excluding latest human input at %d and split tool exchanges. Estimated input %d tokens.\n", len(request.History), len(state.Blocks), foldableEnd(request.History), latestContextInput(request.History), contextTokens(*request))
+			fmt.Fprintf(&out, "%d visible messages; %d archive blocks; latest human input at %d. At least eight recent messages are protected. Estimated input %d tokens.\n", len(request.History), len(state.Blocks), latestContextInput(request.History), contextTokens(*request))
+			ranges := contextFoldRanges(request.History)
+			if len(ranges) == 0 {
+				out.WriteString("No safe range is available yet. Continue the task without compression.\n")
+			}
+			for _, span := range ranges {
+				fmt.Fprintf(&out, "Safe range: start_ref=%q end_ref=%q (inclusive indexes %d..%d). Summarize this entire range; subranges must also contain complete tool exchanges.\n", request.History[span.start].ContextRef, request.History[span.end-1].ContextRef, span.start, span.end-1)
+			}
 			end := min(args.Offset+40, len(request.History))
 			for i := args.Offset; i < end; i++ {
 				message := request.History[i]
@@ -299,7 +365,7 @@ func contextMemoryTools(request *model.Request, state *ContextMemory, commit fun
 			fmt.Fprintf(&out, "Next offset: %d", end)
 			return model.ToolOutput{Text: out.String()}, ctx.Err()
 		})
-	add("CompressContext", "Fold a completed historical range into your detailed summary. First inspect ContextStatus. Range is inclusive. Recent work and complete tool pairs are protected.", map[string]any{
+	add("CompressContext", "Fold a completed historical range into your detailed summary. First inspect ContextStatus and choose its safe references. Both ends are inclusive; end_ref must be the last result of a tool-call group, never a partial group. Recent work is protected. If rejected, follow the specific boundary correction and update the summary before retrying.", map[string]any{
 		"start_ref": text("First visible message reference"), "end_ref": text("Last visible message reference"), "summary": text("Detailed summary, at most 8000 characters"),
 	}, []string{"start_ref", "end_ref", "summary"},
 		func(ctx context.Context, raw json.RawMessage) (model.ToolOutput, error) {
