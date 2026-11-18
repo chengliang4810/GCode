@@ -2,9 +2,11 @@
 package modelcatalog
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -98,39 +100,57 @@ func Open(options Options) (*Cache, error) {
 	if c.client == nil {
 		c.client = &http.Client{Timeout: 30 * time.Second}
 	}
-	payload, err := os.ReadFile(c.path)
+	file, err := os.Open(c.path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
-	seeded := len(payload) == 0
-	recovered := seeded && err == nil
-	if len(payload) == 0 {
-		if recovered {
-			slog.Warn("model catalog cache is empty; restoring bundled catalog", "path", c.path)
+	seeded, recovered := file == nil, false
+	if file != nil {
+		info, statErr := file.Stat()
+		if statErr != nil {
+			_ = file.Close()
+			return nil, statErr
 		}
-		payload = seed
-		if err := storage.WriteJSON(c.path, json.RawMessage(payload)); err != nil {
-			return nil, err
+		if !info.Mode().IsRegular() {
+			_ = file.Close()
+			return nil, fmt.Errorf("model catalog cache is not a regular file: %s", c.path)
+		}
+		seeded = info.Size() == 0
+		if seeded {
+			recovered = true
+			slog.Warn("model catalog cache is empty; restoring bundled catalog", "path", c.path)
+		} else {
+			// Stream the file: retaining the entire source JSON alongside its
+			// metadata index needlessly raises the startup heap peak.
+			c.data, err = decodeReader(file)
+		}
+		if closeErr := file.Close(); closeErr != nil {
+			return nil, closeErr
 		}
 	}
-	c.data, err = decode(payload)
-	if err != nil {
+	if err != nil && !seeded {
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) {
+			return nil, err
+		}
 		slog.Warn("model catalog cache is damaged; restoring bundled catalog", "path", c.path, "error", err)
+		recovered = true
+	}
+	if seeded || recovered {
 		c.data, err = decode(seed)
 		if err != nil {
 			return nil, fmt.Errorf("read bundled model catalog: %w", err)
 		}
-		if err := storage.WriteJSON(c.path, json.RawMessage(seed)); err != nil {
+		if err := storage.WriteJSONBytes(c.path, seed); err != nil {
 			return nil, fmt.Errorf("restore model catalog cache: %w", err)
 		}
-		recovered = true
 	}
 	info, err := os.Stat(c.path)
 	if err != nil {
 		return nil, err
 	}
 	c.state.CheckedAt = info.ModTime()
-	payload, err = os.ReadFile(c.statePath())
+	payload, err := os.ReadFile(c.statePath())
 	if err == nil {
 		if seeded {
 			// A missing/empty catalog cannot use another file's validators.
@@ -155,8 +175,12 @@ func Open(options Options) (*Cache, error) {
 }
 
 func decode(payload []byte) (map[string]provider, error) {
+	return decodeReader(bytes.NewReader(payload))
+}
+
+func decodeReader(source io.Reader) (map[string]provider, error) {
 	var data map[string]provider
-	if err := json.Unmarshal(payload, &data); err != nil {
+	if err := jsonv2.UnmarshalRead(source, &data); err != nil {
 		return nil, err
 	}
 	count := 0
@@ -246,7 +270,7 @@ func (c *Cache) Refresh(ctx context.Context) (resultErr error) {
 	if err != nil {
 		return fmt.Errorf("validate model catalog: %w", err)
 	}
-	if err := storage.WriteJSON(c.path, json.RawMessage(payload)); err != nil {
+	if err := storage.WriteJSONBytes(c.path, payload); err != nil {
 		return err
 	}
 	c.mu.Lock()

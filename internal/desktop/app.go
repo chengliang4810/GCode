@@ -189,7 +189,6 @@ type Options struct {
 func New(service contracts.Service) (*App, error) { return NewWithOptions(service, Options{}) }
 
 func NewWithOptions(service contracts.Service, options Options) (*App, error) {
-	_ = conversationBackgroundShader()
 	ctx, cancel := context.WithCancel(context.Background())
 	snapshot, err := service.Bootstrap(ctx)
 	if err != nil {
@@ -503,7 +502,8 @@ func (a *App) applyEvent(event contracts.Event) {
 		// clone the entire conversation history between the Go core and UI.
 		s := a.state
 		s.Messages = maps.Clone(s.Messages)
-		messages := slices.Clone(s.Messages[event.SessionID])
+		before := s.Messages[event.SessionID]
+		messages := slices.Clone(before)
 		if event.Message != nil {
 			delete(a.streamText, event.SessionID)
 			message := *event.Message
@@ -539,6 +539,14 @@ func (a *App) applyEvent(event contracts.Event) {
 					part = 1
 				}
 				messages[i].Blocks[index].Text = stream.blocks[part].Append(messages[i].Blocks[index].Text, event.Text)
+				if i == len(messages)-1 {
+					if a.transcriptCache.session == event.SessionID {
+						a.transcriptCache.updateTail(event.Revision, before, messages)
+					}
+					if cache := a.sideTranscripts[event.SessionID]; cache != nil {
+						cache.updateTail(event.Revision, before, messages)
+					}
+				}
 			}
 		}
 		s.Messages[event.SessionID] = messages

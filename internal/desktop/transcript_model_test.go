@@ -3,6 +3,7 @@ package desktop
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -363,6 +364,89 @@ func TestTranscriptCacheReusesRowsUntilContentChanges(t *testing.T) {
 	entries = cache.entriesFor(8, "chat", streamed, true)
 	if rows := cache.rowsFor(entries[1], true); len(rows) != 2 || !rows[1].Compact {
 		t.Fatalf("compact projection did not reshape: %+v", rows)
+	}
+}
+
+func TestTranscriptTailUpdateMatchesFullProjection(t *testing.T) {
+	for _, prefix := range []string{"", "side:chat:"} {
+		for _, compact := range []bool{false, true} {
+			t.Run(fmt.Sprintf("prefix=%q/compact=%t", prefix, compact), func(t *testing.T) {
+				messages := railFixtureMessages(600)
+				last := &messages[len(messages)-1]
+				last.TurnID = "active"
+				messages = append(messages, contracts.Message{
+					ID: "continued", Role: "assistant", TurnID: "active", Streaming: true,
+					Blocks: []contracts.Block{{ID: "partial", Kind: "text", Text: "Partial"}},
+				})
+				cache := transcriptCache{prefix: prefix}
+				entries := cache.entriesFor(1, "chat", messages, compact)
+				rows := cache.conversationFor(entries, compact)
+				firstTick := &cache.rail[0]
+
+				after := slices.Clone(messages)
+				after[len(after)-1].Blocks = []contracts.Block{{ID: "partial", Kind: "text", Text: "Partial extended"}}
+				cache.updateTail(2, messages, after)
+				entries = cache.entriesFor(2, "chat", after, compact)
+				gotRows := cache.conversationFor(entries, compact)
+				if &gotRows[0] != &rows[0] || &cache.rail[0] != firstTick {
+					t.Fatal("text append rebuilt history or outline")
+				}
+				full := transcriptCache{prefix: prefix}
+				want := full.entriesFor(2, "chat", after, compact)
+				wantRows := full.conversationFor(want, compact)
+				if !reflect.DeepEqual(entries, want) || !reflect.DeepEqual(gotRows, wantRows) ||
+					!reflect.DeepEqual(cache.tail.rows, full.tail.rows) || !reflect.DeepEqual(cache.rail, full.rail) ||
+					cache.streamingText != full.streamingText {
+					t.Fatal("incremental projection differed from a clean build")
+				}
+				if messages[len(messages)-1].Blocks[0].Text != "Partial" {
+					t.Fatal("append mutated the previous snapshot")
+				}
+			})
+		}
+	}
+}
+
+func TestTranscriptTailUpdateInvalidatesWhenRowsChange(t *testing.T) {
+	messages := []contracts.Message{
+		{ID: "prompt", Role: "user"},
+		{ID: "reply", Role: "assistant", Streaming: true, Blocks: []contracts.Block{{ID: "first", Kind: "text", Text: " "}}},
+	}
+	cache := transcriptCache{}
+	old := cache.conversationFor(cache.entriesFor(1, "chat", messages, false), false)
+	after := slices.Clone(messages)
+	after[1].Blocks = []contracts.Block{{ID: "first", Kind: "text", Text: " First visible text"}}
+	cache.updateTail(2, messages, after)
+	if cache.revision != 1 {
+		t.Fatal("a change from bare to content reused old row geometry")
+	}
+	rows := cache.conversationFor(cache.entriesFor(2, "chat", after, false), false)
+	if !old[1].Bare || rows[1].Bare || cache.rail[0].Reply != "First visible text" {
+		t.Fatalf("fallback did not refresh the row and preview: %+v %+v", rows, cache.rail)
+	}
+	afterAgain := slices.Clone(after)
+	afterAgain[1].Blocks = []contracts.Block{{ID: "first", Kind: "text", Text: " First visible text continued"}}
+	cache.updateTail(3, after, afterAgain)
+	if cache.revision != 3 || cache.rail[0].Reply != "First visible text continued" {
+		t.Fatal("optimized append did not refresh the preview")
+	}
+}
+
+func TestResolveActivityCopiesOnlyWhenResultsReplaceCalls(t *testing.T) {
+	call := contracts.Block{ID: "first", Tool: &contracts.ToolCall{ID: "tool"}}
+	text := contracts.Block{ID: "text", Kind: "text", Text: "Next"}
+	second := contracts.Block{ID: "second", Tool: &contracts.ToolCall{ID: "second"}}
+	unique := []contracts.Block{call, text, second}
+	if got := resolvedActivity(unique); &got[0] != &unique[0] {
+		t.Fatal("a unique block list was copied")
+	}
+	result := contracts.Block{ID: "result", Tool: &contracts.ToolCall{ID: "tool", Output: "Done"}}
+	secondResult := contracts.Block{ID: "second-result", Tool: &contracts.ToolCall{ID: "second", Output: "Second done"}}
+	input := []contracts.Block{call, result, text, second, secondResult}
+	got := resolvedActivity(input)
+	if len(got) != 3 || got[0].ID != "first" || got[0].Tool.Output != "Done" || got[1].ID != "text" ||
+		got[2].ID != "second" || got[2].Tool.Output != "Second done" || input[0].Tool.Output != "" {
+		t.Fatalf("tool replacement changed order, identity or source: %+v", got)
 	}
 }
 

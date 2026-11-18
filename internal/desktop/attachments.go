@@ -84,6 +84,7 @@ func (a *App) attachmentWork(request contracts.AttachmentImportRequest, pick boo
 			}
 			if origin == a.sessionID {
 				a.attachments = append(a.attachments, items...)
+				a.prefetchMedia(attachmentMediaRefs(items))
 				a.focusComposer = len(items) > 0
 			} else {
 				if a.sessionStates == nil {
@@ -125,9 +126,28 @@ func (a *App) pasteAttachments(services ui.Services) bool {
 	return false
 }
 
+// Only projected conversation bodies and their queue can need previews.
+// Snapshot.Attachments is the global storage index, including unopened history.
 func snapshotMediaRefs(snapshot contracts.Snapshot) []string {
+	var items []contracts.Attachment
+	for _, messages := range snapshot.Messages {
+		for _, message := range messages {
+			for _, block := range message.Blocks {
+				if block.Attachment != nil {
+					items = append(items, *block.Attachment)
+				}
+			}
+		}
+	}
+	for _, queued := range snapshot.Queue {
+		items = append(items, queued.Attachments...)
+	}
+	return attachmentMediaRefs(items)
+}
+
+func attachmentMediaRefs(items []contracts.Attachment) []string {
 	var refs []string
-	for _, attachment := range snapshot.Attachments {
+	for _, attachment := range items {
 		if strings.HasPrefix(attachment.MIME, "image/") {
 			refs = append(refs, attachment.AssetRef)
 		}

@@ -213,6 +213,7 @@ func TestEditActivityShowsPerCallLineCountsBesidePath(t *testing.T) {
 					a.palette = design.Palette("rcode", dark)
 					path := "/workspace/internal/a_very_long_conversation_metrics_filename.go"
 					tool := contracts.ToolCall{Kind: kind, Status: "completed", Path: path,
+						Args: `{"old_string":"raw edit parameters"}`, Output: "Edited /workspace/file.go",
 						Diff: &contracts.Change{Additions: 12, Deletions: 1, OldContent: "before\n", NewContent: "after\n"}}
 					block := contracts.Block{ID: "edit-count", Kind: "tool", Tool: &tool}
 					tt := ui.NewTester(func(c *ui.Context) {
@@ -241,6 +242,9 @@ func TestEditActivityShowsPerCallLineCountsBesidePath(t *testing.T) {
 					tt.Advance(time.Second)
 					if _, ok := tt.Find("更改详情"); !ok || !tt.HasText("+12") || !tt.HasText("-1") {
 						t.Fatal("expanding diff lost the change or header counts")
+					}
+					if tt.HasText("raw edit parameters") || tt.HasText("Edited /workspace/file.go") {
+						t.Fatal("diff exposed raw tool parameters or output")
 					}
 					for _, state := range []struct {
 						name, status string

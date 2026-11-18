@@ -43,6 +43,8 @@ func TestOpenRecoversDamagedCacheAndRefreshState(t *testing.T) {
 		name, catalog, state string
 		seed                 bool
 	}{
+		{"trailing JSON", fixture + ` {}`, `{}`, true},
+		{"trailing garbage", fixture + ` invalid`, `{}`, true},
 		{"truncated catalog", `{"broken"`, `{"etag":"stale","checkedAt":"2099-01-01T00:00:00Z"}`, true},
 		{"zero-byte catalog", "", `{"etag":"stale","checkedAt":"2099-01-01T00:00:00Z"}`, true},
 		{"empty catalog", `{}`, `{}`, true},
@@ -190,6 +192,9 @@ func TestRefreshKeepsGoodFileAndPersistsThreeHourSchedule(t *testing.T) {
 				t.Fatalf("refresh error=%v", err)
 			}
 			after, readErr := os.ReadFile(cache.path)
+			if test.status == http.StatusOK && !bytes.Equal(after, []byte(fixture)) {
+				t.Fatal("validated source JSON was reencoded instead of written directly")
+			}
 			if readErr != nil || !json.Valid(after) || test.fail && string(before) != string(after) {
 				t.Fatal("failed refresh damaged the local file")
 			}
@@ -276,6 +281,9 @@ func TestBundledCatalogWorksOffline(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join(dir, "models-dev.json"))
 	if err != nil || !strings.Contains(string(content), "deepseek-v4-pro") {
 		t.Fatal("bundled JSON was not cached")
+	}
+	if !bytes.Equal(content, seed) {
+		t.Fatal("bundled catalog was reencoded instead of written directly")
 	}
 	if err := storage.WriteJSON(cache.statePath(), cacheState{CheckedAt: time.Now()}); err != nil {
 		t.Fatal(err)

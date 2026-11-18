@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -54,5 +55,55 @@ func TestTranscriptPushesHistoryUpOnNewTurn(t *testing.T) {
 	}
 	if !a.messages.AtEnd() {
 		t.Fatal("following the end stopped without the reader scrolling away")
+	}
+}
+
+func TestTranscriptStreamingKeepsHistoryAnchor(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		for _, width := range []int{900, 1320} {
+			t.Run(fmt.Sprintf("dark=%t/width=%d", dark, width), func(t *testing.T) {
+				a := testApp(t, "transcript")
+				a.selectSession("chat-0")
+				a.state.Settings.Appearance.ReduceMotion = true
+				a.expanded["session-info-user"], a.expanded["session-info"] = true, false
+				a.palette = design.Palette("rcode", dark)
+				history := railFixtureMessages(32)
+				reply := &history[len(history)-1]
+				reply.Blocks = []contracts.Block{{ID: "active-text", Kind: "text", Text: "FINAL REPLY"}}
+				reply.Streaming = true
+				a.state.Messages[a.sessionID] = history
+				a.state.Revision++
+				tt := ui.NewTester(func(c *ui.Context) {
+					c.SetTheme(a.palette.UI())
+					a.View(c)
+				}, width, 720)
+				tt.Frame()
+				a.messages.ScrollTo(13*15, ui.Start)
+				tt.Frame()
+				first, _ := a.messages.Visible()
+				if a.messages.AtEnd() {
+					t.Fatal("fixture did not leave the end")
+				}
+				a.applyEvent(contracts.Event{
+					Kind: "message.delta", Revision: a.state.Revision + 1, SessionID: a.sessionID,
+					MessageID: reply.ID, BlockKind: "text", Text: " STREAMED APPEND",
+				})
+				tt.Frame()
+				if after, _ := a.messages.Visible(); a.messages.AtEnd() || after != first {
+					t.Fatalf("streaming moved the reading position: row %d -> %d", first, after)
+				}
+				cache := &a.transcriptCache
+				hits := a.conversationMatches(cache, cache.entries, cache.flat, "STREAMED APPEND")
+				if len(hits) != 1 || hits[0] != len(cache.flat)-1 {
+					t.Fatalf("search did not see streamed text at the correct row: %v", hits)
+				}
+				a.messages.ScrollToEnd()
+				tt.Advance(time.Second)
+				tt.Frame()
+				if !tt.HasText("FINAL REPLY STREAMED APPEND") {
+					t.Fatal("returning to the end showed stale streamed text")
+				}
+			})
+		}
 	}
 }

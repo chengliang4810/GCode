@@ -120,7 +120,7 @@ func (a *App) sideTranscriptCache(sessionID string) *transcriptCache {
 	}
 	cache := a.sideTranscripts[sessionID]
 	if cache == nil {
-		cache = &transcriptCache{}
+		cache = &transcriptCache{prefix: "side:" + sessionID + ":"}
 		a.sideTranscripts[sessionID] = cache
 	}
 	return cache
@@ -149,12 +149,7 @@ func (a *App) sideTranscript(c *ui.Context, sessionID string) {
 	// transcript's, with identities prefixed so a fold opened here does not
 	// open in the conversation behind it.
 	cache := a.sideTranscriptCache(sessionID)
-	entries := cache.entriesFor(a.state.Revision, sessionID, a.projectedMessages(sessionID), a.state.Settings.General.CompactMode)
-	messages := make([]contracts.Message, len(entries))
-	copy(messages, entries)
-	for i := range messages {
-		messages[i].ID = "side:" + sessionID + ":" + messages[i].ID
-	}
+	messages := cache.entriesFor(a.state.Revision, sessionID, a.projectedMessages(sessionID), a.state.Settings.General.CompactMode)
 	conversation := cache.conversationFor(messages, a.state.Settings.General.CompactMode)
 	if _, _, working := a.workingState(sessionID); len(conversation) == 0 && working {
 		conversation = []conversationRow{{Key: "side:" + sessionID + ":working", Message: -1}}
@@ -293,7 +288,7 @@ func (a *App) stopSideMessage(id string) {
 func (a *App) sideQueuedMessages(c *ui.Context, id string, state *sideComposerState) {
 	for _, queued := range a.state.Queue {
 		// A steering row is already the user's message in the pane above.
-		if queued.SessionID != id || queued.Delivery == "steer" {
+		if queued.SessionID != id || !isUserQueuedMessage(queued) || queued.Delivery == "steer" {
 			continue
 		}
 		q := queued

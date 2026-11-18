@@ -1,8 +1,9 @@
 package desktop
 
 import (
-	"gcode/internal/contracts"
 	"strings"
+
+	"gcode/internal/contracts"
 )
 
 // conversationMatches returns the rows whose text holds the query, as the list
@@ -26,7 +27,7 @@ func (a *App) conversationMatches(cache *transcriptCache, entries []contracts.Me
 			}
 		default:
 			projected := a.transcriptRowAt(cache, message, row.Block)
-			if blockMatches(projected.Block, query) || messageMatches(projected.Activity, query) {
+			if (projected.Block != nil && blockMatches(*projected.Block, query)) || messageMatches(projected.Activity, query) {
 				result = append(result, index)
 			}
 		}

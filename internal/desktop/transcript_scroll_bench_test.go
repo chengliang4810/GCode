@@ -225,3 +225,63 @@ func BenchmarkStoredConversationMetrics(b *testing.B) {
 		}
 	})
 }
+
+func BenchmarkTranscriptLongSession(b *testing.B) {
+	for _, count := range []int{100, 1000} {
+		b.Run(fmt.Sprintf("turns=%d", count), func(b *testing.B) {
+			messages := railFixtureMessages(count)
+			last := &messages[len(messages)-1]
+			last.Streaming = true
+			last.Blocks[len(last.Blocks)-1].Text = strings.Repeat("A paragraph with **bold**, `code`, and words.\n\n", 64)
+
+			b.Run("cold-open", func(b *testing.B) {
+				app, tt := longTranscriptTester(b, messages)
+				b.ReportAllocs()
+				for b.Loop() {
+					app.transcriptCache = transcriptCache{}
+					app.messages = ui.ListState{}
+					tt.Frame()
+				}
+			})
+			b.Run("stream-while-reading-history", func(b *testing.B) {
+				app, tt := longTranscriptTester(b, messages)
+				app.messages.ScrollTo(len(app.transcriptCache.flat)/2, ui.Start)
+				tt.Frame()
+				b.ReportAllocs()
+				for b.Loop() {
+					app.applyEvent(contracts.Event{Kind: "message.delta", Revision: app.state.Revision + 1,
+						SessionID: "chat-0", MessageID: last.ID, BlockKind: "text", Text: " more"})
+					tt.Frame()
+				}
+			})
+		})
+	}
+}
+
+func longTranscriptTester(tb testing.TB, messages []contracts.Message) (*App, *ui.Tester) {
+	tb.Helper()
+	if err := assets.RegisterFonts(); err != nil {
+		tb.Fatal(err)
+	}
+	backend, err := mock.New(mock.Options{Scenario: "default", Instant: true})
+	if err != nil {
+		tb.Fatal(err)
+	}
+	app, err := NewWithOptions(backend, Options{Now: time.Now})
+	if err != nil {
+		tb.Fatal(err)
+	}
+	tb.Cleanup(app.Close)
+	app.selectSession("chat-0")
+	app.state.Settings.General.Language = "en"
+	app.state.Settings.Appearance.ReduceMotion = true
+	app.expanded["session-info-user"] = true
+	app.expanded["session-info"] = false
+	app.ensureComposerFooterRefs(false)
+	app.state.Messages[app.sessionID] = messages
+	app.state.Revision++
+	publishMetricsFixture(app)
+	tt := ui.NewTester(app.View, 1320, 880)
+	tt.Frame()
+	return app, tt
+}

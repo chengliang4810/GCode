@@ -53,15 +53,19 @@ func messageRailTicks(entries []contracts.Message, rows []conversationRow) []mes
 			})
 			current = len(ticks) - 1
 		} else if entry.Role == "assistant" && current >= 0 && ticks[current].Reply == "" {
-			for _, block := range entry.Blocks {
-				if block.Kind == "text" && strings.TrimSpace(block.Text) != "" {
-					ticks[current].Reply = railPreviewText(block.Text, 200)
-					break
-				}
-			}
+			ticks[current].Reply = railReplyPreview(entry.Blocks)
 		}
 	}
 	return ticks
+}
+
+func railReplyPreview(blocks []contracts.Block) string {
+	for _, block := range blocks {
+		if block.Kind == "text" && strings.TrimSpace(block.Text) != "" {
+			return railPreviewText(block.Text, 200)
+		}
+	}
+	return ""
 }
 
 // Normalize free text while reading only the bounded preview prefix, including

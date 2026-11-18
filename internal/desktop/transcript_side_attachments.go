@@ -71,6 +71,7 @@ func (a *App) sideAttachmentWork(sessionID string, state *sideComposerState, req
 				return
 			}
 			state.Attachments = append(state.Attachments, items...)
+			a.prefetchMedia(attachmentMediaRefs(items))
 			state.Failure = ""
 			state.FocusPending = len(items) > 0
 		}

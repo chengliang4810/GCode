@@ -10,9 +10,10 @@ import (
 // message. It follows rows_for_entry in the pinned GPUI source: ordinary work
 // forms a tree; compact mode moves narration into that tree as progress updates.
 // DTO order is authoritative, including input/error rows interleaved with work.
+// A standalone row references its immutable message block rather than copying it.
 type transcriptRow struct {
 	ID       string
-	Block    contracts.Block
+	Block    *contracts.Block
 	Activity []contracts.Block
 	Summary  contracts.ActivitySummary
 	AutoOpen bool
@@ -117,7 +118,8 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 			}
 		}
 	}
-	for i, block := range blocks {
+	for i := range blocks {
+		block := &blocks[i]
 		// Checklists belong to the selected chat's composer tray. The tool
 		// record remains in the activity tree, including its historical output.
 		if block.Kind == "todo" || block.Kind == "todos" {
@@ -127,7 +129,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 			if !block.Tool.Failed() {
 				continue
 			}
-			block = contracts.Block{ID: block.ID, Kind: "error", Text: block.Tool.Output}
+			block = &contracts.Block{ID: block.ID, Kind: "error", Text: block.Tool.Output}
 		}
 		ordinary := block.Tool != nil || block.Hook != nil || block.Kind == "reasoning"
 		note := compact && block.Kind == "text" && (replyStart < 0 || i < replyStart)
@@ -139,7 +141,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 			if compact && groupPosition < 0 {
 				groupPosition = len(rows)
 			}
-			work = append(work, block)
+			work = append(work, *block)
 			groupLast = i
 			continue
 		}
@@ -165,40 +167,52 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 // Some adapters emit a separate result block rather than updating their call.
 // Retain the first timeline position while rendering the latest typed payload.
 func resolvedActivity(blocks []contracts.Block) []contracts.Block {
-	result := make([]contracts.Block, 0, len(blocks))
-	positions := make(map[string]int)
-	for _, block := range blocks {
+	var result []contracts.Block
+	var positions map[string]int
+	for index, block := range blocks {
 		if block.Tool != nil && block.Tool.ID != "" {
 			if i, exists := positions[block.Tool.ID]; exists {
+				if result == nil {
+					result = make([]contracts.Block, index, len(blocks)-1)
+					copy(result, blocks[:index])
+				}
 				block.ID = result[i].ID
 				result[i] = block
 				continue
 			}
-			positions[block.Tool.ID] = len(result)
+			if positions == nil {
+				positions = make(map[string]int)
+			}
+			position := index
+			if result != nil {
+				position = len(result)
+			}
+			positions[block.Tool.ID] = position
 		}
-		result = append(result, block)
+		if result != nil {
+			result = append(result, block)
+		}
+	}
+	if result == nil {
+		return blocks
 	}
 	return result
 }
 
-// transcriptCache keeps the presentation projection of the conversation for
-// the snapshot it came from: the continuation-joined entries and, per entry,
-// its rows. A build projects the whole conversation, and a scroll, a hover or
-// another pane's frame leaves it unchanged: without the cache every frame walks
-// every block and re-copies a long assistant turn's blocks. The reference
-// caches rows per entry by content fingerprint; here a snapshot is published
-// whole and applyEvent clones the one message it changes, so the revision
-// identifies the content and a new revision re-keys the cache.
+// transcriptCache projects immutable message snapshots. A content delta that
+// leaves the last entry's row structure intact can update it in place.
 type transcriptCache struct {
 	revision uint64
 	session  string
-	stamp    uint64
+	prefix   string
 	compact  bool
+	source   []contracts.Message
 	entries  []contracts.Message
 	// Only the newest model round's trailing text can still receive deltas.
 	// Streaming on the joined entry instead describes the entire active turn.
 	streamingText string
 	rows          map[string]transcriptProjection
+	tail          transcriptProjection
 	flat          []conversationRow
 	rail          []messageRailTick
 }
@@ -206,6 +220,7 @@ type transcriptCache struct {
 // transcriptProjection is an entry's block rows and the fingerprint of the
 // content they were made from.
 type transcriptProjection struct {
+	id    string
 	stamp uint64
 	rows  []transcriptRow
 }
@@ -231,12 +246,8 @@ func fnvMixInt(hash uint64, value int) uint64 {
 	return hash
 }
 
-// transcriptStamp hashes what a message's projection reads, without reading
-// the text itself: its length stands in, which keeps the walk cheap on a long
-// conversation. The revision catches every content change the app makes (the
-// core publishes a new snapshot, and a delta clones the message it changes);
-// the stamp catches a conversation replaced under the same revision, as a
-// fixture or a test does.
+// transcriptStamp hashes what a message's row projection reads, without
+// reading long text or tool output bodies.
 func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint64 {
 	hash := fnvMix(stamp, message.ID)
 	if compact {
@@ -294,15 +305,30 @@ func transcriptStamp(stamp uint64, message contracts.Message, compact bool) uint
 }
 
 func (cache *transcriptCache) entriesFor(revision uint64, session string, messages []contracts.Message, compact bool) []contracts.Message {
-	stamp := uint64(1469598103934665603)
-	for i := range messages {
-		stamp = transcriptStamp(stamp, messages[i], compact)
-	}
-	if cache.entries != nil && cache.revision == revision && cache.session == session && cache.stamp == stamp && cache.compact == compact {
+	if cache.entries != nil && cache.revision == revision && cache.session == session &&
+		cache.compact == compact && sameTranscriptSource(cache.source, messages) {
 		return cache.entries
 	}
-	cache.revision, cache.session, cache.stamp, cache.compact = revision, session, stamp, compact
+	if cache.session != session {
+		cache.rows = nil
+	}
+	cache.revision, cache.session, cache.source, cache.compact = revision, session, messages, compact
 	cache.entries, cache.flat, cache.rail = transcriptEntries(messages), nil, nil
+	if cache.prefix != "" {
+		for i := range cache.entries {
+			cache.entries[i].ID = cache.prefix + cache.entries[i].ID
+		}
+	}
+	cache.tail = transcriptProjection{}
+	cache.updateStreamingText(messages)
+	return cache.entries
+}
+
+func sameTranscriptSource(a, b []contracts.Message) bool {
+	return len(a) == len(b) && (len(a) == 0 || &a[0] == &b[0])
+}
+
+func (cache *transcriptCache) updateStreamingText(messages []contracts.Message) {
 	cache.streamingText = ""
 	for i := len(messages) - 1; i >= 0; i-- {
 		message := &messages[i]
@@ -317,20 +343,81 @@ func (cache *transcriptCache) entriesFor(revision uint64, session string, messag
 		}
 		break
 	}
-	if cache.rows == nil {
-		cache.rows = map[string]transcriptProjection{}
+}
+
+// updateTail accepts only a change to the final assistant message of the
+// exact source we rendered. A snapshot replacement, optimistic message
+// overlay, or change to the row topology must use the normal projection.
+func (cache *transcriptCache) updateTail(revision uint64, before, after []contracts.Message) {
+	if len(after) == 0 || len(cache.entries) == 0 || cache.flat == nil || !sameTranscriptSource(cache.source, before) {
+		return
 	}
-	return cache.entries
+	last := len(after) - 1
+	entry := after[last]
+	if entry.Role != "assistant" {
+		return
+	}
+	tailIndex := len(cache.entries) - 1
+	tailID := cache.entries[tailIndex].ID
+	rawID := strings.TrimPrefix(tailID, cache.prefix)
+	if entry.ID != rawID {
+		first := last - 1
+		for first >= 0 && after[first].ID != rawID {
+			first--
+		}
+		if first < 0 {
+			return
+		}
+		joined := transcriptEntries(after[first:])
+		if len(joined) != 1 {
+			return
+		}
+		entry = joined[0]
+	}
+	entry.ID = tailID
+	rows := transcriptRows(entry, cache.compact)
+	if cache.tail.id != tailID || len(rows) != len(cache.tail.rows) {
+		return
+	}
+	for i, row := range rows {
+		if old := cache.tail.rows[i]; row.ID != old.ID || (len(row.Activity) > 0) != (len(old.Activity) > 0) {
+			return
+		}
+	}
+	cache.entries[tailIndex] = entry
+	cache.tail = transcriptProjection{id: tailID, stamp: transcriptStamp(0, entry, cache.compact), rows: rows}
+	cache.source, cache.revision = after, revision
+	cache.updateStreamingText(after)
+	if n := len(cache.rail); n > 0 {
+		tick := &cache.rail[n-1]
+		tick.Reply = ""
+		for _, reply := range cache.entries[cache.flat[tick.Row].Message+1:] {
+			if reply.Role == "assistant" {
+				tick.Reply = railReplyPreview(reply.Blocks)
+				if tick.Reply != "" {
+					break
+				}
+			}
+		}
+	}
 }
 
 // rowsFor returns the entry's block rows, projecting them again only when
 // its content changed since they were made, and keeps them for the row builder
 // to read by ID.
 func (cache *transcriptCache) rowsFor(entry contracts.Message, compact bool) []transcriptRow {
+	stamp := transcriptStamp(0, entry, compact)
+	if n := len(cache.entries); n > 0 && cache.entries[n-1].ID == entry.ID {
+		if cache.tail.id == entry.ID && cache.tail.stamp == stamp {
+			return cache.tail.rows
+		}
+		rows := transcriptRows(entry, compact)
+		cache.tail = transcriptProjection{id: entry.ID, stamp: stamp, rows: rows}
+		return rows
+	}
 	if cache.rows == nil {
 		cache.rows = map[string]transcriptProjection{}
 	}
-	stamp := transcriptStamp(0, entry, compact)
 	if cached, ok := cache.rows[entry.ID]; ok && cached.stamp == stamp {
 		return cached.rows
 	}
@@ -343,6 +430,9 @@ func (cache *transcriptCache) rowsFor(entry contracts.Message, compact bool) []t
 
 // rowsOf returns the rows the last projection made for the entry.
 func (cache *transcriptCache) rowsOf(entryID string) []transcriptRow {
+	if cache.tail.id == entryID {
+		return cache.tail.rows
+	}
 	return cache.rows[entryID].rows
 }
 

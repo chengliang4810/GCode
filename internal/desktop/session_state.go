@@ -171,6 +171,7 @@ func (a *App) restoreSessionView(id string) {
 	v := a.sessionStates[id]
 	a.draft = v.Draft
 	a.attachments = append([]contracts.Attachment(nil), v.Attachments...)
+	a.prefetchMedia(attachmentMediaRefs(a.attachments))
 	a.annotations = append([]contracts.Annotation(nil), v.Annotations...)
 	indices := make([]uint32, 0, len(a.annotations))
 	for _, annotation := range a.annotations {

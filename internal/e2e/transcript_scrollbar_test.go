@@ -64,10 +64,8 @@ func TestDesktopLocalTranscriptScrollbarEdge(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if !activityTreeContains(tree, "SIDE CHATS") {
-					return fmt.Errorf("information card missing")
-				}
-				return nil
+				_, err = tree.findKey("session-info-branch-changes")
+				return err
 			})
 			var viewport accessNode
 			checkEdge := func() error {
@@ -115,7 +113,7 @@ func TestDesktopLocalTranscriptScrollbarEdge(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if activityTreeContains(tree, "SIDE CHATS") {
+				if _, err := tree.findKey("session-info-branch-changes"); err == nil {
 					return fmt.Errorf("information card still visible")
 				}
 				return checkEdge()

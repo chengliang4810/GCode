@@ -58,11 +58,16 @@ func collectProjectFiles(ctx context.Context, project contracts.Project) ([]cont
 		if entry.IsDir() {
 			kind = "directory"
 		}
-		parent := ""
-		if directory := filepath.ToSlash(filepath.Dir(relative)); directory != "." {
-			parent = project.ID + ":" + directory
+		// These immutable fields can share the ID's storage. Keeping the walk's
+		// absolute path and allocating a parent ID per entry duplicates the tree.
+		fileID := project.ID + ":" + relative
+		relative = fileID[len(project.ID)+1:]
+		name, parent := relative, ""
+		if slash := strings.LastIndexByte(relative, '/'); slash >= 0 {
+			name = relative[slash+1:]
+			parent = fileID[:len(project.ID)+1+slash]
 		}
-		files = append(files, contracts.File{ID: project.ID + ":" + relative, ProjectID: project.ID, Path: relative, Name: entry.Name(), Kind: kind, ParentID: parent})
+		files = append(files, contracts.File{ID: fileID, ProjectID: project.ID, Path: relative, Name: name, Kind: kind, ParentID: parent})
 		return nil
 	})
 	return files, err

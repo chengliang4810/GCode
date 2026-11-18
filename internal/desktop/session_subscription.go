@@ -212,22 +212,12 @@ func (a *App) refreshSessionSubscription() {
 			})
 			return
 		}
-		for {
-			select {
-			case <-ctx.Done():
+		dispatchSubscriptionEvents(ctx, events, window.Update, func(event contracts.Event) {
+			if a.closed || generation != a.sessionSubscriptionGeneration {
 				return
-			case event, ok := <-events:
-				if !ok {
-					return
-				}
-				window.Update(func() {
-					if a.closed || generation != a.sessionSubscriptionGeneration {
-						return
-					}
-					a.applyEvent(event)
-				})
 			}
-		}
+			a.applyEvent(event)
+		})
 	}()
 }
 

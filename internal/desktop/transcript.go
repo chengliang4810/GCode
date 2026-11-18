@@ -105,11 +105,11 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 				block := a.transcriptRowAt(pane.cache, message, row.Block)
 				if len(block.Activity) > 0 {
 					a.activityGroup(c, block, message)
-				} else {
+				} else if block.Block != nil {
 					c.Key(block.ID)
 					body := message
 					body.Streaming = message.Streaming && block.Block.ID == pane.cache.streamingText
-					a.transcriptBlock(c, body, block.Block)
+					a.transcriptBlock(c, body, *block.Block)
 				}
 			}
 			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {

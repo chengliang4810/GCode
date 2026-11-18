@@ -150,6 +150,10 @@ func (a *App) prepareBackground(state *backgroundSettingsState) {
 				return
 			}
 			state.LoadError = ""
+			if bitmap != nil {
+				// Compile only when a background is loaded, before painting it.
+				_ = conversationBackgroundShader()
+			}
 			state.Bitmap = bitmap
 			state.Thumbnail = thumbnail
 		}
