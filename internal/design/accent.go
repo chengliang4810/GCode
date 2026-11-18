@@ -7,14 +7,17 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+// accentPresets is the original AccentPreset/AccentRoles table: the first
+// value is the dark background pair, the second the light one.
+var accentPresets = map[string][2]string{
+	"rcode": {"#8b7cf6", "#5b43e8"}, "orange": {"#fb923c", "#c2410c"}, "amber": {"#fbbf24", "#a16207"},
+	"green": {"#4ade80", "#15803d"}, "cyan": {"#22d3ee", "#0e7490"}, "blue": {"#60a5fa", "#2563eb"}, "pink": {"#f472b6", "#be185d"},
+}
+
 // ApplyAccent applies the original AccentPreset/AccentRoles algorithm. Syntax,
 // terminal ANSI, status and diff roles remain owned by the chosen theme.
 func ApplyAccent(t Tokens, selection string) Tokens {
-	presets := map[string][2]string{
-		"rcode": {"#8b7cf6", "#5b43e8"}, "orange": {"#fb923c", "#c2410c"}, "amber": {"#fbbf24", "#a16207"},
-		"green": {"#4ade80", "#15803d"}, "cyan": {"#22d3ee", "#0e7490"}, "blue": {"#60a5fa", "#2563eb"}, "pink": {"#f472b6", "#be185d"},
-	}
-	values, ok := presets[strings.ToLower(selection)]
+	values, ok := accentPresets[strings.ToLower(selection)]
 	if !ok {
 		return t
 	}
@@ -44,7 +47,17 @@ func ApplyAccent(t Tokens, selection string) Tokens {
 	t.Selection = primary.Alpha(selectionAlpha)
 	t.Caret = primary
 	t.Glyph = [3]ui.Color{sourceMix(primary, lightBase, lightMix), primary, sourceMix(primary, black, deepMix)}
+	// The pressed surface keeps the theme's own alpha (1a light, 2e dark) and
+	// only takes the user accent's hue, so `active` follows the accent without
+	// per-theme overrides.
+	t.Active = accentedHue(primary, t.Active)
 	return t
+}
+
+// accentedHue returns color's hue with base's alpha, which lets a translucent
+// theme surface follow the accent without giving up its own transparency.
+func accentedHue(color, base ui.Color) ui.Color {
+	return ui.Color{R: color.R, G: color.G, B: color.B, A: base.A}
 }
 
 func sourceMix(a, b ui.Color, amount float32) ui.Color {

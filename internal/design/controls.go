@@ -1,5 +1,11 @@
 package design
 
+import (
+	"sync"
+
+	"github.com/egoist/mygo/ui"
+)
+
 // AttachedPanels keeps the goal and todo trays in one composer surface stack.
 type AttachedPanelTokens struct {
 	Inset, Overlap, Height, Radius, HeaderPadding, Gap float32
@@ -46,9 +52,20 @@ type ControlTokens struct {
 // Controls defines shared component geometry. Change it here rather than in a
 // page. Theme colors continue to come from Tokens.UI and the selected palette.
 func Controls() ControlTokens {
+	const (
+		popupRadius  float32 = 10
+		popupPadding float32 = 5
+	)
 	return ControlTokens{
 		FontSize: TextBase, BorderWidth: 1,
-		ButtonHeight: 28.8, ButtonRadius: 6, ButtonPaddingX: 8, ButtonPaddingY: 4,
+		// One button height for every text-bearing control, rounded onto the
+		// 4px geometry grid. A 14px label needs 1.5 line boxes plus the two
+		// 4px paddings (29px), so 28 is the wrong side to round to: it would
+		// sit below the content it must hold. The value therefore rounds up,
+		// 28.8 → 32, which also matches InputHeight so a button and a field
+		// next to it share one line. Small interface fonts still fit inside
+		// it, and controlButton keeps its max() so nothing clips.
+		ButtonHeight: 32, ButtonRadius: 6, ButtonPaddingX: 8, ButtonPaddingY: 4,
 		ButtonGap: 6, IconButtonSize: 28, IconSize: 16,
 		InlineIconButtonSize: 24,
 		ChipDismissSize:      16, AttachmentDismissSize: 20,
@@ -56,14 +73,19 @@ func Controls() ControlTokens {
 		ComposerTargetIconSize: 12, ComposerTargetGap: 5,
 		ComposerTargetPaddingX: 4, ComposerTargetPaddingY: 3, ComposerTargetRadius: 5,
 		InputHeight: 32, InputRadius: 6, InputPaddingX: 10, InputPaddingY: 6,
-		SelectMinWidth: 124, PopupPadding: 5, PopupRadius: 10,
-		OptionPaddingX: 10, OptionPaddingY: 7, OptionRadius: 6,
-		SwitchWidth: 44.8, SwitchHeight: 28.8,
+		SelectMinWidth: 124, PopupPadding: popupPadding, PopupRadius: popupRadius,
+		// An option is the popup's inner row, so its corners stay concentric
+		// with the popup's: the outer radius minus the popup's padding,
+		// 10 − 5 = 5.
+		OptionPaddingX: 10, OptionPaddingY: 7, OptionRadius: popupRadius - popupPadding,
+		// The switch track and thumb keep their 1.6 ratio; both sides sit on the
+		// 4px grid so the control lines up with buttons and fields.
+		SwitchWidth: 44, SwitchHeight: 28,
 		CheckboxSize: 16, CheckboxRadius: 4,
 		SliderHeight:    28,
 		ScrollbarHeight: 16, ScrollbarMinThumb: 24,
 		NavigationHeight: 36, NavigationPaddingX: 10, NavigationGap: 10,
-		TileRadius: 9, TilePadding: 10, SwatchSize: 20,
+		TileRadius: 8, TilePadding: 10, SwatchSize: 20,
 		GradientSwatchWidth: 24, GradientSwatchHeight: 12,
 		ReorderIndicatorWidth: 2,
 		ResourceIconSize:      36, BadgePaddingX: 6, BadgePaddingY: 2,
@@ -136,5 +158,53 @@ func Sidebar() SidebarTokens {
 		ConversationTrailingWidth: controls.InlineIconButtonSize,
 		ChildInset:                8, ConversationTextInset: conversationRowPaddingX + leading + conversationGap,
 		PageSize: 5,
+	}
+}
+
+// SemanticTones carries the muted companions of the semantic colors: the
+// theme's own fainter tone for a status, so a faint surface comes from the
+// palette instead of an alpha overlay on an arbitrary one.
+type SemanticTones struct {
+	Danger, Warning, Success                ui.Color
+	DangerMuted, WarningMuted, SuccessMuted ui.Color
+}
+
+// semanticToneKey identifies the catalog variant a theme came from.
+type semanticToneKey struct {
+	danger, warning, success ui.Color
+}
+
+// semanticToneIndex maps a theme's semantic colors to the catalog's muted
+// tones. The native theme carries the base colors only, so the muted tones
+// are looked up by the semantic roles the theme exposes: two variants that
+// share one base color but not one muted tone differ in the other roles.
+var semanticToneIndex = sync.OnceValue(func() map[semanticToneKey]SemanticTones {
+	load()
+	index := make(map[semanticToneKey]SemanticTones, len(variants))
+	for _, variant := range variants {
+		tones := Palette(variant.ID, variant.Appearance == "dark")
+		key := semanticToneKey{danger: tones.Danger, warning: tones.Warning, success: tones.Success}
+		index[key] = SemanticTones{
+			Danger: tones.Danger, Warning: tones.Warning, Success: tones.Success,
+			DangerMuted: tones.DangerMuted, WarningMuted: tones.WarningMuted, SuccessMuted: tones.SuccessMuted,
+		}
+	}
+	return index
+})
+
+// SemanticTonesFor resolves the muted companions of the semantic colors for
+// the running theme. A theme outside the catalog (the agent island) keeps the
+// base colors, so no surface depends on a tone the theme does not own.
+func SemanticTonesFor(theme *ui.Theme) SemanticTones {
+	if theme == nil {
+		return SemanticTones{}
+	}
+	key := semanticToneKey{danger: theme.Danger, warning: theme.Warning, success: theme.Success}
+	if tones, ok := semanticToneIndex()[key]; ok {
+		return tones
+	}
+	return SemanticTones{
+		Danger: theme.Danger, Warning: theme.Warning, Success: theme.Success,
+		DangerMuted: theme.Danger, WarningMuted: theme.Warning, SuccessMuted: theme.Success,
 	}
 }

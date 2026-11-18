@@ -65,11 +65,9 @@ type Source struct {
 type accent struct {
 	Primary   string    `json:"primary"`
 	Strong    string    `json:"strong"`
-	Wash      string    `json:"wash"`
 	On        string    `json:"on"`
 	Selection string    `json:"selection"`
 	Caret     string    `json:"caret"`
-	Activity  string    `json:"activity"`
 	Glyph     [3]string `json:"glyph"`
 }
 
@@ -126,18 +124,19 @@ func Themes() []Variant {
 
 // Tokens names the semantic surfaces used by the replica, without losing original roles.
 type Tokens struct {
-	ID, Name                                                  string
-	Dark                                                      bool
-	Frosted                                                   bool
-	Background, Shell, Raised, Card, Dialog, Overlay          ui.Color
-	Text, Muted, Faint, Solid, OnSolid                        ui.Color
-	Accent, AccentStrong, AccentOn, Selection, Caret          ui.Color
-	Border, BorderStrong, Hover, Active, Input, CodeWash      ui.Color
-	Danger, Warning, Success, DiffAdd, DiffDelete, DiffHunk   ui.Color
-	TerminalBackground, TerminalForeground, TerminalSelection ui.Color
-	Glyph                                                     [3]ui.Color
-	ANSI                                                      [16]ui.Color
-	Syntax                                                    map[string]ui.Color
+	ID, Name                                                          string
+	Dark                                                              bool
+	Frosted                                                           bool
+	Background, Shell, Raised, Card, Dialog, Overlay                  ui.Color
+	Text, Muted, Faint, Solid, OnSolid                                ui.Color
+	Accent, AccentStrong, AccentOn, Selection, Caret                  ui.Color
+	Border, BorderStrong, Hover, Active, Input, CodeWash              ui.Color
+	Danger, DangerMuted, Warning, WarningMuted, Success, SuccessMuted ui.Color
+	DiffAdd, DiffDelete                                               ui.Color
+	TerminalBackground, TerminalForeground, TerminalSelection         ui.Color
+	Glyph                                                             [3]ui.Color
+	ANSI                                                              [16]ui.Color
+	Syntax                                                            map[string]ui.Color
 }
 
 // Palette resolves a variant id or family id, falling back to GCode in the requested appearance.
@@ -176,7 +175,7 @@ func Palette(themeID string, dark bool) Tokens {
 		Text: c("text"), Muted: c("textMuted"), Faint: c("textFaint"), Solid: c("solid"), OnSolid: c("onSolid"),
 		Accent: ui.Hex(v.Accent.Primary), AccentStrong: ui.Hex(v.Accent.Strong), AccentOn: ui.Hex(v.Accent.On), Selection: ui.Hex(v.Accent.Selection), Caret: ui.Hex(v.Accent.Caret),
 		Border: c("border"), BorderStrong: c("borderStrong"), Hover: c("hover"), Active: c("active"), Input: c("input"), CodeWash: c("codeWash"),
-		Danger: c("danger"), Warning: c("warning"), Success: c("success"), DiffAdd: c("diffAdd"), DiffDelete: c("diffDelete"), DiffHunk: c("diffHunk"),
+		Danger: c("danger"), DangerMuted: c("dangerMuted"), Warning: c("warning"), WarningMuted: c("warningMuted"), Success: c("success"), SuccessMuted: c("successMuted"), DiffAdd: c("diffAdd"), DiffDelete: c("diffDelete"),
 		TerminalBackground: ui.Hex(v.Terminal.Background), TerminalForeground: ui.Hex(v.Terminal.Foreground), TerminalSelection: ui.Hex(v.Terminal.Selection), Syntax: make(map[string]ui.Color)}
 	for i, color := range v.Terminal.ANSI {
 		t.ANSI[i] = ui.Hex(color)

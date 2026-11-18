@@ -34,7 +34,6 @@
             "successMuted": "#1c6c3b",
             "input": "#ffffff",
             "codeWash": "#0000000f",
-            "cursor": "#3030358c",
             "diffAdd": "#15803d",
             "diffDelete": "#dc2626",
             "diffHunk": "#5b43e812"
@@ -42,11 +41,9 @@
           "accent": {
             "primary": "#5b43e8",
             "strong": "#5b43e8",
-            "wash": "#5b43e81f",
             "on": "#ffffff",
             "selection": "#5b43e83d",
             "caret": "#5b43e8",
-            "activity": "#5b43e8",
             "glyph": [
               "#7965ec",
               "#5b43e8",
@@ -141,7 +138,6 @@
             "successMuted": "#61d8ad",
             "input": "#343438b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#e8e8ea66",
             "diffAdd": "#34d399",
             "diffDelete": "#f87171",
             "diffHunk": "#8b7cf614"
@@ -149,11 +145,9 @@
           "accent": {
             "primary": "#8b7cf6",
             "strong": "#8b7cf6",
-            "wash": "#8b7cf638",
             "on": "#000000",
             "selection": "#8b7cf659",
             "caret": "#8b7cf6",
-            "activity": "#8b7cf6",
             "glyph": [
               "#aba1f9",
               "#8b7cf6",
@@ -254,7 +248,6 @@
             "successMuted": "#086808",
             "input": "#ffffff",
             "codeWash": "#0000000f",
-            "cursor": "#1f1f1f8c",
             "diffAdd": "#008000",
             "diffDelete": "#a1260d",
             "diffHunk": "#0078d412"
@@ -262,11 +255,9 @@
           "accent": {
             "primary": "#0078d4",
             "strong": "#0078d4",
-            "wash": "#0078d41f",
             "on": "#000000",
             "selection": "#0078d43d",
             "caret": "#0078d4",
-            "activity": "#0078d4",
             "glyph": [
               "#2e90dc",
               "#0078d4",
@@ -361,7 +352,6 @@
             "successMuted": "#9cd299",
             "input": "#2a2d2eb8",
             "codeWash": "#ffffff0f",
-            "cursor": "#d4d4d466",
             "diffAdd": "#89d185",
             "diffDelete": "#f48771",
             "diffHunk": "#007acc14"
@@ -369,11 +359,9 @@
           "accent": {
             "primary": "#007acc",
             "strong": "#007acc",
-            "wash": "#007acc38",
             "on": "#000000",
             "selection": "#007acc59",
             "caret": "#007acc",
-            "activity": "#007acc",
             "glyph": [
               "#479fda",
               "#007acc",
@@ -474,7 +462,6 @@
             "successMuted": "#438c3b",
             "input": "#f7f8fa",
             "codeWash": "#0000000f",
-            "cursor": "#4c4f698c",
             "diffAdd": "#40a02b",
             "diffDelete": "#d20f39",
             "diffHunk": "#8839ef12"
@@ -482,11 +469,9 @@
           "accent": {
             "primary": "#8839ef",
             "strong": "#8839ef",
-            "wash": "#8839ef1f",
             "on": "#ffffff",
             "selection": "#8839ef3d",
             "caret": "#8839ef",
-            "activity": "#8839ef",
             "glyph": [
               "#9b5af0",
               "#8839ef",
@@ -581,7 +566,6 @@
             "successMuted": "#b0e0b6",
             "input": "#313244b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#cdd6f466",
             "diffAdd": "#a6e3a1",
             "diffDelete": "#f38ba8",
             "diffHunk": "#cba6f714"
@@ -589,11 +573,9 @@
           "accent": {
             "primary": "#cba6f7",
             "strong": "#cba6f7",
-            "wash": "#cba6f738",
             "on": "#000000",
             "selection": "#cba6f759",
             "caret": "#cba6f7",
-            "activity": "#cba6f7",
             "glyph": [
               "#dabff9",
               "#cba6f7",
@@ -694,7 +676,6 @@
             "successMuted": "#33595b",
             "input": "#e1e2e7",
             "codeWash": "#0000000f",
-            "cursor": "#343b598c",
             "diffAdd": "#33635c",
             "diffDelete": "#8c4351",
             "diffHunk": "#34548a12"
@@ -702,11 +683,9 @@
           "accent": {
             "primary": "#34548a",
             "strong": "#34548a",
-            "wash": "#34548a1f",
             "on": "#ffffff",
             "selection": "#34548a3d",
             "caret": "#34548a",
-            "activity": "#34548a",
             "glyph": [
               "#516b99",
               "#34548a",
@@ -801,7 +780,6 @@
             "successMuted": "#a7cd8d",
             "input": "#292e42b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#c0caf566",
             "diffAdd": "#9ece6a",
             "diffDelete": "#f7768e",
             "diffHunk": "#7aa2f714"
@@ -809,11 +787,9 @@
           "accent": {
             "primary": "#7aa2f7",
             "strong": "#7aa2f7",
-            "wash": "#7aa2f738",
             "on": "#000000",
             "selection": "#7aa2f759",
             "caret": "#7aa2f7",
-            "activity": "#7aa2f7",
             "glyph": [
               "#9fbcf9",
               "#7aa2f7",
@@ -914,7 +890,6 @@
             "successMuted": "#7afa99",
             "input": "#44475ab8",
             "codeWash": "#ffffff0f",
-            "cursor": "#f8f8f266",
             "diffAdd": "#50fa7b",
             "diffDelete": "#ff5555",
             "diffHunk": "#bd93f914"
@@ -922,11 +897,9 @@
           "accent": {
             "primary": "#bd93f9",
             "strong": "#bd93f9",
-            "wash": "#bd93f938",
             "on": "#000000",
             "selection": "#bd93f959",
             "caret": "#bd93f9",
-            "activity": "#bd93f9",
             "glyph": [
               "#cfb1fb",
               "#bd93f9",
@@ -1027,7 +1000,6 @@
             "successMuted": "#1b6833",
             "input": "#ffffff",
             "codeWash": "#0000000f",
-            "cursor": "#1f23288c",
             "diffAdd": "#1a7f37",
             "diffDelete": "#cf222e",
             "diffHunk": "#0969da12"
@@ -1035,11 +1007,9 @@
           "accent": {
             "primary": "#0969da",
             "strong": "#0969da",
-            "wash": "#0969da1f",
             "on": "#ffffff",
             "selection": "#0969da3d",
             "caret": "#0969da",
-            "activity": "#0969da",
             "glyph": [
               "#3584e1",
               "#0969da",
@@ -1134,7 +1104,6 @@
             "successMuted": "#69c679",
             "input": "#21262db8",
             "codeWash": "#ffffff0f",
-            "cursor": "#e6edf366",
             "diffAdd": "#3fb950",
             "diffDelete": "#f85149",
             "diffHunk": "#2f81f714"
@@ -1142,11 +1111,9 @@
           "accent": {
             "primary": "#2f81f7",
             "strong": "#2f81f7",
-            "wash": "#2f81f738",
             "on": "#000000",
             "selection": "#2f81f759",
             "caret": "#2f81f7",
-            "activity": "#2f81f7",
             "glyph": [
               "#69a4f9",
               "#2f81f7",
@@ -1247,7 +1214,6 @@
             "successMuted": "#68a84c",
             "input": "#fafafa",
             "codeWash": "#0000000f",
-            "cursor": "#5c61668c",
             "diffAdd": "#6cbf43",
             "diffDelete": "#e65050",
             "diffHunk": "#ce801412"
@@ -1255,11 +1221,9 @@
           "accent": {
             "primary": "#ce8014",
             "strong": "#ce8014",
-            "wash": "#ce80141f",
             "on": "#000000",
             "selection": "#ce80143d",
             "caret": "#ce8014",
-            "activity": "#ce8014",
             "glyph": [
               "#d6963e",
               "#ce8014",
@@ -1354,7 +1318,6 @@
             "successMuted": "#84bf6e",
             "input": "#1b1f29b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#bfbdb666",
             "diffAdd": "#70bf56",
             "diffDelete": "#d95757",
             "diffHunk": "#e6b45014"
@@ -1362,11 +1325,9 @@
           "accent": {
             "primary": "#e6b450",
             "strong": "#e6b450",
-            "wash": "#e6b45038",
             "on": "#000000",
             "selection": "#e6b45059",
             "caret": "#e6b450",
-            "activity": "#e6b450",
             "glyph": [
               "#edc981",
               "#e6b450",
@@ -1461,7 +1422,6 @@
             "successMuted": "#98d582",
             "input": "#343d4db8",
             "codeWash": "#ffffff0f",
-            "cursor": "#cccac266",
             "diffAdd": "#87d96c",
             "diffDelete": "#ff6666",
             "diffHunk": "#ffcc6614"
@@ -1469,11 +1429,9 @@
           "accent": {
             "primary": "#ffcc66",
             "strong": "#ffcc66",
-            "wash": "#ffcc6638",
             "on": "#000000",
             "selection": "#ffcc6659",
             "caret": "#ffcc66",
-            "activity": "#ffcc66",
             "glyph": [
               "#ffda91",
               "#ffcc66",
@@ -1574,7 +1532,6 @@
             "successMuted": "#6a6518",
             "input": "#f9f5d7",
             "codeWash": "#0000000f",
-            "cursor": "#3c38368c",
             "diffAdd": "#79740e",
             "diffDelete": "#9d0006",
             "diffHunk": "#07667812"
@@ -1582,11 +1539,9 @@
           "accent": {
             "primary": "#076678",
             "strong": "#076678",
-            "wash": "#0766781f",
             "on": "#ffffff",
             "selection": "#0766783d",
             "caret": "#076678",
-            "activity": "#076678",
             "glyph": [
               "#337f86",
               "#076678",
@@ -1681,7 +1636,6 @@
             "successMuted": "#c5c349",
             "input": "#504945b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#ebdbb266",
             "diffAdd": "#b8bb26",
             "diffDelete": "#fb4934",
             "diffHunk": "#8ec07c14"
@@ -1689,11 +1643,9 @@
           "accent": {
             "primary": "#8ec07c",
             "strong": "#8ec07c",
-            "wash": "#8ec07c38",
             "on": "#000000",
             "selection": "#8ec07c59",
             "caret": "#8ec07c",
-            "activity": "#8ec07c",
             "glyph": [
               "#aed2a1",
               "#8ec07c",
@@ -1794,7 +1746,6 @@
             "successMuted": "#568496",
             "input": "#fffaf3",
             "codeWash": "#0000000f",
-            "cursor": "#5752798c",
             "diffAdd": "#56949f",
             "diffDelete": "#b4637a",
             "diffHunk": "#907aa912"
@@ -1802,11 +1753,9 @@
           "accent": {
             "primary": "#907aa9",
             "strong": "#907aa9",
-            "wash": "#907aa91f",
             "on": "#000000",
             "selection": "#907aa93d",
             "caret": "#907aa9",
-            "activity": "#907aa9",
             "glyph": [
               "#a390b5",
               "#907aa9",
@@ -1901,7 +1850,6 @@
             "successMuted": "#add3df",
             "input": "#393552b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#e0def466",
             "diffAdd": "#9ccfd8",
             "diffDelete": "#eb6f92",
             "diffHunk": "#c4a7e714"
@@ -1909,11 +1857,9 @@
           "accent": {
             "primary": "#c4a7e7",
             "strong": "#c4a7e7",
-            "wash": "#c4a7e738",
             "on": "#000000",
             "selection": "#c4a7e759",
             "caret": "#c4a7e7",
-            "activity": "#c4a7e7",
             "glyph": [
               "#d5c0ee",
               "#c4a7e7",
@@ -2014,7 +1960,6 @@
             "successMuted": "#b0c6a3",
             "input": "#434c5eb8",
             "codeWash": "#ffffff0f",
-            "cursor": "#d8dee966",
             "diffAdd": "#a3be8c",
             "diffDelete": "#bf616a",
             "diffHunk": "#88c0d014"
@@ -2022,11 +1967,9 @@
           "accent": {
             "primary": "#88c0d0",
             "strong": "#88c0d0",
-            "wash": "#88c0d038",
             "on": "#000000",
             "selection": "#88c0d059",
             "caret": "#88c0d0",
-            "activity": "#88c0d0",
             "glyph": [
               "#a9d2dd",
               "#88c0d0",
@@ -2127,7 +2070,6 @@
             "successMuted": "#94be7c",
             "input": "#2c313ab8",
             "codeWash": "#ffffff0f",
-            "cursor": "#abb2bf66",
             "diffAdd": "#8cc265",
             "diffDelete": "#e05561",
             "diffHunk": "#528bff14"
@@ -2135,11 +2077,9 @@
           "accent": {
             "primary": "#528bff",
             "strong": "#528bff",
-            "wash": "#528bff38",
             "on": "#000000",
             "selection": "#528bff59",
             "caret": "#528bff",
-            "activity": "#528bff",
             "glyph": [
               "#82abff",
               "#528bff",
@@ -2240,7 +2180,6 @@
             "successMuted": "#9dbf8b",
             "input": "#2c313ab8",
             "codeWash": "#ffffff0f",
-            "cursor": "#abb2bf66",
             "diffAdd": "#98c379",
             "diffDelete": "#e06c75",
             "diffHunk": "#528bff14"
@@ -2248,11 +2187,9 @@
           "accent": {
             "primary": "#528bff",
             "strong": "#528bff",
-            "wash": "#528bff38",
             "on": "#000000",
             "selection": "#528bff59",
             "caret": "#528bff",
-            "activity": "#528bff",
             "glyph": [
               "#82abff",
               "#528bff",
@@ -2353,7 +2290,6 @@
             "successMuted": "#167d64",
             "input": "#ffffff",
             "codeWash": "#0000000f",
-            "cursor": "#403f538c",
             "diffAdd": "#08916a",
             "diffDelete": "#de3d3b",
             "diffHunk": "#4876d612"
@@ -2361,11 +2297,9 @@
           "accent": {
             "primary": "#4876d6",
             "strong": "#4876d6",
-            "wash": "#4876d61f",
             "on": "#000000",
             "selection": "#4876d63d",
             "caret": "#4876d6",
-            "activity": "#4876d6",
             "glyph": [
               "#688edd",
               "#4876d6",
@@ -2460,7 +2394,6 @@
             "successMuted": "#4fdb8d",
             "input": "#0b253ab8",
             "codeWash": "#ffffff0f",
-            "cursor": "#d6deeb66",
             "diffAdd": "#22da6e",
             "diffDelete": "#ef5350",
             "diffHunk": "#82aaff14"
@@ -2468,11 +2401,9 @@
           "accent": {
             "primary": "#82aaff",
             "strong": "#82aaff",
-            "wash": "#82aaff38",
             "on": "#000000",
             "selection": "#82aaff59",
             "caret": "#82aaff",
-            "activity": "#82aaff",
             "glyph": [
               "#a5c2ff",
               "#82aaff",
@@ -2573,7 +2504,6 @@
             "successMuted": "#0c8379",
             "input": "#ffffff",
             "codeWash": "#0000000f",
-            "cursor": "#1857a48c",
             "diffAdd": "#08916a",
             "diffDelete": "#de3d3b",
             "diffHunk": "#2f86d212"
@@ -2581,11 +2511,9 @@
           "accent": {
             "primary": "#2f86d2",
             "strong": "#2f86d2",
-            "wash": "#2f86d21f",
             "on": "#000000",
             "selection": "#2f86d23d",
             "caret": "#2f86d2",
-            "activity": "#2f86d2",
             "glyph": [
               "#549cda",
               "#2f86d2",
@@ -2680,7 +2608,6 @@
             "successMuted": "#4fdb8d",
             "input": "#0b253ab8",
             "codeWash": "#ffffff0f",
-            "cursor": "#d6deeb66",
             "diffAdd": "#22da6e",
             "diffDelete": "#ef5350",
             "diffHunk": "#219fd514"
@@ -2688,11 +2615,9 @@
           "accent": {
             "primary": "#219fd5",
             "strong": "#219fd5",
-            "wash": "#219fd538",
             "on": "#000000",
             "selection": "#219fd559",
             "caret": "#219fd5",
-            "activity": "#219fd5",
             "glyph": [
               "#5fbae1",
               "#219fd5",
@@ -2793,7 +2718,6 @@
             "successMuted": "#ceeeaa",
             "input": "#34384cb8",
             "codeWash": "#ffffff0f",
-            "cursor": "#eeffff66",
             "diffAdd": "#c3e88d",
             "diffDelete": "#ff5572",
             "diffHunk": "#82aaff14"
@@ -2801,11 +2725,9 @@
           "accent": {
             "primary": "#82aaff",
             "strong": "#82aaff",
-            "wash": "#82aaff38",
             "on": "#000000",
             "selection": "#82aaff59",
             "caret": "#82aaff",
-            "activity": "#82aaff",
             "glyph": [
               "#a5c2ff",
               "#82aaff",
@@ -2906,7 +2828,6 @@
             "successMuted": "#95f5ca",
             "input": "#37294db8",
             "codeWash": "#ffffff0f",
-            "cursor": "#ffffff66",
             "diffAdd": "#72f1b8",
             "diffDelete": "#fe4450",
             "diffHunk": "#ff7edb14"
@@ -2914,11 +2835,9 @@
           "accent": {
             "primary": "#ff7edb",
             "strong": "#ff7edb",
-            "wash": "#ff7edb38",
             "on": "#000000",
             "selection": "#ff7edb59",
             "caret": "#ff7edb",
-            "activity": "#ff7edb",
             "glyph": [
               "#ffa2e5",
               "#ff7edb",
@@ -3019,7 +2938,6 @@
             "successMuted": "#6be340",
             "input": "#393668b8",
             "codeWash": "#ffffff0f",
-            "cursor": "#ffffff66",
             "diffAdd": "#3ad900",
             "diffDelete": "#ec3a37",
             "diffHunk": "#fad00014"
@@ -3027,11 +2945,9 @@
           "accent": {
             "primary": "#fad000",
             "strong": "#fad000",
-            "wash": "#fad00038",
             "on": "#000000",
             "selection": "#fad00059",
             "caret": "#fad000",
-            "activity": "#fad000",
             "glyph": [
               "#fbdd47",
               "#fad000",
@@ -3132,7 +3048,6 @@
             "successMuted": "#6be340",
             "input": "#20455eb8",
             "codeWash": "#ffffff0f",
-            "cursor": "#ffffff66",
             "diffAdd": "#3ad900",
             "diffDelete": "#ff628c",
             "diffHunk": "#ffc60014"
@@ -3140,11 +3055,9 @@
           "accent": {
             "primary": "#ffc600",
             "strong": "#ffc600",
-            "wash": "#ffc60038",
             "on": "#000000",
             "selection": "#ffc60059",
             "caret": "#ffc600",
-            "activity": "#ffc600",
             "glyph": [
               "#ffd647",
               "#ffc600",
@@ -3245,7 +3158,6 @@
             "successMuted": "#a6dc8c",
             "input": "#2d313bb8",
             "codeWash": "#ffffff0f",
-            "cursor": "#d5ced966",
             "diffAdd": "#96e072",
             "diffDelete": "#ee5d43",
             "diffHunk": "#00e8c614"
@@ -3253,11 +3165,9 @@
           "accent": {
             "primary": "#00e8c6",
             "strong": "#00e8c6",
-            "wash": "#00e8c638",
             "on": "#000000",
             "selection": "#00e8c659",
             "caret": "#00e8c6",
-            "activity": "#00e8c6",
             "glyph": [
               "#47eed6",
               "#00e8c6",
