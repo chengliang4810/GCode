@@ -110,7 +110,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 		// and meet the collapsed navigation without a jump at the last frame.
 		left = max(0, navigationWidth-columns.Sidebar)
 	}
-	takeover := !onCanvas && a.workspaceTakeover()
+	takeover := a.route == "chat" && !onCanvas && a.workspaceTakeover()
 	gapBudget := float32(24)
 	if takeover {
 		// In the source, row_left is sidebar-8 and the 8px row gap
@@ -139,6 +139,9 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 			identity.Padding(titlebarTopPadding(bar), 8, 0, 10).Gap(8)
 		}
 		identity.Children(func() {
+			if a.route == "automations" {
+				return
+			}
 			if a.route == "settings" {
 				ui.Text(c.Key("settings-title"), tr(c, a.section)).FontWeight(600).SingleLine()
 				return
@@ -162,7 +165,7 @@ func (a *App) titlebarRow(c *ui.Context, overlay bool) {
 				iconButton(c, "info-circle", tr(c, "Session information")).Shrink(0).OnClick(a.toggleInfo)
 			}
 		})
-		if a.route != "settings" && !onCanvas {
+		if a.route == "chat" && !onCanvas {
 			if a.fit.Right && surface >= 44 {
 				ui.Box(c).Width(surface).Height(height).Shrink(0).Clip().Children(func() { a.workspace.TabStrip(c, a.rightExpanded) })
 			}

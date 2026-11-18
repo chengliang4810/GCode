@@ -26,6 +26,7 @@ import (
 )
 
 type App struct {
+	automationUI          automationPageState
 	sessionInfoProjection sessionInfoProjection
 	math                  mathViewState
 	notifications         *desktopNotifications
@@ -750,6 +751,10 @@ func (a *App) OpenRoute(route string) {
 		a.workspace.StopAnnotations()
 	}
 	switch route {
+	case "automations":
+		a.workspace.StopAnnotations()
+		a.route = "automations"
+		return
 	case "browser", "changes", "history", "files":
 		a.route = "chat"
 		a.setPanel(1, true)
@@ -1080,6 +1085,11 @@ func (a *App) View(c *ui.Context) {
 
 func (a *App) mainView(c *ui.Context) {
 	ui.Column(c).Grow(1).FillHeight().AlignItems(ui.Stretch).Children(func() {
+		if a.route == "automations" {
+			a.titlebar(c)
+			a.automationsView(c)
+			return
+		}
 		if a.route == "settings" {
 			a.titlebar(c)
 			a.settingsView(c)

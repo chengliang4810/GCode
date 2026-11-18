@@ -132,6 +132,10 @@ func (a *App) sidebarNavigation(c *ui.Context) {
 				}
 			}
 		})
+		controlSidebarRow(c.Key("sidebar-automations"), tr(c, "Automations"), a.route == "automations").OnClick(func() { a.navigate("automations") }).Children(func() {
+			icon(c, "action-play", s.IconSize)
+			ui.Text(c, tr(c, "Automations")).Grow(1).MinWidth(0).SingleLine()
+		})
 	})
 	ui.Box(c).FillWidth().Height(1).Background(a.palette.Border).Shrink(0)
 }
