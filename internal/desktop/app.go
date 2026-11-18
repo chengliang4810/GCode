@@ -54,6 +54,7 @@ type App struct {
 	composerControls
 	footerUsage         composerUsageState
 	appUsage            appUsageState
+	menuBar             menuBarState
 	trajectoryViews     map[string]*trajectoryViewState
 	footerGit           composerFooterGitState
 	sideComposers       map[string]*sideComposerState
@@ -320,6 +321,7 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.configureWorkspaceLinks()
 	a.refreshSessionSubscription()
 	a.notifications.Start(a.ctx, nativeNotificationSink{})
+	a.syncMenuBar()
 	a.syncAgentIsland()
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -332,6 +334,7 @@ func (a *App) Attach(win *mygo.Window) error {
 				win.Update(func() {
 					if !a.closed {
 						a.syncAgentIsland()
+						a.refreshMenuBarDay()
 					}
 				})
 			}
@@ -392,6 +395,7 @@ func (a *App) startClose() {
 		saveInstructions := a.agentsDraft != a.agentsSaved
 		instructionsDone := a.agentsSaveDone
 		a.closed = true
+		a.closeMenuBar()
 		a.closeIslandWindows()
 		if a.sessionSubscriptionCancel != nil {
 			a.sessionSubscriptionCancel()
@@ -452,6 +456,7 @@ func (a *App) apply(s contracts.Snapshot) {
 		a.projectFooterAccountSwitches(&s)
 		a.notifications.Observe(s, a.notificationWindowFocused())
 		a.state = s
+		a.syncMenuBar()
 		a.syncAgentIsland()
 		a.sessionInfoProjection = sessionInfoProjection{}
 		a.linkFiles = nil
@@ -510,6 +515,9 @@ func (a *App) applyEvent(event contracts.Event) {
 		a.notification(event.Text)
 	}
 	if event.Kind == "model.request.recorded" || event.Kind == "run.finished" {
+		if a.menuBar.Tray != nil {
+			a.refreshMenuBarUsage()
+		}
 		if state := a.trajectoryViews[event.SessionID]; state != nil {
 			a.refreshModelTrajectory(event.SessionID)
 		}

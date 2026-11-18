@@ -344,6 +344,7 @@ type AgentIslandSettings struct {
 }
 
 type Settings struct {
+	MenuBar         bool                    `json:"menuBar"`
 	Island          AgentIslandSettings     `json:"island"`
 	AgentIsland     bool                    `json:"agentIsland"`
 	Privacy         privacy.Settings        `json:"privacy"`

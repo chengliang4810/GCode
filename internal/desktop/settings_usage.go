@@ -27,7 +27,7 @@ type appUsageState struct {
 }
 
 func (a *App) refreshVisibleAppUsage() {
-	if a.route == "settings" && a.section == "Usage statistics" && !a.appUsage.loading {
+	if (a.route == "settings" && a.section == "Usage statistics" || a.menuBar.Window != nil && a.menuBar.Window.IsVisible()) && !a.appUsage.loading {
 		a.refreshAppUsage()
 	}
 }
@@ -37,9 +37,11 @@ func (a *App) refreshAppUsage() {
 	if state.loading {
 		return
 	}
+	a.menuBar.UsageDay = time.Now().Format("2006-01-02")
 	reader, ok := a.service.(contracts.ApplicationUsageService)
 	if !ok {
 		state.errorText = "Application usage is unavailable: service does not support usage statistics."
+		a.syncMenuBarTitle()
 		return
 	}
 	state.loading = true
@@ -51,12 +53,22 @@ func (a *App) refreshAppUsage() {
 		usage, err := reader.ReadApplicationUsage(a.ctx)
 		return func() {
 			state.loading = false
+			defer func() {
+				if a.menuBar.UsageDirty {
+					a.refreshMenuBarUsage()
+				}
+			}()
 			if err != nil {
 				state.errorText = err.Error()
+				a.syncMenuBarTitle()
 				return
 			}
 			state.report, state.generated, state.errorText = appusage.FromContractReport(usage.Report), usage.GeneratedAt, ""
 			state.invalidateDerivedUsage()
+			a.syncMenuBarTitle()
+			if a.menuBar.Window != nil {
+				a.menuBar.Window.Invalidate()
+			}
 			if a.state.Revision != revision {
 				a.refreshVisibleAppUsage()
 			}
@@ -65,6 +77,7 @@ func (a *App) refreshAppUsage() {
 }
 
 func (a *App) appUsageSettings(c *ui.Context) {
+	a.menuBarSettings(c)
 	state := &a.appUsage
 	if state.errorText != "" {
 		ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Danger)

@@ -43,3 +43,18 @@ is replaced by a bitmap.
 The Rust reference theme exporter is offline build tooling, not an application
 runtime dependency. It exports original resolved palettes instead of guessing
 colors from screenshots. The Go executable embeds the resulting JSON.
+
+## Dynamic Island resources
+
+`island/` contains the ten character images and eight short event sounds from
+Cindy at c591eaa0feb2d6e45591effa6786b6fefe5c00d7 (Apache-2.0). Character images
+are copied unchanged from `apps/desktop/src/renderer/assets/agent-island-*`.
+Sounds from `apps/desktop/native/agent-island/sounds/` are converted from MP3 to
+mono 24 kHz signed 16-bit PCM WAV using macOS `afconvert`; MyGo's existing WAV
+decoder plays them without another dependency. Original LICENSE/NOTICE and the
+Code Island MIT attribution are embedded and included in package licenses.
+
+`branding/menu-bar.svg` derives from the existing small GCode monogram by
+removing its enclosing square and using a black template fill. `MenuBarIcon`
+rasterizes it at 32 pixels for a 16-point native menu bar icon; the system tints
+it for the menu bar appearance.
