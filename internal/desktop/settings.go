@@ -15,7 +15,7 @@ import (
 type settingOption struct{ value, label string }
 
 func (a *App) sections() []string {
-	s := []string{"General", "Appearance", "Privacy", "Notifications", "Devices", "Dynamic Island", "Shortcuts"}
+	s := []string{"General", "Appearance", "Notifications", "Devices", "Dynamic Island", "Shortcuts"}
 	if a.state.Runtime != nil {
 		s = append(s, "Model settings", "Marketplace", "Personalization", "Plugins", "Subagents", "Skills", "Commands", "Hooks", "MCP servers")
 	} else {
@@ -28,7 +28,7 @@ func (a *App) sections() []string {
 	if runtime.GOOS == "darwin" && a.state.Capabilities.Appshots {
 		s = append(s, "Appshots")
 	}
-	return append(s, "Usage statistics", "Archived sessions", "About")
+	return append(s, "Usage statistics", "Privacy", "Archived sessions", "About")
 }
 
 func settingsIcon(section string) string {
@@ -40,9 +40,9 @@ func settingsIcon(section string) string {
 	case "Appearance":
 		return "tuning"
 	case "Privacy":
-		return "settings"
+		return "key-minimalistic"
 	case "Personalization":
-		return "global"
+		return "magic-stick-3"
 	case "Notifications":
 		return "bell"
 	case "Shortcuts":
@@ -52,25 +52,27 @@ func settingsIcon(section string) string {
 	case "Subagents":
 		return "git-branch"
 	case "MCP servers":
-		return "remote-server"
+		return "server"
 	case "Skills":
 		return "star"
 	case "Plugins":
-		return "widget"
+		return "plug"
 	case "Marketplace":
 		return "global"
 	case "Commands":
 		return "command"
 	case "Hooks":
 		return "action-play"
-	case "Devices", "Appshots":
+	case "Devices":
 		return "monitor"
+	case "Appshots":
+		return "cursor-square"
 	case "Cloud":
 		return "cloud"
 	case "Billing":
 		return "wallet"
 	case "Usage statistics":
-		return "widget"
+		return "metrics-gauge"
 	case "Files":
 		return "folder"
 	case "Archived sessions":
@@ -94,7 +96,7 @@ func (a *App) settingsNavigation(c *ui.Context) {
 			}
 			a.navigate(route)
 		})
-		ui.Scroll(c.Key("settings-navigation")).Grow(1).Gap(3).Children(func() {
+		ui.Scroll(c.Key("settings-navigation")).Label(tr(c, "Settings navigation")).Grow(1).Gap(3).Children(func() {
 			for _, name := range a.sections() {
 				section := name
 				if name == "Providers" || name == "Personalization" || name == "Files" {
@@ -146,8 +148,8 @@ func (a *App) settingsView(c *ui.Context) {
 			case "Dynamic Island":
 				a.islandSettings(c)
 			case "General":
-				a.dataDirectorySettings(c)
 				a.generalSettings(c)
+				a.dataDirectorySettings(c)
 			case "Appearance":
 				a.appearanceSettings(c)
 			case "Privacy":
@@ -477,11 +479,6 @@ func recordedShortcut(event ui.InputEvent) string {
 func (a *App) generalSettings(c *ui.Context) {
 	g := &a.state.Settings.General
 	a.settingsCard(c, func() {
-		a.settingsRow(c, "Hierarchical context compression", "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.", func() {
-			a.settingsToggle(c, "Hierarchical context compression", &g.HierarchicalContext)
-		})
-	})
-	a.settingsCard(c, func() {
 		a.settingsRow(c, "Language", "", func() {
 			a.settingsChoice(c, "Language", &g.Language, []settingOption{{"zh-CN", "简体中文"}, {"en", "English"}}, nil)
 		})
@@ -501,6 +498,10 @@ func (a *App) generalSettings(c *ui.Context) {
 		})
 		line(c)
 		a.settingsRow(c, "Compact mode", "Collapse thinking and tools.", func() { a.settingsToggle(c, "Compact mode", &g.CompactMode) })
+		line(c)
+		a.settingsRow(c, "Hierarchical context compression", "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.", func() {
+			a.settingsToggle(c, "Hierarchical context compression", &g.HierarchicalContext)
+		})
 		line(c)
 		a.settingsRow(c, "Stop agent with Escape", "When no dialog or menu is open.", func() { a.settingsToggle(c, "Stop agent with Escape", &g.StopWithEscape) })
 	})

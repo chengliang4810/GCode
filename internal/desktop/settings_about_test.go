@@ -30,6 +30,12 @@ func TestSettingsAboutNavigationLinksAndUpdates(t *testing.T) {
 					if tt.HasText(app.t("Software updates")) {
 						t.Fatal("software updates remain in General")
 					}
+					navigation, ok := tt.Find(app.t("Settings navigation"))
+					if !ok {
+						t.Fatal("settings navigation missing")
+					}
+					tt.Scroll(navigation.X+navigation.W/2, navigation.Y+navigation.H/2, 0, 1000)
+					tt.Frame()
 					if err := tt.Click(app.t("About")); err != nil {
 						t.Fatal(err)
 					}
