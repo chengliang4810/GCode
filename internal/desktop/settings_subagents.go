@@ -31,8 +31,12 @@ func (a *App) editSubagent(profile *contracts.SubagentProfile) {
 }
 
 func (a *App) subagentSelectedModel() contracts.Model {
+	return a.subagentModelByID(a.runtimeUI.subagentModel)
+}
+
+func (a *App) subagentModelByID(id string) contracts.Model {
 	for _, candidate := range a.state.Models {
-		if candidate.ID == a.runtimeUI.subagentModel {
+		if candidate.ID == id {
 			return candidate
 		}
 	}
@@ -42,10 +46,14 @@ func (a *App) subagentSelectedModel() contracts.Model {
 func (a *App) subagentModelChanged() {
 	state := &a.runtimeUI
 	delete(state.subagentFieldErrors, "model")
-	state.subagentReasoning = ""
-	if levels := a.subagentSelectedModel().ReasoningLevels; len(levels) > 0 {
-		state.subagentReasoning = levels[len(levels)-1]
+	state.subagentReasoning = defaultSubagentReasoning(a.subagentSelectedModel())
+}
+
+func defaultSubagentReasoning(model contracts.Model) string {
+	if levels := model.ReasoningLevels; len(levels) > 0 {
+		return levels[len(levels)-1]
 	}
+	return ""
 }
 
 func (a *App) subagentSelectionValid() bool {
@@ -75,8 +83,8 @@ func (a *App) subagentSettings(c *ui.Context) {
 		if !matchesResource(query, profile.ID, profile.Name, profile.Description, name, description) {
 			continue
 		}
-		ui.Row(c.Key("subagent-row-"+profile.ID)).FillWidth().AlignItems(ui.Center).Gap(8).Padding(10, 4).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
-			controlRowButton(c).Grow(1).MinWidth(0).Label(tr(c, "Edit subagent") + " " + name).OnClick(func() { a.editSubagent(&profile) }).Children(func() {
+		ui.Row(c.Key("subagent-row-"+profile.ID)).FillWidth().Wrap().AlignItems(ui.Center).Gap(8).Padding(10, 4).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
+			controlRowButton(c).Grow(1).Width(180).MinWidth(0).Label(tr(c, "Edit subagent") + " " + name).OnClick(func() { a.editSubagent(&profile) }).Children(func() {
 				ui.Column(c).MinWidth(0).Gap(3).Children(func() {
 					ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
 						ui.Text(c, name).FontWeight(500)
@@ -84,20 +92,32 @@ func (a *App) subagentSettings(c *ui.Context) {
 							ui.Text(c, tr(c, "Built-in")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 					})
-					ui.Text(c, description).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
+					ui.Text(c, description).MinWidth(0).Wrap().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 				})
 			})
+			modelID, reasoning := "", ""
+			if profile.Model != nil {
+				modelID, reasoning = profile.Model.ModelID, profile.Model.Reasoning
+			}
+			saveSelection := func() {
+				profile.Model = nil
+				if modelID != "" {
+					profile.Model = &contracts.ModelSelection{ModelID: modelID, Reasoning: reasoning}
+				}
+				a.storeSubagentProfile(profile)
+				a.saveSettings()
+			}
+			a.renderSubagentModelPicker(c, &modelID, name, 180, func() {
+				reasoning = defaultSubagentReasoning(a.subagentModelByID(modelID))
+				saveSelection()
+			})
+			a.renderSubagentReasoning(c, a.subagentModelByID(modelID).ReasoningLevels, &reasoning, name, 112, saveSelection)
 			enabled := !profile.Disabled
 			a.controlSwitch(c.Key("enabled"), &enabled, tr(c, "Enable")+" "+name, false, func(enabled bool) {
 				profile.Disabled = !enabled
 				a.storeSubagentProfile(profile)
 				a.saveSettings()
 			})
-			if !contracts.IsBuiltinSubagent(profile.ID) {
-				textButton(c, tr(c, "Remove")).Label(tr(c, "Remove subagent") + " " + name).OnClick(func() {
-					a.confirmSettingsRemoval("subagent", profile.ID, profile.Name)
-				})
-			}
 		})
 	}
 	if a.runtimeUI.subagentOpen {
@@ -181,28 +201,7 @@ func (a *App) subagentSettingsForm(c *ui.Context) {
 					})
 				}
 				a.subagentModelPicker(c)
-				selected := a.subagentSelectedModel()
-				if len(selected.ReasoningLevels) > 0 {
-					sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
-					label := state.subagentReasoning
-					unavailable := !slices.Contains(selected.ReasoningLevels, label)
-					sel.Trigger.Label(tr(c, "Subagent reasoning level")).FillWidth().Children(func() {
-						ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
-							if unavailable {
-								ui.Text(c, tr(c, "Unavailable")).Shrink(0)
-							}
-							ui.Text(c, tr(c, label)).MinWidth(0).SingleLine()
-						})
-						icon(c, "alt-arrow-down", 13)
-					})
-					sel.Popup(func(panel ui.Element) {
-						controlSelectPopup(c, panel).Children(func() {
-							for _, level := range selected.ReasoningLevels {
-								controlSelectItem(c, sel.Item(level)).Label(tr(c, "Subagent reasoning level") + " " + level).Children(func() { ui.Text(c, tr(c, level)) })
-							}
-						})
-					})
-				}
+				a.renderSubagentReasoning(c, a.subagentSelectedModel().ReasoningLevels, &state.subagentReasoning, "", 0, func() {})
 				if !a.subagentSelectionValid() {
 					ui.Text(c, tr(c, "The configured model or reasoning level is unavailable.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 				}
@@ -213,18 +212,26 @@ func (a *App) subagentSettingsForm(c *ui.Context) {
 }
 
 func (a *App) subagentModelPicker(c *ui.Context) {
-	state := &a.runtimeUI
-	selected := a.subagentSelectedModel()
+	a.renderSubagentModelPicker(c, &a.runtimeUI.subagentModel, "", 0, a.subagentModelChanged)
+}
+
+func (a *App) renderSubagentModelPicker(c *ui.Context, modelID *string, name string, width float32, changed func()) {
+	selected := a.subagentModelByID(*modelID)
 	label := tr(c, "Default main model")
 	unavailable := false
-	if state.subagentModel != "" {
-		label, unavailable = state.subagentModel, true
+	if *modelID != "" {
+		label, unavailable = *modelID, true
 		if selected.ID != "" {
 			label, unavailable = a.runtimeModelLabel(selected), false
 		}
 	}
-	sel := controlSelect(c.Key("subagent-model"), &state.subagentModel)
-	sel.Trigger.Label(tr(c, "Subagent model")).FillWidth().OnChange(a.subagentModelChanged).Children(func() {
+	sel := controlSelect(c.Key("subagent-model"), modelID)
+	if width > 0 {
+		sel.Trigger.Width(width)
+	} else {
+		sel.Trigger.FillWidth()
+	}
+	sel.Trigger.Label(strings.TrimSpace(tr(c, "Subagent model") + " " + name)).OnChange(changed).Children(func() {
 		ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
 			if unavailable {
 				ui.Text(c, tr(c, "Unavailable")).Shrink(0)

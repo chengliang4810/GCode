@@ -149,6 +149,26 @@ func TestCustomSubagentEditorLayoutAcrossWindowsAndThemes(t *testing.T) {
 			profile := contracts.SubagentProfile{ID: "reviewer", Name: "Code reviewer", Description: "Inspect the implementation and report actionable findings.",
 				Prompt: "Read the changed files and verify the result.", Model: &contracts.ModelSelection{ModelID: "custom/model", Reasoning: "High"}}
 			app.state.Settings.Subagents = append(app.state.Settings.Subagents, profile)
+			builtin := contracts.DefaultSubagentProfiles()[0]
+			builtin.Model = profile.Model
+			app.storeSubagentProfile(builtin)
+			list := ui.NewTester(app.View, test.width, 1000)
+			nameLabel := app.t(builtin.Name)
+			modelBounds, modelOK := list.Find(app.t("Subagent model") + " " + nameLabel)
+			reasoningBounds, reasoningOK := list.Find(app.t("Subagent reasoning level") + " " + nameLabel)
+			switchBounds, switchOK := list.Find(app.t("Enable") + " " + nameLabel)
+			for _, rect := range []ui.Rect{modelBounds, reasoningBounds, switchBounds} {
+				if rect.W <= 0 || rect.H <= 0 || rect.X < 20 || rect.X+rect.W > float32(test.width) {
+					t.Fatalf("built-in row control missing or clipped: %+v", rect)
+				}
+			}
+			if !modelOK || !reasoningOK || !switchOK {
+				t.Fatal("built-in row controls are missing")
+			}
+			if test.width == 1320 && (modelBounds.X+modelBounds.W > reasoningBounds.X || reasoningBounds.X+reasoningBounds.W > switchBounds.X ||
+				math.Abs(float64(modelBounds.Y-reasoningBounds.Y)) > 1) {
+				t.Fatalf("built-in row controls are misaligned: model=%+v reasoning=%+v switch=%+v", modelBounds, reasoningBounds, switchBounds)
+			}
 			app.editSubagent(&profile)
 			tt := ui.NewTester(app.View, test.width, 1000)
 			bounds := map[string]ui.Rect{}

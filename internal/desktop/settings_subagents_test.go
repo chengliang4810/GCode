@@ -73,6 +73,33 @@ func TestSubagentProfileModelSwitchAndInheritance(t *testing.T) {
 		app.subagentSettings(c)
 		app.settingsRemovalDialog(c)
 	}, 900, 1000)
+	click := func(label string) {
+		t.Helper()
+		if err := tt.Click(label); err != nil {
+			t.Fatal(err)
+		}
+	}
+	assertBuiltinModel := func(want *contracts.ModelSelection) {
+		t.Helper()
+		saved, err := core.Snapshot(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		profile := contracts.EffectiveSubagentProfiles(saved.Settings.Subagents)[0]
+		if (profile.Model == nil) != (want == nil) || want != nil && *profile.Model != *want {
+			t.Fatalf("built-in model = %+v, want %+v", profile.Model, want)
+		}
+	}
+	click("Subagent model General purpose")
+	click("Subagent model user/first")
+	assertBuiltinModel(&contracts.ModelSelection{ModelID: "user/first", Reasoning: "Max"})
+	click("Subagent reasoning level General purpose")
+	click("Subagent reasoning level High")
+	assertBuiltinModel(&contracts.ModelSelection{ModelID: "user/first", Reasoning: "High"})
+	click("Subagent model General purpose")
+	click("Default main model")
+	assertBuiltinModel(nil)
+
 	if err := tt.Click("Add subagent"); err != nil {
 		t.Fatal(err)
 	}

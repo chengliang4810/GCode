@@ -201,14 +201,29 @@ func (a *App) customSubagentReasoning(c *ui.Context) {
 	if state.subagentModel == "" {
 		return
 	}
-	selected := a.subagentSelectedModel()
-	if len(selected.ReasoningLevels) == 0 {
+	a.renderSubagentReasoning(c, a.subagentSelectedModel().ReasoningLevels, &state.subagentReasoning, "", 0, func() {
+		delete(state.subagentFieldErrors, "model")
+	})
+}
+
+func (a *App) renderSubagentReasoning(c *ui.Context, levels []string, reasoning *string, name string, width float32, changed func()) {
+	if len(levels) == 0 {
+		if width > 0 {
+			sel := controlSelect(c.Key("subagent-reasoning"), reasoning)
+			sel.Trigger.Width(width).Disabled(true).Label(tr(c, "Subagent reasoning level") + " " + name).Children(func() {
+				ui.Text(c, "—").Grow(1)
+				icon(c, "alt-arrow-down", 13)
+			})
+		}
 		return
 	}
-	sel := controlSelect(c.Key("subagent-reasoning"), &state.subagentReasoning)
-	label := state.subagentReasoning
-	unavailable := !slices.Contains(selected.ReasoningLevels, label)
-	sel.Trigger.Label(tr(c, "Subagent reasoning level")).OnChange(func() { delete(state.subagentFieldErrors, "model") }).Children(func() {
+	sel := controlSelect(c.Key("subagent-reasoning"), reasoning)
+	if width > 0 {
+		sel.Trigger.Width(width)
+	}
+	label := *reasoning
+	unavailable := !slices.Contains(levels, label)
+	sel.Trigger.Label(strings.TrimSpace(tr(c, "Subagent reasoning level") + " " + name)).OnChange(changed).Children(func() {
 		ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
 			if unavailable {
 				ui.Text(c, tr(c, "Unavailable")).Shrink(0)
@@ -219,7 +234,7 @@ func (a *App) customSubagentReasoning(c *ui.Context) {
 	})
 	sel.Popup(func(panel ui.Element) {
 		controlSelectPopup(c, panel).Children(func() {
-			for _, level := range selected.ReasoningLevels {
+			for _, level := range levels {
 				controlSelectItem(c, sel.Item(level)).Label(tr(c, "Subagent reasoning level") + " " + level).Children(func() {
 					ui.Text(c, tr(c, level))
 				})
