@@ -236,7 +236,7 @@ func (a *App) questionComposer(c *ui.Context, sessionID, scope string) bool {
 				OnClick(func() { a.advanceQuestion(q, state, sessionID) })
 		})
 		if state.Failure != "" {
-			ui.Text(c, state.Failure).TextColor(a.palette.Danger).FontSize(design.TextSize(c, design.TextSmall))
+			ui.Text(c, state.Failure).TextColor(a.palette.Readable(a.palette.Danger)).FontSize(design.TextSize(c, design.TextSmall))
 		}
 	})
 	// Number keys choose only outside the text area; typing a number must

@@ -43,7 +43,7 @@ func (a *App) customSubagentToolbar(c *ui.Context) string {
 			Disabled(busy).OnClick(func() { a.editSubagent(nil) })
 	})
 	if a.runtimeUI.subagentError != "" {
-		ui.Text(c, a.runtimeUI.subagentError).FillWidth().TextColor(a.palette.Danger)
+		ui.Text(c, a.runtimeUI.subagentError).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 	}
 	return strings.ToLower(strings.TrimSpace(*query))
 }
@@ -132,7 +132,7 @@ func (a *App) customSubagentField(c *ui.Context, label, key string, draw func())
 			message = "The configured model or reasoning level is unavailable."
 		}
 		if message != "" {
-			ui.Text(c, tr(c, message)).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+			ui.Text(c, tr(c, message)).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	})
 }
@@ -187,7 +187,7 @@ func (a *App) customSubagentForm(c *ui.Context) {
 					})
 				})
 				if state.subagentError != "" {
-					ui.Text(c, state.subagentError).FillWidth().TextColor(a.palette.Danger)
+					ui.Text(c, state.subagentError).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 				}
 
 			})

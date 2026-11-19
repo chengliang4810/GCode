@@ -84,6 +84,26 @@ func contrast(a, b ui.Color) float32 {
 	return (max(x, y) + .05) / (min(x, y) + .05)
 }
 
+// Readable is the color a role may take when it carries text. A semantic color
+// is tuned for marks — an icon, a border, a status dot — where 3:1 suffices;
+// as text it has to reach 4.5:1 on every surface a page reads on, so this
+// darkens or lightens the hue only as far as that needs. Marks keep the raw
+// role, which is why the correction lives at the text site and not in the
+// theme: the palette stays the one the source shipped.
+func (t Tokens) Readable(color ui.Color) ui.Color {
+	for _, surface := range [...]ui.Color{t.Background, t.Card, t.Dialog} {
+		color = ensureContrast(color, surface, 4.5)
+	}
+	return color
+}
+
+// ReadableOn is the tone a role takes as text on one surface: it darkens or
+// lightens the hue only as far as 4.5:1 needs. Surfaces that are not part of
+// the palette — a button's own fill — use it with the color they paint over.
+func ReadableOn(color, surface ui.Color) ui.Color {
+	return ensureContrast(color, surface, 4.5)
+}
+
 func ensureContrast(color, background ui.Color, minimum float32) ui.Color {
 	if contrast(color, background) >= minimum {
 		return color

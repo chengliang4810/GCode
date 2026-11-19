@@ -20,6 +20,9 @@ type sidebarState struct {
 	deleteOpen            bool
 	removeProject         contracts.Project
 	removeProjectOpen     bool
+	renameProjectID       string
+	renameProjectName     string
+	renameProjectOpen     bool
 	projectsClosed        bool
 	conversationsClosed   bool
 	limits                map[string]int

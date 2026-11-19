@@ -495,7 +495,7 @@ func (a *App) footerAccountsCard(c *ui.Context, state *composerUsageState) {
 							ui.Text(c, account.Plan).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
 						if account.InUse {
-							ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Accent)
+							ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Accent))
 						} else if len(account.Usage) == 0 && account.UsageError != "" {
 							ui.Text(c, account.UsageError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 						}
@@ -513,7 +513,7 @@ func (a *App) footerAccountsCard(c *ui.Context, state *composerUsageState) {
 		})
 	}
 	if state.errorText != "" {
-		ui.Text(c, state.errorText).Padding(4, 8).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+		ui.Text(c, state.errorText).Padding(4, 8).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 	}
 }
 

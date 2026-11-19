@@ -461,6 +461,16 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 		}
 		_, err := s.CreateProject(ctx, c.Name, c.Path)
 		return err
+	case "project.rename":
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		i := slices.IndexFunc(s.state.Projects, func(p contracts.Project) bool { return p.ID == c.ID })
+		if i < 0 {
+			return ErrNotFound
+		}
+		s.state.Projects[i].Name = strings.TrimSpace(c.Name)
+		s.publishLocked("project.renamed", "", "", "", "")
+		return nil
 	case "project.delete":
 		s.mu.Lock()
 		defer s.mu.Unlock()

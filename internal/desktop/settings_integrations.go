@@ -55,7 +55,7 @@ func (a *App) integrationToggle(c *ui.Context, key, label string, value, disable
 
 func (a *App) integrationError(c *ui.Context, message, kind string, request *contracts.IntegrationRequest) {
 	ui.Row(c).FillWidth().Padding(12, 16).Gap(10).AlignItems(ui.Center).Children(func() {
-		ui.Text(c, tr(c, message)).Grow(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+		ui.Text(c, tr(c, message)).Grow(1).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 		if kind != "" {
 			textButton(c, tr(c, "Retry")).OnClick(func() { a.dispatch(contracts.Command{Kind: kind, Integration: request}) })
 		}
@@ -143,7 +143,7 @@ func (a *App) integrationDialogs(c *ui.Context) {
 			ui.Text(c, tr(c, copy)).FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(a.palette.Muted)
 			req := &contracts.IntegrationRequest{TargetID: login.TargetID, ProviderID: login.ProviderID}
 			if login.State == "failed" {
-				ui.Text(c, login.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+				ui.Text(c, login.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 			} else {
 				textButton(c, tr(c, "Reopen the sign-in page")).OnClick(func() { a.dispatch(contracts.Command{Kind: "provider.login.poll", ID: login.ID, Integration: req}) })
 				if login.Kind == "code" {

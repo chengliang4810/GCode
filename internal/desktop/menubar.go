@@ -182,7 +182,7 @@ func (a *App) menuPanelView(c *ui.Context) {
 		ui.Scroll(c.Key("menubar-content")).Grow(1).FillWidth().MinHeight(0).Gap(8).Children(func() {
 			if a.menuBar.Tab == "today" {
 				if a.appUsage.errorText != "" {
-					ui.Text(c, a.appUsage.errorText).Wrap().TextColor(theme.Danger)
+					ui.Text(c, a.appUsage.errorText).Wrap().TextColor(a.palette.Readable(a.palette.Danger))
 					return
 				}
 				if a.appUsage.generated.IsZero() {
@@ -326,7 +326,7 @@ func (a *App) menuBarSettings(c *ui.Context) {
 			})
 		})
 		if a.menuBar.Error != "" {
-			ui.Text(c, a.menuBar.Error).Wrap().TextColor(a.palette.Danger)
+			ui.Text(c, a.menuBar.Error).Wrap().TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	})
 }

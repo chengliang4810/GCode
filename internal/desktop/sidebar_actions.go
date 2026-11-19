@@ -135,6 +135,31 @@ func (a *App) sessionDeleteDialog(c *ui.Context) {
 	})
 }
 
+func (a *App) projectRenameDialog(c *ui.Context) {
+	s := &a.sidebarUI
+	save := func() {
+		name := strings.TrimSpace(s.renameProjectName)
+		if name != "" {
+			s.renameProjectOpen = false
+			a.dispatch(contracts.Command{Kind: "project.rename", ID: s.renameProjectID, Name: name})
+		}
+	}
+	ui.DialogBase(c.Key("project-rename-dialog"), &s.renameProjectOpen, func(back, panel ui.Element) {
+		back.Background(ui.RGBA(0, 0, 0, .35))
+		panel.Width(400).Padding(24).Radius(12).Label(tr(c, "Rename project"))
+		a.floatingSurface(c, panel, 12)
+		ui.Column(c).Gap(16).Children(func() {
+			ui.Text(c, tr(c, "Rename project")).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
+			controlTextInput(c.Key("project-rename-name"), &s.renameProjectName).
+				FillWidth().Label(tr(c, "Project name")).AutoFocus().OnSubmit(save)
+			ui.Row(c).Gap(8).Justify(ui.End).Children(func() {
+				textButton(c.Key("project-rename-cancel"), tr(c, "Cancel")).OnClick(func() { s.renameProjectOpen = false })
+				textButton(c.Key("project-rename-save"), tr(c, "Save")).Disabled(strings.TrimSpace(s.renameProjectName) == "").OnClick(save)
+			})
+		})
+	})
+}
+
 func (a *App) projectRemoveDialog(c *ui.Context) {
 	ui.DialogBase(c.Key("project-remove-dialog"), &a.sidebarUI.removeProjectOpen, func(back, panel ui.Element) {
 		back.Background(ui.RGBA(0, 0, 0, .35))

@@ -138,7 +138,7 @@ func (a *App) hookSettingsForm(c *ui.Context) {
 			controlCheckbox(c.Key("hook-once"), &s.hook.Once, tr(c, "Run once"))
 		}
 		if !contracts.HookTypeSupported(s.hook.Event, s.hook.Type) {
-			ui.Text(c, tr(c, "This event does not support the selected hook type; execution will skip it.")).TextColor(a.palette.Warning)
+			ui.Text(c, tr(c, "This event does not support the selected hook type; execution will skip it.")).TextColor(a.palette.Readable(a.palette.Warning))
 		}
 	}, func() {
 		hook, err := a.hookDraft()

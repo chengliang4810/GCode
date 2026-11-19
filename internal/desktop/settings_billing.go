@@ -25,7 +25,7 @@ func (a *App) billingSettings(c *ui.Context) {
 		})
 	}
 	if b.Notice != "" {
-		ui.Text(c, b.Notice).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Success).Padding(8, 16)
+		ui.Text(c, b.Notice).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Success)).Padding(8, 16)
 	}
 	if b.Checkout != nil && b.Checkout.State == "waiting" {
 		a.settingsCard(c, func() {

@@ -373,6 +373,12 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			name = filepath.Base(path)
 		}
 		e.state.Projects = append(e.state.Projects, contracts.Project{ID: id("project"), Name: name, Path: path, DeviceID: "local", Icon: "folder", FilesState: contracts.LoadLoading})
+	case "project.rename":
+		i := slices.IndexFunc(e.state.Projects, func(p contracts.Project) bool { return p.ID == command.ID })
+		if i < 0 {
+			return errors.New("project not found")
+		}
+		e.state.Projects[i].Name = strings.TrimSpace(command.Name)
 	case "project.delete":
 		e.state.Projects = slices.DeleteFunc(e.state.Projects, func(p contracts.Project) bool { return p.ID == command.ID })
 		e.state.Files = slices.DeleteFunc(e.state.Files, func(f contracts.File) bool { return f.ProjectID == command.ID })

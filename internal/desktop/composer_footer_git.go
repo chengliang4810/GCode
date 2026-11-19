@@ -603,11 +603,11 @@ func (a *App) footerRefPopover(c *ui.Context, anchor ui.Element) {
 			})
 		}
 		if refError != "" {
-			ui.Text(c.Key("composer-ref-error"), refError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Padding(8)
+			ui.Text(c.Key("composer-ref-error"), refError).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger)).Padding(8)
 			textButton(c, tr(c, "Retry refs")).OnClick(func() { a.ensureComposerFooterRefs(true) })
 		}
 		if f.SwitchError != "" {
-			ui.Text(c, f.SwitchError).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger).Padding(4, 8)
+			ui.Text(c, f.SwitchError).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Danger)).Padding(4, 8)
 		}
 	})
 }

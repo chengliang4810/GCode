@@ -110,7 +110,7 @@ func (a *App) providerLogoDialog(c *ui.Context) {
 			ui.Text(c.Key("provider-logo-loading"), tr(c, "Fetching website logo…")).FillWidth()
 		}
 		if state.logoError != "" {
-			ui.Text(c.Key("provider-logo-error"), state.logoError).FillWidth().TextColor(a.palette.Danger)
+			ui.Text(c.Key("provider-logo-error"), state.logoError).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	}, func() {
 		ui.Row(c).FillWidth().Wrap().Gap(8).Children(func() {

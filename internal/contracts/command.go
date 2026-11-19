@@ -229,6 +229,11 @@ func (c Command) Validate() error {
 		return errors.New("terminal size payload does not match command")
 	}
 	switch c.Kind {
+	case "project.rename":
+		if c.ID == "" || strings.TrimSpace(c.Name) == "" {
+			return errors.New("project ID and name are required")
+		}
+		return nil
 	case "project.files.refresh", "project.delete":
 		if c.ID == "" {
 			return errors.New("project ID is required")

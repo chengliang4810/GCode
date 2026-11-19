@@ -244,6 +244,17 @@ func (a *App) sidebarProjectRow(c *ui.Context, row sidebarRow) {
 		if found && showNewConversation {
 			inlineIconButton(c.Key("sidebar-project-actions:"+row.ProjectID), "more-horizontal", tr(c, "Project actions")).
 				Menu(func(menu *ui.Menu) {
+					if menu.Item(tr(c, "Rename project")).Chosen() {
+						a.sidebarUI.renameProjectID = project.ID
+						a.sidebarUI.renameProjectName = project.Name
+						a.sidebarUI.renameProjectOpen = true
+					}
+					if a.localProjectFolder(project) {
+						if menu.Item(tr(c, "Open project folder")).Chosen() {
+							a.openProjectFolder(project)
+						}
+					}
+					menu.Separator()
 					if menu.Item(tr(c, "Remove project")).Chosen() {
 						a.sidebarUI.removeProject = project
 						a.sidebarUI.removeProjectOpen = true

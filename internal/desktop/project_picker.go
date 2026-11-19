@@ -472,7 +472,7 @@ func (a *App) newProjectDialog(c *ui.Context) {
 							ui.Text(c, tr(c, "Loading folders…"))
 						}
 					} else if p.error != "" {
-						ui.Text(c, p.error).TextColor(a.palette.Danger)
+						ui.Text(c, p.error).TextColor(a.palette.Readable(a.palette.Danger))
 						textButton(c, tr(c, "Retry")).OnClick(func() {
 							if p.step == 1 {
 								a.listProjectLocations()

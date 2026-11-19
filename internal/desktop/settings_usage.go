@@ -80,7 +80,7 @@ func (a *App) appUsageSettings(c *ui.Context) {
 	a.menuBarSettings(c)
 	state := &a.appUsage
 	if state.errorText != "" {
-		ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Danger)
+		ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 		ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
 			secondaryButton(c.Key("usage-refresh"), tr(c, "Refresh")).Disabled(state.loading).OnClick(a.refreshAppUsage)
 		})

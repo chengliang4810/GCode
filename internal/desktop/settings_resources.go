@@ -214,7 +214,7 @@ func (a *App) mcpSettings(c *ui.Context) {
 				textButton(c, tr(c, "Test")).Label(tr(c, "Test") + " " + server.Name).Disabled(server.Test.State == "testing").OnClick(func() { a.dispatch(contracts.Command{Kind: "resource.mcp.test", ID: server.ID}) })
 			})
 		if server.Test.Error != "" {
-			ui.Text(c, server.Test.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+			ui.Text(c, server.Test.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 		}
 		if len(server.Test.Tools) > 0 {
 			key := "mcp-tools-" + server.ID

@@ -954,3 +954,39 @@ GEO-3 的 `transcript.go` 徽章固定高度、以及第 6 节列出的全部真
 **结论**：11 个失败中 10 个在基线上同样失败，属于仓库既有缺陷，与本轮改动无关；
 唯一的本轮回归（菜单栏标题）已修复并复验。既有失败的清单与首因已记录，
 建议单开一轮排查，不与规范整改混在一起。
+
+## 16. 语义色作为文字的对比度（改法 B）
+
+第 15 节量化出的问题：`text` 在 30 个主题全部 ≥4.5:1，但**语义色与强调色当文字用时**
+远低于 AA——`danger` 最低 3.05（nord）、`warning` 最低 2.05（rose-pine-dawn）、
+`success` 最低 2.23（ayu-light）、`accent` 最低 3.05（ayu-light）。
+这些颜色是为图标、边框、状态点调的（3:1 就够），当文字用就需要更高的对比度。
+
+**决定（用户确认）**：不改主题 hex（`themes.json` 是上游注册表的取色，改了破坏「与来源一致」），
+只在**当文字用**的地方做校正。
+
+实现：
+
+- `design.Tokens.Readable(color)`：把颜色依次对 `Background`/`Card`/`Dialog` 三个阅读面
+  做 `ensureContrast(…, 4.5)`，只压深/提亮到刚好达标，色相不变。
+- `design.ReadableOn(color, surface)`：给不在调色板里的面（比如按钮自身填充）用。
+- 替换 56 处「文字用语义色/强调色」的调用点为 `palette.Readable(...)`；
+  **图标、状态点、Spinner 保持原色**（`Readable` 会被误用在 `ui.Box`/`ui.Spinner`/图标行，
+  已逐处回退）。
+- 新增门禁 `internal/design/contrast_test.go`：30 个主题 × 4 个角色 × 3 个阅读面，
+  断言校正后 ≥4.5:1，并断言校正没有把颜色从它的色相上挪走。
+
+**实际变化范围**：90 个「主题 × 角色」组合里只有 24 个会变，其余 66 个（含默认的
+rcode-light / rcode-dark）一个像素不动。变的是浅色主题里的黄/绿/红被压深、
+暗色主题里的红被提亮，例如：
+
+| 主题 | 角色 | 改前 | 改后 |
+| --- | --- | --- | --- |
+| ayu-light | warning | `#eba400`（2.08:1） | `#996b00`（4.59:1） |
+| ayu-light | success | `#6cbf43`（2.23:1） | `#467c2c`（4.90:1） |
+| rose-pine-dawn | warning | `#ea9d34`（2.05:1） | `#986622`（4.51:1） |
+| rose-pine-dawn | success | `#56949f`（3.14:1） | `#45767f`（4.63:1） |
+| nord（暗） | danger | `#bf616a`（3.05:1） | `#cf888f`（4.50:1） |
+
+视觉对照（真实 token 渲染，非示意）：rose-pine-dawn 与 ayu-light 的 Warning/Success/Danger
+两列并排可见明显差别（淡色那一列在浅底上偏糊），Accent 在这两个主题里本已达标故两侧一致。

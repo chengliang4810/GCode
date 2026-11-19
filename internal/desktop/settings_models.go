@@ -61,7 +61,7 @@ func (a *App) customProviderSettings(c *ui.Context) {
 			Disabled(a.modelSettingsBusy()).OnClick(a.addCustomProvider)
 	})
 	if a.modelsUI.reorderError != "" {
-		ui.Text(c, a.modelsUI.reorderError).FillWidth().TextColor(a.palette.Danger)
+		ui.Text(c, a.modelsUI.reorderError).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 	}
 	pendingSelection := (a.modelsUI.inlineSaving || a.modelsUI.inlineDirty) && a.modelsUI.inlineID == a.modelsUI.selected
 	if !pendingSelection && !slices.ContainsFunc(a.state.CustomProviders, func(p contracts.ProviderConfiguration) bool { return p.Provider.ID == a.modelsUI.selected }) {
@@ -266,7 +266,7 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 			}, a.toggleProviderKey)
 	})
 	if state.inlineError != "" {
-		ui.Text(c, state.inlineError).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+		ui.Text(c, state.inlineError).FillWidth().FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 	}
 	ui.Column(c).FillWidth().Gap(6).Children(func() {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(12).Children(func() {
@@ -564,7 +564,7 @@ func (a *App) modelMetadataDialog(c *ui.Context) {
 	a.settingsDialogWithFooter(c, "model-metadata-dialog", title, &state.modelOpen, 680, func() {
 		a.modelMetadataFields(c)
 		if state.errorText != "" {
-			ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Danger)
+			ui.Text(c, state.errorText).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	}, func() {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {

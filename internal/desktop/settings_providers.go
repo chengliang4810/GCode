@@ -266,7 +266,7 @@ func (a *App) providerAccounts(c *ui.Context, p contracts.Provider, d contracts.
 		})
 		if d.Warning != "" {
 			// A recoverable notice, not a failure: it warns, it does not fail.
-			ui.Text(c, d.Warning).TextColor(a.palette.Warning)
+			ui.Text(c, d.Warning).TextColor(a.palette.Readable(a.palette.Warning))
 		}
 		if d.AccountNote != "" {
 			ui.Text(c, d.AccountNote).TextColor(a.palette.Muted).Margin(4, 0, 0, 0)
@@ -365,7 +365,7 @@ func (a *App) providerAccountRow(c *ui.Context, account contracts.ProviderAccoun
 			ui.Row(c).Gap(6).Children(func() {
 				ui.Text(c, account.Plan).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 				if account.InUse {
-					ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Accent)
+					ui.Text(c, tr(c, "In use")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Accent))
 				}
 				if len(account.Usage) == 0 && account.ReportsUsage {
 					reason := account.UsageError

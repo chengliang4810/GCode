@@ -100,7 +100,7 @@ func (a *App) dataDirectorySettings(c *ui.Context) {
 				ui.Text(c, tr(c, "The new directory takes effect after restart. Existing conversations stay in their original directories; no data is copied.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Muted)
 			}
 			if info.StorageError != "" {
-				ui.Text(c, tr(c, "Data directory change failed; the current directory is still active.")).TextColor(a.palette.Danger)
+				ui.Text(c, tr(c, "Data directory change failed; the current directory is still active.")).TextColor(a.palette.Readable(a.palette.Danger))
 				ui.Text(c, info.StorageError).Selectable().TextColor(a.palette.Muted)
 			}
 			if info.Remote {

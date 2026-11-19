@@ -11,7 +11,7 @@ import (
 func (a *App) cloudSettings(c *ui.Context) {
 	a.integrationSubtitle(c, "Run your agents in cloud sandboxes.")
 	if a.cloudPage.error != "" {
-		ui.Text(c, a.cloudPage.error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+		ui.Text(c, a.cloudPage.error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 	}
 	v := a.state.Integrations.Cloud
 	if a.cloudPage.busy == "cloud.enable" {

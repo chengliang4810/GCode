@@ -194,7 +194,7 @@ func (a *App) backgroundSettings(c *ui.Context) {
 			}
 		})
 		if state.Error != "" {
-			ui.Text(c, state.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(0, 16, 12, 16)
+			ui.Text(c, state.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger)).Margin(0, 16, 12, 16)
 		}
 		if p.Background != "" {
 			line(c)

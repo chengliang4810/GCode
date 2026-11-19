@@ -124,7 +124,7 @@ func (a *App) goalEditorView(c *ui.Context, sessionID string) {
 				state.focusPending = false
 			}
 			if state.failure != "" {
-				ui.Text(c, state.failure).FillWidth().Margin(10, 0).TextColor(a.palette.Danger)
+				ui.Text(c, state.failure).FillWidth().Margin(10, 0).TextColor(a.palette.Readable(a.palette.Danger))
 			}
 			if goal == nil {
 				ui.Text(c, tr(c, "This conversation no longer has a goal.")).Margin(10, 0)

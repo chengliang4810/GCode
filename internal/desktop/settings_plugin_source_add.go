@@ -87,7 +87,7 @@ func (a *App) pluginSourceAddForm(c *ui.Context) {
 		}
 	}
 	if s.sourceError != "" {
-		ui.Text(c.Key("plugin-source-error"), s.sourceError).FillWidth().TextColor(a.palette.Danger).Selectable()
+		ui.Text(c.Key("plugin-source-error"), s.sourceError).FillWidth().TextColor(a.palette.Readable(a.palette.Danger)).Selectable()
 	}
 	ui.Row(c.Key("plugin-source-add-actions")).FillWidth().Wrap().Justify(ui.End).Gap(8).Children(func() {
 		buttonWithIcon(c.Key("plugin-source-choose-directory"), tr(c, "Choose directory"), "folder", buttonSecondary).

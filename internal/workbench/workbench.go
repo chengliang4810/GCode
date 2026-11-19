@@ -625,7 +625,7 @@ func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 			s.TabStrip(c, false)
 		}
 		if s.Error != "" {
-			ui.Text(c, s.Error).TextColor(p.Danger).Padding(8, 12)
+			ui.Text(c, s.Error).TextColor(p.Readable(p.Danger)).Padding(8, 12)
 		}
 		if s.pendingClose != "" {
 			s.closeConfirmation(c)
@@ -832,7 +832,7 @@ func (s *State) styleFileRow(c *ui.Context, row ui.Element, f contracts.File, de
 		ui.Image(c, sourceFileIcon(f, expanded, p.Dark)).Size(14, 14).Margin(0, 4)
 		text := ui.Text(c, f.Name).SingleLine()
 		if f.Modified {
-			text.TextColor(p.Warning)
+			text.TextColor(p.Readable(p.Warning))
 		}
 	})
 }
@@ -869,7 +869,7 @@ func (s *State) fileView(c *ui.Context, id string) {
 	})
 	if d.conflict {
 		ui.Row(c).Padding(8, 12).Gap(8).Children(func() {
-			ui.Text(c, tr(c, "This file changed since it was opened.")).TextColor(p.Warning)
+			ui.Text(c, tr(c, "This file changed since it was opened.")).TextColor(p.Readable(p.Warning))
 			ui.Spacer(c)
 			ui.Button(c, tr(c, "Reload")).OnClick(func() {
 				for _, f := range s.snapshot.Files {
@@ -883,7 +883,7 @@ func (s *State) fileView(c *ui.Context, id string) {
 		})
 	}
 	if d.deleted {
-		ui.Text(c, tr(c, "This file no longer exists.")).TextColor(p.Warning).Padding(8, 12)
+		ui.Text(c, tr(c, "This file no longer exists.")).TextColor(p.Readable(p.Warning)).Padding(8, 12)
 	}
 	if d.file.Kind == "image" {
 		s.imagePreview(c, d.file)
@@ -1080,8 +1080,8 @@ func (s *State) changesView(c *ui.Context) {
 			ui.ButtonBase(c).Label(ch.Path).FillWidth().Padding(10, 8).Radius(6).OnClick(func() { s.OpenChange(ch.ID) }).Children(func() {
 				ui.Icon(c, assets.Icon("file-code")).Size(16, 16)
 				ui.Text(c, ch.Path).Grow(1).SingleLine()
-				ui.Text(c, fmt.Sprintf(tr(c, "+%d"), added)).TextColor(p.Success)
-				ui.Text(c, fmt.Sprintf(tr(c, "−%d"), deleted)).TextColor(p.Danger)
+				ui.Text(c, fmt.Sprintf(tr(c, "+%d"), added)).TextColor(p.Readable(p.Success))
+				ui.Text(c, fmt.Sprintf(tr(c, "−%d"), deleted)).TextColor(p.Readable(p.Danger))
 			})
 		}
 		if !visible {

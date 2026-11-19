@@ -141,7 +141,7 @@ func (a *App) settingsView(c *ui.Context) {
 			}
 			if (a.section == "Providers" || a.section == "Devices" || a.section == "Cloud" || a.section == "Billing") && a.integrationUI.Error != "" {
 				controlRowButton(c).FillWidth().Label(tr(c, "Dismiss settings error")).OnClick(func() { a.integrationUI.Error = "" }).Children(func() {
-					ui.Text(c, a.integrationUI.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+					ui.Text(c, a.integrationUI.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 				})
 			}
 			switch a.section {
@@ -782,7 +782,7 @@ func (a *App) themeLibrary(c *ui.Context) {
 						ui.Text(c, entry.Name).FontSize(design.TextSize(c, design.TextBase)).FontWeight(600).SingleLine()
 						ui.Text(c, entry.Path).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
 						if entry.Warning != "" {
-							ui.Text(c, entry.Warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning)
+							ui.Text(c, entry.Warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Warning))
 						}
 					})
 					if kind != "imported" {
@@ -840,10 +840,10 @@ func (a *App) themeLibrary(c *ui.Context) {
 				controlCheckbox(c.Key("theme-import-"+variant.ID), &selected, variant.Name).OnClick(func() { a.dispatch(contracts.Command{Kind: "theme.select", ID: variant.ID, Enabled: selected}) })
 			}
 			for _, warning := range preview.Warnings {
-				ui.Text(c, warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning)
+				ui.Text(c, warning).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Warning))
 			}
 			if preview.Error != "" {
-				ui.Text(c, preview.Error).TextColor(a.palette.Danger).FontSize(design.TextSize(c, design.TextBase))
+				ui.Text(c, preview.Error).TextColor(a.palette.Readable(a.palette.Danger)).FontSize(design.TextSize(c, design.TextBase))
 			}
 		}
 		ui.Row(c).Gap(8).Justify(ui.End).Children(func() {

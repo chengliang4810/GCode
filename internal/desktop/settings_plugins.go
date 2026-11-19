@@ -245,7 +245,7 @@ func (a *App) pluginDetails(c *ui.Context, components []string, issues []contrac
 		if location != "" {
 			text = location + ": " + text
 		}
-		ui.Text(c, text).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Warning).Selectable()
+		ui.Text(c, text).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Warning)).Selectable()
 	}
 }
 
@@ -306,7 +306,7 @@ func (a *App) pluginSources(c *ui.Context) {
 				ui.Text(c, fmt.Sprint(source.PluginCount)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 			})
 			if source.Error != "" {
-				ui.Text(c, source.Error).TextColor(a.palette.Danger).Selectable()
+				ui.Text(c, source.Error).TextColor(a.palette.Readable(a.palette.Danger)).Selectable()
 			}
 			ui.Row(c).Wrap().Gap(8).Children(func() {
 				a.pluginAction(c, "refresh", "Refresh", "plugins.source.refresh", source.ID)

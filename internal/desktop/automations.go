@@ -97,7 +97,7 @@ func (a *App) automationPage(c *ui.Context) {
 		})
 		ui.Box(c).FillWidth().Height(1).Background(c.Theme().Border)
 		if s.Error != "" && !s.Open {
-			ui.Text(c, s.Error).Margin(12, 20).TextColor(a.palette.Danger).Wrap()
+			ui.Text(c, s.Error).Margin(12, 20).TextColor(a.palette.Readable(a.palette.Danger)).Wrap()
 		}
 		width, _ := c.Size()
 		narrow := width < 800
@@ -208,7 +208,7 @@ func (a *App) automationPage(c *ui.Context) {
 							ui.Text(c, i18n.Duration(a.state.Settings.General.Language, run.FinishedAt.Sub(run.StartedAt).Milliseconds())).FontFeatures("tnum").TextColor(c.Theme().TextMuted)
 						}
 						if run.Error != "" {
-							ui.Text(c, run.Error).Wrap().TextColor(a.palette.Danger)
+							ui.Text(c, run.Error).Wrap().TextColor(a.palette.Readable(a.palette.Danger))
 						}
 						if run.SessionID != "" {
 							textButton(c.Key("automation-open-"+run.ID), tr(c, "Open session")).OnClick(func() { a.selectSession(run.SessionID); a.navigate("chat/" + run.SessionID) })

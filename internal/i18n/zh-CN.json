@@ -1,5 +1,9 @@
 {
   "Project actions": "项目操作",
+  "Rename project": "重命名项目",
+  "Project name": "项目名称",
+  "Open project folder": "打开项目文件夹",
+  "Project path is not a folder": "项目路径不是文件夹",
   "Remove project": "移除项目",
   "This only removes the project from the list. Files and chats are kept.": "仅从列表移除项目，文件和聊天记录会保留。",
   "Choose provider logo": "选择供应商图标",

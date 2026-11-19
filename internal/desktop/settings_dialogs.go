@@ -134,7 +134,7 @@ func (a *App) settingsEditorDialog(c *ui.Context, key, title string, open *bool,
 	a.settingsDialogWithFooter(c, key, title, open, width, func() {
 		ui.Column(c).FillWidth().Gap(12).Disabled(busy).Children(draw)
 		if errorText != "" {
-			ui.Text(c, errorText).FillWidth().Wrap().TextColor(a.palette.Danger)
+			ui.Text(c, errorText).FillWidth().Wrap().TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	}, actions, busy)
 }

@@ -204,7 +204,7 @@ func (a *App) subagentSettingsForm(c *ui.Context) {
 					})
 				}
 				if !a.subagentSelectionValid() {
-					ui.Text(c, tr(c, "The configured model or reasoning level is unavailable.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+					ui.Text(c, tr(c, "The configured model or reasoning level is unavailable.")).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 				}
 
 			})

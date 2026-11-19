@@ -11,7 +11,7 @@ func (a *App) sessionStorageNotice(c *ui.Context, session contracts.Session) {
 		return
 	}
 	ui.Column(c.Key("session-storage-error:"+session.ID)).FillWidth().Padding(12, 24).Gap(8).Children(func() {
-		ui.Text(c, tr(c, "Conversation data is unavailable")).TextColor(a.palette.Danger)
+		ui.Text(c, tr(c, "Conversation data is unavailable")).TextColor(a.palette.Readable(a.palette.Danger))
 		ui.Text(c, session.StorageError).FillWidth().Selectable().
 			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		ui.Text(c, tr(c, "Restore access to the original data directory, then retry.")).

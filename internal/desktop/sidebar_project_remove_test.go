@@ -52,3 +52,59 @@ func TestSidebarRemoveProjectKeepsChatsAndDraft(t *testing.T) {
 		})
 	}
 }
+
+func TestSidebarProjectRename(t *testing.T) {
+	a := testApp(t, "default")
+	a.state.Runtime = nil
+	a.state.Projects[0].DeviceID = "local"
+	a.state.Projects[0].Path = t.TempDir()
+	project := a.state.Projects[0]
+	tt := ui.NewTester(a.View, 900, 720)
+	row, ok := tt.Find(project.Name)
+	if !ok {
+		t.Fatal("project row missing")
+	}
+	tt.Move(row.X+row.W/2, row.Y+row.H/2)
+	if err := tt.Click("Project actions"); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Contains(tt.Menu(), "Open project folder") {
+		t.Fatal("folder action missing")
+	}
+	if err := tt.ChooseMenuItem("Rename project"); err != nil {
+		t.Fatal(err)
+	}
+	if a.sidebarUI.renameProjectName != project.Name {
+		t.Fatal("rename dialog did not preload the current name")
+	}
+	a.sidebarUI.renameProjectName = "  Renamed project  "
+	if err := tt.Click("Save"); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.ContainsFunc(a.state.Projects, func(p contracts.Project) bool {
+		return p.ID == project.ID && p.Name == "Renamed project"
+	}) {
+		t.Fatal("rename did not preserve the project ID and path")
+	}
+}
+
+func TestSidebarRemoteProjectHidesFolderAction(t *testing.T) {
+	a := testApp(t, "default")
+	a.state.Runtime = &contracts.RuntimeInfo{Remote: true}
+	a.state.Projects[0].DeviceID = "local"
+	a.state.Projects[0].Path = t.TempDir()
+	project := a.state.Projects[0]
+	tt := ui.NewTester(a.View, 1320, 880)
+	row, ok := tt.Find(project.Name)
+	if !ok {
+		t.Fatal("project row missing")
+	}
+	tt.Move(row.X+row.W/2, row.Y+row.H/2)
+	if err := tt.Click("Project actions"); err != nil {
+		t.Fatal(err)
+	}
+	menu := tt.Menu()
+	if slices.Contains(menu, "Open project folder") || !slices.Contains(menu, "Rename project") || !slices.Contains(menu, "Remove project") {
+		t.Fatalf("unexpected remote project menu: %v", menu)
+	}
+}

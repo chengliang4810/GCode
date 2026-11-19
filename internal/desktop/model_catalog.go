@@ -26,7 +26,7 @@ func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bo
 		ui.Column(c).FillWidth().Height(min(float32(144), budget)).Padding(8).Label(tr(c, "Loading models")).Children(func() { a.modelSkeleton(c) })
 	case contracts.CatalogError:
 		ui.Column(c).FillWidth().Padding(16).Gap(6).Children(func() {
-			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger)
+			ui.Text(c, a.state.ModelCatalog.Error).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger))
 			secondaryButton(c, tr(c, "Retry")).OnClick(func() { a.dispatch(contracts.Command{Kind: "catalog.retry"}) })
 		})
 	case contracts.CatalogNoAgents:

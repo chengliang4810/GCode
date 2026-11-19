@@ -12,6 +12,34 @@ import (
 	"github.com/egoist/mygo"
 )
 
+func (a *App) localProjectFolder(project contracts.Project) bool {
+	return project.DeviceID == "local" && (a.state.Runtime == nil || !a.state.Runtime.Remote) &&
+		filepath.IsAbs(filepath.FromSlash(project.Path))
+}
+
+func (a *App) openProjectFolder(project contracts.Project) {
+	if !a.localProjectFolder(project) {
+		return
+	}
+	notFolder := a.t("Project path is not a folder")
+	a.backgroundTask(func() func() {
+		path := filepath.FromSlash(project.Path)
+		info, err := os.Stat(path)
+		if err == nil {
+			if !info.IsDir() {
+				err = errors.New(notFolder)
+			} else {
+				err = mygo.Shell.OpenPath(path)
+			}
+		}
+		return func() {
+			if err != nil {
+				a.errorText = err.Error()
+			}
+		}
+	})
+}
+
 func (a *App) openExternalWorkspaceFile(sessionID string, result contracts.LinkedFileResult) {
 	config := a.linkConfig(sessionID, "", a.services)
 	destination, ok := config.Resolve(result.AbsolutePath)

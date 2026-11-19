@@ -1119,6 +1119,7 @@ func (a *App) View(c *ui.Context) {
 	a.overlays(c)
 	a.sessionDeleteDialog(c)
 	a.projectRemoveDialog(c)
+	a.projectRenameDialog(c)
 	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
 	if a.toast != "" && time.Now().Before(a.toastUntil) {

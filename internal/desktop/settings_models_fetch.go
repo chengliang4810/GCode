@@ -158,7 +158,7 @@ func (a *App) modelFetchDialog(c *ui.Context) {
 		case state.fetchLoading:
 			ui.Text(c.Key("fetch-models-loading"), tr(c, "Fetching models…")).FillWidth().TextColor(a.palette.Muted)
 		case state.fetchError != "":
-			ui.Text(c.Key("fetch-models-error"), tr(c, state.fetchError)).FillWidth().TextColor(a.palette.Danger)
+			ui.Text(c.Key("fetch-models-error"), tr(c, state.fetchError)).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 		case len(state.fetchRows) == 0:
 			ui.Text(c, tr(c, "The provider returned no models.")).FillWidth().TextColor(a.palette.Muted)
 		default:
@@ -171,7 +171,7 @@ func (a *App) modelFetchDialog(c *ui.Context) {
 			}
 		}
 		if state.fetchValidation != "" {
-			ui.Text(c, state.fetchValidation).FillWidth().TextColor(a.palette.Danger)
+			ui.Text(c, state.fetchValidation).FillWidth().TextColor(a.palette.Readable(a.palette.Danger))
 		}
 	}, func() {
 		ui.Row(c).FillWidth().AlignItems(ui.Center).Gap(8).Children(func() {

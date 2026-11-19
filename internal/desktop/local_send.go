@@ -243,7 +243,7 @@ func (a *App) localSendStatus(c *ui.Context, message contracts.Message) {
 	}
 	ui.Row(c.Key("send-status:" + message.RequestID)).Gap(8).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, tr(c, "Send failed")).Tooltip(send.failure).
-			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Danger)
+			FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Danger))
 		textButton(c.Key("retry-send:"+message.RequestID), tr(c, "Retry")).OnClick(func() { a.retryLocalSend(message.RequestID) })
 		iconButton(c.Key("dismiss-send:"+message.RequestID), "close", tr(c, "Dismiss")).OnClick(func() {
 			a.localSends = slices.DeleteFunc(a.localSends, func(candidate *localSend) bool { return candidate == send })

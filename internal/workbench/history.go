@@ -167,7 +167,7 @@ func (s *State) historyView(c *ui.Context) {
 				historyGraph(c, rows[i], columns, i == 0, p)
 				ui.Row(c).Grow(1).Gap(5).AlignItems(ui.Center).Children(func() {
 					for _, ref := range commit.Refs {
-						ui.Text(c, ref).FontSize(design.TextSize(c, design.TextSmall)).Padding(2, 5).Radius(4).Background(p.Active).TextColor(p.Accent).SingleLine().MaxWidth(112)
+						ui.Text(c, ref).FontSize(design.TextSize(c, design.TextSmall)).Padding(2, 5).Radius(4).Background(p.Active).TextColor(p.Readable(p.Accent)).SingleLine().MaxWidth(112)
 					}
 					ui.Text(c, commit.Subject).Grow(1).SingleLine()
 				})

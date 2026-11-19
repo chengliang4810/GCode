@@ -54,7 +54,7 @@ func controlButton(c *ui.Context, label string, variant buttonVariant) ui.Elemen
 			b.Background(t.SurfacePressed)
 		}
 	case buttonDanger:
-		b.TextColor(t.Danger)
+		b.TextColor(design.ReadableOn(t.Danger, t.Background))
 		if b.Hovered() {
 			// The hover wash is the theme's own muted danger tone: an alpha
 			// overlay on the surface would carry no theme guarantee.
@@ -881,7 +881,7 @@ func controlDiffStats(c *ui.Context, additions, deletions int) ui.Element {
 		ui.Text(c, fmt.Sprintf("+%d", additions)).SingleLine().
 			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Success).FontFeatures("tnum")
 		ui.Text(c, fmt.Sprintf("-%d", deletions)).SingleLine().
-			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(t.Danger).FontFeatures("tnum")
+			FontSize(design.TextSize(c, design.TextBase)).LineHeight(1.5).TextColor(design.ReadableOn(t.Danger, t.Background)).FontFeatures("tnum")
 	})
 }
 

@@ -385,7 +385,7 @@ func (s *State) terminalView(c *ui.Context, id string) {
 	}
 	p := s.palette()
 	if v.meta.StorageError != "" {
-		ui.Text(c.Key("terminal.storage.error"), v.meta.StorageError).TextColor(p.Danger).Selectable()
+		ui.Text(c.Key("terminal.storage.error"), v.meta.StorageError).TextColor(p.Readable(p.Danger)).Selectable()
 	}
 	if v.loading {
 		ui.Column(c).Grow(1).FillWidth().Center().Children(func() { ui.Spinner(c) })

@@ -278,7 +278,7 @@ func (a *App) sideComposerView(c *ui.Context, session contracts.Session, state *
 				a.composerUsage(c, session, &state.FooterUsage, true)
 			})
 			if state.Failure != "" {
-				ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Danger).Margin(6, 12, 0, 12)
+				ui.Text(c, state.Failure).FontSize(design.TextSize(c, design.TextBase)).TextColor(a.palette.Readable(a.palette.Danger)).Margin(6, 12, 0, 12)
 			}
 		})
 		// Share the central composer's bottom inset so both pills align.

@@ -156,7 +156,7 @@ func (a *App) settingsImportDialog(c *ui.Context) {
 				FillWidth().Height(320).Label(tr(c, "Configuration JSON")).
 				Disabled(s.pendingID != "")
 			if s.errorText != "" {
-				ui.Text(c, s.errorText).TextColor(a.palette.Danger)
+				ui.Text(c, s.errorText).TextColor(a.palette.Readable(a.palette.Danger))
 			}
 			ui.Row(c.Key("settings-import-actions")).FillWidth().Justify(ui.End).Gap(8).Children(func() {
 				textButton(c, tr(c, "Cancel")).OnClick(func() {

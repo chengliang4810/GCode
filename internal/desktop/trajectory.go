@@ -122,7 +122,7 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 		controlTextInput(c.Key("trajectory-search"), &state.search).FillWidth().
 			Placeholder(tr(c, "Search call trajectory")).Label(tr(c, "Search call trajectory"))
 		if state.error != "" {
-			ui.Text(c.Key("trajectory-error"), state.error).FillWidth().TextColor(p.Danger).Selectable()
+			ui.Text(c.Key("trajectory-error"), state.error).FillWidth().TextColor(p.Readable(p.Danger)).Selectable()
 		}
 		if state.loading && !state.loaded {
 			ui.Text(c, tr(c, "Loading call trajectory…")).TextColor(p.Muted)
@@ -143,7 +143,7 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 			FontSize(design.TextSize(c, design.TextSmall)).TextColor(p.Muted)
 		if state.data.Truncated {
 			ui.Text(c, tr(c, "Some older or oversized trace content was omitted.")).FillWidth().
-				FontSize(design.TextSize(c, design.TextSmall)).LineHeight(1.5).TextColor(p.Warning)
+				FontSize(design.TextSize(c, design.TextSmall)).LineHeight(1.5).TextColor(p.Readable(p.Warning))
 		}
 		ui.Scroll(c.Key("trajectory-timeline:" + sessionID)).Grow(1).FillWidth().Gap(10).Children(func() {
 			for i, record := range state.data.Records {
@@ -209,7 +209,7 @@ func (a *App) modelTrajectoryView(c *ui.Context, sessionID string) {
 							})
 						}
 						if record.Error != "" {
-							ui.Text(c.Key("trajectory-call-error:"+key), record.Error).FillWidth().TextColor(p.Danger).Selectable()
+							ui.Text(c.Key("trajectory-call-error:"+key), record.Error).FillWidth().TextColor(p.Readable(p.Danger)).Selectable()
 						}
 						services := c.Services()
 						ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
