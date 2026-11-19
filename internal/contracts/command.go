@@ -274,7 +274,7 @@ func (c Command) Validate() error {
 		return nil
 	case "message.send", "session.create", "project.create", "terminal.create", "cloud.toggle", "update.check", "file.create":
 		return nil
-	case "message.stop", "message.retry", "session.storage.retry":
+	case "message.stop", "message.retry", "session.storage.retry", "session.acknowledge":
 		if c.SessionID == "" {
 			return errors.New("session ID is required")
 		}

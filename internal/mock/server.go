@@ -444,6 +444,8 @@ func (s *Server) Execute(ctx context.Context, c contracts.Command) error {
 			return errors.New("session update is required")
 		}
 		return s.UpdateSession(ctx, *c.Session)
+	case "session.acknowledge":
+		return s.AcknowledgeSession(ctx, c.SessionID)
 	case "session.archive":
 		return s.UpdateSession(ctx, contracts.SessionUpdate{ID: c.ID, Archived: &c.Enabled})
 	case "group.create":

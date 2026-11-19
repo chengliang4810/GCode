@@ -511,6 +511,17 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 				return err
 			}
 		}
+	case "session.acknowledge":
+		index := e.sessionIndex(command.SessionID)
+		if index < 0 {
+			return errors.New("session not found")
+		}
+		// The failed status marks a result nobody has read yet. Reading it
+		// returns the session to idle; LastOutcome keeps naming the failure for
+		// the transcript, the menu bar and the failed turn's edit anchor.
+		if e.state.Sessions[index].Status == contracts.Errored {
+			e.state.Sessions[index].Status = contracts.Idle
+		}
 	case "session.archive":
 		index := e.sessionIndex(command.ID)
 		if index < 0 {

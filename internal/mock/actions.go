@@ -104,6 +104,29 @@ func (s *Server) CreateProjectOnDevice(ctx context.Context, request contracts.Pr
 	return clone(v), s.persist()
 }
 
+func (s *Server) AcknowledgeSession(ctx context.Context, id string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	s.mu.Lock()
+	if s.closed {
+		s.mu.Unlock()
+		return ErrClosed
+	}
+	i := s.sessionIndexLocked(id)
+	if i < 0 {
+		s.mu.Unlock()
+		return ErrNotFound
+	}
+	// A seen failure returns the session to idle; the outcome keeps naming it.
+	if s.state.Sessions[i].Status == contracts.Errored {
+		s.state.Sessions[i].Status = contracts.Idle
+	}
+	s.publishLocked("session.updated", id, "", "", "")
+	s.mu.Unlock()
+	return s.persist()
+}
+
 func (s *Server) UpdateSession(ctx context.Context, u contracts.SessionUpdate) error {
 	if err := ctx.Err(); err != nil {
 		return err

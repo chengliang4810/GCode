@@ -11,7 +11,10 @@ func EditableTurnMessage(session Session, messages []Message, runs []Run) int {
 	switch {
 	case session.Status == Idle && session.LastOutcome == "interrupted":
 		status = RunStatusInterrupted
-	case session.Status == Errored && session.LastOutcome == "failed":
+	case session.LastOutcome == "failed" && session.Status != Working && session.Status != AwaitingInput:
+		// Acknowledging a failure returns the session to idle, so a seen
+		// failure keeps the same edit anchor an unseen one has. Only a run in
+		// flight takes the anchor away.
 		status = RunStatusFailed
 	default:
 		return -1
