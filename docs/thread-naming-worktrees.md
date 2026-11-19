@@ -72,6 +72,11 @@ choice/switch; a deleted ref produces an error instead of choosing another branc
   This layout applies only to newly created worktrees: existing registered worktrees
   keep their original paths without migration or layout-specific fallback logic.
   The registered data root must be available and match its stored identity.
+  Before creating any managed directory or branch, the core resolves the physical
+  data root and actual source checkout root. It rejects a grouping directory equal
+  to or inside that checkout, including project subdirectories and path aliases.
+  Sibling/external data directories remain valid; current/reuse choices are not
+  subject to this new-creation rule.
 - `cloud` is rejected by the local host.
 
 The resulting conversation owns its CWD, branch, worktree identity and source
@@ -80,6 +85,18 @@ on its original branch when creating another worktree. Worktrees and conversatio
 ownership survive a host restart. An existing conversation keeps its own checkout
 when a later send carries a draft checkout choice. Duplicate accepted request IDs
 do not create additional worktrees.
+
+Each actual task dispatch (initial, follow-up, queued, goal continuation or
+subagent) re-observes Git from the conversation's execution CWD on its existing
+background worker, before model/tool execution. The Git probe has a three-second
+context budget. Successful observations persist that conversation's branch and
+source context and publish a typed session update; they do not switch branches,
+change checkout selection, or rewrite another conversation/project's observation.
+Failures retain the previous source and its original observation time. Canceled,
+closed, superseded or later-than-newer-refresh results are discarded. Observation
+is not a cross-process Git transaction or a promise that external Git cannot change
+immediately afterwards. Persistence failure keeps the prior in-memory observation
+and does not cancel an already accepted task.
 
 The displayed cached current branch is never inserted as an implicit fixed
 branch/base into a send. An unpicked `newWorktree` base stays empty until the core
