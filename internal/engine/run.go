@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"maps"
 	"os"
 	"path/filepath"
@@ -360,6 +361,9 @@ func (e *Engine) startRunWithProvidersLocked(
 		defer e.wg.Done()
 		defer cancel()
 		defer e.signalSubagentStarted(child)
+		if err := e.refreshRunSource(runCtx, session, run, inspectRunSource); err != nil {
+			log.Printf("save conversation source context: %v", err)
+		}
 		liveModel := sessionModel{core: e, sessionID: session.ID, run: run, trackReply: true}
 		var bound agent.Model = liveModel
 		var auxiliary agent.Model = sessionModel{core: e, sessionID: session.ID, run: run}
