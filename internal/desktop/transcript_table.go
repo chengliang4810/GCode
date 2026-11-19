@@ -233,7 +233,7 @@ func (a *App) transcriptTableActions(c *ui.Context, table transcriptTableData, s
 			a.notification(a.t("Table copied"))
 		})
 		iconButton(c.Key(state.key("table-export")), "arrow-down", tr(c, "Download table as CSV")).OnClick(func() { a.exportTranscriptTable(table) })
-		iconButton(c.Key(state.key("table-preview")), "window-maximize", tr(c, "Expand table")).OnClick(func() {
+		iconButton(c.Key(state.key("table-preview")), "expand-arrows", tr(c, "Expand table")).OnClick(func() {
 			state.opened = true
 			state.preview.X, state.preview.Y = 0, 0
 		})
