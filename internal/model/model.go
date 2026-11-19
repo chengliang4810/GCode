@@ -241,12 +241,17 @@ type Message struct {
 	// never encoded by an adapter or reconstructed from display text.
 	ContextUsage *ContextUsage `json:"contextUsage,omitempty"`
 	// ContentHash identifies an original Read result, not a deduplication stub.
-	ContentHash string `json:"contentHash,omitempty"`
-	OutputFile  string `json:"outputFile,omitempty"`
-	Summary     bool   `json:"summary,omitempty"`
+	ContentHash      string   `json:"contentHash,omitempty"`
+	OutputFile       string   `json:"outputFile,omitempty"`
+	Summary          bool     `json:"summary,omitempty"`
+	RetainedInputs   []string `json:"retainedInputs,omitempty"`
+	RetainedEvidence []string `json:"retainedEvidence,omitempty"`
 }
 
 type ContextUsage struct {
+	HistoryHash   string `json:"historyHash,omitempty"`
+	PromptTokens  int    `json:"promptTokens,omitempty"`
+	Estimated     bool   `json:"estimated,omitempty"`
 	Known         bool   `json:"known"`
 	InputTokens   int    `json:"inputTokens"`
 	OutputTokens  int    `json:"outputTokens"`

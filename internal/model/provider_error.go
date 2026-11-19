@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,6 +11,21 @@ import (
 	"time"
 	"unicode/utf8"
 )
+
+func IsContextOverflow(err error) bool {
+	var e *ProviderError
+	if !errors.As(err, &e) || (e.HTTPStatus != 400 && e.HTTPStatus != 422) {
+		return false
+	}
+	var body struct {
+		Error struct{ Code, Type, Message string }
+	}
+	if json.Unmarshal([]byte(e.detail), &body) != nil {
+		return false
+	}
+	return body.Error.Code == "context_length_exceeded" || body.Error.Type == "context_length_exceeded" ||
+		(body.Error.Type == "invalid_request_error" && strings.HasPrefix(strings.ToLower(body.Error.Message), "prompt is too long"))
+}
 
 const maxProviderErrorBytes = 64 << 10
 

@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"gcode/internal/privacy"
 )
 
 func TestRequestDiagnosticsFingerprintActualWireAndPreserveRetries(t *testing.T) {
@@ -49,6 +51,40 @@ func TestRequestDiagnosticsFingerprintActualWireAndPreserveRetries(t *testing.T)
 				t.Fatal("diagnostics duplicated raw payload or credentials")
 			}
 		})
+	}
+}
+
+func TestMatchesChatHistoryVerifiesRecordedWireRequest(t *testing.T) {
+	provider := Provider{ID: "p", Name: "P", Protocol: Chat, BaseURL: "http://fixture", Models: []Model{{ID: "m"}}}
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	history := []Message{{Role: "user", Text: "first"}, {Role: "assistant", Text: "answer"}, {Role: "user", Text: "second"}}
+	request := Request{System: "stable system", History: history}
+	payload, err := gateway.adapter.encode(request, gateway.target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(payload)
+	// The system prompt travels inside the Chat messages array, so the
+	// recorded count is one above the history prefix it proves.
+	recorded := requestDiagnostics(payload, body, request)
+	recorded.TargetHash = gateway.target.scope
+	if recorded.MessageCount != len(history)+1 {
+		t.Fatalf("system message was not recorded in the wire: %d", recorded.MessageCount)
+	}
+	if !recorded.MatchesChatHistory(t.Context(), history, privacy.Settings{}) {
+		t.Fatal("identical history did not match the recorded wire request")
+	}
+	changed := CloneMessages(history)
+	changed[0].Text = "firsT"
+	if recorded.MatchesChatHistory(t.Context(), changed, privacy.Settings{}) {
+		t.Fatal("same-length edit matched the recorded wire request")
+	}
+	if recorded.MatchesChatHistory(t.Context(), history[len(history)-1:], privacy.Settings{}) ||
+		(RequestDiagnostics{}).MatchesChatHistory(t.Context(), history, privacy.Settings{}) {
+		t.Fatal("unrelated history or an empty fingerprint matched")
 	}
 }
 

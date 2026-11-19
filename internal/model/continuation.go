@@ -43,6 +43,10 @@ func continuationScope(provider Provider, selected Model) string {
 	return hex.EncodeToString(sum[:])
 }
 
+func (d RequestDiagnostics) MatchesTarget(provider Provider, selected Model) bool {
+	return d.TargetHash != "" && d.TargetHash == continuationScope(provider, selected)
+}
+
 func replayData(message Message, scope string) json.RawMessage {
 	if message.Continuation == nil || message.Continuation.scope != scope {
 		return nil
@@ -56,6 +60,8 @@ func CloneMessages(history []Message) []Message {
 	out := slices.Clone(history)
 	for i := range out {
 		out[i].InputIDs = slices.Clone(out[i].InputIDs)
+		out[i].RetainedInputs = slices.Clone(out[i].RetainedInputs)
+		out[i].RetainedEvidence = slices.Clone(out[i].RetainedEvidence)
 		out[i].Calls = slices.Clone(out[i].Calls)
 		out[i].Images = slices.Clone(out[i].Images)
 		out[i].ImageRefs = slices.Clone(out[i].ImageRefs)

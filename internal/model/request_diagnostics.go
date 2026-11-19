@@ -2,10 +2,52 @@ package model
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"gcode/internal/privacy"
 )
+
+// MatchesChatHistory compares every encoded history item after the same
+// privacy transformation used for the recorded invocation.
+func (d RequestDiagnostics) MatchesChatHistory(ctx context.Context, history []Message, settings privacy.Settings) bool {
+	if d.TargetHash == "" || len(d.MessageHashes) != d.MessageCount || len(history) == 0 {
+		return false
+	}
+	body, err := (chatAdapter{}).encode(Request{History: history}, adapterTarget{scope: d.TargetHash})
+	if err != nil {
+		return false
+	}
+	if settings.Enabled {
+		if settings.LocalModel {
+			return false
+		}
+		g := Gateway{Privacy: settings, target: adapterTarget{scope: d.TargetHash}}
+		raw, err := json.Marshal(body)
+		if err != nil {
+			return false
+		}
+		raw, err = g.maskRequest(ctx, raw)
+		if err != nil || json.Unmarshal(raw, &body) != nil {
+			return false
+		}
+	}
+	msgs, ok := body["messages"].([]any)
+	if !ok {
+		return false
+	}
+	offset := d.MessageCount - len(msgs)
+	if offset != 0 && offset != 1 {
+		return false
+	}
+	for i, m := range msgs {
+		if diagnosticValueHash(withoutCacheMarkers(m)) != d.MessageHashes[offset+i] {
+			return false
+		}
+	}
+	return true
+}
 
 // RequestDiagnostics fingerprints the encoded wire request, including opaque
 // continuation and image bytes, without storing those bytes a second time.

@@ -54,6 +54,25 @@ func contextTokens(request model.Request) int {
 }
 
 func contextPressure(request model.Request, limits ContextLimits) int {
+	n, _ := measureContext(request, limits)
+	return n
+}
+
+// Include model-visible content, not host bookkeeping such as context refs.
+func historyHash(history []model.Message) string {
+	h := sha256.New()
+	encoder := json.NewEncoder(h)
+	for _, m := range history {
+		if err := encoder.Encode(model.Message{Role: m.Role, Text: m.Text, Reasoning: m.Reasoning, Calls: m.Calls,
+			CallID: m.CallID, IsError: m.IsError, Images: m.Images, Continuation: m.Continuation}); err != nil {
+			return ""
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func measureContext(request model.Request, limits ContextLimits) (int, string) {
+	reason := "no measured usage"
 	for i := len(request.History) - 1; i >= 0; i-- {
 		anchor := request.History[i].ContextUsage
 		if anchor == nil {
@@ -61,13 +80,24 @@ func contextPressure(request model.Request, limits ContextLimits) int {
 		}
 		// Compaction, prepended input, model changes or changed prompt/tools
 		// invalidate the old count. Input already includes cached tokens.
-		if anchor.Known && anchor.HistoryLength == i && anchor.ModelKey == limits.ModelKey &&
-			anchor.PromptHash != "" && anchor.PromptHash == promptHash(request) {
-			return anchor.InputTokens + anchor.OutputTokens + estimateMessages(request.History[i+1:])
+		if !anchor.Known || anchor.HistoryLength != i || anchor.ModelKey != limits.ModelKey {
+			reason = "missing usage or model/position changed"
+			break
 		}
-		break
+		if anchor.HistoryHash == "" || anchor.HistoryHash != historyHash(request.History[:i+1]) {
+			reason = "unverified or changed history"
+			break
+		}
+		n := anchor.InputTokens + anchor.OutputTokens + estimateMessages(request.History[i+1:])
+		if anchor.PromptHash != promptHash(request) {
+			n += contextTokens(model.Request{System: request.System, Tools: request.Tools}) - anchor.PromptTokens
+		}
+		if anchor.Estimated {
+			return max(0, n), "fold checkpoint plus changes"
+		}
+		return max(0, n), "provider usage plus changes"
 	}
-	return contextTokens(request)
+	return contextTokens(request), reason
 }
 
 func compactThreshold(limits ContextLimits) int {
@@ -78,9 +108,10 @@ func compactThreshold(limits ContextLimits) int {
 	// Adapters actually send the configured output limit. Reserve it in
 	// full instead of assuming a large configured limit will not be used.
 	output = min(output, max(0, limits.Window-1))
-	growth := min(16_000, limits.Window/20)
-	return max(1, limits.Window-output-growth)
+	return max(1, limits.Window-output-compactGrowthReserve(limits.Window))
 }
+
+func compactGrowthReserve(window int) int { return min(16_000, window/20) }
 
 func needsCompactionBaseline(history []model.Message) bool {
 	if len(history) == 0 || !history[0].Summary {

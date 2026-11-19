@@ -13,6 +13,24 @@ import (
 	"unicode/utf8"
 )
 
+func TestContextOverflowNeedsExplicitProviderError(t *testing.T) {
+	for _, tc := range []struct {
+		status int
+		body   string
+		want   bool
+	}{
+		{400, `{"error":{"code":"context_length_exceeded"}}`, true},
+		{400, `{"error":{"type":"invalid_request_error","message":"prompt is too long: 1234 tokens"}}`, true},
+		{429, `{"error":{"code":"context_length_exceeded"}}`, false},
+		{400, `{"error":{"message":"invalid tool call"}}`, false},
+		{500, `deadline exceeded`, false},
+	} {
+		if got := IsContextOverflow(&ProviderError{HTTPStatus: tc.status, detail: tc.body}); got != tc.want {
+			t.Errorf("status=%d body=%q: got %t", tc.status, tc.body, got)
+		}
+	}
+}
+
 func TestProviderHTTPErrorPreservesOriginalBody(t *testing.T) {
 	for _, protocol := range []Protocol{Chat, Responses, Messages} {
 		for _, body := range []string{

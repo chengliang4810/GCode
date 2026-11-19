@@ -640,6 +640,32 @@ func (e *Engine) startRunWithProvidersLocked(
 				memory = &contextMemory
 			}
 			runErr = agent.Run(runCtx, agent.Options{
+				VerifyPriorUsage: func(prefix []model.Message, anchor model.ContextUsage) bool {
+					trajectory, err := e.ReadModelTrajectory(runCtx, session.ID)
+					if err != nil {
+						return false
+					}
+					e.mu.Lock()
+					_, provider, selected, selectionErr := liveModel.selectionLocked()
+					settings := e.state.Settings.Privacy.Clone()
+					e.mu.Unlock()
+					if selectionErr != nil {
+						return false
+					}
+					for i := len(trajectory.Records) - 1; i >= 0; i-- {
+						r := trajectory.Records[i]
+						if r.Source != "main" || r.ContextChange == "summary" || r.Error != "" || r.Response == nil || !r.Response.Usage.Known {
+							continue
+						}
+						if r.Protocol != model.Chat || !r.Request.MatchesTarget(provider, selected) || r.Response.Usage.Input != anchor.InputTokens || r.Response.Usage.Output != anchor.OutputTokens {
+							continue
+						}
+						if r.Request.MatchesChatHistory(runCtx, prefix, settings) {
+							return true
+						}
+					}
+					return false
+				},
 				Memory: memory,
 				ReplaceMemory: func(messages []model.Message, state agent.ContextMemory) error {
 					e.mu.Lock()
@@ -695,8 +721,13 @@ func (e *Engine) startRunWithProvidersLocked(
 				ReplaceContext: func(messages []model.Message) error {
 					e.mu.Lock()
 					defer e.mu.Unlock()
+					previous := e.context[session.ID]
 					e.context[session.ID] = model.CloneMessages(messages)
-					return e.persistLocked(session.ID)
+					if err := e.persistLocked(session.ID); err != nil {
+						e.context[session.ID] = previous
+						return err
+					}
+					return nil
 				},
 				Pending: func(idle bool) []model.Message {
 					e.mu.Lock()

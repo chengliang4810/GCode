@@ -53,11 +53,12 @@ type Options struct {
 	Model Model
 	// ContextLimits reads the current model before each step. Unknown capacity
 	// disables automatic compaction without inventing a token limit.
-	ContextLimits func() ContextLimits
-	Request       model.Request
-	CWD           string
-	Tools         []Tool
-	ToolAllowed   func(string) bool
+	ContextLimits    func() ContextLimits
+	VerifyPriorUsage func([]model.Message, model.ContextUsage) bool
+	Request          model.Request
+	CWD              string
+	Tools            []Tool
+	ToolAllowed      func(string) bool
 	// Record commits complete execution messages before the next effect.
 	Record         func(model.Message) error
 	ReplaceContext func([]model.Message) error
@@ -253,6 +254,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		return admissionErr
 	}
 	stopContinuations := 0
+	recoverOverflow, triedOverflow := false, false
 	todoClosures := 0
 	for {
 		if err := ctx.Err(); err != nil {
@@ -275,14 +277,35 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		if options.ContextLimits != nil {
 			limits = options.ContextLimits()
 		}
+		if options.VerifyPriorUsage != nil {
+			for i := len(request.History) - 1; i >= 0; i-- {
+				a := request.History[i].ContextUsage
+				if a == nil {
+					continue
+				}
+				if a.Known && !a.Estimated && a.HistoryLength == i && (a.HistoryHash == "" || a.ModelKey != limits.ModelKey) {
+					if !options.VerifyPriorUsage(request.History[:i], *a) {
+						break
+					}
+					copy := *a
+					copy.ModelKey = limits.ModelKey
+					copy.OutputTokens = max(copy.OutputTokens, estimateMessages(request.History[i:i+1]))
+					copy.HistoryHash = historyHash(request.History[:i+1])
+					request.History[i].ContextUsage = &copy
+				}
+				break
+			}
+			options.VerifyPriorUsage = nil
+		}
+		pressure, source := measureContext(request, limits)
 		if (options.ReplaceContext != nil || options.Memory != nil && options.ReplaceMemory != nil) && len(request.History) >= minimumCompactMessages &&
-			limits.Window > 0 && contextPressure(request, limits) >= compactThreshold(limits) {
+			limits.Window > 0 && (recoverOverflow || pressure >= compactThreshold(limits)) {
 			before, err := applyHook(HookInput{Event: contracts.HookPreCompact, Trigger: "auto"})
 			if err != nil {
 				return err
 			}
 			if !before.Deny {
-				if err := options.Emit(Event{Kind: "context.compacting"}); err != nil {
+				if err := options.Emit(Event{Kind: "context.compacting", Text: fmt.Sprintf("usage=%d threshold=%d source=%s provider_overflow=%t", pressure, compactThreshold(limits), source, recoverOverflow)}); err != nil {
 					return err
 				}
 				// Compaction summarizes the TodoWrite calls away; retain the
@@ -297,37 +320,106 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				var compacted []model.Message
 				var nextMemory ContextMemory
 				var err error
-				excess := max(0, contextPressure(request, limits)-contextTokens(request))
+				threshold := compactThreshold(limits)
+				rawBefore := contextTokens(request)
+				if recoverOverflow {
+					pressure = max(pressure, threshold)
+				}
+				project := func(raw int) int {
+					if rawBefore <= 0 {
+						return raw
+					}
+					return int(float64(pressure) * float64(raw) / float64(rawBefore))
+				}
+				retainedTokens := 0
+				if retained != nil {
+					retainedTokens = estimateMessages([]model.Message{*retained})
+				}
+				tail := foldableEnd(request.History)
+				protected := request
+				protected.History = request.History[tail:]
+				if project(contextTokens(protected))+retainedTokens >= threshold {
+					return errors.New("automatic context compaction cannot reach the model budget: protected recent input is too large; reduce it or choose a larger context window")
+				}
 				compactCtx, cancelCompact := context.WithTimeout(ctx, 6*time.Minute)
 				compactDeadline, _ := compactCtx.Deadline()
-				if options.Memory != nil {
-					// Preserve any observed excess over our text estimate
-					// until a new real model response establishes a baseline.
-					compacted, nextMemory, err = CompactContext(compactCtx, options.Model, request, *options.Memory)
-					// A single large segment may not reclaim enough space.
-					// Continue folding before sending the normal model step.
-					previousTokens := contextTokens(request)
-					for rounds := 1; err == nil && excess+contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted}) >= compactThreshold(limits); rounds++ {
-						currentTokens := contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted})
-						if rounds >= 16 || currentTokens >= previousTokens {
+				var light []model.Message
+				if !recoverOverflow {
+					light = planLightCompact(request, func(raw int) bool {
+						return project(raw) <= threshold-compactGrowthReserve(limits.Window)
+					})
+				}
+				if light != nil {
+					compacted = light
+					if options.Memory != nil {
+						nextMemory = *options.Memory
+						err = options.ReplaceMemory(compacted, nextMemory)
+					}
+				} else if options.Memory != nil {
+					nextRequest := request
+					nextMemory = *options.Memory
+					if retained != nil {
+						retained.ContextRef = "m_" + hookUUID()
+					}
+					for rounds := 0; ; rounds++ {
+						before := contextTokens(nextRequest)
+						if rounds >= 16 {
 							err = errors.New("context compaction cannot reach the model budget; reduce protected input or choose a model with a larger context window")
 							break
 						}
-						if time.Until(compactDeadline) < summaryTimeout {
+						if rounds > 0 && time.Until(compactDeadline) < summaryTimeout {
 							err = fmt.Errorf("not enough time for another context fold: %w", context.DeadlineExceeded)
 							break
 						}
-						previousTokens = currentTokens
-						nextRequest := request
+						start, end := automaticFoldRange(nextRequest.History)
+						if start == end {
+							err = errors.New("no complete historical range is available for context compression")
+							break
+						}
+						prefix := model.Request{System: request.System, History: nextRequest.History[:start]}
+						needed := project(before) + retainedTokens - compactThreshold(limits) + compactGrowthReserve(limits.Window)
+						rawNeeded := int(float64(max(0, needed)) * float64(rawBefore) / float64(max(1, pressure)))
+						segmentTokens := min(max(12_000, rawNeeded+4_000), max(1, threshold-contextTokens(prefix)-256))
+						compacted, nextMemory, err = compactContextSegment(compactCtx, options.Model, nextRequest, nextMemory, segmentTokens, true)
+						if err != nil {
+							break
+						}
 						nextRequest.History = compacted
-						compacted, nextMemory, err = CompactContext(compactCtx, options.Model, nextRequest, nextMemory)
+						after := contextTokens(nextRequest)
+						if after >= before {
+							err = errors.New("context compaction cannot reach the model budget; reduce protected input or choose a model with a larger context window")
+							break
+						}
+						checkpoint := compacted
+						if retained != nil {
+							checkpoint = append(compacted[:len(compacted):len(compacted)], *retained)
+						}
+						last := len(checkpoint) - 1
+						checkpoint[last].ContextUsage = &model.ContextUsage{Known: true, Estimated: true, ModelKey: limits.ModelKey,
+							InputTokens: project(after) + retainedTokens, HistoryLength: last, HistoryHash: historyHash(checkpoint),
+							PromptHash: promptHash(request), PromptTokens: contextTokens(model.Request{System: request.System, Tools: request.Tools})}
+						if err = options.ReplaceMemory(checkpoint, nextMemory); err != nil {
+							break
+						}
+						*options.Memory = nextMemory
+						if project(after)+retainedTokens <= threshold-compactGrowthReserve(limits.Window) {
+							compacted = checkpoint
+							break
+						}
+						if start, end := automaticFoldRange(compacted); start == end {
+							if project(after)+retainedTokens >= threshold {
+								err = errors.New("compacted history still exceeds the model budget")
+							}
+							compacted = checkpoint
+							break
+						}
 					}
 				} else {
-					compacted, err = Compact(compactCtx, options.Model, request)
+					compacted, err = compact(compactCtx, options.Model, request, true)
 				}
 				cancelCompact()
-				if err == nil {
-					estimated := excess + contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted})
+				if err == nil && options.Memory == nil && light == nil {
+					estimated := project(contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted}))
 					if retained != nil {
 						estimated += estimateMessages([]model.Message{*retained})
 					}
@@ -338,25 +430,14 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				if err != nil {
 					return fmt.Errorf("automatic context compaction: %w", err)
 				}
-				if retained != nil {
-					if options.Memory != nil && retained.ContextRef == "" {
-						retained.ContextRef = "m_" + hookUUID()
-					}
-					if err := options.Record(*retained); err != nil {
-						return err
-					}
+				if retained != nil && options.Memory == nil && light == nil {
 					compacted = append(compacted, *retained)
 				}
-				if options.Memory != nil {
-					err = options.ReplaceMemory(compacted, nextMemory)
-				} else {
+				if options.Memory == nil {
 					err = options.ReplaceContext(compacted)
 				}
 				if err != nil {
 					return err
-				}
-				if options.Memory != nil {
-					*options.Memory = nextMemory
 				}
 				request.History = compacted
 				request.ContextChange = "compacted"
@@ -364,7 +445,9 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				if len(compacted) > 0 {
 					summary = compacted[0].Text
 				}
-				if options.Memory != nil && len(nextMemory.Blocks) > 0 {
+				if light != nil {
+					summary = ""
+				} else if options.Memory != nil && len(nextMemory.Blocks) > 0 {
 					summary = nextMemory.Blocks[len(nextMemory.Blocks)-1].Summary
 				}
 				_, err = applyHook(HookInput{Event: contracts.HookPostCompact, Trigger: "auto", CompactSummary: summary})
@@ -409,11 +492,19 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				}
 			}
 		}
-		if err := options.Emit(Event{Kind: "message.start"}); err != nil {
+		startEvent := "message.start"
+		if recoverOverflow {
+			startEvent = "message.retry"
+		}
+		if err := options.Emit(Event{Kind: startEvent}); err != nil {
 			return err
 		}
 		result, err := streamResponse(ctx, options, request)
 		if err != nil {
+			if !triedOverflow && model.IsContextOverflow(err) && limits.Window > 0 && len(request.History) >= minimumCompactMessages && (options.ReplaceContext != nil || options.Memory != nil) {
+				recoverOverflow, triedOverflow = true, true
+				continue
+			}
 			if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 				kind := modelFailureHookKind(err)
 				_, hookErr := applyHook(HookInput{Event: contracts.HookStopFailure, ToolError: kind, ErrorType: kind, ErrorDetails: err.Error(), Response: err.Error()})
@@ -424,7 +515,10 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		result.Message.ContextUsage = &model.ContextUsage{
 			Known: result.Usage.Known, InputTokens: result.Usage.Input, OutputTokens: result.Usage.Output,
 			HistoryLength: len(request.History), ModelKey: limits.ModelKey, PromptHash: promptHash(request),
+			HistoryHash:  historyHash(append(request.History[:len(request.History):len(request.History)], result.Message)),
+			PromptTokens: contextTokens(model.Request{System: request.System, Tools: request.Tools}),
 		}
+		recoverOverflow, triedOverflow = false, false
 		if err := record(result.Message); err != nil {
 			return err
 		}

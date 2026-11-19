@@ -224,6 +224,8 @@ func foldContext(history []model.Message, state ContextMemory, start, end int, s
 	id := "b_" + hookUUID()
 	text := fmt.Sprintf("Earlier work [%s, tier %d; use DecompressContext for originals]:\n%s", id, tier, summary)
 	replacement := model.Message{Role: "user", Text: text, Summary: true, ContextRef: id, InputIDs: inputs}
+	retainUserInputs(&replacement, history[start:end])
+	retainWorkEvidence(&replacement, history[start:end])
 	if estimateMessages([]model.Message{replacement}) >= estimateMessages(history[start:end]) {
 		return nil, state, errors.New("summary does not reduce the context; shorten it or select a larger range")
 	}
@@ -240,6 +242,20 @@ func foldContext(history []model.Message, state ContextMemory, start, end int, s
 // CompactContext folds a bounded prefix segment, preserving existing summary
 // blocks until enough of them accumulate to justify a higher-level merge.
 func CompactContext(ctx context.Context, client Model, request model.Request, state ContextMemory) ([]model.Message, ContextMemory, error) {
+	return compactContextSegment(ctx, client, request, state, 12_000, false)
+}
+
+// Each side of a protected human input may retain one continuation summary.
+func automaticFoldRange(history []model.Message) (int, int) {
+	for _, r := range contextFoldRanges(history) {
+		if r.end-r.start > 1 || !history[r.start].Summary {
+			return r.start, r.end
+		}
+	}
+	return 0, 0
+}
+
+func compactContextSegment(ctx context.Context, client Model, request model.Request, state ContextMemory, segmentTokens int, automatic bool) ([]model.Message, ContextMemory, error) {
 	request.History = model.CloneMessages(request.History)
 	AssignContextRefs(request.History)
 	start, end := 1, foldableEnd(request.History)
@@ -251,6 +267,9 @@ func CompactContext(ctx context.Context, client Model, request model.Request, st
 			end = lastInput
 		}
 	}
+	if automatic {
+		start, end = automaticFoldRange(request.History)
+	}
 	if end <= start {
 		return nil, state, errors.New("no complete historical range is available for context compression")
 	}
@@ -260,16 +279,19 @@ func CompactContext(ctx context.Context, client Model, request model.Request, st
 	for start+summaries < end && request.History[start+summaries].Summary {
 		summaries++
 	}
-	if summaries >= 4 {
+	if !automatic && summaries >= 4 {
 		end = start + 4
 	} else {
-		start += summaries
+		if !automatic {
+			start += summaries
+		}
 		if start >= end {
 			start = 1 // budget pressure: condense the remaining summary prefix
 		}
-		// Keep a summary request bounded by roughly 12K estimated tokens.
+		size := 0
 		for cut := start + 1; cut < end; cut++ {
-			if contextBoundary(request.History, cut) && estimateMessages(request.History[start:cut]) >= 12000 {
+			size += estimateMessages(request.History[cut-1 : cut])
+			if contextBoundary(request.History, cut) && size >= segmentTokens && !(automatic && cut == start+1 && request.History[start].Summary) {
 				end = cut
 				break
 			}

@@ -275,6 +275,14 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 			if contextTokens(request) >= compactThreshold(limits) {
 				t.Fatal("normal request exceeded reserved budget")
 			}
+			if len(request.History) != 10 || !request.History[1].Summary {
+				t.Fatalf("expected first message, one summary and eight recent messages; got %d messages", len(request.History))
+			}
+			for i, msg := range history[len(history)-8:] {
+				if request.History[2+i].Text != msg.Text {
+					t.Fatal("recent message changed", i)
+				}
+			}
 			if request.History[0].Text != history[0].Text || request.History[len(request.History)-1].Text != history[len(history)-1].Text {
 				t.Fatal("protected instructions changed")
 			}
@@ -283,6 +291,58 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 	})
 	if err != nil || summaries < 3 || normal != 1 || len(state.Blocks) != summaries-1 {
 		t.Fatal("budget folding failed", summaries, normal, len(state.Blocks), err)
+	}
+}
+
+func TestRunContextMemoryKeepsCheckpointWhenLaterSummaryFails(t *testing.T) {
+	history := []model.Message{{Role: "user", Text: "first", UserInput: true}}
+	for range 100 {
+		history = append(history, model.Message{Role: "assistant", Text: strings.Repeat("work ", 800)})
+	}
+	history = append(history, model.Message{Role: "user", Text: "latest", UserInput: true})
+	var saved []model.Message
+	var memory ContextMemory
+	requests, writes := 0, 0
+	err := Run(t.Context(), Options{
+		Memory: &memory, Request: model.Request{History: history},
+		ContextLimits: func() ContextLimits { return ContextLimits{Window: 50_000, MaxOutput: 1000} },
+		ReplaceMemory: func(view []model.Message, state ContextMemory) error {
+			if len(state.Blocks) > 0 {
+				writes++
+				saved = model.CloneMessages(view)
+			}
+			return nil
+		},
+		Record: func(model.Message) error { return nil }, Emit: func(Event) error { return nil },
+		Pending: func(bool) []model.Message { return nil },
+		Model: testModel{stream: func(request model.Request) (model.Result, error) {
+			if request.ContextChange != "summary" {
+				t.Fatal("normal request sent before reaching budget")
+			}
+			requests++
+			if requests == 1 {
+				return model.Result{Message: model.Message{Role: "assistant", Text: "Completed stages."}}, nil
+			}
+			if writes != 1 {
+				t.Fatal("first fold was not persisted before starting the second")
+			}
+			return model.Result{}, context.DeadlineExceeded
+		}},
+	})
+	if !errors.Is(err, context.DeadlineExceeded) || writes != 1 || len(memory.Blocks) != 1 ||
+		len(memory.Blocks[0].Originals) < 20 || len(saved) == 0 || !saved[1].Summary || saved[len(saved)-1].Text != "latest" {
+		t.Fatalf("adaptive fold did not survive later failure: requests=%d writes=%d blocks=%d err=%v", requests, writes, len(memory.Blocks), err)
+	}
+	data, err := json.Marshal(saved)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var restored []model.Message
+	if err = json.Unmarshal(data, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if _, source := measureContext(model.Request{History: restored}, ContextLimits{}); source != "fold checkpoint plus changes" {
+		t.Fatal("restored fold lost its pressure checkpoint", source)
 	}
 }
 
