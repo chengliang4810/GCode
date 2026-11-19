@@ -169,10 +169,10 @@ jobs:
             [[ $(find release-assets -name "gcode-$RELEASE_VERSION-$platform.tar.gz" | wc -l) -eq 1 ]]
           done
           [[ $(find release-assets -name 'gcode-setup-*.exe' | wc -l) -eq 1 ]]
-          [[ -f "release-assets/gcode-setup-$RELEASE_VERSION-x86.exe" ]]
+          [[ $(find release-assets -type f -name "gcode-setup-$RELEASE_VERSION-x86.exe" | wc -l) -eq 1 ]]
           [[ $(find release-assets -name '*.dmg' | wc -l) -eq 3 ]]
           for suffix in -arm64 -x86 ''; do
-            [[ -f "release-assets/gcode-$RELEASE_VERSION$suffix.dmg" ]]
+            [[ $(find release-assets -type f -name "gcode-$RELEASE_VERSION$suffix.dmg" | wc -l) -eq 1 ]]
           done
           if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" > tag.json 2> tag-error.txt; then
             [[ $(jq -r '.object.sha' tag.json) == "$GITHUB_SHA" ]] ||
