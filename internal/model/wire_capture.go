@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 )
 
@@ -30,12 +31,16 @@ func startWireCapture(parent, id string, attempt int, request []byte) (*wireCapt
 	if err != nil {
 		return nil, err
 	}
-	if !info.IsDir() || info.Mode().Perm()&0077 != 0 {
+	if !info.IsDir() || (runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0) {
 		return nil, errors.New("capture directory must be a private directory (0700)")
 	}
 	dir, err := os.MkdirTemp(parent, fmt.Sprintf("call-%s-%03d-", id, attempt))
 	if err != nil {
 		return nil, err
+	}
+	if err := protectWireCaptureDirectory(dir); err != nil {
+		_ = os.Remove(dir)
+		return nil, fmt.Errorf("protect capture directory: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "request.json"), request, 0600); err != nil {
 		return nil, err
