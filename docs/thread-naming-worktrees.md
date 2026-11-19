@@ -137,7 +137,10 @@ The native window uses the real local core and a temporary Git repository; the
 accepted conversation CWD is directly under `worktrees/<repository-folder>/`.
 Evidence is `output/desktop-e2e/20261119-225928-2067203277/evidence.json`.
 Model replies use a local HTTP fixture; this does not verify a real provider,
-remote host, other platforms or visual parity.
+remote host, other platforms or visual parity. Worktree/ref race checks,
+contracts/mock/remote regressions and desktop component boundary tests passed.
+The complete engine suite reached its eight-minute suite deadline before finishing;
+this is not a full-engine-suite pass.
 
 2026-11-04 refs refresh acceptance uses a private real Git repository and the
 native local desktop. It starts with a persisted Ready cache for main, switches
