@@ -117,14 +117,21 @@ func TestSettingsPageHeadingFollowsTheFrameTokens(t *testing.T) {
 				c.SetTheme(Palette("rcode-light", false).UI())
 				ui.Column(c).Fill().Children(func() {
 					s.Heading(c, "Usage statistics", "Settings page heading")
+					ui.Text(c, "Usage statistics").Label("Native font minimum").
+						FontSize(TextSize(c, test.size)).FontWeight(s.HeadingWeight).FixedLineHeight(1)
 				})
 			}, test.width, 400)
 			bounds, ok := tt.Find("Settings page heading")
 			if !ok {
 				t.Fatal("the shared heading did not render")
 			}
-			if math.Abs(float64(bounds.H-test.leading)) > 1 {
-				t.Fatalf("heading height = %g, want the %g leading of the %g px level", bounds.H, test.leading, test.size)
+			minimum, ok := tt.Find("Native font minimum")
+			if !ok {
+				t.Fatal("the native font sample did not render")
+			}
+			want := max(test.leading, minimum.H)
+			if math.Abs(float64(bounds.H-want)) > 1 {
+				t.Fatalf("heading height = %g, want %g (token %g, native minimum %g)", bounds.H, want, test.leading, minimum.H)
 			}
 			if bounds.X != s.HeadingInset {
 				t.Fatalf("heading inset = %g, want %g", bounds.X, s.HeadingInset)
