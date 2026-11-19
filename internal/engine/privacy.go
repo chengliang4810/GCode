@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,6 +21,13 @@ func (e *Engine) bindModelLocked(provider model.Provider, selected model.Model) 
 		return nil, err
 	}
 	gateway.SetPrivacy(e.state.Settings.Privacy)
+	if e.state.Settings.General.RecordModelWire {
+		directory, err := e.storage.Resolve(e.storage.ActiveRootID())
+		if err != nil {
+			return nil, fmt.Errorf("resolve model wire capture data directory: %w", err)
+		}
+		gateway.WireCaptureDirectory = filepath.Join(directory, "model-wire")
+	}
 	language := e.state.Settings.General.Language
 	notify := e.state.Settings.Privacy.Notify
 	gateway.PrivacyReport = func(report privacy.Report) {

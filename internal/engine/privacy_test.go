@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -17,6 +18,10 @@ func TestPrivacySettingsPersistAndBindAtHostBoundary(t *testing.T) {
 		t.Fatal("privacy must default off")
 	}
 	settings := core.state.Settings
+	if settings.General.RecordModelWire {
+		t.Fatal("wire capture must default off")
+	}
+	settings.General.RecordModelWire = true
 	settings.Privacy = privacy.Settings{
 		Enabled: true, Secrets: true, Personal: true, Words: []string{"内部项目"}, WordsWhole: true,
 		Kinds: map[string]bool{"ip": true}, Rules: []redact.Rule{{Kind: "KEY", Prefix: "private-"}},
@@ -24,6 +29,10 @@ func TestPrivacySettingsPersistAndBindAtHostBoundary(t *testing.T) {
 		ModelName: "astrlink-guard", ModelScores: map[string]float64{"astrlink-guard": .9},
 	}
 	if err := core.Execute(t.Context(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
+		t.Fatal(err)
+	}
+	nextRoot := filepath.Join(t.TempDir(), "data")
+	if err := core.storage.RequestDirectory(nextRoot); err != nil {
 		t.Fatal(err)
 	}
 	if err := core.Close(); err != nil {
@@ -43,6 +52,9 @@ func TestPrivacySettingsPersistAndBindAtHostBoundary(t *testing.T) {
 	core.mu.Unlock()
 	if err != nil || !reflect.DeepEqual(gateway.Privacy, settings.Privacy) {
 		t.Fatalf("host did not freeze privacy policy: %+v %v", gateway, err)
+	}
+	if gateway.WireCaptureDirectory != filepath.Join(nextRoot, "model-wire") {
+		t.Fatalf("capture did not follow the new active data directory: %q", gateway.WireCaptureDirectory)
 	}
 	settings.Privacy.Words[0] = "new-word"
 	if gateway.Privacy.Words[0] != "内部项目" {

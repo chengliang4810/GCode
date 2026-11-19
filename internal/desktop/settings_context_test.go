@@ -42,6 +42,17 @@ func TestHierarchicalContextSettingsSwitch(t *testing.T) {
 				if err != nil || snapshot.Settings.General.HierarchicalContext {
 					t.Fatal("disable not persisted", err)
 				}
+				wireLabel := "Toggle Record raw model requests and responses"
+				for _, want := range []bool{true, false} {
+					if err := tt.Click(wireLabel); err != nil {
+						t.Fatal(err)
+					}
+					tt.Frame()
+					snapshot, err := backend.Snapshot(t.Context())
+					if err != nil || snapshot.Settings.General.RecordModelWire != want {
+						t.Fatalf("wire capture switch did not save %t: %v", want, err)
+					}
+				}
 				for _, text := range tt.Texts() {
 					if bounds, ok := tt.Find(text); ok && bounds.W > 0 && (bounds.X < -1 || bounds.X+bounds.W > float32(width)+1) {
 						t.Fatalf("overflow %q: %+v", text, bounds)

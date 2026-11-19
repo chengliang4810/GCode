@@ -460,6 +460,7 @@ type WebSearchSettings struct {
 }
 
 type GeneralSettings struct {
+	RecordModelWire bool `json:"recordModelWire"`
 	// HierarchicalContext enables session-local, recoverable context folding.
 	HierarchicalContext bool              `json:"hierarchicalContext"`
 	WebSearch           WebSearchSettings `json:"webSearch"`

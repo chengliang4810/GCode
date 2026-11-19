@@ -42,6 +42,8 @@
   "Personalization": "个性化",
   "Memory": "记忆",
   "Hierarchical context compression": "分层上下文压缩",
+  "Record raw model requests and responses": "记录原始模型请求和响应",
+  "Saves sensitive content in the model-wire directory. Applies to new requests.": "可能包含敏感内容，保存在 model-wire 目录。对新请求生效。",
   "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.": "将较早的工作整理为可恢复原文的分层摘要。默认关闭，修改从下次运行生效。",
   "Auto memory": "自动记忆",
   "Remember facts about you and your projects across sessions. Off until you turn it on.": "跨会话记住与你和项目相关的事实。默认关闭，开启后生效。",

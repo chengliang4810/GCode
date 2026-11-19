@@ -508,6 +508,10 @@ func (a *App) generalSettings(c *ui.Context) {
 		})
 		line(c)
 		a.settingsRow(c, "Stop agent with Escape", "When no dialog or menu is open.", func() { a.settingsToggle(c, "Stop agent with Escape", &g.StopWithEscape) })
+		line(c)
+		a.settingsRow(c, "Record raw model requests and responses", "Saves sensitive content in the model-wire directory. Applies to new requests.", func() {
+			a.settingsToggle(c, "Record raw model requests and responses", &g.RecordModelWire)
+		})
 	})
 	a.settingsCard(c, func() {
 		description := "Uses an additional model request for each new conversation."
