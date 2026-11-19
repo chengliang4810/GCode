@@ -121,7 +121,7 @@ func TestWindowsInstaller(t *testing.T) {
 		"resources/icon.png":   string(defaultIcon()),
 	})
 	setup := artifacts[len(artifacts)-1]
-	if filepath.Base(setup) != "setup-test-setup-2.0.0-amd64.exe" {
+	if filepath.Base(setup) != "setup-test-setup-2.0.0-x86.exe" {
 		t.Fatalf("artifacts = %q", artifacts)
 	}
 	// The executable, the uninstaller that makensis made, then the
@@ -131,7 +131,7 @@ func TestWindowsInstaller(t *testing.T) {
 	for _, line := range strings.Split(strings.TrimSpace(string(listed)), "\n") {
 		signed = append(signed, filepath.Base(strings.Trim(line, "\r \"")))
 	}
-	if len(signed) != 3 || signed[0] != "Setup Test.exe" || signed[1] == signed[0] || signed[1] == signed[2] || signed[2] != "setup-test-setup-2.0.0-amd64.exe" {
+	if len(signed) != 3 || signed[0] != "Setup Test.exe" || signed[1] == signed[0] || signed[1] == signed[2] || signed[2] != "setup-test-setup-2.0.0-x86.exe" {
 		t.Errorf("signed %q", signed)
 	}
 	// The finish page uses a LangString, defined for every wizard language.
@@ -311,7 +311,7 @@ func TestWindowsInstallerDisplayName(t *testing.T) {
 		"mygo.json": `{"name": "Display Test", "identifier": "com.example.displaytest", "version": "1.0.0", "windows": {"displayName": "显示测试: Beta"}}`,
 	})
 	setup := artifacts[len(artifacts)-1]
-	if filepath.Base(setup) != "display-test-setup-1.0.0-amd64.exe" {
+	if filepath.Base(setup) != "display-test-setup-1.0.0-x86.exe" {
 		t.Fatalf("artifacts = %q", artifacts)
 	}
 	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {

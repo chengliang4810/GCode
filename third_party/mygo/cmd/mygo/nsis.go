@@ -95,11 +95,18 @@ func downloadFile(t *task, url, sum string) fetch.File {
 }
 
 // installerFileName is "<slug>-setup-<version>-<arch>.exe", as
-// "my-app-setup-1.2.0-amd64.exe": each architecture's installer is named
+// "my-app-setup-1.2.0-x86.exe": each architecture's installer is named
 // apart, so that the builds of two, uploaded to one release or bucket,
 // keep both. install.ps1 finds it by installerPrefix.
 func installerFileName(c *Config, goarch string) string {
-	return installerPrefix(c) + fsName(c.Version) + "-" + goarch + ".exe"
+	return installerPrefix(c) + fsName(c.Version) + "-" + installerArch(goarch) + ".exe"
+}
+
+func installerArch(goarch string) string {
+	if goarch == "amd64" {
+		return "x86"
+	}
+	return goarch
 }
 
 // installerPrefix is what the names of the app's installers start with,

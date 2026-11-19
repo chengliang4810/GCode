@@ -208,7 +208,7 @@ func TestLinuxFormats(t *testing.T) {
 	const (
 		deb     = "note-pad_1.2.0_amd64.deb"
 		rpm     = "note-pad-1.2.0-1.x86_64.rpm"
-		archive = "note-pad-1.2.0-linux-amd64.tar.gz"
+		archive = "note-pad-1.2.0-linux-x86.tar.gz"
 	)
 	for _, tc := range []struct {
 		formats string // in mygo.json
@@ -366,7 +366,7 @@ func TestBuildLinuxSlug(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := filepath.Join(dir, "build", "linux-amd64")
-	for _, name := range []string{"cloud-music", "cloud-music.desktop", "cloud-music-0.1.0-linux-amd64.tar.gz", "cloud-music_0.1.0_amd64.deb", pkgbuildName, "cloud-music-0.1.0-1.x86_64.rpm"} {
+	for _, name := range []string{"cloud-music", "cloud-music.desktop", "cloud-music-0.1.0-linux-x86.tar.gz", "cloud-music_0.1.0_amd64.deb", pkgbuildName, "cloud-music-0.1.0-1.x86_64.rpm"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Error(err)
 		}
@@ -380,7 +380,7 @@ func TestBuildLinuxSlug(t *testing.T) {
 	}
 	// The list of what the version installs, from which its update knows
 	// what to remove, is in the app's archive.
-	f, err := os.Open(filepath.Join(out, "cloud-music-0.1.0-linux-amd64.tar.gz"))
+	f, err := os.Open(filepath.Join(out, "cloud-music-0.1.0-linux-x86.tar.gz"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -404,7 +404,7 @@ func TestBuildLinuxSlug(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(pkgbuild), "\npkgname='cloud-music'\n") || !strings.Contains(string(pkgbuild), "\nsource=('cloud-music-0.1.0-linux-amd64.tar.gz')\n") || !strings.Contains(string(pkgbuild), "\ndepends=('gtk3')\n") {
+	if !strings.Contains(string(pkgbuild), "\npkgname='cloud-music'\n") || !strings.Contains(string(pkgbuild), "\nsource=('cloud-music-0.1.0-linux-x86.tar.gz')\n") || !strings.Contains(string(pkgbuild), "\ndepends=('gtk3')\n") {
 		t.Errorf("the PKGBUILD does not package cloud-music:\n%s", pkgbuild)
 	}
 	if rpm, err := exec.LookPath("rpm"); err == nil {

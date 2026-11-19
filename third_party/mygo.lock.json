@@ -5,7 +5,7 @@
   "upstreamSum": "h1:vzMjSyahUjSk62+n+qmNXt8Bamyx1UNz359OyEDo/kg=",
   "revision": "rcode-native-ui.28",
   "sourceDir": "third_party/mygo",
-  "treeSha256": "72a46929fae6eb7fbc8fc5ac6cb80fc850605f2930748fab309936e366f7f1d4",
+  "treeSha256": "3a6028f49dc211ddc0ca79e7e56a7c8d9e864359d1feac36f3f49b6c87193e8a",
   "fileCount": 2852,
   "patches": [
     {
@@ -75,6 +75,10 @@
     {
       "path": "patches/mygo-v0.9.1-22-diff-no-separators.patch",
       "sha256": "185b9346da60e25da45286e12a8113fbb58a0718f2c6399a1aa045968b5c4660"
+    },
+    {
+      "path": "patches/mygo-v0.9.1-23-macos-dmg-name.patch",
+      "sha256": "8b59ac5fdebf8d573a3ef6e18ef389a410636b9c18e857ff2b650a20fed8dd31"
     },
     {
       "path": "patches/mygo-v0.9.1-17-api-gen.patch",

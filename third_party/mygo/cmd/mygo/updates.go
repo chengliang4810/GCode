@@ -217,7 +217,11 @@ func writeArchive(c *Config, stage, target string, entries []string) ([]string, 
 			return nil, err
 		}
 	}
-	name := c.slug() + "-" + c.Version + "-" + target + ".tar.gz"
+	archiveTarget := target
+	if arch, ok := strings.CutPrefix(target, "linux-"); ok {
+		archiveTarget = "linux-" + installerArch(arch)
+	}
+	name := c.slug() + "-" + c.Version + "-" + archiveTarget + ".tar.gz"
 	archive := filepath.Join(stage, name)
 	size, sig, err := writeSigned(archive, key, func(w io.Writer) error {
 		return update.WriteArchive(w, stage, entries)

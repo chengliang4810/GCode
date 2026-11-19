@@ -67,6 +67,12 @@ MyGo 生成安装包、签名 `.tar.gz` 更新包、每平台 `update-*.json`，
 构建后运行既有包内容校验，再核实清单版本、说明、日期、下载地址、
 文件大小与每个新下载文件的 Ed25519 签名。普通 ZIP 不再重复包含更新包。
 
+macOS 安装包命名为 `gcode-<版本>-arm64.dmg`（Apple 芯片）、
+`gcode-<版本>-x86.dmg`（Intel 64 位）和 `gcode-<版本>.dmg`（通用版）。
+Windows 64 位安装包为 `gcode-setup-<版本>-x86.exe`。Linux 桌面归档为
+`gcode-<版本>-linux-x86.tar.gz`（Intel/AMD 64 位）或
+`gcode-<版本>-linux-arm64.tar.gz`（ARM64）。DEB 和 RPM 使用各自的标准架构命名。
+
 更新签名用于验证下载文件，不等同于 Windows 代码签名或 Apple 签名/公证。
 现有脚本的 macOS 构建仍跳过公证，其他机器的系统信任验收需要另行完成。
 

@@ -25,7 +25,7 @@ func dmgFileName(c *Config, goarch string) string {
 	if goarch == "universal" {
 		return c.slug() + "-" + fsName(c.Version) + ".dmg"
 	}
-	return c.slug() + "-" + fsName(c.Version) + "-" + goarch + ".dmg"
+	return c.slug() + "-" + fsName(c.Version) + "-" + installerArch(goarch) + ".dmg"
 }
 
 // buildDMG packages app, built for goarch, into a compressed, read-only

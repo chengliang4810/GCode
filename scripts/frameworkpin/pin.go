@@ -25,7 +25,7 @@ const (
 	Replacement     = "./third_party/mygo"
 	UpstreamSum     = "h1:vzMjSyahUjSk62+n+qmNXt8Bamyx1UNz359OyEDo/kg="
 
-	ExpectedTreeSHA256 = "72a46929fae6eb7fbc8fc5ac6cb80fc850605f2930748fab309936e366f7f1d4"
+	ExpectedTreeSHA256 = "3a6028f49dc211ddc0ca79e7e56a7c8d9e864359d1feac36f3f49b6c87193e8a"
 )
 
 // patchChain lists the reviewed local patches in application order over
@@ -48,6 +48,7 @@ var patchChain = []Patch{
 	{Path: "patches/mygo-v0.9.1-20-richtext-clip.patch", SHA256: "ae1ecd5ef1e8264a5ab0a36ece2e409e882bd04b7dd1ef7a5fbc0d416e2ac40b"},
 	{Path: "patches/mygo-v0.9.1-21-inline-code-size.patch", SHA256: "471651d5f68beb08e256739ef45f55e9138d0153d716054f7ab3e476bd7ee3fc"},
 	{Path: "patches/mygo-v0.9.1-22-diff-no-separators.patch", SHA256: "185b9346da60e25da45286e12a8113fbb58a0718f2c6399a1aa045968b5c4660"},
+	{Path: "patches/mygo-v0.9.1-23-macos-dmg-name.patch", SHA256: "8b59ac5fdebf8d573a3ef6e18ef389a410636b9c18e857ff2b650a20fed8dd31"},
 	{Path: "patches/mygo-v0.9.1-17-api-gen.patch", SHA256: "e35b0c35d5bcffaa97cc0c7a97530bf7c742a0642f48516f9979578c194ea1e9"},
 	{Path: "patches/mygo-v0.9.1-19-patch-identity.patch", SHA256: "33f79bc8a799adb0256414932390292c93957a725e5076671395179e283cc9f2"},
 }

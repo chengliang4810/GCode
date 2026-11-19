@@ -1,0 +1,247 @@
+diff --git a/third_party/mygo/cmd/mygo/deb_test.go b/third_party/mygo/cmd/mygo/deb_test.go
+index 4be11d8..987777c 100644
+--- a/third_party/mygo/cmd/mygo/deb_test.go
++++ b/third_party/mygo/cmd/mygo/deb_test.go
+@@ -208,7 +208,7 @@ func TestLinuxFormats(t *testing.T) {
+ 	const (
+ 		deb     = "note-pad_1.2.0_amd64.deb"
+ 		rpm     = "note-pad-1.2.0-1.x86_64.rpm"
+-		archive = "note-pad-1.2.0-linux-amd64.tar.gz"
++		archive = "note-pad-1.2.0-linux-x86.tar.gz"
+ 	)
+ 	for _, tc := range []struct {
+ 		formats string // in mygo.json
+@@ -366,7 +366,7 @@ func TestBuildLinuxSlug(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	out := filepath.Join(dir, "build", "linux-amd64")
+-	for _, name := range []string{"cloud-music", "cloud-music.desktop", "cloud-music-0.1.0-linux-amd64.tar.gz", "cloud-music_0.1.0_amd64.deb", pkgbuildName, "cloud-music-0.1.0-1.x86_64.rpm"} {
++	for _, name := range []string{"cloud-music", "cloud-music.desktop", "cloud-music-0.1.0-linux-x86.tar.gz", "cloud-music_0.1.0_amd64.deb", pkgbuildName, "cloud-music-0.1.0-1.x86_64.rpm"} {
+ 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
+ 			t.Error(err)
+ 		}
+@@ -380,7 +380,7 @@ func TestBuildLinuxSlug(t *testing.T) {
+ 	}
+ 	// The list of what the version installs, from which its update knows
+ 	// what to remove, is in the app's archive.
+-	f, err := os.Open(filepath.Join(out, "cloud-music-0.1.0-linux-amd64.tar.gz"))
++	f, err := os.Open(filepath.Join(out, "cloud-music-0.1.0-linux-x86.tar.gz"))
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -404,7 +404,7 @@ func TestBuildLinuxSlug(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+-	if !strings.Contains(string(pkgbuild), "\npkgname='cloud-music'\n") || !strings.Contains(string(pkgbuild), "\nsource=('cloud-music-0.1.0-linux-amd64.tar.gz')\n") || !strings.Contains(string(pkgbuild), "\ndepends=('gtk3')\n") {
++	if !strings.Contains(string(pkgbuild), "\npkgname='cloud-music'\n") || !strings.Contains(string(pkgbuild), "\nsource=('cloud-music-0.1.0-linux-x86.tar.gz')\n") || !strings.Contains(string(pkgbuild), "\ndepends=('gtk3')\n") {
+ 		t.Errorf("the PKGBUILD does not package cloud-music:\n%s", pkgbuild)
+ 	}
+ 	if rpm, err := exec.LookPath("rpm"); err == nil {
+diff --git a/third_party/mygo/cmd/mygo/dmg.go b/third_party/mygo/cmd/mygo/dmg.go
+index c63b523..5b7e175 100644
+--- a/third_party/mygo/cmd/mygo/dmg.go
++++ b/third_party/mygo/cmd/mygo/dmg.go
+@@ -25,7 +25,7 @@ func dmgFileName(c *Config, goarch string) string {
+ 	if goarch == "universal" {
+ 		return c.slug() + "-" + fsName(c.Version) + ".dmg"
+ 	}
+-	return c.slug() + "-" + fsName(c.Version) + "-" + goarch + ".dmg"
++	return c.slug() + "-" + fsName(c.Version) + "-" + installerArch(goarch) + ".dmg"
+ }
+ 
+ // buildDMG packages app, built for goarch, into a compressed, read-only
+diff --git a/third_party/mygo/cmd/mygo/dmg_test.go b/third_party/mygo/cmd/mygo/dmg_test.go
+index a92d42b..5f5fec7 100644
+--- a/third_party/mygo/cmd/mygo/dmg_test.go
++++ b/third_party/mygo/cmd/mygo/dmg_test.go
+@@ -165,12 +165,12 @@ func TestCreateDMGFallsBackToAPFS(t *testing.T) {
+ // where they are uploaded. A universal disk image is for every Mac.
+ func TestInstallerNames(t *testing.T) {
+ 	c := &Config{Name: "A/B: C", Version: "1.0"}
+-	for goarch, want := range map[string]string{"arm64": "a-b-c-1.0-arm64.dmg", "amd64": "a-b-c-1.0-amd64.dmg", "universal": "a-b-c-1.0.dmg"} {
++	for goarch, want := range map[string]string{"arm64": "a-b-c-1.0-arm64.dmg", "amd64": "a-b-c-1.0-x86.dmg", "universal": "a-b-c-1.0.dmg"} {
+ 		if got := dmgFileName(c, goarch); got != want {
+ 			t.Errorf("dmgFileName(%s) = %q, want %q", goarch, got, want)
+ 		}
+ 	}
+-	for goarch, want := range map[string]string{"amd64": "a-b-c-setup-1.0-amd64.exe", "arm64": "a-b-c-setup-1.0-arm64.exe"} {
++	for goarch, want := range map[string]string{"amd64": "a-b-c-setup-1.0-x86.exe", "arm64": "a-b-c-setup-1.0-arm64.exe"} {
+ 		if got := installerFileName(c, goarch); got != want {
+ 			t.Errorf("installerFileName(%s) = %q, want %q", goarch, got, want)
+ 		}
+@@ -236,7 +236,7 @@ func TestBuildDMGOnAPFS(t *testing.T) {
+ // checks what it shows and returns where it is mounted.
+ func checkDMG(t *testing.T, dmg string, icns []byte) string {
+ 	t.Helper()
+-	if filepath.Base(dmg) != "dmg-test-1.2.3-"+runtime.GOARCH+".dmg" {
++	if filepath.Base(dmg) != dmgFileName(&Config{Name: "DMG Test", Version: "1.2.3"}, runtime.GOARCH) {
+ 		t.Errorf("dmg = %s", dmg)
+ 	}
+ 	mnt := attachDMG(t, dmg)
+diff --git a/third_party/mygo/cmd/mygo/installps1.go b/third_party/mygo/cmd/mygo/installps1.go
+index 074c2d1..2f52172 100644
+--- a/third_party/mygo/cmd/mygo/installps1.go
++++ b/third_party/mygo/cmd/mygo/installps1.go
+@@ -154,7 +154,7 @@ function Get-Arch {
+ 	}
+ 	switch ($arch) {
+ 		'ARM64' { return 'arm64' }
+-		'AMD64' { return 'amd64' }
++		'AMD64' { return 'x86' }
+ 		default { throw "$appName is not made for $arch" }
+ 	}
+ }
+diff --git a/third_party/mygo/cmd/mygo/installscript.go b/third_party/mygo/cmd/mygo/installscript.go
+index c374964..1b4ca5d 100644
+--- a/third_party/mygo/cmd/mygo/installscript.go
++++ b/third_party/mygo/cmd/mygo/installscript.go
+@@ -260,12 +260,14 @@ linux() {
+ 	trap 'rm -rf "$work" "$staging"' EXIT
+ 	trap 'exit 1' HUP INT TERM
+ 
++	archive_target="$target"
++	[ "$target" != linux-amd64 ] || archive_target=linux-x86
+ 	archive="${1:-}"
+-	if [ -z "$archive" ] && [ -f "$0" ] && [ -f "$(dirname -- "$0")/$name-$version-$target.tar.gz" ]; then
+-		archive="$(dirname -- "$0")/$name-$version-$target.tar.gz"
++	if [ -z "$archive" ] && [ -f "$0" ] && [ -f "$(dirname -- "$0")/$name-$version-$archive_target.tar.gz" ]; then
++		archive="$(dirname -- "$0")/$name-$version-$archive_target.tar.gz"
+ 	fi
+ 	if [ -z "$archive" ]; then
+-		[ -n "$releases" ] || fail "no $name-$version-$target.tar.gz next to this script: pass the archive to install"
++		[ -n "$releases" ] || fail "no $name-$version-$archive_target.tar.gz next to this script: pass the archive to install"
+ {{- if .Updates}}
+ 		command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || fail "downloading $app_name needs curl or wget"
+ 		if [ -n "$api" ]; then
+@@ -276,7 +278,7 @@ linux() {
+ 			manifest="${releases}update-$target.json"
+ 		fi
+ 		# Fail before downloading when nothing here checks Ed25519.
+-		has_ed25519 || fail "checking the signature of $app_name needs OpenSSL 3.0 or later (the openssl command): install it, or download $name-<version>-$target.tar.gz and run sh install.sh with it"
++		has_ed25519 || fail "checking the signature of $app_name needs OpenSSL 3.0 or later (the openssl command): install it, or download $name-<version>-$archive_target.tar.gz and run sh install.sh with it"
+ 		fetch "$manifest" >"$work/update.json" || fail "could not download $manifest"
+ 		latest="$(field version)"
+ 		url="$(field url)"
+diff --git a/third_party/mygo/cmd/mygo/installscript_test.go b/third_party/mygo/cmd/mygo/installscript_test.go
+index 3913e22..199e9c6 100644
+--- a/third_party/mygo/cmd/mygo/installscript_test.go
++++ b/third_party/mygo/cmd/mygo/installscript_test.go
+@@ -174,7 +174,7 @@ func TestInstallScript(t *testing.T) {
+ 	c.Updates = &Updates{PublicKey: base64.StdEncoding.EncodeToString(pub), URL: srv.URL, Deltas: &none}
+ 	c.Linux.Command = commandNames{"my-app", "ma"}
+ 	published := build(c, "1.1.0")
+-	for _, name := range []string{"my-app-1.1.0-linux-amd64.tar.gz", "update-linux-amd64.json"} {
++	for _, name := range []string{"my-app-1.1.0-linux-x86.tar.gz", "update-linux-amd64.json"} {
+ 		b, err := os.ReadFile(filepath.Join(published, name))
+ 		if err != nil {
+ 			t.Fatal(err)
+@@ -210,7 +210,7 @@ func TestInstallScript(t *testing.T) {
+ 	if _, err := writeInstallScript(c, withNotes); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	if out := run(filepath.Join(withNotes, "install.sh"), filepath.Join(local, "my-app-1.0.0-linux-amd64.tar.gz")); !strings.Contains(out, "Leaving "+notes+" alone: it is not My App's\n") ||
++	if out := run(filepath.Join(withNotes, "install.sh"), filepath.Join(local, "my-app-1.0.0-linux-x86.tar.gz")); !strings.Contains(out, "Leaving "+notes+" alone: it is not My App's\n") ||
+ 		!strings.HasSuffix(out, "open it from the applications menu, or run "+filepath.Join(binDir, "ma")+"\n") {
+ 		t.Errorf("install.sh printed:\n%s", out)
+ 	}
+@@ -222,7 +222,7 @@ func TestInstallScript(t *testing.T) {
+ 	// the PATH, it says to run the command by its name.
+ 	path := os.Getenv("PATH")
+ 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+path)
+-	if out := run(alone, filepath.Join(local, "my-app-1.0.0-linux-amd64.tar.gz")); !strings.HasSuffix(out, "open it from the applications menu, or run my-app\n") {
++	if out := run(alone, filepath.Join(local, "my-app-1.0.0-linux-x86.tar.gz")); !strings.HasSuffix(out, "open it from the applications menu, or run my-app\n") {
+ 		t.Errorf("install.sh printed:\n%s", out)
+ 	}
+ 	t.Setenv("PATH", path)
+@@ -241,7 +241,7 @@ func TestInstallScript(t *testing.T) {
+ 		{libs: libc + "\tlibgtk-3.so.0 (libc6,x86-64) => /lib/x86_64-linux-gnu/libgtk-3.so.0\n", warns: true},
+ 	} {
+ 		t.Setenv("LD_CACHE", cache.libs)
+-		out := run(alone, filepath.Join(local, "my-app-1.0.0-linux-amd64.tar.gz"))
++		out := run(alone, filepath.Join(local, "my-app-1.0.0-linux-x86.tar.gz"))
+ 		if warns := strings.Contains(out, "My App needs WebKitGTK, which is not installed. Install it with:\n  "); warns != cache.warns {
+ 			t.Errorf("with the library cache\n%s\ninstall.sh printed:\n%s", cache.libs, out)
+ 		}
+@@ -355,7 +355,7 @@ cat "$file"
+ 	}
+ 	release := filepath.Join(served, "desktop-v1.1.0")
+ 	os.MkdirAll(release, 0o755)
+-	for _, name := range []string{"my-app-1.1.0-linux-amd64.tar.gz", "update-linux-amd64.json"} {
++	for _, name := range []string{"my-app-1.1.0-linux-x86.tar.gz", "update-linux-amd64.json"} {
+ 		b, err := os.ReadFile(filepath.Join(stage, name))
+ 		if err != nil {
+ 			t.Fatal(err)
+diff --git a/third_party/mygo/cmd/mygo/nsis.go b/third_party/mygo/cmd/mygo/nsis.go
+index 49970e3..327f2d3 100644
+--- a/third_party/mygo/cmd/mygo/nsis.go
++++ b/third_party/mygo/cmd/mygo/nsis.go
+@@ -95,11 +95,18 @@ func downloadFile(t *task, url, sum string) fetch.File {
+ }
+ 
+ // installerFileName is "<slug>-setup-<version>-<arch>.exe", as
+-// "my-app-setup-1.2.0-amd64.exe": each architecture's installer is named
++// "my-app-setup-1.2.0-x86.exe": each architecture's installer is named
+ // apart, so that the builds of two, uploaded to one release or bucket,
+ // keep both. install.ps1 finds it by installerPrefix.
+ func installerFileName(c *Config, goarch string) string {
+-	return installerPrefix(c) + fsName(c.Version) + "-" + goarch + ".exe"
++	return installerPrefix(c) + fsName(c.Version) + "-" + installerArch(goarch) + ".exe"
++}
++
++func installerArch(goarch string) string {
++	if goarch == "amd64" {
++		return "x86"
++	}
++	return goarch
+ }
+ 
+ // installerPrefix is what the names of the app's installers start with,
+diff --git a/third_party/mygo/cmd/mygo/nsis_test.go b/third_party/mygo/cmd/mygo/nsis_test.go
+index c2d338d..dcc56e9 100644
+--- a/third_party/mygo/cmd/mygo/nsis_test.go
++++ b/third_party/mygo/cmd/mygo/nsis_test.go
+@@ -121,7 +121,7 @@ func TestWindowsInstaller(t *testing.T) {
+ 		"resources/icon.png":   string(defaultIcon()),
+ 	})
+ 	setup := artifacts[len(artifacts)-1]
+-	if filepath.Base(setup) != "setup-test-setup-2.0.0-amd64.exe" {
++	if filepath.Base(setup) != "setup-test-setup-2.0.0-x86.exe" {
+ 		t.Fatalf("artifacts = %q", artifacts)
+ 	}
+ 	// The executable, the uninstaller that makensis made, then the
+@@ -131,7 +131,7 @@ func TestWindowsInstaller(t *testing.T) {
+ 	for _, line := range strings.Split(strings.TrimSpace(string(listed)), "\n") {
+ 		signed = append(signed, filepath.Base(strings.Trim(line, "\r \"")))
+ 	}
+-	if len(signed) != 3 || signed[0] != "Setup Test.exe" || signed[1] == signed[0] || signed[1] == signed[2] || signed[2] != "setup-test-setup-2.0.0-amd64.exe" {
++	if len(signed) != 3 || signed[0] != "Setup Test.exe" || signed[1] == signed[0] || signed[1] == signed[2] || signed[2] != "setup-test-setup-2.0.0-x86.exe" {
+ 		t.Errorf("signed %q", signed)
+ 	}
+ 	// The finish page uses a LangString, defined for every wizard language.
+@@ -311,7 +311,7 @@ func TestWindowsInstallerDisplayName(t *testing.T) {
+ 		"mygo.json": `{"name": "Display Test", "identifier": "com.example.displaytest", "version": "1.0.0", "windows": {"displayName": "显示测试: Beta"}}`,
+ 	})
+ 	setup := artifacts[len(artifacts)-1]
+-	if filepath.Base(setup) != "display-test-setup-1.0.0-amd64.exe" {
++	if filepath.Base(setup) != "display-test-setup-1.0.0-x86.exe" {
+ 		t.Fatalf("artifacts = %q", artifacts)
+ 	}
+ 	if runtime.GOOS != "windows" || runtime.GOARCH != "amd64" {
+diff --git a/third_party/mygo/cmd/mygo/updates.go b/third_party/mygo/cmd/mygo/updates.go
+index c9b688b..6560c7d 100644
+--- a/third_party/mygo/cmd/mygo/updates.go
++++ b/third_party/mygo/cmd/mygo/updates.go
+@@ -217,7 +217,11 @@ func writeArchive(c *Config, stage, target string, entries []string) ([]string,
+ 			return nil, err
+ 		}
+ 	}
+-	name := c.slug() + "-" + c.Version + "-" + target + ".tar.gz"
++	archiveTarget := target
++	if arch, ok := strings.CutPrefix(target, "linux-"); ok {
++		archiveTarget = "linux-" + installerArch(arch)
++	}
++	name := c.slug() + "-" + c.Version + "-" + archiveTarget + ".tar.gz"
+ 	archive := filepath.Join(stage, name)
+ 	size, sig, err := writeSigned(archive, key, func(w io.Writer) error {
+ 		return update.WriteArchive(w, stage, entries)

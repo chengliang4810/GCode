@@ -154,7 +154,7 @@ function Get-Arch {
 	}
 	switch ($arch) {
 		'ARM64' { return 'arm64' }
-		'AMD64' { return 'amd64' }
+		'AMD64' { return 'x86' }
 		default { throw "$appName is not made for $arch" }
 	}
 }

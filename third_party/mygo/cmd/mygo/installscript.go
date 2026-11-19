@@ -260,12 +260,14 @@ linux() {
 	trap 'rm -rf "$work" "$staging"' EXIT
 	trap 'exit 1' HUP INT TERM
 
+	archive_target="$target"
+	[ "$target" != linux-amd64 ] || archive_target=linux-x86
 	archive="${1:-}"
-	if [ -z "$archive" ] && [ -f "$0" ] && [ -f "$(dirname -- "$0")/$name-$version-$target.tar.gz" ]; then
-		archive="$(dirname -- "$0")/$name-$version-$target.tar.gz"
+	if [ -z "$archive" ] && [ -f "$0" ] && [ -f "$(dirname -- "$0")/$name-$version-$archive_target.tar.gz" ]; then
+		archive="$(dirname -- "$0")/$name-$version-$archive_target.tar.gz"
 	fi
 	if [ -z "$archive" ]; then
-		[ -n "$releases" ] || fail "no $name-$version-$target.tar.gz next to this script: pass the archive to install"
+		[ -n "$releases" ] || fail "no $name-$version-$archive_target.tar.gz next to this script: pass the archive to install"
 {{- if .Updates}}
 		command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || fail "downloading $app_name needs curl or wget"
 		if [ -n "$api" ]; then
@@ -276,7 +278,7 @@ linux() {
 			manifest="${releases}update-$target.json"
 		fi
 		# Fail before downloading when nothing here checks Ed25519.
-		has_ed25519 || fail "checking the signature of $app_name needs OpenSSL 3.0 or later (the openssl command): install it, or download $name-<version>-$target.tar.gz and run sh install.sh with it"
+		has_ed25519 || fail "checking the signature of $app_name needs OpenSSL 3.0 or later (the openssl command): install it, or download $name-<version>-$archive_target.tar.gz and run sh install.sh with it"
 		fetch "$manifest" >"$work/update.json" || fail "could not download $manifest"
 		latest="$(field version)"
 		url="$(field url)"
