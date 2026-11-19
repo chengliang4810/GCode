@@ -101,7 +101,7 @@ func (a *App) phaseLabel(c *ui.Context, sessionID string) string {
 
 // toolPhaseLabel names a tool call from what it does and what it touches.
 func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Block) string {
-	switch tool.Category() {
+	switch category := tool.Category(); category {
 	case contracts.ToolExec:
 		// The run's own description says what the command is for, which reads
 		// better than the whole command line. The core already publishes it as
@@ -114,7 +114,7 @@ func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Bl
 		if target == "" {
 			target = tool.Name
 		}
-		return fmt.Sprintf(phaseText(c, "Running %s"), phaseTarget(target))
+		return phaseTarget(target)
 	case contracts.ToolReadFile:
 		target := tool.Path
 		if target == "" {
@@ -130,7 +130,15 @@ func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Bl
 		}
 		return fmt.Sprintf(phaseText(c, "Searching %s"), phaseTarget(target))
 	default:
-		return phaseText(c, "Reviewing changes")
+		label, detail, _ := activityTitle(contracts.Block{Tool: tool})
+		if category == contracts.ToolTodo {
+			detail = tool.Summary
+		}
+		caption := phaseText(c, label)
+		if detail = phaseTarget(detail); detail != "" {
+			return caption + " " + detail
+		}
+		return caption
 	}
 }
 

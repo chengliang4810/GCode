@@ -233,6 +233,23 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 	}
 }
 
+func TestToolPhaseLabelUsesToolActivity(t *testing.T) {
+	for _, tt := range []struct {
+		tool contracts.ToolCall
+		want string
+	}{
+		{contracts.ToolCall{Kind: contracts.ToolWebSearch, Summary: "Go release notes"}, "Search web Go release notes"},
+		{contracts.ToolCall{Kind: contracts.ToolDirectory, Path: "docs"}, "List directory docs"},
+		{contracts.ToolCall{Kind: contracts.ToolAgent, Summary: "Review tests"}, "Start agent Review tests"},
+		{contracts.ToolCall{Kind: contracts.ToolTodo, Args: `{"todos":[]}`}, "Todo"},
+		{contracts.ToolCall{Kind: contracts.ToolUnknown, Name: "CustomTool"}, "Tool CustomTool"},
+	} {
+		if got := toolPhaseLabel(nil, &tt.tool, nil); got != tt.want {
+			t.Errorf("%s: got %q, want %q", tt.tool.Category(), got, tt.want)
+		}
+	}
+}
+
 func TestToolPhaseLabelPrefersTheRunDescription(t *testing.T) {
 	a := testApp(t, "dispatcher")
 	a.selectSession("chat-0")
@@ -252,8 +269,8 @@ func TestToolPhaseLabelPrefersTheRunDescription(t *testing.T) {
 		}}},
 	})
 	tt := ui.NewTester(a.View, 1320, 880)
-	if !tt.HasText("Running Run the desktop tests") {
-		t.Fatal("exec phase did not use the run description")
+	if !tt.HasText("Run the desktop tests") || tt.HasText("Running Run the desktop tests") {
+		t.Fatal("exec phase did not use the run description without a prefix")
 	}
 	// The command itself never reaches the caption: a long command line would
 	// push the status row past the transcript width.
