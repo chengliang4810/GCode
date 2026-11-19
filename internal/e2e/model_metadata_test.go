@@ -125,8 +125,7 @@ func TestDesktopLocalSmartModelConfiguration(t *testing.T) {
 					return err
 				}
 				var disk struct {
-					Providers []model.Provider   `json:"providers"`
-					Snapshot  contracts.Snapshot `json:"snapshot"`
+					Providers []model.Provider `json:"providers"`
 				}
 				if err := json.Unmarshal(payload, &disk); err != nil {
 					return err
@@ -139,9 +138,6 @@ func TestDesktopLocalSmartModelConfiguration(t *testing.T) {
 					!slices.Contains(saved.InputTypes, "image") || !slices.Equal(saved.ReasoningLevels, expected.ReasoningLevels) {
 					return fmt.Errorf("wrong saved metadata: %+v", saved)
 				}
-				if len(disk.Snapshot.Models) != 1 || disk.Snapshot.Models[0].Label != saved.ID {
-					return fmt.Errorf("model list retained a display-name alias")
-				}
 				return nil
 			})
 			after, err := os.Stat(catalogPath)
@@ -149,6 +145,12 @@ func TestDesktopLocalSmartModelConfiguration(t *testing.T) {
 				t.Fatal("a form lookup rewrote or refreshed the cache")
 			}
 			app.waitKey("edit-model-smart/deepseek-v4.1-flash")
+			// The saved model is listed under its own ID; no display-name
+			// alias replaces it in the model list.
+			row := app.waitKey("configured-model-deepseek-v4.1-flash")
+			if !strings.HasSuffix(row.Label, " deepseek-v4.1-flash") {
+				t.Fatalf("model list shows a display-name alias: %q", row.Label)
+			}
 			app.capture("model-id-list")
 			app.act("edit-model-smart/deepseek-v4.1-flash", "press", "")
 			if app.waitKey("context").Value != "234567" {

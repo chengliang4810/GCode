@@ -612,6 +612,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		}
 	case "providers.refresh", "catalog.retry":
 		e.refreshProvidersLocked()
+		// The remote catalog is what the retry is about: report loading at
+		// once and settle when the refresh finishes.
+		e.startModelCatalogRefreshLocked()
 	case "device.rename":
 		for i := range e.state.Devices {
 			if e.state.Devices[i].ID == command.ID {

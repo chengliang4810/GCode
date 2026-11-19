@@ -18,6 +18,10 @@ func TestModelCatalogSkeletonBreathesInLockstep(t *testing.T) {
 	for _, reduced := range []bool{false, true} {
 		for _, appearance := range []string{"light", "dark"} {
 			a := testApp(t, "default")
+			// The picker only stands in for the list while no model is
+			// configured: the list itself comes from the local provider
+			// configuration and never waits for the remote catalog.
+			a.state.Models = nil
 			a.state.ModelCatalog.State = contracts.CatalogLoading
 			a.state.Settings.Appearance.Surface = "opaque"
 			a.state.Settings.Appearance.Mode = appearance

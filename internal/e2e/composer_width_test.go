@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"path/filepath"
@@ -63,9 +64,14 @@ func TestDesktopLocalComposerConversationWidth(t *testing.T) {
 						if err != nil {
 							return err
 						}
+						// The branch/changes row is the card's stable anchor;
+						// its wording changes with the interface language.
 						found := false
 						for _, node := range tree.Nodes {
-							found = found || node.Role == "button" && node.Label == "Fork chat"
+							var key string
+							if json.Unmarshal(node.Key, &key) == nil && key == "session-info-branch-changes" {
+								found = true
+							}
 						}
 						if found != visible {
 							return fmt.Errorf("info card visible=%t, want %t", found, visible)

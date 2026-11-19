@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -40,10 +41,10 @@ func TestToolSchemaValidationAndAgentStringBooleans(t *testing.T) {
 		{"string true", `{"prompt":"task","run_in_background":"true"}`, "", true},
 		{"string false", `{"prompt":"task","run_in_background":"false"}`, "", false},
 		{"omitted", `{"prompt":"task"}`, "", false},
-		{"bad string", `{"prompt":"task","run_in_background":"yes"}`, "必须为布尔值", false},
-		{"null", `{"prompt":"task","run_in_background":null}`, "必须为布尔值", false},
-		{"number", `{"prompt":"task","run_in_background":1}`, "必须为布尔值", false},
-		{"wrong prompt", `{"prompt":5}`, "prompt 参数类型错误", false},
+		{"bad string", `{"prompt":"task","run_in_background":"yes"}`, "must be a boolean", false},
+		{"null", `{"prompt":"task","run_in_background":null}`, "must be a boolean", false},
+		{"number", `{"prompt":"task","run_in_background":1}`, "must be a boolean", false},
+		{"wrong prompt", `{"prompt":5}`, "prompt argument type is wrong", false},
 		{"missing", `{}`, "required", false},
 		{"unknown", `{"prompt":"task","extra":true}`, "additionalProperties", false},
 	} {
@@ -85,7 +86,7 @@ func TestToolSchemaRejectsHookRewrittenType(t *testing.T) {
 		func(context.Context, HookInput) (HookResult, error) {
 			return HookResult{UpdatedInput: json.RawMessage(`{"content":false}`)}, nil
 		}, "call")
-	if called || err == nil || !strings.Contains(err.Error(), "content 参数类型错误") {
+	if called || err == nil || !strings.Contains(err.Error(), "content argument type is wrong") {
 		t.Fatalf("hook bypassed validation: called=%v err=%v", called, err)
 	}
 }
@@ -117,7 +118,7 @@ func TestToolSchemaCacheTracksDefinitionChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 	parameters["properties"].(map[string]any)["value"] = map[string]any{"type": "integer"}
-	if _, err := PrepareToolArguments(def, json.RawMessage(`{"value":"stale"}`)); err == nil || !strings.Contains(err.Error(), "value 参数类型错误") {
+	if _, err := PrepareToolArguments(def, json.RawMessage(`{"value":"stale"}`)); err == nil || !strings.Contains(err.Error(), "value argument type is wrong") {
 		t.Fatalf("changed definition reused stale schema: %v", err)
 	}
 }
@@ -174,11 +175,32 @@ func TestCoreToolSchemasCompileForExecutionValidation(t *testing.T) {
 	for _, tool := range CoreTools() {
 		t.Run(tool.Definition().Name, func(t *testing.T) {
 			_, err := PrepareToolArguments(tool.Definition(), json.RawMessage(`{}`))
-			if err != nil && (strings.Contains(err.Error(), "Schema 无效") ||
-				strings.Contains(err.Error(), "Schema 无法")) {
+			if err != nil && (strings.Contains(err.Error(), "tool schema is invalid") ||
+				strings.Contains(err.Error(), "tool schema cannot")) {
 				t.Fatal(err)
 			}
 		})
+	}
+}
+
+func TestTodoWriteSemanticValidationRunsBeforeTheSchema(t *testing.T) {
+	def := todoWriteTool{}.Definition()
+	// The tool keeps the enum constraint it advertises to the model.
+	items, _ := def.Parameters["properties"].(map[string]any)["todos"].(map[string]any)["items"].(map[string]any)
+	status, _ := items["properties"].(map[string]any)["status"].(map[string]any)
+	if enum, _ := status["enum"].([]string); !slices.Contains(enum, string(TodoCompleted)) {
+		t.Fatalf("todo status enum lost: %v", status)
+	}
+	// The tool's own rule explains the mistake instead of the schema
+	// reporting a generic enum violation.
+	_, err := PrepareToolArguments(def, json.RawMessage(`{"todos":[{"text":"x","status":"done"}]}`))
+	if err == nil || !strings.Contains(err.Error(), "item status must be") {
+		t.Fatalf("semantic error did not reach the model: %v", err)
+	}
+	// Rules the tool does not own stay with the schema.
+	_, err = PrepareToolArguments(def, json.RawMessage(`{"todos":[{"text":"x","status":"pending"}],"extra":true}`))
+	if err == nil || !strings.Contains(err.Error(), "additionalProperties") {
+		t.Fatalf("schema constraint lost: %v", err)
 	}
 }
 
@@ -197,7 +219,7 @@ func TestRunReturnsSchemaErrorToModelForCorrection(t *testing.T) {
 			}}}, Stop: model.StopTools}, nil
 		case 2:
 			last := request.History[len(request.History)-1]
-			if !last.IsError || !strings.Contains(last.Text, "run_in_background 必须为布尔值") || effects != 0 {
+			if !last.IsError || !strings.Contains(last.Text, "run_in_background must be a boolean") || effects != 0 {
 				t.Fatalf("model did not receive actionable error before effects: %+v, effects=%d", last, effects)
 			}
 			return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{{

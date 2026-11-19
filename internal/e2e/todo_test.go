@@ -37,7 +37,7 @@ func TestDesktopLocalTodoWrite(t *testing.T) {
 					return
 				}
 				request := requests.Add(1)
-				if request == 3 && !strings.Contains(string(body), "item status must be") {
+				if request == 3 && !strings.Contains(string(body), "item status must be pending, in_progress or completed") {
 					t.Error("invalid TodoWrite did not return its validation error to the model")
 				}
 				select {

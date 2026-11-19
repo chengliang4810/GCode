@@ -164,8 +164,39 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 					return nil
 				})
 			}
-			app.hoverMetric(scope + ":usage")
-			app.waitKey(scope + ":usage-panel")
+			// Metric panels open on hover. A pointer move that lands between
+			// two frames can miss the trigger, so the hover alternates between
+			// two points inside the metric and repeats until the panel is
+			// there; the panel itself stays mandatory.
+			hoverPanel := func(metric, panel string) {
+				t.Helper()
+				attempt := 0
+				app.await("panel "+panel+" opens on hover", func() error {
+					tree, err := app.client.tree()
+					if err != nil {
+						return err
+					}
+					if _, err := tree.findKey(panel); err == nil {
+						return nil
+					}
+					node, err := tree.findKey(metric)
+					if err != nil {
+						return err
+					}
+					fraction := 0.25
+					if attempt%2 == 1 {
+						fraction = 0.75
+					}
+					attempt++
+					if err := app.client.call("input", map[string]any{"events": []map[string]any{{
+						"type": "pointerMove", "x": node.Bounds.X + node.Bounds.Width*fraction, "y": node.Bounds.Y + node.Bounds.Height/2,
+					}}}, nil); err != nil {
+						t.Fatal(err)
+					}
+					return fmt.Errorf("panel %s is not open yet", panel)
+				})
+			}
+			hoverPanel(scope+":usage", scope+":usage-panel")
 			if label := app.waitKey(scope + ":cache-hit").Label; !strings.Contains(label, "40.0%") {
 				t.Fatal(label)
 			}
@@ -179,8 +210,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			if matched, err := regexp.MatchString(` (\d+d )?(\d+h )?(\d+m )?\d+s$`, timeLabel); err != nil || !matched {
 				t.Fatalf("footer must show elapsed whole seconds: %s (%v)", timeLabel, err)
 			}
-			app.hoverMetric(scope + ":time")
-			app.waitKey(scope + ":time-panel")
+			hoverPanel(scope+":time", scope+":time-panel")
 			if strings.Contains(app.waitKey(scope+":first-token").Label, "—") || strings.Contains(app.waitKey(scope+":model-time").Label, "—") {
 				t.Fatal("actual model timing was not persisted")
 			}
@@ -202,8 +232,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 				if wantModel == "beta" {
 					expectedCache = "—"
 				}
-				app.hoverMetric(replyScope + ":usage")
-				app.waitKey(replyScope + ":usage-panel")
+				hoverPanel(replyScope+":usage", replyScope+":usage-panel")
 				if label := app.waitKey(replyScope + ":model").Label; !strings.Contains(label, "Local fixture, "+wantModel) {
 					t.Fatalf("saved provider/model missing: %s", label)
 				}
@@ -238,7 +267,9 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			}
 			for i, modelName := range []string{"Local fixture/alpha", "Local fixture/beta"} {
 				label := app.waitKey(fmt.Sprintf("usage-model-%d", i)).Label
-				if !strings.Contains(label, modelName) || !strings.Contains(label, "120 Tokens") || !strings.Contains(label, "50.0%") {
+				// The token unit is translated, so only the recorded numbers
+				// and the provider/model split are language independent.
+				if !strings.HasPrefix(label, modelName+", 120 ") || !strings.HasSuffix(label, ", 50.0%") {
 					t.Fatalf("actual request model split is wrong: %s", label)
 				}
 			}

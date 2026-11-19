@@ -22,6 +22,14 @@ var compiledToolSchemas = struct {
 	order   []string
 }{entries: make(map[string]*jsonschema.Schema, compiledToolSchemaCacheLimit)}
 
+// toolArgumentValidators hold the rules a tool explains in its own terms.
+// They run before the schema check, so the model reads the specific reason
+// instead of a generic schema violation; the schema still declares and
+// enforces every constraint it advertises in the tool definition.
+var toolArgumentValidators = map[string]func(json.RawMessage) error{
+	"TodoWrite": validateTodoArguments,
+}
+
 func compileToolSchema(name string, parameters map[string]any) (*jsonschema.Schema, error) {
 	// JSON encoding gives mutable definitions a content key, so a changed
 	// definition cannot reuse a stale compiled schema. The small FIFO bound
@@ -29,7 +37,7 @@ func compileToolSchema(name string, parameters map[string]any) (*jsonschema.Sche
 	// global without limit.
 	encoded, err := json.Marshal(parameters)
 	if err != nil {
-		return nil, fmt.Errorf("%s 工具 Schema 无法编码", name)
+		return nil, fmt.Errorf("%s tool schema cannot be encoded", name)
 	}
 	key := string(encoded)
 	compiledToolSchemas.Lock()
@@ -41,17 +49,17 @@ func compileToolSchema(name string, parameters map[string]any) (*jsonschema.Sche
 
 	schemaValue, err := jsonschema.UnmarshalJSON(bytes.NewReader(encoded))
 	if err != nil {
-		return nil, fmt.Errorf("%s 工具 Schema 无法解析", name)
+		return nil, fmt.Errorf("%s tool schema cannot be parsed", name)
 	}
 	compiler := jsonschema.NewCompiler()
 	compiler.UseLoader(jsonschema.SchemeURLLoader{})
 	const location = "urn:gcode:tool"
 	if err := compiler.AddResource(location, schemaValue); err != nil {
-		return nil, fmt.Errorf("%s 工具 Schema 无法加载", name)
+		return nil, fmt.Errorf("%s tool schema cannot be loaded", name)
 	}
 	schema, err = compiler.Compile(location)
 	if err != nil {
-		return nil, fmt.Errorf("%s 工具 Schema 无效", name)
+		return nil, fmt.Errorf("%s tool schema is invalid", name)
 	}
 
 	compiledToolSchemas.Lock()
@@ -78,7 +86,7 @@ func PrepareToolArguments(def model.Tool, raw json.RawMessage) (json.RawMessage,
 	}
 	value, err := jsonschema.UnmarshalJSON(bytes.NewReader(raw))
 	if err != nil {
-		return nil, fmt.Errorf("%s 参数必须是有效 JSON；请纠正后重试", def.Name)
+		return nil, fmt.Errorf("%s arguments must be valid JSON; correct the call and retry", def.Name)
 	}
 	normalized := false
 	if def.Name == "Agent" {
@@ -95,9 +103,16 @@ func PrepareToolArguments(def model.Tool, raw json.RawMessage) (json.RawMessage,
 			}
 			if v, exists := fields["run_in_background"]; exists {
 				if _, ok := v.(bool); !ok {
-					return nil, errors.New("Agent.run_in_background 必须为布尔值 true/false（也接受字符串 \"true\"/\"false\"）；请纠正后重试")
+					return nil, errors.New("Agent.run_in_background must be a boolean true/false (the string \"true\"/\"false\" is also accepted); correct the call and retry")
 				}
 			}
+		}
+	}
+	if validate, ok := toolArgumentValidators[def.Name]; ok {
+		// A tool's own rules speak for themselves: they explain the exact
+		// mistake before the schema reports a generic constraint violation.
+		if err := validate(raw); err != nil {
+			return nil, err
 		}
 	}
 	if len(def.Parameters) > 0 {
@@ -115,12 +130,12 @@ func PrepareToolArguments(def model.Tool, raw json.RawMessage) (json.RawMessage,
 				}
 				path := strings.Join(validation.InstanceLocation, ".")
 				if expected, ok := validation.ErrorKind.(*kind.Type); ok {
-					return nil, fmt.Errorf("%s.%s 参数类型错误，必须为 %s；请纠正后重试", def.Name, path, strings.Join(expected.Want, "/"))
+					return nil, fmt.Errorf("%s.%s argument type is wrong: expected %s; correct the call and retry", def.Name, path, strings.Join(expected.Want, "/"))
 				}
-				return nil, fmt.Errorf("%s.%s 参数不符合 Schema 的 %s 约束；请纠正后重试",
+				return nil, fmt.Errorf("%s.%s argument violates the %s schema constraint; correct the call and retry",
 					def.Name, path, strings.Join(validation.ErrorKind.KeywordPath(), "/"))
 			}
-			return nil, fmt.Errorf("%s 参数不符合工具 Schema；请纠正后重试", def.Name)
+			return nil, fmt.Errorf("%s arguments do not match the tool schema; correct the call and retry", def.Name)
 		}
 	}
 	// Preserve the original bytes unless the Agent compatibility rule applied.

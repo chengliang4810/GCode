@@ -123,16 +123,28 @@ func TestDesktopLocalPromptReferences(t *testing.T) {
 			})
 			app.capture("selected-tokens")
 			app.act("send", "press", "")
+			// The same provider fixture also serves the session-naming request,
+			// so keep every body this run receives. A single unconsumed read of
+			// the first body used to hide the real prompt for the rest of the run.
+			var bodies []string
 			app.await("provider receives expanded command and selected skill", func() error {
-				select {
-				case body := <-requests:
+				for drained := false; !drained; {
+					select {
+					case body := <-requests:
+						bodies = append(bodies, body)
+					default:
+						drained = true
+					}
+				}
+				if len(bodies) == 0 {
+					return fmt.Errorf("provider has not received the message")
+				}
+				for _, body := range bodies {
 					if strings.Contains(body, "REVIEW") && strings.Contains(body, "SKILL INSTRUCTIONS E2E") && !strings.Contains(body, "gcode://") {
 						return nil
 					}
-					return fmt.Errorf("unexpected provider request: %s", body)
-				default:
-					return fmt.Errorf("provider has not received the message")
 				}
+				return fmt.Errorf("provider request does not carry the expanded command and the selected skill: %s", bodies[len(bodies)-1])
 			})
 			var acceptedID string
 			app.await("canonical reference persisted in completed conversation", func() error {

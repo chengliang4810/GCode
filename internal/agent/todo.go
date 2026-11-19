@@ -87,6 +87,14 @@ func ParseTodoUpdate(raw json.RawMessage) (TodoUpdate, error) {
 	return update, nil
 }
 
+// validateTodoArguments applies the checklist rules before the schema check,
+// so the model receives the exact reason a list was rejected instead of the
+// schema's generic enum or length violation.
+func validateTodoArguments(raw json.RawMessage) error {
+	_, err := ParseTodoUpdate(raw)
+	return err
+}
+
 // CurrentTodos replays the same successful writes and compaction checkpoints as
 // the execution loop. Goal verification must not infer task state from prose.
 func CurrentTodos(history []model.Message) *TodoUpdate {

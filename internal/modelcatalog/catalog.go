@@ -78,14 +78,32 @@ type Options struct {
 	Client    *http.Client
 }
 
+// RefreshStatus reports the remote refresh lifecycle. Hosts derive their
+// visible loading state from it instead of guessing from the model list.
+type RefreshStatus struct {
+	// Refreshing is true while a remote check is in flight.
+	Refreshing bool
+	// Synced is true once a refresh succeeded during this process. A later
+	// failure keeps the last usable catalog until the next attempt.
+	Synced bool
+	// Err is the outcome of the last completed refresh.
+	Err error
+}
+
 type Cache struct {
-	mu      sync.RWMutex
-	refresh sync.Mutex
-	path    string
-	state   cacheState
-	data    map[string]provider
-	source  string
-	client  *http.Client
+	mu         sync.RWMutex
+	refresh    sync.Mutex
+	path       string
+	state      cacheState
+	data       map[string]provider
+	source     string
+	client     *http.Client
+	refreshing bool
+	synced     bool
+	refreshErr error
+	// changed is closed on every refresh lifecycle edge and replaced, so an
+	// observer that reads it before Status cannot miss a transition.
+	changed chan struct{}
 }
 
 // Open reads only local files. The bundled JSON seeds the first offline launch.
@@ -93,7 +111,7 @@ func Open(options Options) (*Cache, error) {
 	if options.Directory == "" {
 		return nil, errors.New("catalog cache directory is required")
 	}
-	c := &Cache{path: filepath.Join(options.Directory, "models-dev.json"), source: options.URL, client: options.Client}
+	c := &Cache{path: filepath.Join(options.Directory, "models-dev.json"), source: options.URL, client: options.Client, changed: make(chan struct{})}
 	if c.source == "" {
 		c.source = Source
 	}
@@ -202,6 +220,54 @@ func (c *Cache) statePath() string {
 	return filepath.Join(filepath.Dir(c.path), "models-dev-state.json")
 }
 
+// Status reports the refresh lifecycle. Lookups never depend on it.
+func (c *Cache) Status() RefreshStatus {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return RefreshStatus{Refreshing: c.refreshing, Synced: c.synced, Err: c.refreshErr}
+}
+
+// Changes returns a channel closed at the next refresh lifecycle edge. Reading
+// it before Status cannot miss an edge; the caller replaces it each iteration.
+func (c *Cache) Changes() <-chan struct{} {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.changed
+}
+
+// NeedsRefresh reports whether the stored check time is due. Run refreshes as
+// soon as this is true, so a host can report loading before the first edge.
+func (c *Cache) NeedsRefresh() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.state.CheckedAt.IsZero() || time.Since(c.state.CheckedAt) >= RefreshInterval
+}
+
+// beginRefresh publishes the loading edge before any network work.
+func (c *Cache) beginRefresh() {
+	c.mu.Lock()
+	c.refreshing = true
+	c.notifyLocked()
+	c.mu.Unlock()
+}
+
+// endRefresh publishes the settled edge. A failure keeps the success flag so
+// hosts stay on the last usable catalog instead of falling back to an error.
+func (c *Cache) endRefresh(err error) {
+	c.mu.Lock()
+	c.refreshing, c.refreshErr = false, err
+	if err == nil {
+		c.synced = true
+	}
+	c.notifyLocked()
+	c.mu.Unlock()
+}
+
+func (c *Cache) notifyLocked() {
+	close(c.changed)
+	c.changed = make(chan struct{})
+}
+
 // Run owns one refresh loop. Lookups never cause HTTP requests.
 func (c *Cache) Run(ctx context.Context) {
 	for {
@@ -230,6 +296,10 @@ func (c *Cache) Refresh(ctx context.Context) (resultErr error) {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	c.beginRefresh()
+	// Registered before the state writer so the settled edge carries the
+	// final outcome, including a failed state write.
+	defer func() { c.endRefresh(resultErr) }()
 	c.mu.RLock()
 	state := c.state
 	c.mu.RUnlock()

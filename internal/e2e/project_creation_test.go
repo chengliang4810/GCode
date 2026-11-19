@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"gcode/internal/contracts"
+	"gcode/internal/engine"
+	"gcode/internal/storage"
 )
 
 // Read the actual checkout through the visible project picker. The app process,
@@ -79,28 +81,83 @@ func TestDesktopLocalProjectCreationWithIgnoredArtifacts(t *testing.T) {
 		}
 		return nil
 	})
-	app.await("checkout file tree loaded independently", func() error {
-		if err := readState(); err != nil {
+	app.capture("project-created")
+	app.stop()
+	// The file tree is a view of the running core, not persisted state: the
+	// restarted app reads it from the Files panel of a real conversation.
+	store, err := storage.Open(storage.Options{Directory: data})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err := openExecutionFixture(t, engine.Options{Storage: store})
+	if err != nil {
+		_ = store.Close()
+		t.Fatal(err)
+	}
+	projectID := loaded.Projects[0].ID
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "session.create", Name: "File tree", ProjectID: projectID}); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := core.Snapshot(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	sessionID := snapshot.Sessions[0].ID
+	if err := core.Close(); err != nil {
+		t.Fatal(err)
+	}
+	restarted := startApp(t, binary, artifacts, "restart", data, "--local")
+	restarted.act("back-to-conversations", "press", "")
+	restarted.waitKey("sidebar-project:" + projectID)
+	restarted.act("sidebar-session:"+sessionID, "press", "")
+	restarted.act("titlebar-files", "press", "")
+	restarted.await("checkout file tree loaded independently", func() error {
+		tree, err := restarted.client.tree()
+		if err != nil {
 			return err
 		}
-		if loaded.Projects[0].FilesState != contracts.LoadReady {
-			return fmt.Errorf("files state %q: %s", loaded.Projects[0].FilesState, loaded.Projects[0].FilesError)
+		if _, err := tree.findKey("project-files-loading:" + projectID); err == nil {
+			return fmt.Errorf("file tree is still loading")
 		}
-		if len(loaded.Files) == 0 {
-			return fmt.Errorf("file list is empty")
+		if _, err := tree.findKey("project-files-error:" + projectID); err == nil {
+			return fmt.Errorf("file tree reports an error")
 		}
-		for _, file := range loaded.Files {
-			if file.Path == "output/plugin-acceptance" || strings.HasPrefix(file.Path, "output/plugin-acceptance/") ||
-				file.Path == "output/project-create-async-native" || strings.HasPrefix(file.Path, "output/project-create-async-native/") {
-				return fmt.Errorf("ignored output artifact entered the file tree: %s", file.Path)
-			}
+		if _, err := tree.findKey(projectID + ":go.mod"); err != nil {
+			return fmt.Errorf("checked out file missing from the tree: %w", err)
 		}
 		return nil
 	})
-	app.capture("project-created")
-	app.stop()
-	restarted := startApp(t, binary, artifacts, "restart", data, "--local")
-	restarted.act("back-to-conversations", "press", "")
-	restarted.waitKey("sidebar-project:" + loaded.Projects[0].ID)
+	// Ignored output artifacts never reach the tree: only the checked-in
+	// output/go.mod survives the ignore rules inside the output directory.
+	restarted.act(projectID+":output", "expand", "")
+	restarted.await("ignored output artifacts stay out of the file tree", func() error {
+		tree, err := restarted.client.tree()
+		if err != nil {
+			return err
+		}
+		children := 0
+		for _, node := range tree.Nodes {
+			var key string
+			if json.Unmarshal(node.Key, &key) != nil {
+				continue
+			}
+			for _, artifact := range []string{"output/plugin-acceptance", "output/project-create-async-native"} {
+				if strings.Contains(key, artifact) {
+					return fmt.Errorf("ignored output artifact entered the file tree: %s", key)
+				}
+			}
+			if !strings.HasPrefix(key, projectID+":output/") {
+				continue
+			}
+			children++
+			if key != projectID+":output/go.mod" {
+				return fmt.Errorf("ignored entry entered the output directory: %s", key)
+			}
+		}
+		if children == 0 {
+			return fmt.Errorf("output directory did not expand")
+		}
+		return nil
+	})
 	restarted.capture("project-restored")
 }

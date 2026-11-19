@@ -457,6 +457,10 @@ func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Settings.Appearance.ReduceMotion = true
 	a.saveSettings()
+	// The skeleton waits for the remote catalog only while no model is
+	// configured at all; an existing list keeps rendering during loading.
+	models := a.state.Models
+	a.state.Models = nil
 	a.state.ModelCatalog = contracts.ModelCatalogState{State: contracts.CatalogLoading}
 	tt := ui.NewTester(a.View, 900, 600)
 	if err := openTestModelList(tt, "Select model"); err != nil {
@@ -470,6 +474,7 @@ func TestModelCatalogLoadingErrorRetryAndNoAgents(t *testing.T) {
 	if before != tt.Image().RGBAAt(500, 100) {
 		t.Fatal("reduced-motion catalog changed its shell fill")
 	}
+	a.state.Models = models
 	a.state.ModelCatalog = contracts.ModelCatalogState{State: contracts.CatalogError, Error: "The model catalog could not be loaded."}
 	tt.Frame()
 	if !tt.HasText(a.state.ModelCatalog.Error) {

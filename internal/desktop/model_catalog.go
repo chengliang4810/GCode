@@ -9,20 +9,51 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bool {
+// modelCatalogStatus returns the catalog status this composer shows. The
+// aggregate status may describe local agents while this composer targets
+// another device, so the provider details own availability.
+func (a *composerController) modelCatalogStatus() contracts.ModelCatalogStatus {
 	status := a.state.ModelCatalog.State
 	if status != contracts.CatalogLoading && status != contracts.CatalogError && a.modelNoAgents() {
 		if a.sessionID != "" && a.selectedModel().ID != "" {
-			return false
+			return contracts.CatalogReady
 		}
-		status = contracts.CatalogNoAgents
-	} else if status == contracts.CatalogNoAgents {
+		return contracts.CatalogNoAgents
+	}
+	if status == contracts.CatalogNoAgents {
 		// The catalog's aggregate status may describe local agents while this
 		// composer targets another device. Its provider details own availability.
-		status = contracts.CatalogReady
+		return contracts.CatalogReady
 	}
-	switch status {
+	return status
+}
+
+// modelCatalogSkeleton reports whether the picker waits for the remote
+// catalog. The model list comes from the local provider configuration and never
+// waits for the network, so a refresh only shows a skeleton while no model is
+// configured at all.
+func (a *composerController) modelCatalogSkeleton() bool {
+	return a.modelCatalogStatus() == contracts.CatalogLoading && len(a.state.Models) == 0
+}
+
+// modelCatalogReplacesList reports whether the catalog panel stands in for the
+// model list. A loading catalog keeps an existing list.
+func (a *composerController) modelCatalogReplacesList() bool {
+	switch a.state.ModelCatalog.State {
+	case contracts.CatalogReady, "":
+		return false
 	case contracts.CatalogLoading:
+		return a.modelCatalogSkeleton()
+	}
+	return true
+}
+
+func (a *composerController) modelCatalogState(c *ui.Context, budget float32) bool {
+	switch a.modelCatalogStatus() {
+	case contracts.CatalogLoading:
+		if !a.modelCatalogSkeleton() {
+			return false
+		}
 		ui.Column(c).FillWidth().Height(min(float32(144), budget)).Padding(8).Label(tr(c, "Loading models")).Children(func() { a.modelSkeleton(c) })
 	case contracts.CatalogError:
 		ui.Column(c).FillWidth().Padding(16).Gap(6).Children(func() {

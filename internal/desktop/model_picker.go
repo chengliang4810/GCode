@@ -620,7 +620,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	// that up onto the 4px geometry grid, so a full list is never budgeted
 	// shorter than it draws.
 	height := min(float32(max(1, min(7, len(rows))))*36+8+searchHeight+optionHeight, budget)
-	if a.state.ModelCatalog.State != contracts.CatalogReady && a.state.ModelCatalog.State != "" {
+	if a.modelCatalogReplacesList() {
 		height = min(float32(180), budget)
 	}
 	// A card is an overlay surface: the wrapper casts the overlay shadow and

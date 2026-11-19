@@ -40,6 +40,10 @@ type runtimeResources struct {
 	mcp      []mcp.Config
 	warnings []string
 	envFile  string
+	// configRoot is the configuration directory the user resources were read
+	// from. Prompt preparation expands the same catalog, so the runtime
+	// expansion can locate the command segment inside a prepared prompt.
+	configRoot string
 }
 
 type forkSkillScope struct {
@@ -81,7 +85,7 @@ func (e *Engine) prepareRuntimeResources(configRoot string, session contracts.Se
 }
 
 func buildRuntimeResources(configRoot, runtimeRoot, cwd, sessionID string, bundles []plugins.Bundle, config map[string]map[string]string, profiles []contracts.SubagentProfile) (runtimeResources, error) {
-	r := runtimeResources{skills: map[string]runtimeSkill{}}
+	r := runtimeResources{skills: map[string]runtimeSkill{}, configRoot: configRoot}
 	// Runtime storage belongs to the conversation root, independently of the
 	// fixed configuration and immutable plugin installation directories.
 	root, err := os.OpenRoot(runtimeRoot)
@@ -786,8 +790,36 @@ func (e *Engine) prepareRuntimeInput(ctx context.Context, message model.Message,
 	if err != nil {
 		return message, err
 	}
-	message.Text = output.Text
+	// The runtime expansion replaces the command segment only. Prompt
+	// preparation already appended the expanded text of the user-selected
+	// references after the command, so replacing the whole prompt would drop
+	// them.
+	message.Text = output.Text + promptReferenceTail(r.configRoot, session.CWD, message)
 	return message, nil
+}
+
+// promptReferenceTail returns the text that follows the command expansion in an
+// already prepared prompt. Prompt preparation expands the command first and
+// appends the expanded user-selected references after it, so a runtime command
+// expansion must keep that tail instead of replacing the whole prompt. The
+// returned text keeps the separator that prompt preparation used.
+func promptReferenceTail(root, cwd string, message model.Message) string {
+	if message.SourceText == "" {
+		return ""
+	}
+	plain := contracts.PlainPrompt(message.SourceText)
+	command, err := expandCommand(root, cwd, plain)
+	if err == nil && command != "" && strings.HasPrefix(message.Text, command) {
+		return strings.TrimPrefix(message.Text, command)
+	}
+	// The prepared prompt no longer starts with the same command segment, for
+	// example because the resource catalog changed after preparation. Expand
+	// the references again so a selected skill is never dropped silently.
+	_, additions, err := promptResources(root, message.SourceText)
+	if err != nil || additions == "" {
+		return ""
+	}
+	return "\n\n" + additions
 }
 
 func firstRuntimeText(values ...string) string {

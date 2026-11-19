@@ -164,16 +164,29 @@ func TestDesktopLocalRepositoryRefsRefresh(t *testing.T) {
 			git("switch", "-c", "new-draft-fresh")
 			app.act("sidebar-new-conversation", "press", "")
 			awaitRef("new-draft-fresh")
+			// The new draft re-reads the repository: a branch created after the
+			// draft started shows up in the ref picker, and the picker is no
+			// longer loading or reporting an error.
+			git("branch", "added-on-new-draft")
+			app.act("Select ref", "press", "")
+			app.waitKey("added-on-new-draft")
 			app.await("new draft refresh completes", func() error {
-				snapshot, err := readFixtureSnapshot(data)
+				tree, err := app.client.tree()
 				if err != nil {
 					return err
 				}
-				if refs := snapshot.RepoRefs[scope.Key()]; refs.State != contracts.LoadReady {
-					return fmt.Errorf("refs state=%q", refs.State)
+				if _, err := tree.findKey("composer-ref-loading"); err == nil {
+					return fmt.Errorf("ref picker is still loading")
+				}
+				if _, err := tree.findKey("composer-ref-error"); err == nil {
+					return fmt.Errorf("ref picker reports an error")
+				}
+				if _, err := tree.findKey("added-on-new-draft"); err != nil {
+					return fmt.Errorf("refreshed branch missing from the picker: %w", err)
 				}
 				return nil
 			})
+			closeMenu()
 			// Change HEAD again after refresh has completed. Following the
 			// default current checkout must not submit the cached branch name.
 			git("switch", "-c", "actual-at-send")

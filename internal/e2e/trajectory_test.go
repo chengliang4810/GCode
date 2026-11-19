@@ -94,9 +94,10 @@ func TestDesktopLocalCallTrajectory(t *testing.T) {
 					}
 					sessionID = snapshot.Sessions[0].ID
 				}
-				wantOutcome := "completed"
+				wantOutcome, wantStatus := "completed", contracts.Idle
 				if count == 1 {
-					wantOutcome = "failed"
+					// A failed run parks the conversation in the errored state.
+					wantOutcome, wantStatus = "failed", contracts.Errored
 				}
 				var session contracts.Session
 				deadline := time.Now().Add(stateTimeout)
@@ -119,7 +120,7 @@ func TestDesktopLocalCallTrajectory(t *testing.T) {
 							break
 						}
 					}
-					if session.Status == contracts.Idle && session.LastOutcome == wantOutcome && turnFinished {
+					if session.Status == wantStatus && session.LastOutcome == wantOutcome && turnFinished {
 						break
 					}
 					if time.Now().After(deadline) {

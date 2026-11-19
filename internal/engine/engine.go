@@ -141,6 +141,10 @@ type Engine struct {
 	// because they outlive the turn that started them.
 	background     context.Context
 	hookBackground sync.WaitGroup
+
+	// catalogPending marks a refresh this engine started; the remote catalog
+	// reports loading until it settles.
+	catalogPending bool
 }
 
 var _ contracts.Service = (*Engine)(nil)
@@ -245,10 +249,20 @@ func Open(options Options) (*Engine, error) {
 	e.catalogCancel = cancel
 	e.background = ctx
 	e.catalogDone = make(chan struct{})
+	e.wg.Add(1)
+	go func() {
+		defer e.wg.Done()
+		e.watchModelCatalog(ctx)
+	}()
 	go func() {
 		defer close(e.catalogDone)
 		e.catalog.Run(ctx)
 	}()
+	e.mu.Lock()
+	// A refresh that is already due starts immediately, so the first snapshot
+	// reports loading instead of a settled catalog.
+	e.settleModelCatalogLocked()
+	e.mu.Unlock()
 	maintenance := storage.StartRuntimeMaintenance(ctx, options.Storage)
 	e.maintenanceDone = make(chan struct{})
 	go func() {
@@ -471,10 +485,7 @@ func (e *Engine) refreshProvidersLocked() {
 		e.state.Providers = append(e.state.Providers, provider)
 		e.state.Integrations.Providers = append(e.state.Integrations.Providers, contracts.ProviderDetails{ProviderID: config.ID, TargetID: "local", Installed: true, Enabled: !config.Disabled, InstallState: "idle", AccountsState: contracts.LoadReady})
 	}
-	e.state.ModelCatalog.State = contracts.CatalogReady
-	if len(e.state.Models) == 0 {
-		e.state.ModelCatalog.State = contracts.CatalogEmpty
-	}
+	e.settleModelCatalogLocked()
 }
 func (e *Engine) publishLocked(event contracts.Event) {
 	e.state.Revision++

@@ -1034,3 +1034,54 @@ rcode-light / rcode-dark）一个像素不动。变的是浅色主题里的黄/�
 #8（逼出一个产品决策：schema `enum` 保留与否、以及工具校验报错为何是中文硬编码）。
 其余「读错字段/写死文案」可一次批量修；#5 需重新设计观测点（改在应用内看文件树）；
 #9 把判据从「最后一个采样点」换成「动画稳定后」。
+
+## 18. 最后一轮：目录状态真实化、技能正文修复与过期断言
+
+### 18.1 模型目录的 loading 状态变成真实状态
+
+此前 `CatalogLoading` 无人写入，骨架屏分支不可达。现在：
+
+- `internal/modelcatalog/catalog.go` 暴露刷新生命周期（`Status()`、`Changes()` 边沿广播、
+  `NeedsRefresh()`），**不改变联网时机**，只增加可观测性。
+- 新增 `internal/engine/catalog_state.go`：`settleModelCatalogLocked()` 由「刷新生命周期 +
+  本地模型数」派生状态（loading > error > empty/ready）；`watchModelCatalog` 后台监听边沿，
+  状态变化即 `publishLocked(state.changed)`，订阅者能看到带快照的事件。
+- `engine.go` 在首个快照前先 settle 一次；`commands.go` 的 `providers.refresh` / `catalog.retry`
+  在命令内**同步**置 loading（命令返回时快照已是 loading），随后在锁外起 goroutine 刷新再落定。
+- **失败保留旧状态**：本次进程内曾成功刷新过（`Synced`）时，失败不再置 error，保持上一次可用状态；
+  只有从未成功过才报 `error` 并写入错误文本。成功刷新不触碰本地 provider 配置。
+- 桌面端保持诚实：模型**列表**来自本地配置，刷新期间照常显示，
+  **只有「loading 且一个模型都没有」时才显示骨架**（`modelCatalogSkeleton()`）；
+  真正依赖远端目录的**模型元数据**区（设置页模型编辑）显示「正在查询模型参数…」，
+  状态落定后消失。
+
+### 18.2 修掉真实缺陷：命令与技能同现时技能正文被丢
+
+`expandPrompt` 先展开命令、再把已展开的 `@skill:` 正文追加在命令段之后；
+运行期 `prepareRuntimeInput` 把整段文本**替换**成 runtime 命令输出 → 正文静默丢失
+（复现 body 只剩 `Skill review … REVIEW 请检查 @skill:docs`）。
+现改为：**只替换命令段**，命令段之后的尾部原样保留；前缀定位失败时重算引用正文，
+再不行才回退旧行为。测试断言 `REVIEW` 只出现一次，证明没有双重展开。
+e2e 的 `await` 也从「读到第一条不满足的 body 就消费掉」改成累积每次 body、失败时打印最后一个。
+
+### 18.3 8 个过期 e2e 断言 + 工具校验文案
+
+| 用例 | 原断言为何永假 | 改法 |
+| --- | --- | --- |
+| `ComposerConversationWidth` | 找已被删除的 `Fork chat` 按钮 | 按 key `session-info-branch-changes` 判可见 |
+| `RepositoryRefsRefresh` | 读 `engine.json` 的 `RepoRefs`（从不落盘） | 断言 UI：引用选择器出现新分支、无加载/错误态 |
+| `SmartModelConfiguration` | 读 `snapshot.Models`（快照无此字段） | 断言模型行只以 ID 出现、无显示名别名 |
+| `ProjectCreationWithIgnoredArtifacts` | 读 `FilesState`（持久化时主动抹掉） | 在 Files 面板断言真实节点，并确认忽略产物不在其中 |
+| `ApplicationUsage` | 写死英文 `120 Tokens`（中文已统一为 `Token`） | 断言语言无关的「`<模型>, 120 ` 前缀 + `, 50.0%` 后缀」 |
+| `CallTrajectory` | 失败运行置 `Errored`，断言等 `Idle` | 按仓库既有写法判 `Errored`+`failed` |
+| `SidebarAlignment` | 跨层级比较容器与行内按钮 | 改用容器 key 比较左轨 |
+| `TodoWrite` | 期待语义化报错，但 schema `enum` 先拦截 | 让语义校验先于 schema 生效，`enum` 保留 |
+
+**工具校验文案**：`internal/agent/tool_validation.go` 的报错原本是中文硬编码，
+而它是要**回给模型**的（英文模型会收到中文）。现全部改英文；并新增
+`toolArgumentValidators`（`TodoWrite → ParseTodoUpdate`）让语义化报错在 schema 之前生效，
+`enum` 约束保留在工具定义里并有单测锁住。schema 继续负责工具不拥有的约束。
+
+**验证**：8 个 e2e 全部通过（含子用例，连续三轮全绿）；`go build ./...`、`go vet ./...` 通过；
+`./internal/desktop`（179s）、`./internal/design`、`./internal/agent`、`./internal/mock`、
+`./internal/contracts`、`./internal/workbench` 全绿。

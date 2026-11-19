@@ -56,6 +56,11 @@ func (a *App) modelMetadataFields(c *ui.Context) {
 				}
 			})
 		})
+		if a.state.ModelCatalog.State == contracts.CatalogLoading {
+			// The limits and modalities come from the remote catalog, so a
+			// refresh in flight may still change them.
+			ui.Text(c.Key("model-metadata-loading"), tr(c, "Loading model details…")).FillWidth().TextColor(a.palette.Muted)
+		}
 	})
 }
 
