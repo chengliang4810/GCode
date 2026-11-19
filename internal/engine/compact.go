@@ -65,7 +65,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 	onceState := e.sessionHookOnce[sessionID]
 	e.runs[sessionID] = run
 	e.state.Sessions[index].Status = contracts.Working
-	e.state.Runs = append(e.state.Runs, contracts.Run{ID: run.id, SessionID: sessionID, RequestID: requestID, Status: "running", StartedAt: time.Now()})
+	e.state.Runs = append(e.state.Runs, contracts.Run{ID: run.id, SessionID: sessionID, RequestID: requestID, Status: "running", Compacting: true, StartedAt: time.Now()})
 	if err = e.persistLocked(sessionID); err != nil {
 		delete(e.runs, sessionID)
 		e.state.Sessions[index] = priorSession
@@ -141,6 +141,7 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 				r.FinishedAt = &now
 				r.DurationMS = now.Sub(r.StartedAt).Milliseconds()
 				r.Status = "completed"
+				r.Compacting = false
 				if err != nil {
 					r.Status = "failed"
 					r.Error = err.Error()

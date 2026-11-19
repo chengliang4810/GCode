@@ -287,17 +287,19 @@ const (
 )
 
 type Run struct {
-	RequestID    string          `json:"requestId,omitempty"`
-	DurationMS   int64           `json:"durationMs"`
-	Summary      ActivitySummary `json:"summary"`
-	ID           string          `json:"id"`
-	SessionID    string          `json:"sessionId"`
-	Status       string          `json:"status"`
-	FinishReason string          `json:"finishReason"`
-	Error        string          `json:"error,omitempty"`
-	OutputFile   string          `json:"outputFile,omitempty"`
-	StartedAt    time.Time       `json:"startedAt"`
-	FinishedAt   *time.Time      `json:"finishedAt,omitempty"`
+	RequestID            string          `json:"requestId,omitempty"`
+	DurationMS           int64           `json:"durationMs"`
+	Summary              ActivitySummary `json:"summary"`
+	ID                   string          `json:"id"`
+	SessionID            string          `json:"sessionId"`
+	Status               string          `json:"status"`
+	Compacting           bool            `json:"compacting,omitempty"`
+	CompactionDiagnostic string          `json:"compactionDiagnostic,omitempty"`
+	FinishReason         string          `json:"finishReason"`
+	Error                string          `json:"error,omitempty"`
+	OutputFile           string          `json:"outputFile,omitempty"`
+	StartedAt            time.Time       `json:"startedAt"`
+	FinishedAt           *time.Time      `json:"finishedAt,omitempty"`
 }
 type QueuedMessage struct {
 	RequestID      string       `json:"requestId,omitempty"`

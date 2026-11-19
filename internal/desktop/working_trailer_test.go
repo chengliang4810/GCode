@@ -11,6 +11,32 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+func TestWorkingTrailerShowsContextCompaction(t *testing.T) {
+	for _, appearance := range []string{"light", "dark"} {
+		t.Run(appearance, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.selectSession("chat-0")
+			a.state.Settings.Appearance.Mode = appearance
+			a.state.Settings.General.Language = "zh-CN"
+			for i := range a.state.Sessions {
+				if a.state.Sessions[i].ID == "chat-0" {
+					a.state.Sessions[i].Status = contracts.Working
+				}
+			}
+			a.state.Runs = []contracts.Run{{ID: "compact", SessionID: "chat-0", Status: runStatusRunning, Compacting: true}}
+			tt := ui.NewTester(func(c *ui.Context) { a.View(c) }, 650, 600)
+			if !tt.HasText("正在压缩上下文") {
+				t.Fatal("compaction caption is not visible")
+			}
+			a.state.Runs[0].Compacting = false
+			tt.Frame()
+			if tt.HasText("正在压缩上下文") || !tt.HasText("等待模型响应…") {
+				t.Fatal("caption did not return to model waiting")
+			}
+		})
+	}
+}
+
 func TestWorkingRetryVisibilityThresholdAndReset(t *testing.T) {
 	for _, appearance := range []string{"light", "dark"} {
 		t.Run(appearance, func(t *testing.T) {

@@ -82,6 +82,9 @@ func (a *App) phaseLabel(c *ui.Context, sessionID string) string {
 	if run.Status == runStatusStopping {
 		return phaseText(c, "Stopping…")
 	}
+	if run.Status == runStatusRunning && run.Compacting {
+		return phaseText(c, "Compressing context")
+	}
 	// TurnActivity keeps the turn's work blocks: the last one is the step the
 	// run is on now.
 	blocks := contracts.TurnActivity(a.state.Messages[sessionID], run.ID)
@@ -212,10 +215,10 @@ func (a *App) workingStateFor(c *ui.Context, sessionID string) (word, elapsed st
 		return "", "", false
 	}
 	word = a.phaseLabel(c, sessionID)
-	if !strings.HasSuffix(word, "…") {
+	run, ok := a.latestRun(sessionID)
+	if !(ok && run.Status == runStatusRunning && run.Compacting) && !strings.HasSuffix(word, "…") {
 		word += "…"
 	}
-	run, ok := a.latestRun(sessionID)
 	if !ok || run.StartedAt.IsZero() {
 		// Without a real run there is no elapsed work to report.
 		return word, "", true

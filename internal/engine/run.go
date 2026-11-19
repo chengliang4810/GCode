@@ -836,6 +836,7 @@ func (e *Engine) startRunWithProvidersLocked(
 				r.FinishedAt = &now
 				r.DurationMS = now.Sub(r.StartedAt).Milliseconds()
 				r.Status = contracts.RunStatusCompleted
+				r.Compacting = false
 				r.FinishReason = contracts.FinishReasonStop
 				r.OutputFile = run.outputFile
 				if runErr != nil {
@@ -954,8 +955,23 @@ func (e *Engine) startRunWithProvidersLocked(
 }
 
 func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string, event agent.Event) error {
+	if event.Kind == "context.compacting" || event.Kind == "message.start" || event.Kind == "message.retry" {
+		for i := len(e.state.Runs) - 1; i >= 0; i-- {
+			if e.state.Runs[i].ID == runID {
+				wasCompacting := e.state.Runs[i].Compacting
+				e.state.Runs[i].Compacting = event.Kind == "context.compacting"
+				if event.Kind == "context.compacting" {
+					e.state.Runs[i].CompactionDiagnostic = event.Text
+				}
+				if wasCompacting && !e.state.Runs[i].Compacting {
+					e.publishLocked(contracts.Event{Kind: "context.compaction.finished", SessionID: sessionID, RunID: runID})
+				}
+				break
+			}
+		}
+	}
 	if event.Kind == "context.compacting" {
-		e.publishLocked(contracts.Event{Kind: "context.compacting", SessionID: sessionID, RunID: runID})
+		e.publishLocked(contracts.Event{Kind: "context.compacting", SessionID: sessionID, RunID: runID, Text: event.Text})
 		return nil
 	}
 	messages := e.state.Messages[sessionID]

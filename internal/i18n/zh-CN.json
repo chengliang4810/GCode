@@ -1445,6 +1445,7 @@
   "Stopped at step %d": "已在第 %d 步停止",
   "Retry response": "重试回复",
   "Waiting for the model": "等待模型响应",
+  "Compressing context": "正在压缩上下文",
   "Reading %s": "正在读取 %s",
   "Editing %d files": "正在编辑 %d 个文件",
   "Searching %s": "正在搜索 %s",
