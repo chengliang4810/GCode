@@ -251,6 +251,11 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 			a.refreshBackground()
 		}
 	}
+	if cmd.Kind == "session.acknowledge" {
+		// Clearing a seen failure is bookkeeping the user never asked for: a
+		// host that cannot settle it must not interrupt with an error.
+		return
+	}
 	if err == nil {
 		return
 	}

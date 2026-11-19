@@ -17,6 +17,7 @@ func (a *App) pruneSessionUIState() {
 		exists[session.ID] = true
 	}
 	pruneSessionMap(a.sessionStates, exists)
+	pruneSessionMap(a.acknowledgedFailures, exists)
 	pruneSessionMap(a.drafts, exists)
 	pruneSessionMap(a.pendingSends, exists)
 	pruneSessionMap(a.sideComposers, exists)

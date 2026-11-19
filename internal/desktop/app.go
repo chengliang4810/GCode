@@ -98,6 +98,7 @@ type App struct {
 	panelReady                    bool
 	frameColumns                  panelWidths
 	sessionStates                 map[string]sessionViewState
+	acknowledgedFailures          map[string]time.Time
 	canvasTarget                  *canvasTarget
 	chatWorkspacePending          bool
 	desiredSettings               *contracts.Settings
@@ -526,6 +527,8 @@ func (a *App) apply(s contracts.Snapshot) {
 	a.refreshSessionSubscription()
 	if applySnapshot {
 		a.pruneSessionUIState()
+		// A failure the user can already see has nothing left to announce.
+		a.acknowledgeVisibleFailures()
 	}
 }
 
@@ -925,6 +928,9 @@ func (a *App) setSelectedSession(id string, preserveWorkspace bool) {
 				unread := false
 				a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: id, Unread: &unread}})
 			}
+			// Opening the conversation shows the failure itself, so the row and
+			// its project stop marking it as unseen.
+			a.acknowledgeSessionFailure(s)
 			break
 		}
 	}

@@ -214,14 +214,15 @@ func (a *App) menuPanelView(c *ui.Context) {
 				controlTileButton(c.Key("menubar-session-"+session.ID), false).FillWidth().Label(session.Title).OnClick(func() { a.menuPanelNavigate("chat/" + session.ID) }).Children(func() {
 					ui.Column(c).FillWidth().Gap(5).Children(func() {
 						ui.Text(c, session.Title).Bold().SingleLine()
+						// The outcome keeps naming a failure the user has already
+						// seen, which the core settles back to idle.
 						label := "Completed"
-						if session.Status == contracts.Working {
+						switch {
+						case session.Status == contracts.Working:
 							label = "Working"
-						}
-						if session.Status == contracts.AwaitingInput {
+						case session.Status == contracts.AwaitingInput:
 							label = "Waiting for input"
-						}
-						if session.Status == contracts.Errored {
+						case session.LastOutcome == "failed":
 							label = "Failed"
 						}
 						ui.Text(c, tr(c, label)).TextColor(theme.TextMuted)
