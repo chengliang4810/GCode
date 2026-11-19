@@ -139,22 +139,22 @@ type App struct {
 	// dragOrigin keeps the pane sizes a live drag started from, so Escape can
 	// put them back; dragMovedFrame says a divider moved this frame, which is
 	// what keeps that origin alive.
-	dragOrigin      paneDragOrigin
-	dragMovedFrame  bool
-	paneSaveAt                                              time.Time
-	paneDirty                                               paneDirty
-	draft, search, paletteQuery, errorText, toast           string
-	attachments                                             []contracts.Attachment
-	drafts                                                  map[string]string
-	expanded                                                map[string]bool
-	integrationUI                                           integrationUIState
-	messages                                                ui.ListState
-	md                                                      markdown.Options
-	userMD                                                  markdown.Options
-	linkOptions                                             map[string]*markdown.Options
-	linkFiles                                               map[string]*transcriptFileIndex
-	linkSource                                              string
-	linkSelection                                           *linkui.Selection
+	dragOrigin                                    paneDragOrigin
+	dragMovedFrame                                bool
+	paneSaveAt                                    time.Time
+	paneDirty                                     paneDirty
+	draft, search, paletteQuery, errorText, toast string
+	attachments                                   []contracts.Attachment
+	drafts                                        map[string]string
+	expanded                                      map[string]bool
+	integrationUI                                 integrationUIState
+	messages                                      ui.ListState
+	md                                            markdown.Options
+	userMD                                        markdown.Options
+	linkOptions                                   map[string]*markdown.Options
+	linkFiles                                     map[string]*transcriptFileIndex
+	linkSource                                    string
+	linkSelection                                 *linkui.Selection
 	// transcriptSelections are the selection scopes of the open transcripts
 	// by pane, and transcriptHover the row the pointer is in on each.
 	transcriptSelections map[string]*linkui.Selection
@@ -331,6 +331,18 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.refreshSessionSubscription()
 	a.notifications.Start(a.ctx, nativeNotificationSink{})
 	a.syncMenuBar()
+	refreshIsland := func() { win.Update(a.syncAgentIsland) }
+	offIslandVisibility := []func(){
+		win.OnEnterFullScreen(refreshIsland),
+		win.OnLeaveFullScreen(refreshIsland),
+		win.OnFocus(refreshIsland),
+		win.OnBlur(refreshIsland),
+	}
+	win.OnClosed(func() {
+		for _, off := range offIslandVisibility {
+			off()
+		}
+	})
 	a.syncAgentIsland()
 	go func() {
 		ticker := time.NewTicker(time.Second)

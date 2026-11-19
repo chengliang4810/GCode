@@ -114,6 +114,10 @@ func (a *App) syncAgentIsland() {
 		a.closeIslandWindows()
 		return
 	}
+	hideForFullScreen := a.win.IsFullScreen() && a.win.IsFocused() && mygo.App.IsActive()
+	if hideForFullScreen {
+		s.resetHover()
+	}
 	displays := islandDisplays(s.Displays, a.state.Settings.Island.DisplayTarget)
 	if s.Windows == nil {
 		s.Windows = map[int64]*mygo.Window{}
@@ -149,7 +153,6 @@ func (a *App) syncAgentIsland() {
 			}
 		})
 		configureIslandWindow(window)
-		window.ShowInactive()
 	}
 	s.Window = nil
 	if len(displays) > 0 {
@@ -182,6 +185,13 @@ func (a *App) syncAgentIsland() {
 	}
 	a.resizeAgentIsland(len(entries))
 	for _, window := range s.Windows {
+		if hideForFullScreen {
+			window.Hide()
+			continue
+		}
+		if !window.IsVisible() {
+			window.ShowInactive()
+		}
 		window.Invalidate()
 	}
 }
@@ -239,14 +249,18 @@ func islandDisplays(displays []mygo.Display, target string) []mygo.Display {
 	return nil
 }
 
-func (a *App) closeIslandWindows() {
-	s := &a.island
-	windows := s.Windows
-	s.Windows = nil
+func (s *agentIslandState) resetHover() {
 	s.Hovered = nil
 	s.HoverExpanded = false
 	s.HoverCooldown = time.Time{}
 	s.cancelHoverTimer()
+}
+
+func (a *App) closeIslandWindows() {
+	s := &a.island
+	windows := s.Windows
+	s.Windows = nil
+	s.resetHover()
 	s.Window = nil
 	s.Width = 0
 	s.Height = 0
