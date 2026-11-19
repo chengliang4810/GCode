@@ -181,6 +181,7 @@ type App struct {
 	launchingNewSession                                        bool
 	chooseTableExportPath                                      func() (string, error)
 	nestedMarkdownTable                                        bool
+	transcriptTableLayout                                      transcriptRowLayout
 	projectMenu, deviceMenu, branchMenu, viewMenu, paletteOpen bool
 	projectSelect                                              projectSelectState
 	renameOpen, projectOpen, attachmentOpen, imageOpen         bool
@@ -1235,7 +1236,10 @@ func (a *App) mainView(c *ui.Context) {
 				chatWidth = a.rightResize.paint(c, chatWidth, reduced)
 				c.Key("conversation-workspace-split")
 				before := chatWidth
-				ui.Split(c, &chatWidth, conversation, workspaceView).Grow(1).FillWidth()
+				ui.Split(c, &chatWidth, func() {
+					a.chatWidth = chatWidth
+					conversation()
+				}, workspaceView).Grow(1).FillWidth()
 				if chatWidth != before {
 					a.beginPaneDrag()
 					requested := chatWidth - a.rightResize.painted

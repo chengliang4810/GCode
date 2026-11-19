@@ -67,9 +67,17 @@ func (a *App) transcriptTableBlock(c *ui.Context, document *parser.Document, ind
 	reserve, _ := a.infoVisibility()
 	viewport.W = max(float32(0), viewport.W-reserve)
 	left, expandedWidth := tableExpandedGeometry(bounds, viewport)
+	if layout := a.transcriptTableLayout; layout.viewport > 0 && document.Block(index).Parent == 0 {
+		// The split and centered row already know this build's width, even
+		// when a panel transition remounts the table and clears its bounds.
+		width = max(0, min(layout.width, layout.viewport)-2*layout.padding)
+		left = max(0, (layout.viewport-width)/2-16)
+		expandedWidth = width + 2*left
+	}
 	canExpand := !a.nestedMarkdownTable && sumTableWidths(natural) > width+1 && expandedWidth > width+16
 	drawWidth := width
-	if state.expanded && canExpand {
+	expanded := state.expanded && canExpand
+	if expanded {
 		drawWidth = expandedWidth
 	} else {
 		left = 0
@@ -77,7 +85,11 @@ func (a *App) transcriptTableBlock(c *ui.Context, document *parser.Document, ind
 	widths := fitTranscriptTableWidths(natural, drawWidth)
 	root.Children(func() {
 		a.transcriptTableActions(c, table, state, canExpand)
-		ui.Column(c).Width(drawWidth).Shrink(0).Margin(0, 0, 0, -left).Children(func() {
+		container := ui.Column(c).FillWidth().MinWidth(0).Shrink(0)
+		if expanded {
+			container.Width(drawWidth).Margin(0, 0, 0, -left)
+		}
+		container.Children(func() {
 			frame := ui.Column(c.Key(state.key("table-frame"))).Bind(&state.frame).FillWidth().MinWidth(0).Shrink(0).
 				Radius(12).Border(1, a.palette.Border).Background(a.palette.Background).Clip().Role(ui.RoleTable).Label(tr(c, "Table frame"))
 			frame.Children(func() {

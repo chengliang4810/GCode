@@ -127,7 +127,9 @@ func (a *App) chatView(c *ui.Context) {
 					// Reserve the card inside the content; the scroll viewport
 					// and its scrollbar still reach the conversation pane edge.
 					ui.List(c.Key("chat-transcript-list"), &a.messages, len(rows), func(i int) {
-						a.transcriptRowView(c, pane, messages, rows, i, transcriptRowLayout{width: width, padding: 24})
+						a.transcriptRowView(c, pane, messages, rows, i, transcriptRowLayout{
+							width: width, padding: 24, viewport: a.chatWidth - reserve,
+						})
 					}).Grow(1).FillWidth().Gap(0).Padding(transcriptListTopPadding, reserve, 24, 0)
 				})
 				a.messageRail(c, a.transcriptCache.rail)

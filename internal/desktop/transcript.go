@@ -34,9 +34,10 @@ const (
 // transcriptRowLayout is how one pane frames its rows: the main conversation
 // centers them in the transcript width, a side pane fills its column.
 type transcriptRowLayout struct {
-	width   float32 // the centered width; 0 fills the pane
-	padding float32 // horizontal padding inside the row
-	nested  bool    // renders inside another pane's tab
+	width    float32 // the centered width; 0 fills the pane
+	padding  float32 // horizontal padding inside the row
+	nested   bool    // renders inside another pane's tab
+	viewport float32 // current content viewport, when known
 }
 
 // transcriptPane is where a transcript is shown: the projection cache its rows
@@ -110,7 +111,10 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 					c.Key(block.ID)
 					body := message
 					body.Streaming = message.Streaming && block.Block.ID == pane.cache.streamingText
+					previous := a.transcriptTableLayout
+					a.transcriptTableLayout = layout
 					a.transcriptBlock(c, body, *block.Block)
+					a.transcriptTableLayout = previous
 				}
 			}
 			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {

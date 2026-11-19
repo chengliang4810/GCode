@@ -172,6 +172,42 @@ func TestTranscriptTableNativeActionsAndPreview(t *testing.T) {
 	}
 }
 
+func TestTranscriptTableColumnsFollowPanelWidthOnFirstFrame(t *testing.T) {
+	for _, dark := range []bool{false, true} {
+		t.Run(fmt.Sprintf("dark=%t", dark), func(t *testing.T) {
+			app := testApp(t, "default")
+			app.palette = design.Palette("rcode", dark)
+			layout := transcriptRowLayout{width: 736, padding: 24, viewport: 900}
+			mount := 0
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(app.palette.UI())
+				app.prepareTranscriptMarkdown(c)
+				app.transcriptTableLayout = layout
+				ui.Row(c.Key(mount)).Width(layout.viewport).Justify(ui.Center).Children(func() {
+					ui.Column(c).FillWidth().MaxWidth(layout.width).Padding(0, layout.padding).Children(func() {
+						markdown.View(c, "| First | Last |\n|---|---|\n| one | two |", &app.md)
+					})
+				})
+			}, 1000, 600)
+			for _, step := range []struct {
+				width   float32
+				remount bool
+			}{{900, false}, {640, true}, {520, false}, {380, false}, {560, true}, {900, false}} {
+				layout.viewport = step.width
+				if step.remount {
+					mount++
+				}
+				tt.Frame()
+				frame, frameOK := tt.Find("Table frame")
+				last, lastOK := tt.Find("Last")
+				if !frameOK || !lastOK || math.Abs(float64(frame.X+frame.W-last.X-last.W)) > 3 {
+					t.Fatalf("viewport %v, remount %t: table frame=%+v, last column=%+v", step.width, step.remount, frame, last)
+				}
+			}
+		})
+	}
+}
+
 func TestTranscriptWideTableScrollAndPreviewHeader(t *testing.T) {
 	app := testApp(t, "default")
 	app.palette = design.Palette("rcode-light", false)
