@@ -38,6 +38,9 @@ func (e *Engine) Execute(ctx context.Context, command contracts.Command) (result
 	if command.Kind == "message.send" && command.Send != nil && command.Send.SessionID == "" && command.Send.Checkout != nil {
 		return e.checkoutSend(ctx, command)
 	}
+	if command.Kind == "background.install" || command.Kind == "background.adjust" || command.Kind == "background.remove" {
+		return e.updateBackground(ctx, command)
+	}
 	return e.executeCommand(ctx, command, nil)
 }
 

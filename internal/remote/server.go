@@ -58,6 +58,10 @@ func (s Server) Handler() (http.Handler, error) {
 			http.Error(w, "invalid command", 400)
 			return
 		}
+		if command.Kind == "background.install" {
+			http.Error(w, "background installation from a local path is desktop-only", http.StatusBadRequest)
+			return
+		}
 		if err := s.Core.Execute(r.Context(), command); err != nil {
 			http.Error(w, err.Error(), 400)
 			return
