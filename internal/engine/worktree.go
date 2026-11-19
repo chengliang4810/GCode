@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"gcode/internal/contracts"
 	"gcode/internal/model"
@@ -482,8 +484,9 @@ func prepareCheckout(ctx context.Context, project contracts.Project, plan contra
 		if err != nil {
 			return nil, err
 		}
-		parent := filepath.Join(dataDirectory, "worktrees")
-		worktrees, err := openWorktreeParent(dataDirectory)
+		projectName := worktreeProjectName(filepath.Base(repo.root))
+		parent := filepath.Join(dataDirectory, "worktrees", projectName)
+		worktrees, err := openWorktreeParent(dataDirectory, projectName)
 		if err != nil {
 			return nil, err
 		}
@@ -527,7 +530,36 @@ func prepareCheckout(ctx context.Context, project contracts.Project, plan contra
 	return checkout, nil
 }
 
-func openWorktreeParent(dataDirectory string) (*os.Root, error) {
+// Keep repository names recognizable while producing one portable path component.
+// The random checkout ID, not this display grouping, provides uniqueness.
+func worktreeProjectName(name string) string {
+	var safe strings.Builder
+	for _, r := range name {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' && r != '_' && r != '.' {
+			r = '-'
+		}
+		if safe.Len()+utf8.RuneLen(r) > 100 {
+			break
+		}
+		safe.WriteRune(r)
+	}
+	name = strings.Trim(safe.String(), ".-")
+	if name == "" {
+		return "project"
+	}
+	// Windows reserves these names even when followed by a file extension.
+	stem, _, _ := strings.Cut(strings.ToLower(name), ".")
+	if stem == "con" || stem == "prn" || stem == "aux" || stem == "nul" ||
+		(len(stem) == 4 && (strings.HasPrefix(stem, "com") || strings.HasPrefix(stem, "lpt")) && stem[3] >= '1' && stem[3] <= '9') {
+		name = "_" + name
+	}
+	return name
+}
+
+func openWorktreeParent(dataDirectory, projectName string) (*os.Root, error) {
+	if projectName == "" || projectName == "." || !filepath.IsLocal(projectName) || strings.ContainsAny(projectName, `/\`) {
+		return nil, errors.New("invalid worktree project directory name")
+	}
 	info, err := os.Stat(dataDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("access worktree data directory: %w", err)
@@ -547,7 +579,15 @@ func openWorktreeParent(dataDirectory string) (*os.Root, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open worktree parent: %w", err)
 	}
-	return parent, nil
+	defer parent.Close()
+	if err := parent.Mkdir(projectName, 0700); err != nil && !errors.Is(err, os.ErrExist) {
+		return nil, fmt.Errorf("create worktree project directory: %w", err)
+	}
+	folder, err := openRealDirectory(parent, projectName)
+	if err != nil {
+		return nil, fmt.Errorf("open worktree project directory: %w", err)
+	}
+	return folder, nil
 }
 
 // Only a checkout created by this dispatch and not accepted by a persisted run

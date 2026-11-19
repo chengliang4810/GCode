@@ -113,7 +113,7 @@ Engine 不再解释或清除协议字段。该内部结构直接更新，没有�
 | 配置入口 | plugin-configuration.json | 宿主私有插件配置 |
 | 附件绑定根 | uploads/ | 托管附件，通过 root ID 解析 |
 | 会话绑定根 | workspaces/会话短ID/ | 普通无项目对话独占的工作目录 |
-| 工作树创建时的数据根 | worktrees/工作树短ID/ | 新创建的真实 Git 工作树 |
+| 工作树创建时的数据根 | worktrees/项目名/工作树短ID/ | 按仓库根文件夹名安全分组的新建真实 Git 工作树；已有工作树保留原路径 |
 | 当前数据根 | cache/gcode/models-dev.json、cache/gcode/models-dev-state.json | 模型目录缓存及刷新状态 |
 | 配置入口 | native/ | 原生窗口状态及偏好 |
 | 当前数据根 | logs/、cache/gcode/、tmp/gcode/ | 应用日志、框架缓存和临时文件 |
