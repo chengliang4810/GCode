@@ -33,8 +33,7 @@ func (s SettingsPageTokens) Heading(c *ui.Context, text, label string) ui.Elemen
 	}
 	return ui.Text(c, text).Label(label).
 		FontSize(TextSize(c, size)).FontWeight(s.HeadingWeight).
-		LineHeight(lineHeight/size).
+		FixedLineHeight(lineHeight+TextSize(c, size)-size).
 		Margin(0, s.HeadingInset, s.HeadingBottomMargin, s.HeadingInset).
 		Balance()
 }
-
