@@ -207,6 +207,10 @@ func (a *App) projectPickerRows() []projectPickerRow {
 	}
 	return rows
 }
+func (p *newProjectState) browseTruncated() bool {
+	return (p.step == 1 && p.locations.Truncated) || (p.step == 2 && p.listing.Truncated)
+}
+
 func deviceGlyph(device contracts.Device) string {
 	if device.Platform == "darwin" {
 		return "laptop"
@@ -492,13 +496,21 @@ func (a *App) newProjectDialog(c *ui.Context) {
 								title, hint = "No folders match", "Type a path like ~/code or /mnt to jump there."
 							}
 						}
+						if p.browseTruncated() {
+							title = tr(c, "Folder list is incomplete")
+							hint = tr(c, "Enter a path to browse directly.")
+						}
 						ui.Text(c, title)
 						ui.Text(c, hint).TextColor(a.palette.Muted)
 					}
 				})
 			}
 			ui.Row(c).Padding(7, 16).Gap(12).AlignItems(ui.Center).BorderWidth(1, 0, 0, 0).BorderColor(a.palette.Border).Children(func() {
-				a.paletteKeyHint(c, "↑ ↓", "Navigate")
+				if !p.loading && p.error == "" && p.browseTruncated() {
+					a.paletteKeyHint(c, "↑ ↓", "Partial list")
+				} else {
+					a.paletteKeyHint(c, "↑ ↓", "Navigate")
+				}
 				a.paletteKeyHint(c, "↵", "Open")
 				ui.Box(c).Grow(1)
 				if p.step == 2 {

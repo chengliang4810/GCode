@@ -2,8 +2,6 @@ package engine
 
 import (
 	"context"
-	"errors"
-	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -16,13 +14,15 @@ import (
 // the home directory first, then the mounted roots/volumes. Roots come from the
 // host filesystem at call time; nothing is cached in the snapshot.
 func (e *Engine) ListDirectoryLocations(ctx context.Context, request contracts.DirectoryRequest) (contracts.DirectoryLocations, error) {
-	if err := ctx.Err(); err != nil {
-		return contracts.DirectoryLocations{}, err
-	}
-	if request.DeviceID != "" && request.DeviceID != "local" {
-		return contracts.DirectoryLocations{}, errors.New("device not found")
-	}
-	home, err := os.UserHomeDir()
+	return hostDirectoryBrowser.listDirectoryLocations(ctx, request)
+}
+
+func (b *directoryBrowser) listDirectoryLocations(ctx context.Context, request contracts.DirectoryRequest) (contracts.DirectoryLocations, error) {
+	return runDirectoryQuery(ctx, b, request.DeviceID, b.readDirectoryLocations)
+}
+
+func (b *directoryBrowser) readDirectoryLocations(ctx context.Context) (contracts.DirectoryLocations, error) {
+	home, err := b.home()
 	if err != nil {
 		return contracts.DirectoryLocations{}, err
 	}
@@ -30,9 +30,19 @@ func (e *Engine) ListDirectoryLocations(ctx context.Context, request contracts.D
 	if home != "" {
 		result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: "Home", Path: filepath.ToSlash(home), Kind: contracts.LocationHome})
 	}
-	for _, root := range volumeRoots() {
+	if err := ctx.Err(); err != nil {
+		return contracts.DirectoryLocations{}, err
+	}
+	for _, root := range b.roots() {
+		if err := ctx.Err(); err != nil {
+			return contracts.DirectoryLocations{}, err
+		}
 		if root == filepath.ToSlash(home) {
 			continue
+		}
+		if len(result.Locations) == contracts.DirectoryResultLimit {
+			result.Truncated = true
+			break
 		}
 		result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: volumeName(root), Path: filepath.ToSlash(root), Kind: contracts.LocationVolume})
 	}

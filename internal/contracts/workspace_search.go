@@ -1,6 +1,9 @@
 package contracts
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // WorkspaceSearchRequest searches only the selected virtual project. Offsets
 // are one-based lines and zero-based UTF-8 byte columns, matching the reference protocol.
@@ -40,6 +43,16 @@ type WorkspaceSearchService interface {
 	SearchWorkspace(context.Context, WorkspaceSearchRequest) (WorkspaceSearchResult, error)
 }
 
+// Directory browsing is read-only and bounded independently of project scans.
+const (
+	DirectoryResultLimit = 500
+	DirectoryScanLimit   = 10_000
+)
+
+// ErrDirectoryBrowseBusy means all host-wide read-only browsing workers are
+// occupied. Timed-out OS calls keep their permits until they actually return.
+var ErrDirectoryBrowseBusy = errors.New("folder browsing is busy: all filesystem workers are occupied; retry later")
+
 type DirectoryRequest struct {
 	DeviceID string `json:"deviceId"`
 	Path     string `json:"path"`
@@ -71,6 +84,9 @@ type DirectoryListing struct {
 	Home     string           `json:"home"`
 	Entries  []DirectoryEntry `json:"entries"`
 	Revision uint64           `json:"revision"`
+	// Truncated means result/scan limits prevented proving completeness. The
+	// returned subset is path-sorted, not necessarily the first paths globally.
+	Truncated bool `json:"truncated"`
 }
 
 // DirectoryLocations lists the places the picker offers before a folder is
@@ -78,6 +94,7 @@ type DirectoryListing struct {
 type DirectoryLocations struct {
 	DeviceID  string              `json:"deviceId"`
 	Locations []DirectoryLocation `json:"locations"`
+	Truncated bool                `json:"truncated"`
 }
 
 type ProjectDirectoryService interface {
