@@ -274,6 +274,192 @@ func TestWorktreeRejectsInvalidSelectionAndUnavailableDataDirectory(t *testing.T
 	}
 }
 
+func TestWorktreeNewRejectsSourceRepositoryNesting(t *testing.T) {
+	for _, name := range []string{
+		"data inside repository", "data equals repository", "data alias into repository",
+		"case alias data inside repository", "case alias data equals repository",
+		"source alias", "source subdirectory", "registered source worktree", "group equals source root",
+	} {
+		t.Run(name, func(t *testing.T) {
+			repository := temporaryGitRepository(t)
+			source, data := repository, filepath.Join(repository, "data")
+			switch name {
+			case "data equals repository":
+				data = repository
+			case "case alias data inside repository", "case alias data equals repository":
+				source = filepath.Join(t.TempDir(), "RePoSiToRy")
+				if err := os.Rename(repository, source); err != nil {
+					t.Fatal(err)
+				}
+				alias := filepath.Join(filepath.Dir(source), strings.ToLower(filepath.Base(source)))
+				sourceInfo, err := os.Stat(source)
+				if err != nil {
+					t.Fatal(err)
+				}
+				aliasInfo, err := os.Stat(alias)
+				if os.IsNotExist(err) {
+					t.Skip("test filesystem is case-sensitive")
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !os.SameFile(sourceInfo, aliasInfo) {
+					t.Skip("case alias does not identify the same repository")
+				}
+				data = alias
+				if name == "case alias data inside repository" {
+					data = filepath.Join(alias, "data")
+				}
+			case "data alias into repository", "source alias":
+				alias := filepath.Join(t.TempDir(), "alias")
+				target := repository
+				if name == "data alias into repository" {
+					target = data
+					if err := os.Mkdir(target, 0700); err != nil {
+						t.Fatal(err)
+					}
+					data = alias
+				} else {
+					source = alias
+				}
+				if err := os.Symlink(target, alias); err != nil {
+					if runtime.GOOS == "windows" {
+						t.Skipf("directory symlink creation unavailable: %v", err)
+					}
+					t.Fatal(err)
+				}
+			case "source subdirectory":
+				source = filepath.Join(repository, "subproject")
+				if err := os.Mkdir(source, 0700); err != nil {
+					t.Fatal(err)
+				}
+			case "registered source worktree":
+				linked := filepath.Join(t.TempDir(), "linked")
+				runGitTest(t, repository, "worktree", "add", "-b", "source-tree", "--", linked, "HEAD")
+				source, data = filepath.Join(linked, "subproject"), filepath.Join(linked, "data")
+				if err := os.Mkdir(source, 0700); err != nil {
+					t.Fatal(err)
+				}
+			case "group equals source root":
+				data = t.TempDir()
+				source = filepath.Join(data, "worktrees", "repository")
+				if err := os.Mkdir(filepath.Dir(source), 0700); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(repository, source); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.MkdirAll(data, 0700); err != nil {
+				t.Fatal(err)
+			}
+			repo, err := inspectGit(t.Context(), source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			managed := filepath.Join(data, "worktrees")
+			group := filepath.Join(managed, worktreeProjectName(filepath.Base(repo.root)))
+			if name == "group equals source root" {
+				groupInfo, err := os.Stat(group)
+				if err != nil {
+					t.Fatal(err)
+				}
+				repoInfo, err := os.Stat(repo.root)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !os.SameFile(groupInfo, repoInfo) {
+					t.Fatal("test grouping must identify the source root itself")
+				}
+			}
+			_, managedBefore := os.Lstat(managed)
+			_, groupBefore := os.Lstat(group)
+			refsBefore := runGitTest(t, source, "for-each-ref", "--format=%(refname):%(objectname)", "refs/heads")
+			treesBefore := runGitTest(t, source, "worktree", "list", "--porcelain")
+			statusBefore := runGitTest(t, source, "status", "--porcelain", "--untracked-files=all")
+			project := contracts.Project{Path: source, GitDetected: true}
+			checkout, err := prepareCheckout(t.Context(), project, contracts.CheckoutPlan{Kind: contracts.CheckoutNew}, data)
+			if err == nil || !strings.Contains(err.Error(), "must be outside source repository") {
+				t.Fatalf("nested checkout was not explicitly rejected: checkout=%+v error=%v", checkout, err)
+			}
+			for _, path := range []struct {
+				name   string
+				before error
+			}{{managed, managedBefore}, {group, groupBefore}} {
+				if os.IsNotExist(path.before) {
+					if _, err := os.Lstat(path.name); !os.IsNotExist(err) {
+						t.Fatalf("rejected checkout left a directory at %q: %v", path.name, err)
+					}
+				}
+			}
+			if refs := runGitTest(t, source, "for-each-ref", "--format=%(refname):%(objectname)", "refs/heads"); refs != refsBefore {
+				t.Fatalf("rejected checkout changed branches: before=%q after=%q", refsBefore, refs)
+			}
+			if trees := runGitTest(t, source, "worktree", "list", "--porcelain"); trees != treesBefore {
+				t.Fatalf("rejected checkout changed registered worktrees: before=%q after=%q", treesBefore, trees)
+			}
+			if status := runGitTest(t, source, "status", "--porcelain", "--untracked-files=all"); status != statusBefore {
+				t.Fatalf("rejected checkout changed repository files: before=%q after=%q", statusBefore, status)
+			}
+		})
+	}
+}
+
+func TestWorktreeNewAllowsSiblingAndExternalData(t *testing.T) {
+	for _, name := range []string{"sibling with repository prefix", "external", "external alias", "registered source worktree", "separate git directory"} {
+		t.Run(name, func(t *testing.T) {
+			repository := temporaryGitRepository(t)
+			data := t.TempDir()
+			switch name {
+			case "sibling with repository prefix":
+				parent := t.TempDir()
+				source := filepath.Join(parent, "repository")
+				if err := os.Rename(repository, source); err != nil {
+					t.Fatal(err)
+				}
+				repository, data = source, source+"-data"
+			case "external alias":
+				alias := filepath.Join(t.TempDir(), "alias")
+				if err := os.Symlink(data, alias); err != nil {
+					if runtime.GOOS == "windows" {
+						t.Skipf("directory symlink creation unavailable: %v", err)
+					}
+					t.Fatal(err)
+				}
+				data = alias
+			case "registered source worktree":
+				linked := filepath.Join(t.TempDir(), "linked")
+				runGitTest(t, repository, "worktree", "add", "-b", "source-tree", "--", linked, "HEAD")
+				repository, data = linked, filepath.Dir(linked)
+			case "separate git directory":
+				// The common-dir's parent is not a checkout and remains a valid data root.
+				runGitTest(t, repository, "init", "--separate-git-dir", filepath.Join(data, "metadata"))
+			}
+			if err := os.MkdirAll(data, 0700); err != nil {
+				t.Fatal(err)
+			}
+			project := contracts.Project{Path: repository, GitDetected: true}
+			checkout, err := prepareCheckout(t.Context(), project, contracts.CheckoutPlan{Kind: contracts.CheckoutNew}, data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if filepath.Dir(checkout.cwd) != filepath.Join(data, "worktrees", worktreeProjectName(filepath.Base(repository))) ||
+				!validShortDirectoryID(filepath.Base(checkout.cwd)) || checkout.branch != "feat/"+filepath.Base(checkout.cwd) {
+				t.Fatalf("external checkout layout changed: %+v", checkout)
+			}
+			if err := cleanupUnacceptedCheckout(checkout); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := os.Stat(checkout.cwd); !os.IsNotExist(err) {
+				t.Fatalf("rollback retained the unaccepted checkout: %v", err)
+			}
+			if branches := runGitTest(t, repository, "branch", "--list", checkout.branch); branches != "" {
+				t.Fatalf("rollback retained branch %q: %s", checkout.branch, branches)
+			}
+		})
+	}
+}
+
 func TestWorktreeProjectName(t *testing.T) {
 	t.Parallel()
 	for _, test := range []struct{ name, input, want string }{
@@ -474,6 +660,44 @@ func TestWorktreeNewDirectoriesFollowRootAndReuseKeepsOriginalPath(t *testing.T)
 	}
 	if data, err := os.ReadFile(filepath.Join(first.cwd, "tracked.txt")); err != nil || string(data) != "baseline" {
 		t.Fatalf("original worktree was changed by creating or reusing another tree: %q %v", data, err)
+	}
+}
+
+func TestWorktreeExistingNestedCurrentAndReuseKeepPaths(t *testing.T) {
+	repository := temporaryGitRepository(t)
+	data := filepath.Join(repository, "data")
+	original := filepath.Join(data, "worktrees", "existing-checkout")
+	runGitTest(t, repository, "worktree", "add", "-b", "existing", "--", original, "HEAD")
+	project := contracts.Project{Path: repository, GitDetected: true}
+	for _, test := range []struct {
+		name string
+		plan contracts.CheckoutPlan
+		cwd  string
+	}{
+		{name: "current", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutCurrent}, cwd: repository},
+		{name: "reuse", plan: contracts.CheckoutPlan{Kind: contracts.CheckoutReuse, Path: original, Branch: "existing"}, cwd: original},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			checkout, err := prepareCheckout(t.Context(), project, test.plan, data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !sameCheckoutPath(checkout.cwd, test.cwd) || checkout.owned {
+				t.Fatalf("existing checkout moved or acquired cleanup ownership: %+v", checkout)
+			}
+			if err := cleanupUnacceptedCheckout(checkout); err != nil {
+				t.Fatal(err)
+			}
+			if body, err := os.ReadFile(filepath.Join(checkout.cwd, "tracked.txt")); err != nil || string(body) != "baseline" {
+				t.Fatalf("existing checkout changed: %q %v", body, err)
+			}
+		})
+	}
+	if _, err := os.Lstat(filepath.Join(data, "worktrees", worktreeProjectName(filepath.Base(repository)))); !os.IsNotExist(err) {
+		t.Fatalf("current/reuse created the new project grouping: %v", err)
+	}
+	if branch := runGitTest(t, original, "symbolic-ref", "--short", "HEAD"); branch != "existing" {
+		t.Fatalf("reused worktree branch changed: %q", branch)
 	}
 }
 

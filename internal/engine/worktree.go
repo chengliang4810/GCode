@@ -54,7 +54,7 @@ func gitOutput(ctx context.Context, directory string, args ...string) (string, e
 	if err != nil {
 		// Git diagnostics concern only the explicit checkout command, never
 		// provider credentials or environment contents.
-		return "", fmt.Errorf("git %s: %s", args[0], strings.TrimSpace(string(output)))
+		return "", fmt.Errorf("git %s: %s: %w", args[0], strings.TrimSpace(string(output)), err)
 	}
 	return strings.TrimSpace(string(output)), nil
 }
@@ -486,6 +486,9 @@ func prepareCheckout(ctx context.Context, project contracts.Project, plan contra
 		}
 		projectName := worktreeProjectName(filepath.Base(repo.root))
 		parent := filepath.Join(dataDirectory, "worktrees", projectName)
+		if err := validateWorktreeLocation(dataDirectory, projectName, repo.root); err != nil {
+			return nil, err
+		}
 		worktrees, err := openWorktreeParent(dataDirectory, projectName)
 		if err != nil {
 			return nil, err
@@ -554,6 +557,45 @@ func worktreeProjectName(name string) string {
 		name = "_" + name
 	}
 	return name
+}
+
+func validateWorktreeLocation(dataDirectory, projectName, repoRoot string) error {
+	if !filepath.IsAbs(dataDirectory) {
+		return errors.New("worktree data directory must be an existing absolute directory")
+	}
+	dataRoot, err := filepath.EvalSymlinks(dataDirectory)
+	if err != nil {
+		return fmt.Errorf("resolve worktree data directory: %w", err)
+	}
+	repoRoot, err = filepath.EvalSymlinks(repoRoot)
+	if err != nil {
+		return fmt.Errorf("resolve source repository root: %w", err)
+	}
+	repoInfo, err := os.Stat(repoRoot)
+	if err != nil {
+		return fmt.Errorf("access source repository root: %w", err)
+	}
+	// Only the source checkout's actual top-level is the repository boundary.
+	// A shared Git common-dir can live separately from every checkout, so its
+	// parent must not be treated as a working directory.
+	// Compare file identities: EvalSymlinks can retain different spellings of
+	// the same directory on case-insensitive filesystems.
+	// The grouping need not exist: openWorktreeParent rejects links in both
+	// managed components before using them, so inspect ancestors without creation.
+	parent := filepath.Join(dataRoot, "worktrees", projectName)
+	for ancestor := parent; ; ancestor = filepath.Dir(ancestor) {
+		info, err := os.Stat(ancestor)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("access worktree directory ancestor %q: %w", ancestor, err)
+		}
+		if err == nil && os.SameFile(repoInfo, info) {
+			return fmt.Errorf("new worktree directory %q must be outside source repository %q", parent, repoRoot)
+		}
+		if filepath.Dir(ancestor) == ancestor {
+			break
+		}
+	}
+	return nil
 }
 
 func openWorktreeParent(dataDirectory, projectName string) (*os.Root, error) {
