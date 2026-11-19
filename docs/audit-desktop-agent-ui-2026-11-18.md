@@ -1085,3 +1085,23 @@ e2e 的 `await` 也从「读到第一条不满足的 body 就消费掉」改成�
 **验证**：8 个 e2e 全部通过（含子用例，连续三轮全绿）；`go build ./...`、`go vet ./...` 通过；
 `./internal/desktop`（179s）、`./internal/design`、`./internal/agent`、`./internal/mock`、
 `./internal/contracts`、`./internal/workbench` 全绿。
+
+### 18.4 复核抓到的一个真实缺陷：常驻监听把 `wg` 变成了死锁
+
+子 Agent 把目录监听协程注册进了 `e.wg`。`e.wg` 是**调用方可以中途等待的工作**
+（`project_files_test.go`、`provider_checks_test.go` 等 5 处测试会 `core.wg.Wait()`），
+而监听协程只在引擎关闭时退出 → 任何中途 `wg.Wait()` 都会永久阻塞。
+实测表现：引擎全量测试从 551s 变成挂到超时（`TestProjectFileLoadingCancelsOnDeleteAndShutdown` 单跑即 90s 超时）。
+
+修法：监听协程改用独立的 `catalogWatchDone` 通道，正在进行的刷新用独立的
+`catalogRefresh sync.WaitGroup`；`Close` 依次等待 `catalogWatchDone`、`catalogRefresh`、`catalogDone`。
+修完该用例 4.85s 通过，引擎全量 545s 完成，**唯一失败**是
+`TestCacheStableToolOutputAndManualSummaryAcrossProtocols`——它在干净 HEAD 上通过，
+在当前工作树里失败，原因是工作树里另一条未提交的「上下文压缩」改动脉冲到了缓存关键字段
+（`summary changed cache-critical tools`），与本批改动无关。
+
+### 18.5 提交范围说明
+
+本轮提交只包含模型目录状态、技能正文修复、过期断言与工具校验文案。
+工作树里另有**另一条未提交的工作流**（上下文压缩的摘要上限/超时、工具组自动展开），
+其改动单独留在工作树中未提交；`docs/user-settings.md` 只把属于本批的那一段进了提交。

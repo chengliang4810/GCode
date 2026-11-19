@@ -122,6 +122,8 @@ type Engine struct {
 	catalog            *modelcatalog.Cache
 	catalogCancel      context.CancelFunc
 	catalogDone        chan struct{}
+	catalogWatchDone   chan struct{}
+	catalogRefresh     sync.WaitGroup
 	automationDone     chan struct{}
 	maintenanceDone    chan struct{}
 	flushDone          chan struct{}
@@ -249,9 +251,12 @@ func Open(options Options) (*Engine, error) {
 	e.catalogCancel = cancel
 	e.background = ctx
 	e.catalogDone = make(chan struct{})
-	e.wg.Add(1)
+	// The watcher lives as long as the engine, so it keeps its own done
+	// channel: e.wg tracks work a caller may wait on mid-life, and a permanent
+	// goroutine there would make every such wait block forever.
+	e.catalogWatchDone = make(chan struct{})
 	go func() {
-		defer e.wg.Done()
+		defer close(e.catalogWatchDone)
 		e.watchModelCatalog(ctx)
 	}()
 	go func() {
@@ -426,6 +431,8 @@ func (e *Engine) Close() error {
 	// The background context is already canceled, so background hooks stop and
 	// their final report still reaches the state before storage closes.
 	e.hookBackground.Wait()
+	<-e.catalogWatchDone
+	e.catalogRefresh.Wait()
 	<-e.catalogDone
 	<-e.maintenanceDone
 	<-e.flushDone

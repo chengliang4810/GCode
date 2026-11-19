@@ -80,9 +80,9 @@ func (e *Engine) startModelCatalogRefreshLocked() {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	e.wg.Add(1)
+	e.catalogRefresh.Add(1)
 	go func() {
-		defer e.wg.Done()
+		defer e.catalogRefresh.Done()
 		_ = e.catalog.Refresh(ctx)
 		e.mu.Lock()
 		e.catalogPending = false
