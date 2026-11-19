@@ -91,27 +91,40 @@ func TestSubagentProfileModelSwitchAndInheritance(t *testing.T) {
 		}
 	}
 	click("Subagent model General purpose")
+	if _, expanded := tt.Find("Subagent model user/first"); expanded {
+		t.Fatal("inheriting the conversation model should not expand the first provider")
+	}
+	click("My provider")
 	click("Subagent model user/first")
 	assertBuiltinModel(&contracts.ModelSelection{ModelID: "user/first", Reasoning: "Max"})
 	click("Subagent reasoning level General purpose")
 	click("Subagent reasoning level High")
 	assertBuiltinModel(&contracts.ModelSelection{ModelID: "user/first", Reasoning: "High"})
 	click("Subagent model General purpose")
-	click("Default main model")
+	click("Choose Inherit conversation model")
 	assertBuiltinModel(nil)
+	if _, ok := tt.Find("Subagent reasoning level General purpose"); ok {
+		t.Fatal("inherited built-in model exposed a reasoning picker")
+	}
 
 	if err := tt.Click("Add subagent"); err != nil {
 		t.Fatal(err)
 	}
 	app.runtimeUI.subagent.Name, app.runtimeUI.subagent.Description, app.runtimeUI.subagent.Prompt = "Reviewer", "Review an independent change", "Inspect the actual files."
 	tt.Frame()
-	if !tt.HasText("Default main model") {
+	if !tt.HasText("Inherit conversation model") {
 		t.Fatal("new profiles must inherit main model and reasoning")
+	}
+	if _, ok := tt.Find("Subagent reasoning level"); ok {
+		t.Fatal("inherited custom model exposed a reasoning picker")
 	}
 	choose := func(id string) {
 		t.Helper()
 		if err := tt.Click("Subagent model"); err != nil {
 			t.Fatal(err)
+		}
+		if _, expanded := tt.Find("Subagent model " + id); !expanded {
+			click("My provider")
 		}
 		if err := tt.Click("Subagent model " + id); err != nil {
 			t.Fatal(err)
@@ -119,7 +132,7 @@ func TestSubagentProfileModelSwitchAndInheritance(t *testing.T) {
 		tt.Frame()
 	}
 	choose("user/first")
-	if app.runtimeUI.subagentReasoning != "Max" || !tt.HasText("My provider/first") {
+	if app.runtimeUI.subagentModel != "user/first" || app.runtimeUI.subagentReasoning != "Max" || !tt.HasText("first") {
 		t.Fatal("selecting a model did not select its last configured level")
 	}
 	choose("user/second")
@@ -148,7 +161,7 @@ func TestSubagentProfileModelSwitchAndInheritance(t *testing.T) {
 	if err := tt.Click("Subagent model"); err != nil {
 		t.Fatal(err)
 	}
-	if err := tt.Click("Default main model"); err != nil {
+	if err := tt.Click("Choose Inherit conversation model"); err != nil {
 		t.Fatal(err)
 	}
 	if err := tt.Click("Save"); err != nil {

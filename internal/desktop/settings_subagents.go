@@ -111,7 +111,9 @@ func (a *App) subagentSettings(c *ui.Context) {
 				reasoning = defaultSubagentReasoning(a.subagentModelByID(modelID))
 				saveSelection()
 			})
-			a.renderSubagentReasoning(c, a.subagentModelByID(modelID).ReasoningLevels, &reasoning, name, 112, saveSelection)
+			if modelID != "" {
+				a.renderSubagentReasoning(c, a.subagentModelByID(modelID).ReasoningLevels, &reasoning, name, 112, saveSelection)
+			}
 			enabled := !profile.Disabled
 			a.controlSwitch(c.Key("enabled"), &enabled, tr(c, "Enable")+" "+name, false, func(enabled bool) {
 				profile.Disabled = !enabled
@@ -216,46 +218,11 @@ func (a *App) subagentModelPicker(c *ui.Context) {
 }
 
 func (a *App) renderSubagentModelPicker(c *ui.Context, modelID *string, name string, width float32, changed func()) {
-	selected := a.subagentModelByID(*modelID)
-	label := tr(c, "Default main model")
-	unavailable := false
-	if *modelID != "" {
-		label, unavailable = *modelID, true
-		if selected.ID != "" {
-			label, unavailable = a.runtimeModelLabel(selected), false
-		}
-	}
-	sel := controlSelect(c.Key("subagent-model"), modelID)
-	if width > 0 {
-		sel.Trigger.Width(width)
-	} else {
-		sel.Trigger.FillWidth()
-	}
-	sel.Trigger.Label(strings.TrimSpace(tr(c, "Subagent model") + " " + name)).OnChange(changed).Children(func() {
-		ui.Row(c).Grow(1).MinWidth(0).Gap(6).AlignItems(ui.Center).Children(func() {
-			if unavailable {
-				ui.Text(c, tr(c, "Unavailable")).Shrink(0)
-			}
-			ui.Text(c, label).MinWidth(0).SingleLine()
-		})
-		icon(c, "alt-arrow-down", 13)
-	})
-	sel.Popup(func(panel ui.Element) {
-		controlSelectPopup(c, panel).Children(func() {
-			controlSelectItem(c, sel.Item("")).Label(tr(c, "Default main model")).Children(func() { ui.Text(c, tr(c, "Default main model")) })
-			ui.Scroll(c.Key("subagent-model-options")).MaxHeight(280).Children(func() {
-				for _, provider := range a.state.Providers {
-					ui.Column(c.Key(provider.ID)).FillWidth().Children(func() {
-						ui.Text(c, provider.Name).Padding(8, 10, 4, 10).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-						for _, candidate := range a.state.Models {
-							if candidate.ProviderID == provider.ID {
-								controlSelectItem(c, sel.Item(candidate.ID)).Label(tr(c, "Subagent model") + " " + candidate.ID).Children(func() { ui.Text(c, candidate.Label) })
-							}
-						}
-					})
-				}
-			})
-		})
+	a.renderSettingsModelPicker(c, *modelID, width, settingsModelPicker{
+		label: strings.TrimSpace(tr(c, "Subagent model") + " " + name), optionLabel: tr(c, "Subagent model"),
+		providers: a.state.Providers, models: a.state.Models,
+		choices:  []settingOption{{"", "Inherit conversation model"}},
+		selectID: func(id string) { *modelID = id; changed() },
 	})
 }
 

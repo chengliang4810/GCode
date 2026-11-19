@@ -189,12 +189,18 @@ func (a *composerController) modelPickerColumns(c *ui.Context) (providerWidth, m
 		return advance
 	}
 	providerWidth = providerPanelMinWidth
-	for _, provider := range a.state.Providers {
+	for _, provider := range a.pickerProviders() {
 		if a.modelProviderOffered(provider) {
 			providerWidth = max(providerWidth, measure(provider.Name, 400)+providerRowChrome)
 		}
 	}
-	providerWidth = max(providerWidth, measure(tr(c, "Model management"), 400)+managementRowChrome)
+	if a.picker == nil {
+		providerWidth = max(providerWidth, measure(tr(c, "Model management"), 400)+managementRowChrome)
+	} else {
+		for _, choice := range a.picker.choices {
+			providerWidth = max(providerWidth, measure(tr(c, choice.label), 400)+modelRowChrome)
+		}
+	}
 	providerWidth = min(providerWidth, providerPanelMaxWidth)
 
 	providerID := a.modelProvider
@@ -203,7 +209,7 @@ func (a *composerController) modelPickerColumns(c *ui.Context) (providerWidth, m
 	}
 	modelWidth = modelPanelMinWidth
 	measured := 0
-	for _, option := range a.state.Models {
+	for _, option := range a.pickerModels() {
 		if option.ProviderID != providerID {
 			continue
 		}
@@ -220,15 +226,26 @@ func (a *composerController) modelPickerColumns(c *ui.Context) (providerWidth, m
 func (a *composerController) modelPopover(c *ui.Context, anchor ui.Element) ui.Element {
 	return ui.PopoverBase(c, anchor, &a.modelMenu, func(panel ui.Element) {
 		panel.OnShortcut(ui.Cmd, ui.KeyF, func() { a.modelSearchOpen = true; a.modelSearch.Focus(c) })
-		a.modelOptionsShortcuts(c)
+		if a.picker == nil {
+			a.modelOptionsShortcuts(c)
+		}
 		budget := promptMenuHeight(c, panel, anchor)
-		placeComposerSelector(panel, anchor, false)
+		below := false
+		if a.picker != nil {
+			budget, below = composerMenuPlacement(c, panel, anchor, true, false)
+		}
+		placeComposerSelector(panel, anchor, below)
 		viewportWidth, _ := c.Size()
 		providerWidth, modelWidth := a.modelPickerColumns(c)
 		trigger := anchor.Bounds()
-		providerWidth = max(providerWidth, trigger.W)
+		if a.picker == nil {
+			providerWidth = max(providerWidth, trigger.W)
+		}
 		width := min(providerWidth+modelPickerGap+modelWidth, min(modelPickerMaxWidth, max(float32(0), viewportWidth-16)))
 		providerWidth = min(providerWidth, max(float32(0), width-modelPickerGap))
+		if a.picker != nil {
+			providerWidth = min(providerWidth, width*.55)
+		}
 		modelWidth = max(float32(0), width-providerWidth-modelPickerGap)
 		providerOffset := providerWidth / 2
 		// Keep the provider card's centerline on the trigger. The model list
@@ -586,6 +603,10 @@ func (a *composerController) activateModelRow(rows []modelRow, index int) {
 	if !a.modelProviderOffered(rows[index].provider) {
 		return
 	}
+	if a.picker != nil {
+		a.chooseSettingsModel(rows[index].model.ID)
+		return
+	}
 	if a.state.Runtime != nil && a.modelID != rows[index].model.ID {
 		a.reasoning = ""
 	}
@@ -600,7 +621,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	palette := a.modelPopupPalette(c)
 	rows := a.modelRows()
 	providerCount := 0
-	for _, provider := range a.state.Providers {
+	for _, provider := range a.pickerProviders() {
 		if a.modelProviderOffered(provider) {
 			providerCount++
 		}
@@ -608,6 +629,9 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	rowHeight := float32(32)
 	supplierHeight := design.Controls().ButtonHeight
 	leftHeight := min(float32(providerCount)*(supplierHeight+2)+supplierHeight+20, budget)
+	if a.picker != nil {
+		leftHeight = min(float32(providerCount+len(a.picker.choices))*(supplierHeight+2)+20, budget)
+	}
 	searchHeight := float32(0)
 	if a.modelSearchVisible() {
 		searchHeight = 40
@@ -620,7 +644,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	// that up onto the 4px geometry grid, so a full list is never budgeted
 	// shorter than it draws.
 	height := min(float32(max(1, min(7, len(rows))))*36+8+searchHeight+optionHeight, budget)
-	if a.modelCatalogReplacesList() {
+	if a.picker == nil && a.modelCatalogReplacesList() {
 		height = min(float32(180), budget)
 	}
 	// A card is an overlay surface: the wrapper casts the overlay shadow and
@@ -647,7 +671,18 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		providerCard.Width(providerWidth).Height(leftHeight).Shrink(0)
 		surface.Children(func() {
 			ui.Scroll(c).Grow(1).MinHeight(0).FillWidth().Gap(2).Children(func() {
-				for _, provider := range a.state.Providers {
+				if a.picker != nil {
+					for _, option := range a.picker.choices {
+						label := tr(c, option.label)
+						controlPromptChoice(c.Key("model-special:"+option.value), false).FillWidth().Label(tr(c, "Choose ") + label).Children(func() {
+							ui.Text(c, label).SingleLine().MinWidth(0).Shrink(1)
+							if a.modelID == option.value {
+								icon(c, "check", 12)
+							}
+						}).OnClick(func() { a.chooseSettingsModel(option.value) })
+					}
+				}
+				for _, provider := range a.pickerProviders() {
 					if a.modelProviderOffered(provider) {
 						row := a.modelGroupButton(c, provider.ID, provider.Name)
 						if provider.ID == providerID {
@@ -656,6 +691,9 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 					}
 				}
 			})
+			if a.picker != nil {
+				return
+			}
 			ui.Box(c).FillWidth().Height(1).Margin(3, 0).Background(palette.Border)
 			controlPromptChoice(c.Key("model-settings"), false).FillWidth().Label(tr(c, "Model management")).Children(func() {
 				icon(c, "settings", 14)
@@ -683,7 +721,7 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 		}
 		modelCard.Margin(offset, 0, 0, 0).SnapToWindow(8)
 		surface.Children(func() {
-			if a.modelCatalogState(c, max(float32(0), height-10)) {
+			if a.picker == nil && a.modelCatalogState(c, max(float32(0), height-10)) {
 				return
 			}
 			if a.hasModelOptions() {
@@ -712,7 +750,15 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 			list := ui.List(c, &a.modelList, len(rows), func(i int) {
 				row := rows[i]
 				m := row.model
-				button := ui.ButtonBase(c.Key("model-choice:"+m.ID)).FillWidth().Height(rowHeight).Padding(0, 4, 0, 8).Radius(7).Gap(4).AlignItems(ui.Center).Justify(ui.SpaceBetween).Label(tr(c, a.controlLabel("Select model")) + " " + m.Label).Tooltip(m.Label).TextColor(a.palette.Text)
+				label := tr(c, a.controlLabel("Select model")) + " " + m.Label
+				if a.picker != nil {
+					base := a.picker.optionLabel
+					if base == "" {
+						base = a.picker.label
+					}
+					label = strings.TrimSpace(base + " " + m.ID)
+				}
+				button := ui.ButtonBase(c.Key("model-choice:"+m.ID)).FillWidth().Height(rowHeight).Padding(0, 4, 0, 8).Radius(7).Gap(4).AlignItems(ui.Center).Justify(ui.SpaceBetween).Label(label).Tooltip(m.Label).TextColor(a.palette.Text)
 				if button.Hovered() {
 					button.Background(a.palette.Hover)
 				}
@@ -759,7 +805,9 @@ func (a *composerController) modelListPanel(c *ui.Context, budget, providerWidth
 	}
 	row.Children(func() {
 		providers()
-		models()
+		if a.picker == nil || providerID != "" {
+			models()
+		}
 	})
 }
 
@@ -769,7 +817,7 @@ func (a *composerController) modelSearchVisible() bool {
 		providerID = a.selectedProvider().ID
 	}
 	count := 0
-	for _, model := range a.state.Models {
+	for _, model := range a.pickerModels() {
 		if model.ProviderID == providerID {
 			count++
 		}
@@ -778,6 +826,9 @@ func (a *composerController) modelSearchVisible() bool {
 }
 
 func (a *composerController) hasModelOptions() bool {
+	if a.picker != nil {
+		return false
+	}
 	effort := a.reasoningChoice()
 	for _, option := range a.selectedModel().Options {
 		if option.ID != effort.option.ID {
@@ -837,11 +888,11 @@ func (a *composerController) modelRows() []modelRow {
 	if providerID == "" {
 		providerID = a.selectedProvider().ID
 	}
-	for _, provider := range a.state.Providers {
+	for _, provider := range a.pickerProviders() {
 		if !a.modelProviderOffered(provider) {
 			continue
 		}
-		for _, model := range a.state.Models {
+		for _, model := range a.pickerModels() {
 			if model.ProviderID != provider.ID {
 				continue
 			}
@@ -869,7 +920,7 @@ func (a *composerController) modelGroupButton(c *ui.Context, id, label string) u
 		current = a.selectedProvider().ID
 	}
 	b := controlPromptChoice(c.Key("model-provider:"+id), current == id).FillWidth().Label(label).Children(func() {
-		for _, provider := range a.state.Providers {
+		for _, provider := range a.pickerProviders() {
 			if provider.ID == id {
 				providerLogo(c, provider.Logo, 16)
 				break

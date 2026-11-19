@@ -122,6 +122,9 @@ func (a *composerController) modelProviderAvailable(id string) bool {
 }
 
 func (a *composerController) modelProviderOffered(provider contracts.Provider) bool {
+	if a.picker != nil {
+		return true
+	}
 	details := a.modelProviderDetails(provider.ID)
 	return details.Installed && (details.Enabled || a.sessionID != "" && provider.ID == a.selectedModel().ProviderID)
 }

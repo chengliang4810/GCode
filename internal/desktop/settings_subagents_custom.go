@@ -50,7 +50,7 @@ func (a *App) customSubagentToolbar(c *ui.Context) string {
 
 func (a *App) customSubagentModelLabel(profile contracts.SubagentProfile) string {
 	if profile.Model == nil {
-		return a.t("Default main model")
+		return a.t("Inherit conversation model")
 	}
 	for _, candidate := range a.state.Models {
 		if candidate.ID == profile.Model.ModelID {

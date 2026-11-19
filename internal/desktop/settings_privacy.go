@@ -252,7 +252,17 @@ func (a *App) privacyLocalModels(c *ui.Context) {
 		})
 		line(c)
 		a.settingsRow(c, "Local privacy model", "", func() {
-			a.settingsChoice(c, "Local privacy model", &p.ModelName, []settingOption{{"", "AstrLink Guard (default)"}, {pii.AstrLinkGuard, "AstrLink Guard"}, {pii.PrivacyFilter, "Privacy Filter"}}, nil)
+			const local = "local-privacy"
+			a.renderSettingsModelPicker(c, p.ModelName, 200, settingsModelPicker{
+				label: tr(c, "Choose ") + tr(c, "Local privacy model"), optionLabel: tr(c, "Local privacy model"),
+				providers: []contracts.Provider{{ID: local, Name: tr(c, "Local models")}},
+				models: []contracts.Model{
+					{ID: "", ProviderID: local, Label: tr(c, "AstrLink Guard (default)")},
+					{ID: pii.AstrLinkGuard, ProviderID: local, Label: "AstrLink Guard"},
+					{ID: pii.PrivacyFilter, ProviderID: local, Label: "Privacy Filter"},
+				},
+				selectID: func(id string) { p.ModelName = id; a.saveSettings() },
+			})
 		})
 		line(c)
 		a.settingsRow(c, "Detection confidence", "Only findings at or above this score are masked.", func() {

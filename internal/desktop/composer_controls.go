@@ -28,6 +28,7 @@ type composerController struct {
 	sessionID  string
 	pendingNew bool
 	side       *sideComposerState
+	picker     *settingsModelPicker
 }
 
 func (a *App) centralControls() *composerController {
@@ -48,7 +49,7 @@ func (a *composerController) currentSession() contracts.Session {
 }
 
 func (a *composerController) selectedModel() contracts.Model {
-	for _, model := range a.state.Models {
+	for _, model := range a.pickerModels() {
 		if model.ID == a.modelID {
 			return model
 		}
@@ -67,7 +68,7 @@ func (a *composerController) modelLabel() string {
 }
 
 func (a *composerController) selectedProvider() contracts.Provider {
-	for _, provider := range a.state.Providers {
+	for _, provider := range a.pickerProviders() {
 		if provider.ID == a.selectedModel().ProviderID {
 			return provider
 		}

@@ -422,6 +422,10 @@ func controlSelectTrigger(c *ui.Context, trigger ui.Element) ui.Element {
 		Background(t.Surface).Border(s.BorderWidth, t.Border).AlignItems(ui.Center)
 }
 
+func controlSelectButton(c *ui.Context) ui.Element {
+	return controlSelectTrigger(c, ui.ButtonBase(c))
+}
+
 func controlMenuButton(c *ui.Context, label string, build func(*ui.Menu)) ui.Element {
 	return controlSelectTrigger(c, ui.ButtonBase(c)).Label(label).Menu(build).Children(func() {
 		ui.Text(c, label).Grow(1).MinWidth(0).SingleLine()

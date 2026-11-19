@@ -522,11 +522,11 @@ func (a *App) generalSettings(c *ui.Context) {
 			if g.ThreadNamingModel != "current-model" {
 				textButton(c, tr(c, "Reset")).Label(tr(c, "Reset thread naming")).OnClick(func() { g.ThreadNamingModel = "current-model"; a.saveSettings() })
 			}
-			options := []settingOption{{"current-model", "Current conversation model"}, {"first-message", "First message"}}
-			for _, model := range a.state.Models {
-				options = append(options, settingOption{model.ID, model.Label})
-			}
-			a.settingsChoice(c, "Thread naming model", &g.ThreadNamingModel, options, nil)
+			a.renderSettingsModelPicker(c, g.ThreadNamingModel, 200, settingsModelPicker{
+				label: tr(c, "Thread naming model"), providers: a.state.Providers, models: a.state.Models,
+				choices:  []settingOption{{"current-model", "Current conversation model"}, {"first-message", "First message"}},
+				selectID: func(id string) { g.ThreadNamingModel = id; a.saveSettings() },
+			})
 		})
 	})
 }
