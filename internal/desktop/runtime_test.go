@@ -283,6 +283,16 @@ func TestRealCoreSettingsAndTypedMessageProjection(t *testing.T) {
 	app.OpenRoute("settings/General")
 	tt.Frame()
 	target := filepath.Join(filepath.Dir(store.Directory()), "chosen-data")
+	// Settings pages scroll: bring the directory card fully into view before
+	// using its row coordinates.
+	viewport, ok := tt.Find("Settings page viewport")
+	if !ok {
+		t.Fatal("settings page viewport is missing")
+	}
+	if browse, ok := tt.Find("Browse…"); ok && browse.Y+browse.H > viewport.Y+viewport.H {
+		tt.Scroll(viewport.X+viewport.W/2, viewport.Y+viewport.H/2, 0, browse.Y+browse.H-(viewport.Y+viewport.H)+16)
+		tt.Frame()
+	}
 	// The directory field commits when it loses focus. Find returns the row's
 	// title, which sits directly above the input inside the same card.
 	row, ok := tt.Find("Data directory")
