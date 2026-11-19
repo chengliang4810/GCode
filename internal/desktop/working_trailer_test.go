@@ -270,8 +270,23 @@ func TestToolPhaseLabelUsesToolActivity(t *testing.T) {
 		{contracts.ToolCall{Kind: contracts.ToolTodo, Args: `{"todos":[]}`}, "Todo"},
 		{contracts.ToolCall{Kind: contracts.ToolUnknown, Name: "CustomTool"}, "Tool CustomTool"},
 	} {
-		if got := toolPhaseLabel(nil, &tt.tool, nil); got != tt.want {
+		if got := toolPhaseLabel(nil, &tt.tool, nil, ""); got != tt.want {
 			t.Errorf("%s: got %q, want %q", tt.tool.Category(), got, tt.want)
+		}
+	}
+}
+
+func TestToolPhaseLabelReadPath(t *testing.T) {
+	for _, tt := range []struct{ root, path, want string }{
+		{"/work/project", "/work/project/internal/main.go", "internal/main.go"},
+		{"/work/project", "internal/main.go", "internal/main.go"},
+		{"/work/project", "/work/project-other/main.go", "/work/project-other/main.go"},
+		{"/work/project", "/work/project/../main.go", "/work/project/../main.go"},
+		{`C:\work\project`, `C:\work\project\internal\main.go`, "internal/main.go"},
+	} {
+		tool := contracts.ToolCall{Kind: contracts.ToolReadFile, Path: tt.path}
+		if got := toolPhaseLabel(nil, &tool, nil, tt.root); got != "Reading "+tt.want {
+			t.Errorf("path %q: got %q, want %q", tt.path, got, "Reading "+tt.want)
 		}
 	}
 }

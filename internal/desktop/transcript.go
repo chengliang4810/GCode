@@ -626,7 +626,7 @@ func (a *App) activityFileContext(path string) (contracts.File, func()) {
 		}
 		return contracts.File{}, false
 	}
-	for _, candidate := range []string{path, a.activityRelativePath(path, projectPath)} {
+	for _, candidate := range []string{path, activityRelativePath(path, projectPath)} {
 		if candidate == "" {
 			continue
 		}
@@ -650,7 +650,7 @@ func (a *App) activityFileContext(path string) (contracts.File, func()) {
 // activityRelativePath turns an absolute tool path into the project-relative
 // path the file index uses. Paths already relative, or outside the project,
 // yield no candidate; the caller then falls back to a linked open.
-func (a *App) activityRelativePath(path, projectPath string) string {
+func activityRelativePath(path, projectPath string) string {
 	if projectPath == "" {
 		return ""
 	}

@@ -74,8 +74,8 @@ func (a *App) sessionRunInFlight(sessionID string) bool {
 
 // phaseLabel names the step the session's latest run is on, from the activity
 // that run actually produced instead of a decorative word.
-func (a *App) phaseLabel(c *ui.Context, sessionID string) string {
-	run, ok := a.latestRun(sessionID)
+func (a *App) phaseLabel(c *ui.Context, session contracts.Session) string {
+	run, ok := a.latestRun(session.ID)
 	if !ok {
 		return phaseText(c, "Waiting for the model")
 	}
@@ -87,14 +87,23 @@ func (a *App) phaseLabel(c *ui.Context, sessionID string) string {
 	}
 	// TurnActivity keeps the turn's work blocks: the last one is the step the
 	// run is on now.
-	blocks := contracts.TurnActivity(a.state.Messages[sessionID], run.ID)
+	blocks := contracts.TurnActivity(a.state.Messages[session.ID], run.ID)
 	if len(blocks) == 0 {
 		return phaseText(c, "Waiting for the model")
 	}
 	last := blocks[len(blocks)-1]
 	switch {
 	case last.Tool != nil:
-		return toolPhaseLabel(c, last.Tool, blocks)
+		root := session.CWD
+		if root == "" {
+			for _, project := range a.state.Projects {
+				if project.ID == session.ProjectID {
+					root = project.Path
+					break
+				}
+			}
+		}
+		return toolPhaseLabel(c, last.Tool, blocks, root)
 	case last.Kind == "reasoning":
 		return phaseText(c, "Thinking")
 	default:
@@ -103,7 +112,7 @@ func (a *App) phaseLabel(c *ui.Context, sessionID string) string {
 }
 
 // toolPhaseLabel names a tool call from what it does and what it touches.
-func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Block) string {
+func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Block, root string) string {
 	switch category := tool.Category(); category {
 	case contracts.ToolExec:
 		// The run's own description says what the command is for, which reads
@@ -122,6 +131,8 @@ func toolPhaseLabel(c *ui.Context, tool *contracts.ToolCall, turn []contracts.Bl
 		target := tool.Path
 		if target == "" {
 			target = tool.Summary
+		} else if relative := activityRelativePath(target, root); relative != "" {
+			target = relative
 		}
 		return fmt.Sprintf(phaseText(c, "Reading %s"), phaseTarget(target))
 	case contracts.ToolEditFile, contracts.ToolWriteFile, contracts.ToolApplyPatch:
@@ -214,7 +225,7 @@ func (a *App) workingStateFor(c *ui.Context, sessionID string) (word, elapsed st
 	if session.Status != contracts.Working {
 		return "", "", false
 	}
-	word = a.phaseLabel(c, sessionID)
+	word = a.phaseLabel(c, session)
 	run, ok := a.latestRun(sessionID)
 	if !(ok && run.Status == runStatusRunning && run.Compacting) && !strings.HasSuffix(word, "…") {
 		word += "…"
