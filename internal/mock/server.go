@@ -136,6 +136,8 @@ func New(opts Options) (*Server, error) {
 	if restored {
 		s.restoreIntegrationsLocked()
 	}
+	// A scenario that shows the loading branch owns its status: recomputing it
+	// here would replace the state the scenario exists for.
 	if status := s.state.ModelCatalog.State; status == "" || status == contracts.CatalogReady || status == contracts.CatalogEmpty || status == contracts.CatalogNoAgents {
 		s.state.ModelCatalog.State = catalogStatus(s.state)
 	}

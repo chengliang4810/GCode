@@ -990,3 +990,47 @@ rcode-light / rcode-dark）一个像素不动。变的是浅色主题里的黄/�
 
 视觉对照（真实 token 渲染，非示意）：rose-pine-dawn 与 ayu-light 的 Warning/Success/Danger
 两列并排可见明显差别（淡色那一列在浅底上偏糊），Accent 在这两个主题里本已达标故两侧一致。
+
+## 17. 骨架屏与既有 e2e 失败分诊
+
+### 17.1 骨架屏：状态不可达，但分支已受测
+
+`ModelCatalogLoading` 这个状态**没有任何代码写入**——引擎在启动时按本地 provider 配置
+同步算出 `ready`/`empty`/`noAgents`（`engine.go:474-477`），mock 也只返回这三种
+（`mock/catalog.go`）。也就是说模型选择器的骨架屏分支在真实应用里**永远不会出现**，
+它是一段可达性缺失的 UI。这是本轮新发现，比「骨架节奏对不对」更值得记一笔。
+
+为了给这一分支留下证据与回归，本轮：
+
+- `internal/mock` 增加 `catalog-loading` 场景（mock 是唯一能给桌面端提供该状态的后端）。
+- 新增 `internal/desktop/model_skeleton_test.go`：在两种外观 × 减弱动效开/关下渲染选择器弹层，
+  断言 `Loading models` 的可访问标签存在；并用**整帧指纹**断言「开动效时两帧不同、减弱动效时两帧完全相同」，
+  这同时也是「锁步 2s / 30fps / 静止」这三条的可执行证据。
+- 证据图（真实 token 渲染，非示意）：
+  `output/evidence/skeleton/model-skeleton-{light,dark}-reduced-{on,off}.png`。
+  浅色与深色各四张，可以看到五条宽度交替的 ghost 行同相位呼吸、圆角与浮层阴影完整。
+
+**待决策**：要不要让引擎真的上报 `loading`（例如首次从远端目录刷新期间），
+让这个分支在真实应用里可达？这是功能变更，不是修复。
+
+### 17.2 10 个既有 e2e 失败的分诊
+
+只读分诊（未改任何文件）逐条核对源码、持久化产物与截图，结论：
+
+| # | 用例 | 分类 | 首因 |
+| --- | --- | --- | --- |
+| 2 | `PromptReferences` | **代码缺陷** | 命令在开头 + 同时选技能时，运行期把 `message.Text` 整体替换成技能输出，`@skill:` 正文被静默丢弃（违反 `docs/prompt-references.md:38`） |
+| 1 | `ComposerConversationWidth` | 测试过期 | 断言找 `Fork chat`，该按钮已在 `6f0f9f0` 删除；i18n 词条成孤儿 |
+| 3 | `RepositoryRefsRefresh` | 测试过期 | 断言读 `engine.json` 的 `RepoRefs`，该字段从不落盘 |
+| 4 | `SmartModelConfiguration` | 测试过期 | 断言读 `engine.json` 的 `snapshot.models`，实际模型清单在顶层 `providers` |
+| 5 | `ProjectCreationWithIgnoredArtifacts` | 测试过期 | 断言读 `engine.json` 的 `FilesState`，该字段被持久化层主动抹掉，条件永假 |
+| 6 | `ApplicationUsage` | 测试过期 | 断言写死英文 `120 Tokens`，中文界面按 D8 统一为 `Token` |
+| 7 | `CallTrajectory` | 测试过期 | 失败运行会把会话置 `Errored`，断言却等 `Idle`，用例在造数据阶段就退出 |
+| 8 | `TodoWrite` | 测试过期 | 断言期待语义化报错文案，但 schema 的 `enum` 先拦截，友好文案成了死代码 |
+| 10 | `ScenarioSidebarAlignment` | 测试过期 | 比较了两个不同层级的盒子（容器 vs 行内按钮），视觉左轨其实对齐 |
+| 9 | `TranscriptFoldMotion` | 环境抖动 | 340ms 采样窗口内连按三次，动画中落点丢失；单独跑通过 |
+
+**建议先修三个**：#2（唯一产品缺陷）、#7（一行断言解锁轨迹面板整块覆盖）、
+#8（逼出一个产品决策：schema `enum` 保留与否、以及工具校验报错为何是中文硬编码）。
+其余「读错字段/写死文案」可一次批量修；#5 需重新设计观测点（改在应用内看文件树）；
+#9 把判据从「最后一个采样点」换成「动画稳定后」。

@@ -172,6 +172,11 @@ func applyScenario(s *contracts.Snapshot, opts Options) {
 		s.Messages = make(map[string][]contracts.Message)
 		s.Queue = nil
 		s.Runs = nil
+	case "catalog-loading":
+		// The picker's loading branch: the engine reports its own configured
+		// models synchronously, so this is the one backend that can show what a
+		// catalog still being read looks like.
+		s.ModelCatalog.State = contracts.CatalogLoading
 	case "live":
 		s.Sessions[0].Status = contracts.Working
 		s.Sessions[0].LastOutcome = ""
