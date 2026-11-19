@@ -5,12 +5,58 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestGatewayWireCapturePreservesInvalidStreamingEvent(t *testing.T) {
+	const raw = "data: {\"choices\":[{\"delta\":{\"content\":\"partial\"}}]}\n\ndata: not-json\n\n"
+	sent := make(chan []byte, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		sent <- body
+		fmt.Fprint(w, raw)
+	}))
+	defer server.Close()
+	provider := Provider{ID: "test", Name: "Test", Protocol: Chat, BaseURL: server.URL, APIKey: "test-secret", Models: []Model{{ID: "model"}}}
+	gateway, err := newTestClient().Bind(provider, provider.Models[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := t.TempDir()
+	if err := os.Chmod(parent, 0700); err != nil {
+		t.Fatal(err)
+	}
+	gateway.WireCaptureDirectory = parent
+	_, err = gateway.Stream(t.Context(), Request{History: []Message{{Role: "user", Text: "test"}}}, nil)
+	if err == nil || !strings.Contains(err.Error(), "invalid model streaming event") {
+		t.Fatalf("expected invalid event, got %v", err)
+	}
+	entries, err := os.ReadDir(parent)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("expected one capture, got %v: %v", entries, err)
+	}
+	read := func(name string) string {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(parent, entries[0].Name(), name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	if request := read("request.json"); request != string(<-sent) || strings.Contains(request, "test-secret") {
+		t.Fatal("capture differs from sent body or contains authentication")
+	}
+	if read("response.body") != raw || !strings.Contains(read("metadata.json"), `"responseComplete":true`) {
+		t.Fatal("capture lost the original response")
+	}
+}
 
 func TestGatewayRecordsRequestAndFirstTokenTiming(t *testing.T) {
 	for _, output := range []bool{false, true} {

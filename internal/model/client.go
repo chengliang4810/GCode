@@ -53,14 +53,15 @@ type adapter interface {
 // Gateway binds a frozen channel/model configuration to one protocol adapter.
 // Its Stream input and output contain no endpoint, credentials or protocol choice.
 type Gateway struct {
-	Observe       func(Invocation)
-	Privacy       privacy.Settings
-	PrivacyReport func(privacy.Report)
-	http          *http.Client
-	provider      Provider
-	target        adapterTarget
-	adapter       adapter
-	retry         RetryPolicy
+	WireCaptureDirectory string
+	Observe              func(Invocation)
+	Privacy              privacy.Settings
+	PrivacyReport        func(privacy.Report)
+	http                 *http.Client
+	provider             Provider
+	target               adapterTarget
+	adapter              adapter
+	retry                RetryPolicy
 }
 
 func (c *Client) Bind(provider Provider, selected Model) (*Gateway, error) {
@@ -345,6 +346,18 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
 	g.adapter.headers(req.Header, g.provider.APIKey)
+	var capture *wireCapture
+	if g.WireCaptureDirectory != "" {
+		capture, err = startWireCapture(g.WireCaptureDirectory, requestID, attempt, body)
+		if err != nil {
+			return result, 0, fmt.Errorf("start model wire capture: %w", err)
+		}
+		defer func() {
+			if err := capture.finish(status, providerRequestID); err != nil {
+				callErr = errors.Join(callErr, fmt.Errorf("save model wire capture: %w", err))
+			}
+		}()
+	}
 	response, err := g.http.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
@@ -360,6 +373,10 @@ func (g *Gateway) streamAttempt(ctx context.Context, input Request, emit func(De
 		providerRequestID = response.Header.Get("request-id")
 	}
 	status = response.StatusCode
+	if capture != nil {
+		response.Body = capture.wrap(response.Body)
+		defer capture.drain()
+	}
 	if status < 200 || status >= 300 {
 		return result, status, providerHTTPError(response, "model request failed", g.provider.APIKey)
 	}
