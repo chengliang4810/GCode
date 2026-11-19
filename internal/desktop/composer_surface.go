@@ -49,8 +49,8 @@ type composerSurfaceProps struct {
 	stopWithEscape         bool
 	// sending is a message the app already accepted and is still delivering:
 	// the button spins instead of only turning grey.
-	sending bool
-	focusPending           *bool
+	sending      bool
+	focusPending *bool
 }
 
 func (a *App) nativeComposerSurface(c *ui.Context, p composerSurfaceProps) {

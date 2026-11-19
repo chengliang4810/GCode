@@ -52,7 +52,7 @@ func TestActivityManualFoldsKeepTailStableAndRestoreStreamFollowing(t *testing.T
 			}
 			summary := "Activity: " + contracts.SummarizeActivity(message.Blocks[:len(message.Blocks)-1]).Label()
 			// A settled thought names its first line, so the row is found by what it says.
-for _, control := range []string{summary, "Thought process: I’ll read the layout contract, then run the regression check.", "Thought process: I’ll read the layout contract, then run the regression check.", summary} {
+			for _, control := range []string{summary, "Thought process: I’ll read the layout contract, then run the regression check.", "Thought process: I’ll read the layout contract, then run the regression check.", summary} {
 				if err := tt.Click(control); err != nil {
 					t.Fatal(err)
 				}

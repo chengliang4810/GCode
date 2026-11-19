@@ -134,11 +134,11 @@ type Engine struct {
 	// hookApprovals is this engine's memory of "always allow in this session"
 	// grants: host memory, never session data, and never shared with another
 	// engine in the same process.
-	hookApprovals      hookPermissionApprovals
-	sessionStarted     map[string]bool
-	sessionTools       map[string]*sessionToolSet
-	projectScans       map[string]*projectScan
-	projectScanner     func(context.Context, contracts.Project) ([]contracts.File, error)
+	hookApprovals  hookPermissionApprovals
+	sessionStarted map[string]bool
+	sessionTools   map[string]*sessionToolSet
+	projectScans   map[string]*projectScan
+	projectScanner func(context.Context, contracts.Project) ([]contracts.File, error)
 	// background is canceled when the host closes; asynchronous hooks use it
 	// because they outlive the turn that started them.
 	background     context.Context
