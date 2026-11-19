@@ -18,11 +18,11 @@ func (a *App) interruptedMessageAction(c *ui.Context, m contracts.Message) {
 		return
 	}
 	messages := a.state.Messages[m.SessionID]
-	at := contracts.InterruptedTurnMessage(a.currentSession(), messages, a.state.Runs)
+	at := contracts.EditableTurnMessage(a.currentSession(), messages, a.state.Runs)
 	if at < 0 || messages[at].ID != m.ID {
 		return
 	}
-	iconButton(c.Key("edit-interrupted:"+m.ID), "pen", tr(c, "Edit stopped message")).OnClick(func() {
+	iconButton(c.Key("edit-interrupted:"+m.ID), "pen", tr(c, "Edit message")).OnClick(func() {
 		state := interruptedEditorState{open: true, session: m.SessionID, message: m.ID}
 		for _, b := range m.Blocks {
 			if b.Kind == "text" {
@@ -39,7 +39,7 @@ func (a *App) interruptedMessageDialog(c *ui.Context) {
 	if !s.open || s.session != a.sessionID {
 		return
 	}
-	a.settingsEditorDialog(c, "edit-interrupted-message", "Edit stopped message", &s.open, s.requestID != "", 560, s.err, func() {
+	a.settingsEditorDialog(c, "edit-interrupted-message", "Edit message", &s.open, s.requestID != "", 560, s.err, func() {
 		controlTextArea(c.Key("interrupted-message-text"), &s.text).FillWidth().Height(160).Label(tr(c, "Message"))
 	}, func() {
 		ui.Row(c).FillWidth().Justify(ui.End).Gap(8).Children(func() {

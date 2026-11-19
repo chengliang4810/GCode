@@ -14,12 +14,12 @@ func (e *Engine) replaceInterruptedTurnLocked(send *contracts.SendRequest) error
 	id := send.SessionID
 	ix := e.sessionIndex(id)
 	if ix < 0 || e.runs[id] != nil || send.Delivery != "" || send.Checkout != nil {
-		return errors.New("only the last stopped message can be edited")
+		return errors.New("only the last message from a stopped or failed turn can be edited")
 	}
 	messages := e.state.Messages[id]
-	at := contracts.InterruptedTurnMessage(e.state.Sessions[ix], messages, e.state.Runs)
+	at := contracts.EditableTurnMessage(e.state.Sessions[ix], messages, e.state.Runs)
 	if at < 0 || messages[at].ID != send.ReplaceMessageID {
-		return errors.New("only the last stopped message can be edited")
+		return errors.New("only the last message from a stopped or failed turn can be edited")
 	}
 
 	var source string
@@ -35,13 +35,13 @@ func (e *Engine) replaceInterruptedTurnLocked(send *contracts.SendRequest) error
 	history, view := e.history[id], e.context[id]
 	h := lastHumanInput(history)
 	if h < 0 || history[h].SourceText != source || len(history[h].InputIDs) != 1 {
-		return errors.New("the stopped message is no longer available in execution history")
+		return errors.New("the original message is no longer available in execution history")
 	}
 	inputID := history[h].InputIDs[0]
 	v := lastHumanInput(view)
 	if v < 0 || !slices.Equal(view[v].InputIDs, []string{inputID}) ||
 		slices.ContainsFunc(view[v+1:], func(m model.Message) bool { return m.Summary }) {
-		return errors.New("the stopped message cannot be edited after context compaction")
+		return errors.New("the original message cannot be edited after context compaction")
 	}
 	e.history[id] = history[:h:h]
 	e.context[id] = view[:v:v]

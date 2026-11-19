@@ -465,10 +465,10 @@ func (s *Server) Send(ctx context.Context, req contracts.SendRequest) (contracts
 	}
 	if req.ReplaceMessageID != "" {
 		messages := s.state.Messages[req.SessionID]
-		at := contracts.InterruptedTurnMessage(s.state.Sessions[i], messages, s.state.Runs)
+		at := contracts.EditableTurnMessage(s.state.Sessions[i], messages, s.state.Runs)
 		if at < 0 || messages[at].ID != req.ReplaceMessageID {
 			s.mu.Unlock()
-			return contracts.Run{}, errors.New("only the last stopped message can be edited")
+			return contracts.Run{}, errors.New("only the last message from a stopped or failed turn can be edited")
 		}
 		req.Attachments, req.Annotations = nil, nil
 		for _, block := range messages[at].Blocks {

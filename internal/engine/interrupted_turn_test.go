@@ -13,7 +13,13 @@ import (
 )
 
 func TestInterruptedMessageReplacement(t *testing.T) {
+	t.Run("stopped", func(t *testing.T) { testMessageReplacement(t, false) })
+	t.Run("failed", func(t *testing.T) { testMessageReplacement(t, true) })
+}
+
+func testMessageReplacement(t *testing.T, fail bool) {
 	started := make(chan struct{})
+	release := make(chan struct{})
 	replacement := make(chan string, 1)
 	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body json.RawMessage
@@ -27,7 +33,11 @@ func TestInterruptedMessageReplacement(t *testing.T) {
 				replacement <- string(body)
 			default:
 				close(started)
-				<-r.Context().Done()
+				select {
+				case <-r.Context().Done():
+				case <-release:
+					http.Error(w, "fixture failure", http.StatusBadRequest)
+				}
 				return
 			}
 		} else {
@@ -58,10 +68,18 @@ func TestInterruptedMessageReplacement(t *testing.T) {
 	if err := core.Execute(ctx, edit); err == nil {
 		t.Fatal("accepted replacement while running")
 	}
-	execute(contracts.Command{Kind: "message.stop", SessionID: sid})
-	waitSideChatSession(t, core, sid, contracts.Idle)
+	if fail {
+		close(release)
+		state = waitIdle(t, core, sid)
+		if state.Sessions[0].Status != contracts.Errored {
+			t.Fatalf("expected failed turn, got %s", state.Sessions[0].Status)
+		}
+	} else {
+		execute(contracts.Command{Kind: "message.stop", SessionID: sid})
+		waitSideChatSession(t, core, sid, contracts.Idle)
+	}
 	state, _ = core.Snapshot(ctx, sid)
-	if i := contracts.InterruptedTurnMessage(state.Sessions[0], state.Messages[sid], state.Runs); i < 0 || state.Messages[sid][i].ID != old {
+	if i := contracts.EditableTurnMessage(state.Sessions[0], state.Messages[sid], state.Runs); i < 0 || state.Messages[sid][i].ID != old {
 		t.Fatalf("missing stopped anchor: session=%+v runs=%+v messages=%+v", state.Sessions[0], state.Runs, state.Messages[sid])
 	}
 	empty := edit.Clone()

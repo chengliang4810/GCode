@@ -21,7 +21,7 @@ func TestInterruptedMessageEditor(t *testing.T) {
 			a.dispatch(contracts.Command{Kind: "message.stop", SessionID: a.sessionID})
 			a.palette = design.Palette("rcode-"+theme, theme == "dark")
 			messages := a.state.Messages[a.sessionID]
-			i := contracts.InterruptedTurnMessage(a.currentSession(), messages, a.state.Runs)
+			i := contracts.EditableTurnMessage(a.currentSession(), messages, a.state.Runs)
 			if i < 0 {
 				t.Fatal("mock did not stop on a user turn")
 			}
@@ -32,7 +32,7 @@ func TestInterruptedMessageEditor(t *testing.T) {
 				a.userMessage(c, original)
 				a.interruptedMessageDialog(c)
 			}, 360, 500)
-			if err := tt.Click("Edit stopped message"); err != nil {
+			if err := tt.Click("Edit message"); err != nil {
 				t.Fatal(err)
 			}
 			if a.interruptedEditor.text != "Original question" {
@@ -44,7 +44,7 @@ func TestInterruptedMessageEditor(t *testing.T) {
 			if a.interruptedEditor.open || a.state.Messages[a.sessionID][i].ID != original.ID {
 				t.Fatal("cancel changed history")
 			}
-			if err := tt.Click("Edit stopped message"); err != nil {
+			if err := tt.Click("Edit message"); err != nil {
 				t.Fatal(err)
 			}
 			a.interruptedEditor.text = "Revised input"
