@@ -57,7 +57,7 @@ func watch(ctx context.Context, dark bool, interval time.Duration, source func(c
 		if err == nil {
 			key := fingerprint{path: path, size: info.Size(), modTime: info.ModTime()}
 			if !initialized || key != previous || previousError != "" {
-				result := Read(path)
+				result := read(ctx, path)
 				if result.Err == nil {
 					previous = key
 				}
@@ -87,6 +87,10 @@ func errorString(err error) string {
 // Read decodes one wallpaper with resource bounds and chooses a representative
 // saturated color. It does no network access and never changes desktop settings.
 func Read(path string) Result {
+	return read(context.Background(), path)
+}
+
+func read(ctx context.Context, path string) Result {
 	result := Result{Path: path}
 	file, err := os.Open(path)
 	if err != nil {
@@ -96,6 +100,16 @@ func Read(path string) Result {
 	defer file.Close()
 	const maxBytes = 64 << 20
 	config, _, err := image.DecodeConfig(io.LimitReader(file, maxBytes))
+	if errors.Is(err, image.ErrFormat) {
+		if pixels, handled, nativeErr := readNativeWallpaper(ctx, path); handled {
+			if nativeErr != nil {
+				result.Err = fmt.Errorf("read wallpaper: %w", nativeErr)
+				return result
+			}
+			result.Color, result.Err = Accent(pixels)
+			return result
+		}
+	}
 	if err != nil {
 		result.Err = fmt.Errorf("read wallpaper: %w", err)
 		return result
