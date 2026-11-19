@@ -44,7 +44,9 @@ func unreachableNetworkFailure(err error) (Failure, bool) {
 	unreachable := errors.Is(err, syscall.ENETDOWN) || errors.Is(err, syscall.ENETUNREACH) ||
 		errors.Is(err, syscall.EHOSTUNREACH)
 	dialTimeout := errors.As(err, &op) && op.Op == "dial" && op.Timeout()
-	dnsUnavailable := errors.As(err, &dns) && !dns.IsNotFound && (dns.IsTimeout || dns.IsTemporary)
+	// A lookup miss alone cannot tell us whether the name is permanently
+	// wrong or unavailable on the current network.
+	dnsUnavailable := errors.As(err, &dns) && (dns.IsNotFound || dns.IsTimeout || dns.IsTemporary)
 	return Failure{Reason: RetryWaitingForNetwork, Retryable: true}, unreachable || dialTimeout || dnsUnavailable
 }
 

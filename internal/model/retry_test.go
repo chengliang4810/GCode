@@ -43,7 +43,9 @@ func TestRetryWaitsForNetworkBeyondOrdinaryBudget(t *testing.T) {
 		attempts++
 		switch {
 		case attempts <= 12:
-			return nil, syscall.ENETUNREACH
+			return nil, &net.OpError{Op: "dial", Net: "tcp", Err: &net.DNSError{
+				Err: "no such host", Name: "fixture.invalid", IsNotFound: true,
+			}}
 		case attempts == 13:
 			return retryResponse(503, `{"error":{"message":"busy"}}`), nil
 		default:
@@ -304,7 +306,8 @@ func TestRetryFailureClassification(t *testing.T) {
 		{"transport deadline", context.DeadlineExceeded, "timeout", true},
 		{"dial deadline", &net.OpError{Op: "dial", Err: context.DeadlineExceeded}, RetryWaitingForNetwork, true},
 		{"transient DNS", &net.DNSError{IsTemporary: true}, RetryWaitingForNetwork, true},
-		{"unknown host", &url.Error{Err: &net.DNSError{IsNotFound: true}}, "network", true},
+		{"unknown host", &url.Error{Err: &net.DNSError{IsNotFound: true}}, RetryWaitingForNetwork, true},
+		{"network unreachable", &url.Error{Err: syscall.ENETUNREACH}, RetryWaitingForNetwork, true},
 		{"connection refused", &url.Error{Err: syscall.ECONNREFUSED}, "network", true},
 		{"certificate", providerConnectionError("connect", x509.UnknownAuthorityError{}, ""), "tls", false},
 		{"auth", &ProviderError{HTTPStatus: 401}, "authentication", false},
