@@ -29,7 +29,10 @@ func TestCompactionReusesOriginalRequestPrefixAndRejectsToolExecution(t *testing
 		}
 		t.Run(name, func(t *testing.T) {
 			backend := testModel{stream: func(got model.Request) (model.Result, error) {
-				if got.System != request.System || got.Effort != request.Effort || !reflect.DeepEqual(got.Tools, request.Tools) ||
+				if len(got.Tools) != 0 {
+					t.Fatal("summary advertised tools")
+				}
+				if got.System != request.System || got.Effort != request.Effort ||
 					!reflect.DeepEqual(got.History[:3], request.History[:3]) || got.ContextChange != "summary" {
 					t.Fatalf("summary rewrote cached prefix: %+v", got)
 				}

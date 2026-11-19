@@ -40,6 +40,21 @@ func TestOutputLimitMatchesProtocolDefaults(t *testing.T) {
 	}
 }
 
+func TestRequestOutputLimit(t *testing.T) {
+	for _, protocol := range []Protocol{Chat, Responses, Messages} {
+		t.Run(string(protocol), func(t *testing.T) {
+			large := Model{MaxOutput: 384_000}
+			small := Model{MaxOutput: 4_096}
+			if large.RequestOutputLimit(protocol, false) != 64_000 ||
+				large.RequestOutputLimit(protocol, true) != 16_000 ||
+				small.RequestOutputLimit(protocol, false) != 4_096 ||
+				small.RequestOutputLimit(protocol, true) != 4_096 {
+				t.Fatal("request budgets do not respect the mode and configured ceiling")
+			}
+		})
+	}
+}
+
 func TestContextKeyTracksEffectivePrivacyPolicy(t *testing.T) {
 	provider := Provider{ID: "provider", Protocol: Chat, BaseURL: "https://example.test", APIKey: "key"}
 	selected := Model{ID: "model"}

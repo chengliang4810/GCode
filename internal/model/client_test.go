@@ -72,14 +72,14 @@ func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 				case Chat:
 					if r.URL.Path != "/custom/v1/chat/completions" ||
 						r.Header.Get("Authorization") != "Bearer configured-key" ||
-						body["reasoning_effort"] == nil || body["max_completion_tokens"] == nil {
+						body["reasoning_effort"] == nil || string(body["max_completion_tokens"]) != "64000" {
 						t.Error("chat adapter lost endpoint, credentials or capability mapping")
 					}
 					fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
 				case Responses:
 					if r.URL.Path != "/custom/v1/responses" ||
 						r.Header.Get("Authorization") != "Bearer configured-key" ||
-						body["reasoning"] == nil || body["max_output_tokens"] == nil {
+						body["reasoning"] == nil || string(body["max_output_tokens"]) != "64000" {
 						t.Error("responses adapter lost endpoint, credentials or capability mapping")
 					}
 					fmt.Fprint(w, "data: {\"type\":\"response.completed\",\"response\":{\"status\":\"completed\",\"output\":[{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":\"ok\"}]}]}}\n\n")
@@ -87,7 +87,7 @@ func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 					if r.URL.Path != "/custom/v1/messages" ||
 						r.Header.Get("x-api-key") != "configured-key" ||
 						r.Header.Get("anthropic-version") != "2023-06-01" ||
-						body["thinking"] == nil || body["max_tokens"] == nil {
+						body["thinking"] == nil || string(body["max_tokens"]) != "64000" {
 						t.Error("messages adapter lost endpoint, credentials or capability mapping")
 					}
 					fmt.Fprint(w, "data: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"ok\"}}\n\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}\n\ndata: {\"type\":\"message_stop\"}\n\n")
@@ -97,7 +97,7 @@ func TestGatewayMapsUniformInputToThreeProtocols(t *testing.T) {
 			provider := Provider{
 				ID: "custom", Name: "User supplied", Protocol: protocol,
 				BaseURL: server.URL + "/custom/v1/", APIKey: "configured-key",
-				Models: []Model{{ID: "user-model", ReasoningLevels: []string{"high"}, MaxOutput: 8192}},
+				Models: []Model{{ID: "user-model", ReasoningLevels: []string{"high"}, MaxOutput: 384_000}},
 			}
 			gateway, err := newTestClient().Bind(provider, provider.Models[0])
 			if err != nil {

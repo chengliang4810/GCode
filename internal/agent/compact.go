@@ -4,15 +4,26 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"gcode/internal/model"
 )
 
 const minimumCompactMessages = 6
+const summaryTimeout = 90 * time.Second
+
+func streamContextSummary(ctx context.Context, client Model, request model.Request) (model.Result, error) {
+	if err := ctx.Err(); err != nil {
+		return model.Result{}, err
+	}
+	ctx, cancel := context.WithTimeout(ctx, summaryTimeout)
+	defer cancel()
+	return client.Stream(ctx, request, nil)
+}
 
 const compactInstruction = "Summarize this coding conversation for continuation. Preserve the user's objective, constraints, exact paths, completed changes, failures, tool outcomes and next steps. Never claim a task is complete without evidence. Return only the summary; do not call tools."
 
-// Compact reuses the original prompt, tools, effort and message prefix.
+// Compact reuses the original prompt, effort and message prefix.
 // This one-shot request never executes returned tool calls.
 func Compact(ctx context.Context, client Model, request model.Request) ([]model.Message, error) {
 	if len(request.History) < minimumCompactMessages {
@@ -30,9 +41,10 @@ func Compact(ctx context.Context, client Model, request model.Request) ([]model.
 		inputIDs = append(inputIDs, message.InputIDs...)
 	}
 	summaryRequest := request
+	summaryRequest.Tools = nil
 	summaryRequest.ContextChange = "summary"
 	summaryRequest.History = append(model.CloneMessages(request.History[:cut]), model.Message{Role: "user", Text: compactInstruction})
-	result, err := client.Stream(ctx, summaryRequest, nil)
+	result, err := streamContextSummary(ctx, client, summaryRequest)
 	if err != nil {
 		return nil, err
 	}

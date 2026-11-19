@@ -78,7 +78,13 @@ func TestCacheStableToolOutputAndManualSummaryAcrossProtocols(t *testing.T) {
 				t.Fatalf("unexpected model calls: %d", len(bodies))
 			}
 			before, summary := bodies[2], bodies[3]
-			for _, field := range []string{"model", "tools", "system", "instructions", "reasoning", "reasoning_effort", "thinking", "output_config"} {
+			// A summary request carries no tool definitions: a fold must not be
+			// able to call a tool. Every other cache-critical field stays the
+			// same, so the summary still reuses the conversation's prefix.
+			if tools, _ := summary["tools"].([]any); len(tools) != 0 {
+				t.Fatalf("summary carried tool definitions: %v", tools)
+			}
+			for _, field := range []string{"model", "system", "instructions", "reasoning", "reasoning_effort", "thinking", "output_config"} {
 				if !reflect.DeepEqual(before[field], summary[field]) {
 					t.Fatalf("summary changed cache-critical %s", field)
 				}

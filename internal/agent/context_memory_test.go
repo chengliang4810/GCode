@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -258,6 +259,9 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 		Record:        func(model.Message) error { return nil }, Emit: func(Event) error { return nil }, Pending: func(bool) []model.Message { return nil },
 		Model: testModel{stream: func(request model.Request) (model.Result, error) {
 			if request.ContextChange == "summary" {
+				if len(request.Tools) != 0 {
+					t.Fatal("summary advertised tools")
+				}
 				summaries++
 				if summaries == 1 {
 					return model.Result{Message: model.Message{Role: "assistant", Text: strings.Repeat("摘", 8001)}}, nil
@@ -265,6 +269,9 @@ func TestRunContextMemoryAutomaticallyFoldsBeforeBudgetOverflow(t *testing.T) {
 				return model.Result{Message: model.Message{Role: "assistant", Text: "Completed stages with original evidence available."}}, nil
 			}
 			normal++
+			if !slices.ContainsFunc(request.Tools, func(tool model.Tool) bool { return tool.Name == "CompressContext" }) {
+				t.Fatal("normal request lost context tools after compaction")
+			}
 			if contextTokens(request) >= compactThreshold(limits) {
 				t.Fatal("normal request exceeded reserved budget")
 			}

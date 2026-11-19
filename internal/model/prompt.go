@@ -73,3 +73,17 @@ func (m Model) OutputLimit(protocol Protocol) int {
 	}
 	return m.MaxOutput
 }
+
+// RequestOutputLimit keeps the configured capability separate from the
+// amount a single request is allowed to generate.
+func (m Model) RequestOutputLimit(protocol Protocol, summary bool) int {
+	limit := m.OutputLimit(protocol)
+	if summary {
+		const summaryLimit = 16_000
+		if limit <= 0 {
+			return summaryLimit
+		}
+		return min(limit, summaryLimit)
+	}
+	return min(limit, 64_000)
+}

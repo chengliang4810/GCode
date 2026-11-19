@@ -298,7 +298,8 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				var nextMemory ContextMemory
 				var err error
 				excess := max(0, contextPressure(request, limits)-contextTokens(request))
-				compactCtx, cancelCompact := context.WithTimeout(ctx, 2*time.Minute)
+				compactCtx, cancelCompact := context.WithTimeout(ctx, 6*time.Minute)
+				compactDeadline, _ := compactCtx.Deadline()
 				if options.Memory != nil {
 					// Preserve any observed excess over our text estimate
 					// until a new real model response establishes a baseline.
@@ -310,6 +311,10 @@ func Run(ctx context.Context, options Options) (runErr error) {
 						currentTokens := contextTokens(model.Request{System: request.System, Tools: request.Tools, History: compacted})
 						if rounds >= 16 || currentTokens >= previousTokens {
 							err = errors.New("context compaction cannot reach the model budget; reduce protected input or choose a model with a larger context window")
+							break
+						}
+						if time.Until(compactDeadline) < summaryTimeout {
+							err = fmt.Errorf("not enough time for another context fold: %w", context.DeadlineExceeded)
 							break
 						}
 						previousTokens = currentTokens
@@ -331,7 +336,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 					}
 				}
 				if err != nil {
-					return err
+					return fmt.Errorf("automatic context compaction: %w", err)
 				}
 				if retained != nil {
 					if options.Memory != nil && retained.ContextRef == "" {

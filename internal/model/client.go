@@ -216,7 +216,9 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
-	payload, err := g.adapter.encode(input, g.target)
+	target := g.target
+	target.model.MaxOutput = target.model.RequestOutputLimit(g.provider.Protocol, input.ContextChange == "summary")
+	payload, err := g.adapter.encode(input, target)
 	if err != nil {
 		return Result{}, err
 	}
