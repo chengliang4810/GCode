@@ -136,6 +136,9 @@ func TestTranscriptHookStatusAndFoldState(t *testing.T) {
 		localize.Set(c, a.state.Settings.General.Language)
 		ui.Column(c).Fill().Children(func() { a.transcriptMessageForTest(c, m) })
 	}, 600, 800)
+	if err := tt.Click("活动：" + a.activitySummary(contracts.SummarizeActivity(m.Blocks))); err != nil {
+		t.Fatal(err)
+	}
 	for _, label := range []string{"已阻止", "失败"} {
 		if !tt.HasText(label) {
 			t.Fatalf("missing localized hook status %q", label)
@@ -147,7 +150,13 @@ func TestTranscriptHookStatusAndFoldState(t *testing.T) {
 	}
 	m.Streaming = false
 	tt.Frame()
+	if tt.HasText("POLICY_REASON") {
+		t.Fatal("completion left the activity group open")
+	}
+	if err := tt.Click("活动：" + a.activitySummary(contracts.SummarizeActivity(m.Blocks))); err != nil {
+		t.Fatal(err)
+	}
 	if !tt.HasText("POLICY_REASON") || tt.HasText("FAILURE_REASON") {
-		t.Fatal("hook folds changed on stream completion or share state")
+		t.Fatal("hook details lost independent fold state")
 	}
 }

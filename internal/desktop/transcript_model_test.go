@@ -60,12 +60,11 @@ func TestTranscriptRowsPreserveActivityAndNarrationOrder(t *testing.T) {
 		name               string
 		compact, streaming bool
 		want               []string
-		auto               bool
 	}{
-		{"normal complete", false, false, []string{"thought1/read", "narration", "thought2/run", "answer"}, false},
-		{"normal streaming text", false, true, []string{"thought1/read", "narration", "thought2/run", "answer"}, false},
-		{"compact complete", true, false, []string{"thought1/read/narration/thought2/run", "answer"}, false},
-		{"compact streaming", true, true, []string{"thought1/read/narration/thought2/run/answer"}, false},
+		{"normal complete", false, false, []string{"thought1/read", "narration", "thought2/run", "answer"}},
+		{"normal streaming text", false, true, []string{"thought1/read", "narration", "thought2/run", "answer"}},
+		{"compact complete", true, false, []string{"thought1/read/narration/thought2/run", "answer"}},
+		{"compact streaming", true, true, []string{"thought1/read/narration/thought2/run/answer"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			rows := transcriptRows(contracts.Message{ID: "entry", Blocks: blocks, Streaming: test.streaming}, test.compact)
@@ -77,9 +76,6 @@ func TestTranscriptRowsPreserveActivityAndNarrationOrder(t *testing.T) {
 						ids = append(ids, block.ID)
 					}
 					got = append(got, strings.Join(ids, "/"))
-					if row.AutoOpen != test.auto {
-						t.Fatalf("unexpected automatic fold state %+v", row)
-					}
 				} else {
 					got = append(got, row.Block.ID)
 				}
@@ -159,7 +155,7 @@ func TestTranscriptLiveTailAndCallResultIdentity(t *testing.T) {
 		{ID: "tail", Kind: "reasoning", Text: "Inspect failure"},
 	}}
 	rows := transcriptRows(m, false)
-	if len(rows) != 1 || !rows[0].AutoOpen || len(rows[0].Activity) != 2 || rows[0].Activity[0].ID != "first" || !rows[0].Activity[0].Tool.Failed() {
+	if len(rows) != 1 || len(rows[0].Activity) != 2 || rows[0].Activity[0].ID != "first" || !rows[0].Activity[0].Tool.Failed() {
 		t.Fatalf("call/result did not update in place: %+v", rows)
 	}
 	if contracts.SummarizeActivity(rows[0].Activity).Failed != 1 {

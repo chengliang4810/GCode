@@ -152,14 +152,16 @@ func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.
 	m.Blocks = m.Blocks[:1]
 	m.Streaming = true
 	tt := transcriptTester(t, a, &m, 760, 700, true)
-	if _, exists := tt.Find("Activity detail"); exists {
-		t.Fatal("live thought detail opened without user input")
+	if _, exists := tt.Find("Thought process: thought-1"); exists {
+		t.Fatal("live activity group opened without user input")
 	}
-	if !tt.HasText(reasoningPreview(m.Blocks[0].Text, true)) {
-		t.Fatal("live thought header did not preview its latest line")
-	}
-	groupID := m.ID + ":activity:" + m.Blocks[0].ID
 	summary := contracts.SummarizeActivity(m.Blocks).Label()
+	if err := tt.Click("Activity: " + summary); err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := tt.Find("Thought process: thought-1"); !exists {
+		t.Fatal("manual expansion did not show live activity")
+	}
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
@@ -171,22 +173,26 @@ func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.
 	if tt.HasText("next delta") {
 		t.Fatal("stream delta overrode explicit fold")
 	}
-	if !a.expanded["activity-explicit:"+groupID] {
-		t.Fatal("fold identity was not retained")
-	}
-	// A fresh virtualized row's local widget state must restore that same choice.
-	tt = transcriptTester(t, a, &m, 760, 700, true)
-	if tt.HasText("next delta") {
-		t.Fatal("virtual row recreation lost explicit collapse")
-	}
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
+	}
+	tt = transcriptTester(t, a, &m, 760, 700, true)
+	if _, exists := tt.Find("Thought process: thought-1"); !exists {
+		t.Fatal("virtual row recreation lost manual expansion")
 	}
 	m.Streaming = false
 	m.Blocks = append(m.Blocks, contracts.Block{ID: "reply", Kind: "text", Text: "The check is complete."})
 	tt.Frame()
-	if !tt.HasText("The check is complete.") || !tt.HasText("Thought process") {
-		t.Fatal("completion hid reply or discarded explicit open group")
+	preview := reasoningPreview(m.Blocks[0].Text, false)
+	if !tt.HasText("The check is complete.") || tt.HasText(preview) {
+		t.Fatal("completion did not show the reply with its activity group folded")
+	}
+	if err := tt.Click("Activity: " + summary); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if !tt.HasText(preview) {
+		t.Fatal("settled activity group did not stay open after manual expansion")
 	}
 }
 
@@ -272,6 +278,7 @@ func TestTranscriptActivitySummaryTipOnlyWhereTheHeaderHidesCounts(t *testing.T)
 func TestTranscriptCompactLiveNeverAutoOpensThought(t *testing.T) {
 	a := testApp(t, "default")
 	a.state.Settings.General.CompactMode = true
+	a.state.Settings.General.AutoExpandToolGroups = true
 	m := activityFixture()
 	m.Blocks = m.Blocks[:1]
 	m.Streaming = true
@@ -291,6 +298,38 @@ func TestTranscriptCompactLiveNeverAutoOpensThought(t *testing.T) {
 	}
 	if !tt.HasText("I’ll read the layout contract") {
 		t.Fatal("manual compact thought expansion failed")
+	}
+}
+
+func TestTranscriptAutoExpandToolGroups(t *testing.T) {
+	for _, manual := range []bool{false, true} {
+		a := testApp(t, "default")
+		a.state.Settings.General.AutoExpandToolGroups = true
+		m := activityFixture()
+		m.Blocks = m.Blocks[:1]
+		m.Streaming = true
+		tt := transcriptTester(t, a, &m, 760, 700, false)
+		const liveRow = "Thought process: thought-1"
+		if _, found := tt.Find(liveRow); !found {
+			t.Fatal("enabled setting did not open the current group")
+		}
+		if manual {
+			header := "Activity: " + contracts.SummarizeActivity(m.Blocks).Label()
+			if err := tt.Click(header); err != nil {
+				t.Fatal(err)
+			}
+			if _, found := tt.Find(liveRow); found {
+				t.Fatal("automatic expansion overrode manual close")
+			}
+			if err := tt.Click(header); err != nil {
+				t.Fatal(err)
+			}
+		}
+		m.Streaming = false
+		tt.Frame()
+		if shown := tt.HasText(reasoningPreview(m.Blocks[0].Text, false)); shown != manual {
+			t.Fatalf("settled group visible = %t, manually opened = %t", shown, manual)
+		}
 	}
 }
 
@@ -675,5 +714,33 @@ func TestTranscriptRenderEvidence(t *testing.T) {
 		if err := f.Close(); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestTranscriptCopyFeedback(t *testing.T) {
+	message := contracts.Message{ID: "copy", Blocks: []contracts.Block{{Kind: "text", Text: "Reply"}}}
+	tt := ui.NewTester(func(c *ui.Context) { transcriptCopyButton(c, message) }, 320, 160)
+	initial, ok := tt.Find("Copy message")
+	if !ok {
+		t.Fatal("missing copy button")
+	}
+	tt.Key(0, ui.KeyTab)
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	if bounds, ok := tt.Find("Copied"); !ok || bounds != initial || tt.Clipboard() != "Reply" {
+		t.Fatalf("copy result: bounds=%v found=%v clipboard=%q", bounds, ok, tt.Clipboard())
+	}
+	if got := tt.Announcements(); len(got) != 1 || got[0] != "Copied" {
+		t.Fatalf("copy announcements: %v", got)
+	}
+	tt.Advance(1501 * time.Millisecond)
+	if _, ok := tt.Find("Copy message"); !ok {
+		t.Fatal("copy button did not reset")
+	}
+	tt.FailClipboard(fmt.Errorf("clipboard unavailable"))
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	if _, ok := tt.Find("Copy failed. Try again."); !ok {
+		t.Fatal("clipboard failure was not shown or keyboard focus was lost")
 	}
 }

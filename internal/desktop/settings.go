@@ -499,6 +499,10 @@ func (a *App) generalSettings(c *ui.Context) {
 		line(c)
 		a.settingsRow(c, "Compact mode", "Collapse thinking and tools.", func() { a.settingsToggle(c, "Compact mode", &g.CompactMode) })
 		line(c)
+		a.settingsRow(c, "Auto-expand tool groups", "Expand the current tool group during a response unless Compact mode is on. Keep manually opened groups open when the response ends.", func() {
+			a.settingsToggle(c, "Auto-expand tool groups", &g.AutoExpandToolGroups)
+		})
+		line(c)
 		a.settingsRow(c, "Hierarchical context compression", "Keep recoverable summaries of earlier work. Off by default; changes apply to the next run.", func() {
 			a.settingsToggle(c, "Hierarchical context compression", &g.HierarchicalContext)
 		})

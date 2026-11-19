@@ -164,8 +164,25 @@ func (a *App) transcriptEntryHovered(pane, entryID string) bool {
 // geometry, typography and connector rail are painted by the application.
 func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.Message) {
 	root := ui.Column(c.Key(row.ID)).FillWidth().Margin(0, 0, 0, -activityLeadingInset)
-	open := ui.Local(root, "open", func() bool { return row.AutoOpen })
-	a.activityFold(row.ID, open, row.AutoOpen)
+	open := ui.Local(root, "open", func() bool { return false })
+	openKey := "activity-open:" + row.ID
+	liveKey := "activity-opened-live:" + row.ID
+	manualOpen, manual := a.expanded[openKey]
+	// Keep this marker outside the virtual row so an offscreen group also
+	// closes when it is next rendered after the reply finishes.
+	autoExpand := a.state.Settings.General.AutoExpandToolGroups
+	if autoExpand {
+		delete(a.expanded, liveKey)
+	} else if message.Streaming {
+		if manualOpen {
+			a.expanded[liveKey] = true
+		}
+	} else if a.expanded[liveKey] {
+		delete(a.expanded, liveKey)
+		delete(a.expanded, openKey)
+		manualOpen = false
+	}
+	*open = manualOpen || !manual && autoExpand && !row.Compact && row.LiveTail
 	summary := a.activitySummary(row.Summary)
 	title := summary
 	if row.Compact && !message.Streaming {
@@ -279,16 +296,7 @@ func (a *App) activityGroup(c *ui.Context, row transcriptRow, message contracts.
 	})
 }
 
-func (a *App) activityFold(id string, open *bool, automatic bool) {
-	if a.expanded["activity-explicit:"+id] {
-		*open = a.expanded["activity-open:"+id]
-	} else {
-		*open = automatic
-	}
-}
-
 func (a *App) rememberActivityFold(id string, open bool) {
-	a.expanded["activity-explicit:"+id] = true
 	a.expanded["activity-open:"+id] = open
 }
 
@@ -472,7 +480,7 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	}
 	root := ui.Column(c.Key(id)).FillWidth()
 	open := ui.Local(root, "open", func() bool { return false })
-	a.activityFold(id, open, false)
+	*open = a.expanded["activity-open:"+id]
 	label, detail, glyph := activityTitle(block)
 	if block.Kind == "reasoning" && !*open {
 		detail = reasoningPreview(block.Text, live)
@@ -719,21 +727,55 @@ func (a *App) replyRetryable(message contracts.Message) bool {
 	return run.Status == runStatusFailed || run.Status == runStatusInterrupted
 }
 
+type messageCopyFeedback struct {
+	result   string
+	until    time.Time
+	announce bool
+}
+
+func transcriptCopyButton(c *ui.Context, message contracts.Message) bool {
+	button := ui.ButtonBase(c.Key("copy-message:"+message.ID)).Size(16, 16).AlignItems(ui.Center).Justify(ui.Start)
+	state := ui.Local(button, "feedback", func() messageCopyFeedback { return messageCopyFeedback{} })
+	label, glyph := "Copy message", "copy"
+	if state.announce {
+		state.announce = false
+		state.until = c.Now().Add(1500 * time.Millisecond)
+		c.Announce(tr(c, state.result))
+	}
+	active := c.Now().Before(state.until)
+	if active {
+		label, glyph = state.result, "check"
+		if label != "Copied" {
+			glyph = "close"
+			button.TextColor(c.Theme().Danger)
+		}
+		c.After(state.until.Sub(c.Now()))
+	}
+	button.Label(tr(c, label)).Tooltip(tr(c, label)).Children(func() { icon(c, glyph, 12) })
+	if button.Clicked() {
+		var text []string
+		for _, block := range message.Blocks {
+			if block.Kind == "text" && block.Text != "" {
+				text = append(text, block.Text)
+			}
+		}
+		c.WriteClipboardThen(strings.Join(text, "\n\n"), func(err error) {
+			state.result = "Copied"
+			if err != nil {
+				state.result = "Copy failed. Try again."
+			}
+			state.announce = true
+		})
+	}
+	return active || button.Focused()
+}
+
 func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered bool) {
-	services := c.Services()
 	ui.Row(c).FillWidth().MinHeight(max(16, design.TextSize(c, design.TextSmall)*1.5)).Margin(8, 0, 0, 0).Gap(6).AlignItems(ui.Center).Children(func() {
 		row := ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center)
-		metricsOpen := false
+		metricsOpen, copyVisible := false, false
 		row.Children(func() {
-			ui.ButtonBase(c.Key("copy-message:"+message.ID)).Size(16, 16).Label(tr(c, "Copy message")).Tooltip(tr(c, "Copy message")).AlignItems(ui.Center).Justify(ui.Start).OnClick(func() {
-				var text []string
-				for _, b := range message.Blocks {
-					if b.Kind == "text" && b.Text != "" {
-						text = append(text, b.Text)
-					}
-				}
-				services.WriteClipboard(strings.Join(text, "\n\n"))
-			}).Children(func() { icon(c, "copy", 12) })
+			copyVisible = transcriptCopyButton(c, message)
 			metricsOpen = a.replyMetricsView(c, message)
 			if a.replyRetryable(message) {
 				// A reply whose own turn failed or was interrupted can be asked
@@ -744,7 +786,7 @@ func (a *App) transcriptFooter(c *ui.Context, message contracts.Message, hovered
 			}
 			ui.Text(c.Key("message-date:"+message.ID), date(c, message.CreatedAt.Local(), "Jan 2, 3:04 PM")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
 		})
-		if !hovered && !metricsOpen {
+		if !hovered && !metricsOpen && !copyVisible {
 			row.Opacity(0)
 		}
 	})

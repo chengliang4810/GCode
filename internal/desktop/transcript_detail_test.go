@@ -141,6 +141,9 @@ func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.
 		{ID: "thought", Kind: "reasoning", Text: "First line\n\nLatest"},
 	}}
 	tt := transcriptTester(t, a, &m, 760, 700, false)
+	if err := tt.Click("Activity: " + contracts.SummarizeActivity(m.Blocks).Label()); err != nil {
+		t.Fatal(err)
+	}
 	if !tt.HasText("Latest") {
 		t.Fatal("latest unterminated line is not previewed")
 	}
@@ -157,8 +160,14 @@ func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.
 	}
 	m.Streaming = false
 	tt.Frame()
+	if _, ok := tt.Find("Activity detail"); ok {
+		t.Fatal("completion left the activity group open")
+	}
+	if err := tt.Click("Activity: " + contracts.SummarizeActivity(m.Blocks).Label()); err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := tt.Find("Activity detail"); !ok {
-		t.Fatal("completion discarded manual expansion")
+		t.Fatal("reopening discarded the nested detail expansion")
 	}
 	// Once the thought settles its row is named by its first line, and the
 	// name stays the same whether the row is open or shut.

@@ -471,6 +471,7 @@ type GeneralSettings struct {
 	// next turn. Empty reads as steer, the reference's default.
 	ActiveTurnSendBehavior string `json:"activeTurnSendBehavior"`
 	CompactMode            bool   `json:"compactMode"`
+	AutoExpandToolGroups   bool   `json:"autoExpandToolGroups"`
 	StopWithEscape         bool   `json:"stopWithEscape"`
 	ThreadNamingModel      string `json:"threadNamingModel"`
 }

@@ -125,6 +125,29 @@ func TestSettingsTogglePersistsThroughBackend(t *testing.T) {
 	}
 }
 
+func TestSettingsAutoExpandToolGroupsPersists(t *testing.T) {
+	app, backend := settingsTestApp(t)
+	app.section = "General"
+	tt := ui.NewTester(func(c *ui.Context) { c.SetTheme(app.palette.UI()); app.settingsView(c) }, 900, 760)
+	if app.state.Settings.General.AutoExpandToolGroups {
+		t.Fatal("tool groups should default to collapsed")
+	}
+	for _, want := range []bool{true, false} {
+		if err := tt.Click("Toggle Auto-expand tool groups"); err != nil {
+			t.Fatal(err)
+		}
+		snapshot, err := backend.Snapshot(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snapshot.Settings.General.AutoExpandToolGroups != want {
+			t.Fatalf("saved auto-expand = %t, want %t", snapshot.Settings.General.AutoExpandToolGroups, want)
+		}
+		app.state = snapshot
+		tt.Frame()
+	}
+}
+
 func TestAppearanceSelectionChangesModeAndClearsOverride(t *testing.T) {
 	app, backend := settingsTestApp(t)
 	app.section = "Appearance"

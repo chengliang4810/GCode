@@ -16,7 +16,7 @@ type transcriptRow struct {
 	Block    *contracts.Block
 	Activity []contracts.Block
 	Summary  contracts.ActivitySummary
-	AutoOpen bool
+	LiveTail bool
 	Compact  bool
 }
 
@@ -99,7 +99,7 @@ func transcriptRows(message contracts.Message, compact bool) []transcriptRow {
 		}
 		rows = append(rows, transcriptRow{
 			ID: message.ID + ":activity:" + work[0].ID, Activity: work, Summary: contracts.SummarizeActivity(work),
-			AutoOpen: !compact && message.Streaming && groupLast == len(blocks)-1,
+			LiveTail: message.Streaming && groupLast == len(blocks)-1,
 			Compact:  compact,
 		})
 		work = nil
