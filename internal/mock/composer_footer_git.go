@@ -371,7 +371,7 @@ func (s *Server) resolveNewCheckoutLocked(project contracts.Project, sessionID s
 		if s.state.Runtime != nil && s.state.Runtime.DataDirectory != "" {
 			directory = s.state.Runtime.DataDirectory
 		}
-		location := path.Join(directory, "worktrees")
+		location := path.Join(directory, "worktrees", path.Base(project.Path))
 		tree := contracts.Worktree{ID: s.idLocked("worktree"), Name: branch, Path: path.Join(location, sessionID), Branch: branch, BaseRef: base}
 		for i := range s.state.Projects {
 			if s.state.Projects[i].ID == project.ID {

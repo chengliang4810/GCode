@@ -107,7 +107,7 @@ func TestDesktopLocalNamingAndWorktree(t *testing.T) {
 	if settings.General.ThreadNamingModel != "current-model" {
 		t.Fatalf("fresh desktop does not default to current-model naming: %q", settings.General.ThreadNamingModel)
 	}
-	worktrees := filepath.Join(data, "worktrees")
+	worktrees := filepath.Join(data, "worktrees", filepath.Base(repository))
 	// Test delivery separately through injected sinks; avoid OS notifications
 	// or sounds from this real-window fixture.
 	settings.Notifications = contracts.NotificationSettings{}
@@ -143,7 +143,7 @@ func TestDesktopLocalNamingAndWorktree(t *testing.T) {
 				continue
 			}
 			relative, err := filepath.Rel(worktrees, session.CWD)
-			if err != nil || relative == "." || !filepath.IsLocal(relative) || session.WorktreeID == "" {
+			if err != nil || relative == "." || !filepath.IsLocal(relative) || filepath.Dir(session.CWD) != worktrees || session.WorktreeID == "" {
 				return fmt.Errorf("accepted cwd %q is not a new worktree inside %q", session.CWD, worktrees)
 			}
 			if session.Status != contracts.Idle || session.LastOutcome != "completed" {
