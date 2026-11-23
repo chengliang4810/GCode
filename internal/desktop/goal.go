@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"gcode/internal/contracts"
@@ -76,8 +77,13 @@ func (a *App) updateGoal(command contracts.Command) {
 	a.goalActions[command.SessionID] = true
 	scope, generation := a.captureSessionScope()
 	a.backgroundTask(func() func() {
+		started := time.Now()
+		log.Printf("goal action started kind=%s session=%s goal=%s request=%s", command.Kind, command.SessionID, command.ID, command.RequestID)
 		err := a.service.Execute(a.ctx, command)
+		log.Printf("goal action execute finished kind=%s session=%s goal=%s request=%s duration_ms=%d error=%v", command.Kind, command.SessionID, command.ID, command.RequestID, time.Since(started).Milliseconds(), err)
+		snapshotStarted := time.Now()
 		snapshot, snapshotErr := a.service.Snapshot(a.ctx, scope...)
+		log.Printf("goal action snapshot finished kind=%s session=%s goal=%s request=%s duration_ms=%d error=%v", command.Kind, command.SessionID, command.ID, command.RequestID, time.Since(snapshotStarted).Milliseconds(), snapshotErr)
 		return func() {
 			delete(a.goalActions, command.SessionID)
 			if snapshotErr == nil && a.sessionGenerationCurrent(generation, scope) {

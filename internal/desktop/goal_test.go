@@ -1,9 +1,13 @@
 package desktop
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"image/png"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -397,5 +401,68 @@ func writeGoalRenderEvidence(t *testing.T, tt *ui.Tester, language string) {
 	}
 	if err := os.WriteFile(path+".json", append(evidence, '\n'), 0644); err != nil {
 		t.Fatal(err)
+	}
+}
+
+type goalDiagnosticService struct {
+	contracts.Service
+	executeErr, snapshotErr error
+}
+
+func (s *goalDiagnosticService) Execute(context.Context, contracts.Command) error {
+	return s.executeErr
+}
+func (s *goalDiagnosticService) Snapshot(ctx context.Context, scope ...string) (contracts.Snapshot, error) {
+	if s.snapshotErr != nil {
+		return contracts.Snapshot{}, s.snapshotErr
+	}
+	return s.Service.Snapshot(ctx, scope...)
+}
+
+func TestGoalActionLogsExecuteAndRefreshSeparately(t *testing.T) {
+	for _, tc := range []struct {
+		name                    string
+		executeErr, snapshotErr error
+	}{
+		{name: "success"},
+		{name: "execute", executeErr: errors.New("execute sentinel")},
+		{name: "refresh", snapshotErr: errors.New("snapshot sentinel")},
+		{name: "both", executeErr: errors.New("execute sentinel"), snapshotErr: errors.New("snapshot sentinel")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.selectSession("chat-0")
+			a.service = &goalDiagnosticService{Service: a.service, executeErr: tc.executeErr, snapshotErr: tc.snapshotErr}
+			var output bytes.Buffer
+			previous := log.Writer()
+			log.SetOutput(&output)
+			defer log.SetOutput(previous)
+			a.updateGoal(contracts.Command{Kind: "goal.clear", SessionID: "chat-0", ID: "goal-sentinel", RequestID: "request-sentinel"})
+			lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+			if len(lines) != 3 {
+				t.Fatalf("expected start, execute and snapshot log records: %s", output.String())
+			}
+			for _, line := range lines {
+				for _, value := range []string{"kind=goal.clear", "session=chat-0", "goal=goal-sentinel", "request=request-sentinel"} {
+					if !strings.Contains(line, value) {
+						t.Fatalf("log omitted correlation data %s: %s", value, line)
+					}
+				}
+			}
+			if !strings.Contains(lines[1], "execute finished") || !strings.Contains(lines[1], fmt.Sprintf("error=%v", tc.executeErr)) ||
+				!strings.Contains(lines[2], "snapshot finished") || !strings.Contains(lines[2], fmt.Sprintf("error=%v", tc.snapshotErr)) {
+				t.Fatalf("execution and refresh failures were not distinguished: %s", output.String())
+			}
+			want := tc.executeErr
+			if want == nil {
+				want = tc.snapshotErr
+			}
+			if want != nil && a.errorText != want.Error() {
+				t.Fatalf("UI lost original error: %q", a.errorText)
+			}
+			if a.goalActions["chat-0"] {
+				t.Fatal("goal action remained pending")
+			}
+		})
 	}
 }
