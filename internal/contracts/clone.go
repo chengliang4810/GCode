@@ -10,8 +10,11 @@ import (
 // CloneSnapshot deliberately shares only immutable strings and time values.
 // This avoids serializing thousands of historical messages on each UI update.
 func CloneSnapshot(v Snapshot) Snapshot {
+	v.BackgroundTasks = slices.Clone(v.BackgroundTasks)
 	v.Automations = slices.Clone(v.Automations)
 	v.AutomationRuns = slices.Clone(v.AutomationRuns)
+	cloneWorkflowRuns(&v)
+	cloneWorkflowDefinitions(&v)
 	v.PrivacyModels = slices.Clone(v.PrivacyModels)
 	if v.Metrics != nil {
 		source := v.Metrics
@@ -225,6 +228,33 @@ func cloneIntegrations(v IntegrationState) IntegrationState {
 		v.Billing.Checkout = &x
 	}
 	return v
+}
+
+// cloneWorkflowRuns copies every run and its nested slices. The core owns the
+// facts and keeps mutating them in place, so a projection that shared the
+// slices would show half-written runs.
+func cloneWorkflowRuns(v *Snapshot) {
+	v.WorkflowRuns = slices.Clone(v.WorkflowRuns)
+	for i := range v.WorkflowRuns {
+		run := &v.WorkflowRuns[i]
+		run.Args = slices.Clone(run.Args)
+		run.Phases = slices.Clone(run.Phases)
+		run.Actors = slices.Clone(run.Actors)
+		run.Questions = slices.Clone(run.Questions)
+		run.Holes = slices.Clone(run.Holes)
+		run.Artifacts = slices.Clone(run.Artifacts)
+		run.Edges = slices.Clone(run.Edges)
+	}
+}
+
+// cloneWorkflowDefinitions copies the saved definitions and their programs.
+func cloneWorkflowDefinitions(v *Snapshot) {
+	v.WorkflowDefinitions = slices.Clone(v.WorkflowDefinitions)
+	for i := range v.WorkflowDefinitions {
+		definition := &v.WorkflowDefinitions[i]
+		definition.Program = definition.Program.clone()
+		definition.Arguments = slices.Clone(definition.Arguments)
+	}
 }
 
 func cloneComposerFooterGitSnapshots(v *Snapshot) {

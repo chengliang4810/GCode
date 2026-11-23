@@ -8,6 +8,12 @@ import "slices"
 func SessionProjection(source Snapshot, sessionIDs []string) Snapshot {
 	out := source
 	out.ApplicationUsage = nil
+	out.BackgroundTasks = nil
+	for _, task := range source.BackgroundTasks {
+		if slices.Contains(sessionIDs, task.SessionID) {
+			out.BackgroundTasks = append(out.BackgroundTasks, task)
+		}
+	}
 	out.Metrics = make(map[string]ConversationMetrics, len(source.Metrics))
 	for id, metrics := range source.Metrics {
 		if !slices.Contains(sessionIDs, id) {

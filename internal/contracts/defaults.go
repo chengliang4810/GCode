@@ -11,6 +11,7 @@ func DefaultSettings() Settings {
 		Notifications: NotificationSettings{Errors: true, Enabled: true, Completion: true, Questions: true, Sound: false},
 		Files:         FileSettings{Autosave: true, AutosaveDelay: 900, LineNumbers: true, FontSize: 12},
 		Appshots:      AppshotSettings{Destination: "lastSession", Shortcut: "Cmd+Shift+2", IncludeCursor: false},
+		WorkflowMode:  "onDemand",
 		Shortcuts: []Shortcut{
 			{ID: "newSession", Label: "New session", Keys: "Mod+N", Group: "Navigation"},
 			{ID: "commandPalette", Label: "Command palette", Keys: "Mod+K", Group: "Navigation"},

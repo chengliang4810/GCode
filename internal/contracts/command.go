@@ -13,6 +13,7 @@ import (
 // Clone freezes a command before it crosses a goroutine/queue boundary.
 func (c Command) Clone() Command {
 	c.Automation = copyPointer(c.Automation)
+	c.Workflow = c.Workflow.Clone()
 	c.QuestionAnswers = CloneQuestionAnswers(c.QuestionAnswers)
 	c.Plugin = c.Plugin.Clone()
 	c.Resource = c.Resource.Clone()
@@ -79,6 +80,79 @@ func copyPointer[T any](p *T) *T {
 	return &v
 }
 
+// validateWorkflowCommand rejects an ambiguous workflow payload before any state
+// is mutated. The command kind owns the action; the payload only carries data.
+func validateWorkflowCommand(kind string, w *WorkflowCommand) error {
+	switch kind {
+	case "workflow.run", "workflow.launch":
+		if w.Run == nil {
+			return errors.New("a workflow run request is required")
+		}
+		if kind == "workflow.launch" {
+			// A launch takes its program from the saved definition.
+			if w.Run.DefinitionID == "" {
+				return errors.New("a workflow definition ID is required")
+			}
+			return nil
+		}
+		if len(w.Run.Program.Phases) == 0 {
+			return errors.New("a workflow program with at least one phase is required")
+		}
+		return nil
+	case "workflow.stop":
+		if w.RunID == "" && w.ID == "" {
+			return errors.New("a workflow run ID is required")
+		}
+		return nil
+	case "workflow.retune":
+		if w.Settings == nil {
+			return errors.New("workflow settings are required")
+		}
+		if w.Settings.RunID == "" {
+			return errors.New("a workflow run ID is required")
+		}
+		if !w.Settings.HasModel && !w.Settings.HasConc {
+			return errors.New("a workflow settings change is required")
+		}
+		return nil
+	case "workflow.resolve":
+		if w.Question == nil || w.Question.ID == "" {
+			return errors.New("a workflow question with ID is required")
+		}
+		return nil
+	case "workflow.fill":
+		if w.Hole == nil || w.Hole.ID == "" {
+			return errors.New("a workflow hole with ID is required")
+		}
+		return nil
+	case "workflow.save":
+		if w.Definition == nil {
+			return errors.New("a workflow definition is required")
+		}
+		if strings.TrimSpace(w.Definition.Name) == "" {
+			return errors.New("a workflow name is required")
+		}
+		return nil
+	case "workflow.delete":
+		if w.ID == "" {
+			return errors.New("a workflow definition ID is required")
+		}
+		return nil
+	case "workflow.confirm":
+		if w.Confirmation == nil || w.Confirmation.ID == "" {
+			return errors.New("a workflow confirmation ID is required")
+		}
+		return nil
+	case "workflow.resume":
+		if w.RunID == "" && w.ID == "" {
+			return errors.New("a workflow run ID is required")
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown workflow command %q", kind)
+	}
+}
+
 // Validate rejects ambiguous tagged payloads before any state is mutated.
 func (c Command) Validate() error {
 	if c.Automation != nil && c.Kind != "automation.save" {
@@ -99,6 +173,16 @@ func (c Command) Validate() error {
 		default:
 			return errors.New("unknown automation command")
 		}
+	}
+
+	if strings.HasPrefix(c.Kind, "workflow.") {
+		if c.Workflow == nil {
+			return errors.New("workflow payload is required")
+		}
+		return validateWorkflowCommand(c.Kind, c.Workflow)
+	}
+	if c.Workflow != nil {
+		return errors.New("workflow payload does not match command")
 	}
 
 	if c.QuestionAnswers != nil && (c.Kind != "request.answer" || c.Text != "") {
@@ -277,6 +361,10 @@ func (c Command) Validate() error {
 	case "message.stop", "message.retry", "session.storage.retry", "session.acknowledge":
 		if c.SessionID == "" {
 			return errors.New("session ID is required")
+		}
+	case "task.stop":
+		if c.SessionID == "" || c.ID == "" {
+			return errors.New("session ID and task ID are required")
 		}
 	case "session.update":
 		if c.Session == nil || c.Session.ID == "" {

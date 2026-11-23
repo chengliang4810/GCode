@@ -25,7 +25,10 @@ const (
 	ToolGoalRead   ToolKind = "goalRead"
 	ToolAgent      ToolKind = "agent"
 	ToolMCP        ToolKind = "mcp"
-	ToolUnknown    ToolKind = "unknown"
+	// ToolWorkflow 是工作流的模型工具。工具行只说明发生了什么，
+	// 运行本身的图与状态由运行卡和详情承担。
+	ToolWorkflow ToolKind = "workflow"
+	ToolUnknown  ToolKind = "unknown"
 )
 
 // Category keeps earlier saved tools, whose Kind was absent, readable.
@@ -66,6 +69,10 @@ func (t ToolCall) Category() ToolKind {
 		return ToolAgent
 	case "listdirectory":
 		return ToolDirectory
+	// 工作流工具按固定名字识别：这些名字是保留的。
+	case "createworkflow", "amendworkflow", "saveworkflow", "listsavedworkflows", "evalworkflowsnippet",
+		"listworkflowruns", "getworkflowrun", "resumeworkflowrun", "resolveworkflowquestion", "fillworkflowhole":
+		return ToolWorkflow
 	}
 	return ToolUnknown
 }
