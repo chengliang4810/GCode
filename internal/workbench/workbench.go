@@ -863,7 +863,8 @@ func (s *State) fileView(c *ui.Context, id string) {
 			if d.preview {
 				label = "Edit"
 			}
-			ui.ButtonBase(c).Label(tr(c, label)).Padding(4, 8).OnClick(func() { d.preview = !d.preview }).Children(func() { ui.Text(c, label) })
+			text := tr(c, label)
+			ui.ButtonBase(c).Label(text).Padding(4, 8).OnClick(func() { d.preview = !d.preview }).Children(func() { ui.Text(c, text) })
 		}
 		ui.ButtonBase(c).Label(tr(c, "Save file")).Disabled(d.file.ReadOnly || !d.editor.Buffer.Modified()).Padding(4, 8).OnClick(func() { s.save(id) }).Children(func() { ui.Text(c, tr(c, "Save")) })
 	})
