@@ -27,7 +27,7 @@ GCode 使用仓库内 MyGo v0.9.1 的 `plugins/updater/native`。
 发布仓库为公开的 `chengliang4810/GCode`。更新器使用无需凭据的正式 Release
 下载地址，不向客户端嵌入 GitHub token。版本从 `0.0.1-beta` 开始；`beta`
 仅标记快速迭代阶段，Release 始终使用 `prerelease=false`，并设为 latest。
-当前版本是 `0.0.4-beta`（见 `mygo.json`），后续按 `0.0.5-beta` 递增，
+当前版本是 `0.0.6-beta`（见 `mygo.json`），后续按 `0.0.7-beta` 递增，
 继续走同一个正式更新通道。
 
 ## 更新签名
@@ -86,6 +86,8 @@ PR 的 Windows/macOS 全仓 race 测试、静态检查和共享控件门禁必�
 2. 推送到 `main`；也可以在 `main` 手动运行 `Desktop release`。
 3. 工作流运行 Windows/macOS 全仓 race、Go/MyGo vet 和共享控件门禁。
    尚未发布的版本继续构建 Windows amd64 与 macOS amd64、arm64、universal。
+发布说明只读取 `CHANGELOG.md` 中当前 `## <version>` 段落，正文不附带历史版本；重跑草稿发布也覆盖为本版本说明。签名更新清单继续使用 MyGo 提取的同一版本段落。
+
 4. 所有目标的安装包、更新包及签名校验通过后，工作流创建指向本次 `main` 提交的
    `v<version>` 标签和一个草稿 Release，统一上传完整产物，再发布并设为 latest。
    `beta` 版本也按正式 Release 处理，不标为 GitHub prerelease。
