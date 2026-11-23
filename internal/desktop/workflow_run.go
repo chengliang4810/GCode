@@ -43,6 +43,35 @@ type workflowSettingsState struct {
 	errorText       string
 }
 
+func workflowLaunchBlock(blocks []contracts.Block) string {
+	for _, block := range blocks {
+		if block.Tool == nil || block.Tool.IsError {
+			continue
+		}
+		switch block.Tool.Name {
+		case "CreateWorkflow", "AmendWorkflow":
+			return block.ID
+		}
+	}
+	return ""
+}
+
+func (a *App) workflowActivityCards(c *ui.Context, sessionID string, blocks []contracts.Block, width float32) {
+	if len(a.state.WorkflowRuns) == 0 || workflowLaunchBlock(blocks) == "" {
+		return
+	}
+	// The transcript merges assistant continuations, but a run points to the
+	// original message. Its tool block keeps its identity in the merged activity.
+	for _, message := range a.state.Messages[sessionID] {
+		launch := workflowLaunchBlock(message.Blocks)
+		if launch == "" || !slices.ContainsFunc(blocks, func(block contracts.Block) bool { return block.ID == launch }) {
+			continue
+		}
+		a.workflowCompletionCards(c, message.ID, width)
+		a.workflowRunCards(c, message.ID, width)
+	}
+}
+
 // workflowRunCards renders every run this turn launched. The same run is
 // never drawn twice.
 func (a *App) workflowRunCards(c *ui.Context, messageID string, width float32) {

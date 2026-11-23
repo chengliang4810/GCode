@@ -107,6 +107,7 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 				block := a.transcriptRowAt(pane.cache, message, row.Block)
 				if len(block.Activity) > 0 {
 					a.activityGroup(c, block, message)
+					a.workflowActivityCards(c, pane.session, block.Activity, layout.width)
 				} else if block.Block != nil {
 					c.Key(block.ID)
 					body := message
@@ -117,14 +118,14 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 					a.transcriptTableLayout = previous
 				}
 			}
-			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {
-				a.transcriptFooter(c, message, a.transcriptEntryHovered(pane.scope, message.ID))
-				// A workflow run belongs to the turn that launched it, so its
-				// card sits at that turn's tail, not at the end of the session.
-				// The completion card comes first: what was delivered, then
-				// the run that delivered it.
-				a.workflowCompletionCards(c, message.ID, layout.width)
-				a.workflowRunCards(c, message.ID, layout.width)
+			if row.Last && !row.User && row.Message >= 0 {
+				if !message.Streaming {
+					a.transcriptFooter(c, message, a.transcriptEntryHovered(pane.scope, message.ID))
+				}
+				if workflowLaunchBlock(message.Blocks) == "" {
+					a.workflowCompletionCards(c, message.ID, layout.width)
+					a.workflowRunCards(c, message.ID, layout.width)
+				}
 			}
 			if index == len(rows)-1 {
 				a.workingTrailer(c, pane.session)

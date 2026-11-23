@@ -45,6 +45,35 @@ func workflowCardApp(t *testing.T) *App {
 	return app
 }
 
+func TestWorkflowRunCardJoinsStreamingContinuation(t *testing.T) {
+	app := workflowCardApp(t)
+	run := app.state.WorkflowRuns[0]
+	messages := []contracts.Message{
+		{ID: "first", SessionID: run.SessionID, Role: "assistant", TurnID: "turn", Blocks: []contracts.Block{{ID: "text", Kind: "text", Text: "Planning"}}},
+		{ID: run.MessageID, SessionID: run.SessionID, Role: "assistant", TurnID: "turn", Streaming: true,
+			Blocks: []contracts.Block{{ID: "launch", Kind: "tool", Tool: &contracts.ToolCall{Name: "CreateWorkflow", Status: "completed"}}}},
+	}
+	app.state.Messages = map[string][]contracts.Message{run.SessionID: messages}
+	entries := transcriptEntries(messages)
+	if len(entries) != 1 || entries[0].ID != "first" || !entries[0].Streaming {
+		t.Fatalf("expected a streaming merged entry: %+v", entries)
+	}
+	cache := &transcriptCache{}
+	rows := conversationRows(entries, func(m contracts.Message) []transcriptRow { return cache.rowsFor(m, false) })
+	tester := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		ui.Column(c).Fill().Children(func() {
+			for i := range rows {
+				app.transcriptRowView(c, transcriptPane{cache: cache, scope: "test", session: run.SessionID}, entries, rows, i, transcriptRowLayout{width: 720})
+			}
+		})
+	}, 900, 900)
+	tester.Frame()
+	if !tester.HasText(run.Name) || !tester.HasText("Running") {
+		t.Fatalf("expected live card at the launch activity, got %v", tester.Texts())
+	}
+}
+
 func TestWorkflowRunCardShowsRunFacts(t *testing.T) {
 	for _, dark := range []bool{false, true} {
 		for _, width := range []int{900, 1320} {
