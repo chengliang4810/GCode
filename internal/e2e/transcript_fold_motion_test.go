@@ -441,6 +441,10 @@ func (app *nativeApp) sampleFoldMotion(actionKey, referenceKey string, expanded,
 
 func (app *nativeApp) assertFoldInternalScroll(viewportKey, lastLine string, height float64) {
 	app.t.Helper()
+	// 折叠动画还在走时，视口的位置与大小都在变：先等布局落定，再测量与滚动。
+	if err := app.client.call("idle", map[string]any{"timeout": 1500}, nil); err != nil {
+		app.t.Fatalf("native layout did not settle before the internal scroll: %v", err)
+	}
 	viewport := app.waitKey(viewportKey)
 	if math.Abs(viewport.Bounds.Height-height) > 1 {
 		app.t.Fatalf("detail viewport height=%g, want 24 lines=%g", viewport.Bounds.Height, height)
@@ -454,13 +458,27 @@ func (app *nativeApp) assertFoldInternalScroll(viewportKey, lastLine string, hei
 		app.t.Fatal(err)
 	}
 	input := app.waitKey("input")
-	y := max(viewport.Bounds.Y, 60) + 12
-	if y >= min(viewport.Bounds.Y+viewport.Bounds.Height, input.Bounds.Y-8) {
-		app.t.Fatalf("detail has no visible scroll target: %+v", viewport.Bounds)
+	// 滚到底本身是幂等的：一次落空（布局还在收敛、指针还没落对）就再来一次，
+	// 而不是把一次落空当成产品缺陷。
+	wheelToTail := func(target accessNode) error {
+		x := target.Bounds.X + min(target.Bounds.Width/2, 120)
+		top, bottom := max(target.Bounds.Y, 60), min(target.Bounds.Y+target.Bounds.Height, input.Bounds.Y-8)
+		// 视口顶部可能压着一行悬停控件：从上往下试几个高度，任何一处命中
+		// 都能把这张列表滚到底。滚轮路由用的是指针下的命中链。
+		events := []map[string]any{}
+		for _, offset := range []float64{12, target.Bounds.Height / 2, target.Bounds.Height - 12} {
+			at := target.Bounds.Y + offset
+			if at < top || at >= bottom {
+				continue
+			}
+			events = append(events, map[string]any{"type": "wheel", "x": x, "y": at, "dy": 10000, "precise": true})
+		}
+		if len(events) == 0 {
+			return fmt.Errorf("detail has no visible scroll target: %+v", target.Bounds)
+		}
+		return app.client.call("input", map[string]any{"events": events}, nil)
 	}
-	if err := app.client.call("input", map[string]any{"events": []map[string]any{{
-		"type": "wheel", "x": viewport.Bounds.X + min(viewport.Bounds.Width/2, 120), "y": y, "dy": 10000, "precise": true,
-	}}}, nil); err != nil {
+	if err := wheelToTail(viewport); err != nil {
 		app.t.Fatal(err)
 	}
 	app.await("full detail tail scrolls while the outer body remains fixed", func() error {
@@ -469,7 +487,12 @@ func (app *nativeApp) assertFoldInternalScroll(viewportKey, lastLine string, hei
 			return err
 		}
 		if !activityTreeContains(tree, lastLine) {
-			return fmt.Errorf("full detail tail %q is not mounted", lastLine)
+			if current, err := tree.findKey(viewportKey); err == nil {
+				if err := wheelToTail(current); err != nil {
+					return err
+				}
+			}
+			return fmt.Errorf("full detail tail %q is not mounted; viewport=%+v mounted=%v", lastLine, boundsOf(tree, viewportKey), foldMounted(tree))
 		}
 		current, err := foldTextNode(tree, foldMotionTail)
 		if err != nil || math.Abs(current.Bounds.Y-tail.Bounds.Y) > 2 {
@@ -477,6 +500,29 @@ func (app *nativeApp) assertFoldInternalScroll(viewportKey, lastLine string, hei
 		}
 		return nil
 	})
+}
+
+// boundsOf reports one node's bounds, for failure messages.
+func boundsOf(tree accessTree, key string) (b struct{ X, Y, Width, Height float64 }) {
+	node, err := tree.findKey(key)
+	if err != nil {
+		return b
+	}
+	return node.Bounds
+}
+
+// foldMounted reports which FOLD THOUGHT lines the detail has mounted.
+func foldMounted(tree accessTree) []string {
+	var out []string
+	for _, node := range tree.Nodes {
+		if strings.HasPrefix(node.Label, "FOLD THOUGHT ") && len(node.Label) == len("FOLD THOUGHT 000") {
+			out = append(out, node.Label[len("FOLD THOUGHT "):])
+		}
+	}
+	if len(out) > 6 {
+		return append(out[:3], append([]string{"…"}, out[len(out)-3:]...)...)
+	}
+	return out
 }
 
 func (app *nativeApp) assertFoldDraft(draft string) {
