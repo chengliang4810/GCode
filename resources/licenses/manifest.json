@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "noticeSha256": "342085840b7dfc11dce93ccd58769b48ec22757bea74af91fe63ffd82587c91e",
+  "noticeSha256": "766ed1294dc891a733fa2ac89bc81c8e97678718f471593aeb89b1990ab68a44",
   "files": [
     {
       "path": "OPEN-ITEMS.md",
@@ -10,8 +10,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6375,
-      "sha256": "0bc7142a0bb8e03ad3c9fa854ac312acd43858bd45b1dd18b7d99420d6faeae6",
+      "bytes": 6377,
+      "sha256": "ecfff683ff71267b1ae567301fa98c7680db79a9a144b217d93f149d599686b1",
       "source": "project-maintained component/source index; no substituted license terms"
     },
     {
@@ -276,7 +276,7 @@
       "path": "mygo/LICENSE.txt",
       "bytes": 1074,
       "sha256": "f0b56f4ab53beb6e18c5e155219c2e2b6000b5475c0ae3ddb3af3894fd9349b4",
-      "source": "github.com/egoist/mygo@v0.9.1/LICENSE (fixed local source copy)"
+      "source": "github.com/egoist/mygo@v0.10.0/LICENSE (fixed local source copy)"
     },
     {
       "path": "native/Ghostty-MIT.txt",
@@ -312,7 +312,7 @@
       "path": "native/ghostty-vt-manifest.json",
       "bytes": 1934,
       "sha256": "2d7c464140e016bf4790671bcd4e61af8995c75a86e491f347297b1a637a29a4",
-      "source": "github.com/egoist/mygo@v0.9.1/plugins/terminal/mygo-plugin.json (verbatim local source)"
+      "source": "github.com/egoist/mygo@v0.10.0/plugins/terminal/mygo-plugin.json (verbatim local source)"
     },
     {
       "path": "native/simdutf-9.0.0-Apache-2.0.txt",
@@ -402,7 +402,7 @@
       "path": "themes/iTerm2-Color-Schemes-MIT.txt",
       "bytes": 1244,
       "sha256": "bddc663c9774e998502e82633e5b7a436e1bbebcbc3ec1314d80e0360b08d805",
-      "source": "github.com/egoist/mygo@v0.9.1/plugins/terminal/ghostty_themes.go, original complete license comment with comment markers removed"
+      "source": "github.com/egoist/mygo@v0.10.0/plugins/terminal/ghostty_themes.go, original complete license comment with comment markers removed"
     },
     {
       "path": "zeron/LICENSE.txt",

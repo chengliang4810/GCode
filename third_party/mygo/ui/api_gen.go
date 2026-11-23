@@ -106,6 +106,17 @@ func (_handle *Route) View(c *Context, fn func(r *Route)) Element {
 	return wrapElement(_e)
 }
 
+// InSystemStack reports whether the system shows r's pages as its own
+// stack of screens (SystemStack), with its navigation bar: the view then
+// shows no bar of its own over them, nor a back button.
+func (_handle *Router) InSystemStack(c *Context) bool {
+	_ctx := c.build()
+	if _ctx == nil {
+		return false
+	}
+	return _handle.coreInSystemStack(_ctx)
+}
+
 // View builds the page shown with fn, in a column taking the room it is
 // given, and returns the column. As a page slides in, it builds the one
 // going away too, which takes neither the pointer nor the keyboard.
@@ -580,6 +591,18 @@ func (_handle *Context) Router() *Router {
 		return nil
 	}
 	return _ctx.Router()
+}
+
+// SafeArea returns how far in from each edge of the window what the system
+// draws covers it, in DIPs: a phone's bars, its cutout and the keyboard. The
+// window's root keeps its content inside them; what draws in the Overlay, as
+// a sheet, or under them, reads them here.
+func (_handle *Context) SafeArea() (float32, float32, float32, float32) {
+	_ctx := _handle.build()
+	if _ctx == nil {
+		return 0, 0, 0, 0
+	}
+	return _ctx.SafeArea()
 }
 
 // SetMenuPresentation sets how the window shows its popup menus: those of
@@ -1772,7 +1795,9 @@ func Local[T any](e Element, key any, init func() T) *T {
 // Right opens a submenu and Left closes it, the other way round right to
 // left (Direction); Enter and Space choose an item, Escape closes the
 // submenu on top, and Tab and a press outside the menu close it. The
-// pointer highlights the item it moves onto, opening its submenu.
+// pointer highlights the item it moves onto, opening its submenu, but for
+// those it crosses heading for a submenu that shows, which stays open
+// until the pointer rests on one of them (menuAimGrace).
 // Assistive technology sees a menu button, expanded while its menu shows,
 // and a menu of items, check box items and radio items. PopoverMenuButton
 // draws its menu with these parts, in the theme's look.
@@ -3923,6 +3948,31 @@ func (_handle Element) AutoFocus() Element {
 	return wrapElement(_node.AutoFocus())
 }
 
+// Autocorrect turns an on-screen keyboard's corrections and suggestions on
+// or off for a text input, on by default where the keyboard has them.
+func (_handle Element) Autocorrect(on bool) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.Autocorrect(on))
+}
+
+// Autofill tells the system what a text input holds, for it to offer it
+// from its passwords and contacts, as with iOS's Passwords above the
+// keyboard.
+func (_handle Element) Autofill(k AutofillKind) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.Autofill(k))
+}
+
 // BackfaceHidden hides the element, and takes it from the pointer, while
 // its 3D transform turns its back to the viewer, as CSS's
 // backface-visibility: hidden: the two faces of a card turning over, the
@@ -4228,6 +4278,17 @@ func (_handle Element) Cache() Element {
 	_ctx := _node.c
 	_ = _ctx
 	return wrapElement(_node.Cache())
+}
+
+// Capitalize sets what an on-screen keyboard capitalizes as one types.
+func (_handle Element) Capitalize(c Capitalization) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.Capitalize(c))
 }
 
 // CaretColor sets the color of the insertion caret of the text inputs in
@@ -6058,6 +6119,18 @@ func (_handle Element) KeyShortcuts(mods Modifiers, key Key) Element {
 	return wrapElement(_node.KeyShortcuts(mods, key))
 }
 
+// Keyboard chooses the on-screen keyboard's layout for a text input, on
+// phones and tablets.
+func (_handle Element) Keyboard(k KeyboardType) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.Keyboard(k))
+}
+
 // Keyframes plays a sequence, holding its last value when done. It starts
 // on the first call, with the first frame's value. Keep the element and
 // key stable, and change Run when changing the sequence. Only active
@@ -6238,6 +6311,19 @@ func (_handle Element) LocalToWindow(x float32, y float32) (float32, float32) {
 	_ctx := _node.c
 	_ = _ctx
 	return _node.LocalToWindow(x, y)
+}
+
+// LongPressed reports whether a finger held the element still for half a
+// second since the last frame, on a touch screen. The press then clicks
+// nothing as it lifts.
+func (_handle Element) LongPressed() bool {
+	_node := _handle.node()
+	if _node == nil {
+		return false
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return _node.LongPressed()
 }
 
 // Loop returns the progress of an animation that starts over every
@@ -7039,14 +7125,19 @@ func (_handle Element) PointerPosition() (float32, float32, bool) {
 // look, for items of a layout of one's own.
 //
 // PopoverMenuButton draws the menu of a menu button so.
-func (_handle Element) PopoverMenu(build func(m *Menu)) Element {
+//
+// Its options style the panel of the menu and of its submenus, and the
+// rows of their items, as a menu button's (PopoverMenuOptions): a context
+// menu that unfolds from where it opened, as the app's drawn menu buttons
+// do.
+func (_handle Element) PopoverMenu(build func(m *Menu), options ...PopoverMenuOptions) Element {
 	_node := _handle.node()
 	if _node == nil {
 		return Element{}
 	}
 	_ctx := _node.c
 	_ = _ctx
-	return wrapElement(_node.PopoverMenu(build))
+	return wrapElement(_node.PopoverMenu(build, options...))
 }
 
 // PopoverMenuButton makes the element a menu button, as Menu does, whose
@@ -7263,6 +7354,29 @@ func (_handle Element) Pretty() Element {
 	return wrapElement(_node.Pretty())
 }
 
+// PullToRefresh lets a finger pull a scroll container's content past its top
+// to refresh it, as with iOS's UIRefreshControl and Android's swipe to
+// refresh, each drawn as on its system: an indicator shows, spinning while
+// s.Refreshing. It reports whether the finger just asked to refresh: fetch
+// what's new, and set s.Refreshing to false.
+//
+//	list := ui.Scroll(c).Fill()
+//	if list.PullToRefresh(&app.refresh) {
+//		go func() {
+//			items := fetch()
+//			win.Update(func() { app.items, app.refresh.Refreshing = items, false })
+//		}()
+//	}
+func (_handle Element) PullToRefresh(s *RefreshState) bool {
+	_node := _handle.node()
+	if _node == nil {
+		return false
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return _node.PullToRefresh(s)
+}
+
 // Query binds *q to the text being typed in a TokenField's input, for an
 // app that looks up suggestions as the user types, as a mail's recipients
 // in an address book. The field writes the text to *q as Query is called,
@@ -7379,6 +7493,19 @@ func (_handle Element) ReplaceText(start int, end int, s string) Element {
 	_ctx := _node.c
 	_ = _ctx
 	return wrapElement(_node.ReplaceText(start, end, s))
+}
+
+// ReturnKey sets what the return key of an on-screen keyboard says, for a
+// single-line input. It submits the input as Enter does; ReturnNext moves
+// the focus on as well.
+func (_handle Element) ReturnKey(k ReturnKeyType) Element {
+	_node := _handle.node()
+	if _node == nil {
+		return Element{}
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return wrapElement(_node.ReturnKey(k))
 }
 
 // Reverse lays the children out in the other direction: a Row from right
@@ -7839,8 +7966,8 @@ func (_handle Element) Search() Element {
 }
 
 // Selectable lets the user select and copy text by dragging, double-clicking
-// a word, triple-clicking a line, or using Shift with the arrows. Its context
-// menu has Copy and Select All; Cmd+C copies the selection.
+// a word, triple-clicking a paragraph, or using Shift with the arrows. Its
+// context menu has Copy and Select All; Cmd+C copies the selection.
 //
 // On a container, its Text and RichText descendants share one selection.
 // Copy joins their selected text with newlines, in the order they were built.
@@ -8461,6 +8588,40 @@ func (_handle Element) TopPercent(p float32) Element {
 	_ctx := _node.c
 	_ = _ctx
 	return wrapElement(_node.TopPercent(p))
+}
+
+// Touches returns the fingers on a touchscreen that landed on the element
+// or on an element inside it, every one down and those that lifted or
+// were canceled since the last build, in the order they landed, unless the
+// element is disabled. Each keeps its ID for as long as it touches, so that
+// a view tells them apart and recognizes gestures of its own, as a
+// whiteboard turning the page as four fingers swipe or clearing it as five
+// tap:
+//
+//	for _, t := range canvas.Touches() {
+//		switch t.Phase {
+//		case ui.TouchBegan, ui.TouchMoved:
+//			strokes.Draw(t.ID, t.X, t.Y)
+//		case ui.TouchEnded, ui.TouchCanceled:
+//			strokes.End(t.ID)
+//		}
+//	}
+//
+// The fingers still do what they do without it, which apps that do not ask
+// see alone: a tap clicks, one finger scrolls, two pinch. The window
+// follows its fingers once a view asks: those down before, and lifting
+// later, are not told of. Windows, Linux and browsers report touches;
+// macOS has no touchscreens, and a trackpad's fingers, which are not points
+// on the screen, report none. Elements asking for them get a frame
+// whenever a finger lands, moves or lifts.
+func (_handle Element) Touches() []Touch {
+	_node := _handle.node()
+	if _node == nil {
+		return nil
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return _node.Touches()
 }
 
 // TrackLines keeps in l where the text area lays out its lines.

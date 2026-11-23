@@ -96,7 +96,7 @@ func paintQuarterText(p *Painter, origin Rect) {
 			p.s.Glyphs = append(p.s.Glyphs, sg)
 		}
 		if run != nil {
-			run.flush(p, baseline)
+			run.flush(p)
 		}
 		if sp != nil {
 			sp.lines(p, l, li, x, y, color, deco)

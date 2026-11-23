@@ -182,6 +182,15 @@ type WindowButtonsBackend interface {
 	WindowButtons() (start, end []string)
 }
 
+// ExitBackend releases what the native application must not take into the
+// process's exit (Windows: its windows, whose window procedure is Go's and
+// cannot run once the process exits). The app calls Exiting once, on the
+// main thread, when it has finished and is about to exit; nothing native
+// is used after it.
+type ExitBackend interface {
+	Exiting()
+}
+
 // AppOptions configures Backend.Init.
 type AppOptions struct {
 	Name string
@@ -240,6 +249,9 @@ type AppHandler interface {
 	// MediaCommand reports a media key or a remote command for what
 	// NowPlaying shows; position is where MediaSeek asks to go.
 	MediaCommand(cmd MediaCommand, position time.Duration)
+	// MemoryWarning reports that the system is short of memory, on the
+	// systems that say: phones end apps that keep too much.
+	MemoryWarning()
 }
 
 // AppController exposes application level native features.
@@ -504,6 +516,8 @@ type WindowOptions struct {
 	// itself fills, instead of a webview: Window.Surface returns it, the
 	// webview methods do nothing and the webview options are ignored.
 	Surface bool
+	// OwnScene opens the window as a window of the system's own, on iPad.
+	OwnScene bool
 }
 
 // DataStoreOptions describe a website data store (AppController.NewDataStore).
@@ -832,6 +846,14 @@ type WebViewPlacement struct {
 	// top-left clockwise, as the hole showing it has: the page shows, and
 	// takes the pointer, inside them.
 	Radii [4]float64
+	// Opacity is how opaque the page shows, 0 to 1. Where the content
+	// painted a background under the element, opaque or through, the
+	// frames' own hole blends the page with it, and this is 1. Where none
+	// is, as in a transparent window, this is the element's opacity, and
+	// the platform fades the page itself by it, over what is behind the
+	// window, as over a parent window a flyout leaves live. A platform
+	// that cannot fades nothing (the page then shows whole).
+	Opacity float64
 	// Covers are the boxes, within Clip, of what the content painted over
 	// the web view that takes the pointer: there the pointer is the
 	// surface's, elsewhere in Clip the web view's.
@@ -1090,21 +1112,34 @@ const (
 	BadgeAlignRight  BadgeAlignment = "right"
 )
 
+// BadgeShape is the background behind a badge.
+type BadgeShape string
+
+const (
+	BadgeShapeSquare  BadgeShape = "square"
+	BadgeShapeRounded BadgeShape = "rounded"
+	BadgeShapePill    BadgeShape = "pill"
+)
+
 // MenuItem is a snapshot of a menu item. ID identifies the public item the
 // native item was built from.
 type MenuItem struct {
-	ID          int
-	Type        MenuItemType
-	Label       string
-	Subtitle    string
-	Badge       string
-	BadgeAlign  BadgeAlignment
-	Role        string
-	Accelerator string
-	Enabled     bool
-	Visible     bool
-	Checked     bool
-	ToolTip     string
+	ID             int
+	Type           MenuItemType
+	Label          string
+	Subtitle       string
+	Badge          string
+	BadgeAlign     BadgeAlignment
+	BadgeShape     BadgeShape
+	BadgeColor     *Color
+	BadgeTextColor *Color
+	KeepOpen       bool
+	Role           string
+	Accelerator    string
+	Enabled        bool
+	Visible        bool
+	Checked        bool
+	ToolTip        string
 	// Icon is the image beside the label, nil for none.
 	Icon *MenuIcon
 	// IconColor, when set, is the color of a template Icon in the menus
@@ -1388,13 +1423,20 @@ const (
 	MediaNext
 	MediaPrevious
 	MediaSeek
+	// MediaRaise asks for the app's window in front, as MPRIS's Raise
+	// does. The core answers it whatever the info's Commands, which never
+	// hold it.
+	MediaRaise
 )
 
 // NowPlayingInfo is what the app plays, fully defaulted by the core.
 type NowPlayingInfo struct {
 	Title, Artist, Album string
-	Artwork              []byte // PNG or JPEG, or nil
-	Duration             time.Duration
+	// Artists are the track's artists, one each, for the systems that
+	// take a list (MPRIS); Artist is them joined with ", ".
+	Artists  []string
+	Artwork  []byte // PNG or JPEG, or nil
+	Duration time.Duration
 	// Position is where playback was when the core set the info; the
 	// system advances it at Rate while State is "playing".
 	Position time.Duration
@@ -1462,6 +1504,10 @@ type Tray interface {
 	Dark() bool
 	SetImage(png []byte, template bool) error
 	SetTitle(title string)
+	// SetTitleMonospaced draws the title in the system's monospaced font,
+	// every character as wide as the others, where the icon has a title
+	// (macOS).
+	SetTitleMonospaced(on bool)
 	SetToolTip(tip string)
 	SetMenu(m *Menu)
 	PopUpMenu(m *Menu)
@@ -1494,4 +1540,126 @@ type Notification struct {
 type NotificationSender struct {
 	ID, Name string
 	Avatar   []byte
+}
+
+// DeviceBackend is a Backend of a device held in the hand: phones and
+// tablets. Backends of desktops have none, and the core's modules do
+// nothing or report that they cannot.
+type DeviceBackend interface {
+	// Haptic plays a haptic: "selection", "light", "medium", "heavy",
+	// "success", "warning" or "error".
+	Haptic(kind string)
+	// SetSystemBars sets the color of the icons of the system's bars,
+	// "auto", "light" or "dark", and whether the bars hide.
+	SetSystemBars(style string, hidden bool)
+	// SetOrientations limits the orientations the screen may take: a mask
+	// of Orientation values, 0 for any.
+	SetOrientations(mask uint32)
+	// Share shows the system's share sheet; done is called once it is
+	// shown, or with why it could not be.
+	Share(s ShareRequest, done func(error))
+	// SaveFile has the user choose where to keep a copy of the file at path.
+	SaveFile(path, name string, done func(saved string, err error))
+	// Battery tells the state of the battery.
+	Battery() BatteryStatus
+	// SetBarItems sets the buttons at the end of w's navigation bar.
+	SetBarItems(w Window, items []BarItem)
+}
+
+// PluginBackend is a Backend whose host runs plugins' native code: the Swift
+// and Kotlin that plugins bring (mygo-plugin.json), which it reaches by name.
+type PluginBackend interface {
+	// PluginCall calls a method of a plugin's native code, with JSON, and
+	// done with its JSON answer, or an error (a PluginError, with its code).
+	PluginCall(plugin, method string, args []byte, done func(result []byte, err error))
+	// OnPluginEvent sets who hears the events of plugins' native code.
+	OnPluginEvent(fn func(plugin, name string, data []byte))
+}
+
+// PluginError is an error of a plugin's native code.
+type PluginError struct{ Code, Message string }
+
+func (e *PluginError) Error() string {
+	if e.Code == "" {
+		return e.Message
+	}
+	return e.Code + ": " + e.Message
+}
+
+// Orientations of the screen, for DeviceBackend.SetOrientations.
+const (
+	OrientationPortrait uint32 = 1 << iota
+	OrientationPortraitUpsideDown
+	OrientationLandscapeLeft
+	OrientationLandscapeRight
+)
+
+// ShareRequest is what a share sheet shares. X and Y are where in the window
+// in front it comes from, which an iPad's sheet points at.
+type ShareRequest struct {
+	Text, URL string
+	Paths     []string
+	X, Y      float64
+}
+
+// BatteryStatus is the state of a device's battery. Level is from 0 to 1,
+// negative where it is not known.
+type BatteryStatus struct {
+	Level    float64
+	Charging bool
+	LowPower bool
+}
+
+// BarItem is a button of a window's navigation bar.
+type BarItem struct {
+	Title, Symbol string
+	// Icon is a PNG drawn as a template (Tab.Icon).
+	Icon    []byte
+	OnClick func()
+}
+
+// NavigationBackend is a Backend with the navigation of phones: a bar of
+// tabs, each showing a window, and stacks of windows pushed over others,
+// both the system's own (UIKit's tab bar and navigation controllers,
+// Android's bottom navigation and toolbars). Backends of desktops have
+// none: the core shows the windows as windows.
+type NavigationBackend interface {
+	// NewTabs shows a bar of tabs at the bottom of the screen, tab i
+	// showing tabs[i].Window, over the windows shown before.
+	NewTabs(tabs []Tab, h TabsHandler) (TabBar, error)
+	// PushWindow shows child over parent in parent's stack, with a bar
+	// at the top holding child's title and a back button, which pops it.
+	PushWindow(parent, child Window, animated bool)
+	// PopWindow takes w out of its stack, back to the window under it.
+	PopWindow(w Window, animated bool)
+}
+
+// Tab is a tab of a TabBar.
+type Tab struct {
+	Title string
+	// Symbol names an SF Symbol, which iOS draws; Icon is a PNG drawn as
+	// a template (its alpha, in the bar's colors), which Android draws,
+	// and iOS without a Symbol.
+	Symbol string
+	Icon   []byte
+	Window Window
+}
+
+// TabBar is a bar of tabs of a NavigationBackend.
+type TabBar interface {
+	Select(i int)
+	SetBadge(i int, badge string)
+	Close()
+}
+
+// TabsHandler hears of a TabBar, on the main thread.
+type TabsHandler interface {
+	// TabSelected reports that the user chose tab i.
+	TabSelected(i int)
+}
+
+// NavigationHandler is a WindowHandler told that the user popped its
+// window off its stack (the back button, a swipe, Android's back).
+type NavigationHandler interface {
+	Popped()
 }

@@ -5,7 +5,7 @@ go 1.27.3
 require (
 	github.com/clipperhouse/uax29/v2 v2.5.0
 	github.com/dlclark/regexp2 v1.12.0
-	github.com/egoist/mygo v0.9.1
+	github.com/egoist/mygo v0.10.0
 	github.com/fyne-io/image v0.1.1
 	github.com/go-latex/latex v0.0.0-20250304174226-2790903426af
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
