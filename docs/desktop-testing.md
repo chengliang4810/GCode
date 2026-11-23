@@ -16,15 +16,14 @@
 `TestDesktopLocalApplicationUsage` 的深浅主题均通过，统计面板与用量页代表截图已检查。
 应用从独立真实核心的持久化数据重开，模型端点为本地 HTTP 夹具；不代表真实供应商或远程宿主验收。
 证据：`output/durable-metrics-20261113/native/20261113-012455-212660129/evidence.json`。
-设计与验收边界见 [统计持久化](metrics-persistence-2026-11-13.md)。
+设计与验收边界以 `internal/accounting` 的实现与测试为准。
 
 2026-11-11 MyGo v0.8.3：设备菜单、引用图标对齐、模型选择器、正文/预览链接、
 Markdown 表格、设置持久化、面板开合和拖拽关闭共 8 组原生用例通过，
 证据为 `output/mygo-upgrade-20261111/native-final/20261111-122519-2869211955/evidence.json`。
 相关深浅主题截图已检查。引用布局使用私有核心重开的显示历史夹具；链接使用真实本机文件
 和回环 HTTP 模型/网页。自动化不证明 OS 输入法、远程宿主或真实供应商验收。
-原有引用发送用例仍有升级前可复现的技能展开问题，边界与对照证据见
-[MyGo 升级记录](mygo-upgrade-2026-11-11.md)。
+原有引用发送用例仍有升级前可复现的技能展开问题。
 
 2026-11-11 链接读取错误清理：`TestDesktopLocalTranscriptLinks` 增加先读取二进制文件失败、
 再打开有效中文 UTF-8 文本的流程，验证正文显示且旧编码错误消失、中央草稿保持。
@@ -41,8 +40,8 @@ Markdown 表格、设置持久化、面板开合和拖拽关闭共 8 组原生�
 同轮原有 `TestDesktopLocalTranscriptActivity` 在思考预览无障碍文本断言处失败；
 截图可见首行，按钮标签不包含预览正文，失败证据保留在该专项的 `native-final/`。
 
-2026-11-05 审计修复后的全仓检查、设置保存、密钥显隐、链接、模型重试与侧聊验收
-见 [核验后修复与决策](audit-repairs-2026-11-05.md)。`output/go.mod` 将生成证据隔离为
+2026-11-05 审计修复后的全仓检查、设置保存、密钥显隐、链接、模型重试与侧聊验收通过。
+`output/go.mod` 将生成证据隔离为
 独立模块，保留其中的中文测试工作区，避免其成为主模块的 Go 导入路径。
 
 桌面退出总时限按用户选择固定为 5 秒；`cmd/rcode/shutdown_test.go` 覆盖精确截止、
@@ -62,7 +61,7 @@ Go 业务核心测试和 `ui.Tester` 组件测试继续保留；端到端测试�
 2026-11-05 目标/待办补齐验证新增工具状态详情、编辑标签关闭重开草稿、
 重新载入和恢复执行 ID 隔离。最新 Windows 深浅主题记录为
 `output/goal-todo-rcode-audit/20261105-043717-3872042836/evidence.json`；
-对照清单与边界见 [RCode 目标/待办复核](rcode-goal-todo-audit.md)。
+对照清单与边界以 `internal/contracts` 的待办类型与测试为准。
 
 ## 执行
 
@@ -185,7 +184,7 @@ macOS 设置标题栏侧栏动效修复的原生记录位于
 `output/storage-native-final/20261030-182931-3147670004/evidence.json`。
 存储切换、设置重启、真实 Git worktree、深浅主题侧聊与模型缓存共 5 项通过。
 配置与正文分片、故障回滚、离线根与 Linux 检查边界见
-[存储验收](storage-acceptance-2026-10-30.md)。
+[session-storage](session-storage.md)。
 
 2026-10-30：工具折叠专项证据为
 `output/fold-motion-native/20261030-175804-1229908973/evidence.json`。

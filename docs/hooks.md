@@ -209,7 +209,7 @@ Hook 详情不进入回复复制，也不计作模型的工具调用或进度说
 stderr、显式通知和执行错误仍可在详情中检查。`hook.finished` 继续保留脱敏审计输出。
 折叠展示不改变 `additionalContext` 注入、权限决策、参数改写及后台结果投递。
 现有普通文本历史不解析、不迁移或改写，新记录采用上述结构。
-专项验证与证据见 [Hook 执行记录修复](hook-records-2026-11-16.md)。
+专项验证见 `internal/agent` 的 Hook 执行记录测试与 `output/` 下的历史运行证据。
 
 插件字段诊断保留组件、字段路径及消息。未知 Hook 字段在中文界面显示为
 `hooks: SessionStart.powershell: 未识别的 Hook 字段：已保留，执行时忽略。`，

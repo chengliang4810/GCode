@@ -92,4 +92,4 @@ Go vet、MyGo vet、共享控件门禁与普通桌面构建通过。
 `CGO_ENABLED=0 go test ./cmd/... ./internal/... ./scripts/...` 全部通过；
 新增编辑页聚焦与保存快捷键另有组件回归通过。
 
-后续逐项复核、补齐项目和最新验收记录见 [RCode 目标/待办复核](rcode-goal-todo-audit.md)。
+后续逐项复核、补齐项目和最新验收记录见 `internal/contracts` 的待办类型与对应测试。

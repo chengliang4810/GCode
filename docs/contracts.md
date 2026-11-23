@@ -7,7 +7,7 @@ No HTTP, stdio or JavaScript bridge sits between the local UI and engine.
 
 The production implementation is `internal/engine`. Deterministic scenarios use
 `internal/mock` only when explicitly launched with `--scenario`. The historical
-[UI fixture contract](ui-fixture-contracts.md) describes those scenes, not live
+fixture contract describes those scenes, not live
 model, tool, account or workspace capabilities.
 
 ## Ownership and events
@@ -117,7 +117,7 @@ Billing and cloud accounts are not implemented. Tools execute with the host
 process's OS permissions; session, send and run contracts expose no access mode
 or Plan configuration.
 PR pages, project actions and local account sign-in/sign-out commands were
-removed. See [the cleanup record](ui-residual-cleanup.md) and
+removed; see
 [naming/checkouts](thread-naming-worktrees.md).
 The sidebar now has a repository PR web link, rather than the retired PR
 workbench: `Project.pullRequestsUrl` is derived from the host's Git origin

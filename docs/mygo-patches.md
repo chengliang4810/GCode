@@ -48,7 +48,7 @@ go tool mygo vet .
 
 ## 验证
 
-上游模块校验成功。21 项补丁逐一通过 apply --check，重建的 3,049 个文件与当前源码逐字节一致。框架身份和 Windows 桌面设置控件回归通过。上游贡献筛选见 [MyGo 补丁上游审查](mygo-upstream-pr-triage-2026-11-23.md)。
+上游模块校验成功。21 项补丁逐一通过 apply --check，重建的 3,049 个文件与当前源码逐字节一致。框架身份和 Windows 桌面设置控件回归通过。上游贡献筛选见 `reference/validation/` 下的阶段结果。
 
 两项 Windows 字形测试失败，分别涉及变换裁切夹具和 DirectWrite 覆盖率对照。在当前机器用原 v0.9.1 源码复跑，两个测试同样失败。
 
