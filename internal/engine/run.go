@@ -418,9 +418,17 @@ func (e *Engine) startRunWithProvidersLocked(
 			system += loadInstructions(root, session.CWD)
 		}
 		system += resources.instructions()
+		var memoryRoot *os.Root
 		if memoryEnabled {
-			_ = os.MkdirAll(memoryDir, 0o700)
-			system += "\n\n" + memorySection(memoryDir)
+			var err error
+			memoryRoot, err = openMemoryRoot(root, session.CWD)
+			if err != nil {
+				log.Printf("open project memory: %v", err)
+				memoryEnabled = false
+			} else {
+				defer memoryRoot.Close()
+				system += "\n\n" + memorySection(memoryRoot.Name())
+			}
 		}
 		// Everything above is stable for the session and worth caching; what
 		// follows depends on the request (side chat framing, MCP discovery
@@ -458,6 +466,9 @@ func (e *Engine) startRunWithProvidersLocked(
 			}
 		}
 		tools = runtimeTools
+		if memoryRoot != nil {
+			tools = agent.ScopeMemoryWrites(tools, memoryRoot)
+		}
 		// Add optional tools after selecting the session-owned runtime set.
 		// Search credentials remain independent of the model provider.
 		if toolErr == nil && searchSettings.Enabled && (child == nil || !contracts.IsReadOnlySubagent(child.profile.ID)) {

@@ -23,6 +23,23 @@ func memoryDirectory(configDir, cwd string) string {
 	return filepath.Join(configDir, "projects", memoryProjectSlug(cwd), "memory")
 }
 
+func openMemoryRoot(configDir, cwd string) (*os.Root, error) {
+	configDir, err := filepath.Abs(configDir)
+	if err != nil {
+		return nil, err
+	}
+	root, err := os.OpenRoot(configDir)
+	if err != nil {
+		return nil, err
+	}
+	defer root.Close()
+	relative := filepath.Join("projects", memoryProjectSlug(cwd), "memory")
+	if err := root.MkdirAll(relative, 0o700); err != nil {
+		return nil, err
+	}
+	return root.OpenRoot(relative)
+}
+
 func memoryProjectSlug(cwd string) string {
 	return strings.Map(func(r rune) rune {
 		switch {

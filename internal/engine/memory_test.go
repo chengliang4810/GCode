@@ -1,13 +1,65 @@
 package engine
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"gcode/internal/agent"
 	"gcode/internal/model"
 )
+
+func TestProjectMemoryWriteAndEdit(t *testing.T) {
+	cwd, config := t.TempDir(), t.TempDir()
+	root, err := openMemoryRoot(config, cwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	base := agent.CoreTools()
+	tools := agent.ScopeMemoryWrites(base, root)
+	call := func(tools []agent.Tool, name string, args map[string]string) error {
+		t.Helper()
+		raw, err := json.Marshal(args)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, tool := range tools {
+			if tool.Definition().Name == name {
+				_, err := tool.Execute(t.Context(), cwd, raw)
+				return err
+			}
+		}
+		t.Fatalf("missing tool %s", name)
+		return nil
+	}
+	index := filepath.Join(memoryDirectory(config, cwd), memoryIndexFile)
+	write := map[string]string{"file_path": index, "content": "- original"}
+	if err := call(base, "Write", write); err == nil {
+		t.Fatal("unscoped tool could write the memory index")
+	}
+	if err := call(tools, "Write", write); err != nil {
+		t.Fatal(err)
+	}
+	if err := call(tools, "Edit", map[string]string{"file_path": index, "old_string": "original", "new_string": "updated"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := loadMemoryIndex(root.Name()); got != "- updated" {
+		t.Fatalf("memory index = %q", got)
+	}
+	other := filepath.Join(memoryDirectory(config, cwd+"-other"), memoryIndexFile)
+	if err := call(tools, "Write", map[string]string{"file_path": other, "content": "blocked"}); err == nil {
+		t.Fatal("scoped tool could write another project's index")
+	}
+	if err := root.Symlink(t.TempDir(), "outside"); err == nil {
+		path := filepath.Join(root.Name(), "outside", "note.md")
+		if err := call(tools, "Write", map[string]string{"file_path": path, "content": "blocked"}); err == nil {
+			t.Fatal("scoped tool followed a symlink out of the memory root")
+		}
+	}
+}
 
 func TestMemoryProjectSlug(t *testing.T) {
 	got := memoryProjectSlug(`C:\Users\jerry\Documents\game`)

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ type fileTool struct {
 	name, description string
 	properties        map[string]any
 	required          []string
+	memoryRoot        *os.Root
 }
 
 func (t fileTool) Definition() model.Tool {
@@ -34,9 +36,9 @@ func CoreTools() []Tool {
 	text := func(description string) any { return map[string]any{"type": "string", "description": description} }
 	tools := []Tool{
 		readTool{},
-		fileTool{"Write", "Create or replace a file with the supplied complete content. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "content": text("Complete content")}, []string{"file_path", "content"}},
-		fileTool{"Edit", "Replace an exact old_string with new_string. Read the file first. The match must be unique unless replace_all is true. CRLF and LF match equivalently. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "old_string": text("Exact old text"), "new_string": text("Replacement"), "replace_all": map[string]any{"type": "boolean", "default": false}}, []string{"file_path", "old_string", "new_string"}},
-		fileTool{"ListDirectory", "List directory entries. GCode extension.", map[string]any{"path": text("Directory path")}, []string{"path"}},
+		fileTool{"Write", "Create or replace a file with the supplied complete content. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "content": text("Complete content")}, []string{"file_path", "content"}, nil},
+		fileTool{"Edit", "Replace an exact old_string with new_string. Read the file first. The match must be unique unless replace_all is true. CRLF and LF match equivalently. Paths must stay inside the session working directory.", map[string]any{"file_path": text("File path"), "old_string": text("Exact old text"), "new_string": text("Replacement"), "replace_all": map[string]any{"type": "boolean", "default": false}}, []string{"file_path", "old_string", "new_string"}, nil},
+		fileTool{"ListDirectory", "List directory entries. GCode extension.", map[string]any{"path": text("Directory path")}, []string{"path"}, nil},
 		globTool{},
 		grepTool{},
 		fileTool{"Bash", shellDescription(), map[string]any{
@@ -44,9 +46,24 @@ func CoreTools() []Tool {
 			"timeout":                   map[string]any{"type": "integer", "minimum": 1, "maximum": 600000, "description": "Timeout in milliseconds, default 120000"},
 			"run_in_background":         map[string]any{"type": "boolean", "description": "Background execution is currently unsupported"},
 			"dangerouslyDisableSandbox": map[string]any{"type": "boolean", "description": "Sandbox override is currently unsupported"},
-		}, []string{"command"}},
+		}, []string{"command"}, nil},
 		todoWriteTool{},
 		webFetchTool{},
+	}
+	return tools
+}
+
+// ScopeMemoryWrites binds the engine-owned memory directory to the existing
+// writing tools for one run. The caller owns the root and its lifetime.
+func ScopeMemoryWrites(tools []Tool, root *os.Root) []Tool {
+	tools = slices.Clone(tools)
+	for i, tool := range tools {
+		if t, ok := tool.(fileTool); ok && (t.name == "Write" || t.name == "Edit") {
+			t.memoryRoot = root
+			t.description = strings.TrimSuffix(t.description, " Paths must stay inside the session working directory.") +
+				" Paths must stay inside the session working directory or the project memory directory specified in the system prompt."
+			tools[i] = t
+		}
 	}
 	return tools
 }
@@ -71,7 +88,7 @@ func EnvironmentInstructions(cwd string) string {
 // fileEffectRoot confines a writing file tool to the session working directory.
 // The relative name is opened through os.Root, so a symlink inside the
 // workspace cannot redirect the effect outside it.
-func fileEffectRoot(cwd, path string) (*os.Root, string, error) {
+func (t fileTool) effectRoot(cwd, path string) (*os.Root, string, error) {
 	if cwd == "" {
 		return nil, "", errors.New("file tools require a session working directory")
 	}
@@ -82,6 +99,13 @@ func fileEffectRoot(cwd, path string) (*os.Root, string, error) {
 	target, err := filepath.Abs(path)
 	if err != nil {
 		return nil, "", err
+	}
+	if t.memoryRoot != nil {
+		relative, err := filepath.Rel(t.memoryRoot.Name(), target)
+		if err == nil && relative != "." && filepath.IsLocal(relative) {
+			root, err := t.memoryRoot.OpenRoot(".")
+			return root, relative, err
+		}
 	}
 	relative, err := filepath.Rel(base, target)
 	if err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
@@ -145,9 +169,9 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 	}
 	switch t.name {
 	case "Write":
-		return executeFileWrite(args, cwd, path)
+		return t.executeFileWrite(args, cwd, path)
 	case "Edit":
-		return executeFileEdit(args, cwd, path)
+		return t.executeFileEdit(args, cwd, path)
 	case "ListDirectory":
 		return executeDirectoryList(path)
 	case "Bash":
@@ -156,11 +180,11 @@ func (t fileTool) Execute(ctx context.Context, cwd string, raw json.RawMessage) 
 	return model.ToolOutput{}, errors.New("unknown tool")
 }
 
-func executeFileWrite(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
+func (t fileTool) executeFileWrite(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
 	if args.FilePath == "" || args.Content == nil {
 		return model.ToolOutput{}, errors.New("file_path and content are required")
 	}
-	root, relative, err := fileEffectRoot(cwd, path)
+	root, relative, err := t.effectRoot(cwd, path)
 	if err != nil {
 		return model.ToolOutput{}, err
 	}
@@ -182,14 +206,14 @@ func executeFileWrite(args fileToolArgs, cwd, path string) (model.ToolOutput, er
 	return model.ToolOutput{Text: "Wrote " + path, Data: map[string]any{"type": kind, "filePath": path, "content": *args.Content, "originalFile": original, "structuredPatch": filePatch(string(previous), *args.Content)}}, err
 }
 
-func executeFileEdit(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
+func (t fileTool) executeFileEdit(args fileToolArgs, cwd, path string) (model.ToolOutput, error) {
 	if args.FilePath == "" || args.OldString == nil || args.NewString == nil {
 		return model.ToolOutput{}, errors.New("file_path, old_string and new_string are required")
 	}
 	if *args.OldString == *args.NewString {
 		return model.ToolOutput{}, errors.New("old_string and new_string must differ")
 	}
-	root, relative, err := fileEffectRoot(cwd, path)
+	root, relative, err := t.effectRoot(cwd, path)
 	if err != nil {
 		return model.ToolOutput{}, err
 	}
