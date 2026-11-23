@@ -2,14 +2,16 @@ package desktop
 
 import (
 	"fmt"
+	"slices"
+	"strings"
+	"unicode/utf8"
+
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"gcode/internal/linktarget"
 	"gcode/internal/workbench"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/markdown"
-	"strings"
-	"unicode/utf8"
 )
 
 const (
@@ -74,6 +76,13 @@ func (a *App) chatView(c *ui.Context) {
 	a.transcriptListScope(c, root, &a.messages, a.sessionID, func() {
 		ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
 			a.sessionStorageNotice(c, a.currentSession())
+			if a.sessionID != "" && slices.ContainsFunc(a.state.WorkflowRuns, func(run contracts.WorkflowRun) bool { return run.SessionID == a.sessionID }) {
+				sessionID := a.sessionID
+				ui.Row(c).FillWidth().Padding(0, 12).Justify(ui.End).Children(func() {
+					iconButton(c.Key("chat-workflow-runs"), "git-branch", tr(c, "Workflow runs")).
+						OnClick(func() { a.openWorkflowRuns(sessionID) })
+				})
+			}
 			if a.expanded["conversation-find"] {
 				ui.Row(c).FillWidth().Padding(4, 12).Gap(6).AlignItems(ui.Center).Children(func() {
 					ui.TextInput(c, &a.conversationQuery).Placeholder(tr(c, "Find in conversation")).Label(tr(c, "Find in conversation")).Grow(1)

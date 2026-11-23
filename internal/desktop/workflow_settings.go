@@ -66,7 +66,7 @@ func (a *App) workflowSettingsSheet(c *ui.Context, run contracts.WorkflowRun, st
 			ui.Text(c, tr(c, "Max concurrency")).FillWidth().FontWeight(500)
 			ui.Text(c, tr(c, "The limit only has a lower bound of one.")).FillWidth().
 				FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Wrap()
-			ui.TextInput(c.Key("workflow-settings-concurrency:"+run.ID), &state.concurrencyText).
+			controlTextInput(c.Key("workflow-settings-concurrency:"+run.ID), &state.concurrencyText).
 				FillWidth().Placeholder(strconv.Itoa(state.concurrency)).
 				Label(tr(c, "Max concurrency"))
 			if consequence := a.workflowSettingsConsequence(run, state); consequence != "" {
@@ -88,40 +88,51 @@ func (a *App) workflowSettingsSheet(c *ui.Context, run contracts.WorkflowRun, st
 
 // workflowModelOptions draws the instance model choices of one run.
 func (a *App) workflowModelOptions(c *ui.Context, run contracts.WorkflowRun, state *workflowSettingsState) {
-	a.workflowModelChoices(c, "workflow-settings-models:"+run.ID, a.workflowSessionModel(run), state.modelID, func(modelID string) {
-		state.modelID = choiceModelID(modelID)
+	a.workflowModelChoices(c, "workflow-settings-models:"+run.ID, a.workflowSessionModel(run), &state.modelID, func(string) {
 		state.hasModel = true
 	})
 }
 
 // workflowModelChoices 画实例模型的选项。空值表示沿用会话模型。
-func (a *App) workflowModelChoices(c *ui.Context, key, sessionModel, current string, pick func(string)) {
+func (a *App) workflowModelChoices(c *ui.Context, key, sessionModel string, current *string, pick func(string)) {
+	sessionLabel := tr(c, "Session model")
 	choices := []struct{ value, label string }{
-		{value: "", label: tr(c, "Session model")},
+		{value: "", label: sessionLabel},
+	}
+	label := sessionLabel
+	if *current != "" {
+		label = *current
 	}
 	for _, model := range a.state.Models {
-		choices = append(choices, struct{ value, label string }{value: model.ID, label: a.runtimeModelLabel(model)})
-	}
-	ui.Column(c.Key(key)).FillWidth().Gap(6).Children(func() {
-		for _, choice := range choices {
-			selected := current == choice.value
-			label := choice.label
-			if choice.value == "" && sessionModel != "" {
-				label = tr(c, "Session model") + " (" + sessionModel + ")"
-			}
-			ui.Row(c).FillWidth().Children(func() {
-				option := controlButton(c, label, buttonSecondary).FillWidth().Justify(ui.Start)
-				if selected {
-					option.Background(a.palette.Active)
-				}
-				option.OnClick(func() { pick(choice.value) })
-			})
+		modelLabel := a.runtimeModelLabel(model)
+		choices = append(choices, struct{ value, label string }{value: model.ID, label: modelLabel})
+		if model.ID == *current {
+			label = modelLabel
 		}
+		if model.ID == sessionModel {
+			choices[0].label = sessionLabel + " (" + modelLabel + ")"
+		}
+	}
+	selectModel := controlSelect(c.Key(key), current)
+	selectModel.Trigger.FillWidth().Label(tr(c, "Instance model")).OnChange(func() { pick(*current) }).Children(func() {
+		ui.Text(c, label).Grow(1).MinWidth(0).SingleLine()
+		icon(c, "alt-arrow-down", 13)
+	})
+	selectModel.Popup(func(panel ui.Element) {
+		controlSelectPopup(c, panel).Children(func() {
+			ui.Scroll(c.Key("models-scroll")).MaxHeight(240).Children(func() {
+				for _, choice := range choices {
+					controlSelectItem(c, selectModel.Item(choice.value)).Label(choice.label).Children(func() {
+						ui.Text(c, choice.label).Grow(1).MinWidth(0).SingleLine()
+						if *current == choice.value {
+							icon(c, "check", 13)
+						}
+					})
+				}
+			})
+		})
 	})
 }
-
-// choiceModelID 保留选项里的模型标识，空值就是空值。
-func choiceModelID(modelID string) string { return modelID }
 
 // workflowSettingsConsequence says what this change does to the run. The
 // wording follows the change itself: an unchanged sheet says nothing, and a
