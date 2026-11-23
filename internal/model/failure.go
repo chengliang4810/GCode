@@ -118,6 +118,8 @@ func providerBusinessFailure(err error) (Failure, bool) {
 			return Failure{Reason: "invalid_request"}, true
 		case "rate_limit_error", "rate_limit_exceeded":
 			return Failure{Reason: "rate_limited", Retryable: true}, true
+		case "upstream_http2_stream_error":
+			return Failure{Reason: "stream_interrupted", Retryable: true}, true
 		case "overloaded_error", "server_error", "api_error":
 			return Failure{Reason: "server", Retryable: true}, true
 		}

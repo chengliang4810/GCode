@@ -421,6 +421,11 @@ func TestRetrySharedAcrossAllProtocols(t *testing.T) {
 					return retryResponse(503, "busy"), nil
 				case 2:
 					return retryResponse(200, ""), nil // Missing completion marker.
+				case 3:
+					if test.protocol == Responses {
+						return retryResponse(200, "event: error\ndata: "+`{"type":"error","sequence_number":0,"code":"upstream_http2_stream_error","message":"Upstream HTTP/2 stream failed","param":null}`+"\n\n"), nil
+					}
+					return retryResponse(200, test.complete), nil
 				default:
 					return retryResponse(200, test.complete), nil
 				}
@@ -439,7 +444,11 @@ func TestRetrySharedAcrossAllProtocols(t *testing.T) {
 				}
 				return nil
 			})
-			if err != nil || calls != 3 || retries != 2 || result.Message.Text != "complete" {
+			wantRetries := 2
+			if test.protocol == Responses {
+				wantRetries++
+			}
+			if err != nil || calls != wantRetries+1 || retries != wantRetries || result.Message.Text != "complete" {
 				t.Fatalf("calls=%d retries=%d result=%+v error=%v", calls, retries, result, err)
 			}
 		})
