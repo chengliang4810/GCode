@@ -204,12 +204,12 @@ func TestMetricDurationUsesWholeSeconds(t *testing.T) {
 		{"subsecond", 900 * time.Millisecond, true, "0s"},
 		{"fraction discarded", 2500 * time.Millisecond, true, "2s"},
 		{"last second", time.Minute - time.Nanosecond, true, "59s"},
-		{"minute rollover", time.Minute, true, "1m 00s"},
+		{"minute rollover", time.Minute, true, "1m"},
 		{"last minute", time.Hour - time.Nanosecond, true, "59m 59s"},
-		{"hour rollover", time.Hour, true, "1h 00m 00s"},
+		{"hour rollover", time.Hour, true, "1h"},
 		{"long running", 353*time.Minute + 48900*time.Millisecond, true, "5h 53m 48s"},
 		{"last hour", 24*time.Hour - time.Nanosecond, true, "23h 59m 59s"},
-		{"day rollover", 24 * time.Hour, true, "1d 00h 00m 00s"},
+		{"day rollover", 24 * time.Hour, true, "1d"},
 		{"multiple days", 51*time.Hour + 4*time.Minute + 5900*time.Millisecond, true, "2d 03h 04m 05s"},
 	} {
 		t.Run(test.name, func(t *testing.T) {

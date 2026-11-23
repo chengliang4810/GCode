@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func tr(c *ui.Context, message string) string { return localize.T(c, message) }
+func tr(c *ui.Context, message string, args ...any) string { return localize.T(c, message, args...) }
 
 func date(c *ui.Context, at time.Time, layout string) string { return localize.Date(c, at, layout) }
 

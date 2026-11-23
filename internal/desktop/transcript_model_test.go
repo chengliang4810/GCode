@@ -255,7 +255,7 @@ func TestWorkedDurationUsesSharedFormat(t *testing.T) {
 		ms   int64
 		want string
 	}{
-		{"seconds", 59000, "Worked for 59s"}, {"minutes", 61000, "Worked for 1m 01s"}, {"hours", 3661000, "Worked for 1h 01m 01s"}, {"days", 90000000, "Worked for 1d 01h 00m 00s"},
+		{"seconds", 59000, "Worked for 59s"}, {"minutes", 61000, "Worked for 1m 01s"}, {"hours", 3661000, "Worked for 1h 01m 01s"}, {"days", 90000000, "Worked for 1d 01h"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			if got := a.workedFor(test.ms); got != test.want {

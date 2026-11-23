@@ -263,7 +263,7 @@ func TestGoalHeaderDurationPreservesWholeSeconds(t *testing.T) {
 	for _, test := range []struct {
 		seconds int64
 		want    string
-	}{{0, "0s"}, {59, "59s"}, {60, "1m 00s"}, {3599, "59m 59s"}, {3600, "1h 00m 00s"}, {86399, "23h 59m 59s"}, {86400, "1d 00h 00m 00s"}} {
+	}{{0, "0s"}, {59, "59s"}, {60, "1m"}, {3599, "59m 59s"}, {3600, "1h"}, {3634, "1h 34s"}, {86399, "23h 59m 59s"}, {86400, "1d"}} {
 		t.Run(test.want, func(t *testing.T) {
 			a := testApp(t, "default")
 			a.state.Settings.General.Language = "en"

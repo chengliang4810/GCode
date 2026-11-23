@@ -1,6 +1,10 @@
 package i18n
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 // Date preserves the local instant and uses a Chinese date layout where the
 // English UI contains month/day names. Currency and business values stay intact.
@@ -22,18 +26,25 @@ func Date(language string, at time.Time, layout string) string {
 	return at.Format(layout)
 }
 
-// Duration formats UI elapsed time in whole seconds, retaining every lower
-// unit through seconds. Measurement and persistence keep their original precision.
+// Duration formats UI elapsed time in whole seconds, omitting zero units.
 func Duration(language string, milliseconds int64) string {
 	seconds := max(milliseconds/1000, 0)
-	switch {
-	case seconds < 60:
+	if seconds == 0 {
 		return In(language, "%ds", seconds)
-	case seconds < 3600:
-		return In(language, "%dm %02ds", seconds/60, seconds%60)
-	case seconds < 86400:
-		return In(language, "%dh %02dm %02ds", seconds/3600, seconds/60%60, seconds%60)
-	default:
-		return In(language, "%dd %02dh %02dm %02ds", seconds/86400, seconds/3600%24, seconds/60%60, seconds%60)
 	}
+	var parts []string
+	for _, unit := range [...]struct {
+		value int64
+		label string
+	}{{seconds / 86400, "d"}, {seconds / 3600 % 24, "h"}, {seconds / 60 % 60, "m"}, {seconds % 60, "s"}} {
+		if unit.value == 0 {
+			continue
+		}
+		width := 1
+		if len(parts) > 0 {
+			width = 2
+		}
+		parts = append(parts, fmt.Sprintf("%0*d%s", width, unit.value, In(language, unit.label)))
+	}
+	return strings.Join(parts, " ")
 }
