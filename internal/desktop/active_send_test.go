@@ -65,16 +65,14 @@ func TestActiveTurnSendFollowsTheSetting(t *testing.T) {
 	}
 }
 
-// The working trailer says which of the two the send is doing.
-func TestWorkingTrailerNamesTheSteer(t *testing.T) {
+func TestPendingFollowupKeepsExistingWorkingStatus(t *testing.T) {
 	a := testApp(t, "default")
-	a.pendingSends = map[string]primaryPendingSend{"chat-0": {Queued: true, Steer: true}}
-	if word, _, visible := a.workingState("chat-0"); !visible || word != "Steering the running response" {
-		t.Fatalf("trailer = %q visible=%v", word, visible)
-	}
-	a.pendingSends["chat-0"] = primaryPendingSend{Queued: true}
-	if word, _, _ := a.workingState("chat-0"); word != "Queued — will send automatically" {
-		t.Fatalf("queued trailer = %q", word)
+	a.selectSession("chat-0")
+	setSessionStatus(a, contracts.Working)
+	want, _, _ := a.workingState("chat-0")
+	a.pendingSends = map[string]primaryPendingSend{"chat-0": {Queued: true}}
+	if word, _, visible := a.workingState("chat-0"); !visible || word != want {
+		t.Fatalf("pending followup replaced working status: %q visible=%v", word, visible)
 	}
 }
 

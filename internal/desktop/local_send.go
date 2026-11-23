@@ -108,8 +108,9 @@ func steeringMessage(queued contracts.QueuedMessage) contracts.Message {
 	return message
 }
 
-// steeringMessageID marks a projected steering message so its status and its
-// removal stay bound to the queue row it comes from.
+// steeringMessageID marks a projected steering message, so the conversation
+// can tell it apart from the core's own copy of the same input once the queue
+// row is handed over.
 func steeringMessageID(queuedID string) string {
 	return "steering:" + queuedID
 }
@@ -188,7 +189,7 @@ func (a *App) retryLocalSend(id string) {
 		if state.Pending != nil || state.Importing > 0 {
 			return
 		}
-		state.Pending = &sidePendingSend{RequestID: id, Draft: req.Text, Attachments: req.Attachments, Queued: busy, Steer: busy && req.Delivery == "steer"}
+		state.Pending = &sidePendingSend{RequestID: id, Draft: req.Text, Attachments: req.Attachments, Queued: busy}
 		state.Failure = ""
 		if state.Draft == req.Text && slices.Equal(state.Attachments, req.Attachments) {
 			state.Draft, state.Attachments = "", nil
@@ -201,7 +202,7 @@ func (a *App) retryLocalSend(id string) {
 		if a.pendingSends == nil {
 			a.pendingSends = make(map[string]primaryPendingSend)
 		}
-		a.pendingSends[req.SessionID] = primaryPendingSend{RequestID: id, DraftEpoch: send.epoch, StartedAt: a.now().UTC(), Queued: busy, Steer: busy && req.Delivery == "steer"}
+		a.pendingSends[req.SessionID] = primaryPendingSend{RequestID: id, DraftEpoch: send.epoch, StartedAt: a.now().UTC(), Queued: busy}
 		if req.SessionID == "" {
 			a.pendingNew, a.launchingNewSession = true, true
 			a.pendingNewRequestID, a.pendingNewEpoch = id, send.epoch
@@ -223,16 +224,11 @@ func (a *App) retryLocalSend(id string) {
 	a.dispatch(send.command)
 }
 
-func (a *App) localSendStatus(c *ui.Context, message contracts.Message) {
-	if id, steering := strings.CutPrefix(message.ID, "steering:"); steering {
-		ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, tr(c, "Steering the running response")).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
-			iconButton(c.Key("cancel-steering:"+id), "close", tr(c, "Cancel this correction")).OnClick(func() {
-				a.dispatch(contracts.Command{Kind: "queue.remove", ID: id})
-			})
-		})
-		return
-	}
+// localSendActions renders the actions a sent message still needs. A message
+// that the core accepted needs none: it stays in the conversation as written.
+// A correction is already on its way into the running reply, so it carries no
+// cancel button either. Only a failed send keeps a row.
+func (a *App) localSendActions(c *ui.Context, message contracts.Message) {
 	send := a.localSendByRequest(message.RequestID)
 	if send == nil || message.ID != send.message.ID && !strings.HasSuffix(message.ID, ":"+send.message.ID) {
 		return

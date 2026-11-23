@@ -161,6 +161,13 @@ func (a *App) chatView(c *ui.Context) {
 // opening its own, so a selection crosses its blocks the way the list's rows
 // do.
 func (a *App) userMessage(c *ui.Context, m contracts.Message) {
+	ui.Column(c).FillWidth().AlignItems(ui.End).Gap(4).Children(func() {
+		a.userMessageBubble(c, m)
+		a.localSendActions(c, m)
+	})
+}
+
+func (a *App) userMessageBubble(c *ui.Context, m contracts.Message) {
 	bubble := ui.Hex("#000000").Alpha(.04)
 	if a.palette.Dark {
 		bubble = ui.Hex("#ffffff").Alpha(.08)
@@ -205,7 +212,6 @@ func (a *App) userMessage(c *ui.Context, m contracts.Message) {
 					textButton(c, a.annotationLabel(item.Index)).OnClick(func() { a.workspace.FocusAnnotation(item.Index) })
 				}
 			}
-			a.localSendStatus(c, m)
 		})
 	})
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
@@ -15,6 +16,27 @@ func holdSendJobs(t *testing.T, a *App) {
 	t.Helper()
 	a.win = &mygo.Window{}
 	t.Cleanup(func() { a.win = nil })
+}
+
+func TestSteeringMessageShowsContentWithoutStatusOrCancel(t *testing.T) {
+	for _, mode := range []string{"light", "dark"} {
+		t.Run(mode, func(t *testing.T) {
+			a := testApp(t, "default")
+			a.palette = design.Palette("rcode-"+mode, mode == "dark")
+			m := steeringMessage(contracts.QueuedMessage{ID: "correction", Text: "Use the smaller file"})
+			tt := ui.NewTester(func(c *ui.Context) {
+				c.SetTheme(a.palette.UI())
+				a.userMessage(c, m)
+			}, 360, 240)
+			tt.Frame()
+			if !tt.HasText("Use the smaller file") || tt.HasText("Steering the running response") {
+				t.Fatal("user message must show the correction text without the status")
+			}
+			if _, ok := tt.Find("Cancel this correction"); ok {
+				t.Fatal("the sent correction still offers a cancel button")
+			}
+		})
+	}
 }
 
 func nextSendJob(t *testing.T, a *App) contracts.Command {

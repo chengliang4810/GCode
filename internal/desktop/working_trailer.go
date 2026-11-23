@@ -18,9 +18,6 @@ type primaryPendingSend struct {
 	DraftEpoch uint64
 	StartedAt  time.Time
 	Queued     bool
-	// Steer tells that the queued message joins the live response instead
-	// of waiting for its end.
-	Steer bool
 }
 
 // A run's status is a plain string in the shared contract: the engine marks a
@@ -195,24 +192,10 @@ func (a *App) workingState(sessionID string) (word, elapsed string, visible bool
 }
 
 func (a *App) workingStateFor(c *ui.Context, sessionID string) (word, elapsed string, visible bool) {
-	// A plain in-flight send owns only its bubble; queueing and steering stay
-	// in the trailer because those need an explanation, not "sending" itself.
-	if pending, ok := a.pendingSends[sessionID]; ok {
-		if pending.Steer {
-			return phaseText(c, "Steering the running response"), "", true
-		}
-		if pending.Queued {
-			return phaseText(c, "Queued — will send automatically"), "", true
-		}
+	if pending, ok := a.pendingSends[sessionID]; ok && !pending.Queued {
 		return "", "", false
 	}
-	if side := a.sideComposers[sessionID]; side != nil && side.Pending != nil {
-		if side.Pending.Steer {
-			return phaseText(c, "Steering the running response"), "", true
-		}
-		if side.Pending.Queued {
-			return phaseText(c, "Queued — will send automatically"), "", true
-		}
+	if side := a.sideComposers[sessionID]; side != nil && side.Pending != nil && !side.Pending.Queued {
 		return "", "", false
 	}
 	var session contracts.Session
@@ -282,9 +265,6 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 	ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 		a.activityGlyph(c)
 		color := a.palette.Muted
-		if word == "Queued — will send automatically" {
-			color = a.palette.Warning
-		}
 		ui.Text(c, caption).FontSize(design.TextSize(c, design.TextBase)).TextColor(color).SingleLine().MinWidth(0).Shrink(1)
 		if elapsed != "" {
 			ui.Text(c, elapsed).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).Margin(1, 0, 0, 0).FontFeatures("tnum")

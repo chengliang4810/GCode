@@ -1321,7 +1321,7 @@ func (a *App) send(text string) bool {
 	if a.pendingSends == nil {
 		a.pendingSends = make(map[string]primaryPendingSend)
 	}
-	a.pendingSends[a.sessionID] = primaryPendingSend{RequestID: cmd.Send.RequestID, DraftEpoch: a.draftEpoch, StartedAt: a.now().UTC(), Queued: busy, Steer: cmd.Send.Delivery == "steer"}
+	a.pendingSends[a.sessionID] = primaryPendingSend{RequestID: cmd.Send.RequestID, DraftEpoch: a.draftEpoch, StartedAt: a.now().UTC(), Queued: busy}
 	cmd.Send.Checkout = a.composerFooterCheckoutPlan()
 	if a.sessionID == "" {
 		a.pendingNew = true

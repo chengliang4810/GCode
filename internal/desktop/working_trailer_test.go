@@ -161,8 +161,8 @@ func TestWorkingSendingBridgeAndQueueStayInTheirConversation(t *testing.T) {
 	}
 	a.pendingSends["chat-0"] = primaryPendingSend{RequestID: "queued", Queued: true}
 	word, _, _ := a.workingState("chat-0")
-	if word != "Queued — will send automatically" {
-		t.Fatal("queued bridge missing")
+	if word != "" {
+		t.Fatal("queued send showed a delivery status")
 	}
 	a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: "chat-0", RequestID: "older"}}, nil)
 	if _, ok := a.pendingSends["chat-0"]; !ok {
@@ -214,12 +214,11 @@ func TestSideWorkingTrailerUsesChildRunAndSettlesWithIt(t *testing.T) {
 
 func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *testing.T) {
 	for _, test := range []struct {
-		name, word string
-		queued     bool
-		visible    bool
+		name   string
+		queued bool
 	}{
 		{name: "sending"},
-		{name: "queued", word: "Queued — will send automatically", queued: true, visible: true},
+		{name: "queued", queued: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			a, tt, child := sideViewTester(t)
@@ -233,11 +232,8 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 			state.Draft = "Keep this draft"
 			state.Pending = &sidePendingSend{RequestID: "pending", Draft: state.Draft, Queued: test.queued}
 			tt.Frame()
-			if shown := tt.HasText("Activity status: " + child.ID); shown != test.visible {
-				t.Fatalf("pending side activity row = %t, want %t", shown, test.visible)
-			}
-			if test.visible && !tt.HasText(test.word) {
-				t.Fatal("queued side send lost its explanation")
+			if tt.HasText("Activity status: " + child.ID) {
+				t.Fatal("pending side send showed a delivery status")
 			}
 			if _, elapsed, _ := a.workingState(child.ID); elapsed != "" {
 				t.Fatal("pending side send inherited a previous turn's timer")
@@ -247,7 +243,7 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 			if state.Pending == nil || state.Pending.RequestID != "pending" {
 				t.Fatal("stale acknowledgment dismissed the newer pending send")
 			}
-			if shown := tt.HasText("Activity status: " + child.ID); shown != test.visible {
+			if tt.HasText("Activity status: " + child.ID) {
 				t.Fatal("stale acknowledgment changed the pending trailer")
 			}
 			a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: child.ID, RequestID: "pending"}}, errors.New("Delivery failed"))

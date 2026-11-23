@@ -11,10 +11,13 @@
 `backend-v1.md` 及 `output/user-input-task-boundaries-final/`。
 
 2026-11-12 更新：交接语义不变，改变的是引导输入的呈现。引导消息发送后立刻作为
-对话流里的用户气泡出现，不再显示为输入框上方的队列行；气泡下标注“正在纠正当前回复”
-并提供取消入口。输入框上方的队列区只保留真正等待下一轮的普通排队消息。实现见
-`internal/desktop/local_send.go` 的 `steeringMessage` / `localSendStatus`，
-`queue_rows.go` 与 `transcript_side.go` 跳过承载引导的队列行。
+对话流里的用户气泡出现，不再显示为输入框上方的队列行。输入框上方的队列区只保留
+真正等待下一轮的普通排队消息。实现见 `internal/desktop/local_send.go` 的
+`steeringMessage`，`queue_rows.go` 与 `transcript_side.go` 跳过承载引导的队列行。
+
+2026-11-18 更新：已发出的纠正气泡只呈现消息本身，气泡下不再显示状态文案，也不提供
+取消入口；纠正被核心接受后直接进入当前回复的下一步，不再就地撤回。`queue.remove`
+仍服务于输入框上方的普通排队行。
 
 以下内容保留为 2026-11-01 的历史实现及验收记录。
 
@@ -36,9 +39,9 @@
 | `UiSettings.active_turn_send_behavior` | `contracts.GeneralSettings.ActiveTurnSendBehavior`（JSON `activeTurnSendBehavior`），值 `steer`/`queue`，空值读作 steer；默认写入 `contracts.DefaultSettings` 与 mock 种子。 |
 | 忙时 steer 立刻并入当前回合 | `App.send()` 在会话 `Working`/`AwaitingInput` 且设置为 steer 时给 `SendRequest.Delivery` 填 `"steer"`；engine 的 `drainPendingLocked`（`engine/queue.go:11`）在 `idle=false`（回合进行中）只放行 steer 行，于是它进入当前回合的下一步（`engine/run.go:635` 的 `Pending(false)`）。 |
 | 忙时排队 | Delivery 为空，消息进入 `state.Queue`，回合结束后按 `idle=true` 排空。 |
-| 引导的呈现 | 引导的队列行由 UI 投影为对话流中的用户气泡（`steeringMessage`），气泡下显示“正在纠正当前回复”与取消按钮（`queue.remove`）；队列区不渲染引导行，交接后由核心自己的消息接管，不重复显示。 |
+| 引导的呈现 | 引导的队列行由 UI 投影为对话流中的用户气泡（`steeringMessage`）；已发出的纠正气泡只呈现消息本身，气泡下没有状态行也没有取消按钮；队列区不渲染引导行，交接后由核心自己的消息接管，不重复显示。 |
 | 发送按钮三态 | `composerSendMode`（`composer_surface.go`）：空输入且运行中为 **Stop**；有内容且运行中按设置显示 **Steer the running response** 或 **Queue for the next turn**；否则 **Send message**。侧边会话的输入框同规则。 |
-| 忙时提示 | 运行中的提示语区分两种：steer 为 "Steering the running response"，queue 为 "Queued — will send automatically"（`working_trailer.go`）。2026-11-17 起，尚未被核心接受的普通发送既不在对话流活动行、也不在用户气泡下显示 "Sending…"/"正在发送…"；气泡只呈现内容，失败后才出现 "Send failed" 与重试入口。 |
+| 忙时提示 | 运行中不再有独立的 steer / queue 状态行：两者的区别只体现在发送按钮的标签（上一行），活动行显示当前阶段与耗时（`working_trailer.go`）。2026-11-17 起，尚未被核心接受的普通发送既不在对话流活动行、也不在用户气泡下显示 "Sending…"/"正在发送…"；气泡只呈现内容，失败后才出现 "Send failed" 与重试入口。2026-11-18 起，已发出的纠正气泡同样只有内容，没有状态行与取消入口。 |
 | 队列行的 Steer / 编辑 / 删除 | 行上的「Send as steering」(`queue.steer`)、「Edit queued message」（取回输入框并出队）、「Remove queued message」(`queue.remove`)。 |
 | 队列行的 **Send now** | 行上的「Send now (interrupt)」(`queue.send`)：行先出队，`run.cancel()` 只结束当前回合（正在进行的模型请求或工具调用），运行收尾后再用该行开启下一回合；它不是回退整段对话，也不是 `message.stop`。`engine/queue.go` 的 `sendQueuedNowLocked` 与 `run.go` 收尾里的 `run.afterStop` 一起完成交接，启动失败时行回到队列。 |
 | 自然队列一次一条 | `drainPendingLocked(sessionID, true)` 每轮只放行第一条，其余保留原顺序；`run.go` 回合收尾的自动交接同样只取第一条。steer 行仍由 `Pending(false)` 在下一步前注入。 |
@@ -60,8 +63,8 @@
 - `go test ./internal/desktop -run 'Test(LocalSendShowsBubbleBeforeCoreAccepts|WorkingSendingBridgeAndQueueStayInTheirConversation|SidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment)'`：
   待接受的普通发送只有气泡、没有发送中提示行；排队与纠正提示仍在活动行。
 - `go test ./internal/desktop -run 'TestSteering'`：引导的队列行投影为对话流中的
-  用户气泡，位置在普通队列行之上；队列区只渲染普通排队行；气泡的取消按钮派发
-  `queue.remove`；交接后消息只出现一次。
+  用户气泡，位置在普通队列行之上；队列区只渲染普通排队行；已发出的纠正气泡不带
+  取消按钮；交接后消息只出现一次。
 - `go test ./internal/i18n`：界面文案门禁无缺失条目。
 - `go test ./internal/engine -run 'TestIdleDrainHandsOverOneQueuedMessage'`：
   `idle=true` 每次只交出一条并保留其余顺序；`idle=false` 只放行 steer 行。
@@ -83,5 +86,5 @@
 - 队列拖动在 `ui.Tester` 里验证了落点与命令，但真实窗口的指针拖动、
   自动滚动与跨行手感尚未验收。
 - 设置项在原生设置页的渲染没有截图证据。
-- 引导气泡的呈现只由 `ui.Tester` 组件测试覆盖（投影、位置与取消命令）；原生窗口中
-  一次真实纠正的气泡、状态行与取消按钮尚未截图验收。
+- 引导气泡的呈现只由 `ui.Tester` 组件测试覆盖（投影、位置与气泡上无取消入口）；
+  原生窗口中一次真实纠正的气泡尚未截图验收。

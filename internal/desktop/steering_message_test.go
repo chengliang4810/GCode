@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"context"
 	"strings"
 	"testing"
 	"time"
@@ -75,24 +74,13 @@ func TestSteeringRowReadsAsAUserMessage(t *testing.T) {
 	if bubble.Y >= row.Y {
 		t.Fatalf("the correction is not in the conversation: bubble=%+v queue row=%+v", bubble, row)
 	}
-	if _, ok := tt.Find("Cancel this correction"); !ok {
-		t.Fatal("the steering message has no way to be cancelled")
+	// The correction is already on its way into the running reply: the bubble
+	// carries no cancel control and no queue action.
+	if _, ok := tt.Find("Cancel this correction"); ok {
+		t.Fatal("the sent correction still offers a cancel button")
 	}
-}
-
-// Cancelling the correction removes its queue row, which is the only thing the
-// core keeps until the boundary hands the input over.
-func TestSteeringMessageCancelsTheCorrection(t *testing.T) {
-	a := steeringApp(t)
-	var dispatched []contracts.Command
-	a.service = &sliceRecordingService{Service: a.service, recorded: &dispatched}
-	tt := ui.NewTester(a.View, 1320, 880)
-	tt.Frame()
-	if err := tt.Click("Cancel this correction"); err != nil {
-		t.Fatal(err)
-	}
-	if len(dispatched) != 1 || dispatched[0].Kind != "queue.remove" || dispatched[0].ID != "queue-steer" {
-		t.Fatalf("cancel dispatched %+v", dispatched)
+	if got := steeringCount(tt.Texts(), "Cancel this correction"); got != 0 {
+		t.Fatalf("the sent correction rendered %d cancel labels: %q", got, tt.Texts())
 	}
 }
 
@@ -113,22 +101,18 @@ func TestSteeringRowLeavesNoDuplicateAfterHandoff(t *testing.T) {
 	}
 	tt := ui.NewTester(a.View, 1320, 880)
 	tt.Frame()
-	if _, ok := tt.Find("Cancel this correction"); ok {
-		t.Fatal("the handed-over message kept its steering status")
+	// The conversation outline lists every prompt once: a duplicate projection
+	// would add a second entry for the same correction.
+	outlined := 0
+	for _, text := range tt.Texts() {
+		if strings.HasPrefix(text, "Go to message ") && strings.Contains(text, "Correct the live answer") {
+			outlined++
+		}
+	}
+	if outlined != 1 {
+		t.Fatalf("the handed-over correction has %d outline entries: %q", outlined, tt.Texts())
 	}
 	if got := steeringCount(tt.Texts(), "Send now (interrupt)"); got != 0 {
 		t.Fatalf("a handed-over correction left a queue row: %q", tt.Texts())
 	}
-}
-
-// sliceRecordingService records the commands the app dispatches without
-// replacing the backend the fixture built.
-type sliceRecordingService struct {
-	contracts.Service
-	recorded *[]contracts.Command
-}
-
-func (s *sliceRecordingService) Execute(ctx context.Context, command contracts.Command) error {
-	*s.recorded = append(*s.recorded, command.Clone())
-	return s.Service.Execute(ctx, command)
 }

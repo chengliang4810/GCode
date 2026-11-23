@@ -30,7 +30,6 @@ type sidePendingSend struct {
 	RequestID, Draft string
 	Attachments      []contracts.Attachment
 	Queued           bool
-	Steer            bool
 }
 
 func (a *App) sideComposer(sessionID string) *sideComposerState {
@@ -99,7 +98,7 @@ func (a *App) sendSideMessage(session contracts.Session, state *sideComposerStat
 	if busy && a.activeTurnSend() == "steer" {
 		delivery = "steer"
 	}
-	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: busy, Steer: delivery == "steer"}
+	state.Pending = &sidePendingSend{RequestID: id, Draft: text, Attachments: append([]contracts.Attachment(nil), state.Attachments...), Queued: busy}
 	state.Failure = ""
 	command := contracts.Command{Kind: "message.send", ProjectID: session.ProjectID, Send: &contracts.SendRequest{
 		RequestID: id, SessionID: session.ID, ProjectID: session.ProjectID, DeviceID: session.DeviceID,
