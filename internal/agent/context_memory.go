@@ -226,14 +226,22 @@ func foldContext(history []model.Message, state ContextMemory, start, end int, s
 	replacement := model.Message{Role: "user", Text: text, Summary: true, ContextRef: id, InputIDs: inputs}
 	retainUserInputs(&replacement, history[start:end])
 	retainWorkEvidence(&replacement, history[start:end])
-	if estimateMessages([]model.Message{replacement}) >= estimateMessages(history[start:end]) {
+	replacements := []model.Message{replacement}
+	// Restore state at the folded boundary, before replaying the unchanged tail.
+	// The model's prose summary is not authoritative checklist state.
+	if todos := todoStateFromHistory(history[:end]); todos.Current != nil {
+		retained := todoMessage(todos, "retained")
+		retained.ContextRef = "m_" + hookUUID()
+		replacements = append(replacements, retained)
+	}
+	if estimateMessages(replacements) >= estimateMessages(history[start:end]) {
 		return nil, state, errors.New("summary does not reduce the context; shorten it or select a larger range")
 	}
 	block := ContextBlock{ID: id, Tier: tier, Summary: summary, Originals: model.CloneMessages(history[start:end])}
 	blocks := append([]ContextBlock(nil), state.Blocks...)
 	blocks = append(blocks, block)
 	out := append([]model.Message(nil), history[:start]...)
-	out = append(out, replacement)
+	out = append(out, replacements...)
 	out = append(out, history[end:]...)
 	out = retainReferencedImages(history, out)
 	return out, ContextMemory{Blocks: blocks, NextNudge: estimateMessages(out) + 50000}, nil

@@ -490,3 +490,104 @@ func TestContextMemoryRangeDiagnosticsAndSafeRanges(t *testing.T) {
 		t.Fatalf("short history advertised compression: %s %v", out.Text, err)
 	}
 }
+
+func TestCompressContextPreservesTodoState(t *testing.T) {
+	for _, source := range []string{"write", "checkpoint", "newer-tail"} {
+		t.Run(source, func(t *testing.T) {
+			history := contextMemoryHistory()
+			todo := todoHistory()
+			todo[1].Calls[0].Arguments = `{"todos":[{"text":"unfinished work","status":"in_progress"}]}`
+			history[1], history[2] = todo[1], todo[2]
+			if source == "checkpoint" {
+				retained := todoMessage(todoStateFromHistory(history[:3]), "retained")
+				history[1] = retained
+				history[2] = model.Message{Role: "assistant", Text: strings.Repeat("old work ", 300)}
+			}
+			if source == "newer-tail" {
+				history[12] = model.Message{Role: "assistant", Calls: []model.Call{{ID: "new-todo", Name: "TodoWrite", Arguments: `{"todos":[{"text":"new work","status":"pending"}]}`}}}
+				history[13] = model.Message{Role: "tool", CallID: "new-todo", Text: "ok"}
+			}
+			AssignContextRefs(history)
+			want := todoStateFromHistory(model.CloneMessages(history))
+			if !want.reminderDue() {
+				t.Fatal("fixture should require a todo reminder")
+			}
+			request := model.Request{History: history}
+			memory := ContextMemory{}
+			commits := 0
+			tools := contextMemoryTools(&request, &memory, func(view []model.Message, next ContextMemory) error {
+				request.History, memory = model.CloneMessages(view), next
+				commits++
+				return nil
+			})
+			raw, _ := json.Marshal(map[string]string{"start_ref": history[1].ContextRef, "end_ref": history[9].ContextRef, "summary": "Earlier implementation work is summarized."})
+			if _, err := tools[1].Execute(t.Context(), "", raw); err != nil {
+				t.Fatal(err)
+			}
+			got := todoStateFromHistory(request.History)
+			if commits != 1 || !reflect.DeepEqual(got, want) || !got.reminderDue() {
+				t.Fatalf("todo state changed on compression: got=%+v want=%+v", got, want)
+			}
+			// Folding the retained checkpoint again must preserve counters and later writes.
+			folded, _, err := foldContext(request.History, memory, 1, 4, "Earlier work remains summarized.")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := todoStateFromHistory(folded); !reflect.DeepEqual(got, want) {
+				t.Fatalf("repeated compression changed todo state: got=%+v want=%+v", got, want)
+			}
+		})
+	}
+}
+
+func TestRunTodoReminderSurvivesManualContextCompression(t *testing.T) {
+	history := contextMemoryHistory()
+	initial := todoHistory()
+	initial[1].Calls[0].Arguments = `{"todos":[{"text":"finish implementation","status":"in_progress"}]}`
+	history[1], history[2] = initial[1], initial[2]
+	// Historical data adds size without advancing the assistant reminder counter.
+	for i := 3; i < len(history)-1; i++ {
+		history[i].Role = "user"
+	}
+	AssignContextRefs(history)
+	memory := ContextMemory{}
+	turns, reminders := 0, 0
+	completed := false
+	err := Run(t.Context(), Options{
+		Request: model.Request{History: history}, Memory: &memory,
+		Tools:         []Tool{todoWriteTool{}, noopTool{}},
+		Pending:       func(bool) []model.Message { return nil },
+		ReplaceMemory: func([]model.Message, ContextMemory) error { return nil },
+		Record: func(message model.Message) error {
+			if strings.Contains(message.Text, "has not been updated recently") {
+				reminders++
+			}
+			return nil
+		},
+		Emit: func(Event) error { return nil },
+		Model: testModel{stream: func(request model.Request) (model.Result, error) {
+			turns++
+			if turns > 16 {
+				return model.Result{}, errors.New("todo reminder never arrived")
+			}
+			if turns == 1 {
+				raw, _ := json.Marshal(map[string]string{"start_ref": history[1].ContextRef, "end_ref": history[9].ContextRef, "summary": "Earlier implementation evidence."})
+				return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{{ID: "fold-with-todos", Name: "CompressContext", Arguments: string(raw)}}}}, nil
+			}
+			if state := CurrentTodos(request.History); state == nil || state.Todos[0].Text != "finish implementation" {
+				t.Fatal("executor lost its checklist after compression")
+			}
+			if completed {
+				return model.Result{Message: model.Message{Role: "assistant", Text: "completed"}}, nil
+			}
+			if reminders > 0 {
+				completed = true
+				return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{writeTodos(t, "finish-todo", TodoUpdate{Todos: []TodoItem{{Text: "finish implementation", Status: TodoCompleted}}})}}}, nil
+			}
+			return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{{ID: fmt.Sprintf("work-%d", turns), Name: "Noop", Arguments: "{}"}}}}, nil
+		}},
+	})
+	if err != nil || reminders != 1 || !completed {
+		t.Fatalf("reminder/update cycle failed: err=%v reminders=%d completed=%t", err, reminders, completed)
+	}
+}
