@@ -7,6 +7,7 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/workbench"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -235,6 +236,43 @@ func TestKnownInlineCodeBecomesFileLinkWhileUnknownCodeRemainsCode(t *testing.T)
 	}
 	if strings.Contains(a.errorText, "unknown") {
 		t.Fatal("ordinary code was treated as a link")
+	}
+}
+
+func TestTranscriptRelativeLineLinkOpensWorktreeFileOutsideProjectIndex(t *testing.T) {
+	const relative = "docs/backend-file-worktree-safety.md"
+	const root = "/worktrees/task"
+	for _, dark := range []bool{false, true} {
+		t.Run(fmt.Sprintf("dark=%t", dark), func(t *testing.T) {
+			a := linkTestApp(t)
+			a.state.Sessions[0].CWD = root
+			a.state.Files = append(a.state.Files, contracts.File{ID: "main-copy", ProjectID: "links", Path: relative, Kind: "file"})
+			service := &resolvingFileReader{result: contracts.LinkedFileResult{
+				File:         contracts.File{ID: "worktree-file", Name: "backend-file-worktree-safety.md", Path: relative, Kind: "file", Loaded: true, Content: "Worktree content"},
+				AbsolutePath: root + "/" + relative,
+			}}
+			a.workspace = workbench.New(nil, service)
+			a.workspace.ProjectID = a.projectID
+			a.workspace.Update(a.state)
+			a.workspace.SwitchSession(a.sessionID)
+			a.configureWorkspaceLinks()
+
+			raw := relative + ":1"
+			target, ok := a.linkConfig(a.sessionID, "", ui.Services{}).Resolve(raw)
+			if !ok || target.KnownFile || target.Tooltip != root+"/"+raw {
+				t.Fatalf("expected unindexed worktree path with line number, got %+v", target)
+			}
+			m := contracts.Message{ID: "worktree", SessionID: a.sessionID, Role: "assistant",
+				Blocks: []contracts.Block{{ID: "body", Kind: "text", Text: "See `" + raw + "`."}}}
+			tt := linkMessageTester(t, a, m, dark)
+			if err := tt.Click(target.Label); err != nil {
+				t.Fatal(err)
+			}
+			want := contracts.LinkedFileRequest{SessionID: a.sessionID, Path: relative}
+			if len(service.requests) != 1 || service.requests[0] != want || a.workspace.ActiveKind() != "file" {
+				t.Fatalf("click did not open the file through the worktree session: %+v", service.requests)
+			}
+		})
 	}
 }
 

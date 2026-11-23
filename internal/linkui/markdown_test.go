@@ -173,7 +173,7 @@ func TestUnknownRelativeCodeKeepsCodeStyle(t *testing.T) {
 		target, err := linktarget.Parse(raw)
 		return Destination{Raw: raw, Kind: target.Kind}, err == nil
 	}}
-	for _, raw := range []string{"report.xlsx", "reports/report.xlsx", "plain()", "../report.xlsx", `C:report.xlsx`, `\\server\share\report.xlsx`} {
+	for _, raw := range []string{"report.xlsx", "reports/report.xlsx", "plain()", "value:1", "reports/:2", "../report.xlsx:1", `C:report.xlsx`, `\\server\share\report.xlsx`} {
 		t.Run(raw, func(t *testing.T) {
 			doc := parser.Parse("`" + raw + "`")
 			_, linked := inlinePieces(doc.Inlines(1), cfg, th, ui.Span{Size: 14})

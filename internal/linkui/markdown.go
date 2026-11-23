@@ -1,6 +1,7 @@
 package linkui
 
 import (
+	"path"
 	"strings"
 	"unicode/utf8"
 
@@ -162,7 +163,7 @@ func inlinePieces(inlines []parser.Inline, cfg Config, th *markdown.Theme, base 
 				if destination == nil {
 					target, err := linktarget.Parse(in.Text)
 					if resolved, ok := cfg.Resolve(in.Text); ok && resolved.Kind == linktarget.File &&
-						(resolved.KnownFile || err == nil && target.IsAbsoluteFile()) {
+						(resolved.KnownFile || err == nil && explicitFileReference(target)) {
 						if resolved.Raw == "" {
 							resolved.Raw = in.Text
 						}
@@ -196,6 +197,11 @@ func inlinePieces(inlines []parser.Inline, cfg Config, th *markdown.Theme, base 
 	}
 	walk(0, len(inlines), base, nil)
 	return result, hasLinks
+}
+
+func explicitFileReference(target linktarget.Target) bool {
+	return target.IsAbsoluteFile() || target.Kind == linktarget.File && target.Line > 0 &&
+		!strings.HasSuffix(target.Path, "/") && (strings.Contains(target.Path, "/") || path.Ext(target.Path) != "")
 }
 
 // Resolve the fields used by this renderer against the pinned Markdown defaults.
