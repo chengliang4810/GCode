@@ -25,7 +25,7 @@ const (
 	Replacement     = "./third_party/mygo"
 	UpstreamSum     = "h1:vzMjSyahUjSk62+n+qmNXt8Bamyx1UNz359OyEDo/kg="
 
-	ExpectedTreeSHA256 = "3a6028f49dc211ddc0ca79e7e56a7c8d9e864359d1feac36f3f49b6c87193e8a"
+	ExpectedTreeSHA256 = "d8cc306d101c96f4d8033aeefb9723672be7d403ec964aaf103898d2901bda6d"
 )
 
 // patchChain lists the reviewed local patches in application order over
@@ -51,6 +51,7 @@ var patchChain = []Patch{
 	{Path: "patches/mygo-v0.9.1-23-macos-dmg-name.patch", SHA256: "8b59ac5fdebf8d573a3ef6e18ef389a410636b9c18e857ff2b650a20fed8dd31"},
 	{Path: "patches/mygo-v0.9.1-17-api-gen.patch", SHA256: "e35b0c35d5bcffaa97cc0c7a97530bf7c742a0642f48516f9979578c194ea1e9"},
 	{Path: "patches/mygo-v0.9.1-19-patch-identity.patch", SHA256: "33f79bc8a799adb0256414932390292c93957a725e5076671395179e283cc9f2"},
+	{Path: "patches/mygo-v0.9.1-24-list-state-a11y-guard.patch", SHA256: "395880f4412edbb7e6f16d3f32ad61d9facc1af4b1b43a66089be5ee25270665"},
 }
 
 type Patch struct {

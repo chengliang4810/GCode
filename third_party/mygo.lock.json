@@ -5,7 +5,7 @@
   "upstreamSum": "h1:vzMjSyahUjSk62+n+qmNXt8Bamyx1UNz359OyEDo/kg=",
   "revision": "rcode-native-ui.28",
   "sourceDir": "third_party/mygo",
-  "treeSha256": "3a6028f49dc211ddc0ca79e7e56a7c8d9e864359d1feac36f3f49b6c87193e8a",
+  "treeSha256": "d8cc306d101c96f4d8033aeefb9723672be7d403ec964aaf103898d2901bda6d",
   "fileCount": 2852,
   "patches": [
     {
@@ -87,6 +87,10 @@
     {
       "path": "patches/mygo-v0.9.1-19-patch-identity.patch",
       "sha256": "33f79bc8a799adb0256414932390292c93957a725e5076671395179e283cc9f2"
+    },
+    {
+      "path": "patches/mygo-v0.9.1-24-list-state-a11y-guard.patch",
+      "sha256": "395880f4412edbb7e6f16d3f32ad61d9facc1af4b1b43a66089be5ee25270665"
     }
   ]
 }

@@ -369,7 +369,7 @@ func listInput(n *node) {
 		// release.
 		f.dragSelect(p)
 	}
-	if f.s.cursor() != nil {
+	if f.s != nil && f.s.cursor() != nil {
 		f.navigate()
 	}
 	f.dragSelect(f.c.rt.pressed)
