@@ -102,33 +102,34 @@ type State struct {
 	// RenderWorkflowRuns draws one conversation's run directory.
 	RenderWorkflowRuns func(*ui.Context, string)
 	// RenderWorkflow draws the run detail tab for one run.
-	RenderWorkflow    func(*ui.Context, string)
-	OnNewSideChat     func()
-	CanNewSideChat    func() bool
-	OnOpenSurface     func()
-	OnCloseSurface    func()
-	OnToggleExpand    func()
-	OnAnnotation      func(contracts.Annotation)
-	OnLinkConfig      func(sessionID, documentPath string) linkui.Config
-	nextAnnotation    uint32
-	nextBrowser       int
-	pendingTerminal   bool
-	pendingFile       string
-	gitHistory        gitHistoryState
-	historySearch     string
-	commitID          string
-	commitOpen        bool
-	fileActionOpen    bool
-	fileAction        string
-	fileActionID      string
-	fileActionName    string
-	fileActionHost    string
-	imageOpen         bool
-	imageID           string
-	imageViewer       ImageViewport
-	linkCancel        context.CancelFunc
-	linkGeneration    uint64
-	pendingNavigation *fileNavigation
+	RenderWorkflow         func(*ui.Context, string)
+	RenderWorkflowArtifact func(*ui.Context, string)
+	OnNewSideChat          func()
+	CanNewSideChat         func() bool
+	OnOpenSurface          func()
+	OnCloseSurface         func()
+	OnToggleExpand         func()
+	OnAnnotation           func(contracts.Annotation)
+	OnLinkConfig           func(sessionID, documentPath string) linkui.Config
+	nextAnnotation         uint32
+	nextBrowser            int
+	pendingTerminal        bool
+	pendingFile            string
+	gitHistory             gitHistoryState
+	historySearch          string
+	commitID               string
+	commitOpen             bool
+	fileActionOpen         bool
+	fileAction             string
+	fileActionID           string
+	fileActionName         string
+	fileActionHost         string
+	imageOpen              bool
+	imageID                string
+	imageViewer            ImageViewport
+	linkCancel             context.CancelFunc
+	linkGeneration         uint64
+	pendingNavigation      *fileNavigation
 }
 
 func New(win *mygo.Window, backend contracts.Service) *State {
@@ -677,6 +678,10 @@ func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 		case "workflow-runs":
 			if s.RenderWorkflowRuns != nil {
 				s.RenderWorkflowRuns(c, t.id)
+			}
+		case "workflow-artifact":
+			if s.RenderWorkflowArtifact != nil {
+				s.RenderWorkflowArtifact(c, t.id)
 			}
 		default:
 			s.picker(c)

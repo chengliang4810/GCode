@@ -147,6 +147,27 @@ func TestDesktopLocalWorkflowDirectRunCard(t *testing.T) {
 				return nil
 			})
 			app.capture("workflow-completion-card")
+			app.act(app.awaitKeyPrefix("workflow-card-open:"), "press", "")
+			directoryKey := app.awaitKeyPrefix("workflow-run-open-directory:")
+			app.awaitKeyPrefix("workflow-artifacts-toggle:")
+			app.await("the workflow sidebar finishes opening", func() error {
+				tree, err := app.client.tree()
+				if err != nil {
+					return err
+				}
+				button, err := tree.findKey(directoryKey)
+				if err != nil {
+					return err
+				}
+				if button.Bounds.X+button.Bounds.Width > 1320 {
+					return fmt.Errorf("the directory control is still outside the window")
+				}
+				return nil
+			})
+			app.capture("workflow-run-side-pane")
+			app.act(app.awaitKeyPrefix("workflow-run-artifact:"), "press", "")
+			app.awaitKeyPrefix("preview:workflow-artifact-")
+			app.capture("workflow-artifact-side-pane")
 		})
 	}
 }

@@ -118,7 +118,7 @@ func TestWorkflowRunPaneShowsPhasesQuestionsAndArtifacts(t *testing.T) {
 	tt.Frame()
 	for _, text := range []string{
 		"Review the change", "Plan", "Build", "Planner", "Builder", "Reviewer",
-		"Which database?", "Missing target", "the plan", "the diff",
+		"Which database?", "Missing target", "plan", "diff",
 	} {
 		if !tt.HasText(text) {
 			t.Fatalf("run pane missing %q: %v", text, tt.Texts())

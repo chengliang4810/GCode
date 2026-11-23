@@ -17,6 +17,11 @@ type ArtifactSlice struct {
 	Overflow int
 }
 
+// RunArtifacts returns every latest delivery in publication order.
+func RunArtifacts(artifacts []contracts.WorkflowArtifact) []contracts.WorkflowArtifact {
+	return orderArtifacts(artifacts)
+}
+
 // CardArtifacts projects a run's artifacts for a card: ordered, latest version
 // only, at most CardArtifactLimit.
 func CardArtifacts(artifacts []contracts.WorkflowArtifact) ArtifactSlice {

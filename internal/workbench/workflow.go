@@ -1,5 +1,15 @@
 package workbench
 
+func (s *State) OpenWorkflowArtifact(id, title string) {
+	s.choose("workflow-artifact", id, title)
+}
+
+func (s *State) FollowWorkflow(previousID, runID, title string) {
+	if len(s.tabs) > 0 && s.tabs[s.active].kind == "workflow" && s.tabs[s.active].id == previousID {
+		s.OpenWorkflow(runID, title)
+	}
+}
+
 // OpenWorkflow binds the run detail tab to the requested run. The tab shows
 // the same run facts the conversation card shows; it never keeps its own copy.
 func (s *State) OpenWorkflow(runID, title string) {

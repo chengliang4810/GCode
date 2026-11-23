@@ -16,9 +16,10 @@ import (
 // expanded, which run's settings sheet is open, and which requests are in
 // flight. The run facts themselves always come from the core.
 type workflowUIState struct {
-	expanded map[string]bool
-	settings map[string]*workflowSettingsState
-	busy     map[string]bool
+	foldedPhases map[[2]string]bool
+	expanded     map[string]bool
+	settings     map[string]*workflowSettingsState
+	busy         map[string]bool
 	// scroll remembers how far each run card's stage line was scrolled and
 	// what the shared scrollbar reports back.
 	scroll   map[string]*ui.ScrollState
@@ -27,10 +28,10 @@ type workflowUIState struct {
 	save map[string]*workflowSaveState
 	// hub is the saved-workflow hub's own state, and hubLaunch is the launch
 	// it is carrying through the core.
-	hub       workflowHubState
-	hubLaunch *workflowLaunchPending
-	// steps holds one run's script steps: read once, kept until asked again.
-	steps map[string]*workflowStepsState
+	hub              workflowHubState
+	hubLaunch        *workflowLaunchPending
+	artifactFolds    map[string]bool
+	artifactVersions map[string]int
 }
 
 type workflowSettingsState struct {
@@ -119,7 +120,7 @@ func (a *App) workflowRunCard(c *ui.Context, run contracts.WorkflowRun, width fl
 		a.workflowRunHeader(c, view)
 		a.workflowRunSummary(c, view, func() { a.toggleWorkflowCard(run.ID) })
 		if len(timeline.Stations) > 0 {
-			a.workflowRunTimeline(c, view, timeline, expanded, max(0, width-24))
+			a.workflowRunTimeline(c, view, timeline, expanded)
 		}
 		if view.Truncated {
 			ui.Text(c.Key("workflow-card-truncated:"+run.ID), tr(c, "Some instance details are not shown here.")).
@@ -187,9 +188,12 @@ func (a *App) workflowRunControls(c *ui.Context, view workflow.RunView, scope st
 		}
 	}
 	if workflow.CanConfigure(run) {
-		iconButton(c.Key("workflow-settings"+key), "settings-minimalistic", tr(c, "Configure run")).OnClick(func() {
-			a.openWorkflowSettings(run.ID)
+		trigger := iconButton(c.Key("workflow-settings"+key), "settings-minimalistic", tr(c, "Configure run")).OnClick(func() {
+			a.openWorkflowSettings(key, run.ID)
 		})
+		if state := a.workflowUI.settings[key]; state != nil {
+			a.workflowSettingsPopover(c.Key("workflow-settings-panel"+key), trigger, run, state)
+		}
 	}
 	if view.Active() {
 		textButton(c.Key("workflow-stop"+key), tr(c, "Stop run")).OnClick(func() {
@@ -258,9 +262,16 @@ func (a *App) workflowRunSummary(c *ui.Context, view workflow.RunView, toggle fu
 	if view.ModelID != "" {
 		parts = append(parts, a.workflowModelLabel(view.ModelID))
 	}
-	ui.Row(c.Key("workflow-card-summary:" + view.RunID)).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
+	ui.Row(c.Key("workflow-card-summary:" + view.RunID)).FillWidth().Gap(8).Wrap().AlignItems(ui.Center).Children(func() {
 		for _, part := range parts {
 			ui.Text(c, part).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
+		}
+		if view.AgentTotal() > 0 {
+			glyph, label := "alt-arrow-right", "Show agents"
+			if a.workflowCardExpanded(view.RunID) {
+				glyph, label = "alt-arrow-down", "Hide agents"
+			}
+			iconButton(c.Key("workflow-card-agent-toggle:"+view.RunID), glyph, tr(c, label)).OnClick(toggle)
 		}
 	})
 }
@@ -268,15 +279,18 @@ func (a *App) workflowRunSummary(c *ui.Context, view workflow.RunView, toggle fu
 // workflowArtifactStrip draws the delivered artifacts: at most three links
 // and a static count for the rest.
 func (a *App) workflowArtifactStrip(c *ui.Context, view workflow.RunView) {
-	ui.Row(c.Key("workflow-card-artifacts:" + view.RunID)).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
+	ui.Row(c.Key("workflow-card-artifacts:" + view.RunID)).FillWidth().Gap(6).Wrap().AlignItems(ui.Center).Children(func() {
 		for _, artifact := range view.Artifacts.Shown {
 			textButton(c.Key("workflow-artifact:"+view.RunID+":"+artifact.ID), artifact.Name).OnClick(func() {
 				a.openWorkflowArtifact(view.RunID, artifact)
 			})
 		}
 		if view.Artifacts.Overflow > 0 {
-			ui.Text(c, fmt.Sprintf(tr(c, "+%d"), view.Artifacts.Overflow)).
-				FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
+			textButton(c.Key("workflow-card-more-artifacts:"+view.RunID), fmt.Sprintf(tr(c, "+%d"), view.Artifacts.Overflow)).
+				OnClick(func() {
+					delete(a.workflowUI.artifactFolds, view.RunID)
+					a.openWorkflowRun(view.RunID)
+				})
 		}
 	})
 }
@@ -407,7 +421,7 @@ func (a *App) openWorkflowRun(runID string) {
 
 // openWorkflowArtifact opens the artifact in the run detail tab.
 func (a *App) openWorkflowArtifact(runID string, artifact contracts.WorkflowArtifact) {
-	a.openWorkflowRun(runID)
+	a.workspace.OpenWorkflowArtifact(runID+"/"+artifact.Name, artifact.Name)
 }
 
 // workflowElapsed is the run's own duration, rounded to whole seconds.

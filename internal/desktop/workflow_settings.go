@@ -11,7 +11,7 @@ import (
 
 // openWorkflowSettings opens the settings sheet of one run. The sheet starts
 // from the run's current settings and only sends the fields that changed.
-func (a *App) openWorkflowSettings(runID string) {
+func (a *App) openWorkflowSettings(key, runID string) {
 	run, ok := a.workflowRun(runID)
 	if !ok {
 		return
@@ -25,35 +25,19 @@ func (a *App) openWorkflowSettings(runID string) {
 		concurrency: workflow.NormalizeConcurrency(run.Concurrency),
 		hasConc:     true,
 	}
-	a.workflowUI.settings[runID] = state
+	if current := a.workflowUI.settings[key]; current != nil && current.open {
+		current.open = false
+		return
+	}
+	a.workflowUI.settings[key] = state
 	state.open = true
 }
 
-// workflowSettingsDialog draws the settings sheet of one run.
-func (a *App) workflowSettingsDialog(c *ui.Context) {
-	for runID, state := range a.workflowUI.settings {
-		if !state.open {
-			continue
-		}
-		run, ok := a.workflowRun(runID)
-		if !ok {
-			state.open = false
-			continue
-		}
-		a.workflowSettingsSheet(c, run, state)
-	}
-}
-
-// workflowSettingsSheet draws the modal form of one run's settings.
-func (a *App) workflowSettingsSheet(c *ui.Context, run contracts.WorkflowRun, state *workflowSettingsState) {
+func (a *App) workflowSettingsPopover(c *ui.Context, anchor ui.Element, run contracts.WorkflowRun, state *workflowSettingsState) {
 	busy := a.workflowUI.busy[run.ID]
 	changed := a.workflowSettingsChanged(run, state)
-	width, height := c.Size()
-	ui.DialogBase(c.Key("workflow-settings:"+run.ID), &state.open, func(backdrop, panel ui.Element) {
-		backdrop.Background(ui.RGBA(0, 0, 0, .45))
-		panel.Width(min(460, width-40)).MaxHeight(height - 40).Padding(20).Gap(16).Radius(12).
-			Label(tr(c, "Configure run"))
-		panel.Background(a.palette.Dialog).Border(1, a.palette.Border)
+	width, _ := c.Size()
+	a.footerPopover(c, anchor, &state.open, "Configure run", min(380, width-24), false, func() {
 		ui.Row(c).FillWidth().Gap(12).AlignItems(ui.Center).Children(func() {
 			ui.Text(c, tr(c, "Configure run")).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextXL)).FontWeight(600)
 			iconButton(c.Key("workflow-settings-close:"+run.ID), "close", tr(c, "Close dialog")).Disabled(busy).OnClick(func() { state.open = false })

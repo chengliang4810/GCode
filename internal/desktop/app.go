@@ -269,6 +269,7 @@ func NewWithOptions(service contracts.Service, options Options) (*App, error) {
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.RenderGoal = a.goalEditorView
 	a.workspace.RenderWorkflow = a.workflowRunView
+	a.workspace.RenderWorkflowArtifact = a.workflowArtifactView
 	a.workspace.RenderWorkflowRuns = a.workflowRunDirectoryView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
@@ -327,6 +328,7 @@ func (a *App) Attach(win *mygo.Window) error {
 	a.workspace.RenderTrajectory = a.modelTrajectoryView
 	a.workspace.RenderGoal = a.goalEditorView
 	a.workspace.RenderWorkflow = a.workflowRunView
+	a.workspace.RenderWorkflowArtifact = a.workflowArtifactView
 	a.workspace.RenderWorkflowRuns = a.workflowRunDirectoryView
 	a.workspace.OnCloseSession = a.dismissSideComposer
 	a.workspace.OnNewSideChat = a.newSideChat
@@ -554,13 +556,6 @@ func (a *App) applyEvent(event contracts.Event) {
 	if event.Kind == "privacy.warning" {
 		a.notification(toastWarning, event.Text)
 	}
-	// 运行的每一步都写一条 workflow.changed：步骤面板因此按事件更新一次，
-	// 而不是每个渲染帧重拉整份日志。
-	if event.Kind == "workflow.changed" && event.RunID != "" {
-		if state := a.workflowUI.steps[event.RunID]; state != nil {
-			state.loaded = false
-		}
-	}
 	if event.Kind == "model.request.recorded" || event.Kind == "run.finished" {
 		if a.menuBar.Tray != nil {
 			a.refreshMenuBarUsage()
@@ -641,6 +636,11 @@ func (a *App) applyEvent(event contracts.Event) {
 		}
 	}
 	a.reconcileLocalSends()
+	if event.Kind == "workflow.changed" {
+		if run, ok := a.workflowRun(event.RunID); ok && run.PreviousRunID != "" && run.StartedAt.Equal(run.UpdatedAt) {
+			a.workspace.FollowWorkflow(run.PreviousRunID, run.ID, run.Name)
+		}
+	}
 	if !a.pendingNew || event.RequestID == "" || event.RequestID != a.pendingNewRequestID || a.pendingNewEpoch != a.draftEpoch || a.pendingNewRuns[event.RunID] || event.Kind != "run.started" && event.Kind != "request.created" && event.Kind != "queue.changed" {
 		return
 	}
@@ -1157,7 +1157,6 @@ func (a *App) View(c *ui.Context) {
 	a.projectRenameDialog(c)
 	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
-	a.workflowSettingsDialog(c)
 	a.workflowSaveDialog(c)
 	a.workflowLaunchDialog(c)
 	a.toastView(c)
