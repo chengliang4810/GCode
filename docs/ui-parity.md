@@ -9,10 +9,10 @@ cases**, thirteen areas, both appearances, three platform targets where
 applicable. Each case tracks reference capture and implementation verification
 separately. The inventory is a coverage obligation, not a completion claim.
 
-The latest granular source/UI audits are `audit-model-picker.md`,
-`audit-workbench.md`, `audit-transcript.md`, `audit-agent-data.md` and
-`audit-sidebar.md`. Their rows distinguish implemented behavior, native Tester
-regressions, inspected implementation PNGs and pending GPUI/OS acceptance.
+The granular source/UI audit checklists were process records and have been
+removed; the accepted behavior they describe stays in the component docs and in
+the scene inventory below. Their rows distinguished implemented behavior, native
+Tester regressions, inspected implementation PNGs and pending GPUI/OS acceptance.
 `implementationStatus=automated-regression-only` in the scene inventory means
 only those named regressions passed; referenceStatus and platform acceptance
 remain independent.

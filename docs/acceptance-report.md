@@ -15,7 +15,7 @@ and 14 patches. The current framework identity and patch list are recorded in
 `third_party/mygo.lock.json`; see `mygo-patches.md`. Its pre-Cloud adoption had 2,931 formal audit inputs. The later Cloud
 four-file adoption below has a separate source identity; that old input manifest
 and canonical packages are not relabeled to cover it. See
-`audit-tabstrip-tooltip-primitives.md` for exact identities and separate V5 evidence.
+the framework lock file for exact identities and separate V5 evidence.
 The pre-Cloud `.9` pin and five gates passed via retained attempts01–03. Its canonical four-target
 package build/verification passed in separate attempt02; earlier `.8` results
 retain their identities.
@@ -39,7 +39,7 @@ SDK/first build/ABI/native require separate evidence. The new planningP3 is
 limited to prepared plan.graphScope's overbroad “all workspace dependencies”.
 README's “workspace-wide” remains valid; no Cargo-documentation/tool bug is
 claimed. Old19 discrepancies and phase as-of boundaries remain intact. See
-`audit-tabstrip-tooltip-primitives.md` for exact source/evidence paths.
+the framework lock file for exact source/evidence paths.
 
 The later Job02 own-Python normal and timed parent/child smoke cases passed
 (055e6710…3e68b). The first reference Rust project build then actually ran and
@@ -56,7 +56,7 @@ natural descendant teardown is not claimed. Reference baseline, runtime ABI
 and baseline/off/on native whole-PNG gates remain pending.
 Cloud navigation's four-file02 repair is adopted
 (0b3a17e9…b090a): four failing red scenarios became green, with nine top-level
-and whole-repository overlay tests passing. See [Cloud audit](audit-account-settings.md).
+and whole-repository overlay tests passing. See Cloud audit.
 A separate normal native-worker path is now recorded (a5981b8b…63b1c): the
 2933-input development EXE69a43719…f0090 on an independent offline profile moved
 from off rev2 through provisioning rev4 to ready/cloud-1 rev5; repeated same-page
@@ -105,14 +105,14 @@ observations and comparison with the reference.
   all30 source theme variants. Voice controls are excluded.
 - File tree, editable buffers, dirty-close/conflict handling, Markdown/image
   preview, changes/diff, commit history. The old PR workbench was removed; the
-  sidebar keeps only the repository PR web link. See `ui-residual-cleanup.md`.
+  sidebar keeps only the repository PR web link.
 - System web engine confined to external document content, native browser
   chrome, navigation/loading/error state and overlay support.
 - MyGo terminal over an in-memory Conn, not a shell. Native library packaged
   for each architecture.
 -210 math/diagram SVG resources produced by the original renderer code.
 - Source compact model panel, effort slider and model search. Model favorites were
-  removed on 2026-10-30; see `ui-residual-cleanup.md`.
+  removed on 2026-10-30.
 - Native file selection, external file drop and clipboard image/file ingestion,
   with backend-managed resources and draft/session isolation.
 - Source background cropping, pan/zoom adjustment, five source-space image
@@ -128,7 +128,7 @@ observations and comparison with the reference.
   tooltip/input/device-scale primitives and bounded Windows package-commit
   retries. The R17 `.9` phase added the fourteenth Windows glyph-placement patch
   and the checked tooltip leaf while preserving AX content names; it has1,864
-  framework files. Evidence scopes are in `audit-tabstrip-tooltip-primitives.md`.
+  framework files. Evidence scopes are recorded in the framework lock file.
 
 Implementation does not imply complete reference parity. See gaps below.
 
@@ -137,9 +137,10 @@ Implementation does not imply complete reference parity. See gaps below.
 The model picker, panel/file workspace, transcript renderer and transcript
 backend were inspected in parallel against source 0.2.128 and official MyGo
 examples. A further sidebar/action review follows the same source/component
-approach. The individual checklists are `audit-model-picker.md`,
-`audit-workbench.md`, `audit-transcript.md`, `audit-agent-data.md` and
-`audit-sidebar.md`. They contain explicit remaining items.
+approach. The individual checklists were process records and have been
+removed; the accepted behavior they recorded stays in the component docs
+(`tool-presentation.md`, `sidebar-layout.md`, `transcript-links.md`,
+`subagents.md`).
 
 Corrected implementation issues include popup geometry and keyboard selection,
 provider/model memory, a zero-width model button in a 300-DIP conversation,
@@ -296,7 +297,7 @@ snapshots; they do not validate the latest source. Rebuild in a fresh directory.
 Current source checks and the exact source manifest are recorded in
 `reference/validation/handoff-result.json`. The handoff includes curated audit
 images and logs, not compiler caches, credentials or personal profiles. Start
-with `HANDOFF.md` and `docs/machine-handoff.md` on the next machine.
+with `docs/machine-handoff.md` on the next machine.
 
 The official Windows compact fixture compiled, but its `render_to_image` API
 is unsupported on Windows. A separate capture-transport adapter also compiled;
@@ -384,7 +385,8 @@ Typography behavior. The application and native fixture now use the existing
 `FontFeatures("kern=0")` API on Windows to match the frozen renderer's default
 Typography; font files, sizes and pinned framework are unchanged. Independent
 measurements cover 312 complete glyph comparisons. Nonempty feature sets and
-other platforms remain outside that mapping; see `audit-windows-typography.md`.
+other platforms remain outside that mapping; the Windows rule is documented in
+`typography.md` and implemented in `internal/design/typography.go`.
 
 R5's eight complete-window comparisons are recorded in
 `output/compact-comparison-20261028-r5/comparison.json`. Dark/light wide panels
@@ -400,7 +402,7 @@ transcript/light native client views and exited 0; this tests startup/rendering,
 not a new interaction sequence, installer or Mac runtime. Current phase evidence
 is `reference/validation/popup-r5-result.json`; all earlier source/package records
 remain phase-specific. Full footer behavior also remains pending; the exact
-source/data/action boundaries are in `audit-composer-footer.md`.
+source/data/action boundaries follow the shared controls in `docs/ui-controls.md`.
 
 ## Later option and footer evidence
 
@@ -448,8 +450,8 @@ CaretWidth APIs. Nine ordered patches reproduce the current1,834-file tree;
 reversing the three additions recovers `.3` exactly. Application popup cold
 geometry, search14px/Faint,2DIP native caret and absolute22.75DIP ComposerInput
 leading follow the frozen renderer rather than wrapper styles. The corrections
-and remaining fractional/IME/tooltip boundaries are in
-`audit-native-popup-style.md` and `audit-model-list-residual.md`.
+and remaining fractional/IME/tooltip boundaries are tracked in the component
+docs and the machine-readable scene inventory.
 
 The newly bound native fixture records the actual2x production branch. Eight
 independent original/full-window implementation pairs score
@@ -622,7 +624,7 @@ clipped after insertion or takeover collapse until manual wheel. This is
 preserved forR13 diagnosis, not counted as passed automatic reveal. True glass
 alpha masking, transitions/custom menu, matched original captures, complete
 Windows native coverage and Mac Intel/ARM execution remain pending.
-See `audit-tabstrip-scrollbars.md` and theR12 phase index. Full parity is false.
+The R12 phase index recorded the same observations. Full parity is false.
 
 ## R13 menu-selection reveal
 
@@ -641,7 +643,7 @@ remains active. Actual exit0, empty stderr and34 raw files are retained.
 Resize/takeover clipping is a distinct observation with unestablished original
 auto-reveal expectation; it was not changed or labeled a confirmed parity bug.
 Reference matched visuals, glass/transitions/menu and the full native matrix
-remain pending. See `audit-tabstrip-reveal.md`. Overall parity remains false.
+remain pending. Overall parity remains false.
 
 ## R14 production TabStrip component baseline
 
@@ -665,11 +667,11 @@ have the active appearance, while20,772 caption pixels still differ by at most
 one channel level. Actual window screen origins differ; DWM/position/raster
 explanations are not established. No image is cropped, resized, registered or
 masked. Diagnostic regional counts read original full PNG coordinates and have
-no pass threshold. See `audit-tabstrip-fixture.md`; overall parity remains false.
+no pass threshold; overall parity remains false.
 
 ## R15 styles and exact release smoke
 
-See `audit-tabstrip-style.md` and `reference/validation/tabstrip-r15-result.json`.
+See `reference/validation/tabstrip-r15-result.json`.
 Float wash, inactive generic glyph opacity and6-DIP dirty dot are implemented.
 Five gates and four package targets pass. The exact Windows release opened,
 switched and context-closed file tabs and exited0 at DPI192.36 baseline pairs

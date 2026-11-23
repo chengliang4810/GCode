@@ -75,9 +75,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/files-open",
@@ -99,9 +97,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/right-open",
@@ -123,9 +119,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/all-panels",
@@ -147,9 +141,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/right-takeover",
@@ -171,9 +163,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/minimum-size",
@@ -195,9 +185,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/maximized",
@@ -241,9 +229,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/resize-files",
@@ -265,9 +251,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/resize-right",
@@ -289,9 +273,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "shell/resize-terminal",
@@ -313,9 +295,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/detailed",
@@ -337,9 +317,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/compact",
@@ -361,9 +339,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/hover",
@@ -407,9 +383,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/reorder-pins",
@@ -431,9 +405,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/projects",
@@ -455,9 +427,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/devices",
@@ -479,9 +449,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/collapsed",
@@ -503,9 +471,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/filter",
@@ -549,9 +515,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/archived",
@@ -573,9 +537,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-sidebar.md"
-      ]
+      "evidence": []
     },
     {
       "id": "sidebar/remote-offline",
@@ -1015,9 +977,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-model-picker.md"
-      ]
+      "evidence": []
     },
     {
       "id": "composer/compact-model-picker",
@@ -1039,9 +999,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-model-picker.md"
-      ]
+      "evidence": []
     },
     {
       "id": "composer/reasoning",
@@ -1063,9 +1021,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-model-picker.md"
-      ]
+      "evidence": []
     },
     {
       "id": "composer/queue",
@@ -1329,9 +1285,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/reasoning-collapsed",
@@ -1353,9 +1307,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/tool-running",
@@ -1377,9 +1329,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/tool-complete",
@@ -1401,9 +1351,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/tool-error",
@@ -1425,9 +1373,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/permission",
@@ -1449,9 +1395,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/question",
@@ -1473,9 +1417,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/todo",
@@ -1519,9 +1461,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/side-chat",
@@ -1609,9 +1549,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/scroll-paused",
@@ -1677,9 +1615,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-transcript.md"
-      ]
+      "evidence": []
     },
     {
       "id": "transcript/long-history",
@@ -1723,9 +1659,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "files/search",
@@ -1747,9 +1681,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "files/context-menu",
@@ -1793,9 +1725,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "files/drag",
@@ -1927,9 +1857,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "files/saving",
@@ -2017,9 +1945,7 @@
       ],
       "referenceStatus": "pending-native-capture",
       "implementationStatus": "automated-regression-only",
-      "evidence": [
-        "docs/audit-workbench.md"
-      ]
+      "evidence": []
     },
     {
       "id": "git/changes",

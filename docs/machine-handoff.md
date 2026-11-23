@@ -13,7 +13,7 @@
 
 最新R16已修文件图片`.78`和无详情标签的标题提示，五门槛与四目标包校验通过。
 计时原图保留详情提示位置/样式差异；GPU控制复现浅色1级差，实际UI适配器仍待绑定。
-见 `audit-tabstrip-file-tooltip.md` 和 `reference/validation/tabstrip-r16-result.json`。
+见 `reference/validation/tabstrip-r16-result.json`。
 旧路径、`.2`表及R15原图保留各阶段范围，完整视觉与Mac实机仍待验收。
 
 ## 当前目标和状态
@@ -34,7 +34,7 @@ Go/MyGo 原生界面，只有公开网页正文使用系统 WebView；业务数�
 `third_party/mygo.lock.json`。R17 阶段基于2931项正式输入的
 pin与五门槛、canonical四目标候选包构建/校验已通过；installer、Mac原生和
 完整视觉/发布接受仍待完成。旧C4/AX包及V5隔离原图保留原身份。R17 阶段证据见 `machine-resume.md` 和
-`audit-tabstrip-tooltip-primitives.md`；`reference/validation/resume-result.json`仍为R16历史hub，
+`third_party/mygo.lock.json`；`reference/validation/resume-result.json`仍为R16历史hub，
 保留原指纹，不将其改称当前源码记录。
 
 ## 仓库与固定版本（原交接基线）
@@ -57,14 +57,14 @@ pin与五门槛、canonical四目标候选包构建/校验已通过；installer�
 
 | 范围 | 当前实现 | 逐项记录 |
 | --- | --- | --- |
-| 工程/数据 | 四层结构、typed DTO/命令/事件、可取消流、状态转换、固定场景、持久化、独立安装/数据身份 | `contracts.md`、`audit-agent-data.md` |
+| 工程/数据 | 四层结构、typed DTO/命令/事件、可取消流、状态转换、固定场景、持久化、独立安装/数据身份 | `contracts.md`、`subagents.md` |
 | 资源/主题 | 507 项原版素材、30 主题、210 公式/图表矢量；原生 Markdown/编辑器/终端/网页正文 | `reference-baseline.md`、`reference/baseline.json` |
-| 应用壳/文件区 | 侧栏/聊天/工具/最右 Files，动态挤压、拖动、takeover、底部终端、标签与文件编辑 | `audit-workbench.md` |
-| 侧栏 | 分组/排序/显示菜单、置顶拖动、项目折叠面板、行内重命名、原生键盘选择；归档只在设置页 | `audit-sidebar.md` |
-| 模型/输入区 | 统一两列菜单、搜索、推理、provider 记忆与锁定、加载/重试；中央/侧聊共用 surface 与 model/reasoning（收藏、access/Plan 已移除） | `audit-model-picker.md`、`audit-composer.md` |
-| Agent 输出 | 按 turn 分组的活动树、思考、读写编辑/命令、失败恢复、差异/子代理、独立最终回复；真实不同的会话轨迹 | `audit-transcript.md`、`audit-agent-data.md` |
-| 命令/项目 | All/Threads/Commands/Files 四页、typed 文件/内容搜索、行列定位、新项目设备/目录选择、离线/重复错误 | `audit-command-palette.md` |
-| 设置条件流程 | Providers/Devices/Cloud/Billing 四页、目标设备/账号/code 登录、更新、GitHub 仓库、计划/credits 的 mock 闭环 | `audit-account-settings.md` |
+| 应用壳/文件区 | 侧栏/聊天/工具/最右 Files，动态挤压、拖动、takeover、底部终端、标签与文件编辑 | `tool-presentation.md`、`sidebar-layout.md` |
+| 侧栏 | 分组/排序/显示菜单、置顶拖动、项目折叠面板、行内重命名、原生键盘选择；归档只在设置页 | `sidebar-layout.md` |
+| 模型/输入区 | 统一两列菜单、搜索、推理、provider 记忆与锁定、加载/重试；中央/侧聊共用 surface 与 model/reasoning（收藏、access/Plan 已移除） | `model-retry.md`、`question-composer.md` |
+| Agent 输出 | 按 turn 分组的活动树、思考、读写编辑/命令、失败恢复、差异/子代理、独立最终回复；真实不同的会话轨迹 | `transcript-links.md`、`subagents.md` |
+| 命令/项目 | All/Threads/Commands/Files 四页、typed 文件/内容搜索、行列定位、新项目设备/目录选择、离线/重复错误 | `prompt-references.md` |
+| 设置条件流程 | Providers/Devices/Cloud/Billing 四页、目标设备/账号/code 登录、更新、GitHub 仓库、计划/credits 的 mock 闭环 | `user-settings.md` |
 
 其他设置、Git/PR、浏览器和终端已有实现，完整覆盖以 `ui-parity.md` 及
 `reference/scenes.json` 为准。清单“automated-regression-only”表示实现回归，
@@ -78,7 +78,7 @@ pin与五门槛、canonical四目标候选包构建/校验已通过；installer�
    footer、动画/材质与多DPI原生验收。R6 picker 3/8、footer组件28/28超过
    数值门槛，均不等于视觉验收。准确细项见 `machine-resume.md` 与相关审计。
 3. 主/侧 composer 的 device-scoped Installed/Enabled 和侧聊 working trailer
-   已在新机接入并通过行为回归；分别见 `audit-composer-device.md` 和
+   已在新机接入并通过行为回归；分别见相关组件文档和
    `machine-resume.md`。配对视觉与完整原生验收仍待完成。
 4. 原版搜索的独立文件名/内容返回时序、索引/错误状态、CRUD 后重查、长树
    虚拟化/多选/Git 装饰；新项目卷/Home 索引/补全/Cloud clone 等详见命令审计。
@@ -179,7 +179,7 @@ Intel、ARM、Universal 包。已有产物应先保留到别处；不要混入�
 
 ## 给新会话的恢复指令
 
-> 读取 AGENTS.md、HANDOFF.md、docs/machine-handoff.md 和 docs/goal-execution.md。
+> 读取 AGENTS.md、docs/machine-handoff.md 和 docs/goal-execution.md。
 > 我已换到专门的验收机器，请恢复“与 Zeron v0.2.128 桌面 UI/交互完全一致”目标；
 > 若新会话没有原目标，则按这些边界建立同一执行目标。先核对分支/提交和固定
 > 参考，跑当前基线，再从剩余差异继续实施。优先用 MyGo 官方组件，不新增 mock

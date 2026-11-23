@@ -17,8 +17,8 @@
 完整 UI 一致性仍未验收，不能标为 complete。
 
 最新封存为R16：`reference/validation/tabstrip-r16-result.json`，详见
-`audit-tabstrip-file-tooltip.md`。文件图片`.78`和无详情标签提示已修；R16 框架为`.6`。
-当时源码已接入尚未发布验收的 [R17 `.9`](audit-tabstrip-tooltip-primitives.md)：
+`reference/validation/tabstrip-r16-result.json`。文件图片`.78`和无详情标签提示已修；R16 框架为`.6`。
+当时源码已接入尚未发布验收的 R17 `.9`：
 MyGo1,864文件、14补丁、树`27e5b9c724175bd11d537765210727fe25722a3407989e7fdcae71fa4357e8d9`。
 该次采用时2931项正式输入与受审提案一致；当时AX app961保留真实内容名称，只新增
 已测的checked quarter tooltip leaf。其后Cloud四文件采用另记下文，不将旧输入表/包
@@ -28,7 +28,7 @@ counter+2,048B仍未解决。Cloud修复前的`.9` pin与五门槛、canonical�
 最新封存发布阶段仍为R16；历史C4+AX候选包、V5隔离原生图和当前源码身份分开。
 下文按阶段保留历史状态，完整视觉与跨平台验收仍未完成。
 
-P0后续进展见`audit-tabstrip-tooltip-primitives.md`：隔离V4AX采集分支完成两次Go
+P0后续进展见框架锁文件：隔离V4AX采集分支完成两次Go
 构建、六项ABI/记录器测试，以及baseline/off/on三阶段两主题6张整PNG字节回归。
 正常Release得到12 uploads/12 Globals/346 instances/67 issued draws，原始输入已独审；
 它不是正式`.9` fixture、GPU完成或精确WGC生产帧证据。当前受控账本R7为
@@ -37,7 +37,7 @@ P0后续进展见`audit-tabstrip-tooltip-primitives.md`：隔离V4AX采集分支
 参考侧第三次default metadata保留其原requested-feature缺口；后续一次feature+Windows
 filter metadata已退出0/helper退出2，959 packages/nodes、30members，锁5c7b128d…caf34
 和4323raw输入不变。completion a1e9cf48…73f1e与独审1e4fe0d2…2a3b关闭原P1，详见
-`audit-tabstrip-tooltip-primitives.md`。workspace feature union不是实际编译units，
+`third_party/mygo.lock.json`。workspace feature union不是实际编译units，
 metadata与首Job smoke（8aa94b81…8178）均不含参考项目编译；SDK/首build/ABI/native
 仍须另据。仅prepared plan.graphScope“all workspace dependencies”措辞过宽新增P3；
 README“workspace-wide”仍成立，不称官方Cargo文档/工具bug。旧19项差异和as-of不回写。
@@ -51,7 +51,7 @@ f76336b9…6fbf3绑定原日志；该次original/raw、当时2931输入/7docs/cu
 实际ml64/MSVC.asm及trace EXE f678bc89…c70ba已记录；自有Job后继按界限清理，
 不声称后继全部自然退出。参考baseline、ABI和baseline/off/on原生整图验收仍待执行。
 Cloud导航四文件已按02采用：red4场景失败→green九顶层及全仓overlay通过，见
-[Cloud审计](audit-account-settings.md)和采用0b3a17e9…b090a。现已补正常native路径：
+Cloud审计和采用0b3a17e9…b090a。现已补正常native路径：
 独立offline profile、2933输入的开发EXE69a43719…f0090，off rev2→provisioning rev4→
 ready/cloud-1 rev5，同页不重复、设置搜索返回rev6；PID50440正常退出0。封存a5981b8b…63b1c
 保留首张错窗拒收与后续激活恢复。live四项门禁通过；lint首败7dd9…保留，仅本地file
@@ -91,7 +91,7 @@ raw MTA/fresh STA只证明原R8包被测sequence的工具字段错显，不是�
 主/侧 composer 根据自己的设备查找 Provider 的 `Installed && Enabled`，不再
 借用 local/global 开关。已有会话可保留已安装但禁用的当前 Provider；未安装或
 缺少该设备元数据时，其可选行排除，选中标签保留。设备切换与陈旧菜单激活均有
-回归，详见 `audit-composer-device.md`。独立审阅发现的 Installed 例外遗漏已修复。
+回归。独立审阅发现的 Installed 例外遗漏已修复。
 
 侧聊的最后一条 transcript 现在挂载同一 working trailer，计时读取子会话的 Run；
 独立的 Pending 产生 Sending/Queued 桥接，不借用主会话的计时。无消息时仍显示
@@ -111,7 +111,7 @@ settled dock expanded104–304。原生 textarea 自行计算 Unicode/换行高�
 不会把组合文字写入业务草稿。独立审阅加强测试后还修复了非空 IME Enter
 误发送、CJK/emoji 高度估算、小字号提前触顶，以及普通文本复用旧 input key
 读出遗留草稿的问题。API 生成、完整 MyGo UI 测试、锁和许可证清单已同步。
-详见 `audit-composer-layout.md`。该布局阶段之后已接入 footer/context ring，见下方
+该布局阶段之后已接入 footer/context ring，见下方
 R6/footer节；完整footer与动效仍待验收。
 
 ## 原生观察及其限度
@@ -177,7 +177,7 @@ Up/Down 打开邻模型列表、F 切 fast、Left/Right/Home/End 调 effort。
 副本共用面板已补齐生产按键与 Fast 按钮，含 Cursor option effort、主/侧归属、
 provider 设备可用性和运行锁回归。另补兼容的 `ModelOption.ChoiceLabels`：
 显示 `Standard`/`1M tokens`，保存仍为 `standard`/`1m`。旧字符串 choice 数据继续
-可用，snapshot 深拷贝包含新 map。详情见 `audit-model-picker.md` 和 `contracts.md`。
+可用，snapshot 深拷贝包含新 map。详情见 `model-retry.md` 和 `contracts.md`。
 
 ## 无损参考与受控实现 fixture
 
@@ -199,7 +199,7 @@ Enter/Escape 导航与 list 状态断言，明确跳过已知过时的完整键�
 `output/captures/model-picker-fixture-native-20261028-r2` 同样取得8张 PNG，但
 它们是原生 `Window.CapturePage()` 的 client840×560 /360×560 内容。
 初次 client0×0 的启动读取没有被算成功；显式 Show、按实际已渲染状态有界等待后
-重跑通过。详见 `audit-compact-picker-fixture.md`。
+重跑通过。
 
 原样严格比较已实际拒绝842×592与840×560的边界不一致，没有生成 SSIM。
 直接看两张原图还可见 dark popup 底色、effort 轨道材质、option 行边框及
@@ -217,7 +217,7 @@ popover 位置差异，尚待收敛。详见 `reference/validation/compact-fixtu
 原版新增实际 appearance/page/effort/Fast 元数据，没有改生产组件；新输出为
 `output/reference-lossless/capture-native-state-20261028-01`。副本 R3 输出为
 `output/captures/model-picker-fixture-wgc-20261028-r3`，完整 committed geometry
-见 `audit-compact-picker-fixture.md`。面板位置为(8,356,256,134)，列表为
+面板位置为(8,356,256,134)，列表为
 (8,264,256,226)。实际触发按钮高度32，已纠正从字形目测为24的旧估计。
 
 `scripts/compare-compact-fixtures.ps1` 先核对8场景、磁盘 PNG/hash/尺寸、实际
@@ -263,7 +263,7 @@ dark/narrow panel 与 light/narrow list。仍可见 option 文字宽度/基线�
 MyGo原本在无feature时跳过，两者默认特性不同。以13px/500为例，Context window
 字宽为101.907对98.943。1,560次布局中的312组完整 glyph 对照确认，公开
 `FontFeatures("kern=0")` 可匹配已测的原版默认 Typography，也会影响默认连字。
-来源、全部产物哈希、命令和限制见 `audit-windows-typography.md` 与
+来源、全部产物哈希、命令和限制见 `typography.md` 与
 `reference/validation/windows-typography.json`。
 
 `design.ApplyReferenceTypography` 现仅在 Windows 的真实 App.View 和同一fixture
@@ -298,7 +298,7 @@ transcript/light1600×1000实际启动、自捕获client PNG、自退出0，证�
 `output/resume-validation/popup-r5-native-boot/evidence.json`。这是启动/绘制证明，
 不包含新的键鼠序列、安装器或Mac原生验收。208项源码在包和native运行后无漂移。
 
-Footer源码审计见 `audit-composer-footer.md`：实际壳总传DockFrame，hero
+Footer源码审计结论：实际壳总传DockFrame，hero
 非Git也保留24px空槽；已有session ref只读；侧聊只接自己的context。以下接续
 已实现 typed DTO/mock、Git 与两种 usage；累计计费 tokens 不代替上下文占用。
 
@@ -327,7 +327,7 @@ GPUI mouse down/up 打开卡片；Go fixture 复用实际 footer，DTO 控制弹
 `output/footer-comparison-r3-2x-reviewed/comparison.json` 的28组完整原图 SSIM
 为0.998987004–0.999950231，全部超过0.995，无裁剪、缩放、配准或遮罩。
 空白背景占比高，分数仅用于组件筛查。账户卡121px与 context 卡/label 宽度
-另由原版实际2x Inspector bounds 交叉核对，见 `audit-footer-text-bounds.md`。
+另由原版实际2x Inspector bounds 交叉核对。
 严格比较工具独立审阅及33项测试通过：31个负例均在建立输出/进入parity前拒绝，
 真实1x和2x正例可达比较阶段。完整 footer、Git/PR 菜单、动效、其他DPI与平台
 仍须验收，阶段记录为 `reference/validation/footer-result.json`。
@@ -358,7 +358,7 @@ R7阶段 MyGo 为 `zeron-native-ui.4`，1,834 文件、9 个有序补丁，完�
 应用，窗口内0–7px位置不移动；ComposerInput renderer 的22.75行高是绝对DIP，
 不能按外层 ui_rems 声明随界面字号缩放。冷开320/above、compact默认向上、
 搜索14px/Faint、2DIP原生caret和列表样式也按实际代码修正，详见
-`audit-native-popup-style.md` 与 `audit-model-list-residual.md`。
+组件文档与场景清单。
 
 原生fixture现绑定真实Window，避免未绑定时1x fallback冒充产品2x分支。
 原版独立8图在 `output/reference-lossless/capture-native-state-20261028-2x-01`，
@@ -430,7 +430,7 @@ Windows amd64、Mac Intel、Mac ARM、Universal 包均已构建并验证架构�
 Composer 完整 footer 验收、动画/材质、Windows DPI/IME/剪贴板/网页叠放、性能及
 Mac 双架构实机门槛仍按原目标保留。JPEG 观察图不能冒充无损参考。
 
-旧交接中“等待用户恢复”的条件现已满足。`HANDOFF.md`、`goal-execution.md` 和
+旧交接中“等待用户恢复”的条件现已满足。`goal-execution.md` 和
 `machine-handoff.md` 已注明恢复；composer/account 审计中旧的设备过滤待办与侧聊
 trailer 待办已更新。旧审计统一写 expanded120 下限和空侧 footer 的陈述
 分别遗漏 settled dock104 分支、条件 context ring，现按源码明确更正。
@@ -448,7 +448,7 @@ AccessNode.Bounds只纠正文档为未裁剪border box，没有改变裁剪行�
 accent overlay按原版border box覆盖，消除CSS padding-box inset留下的双描边；
 slider指针、拖动、焦点、键盘回归通过。标题栏改为实际互不重叠的槽，takeover
 隐藏session info，primary点击pane与secondary菜单独立；原生新包已复测按钮、
-展开/收回、信息卡和空白标题栏拖窗。详见 `audit-titlebar-uia.md`。
+展开/收回、信息卡和空白标题栏拖窗。
 
 全量/tagged Go测试、Go vet、MyGo vet、固定v2.15.0 lint和MyGo Windows/UI测试
 均通过。初次Go门禁扫描到Git忽略的output内诊断备份，失败日志保留；原字节移入
@@ -528,7 +528,7 @@ R10 的显示 guard 不能清理发送目标。R11 从已接受 Sessions 校正�
 容量1的订阅会合并瞬时ACK。新增可选 `Run.requestId`，完整快照和持久化保留
 创建关联，App同时约束当前draft代次和发送前已有RunID。新会话不再采用任意
 第一条新ID；切页时成功完成不会永久pending或抢走当前页。详见
-`audit-session-reconciliation.md` 与独立 `implementation-review.json`。
+`reference/validation/` 下的阶段结果与独立 `implementation-review.json`。
 
 标签栏按源码改为expand28×28、plus24×24，plus在可滚动chips末尾，只有expand
 固定；支持展开/折叠图标、150ms hover和有效reduced-motion；非Git隐藏对应
@@ -586,7 +586,7 @@ mockHistory，展开/收回正常。PID30872/HWND97785678，实际Alt+F4退出0�
 原生还发现History新插入或收回takeover后可保持裁切，手动wheel能滚入；该问题保留
 截图并进入R13诊断，不能由既有键盘测试推成自动滚入全通过。玻璃alpha遮罩、拖动/
 滚入过渡、自绘菜单、独立参考配对和完整跨平台验收仍待完成。细节见
-`audit-tabstrip-scrollbars.md`，目标继续active，未提交/推送。
+滚动条实现，目标继续active，未提交/推送。
 
 ### R13：菜单滚入请求与生成索引换行（本机2026-10-29）
 
@@ -607,7 +607,7 @@ PID31144/HWND584059688，实际exit0、stderr空，34份raw文件在独立目录
 
 缩窄/收回的裁切与菜单请求流失不同，原版没有已证明的resize自动滚入要求；
 R13保留其语义。plus可见性也不等于activechip揭示。原版匹配fixture与完整
-平台验收继续待做，详见 `audit-tabstrip-reveal.md` 与R13阶段索引。目标active。
+平台验收继续待做，详见R13阶段索引。目标active。
 
 ## R14 — 生产TabStrip独立原生基线
 
@@ -631,13 +631,13 @@ Go07比失败06新增2秒最小呈现间隔，之后仍有实际就绪检查，�
 
 选中/hover wash、inactive generic glyph、6DIP dirty dot等源码差异保留待R15修正；
 空闲SideChat不替代dirty文件、玻璃、hover、实际OS输入或Mac验收。见
-`audit-tabstrip-fixture.md`。目标active，未提交/推送，不标complete。
+标签条固定场景。目标active，未提交/推送，不标complete。
 
 ## R15 标签样式与原生对照
 
 287项源码已封实际字节（9改7增），五门槛全过；36对沿用原版基线重新对照，
 另有4组hover/dirty补充。dark底色已同#232323，浅色蓝通道仍差1；四目标发布包
-校验和确切Windows EXE标签交互退出0，完整验收未接受。见 `audit-tabstrip-style.md`。
+校验和确切Windows EXE标签交互退出0，完整验收未接受。
 
 ## R17 V5：已接入源码与隔离原生证据
 
