@@ -44,6 +44,11 @@
 代码、文件、Diff 和终端采用各自保存的绝对字号，不随界面字号变化。
 用户已选字体保留；此轮同步的是字号逻辑，不替换字体文件或系统字形渲染器。
 
+Windows 上额外调用 `internal/design/typography.go` 的 `ApplyReferenceTypography`：
+冻结渲染器的 Windows 整形器始终安装一个空的 Typography 对象，而 MyGo 会跳过该调用，
+两者因此产生字宽与常见连字差异。该函数用公开的 `FontFeatures("kern=0")` 复现那份默认行为，
+只作用于 Windows，不修改字体文件、字号或其他平台的整形器。
+
 参考文档 `docs/ui/ui-font-tokens.md` 只列出了最初的四档字号，
 没有涵盖当前源码中的 caption、xl、24/30px 设置标题等新增档位。
 本次以参考源码为准。GCode 旧文档中的 20px 设置标题、按 13px 基准比例缩放
