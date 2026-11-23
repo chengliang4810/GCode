@@ -208,6 +208,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 	if a.questionCommandFinished(cmd, err) {
 		return
 	}
+	a.workflowCommandFinished(cmd, err)
 	a.capabilityCommandFinished(cmd, err)
 	a.modelSettingsCommandFinished(cmd, err)
 	a.settingsImportCommandFinished(cmd, err)

@@ -539,6 +539,8 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 		return "Use skill", t.Summary, "widget"
 	case contracts.ToolGoalRead:
 		return "Read goal", t.Summary, "checklist"
+	case contracts.ToolWorkflow:
+		return workflowToolTitle(t), t.Summary, "git-branch"
 	case contracts.ToolAgent:
 		return "Start agent", t.Summary, "bot"
 	case contracts.ToolMCP:
@@ -555,6 +557,33 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 			return "Read archived context", "", "widget"
 		}
 		return "Tool", firstNonempty(t.Name, t.Summary), "widget"
+	}
+}
+
+// workflowToolTitle 给工作流工具行一个短标题。工具行说明这一次工具动作，
+// 不复制运行图：阶段线与状态属于运行卡和详情。
+func workflowToolTitle(tool *contracts.ToolCall) string {
+	switch tool.Name {
+	case "CreateWorkflow":
+		return "Start workflow"
+	case "AmendWorkflow":
+		return "Amend workflow"
+	case "SaveWorkflow":
+		return "Save workflow"
+	case "ListSavedWorkflows":
+		return "List saved workflows"
+	case "EvalWorkflowSnippet":
+		return "Check workflow script"
+	case "ListWorkflowRuns":
+		return "List workflow runs"
+	case "GetWorkflowRun":
+		return "Read workflow run"
+	case "ResumeWorkflowRun":
+		return "Resume workflow run"
+	case "ResolveWorkflowQuestion":
+		return "Answer workflow question"
+	default:
+		return "Fill workflow hole"
 	}
 }
 

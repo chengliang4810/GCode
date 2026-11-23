@@ -9,6 +9,7 @@ import (
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/workflow"
 	"github.com/egoist/mygo/ui"
 	"github.com/egoist/mygo/ui/richtext"
 )
@@ -17,6 +18,10 @@ type promptChoice struct {
 	ref         contracts.PromptReference
 	description string
 }
+
+// workflowCommandName 是内置工作流命令的名字。它是保留字：同名用户命令
+// 既不列出也不展开。
+const workflowCommandName = "workflow"
 
 // Document owns text, atomic references, selection and attributed undo.
 // No UI Element or Context survives a frame.
@@ -177,8 +182,11 @@ func (a *App) promptChoices(trigger, query string) []promptChoice {
 		add("command", "init", "Init", a.t("Create workspace instructions"))
 		add("command", "goal", "Goal", a.t("Start a goal"))
 		add("command", "compact", "Compact", a.t("Compact conversation context"))
+		if workflowCommandOffered(a.state.Settings.WorkflowMode) {
+			add("command", "workflow", "Workflow", a.t("Design and run a workflow"))
+		}
 		for _, entry := range a.state.UserResources.Commands {
-			if entry.Enabled && entry.Name != "init" && entry.Name != "goal" && entry.Name != "compact" {
+			if entry.Enabled && !builtinCommandName(entry.Name) {
 				add("command", entry.Name, entry.Name, entry.Description)
 			}
 		}
@@ -393,6 +401,22 @@ func (a *App) promptPanel(c *ui.Context, anchor ui.Element, p composerSurfacePro
 	})
 }
 
+// builtinCommandName 报告一个名字是否被内置命令占用。内置命令是保留字：
+// 同名用户命令既不列出也不展开，插件不能顶替它们的含义。
+func builtinCommandName(name string) bool {
+	switch name {
+	case "init", "goal", "compact", workflowCommandName:
+		return true
+	}
+	return false
+}
+
+// workflowCommandOffered 报告命令菜单要不要给出工作流入口。关闭模式连
+// 名字都不出现，已有运行仍可查看。
+func workflowCommandOffered(mode string) bool {
+	return workflow.NormalizeMode(mode) != contracts.WorkflowModeDisabled
+}
+
 func promptGlyph(ref contracts.PromptReference) string {
 	if ref.Kind == "skill" {
 		return "magic-stick-3"
@@ -402,6 +426,9 @@ func promptGlyph(ref contracts.PromptReference) string {
 	}
 	if ref.ID == "goal" {
 		return "checklist"
+	}
+	if ref.ID == workflowCommandName {
+		return "git-branch"
 	}
 	return "terminal"
 }

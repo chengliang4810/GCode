@@ -119,6 +119,12 @@ func (a *App) transcriptRowView(c *ui.Context, pane transcriptPane, entries []co
 			}
 			if row.Last && !row.User && row.Message >= 0 && !message.Streaming {
 				a.transcriptFooter(c, message, a.transcriptEntryHovered(pane.scope, message.ID))
+				// A workflow run belongs to the turn that launched it, so its
+				// card sits at that turn's tail, not at the end of the session.
+				// The completion card comes first: what was delivered, then
+				// the run that delivered it.
+				a.workflowCompletionCards(c, message.ID, layout.width)
+				a.workflowRunCards(c, message.ID, layout.width)
 			}
 			if index == len(rows)-1 {
 				a.workingTrailer(c, pane.session)

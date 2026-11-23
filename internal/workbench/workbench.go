@@ -99,6 +99,10 @@ type State struct {
 	RenderSession     func(*ui.Context, string)
 	RenderTrajectory  func(*ui.Context, string)
 	RenderGoal        func(*ui.Context, string)
+	// RenderWorkflowRuns draws one conversation's run directory.
+	RenderWorkflowRuns func(*ui.Context, string)
+	// RenderWorkflow draws the run detail tab for one run.
+	RenderWorkflow    func(*ui.Context, string)
 	OnNewSideChat     func()
 	CanNewSideChat    func() bool
 	OnOpenSurface     func()
@@ -662,6 +666,14 @@ func (s *State) view(c *ui.Context, ownTabs bool, top float32) {
 		case "goal":
 			if s.RenderGoal != nil {
 				s.RenderGoal(c, t.id)
+			}
+		case "workflow":
+			if s.RenderWorkflow != nil {
+				s.RenderWorkflow(c, t.id)
+			}
+		case "workflow-runs":
+			if s.RenderWorkflowRuns != nil {
+				s.RenderWorkflowRuns(c, t.id)
 			}
 		default:
 			s.picker(c)

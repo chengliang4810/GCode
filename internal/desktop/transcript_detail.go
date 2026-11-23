@@ -128,6 +128,11 @@ func readableDetailSource(c *ui.Context, block contracts.Block, live bool) activ
 	case contracts.ToolSkill, contracts.ToolAgent, contracts.ToolDirectory, contracts.ToolWebFetch, contracts.ToolWebSearch:
 		source.args, source.path = "", ""
 		source.command = firstNonempty(tool.Command, tool.Summary, tool.Path)
+	case contracts.ToolWorkflow:
+		// 工作流工具的参数里是整段脚本。工具行只留结论与名字，
+		// 脚本正文由确认弹窗和详情承担。
+		source.args, source.path = "", ""
+		source.command = firstNonempty(tool.Summary, tool.Command)
 	case contracts.ToolGoalRead:
 		if goal := tool.GoalSnapshot; goal != nil {
 			lines := []string{

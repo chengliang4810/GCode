@@ -484,6 +484,13 @@ func (a *App) generalSettings(c *ui.Context) {
 		})
 	})
 	a.settingsCard(c, func() {
+		a.settingsRow(c, "Workflows", "Workflow runs ask before they start. On demand keeps the workflow tools out of the way until you turn them on.", func() {
+			a.settingsChoice(c, "Workflows", &a.state.Settings.WorkflowMode, []settingOption{
+				{"disabled", "Off"}, {"onDemand", "On demand"}, {"alwaysOn", "Always on"},
+			}, nil)
+		})
+	})
+	a.settingsCard(c, func() {
 		a.settingsRow(c, "Send messages with", "", func() {
 			modifier := "Ctrl + Enter"
 			if runtime.GOOS == "darwin" {
