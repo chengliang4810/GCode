@@ -163,6 +163,14 @@ jobs:
         run: |
           set -euo pipefail
           tag="$RELEASE_TAG"
+          # Publish only this version's section; CHANGELOG.md keeps the archive.
+          awk -v version="$RELEASE_VERSION" '
+            $0 == "## " version { current = 1; next }
+            current && /^## / { exit }
+            current { print }
+          ' CHANGELOG.md > release-notes.md
+          [[ -n "$(sed '/^[[:space:]]*$/d' release-notes.md)" ]] ||
+            { echo "Release notes are missing for $RELEASE_VERSION" >&2; exit 1; }
           # Every target must contain a signed archive and update manifest.
           for platform in windows-amd64 darwin-amd64 darwin-arm64 darwin-universal; do
             [[ $(find release-assets -name "update-$platform.json" | wc -l) -eq 1 ]]
@@ -189,12 +197,12 @@ jobs:
               { echo 'Refusing to replace a published release.' >&2; exit 1; }
           else
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --draft --verify-tag --title "GCode $RELEASE_VERSION" --notes-file CHANGELOG.md
+              --draft --verify-tag --title "GCode $RELEASE_VERSION" --notes-file release-notes.md
           fi
           mapfile -d '' assets < <(find release-assets -type f -print0)
           gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
           # beta is the product stage; this is the ordinary latest update channel.
           gh release edit "$tag" --repo "$GITHUB_REPOSITORY" \
-            --draft=false --prerelease=false --latest
+            --notes-file release-notes.md --draft=false --prerelease=false --latest
           gh api "repos/$GITHUB_REPOSITORY/releases/latest" \
             --jq '.tag_name' | grep -Fx "$tag"
