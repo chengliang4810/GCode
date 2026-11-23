@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -78,6 +79,24 @@ func TestWorkflowRunExecutesActorsAndSettles(t *testing.T) {
 	if run.Actors[0].SessionID == "" {
 		t.Fatal("a settled instance keeps its session for the actor view")
 	}
+	// 实例会话属于那次运行，不是一次对话：它带着父会话与父运行的归属，
+	// 并作为子代理会话存在，这样对话列表、智能体岛和通知都不会把它当成
+	// 用户发起的那几轮。
+	actor, found := contracts.Session{}, false
+	for _, session := range state.Sessions {
+		if session.ID == run.Actors[0].SessionID {
+			actor, found = session, true
+		}
+	}
+	if !found {
+		t.Fatalf("the instance session is missing: %+v", run.Actors[0])
+	}
+	if actor.SubagentType != contracts.SubagentWorkflow {
+		t.Fatalf("the instance session is not a workflow subagent session: %+v", actor)
+	}
+	if actor.ParentSessionID != run.SessionID || actor.ParentRunID != run.ID {
+		t.Fatalf("the instance session does not belong to the run: %+v", actor)
+	}
 	if len(run.Artifacts) != 1 || run.Artifacts[0].Name != "plan" || !run.Artifacts[0].Primary {
 		t.Fatalf("expected one primary artifact, got %+v", run.Artifacts)
 	}
@@ -88,6 +107,27 @@ func TestWorkflowRunExecutesActorsAndSettles(t *testing.T) {
 		if phase.Status != contracts.WorkflowPhaseDone {
 			t.Fatalf("expected a settled phase, got %+v", phase)
 		}
+	}
+}
+
+// 实例会话只由那次运行驱动：界面与远程客户端发来的消息会被拒绝，
+// 否则用户就能改写一次正在运行的工作流内部的一轮。
+func TestWorkflowInstanceSessionsRejectUserMessages(t *testing.T) {
+	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = subagentRequest(t, r)
+		goalResponse(w, model.Chat, "Plan complete", nil, true)
+	}))
+	state := runWorkflow(t, core, workflowTestProgram())
+	run := state.WorkflowRuns[0]
+	if run.Status != contracts.WorkflowStatusCompleted {
+		t.Fatalf("expected a completed run, got %q (%s)", run.Status, run.Error)
+	}
+	err := core.Execute(context.Background(), contracts.Command{
+		Kind: "message.send",
+		Send: &contracts.SendRequest{SessionID: run.Actors[0].SessionID, Text: "keep going"},
+	})
+	if err == nil || !strings.Contains(err.Error(), "read-only") {
+		t.Fatalf("a user message reached the instance session: %v", err)
 	}
 }
 

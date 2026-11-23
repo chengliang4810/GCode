@@ -62,6 +62,29 @@ func TestAgentIslandProjectionPriorityAndDismissal(t *testing.T) {
 	}
 }
 
+// A workflow run opens one session per instance. Those sessions belong to the
+// run, not to the conversation list, so the island must count the conversation
+// once rather than once per instance.
+func TestAgentIslandCountsTheConversationNotTheWorkflowInstances(t *testing.T) {
+	now := time.Now()
+	state := contracts.Snapshot{
+		Sessions: []contracts.Session{{ID: "talk", Title: "Review the change", Status: contracts.Working, UpdatedAt: now}},
+		Runs:     []contracts.Run{{ID: "talk-run", SessionID: "talk", Status: "running", StartedAt: now.Add(-2 * time.Minute)}},
+	}
+	for _, name := range []string{"reader", "writer", "planner", "reviewer", "tester", "summarizer", "critic", "scribe", "runner"} {
+		id := "actor-" + name
+		state.Sessions = append(state.Sessions, contracts.Session{
+			ID: id, Title: name, ParentSessionID: "talk", ParentRunID: "talk-run",
+			SubagentType: contracts.SubagentWorkflow, Status: contracts.Working, UpdatedAt: now,
+		})
+		state.Runs = append(state.Runs, contracts.Run{ID: "run-" + name, SessionID: id, Status: "running", StartedAt: now.Add(-time.Minute)})
+	}
+	entries := islandEntries(state, now, nil)
+	if len(entries) != 1 || entries[0].SessionID != "talk" {
+		t.Fatalf("the island counted workflow instances as conversations: %+v", entries)
+	}
+}
+
 func TestAgentIslandInterruptedIsNotACompletion(t *testing.T) {
 	now := time.Now()
 	state := contracts.Snapshot{
