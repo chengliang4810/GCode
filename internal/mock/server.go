@@ -67,6 +67,7 @@ type Server struct {
 }
 
 var _ contracts.Service = (*Server)(nil)
+var _ contracts.WorkflowJournalService = (*Server)(nil)
 var _ contracts.ApplicationUsageService = (*Server)(nil)
 
 func New(opts Options) (*Server, error) {
@@ -207,6 +208,23 @@ func (s *Server) ReadApplicationUsage(ctx context.Context) (contracts.Applicatio
 		return contracts.ApplicationUsage{}, nil
 	}
 	return contracts.ApplicationUsage{Report: s.state.ApplicationUsage.Report.Clone(), GeneratedAt: s.state.ApplicationUsage.GeneratedAt}, nil
+}
+
+// WorkflowJournal is the deterministic host's answer for one run: a scenario
+// carries no journal, so it reports an empty log rather than inventing steps.
+func (s *Server) WorkflowJournal(ctx context.Context, runID string) (contracts.WorkflowJournal, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.WorkflowJournal{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.WorkflowJournal{}, ErrClosed
+	}
+	if runID == "" {
+		return contracts.WorkflowJournal{}, errors.New("a workflow run ID is required")
+	}
+	return contracts.WorkflowJournal{}, nil
 }
 
 // Subscribe sends the current scoped state immediately. A slow reader receives

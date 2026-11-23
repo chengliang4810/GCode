@@ -207,3 +207,26 @@ func TestReadLineCountFollowsTheTypedResult(t *testing.T) {
 		}
 	}
 }
+
+// 工作流工具行：参数里的脚本不当摘要，结果里的名字和运行身份才是。
+func TestWorkflowToolPresentationKeepsTheRowShort(t *testing.T) {
+	started := time.Now()
+	call := model.Call{ID: "call", Name: "CreateWorkflow", Arguments: `{"script":"{\"phases\":[]}","name":"Review","question":"Run it?"}`}
+	tool := toolPresentation(call, "", started)
+	if tool.Kind != contracts.ToolWorkflow || tool.Summary != "Review" || tool.Args != call.Arguments {
+		t.Fatalf("the tool row keeps its name and its raw arguments: %+v", tool)
+	}
+	workflowToolPresentation(&tool, map[string]any{"approved": true, "run_id": "workflow-run-1", "name": "Review"})
+	if tool.Summary != "Review" {
+		t.Fatalf("an approved run is named by the run: %+v", tool)
+	}
+	byRun := toolPresentation(model.Call{ID: "call", Name: "GetWorkflowRun", Arguments: `{"run_id":"workflow-run-2"}`}, "", started)
+	if byRun.Summary != "workflow-run-2" {
+		t.Fatalf("a run read is named by the run id: %+v", byRun)
+	}
+	rejected := toolPresentation(call, "", started)
+	workflowToolPresentation(&rejected, map[string]any{"approved": false, "feedback": "not this time"})
+	if rejected.Summary != "Review" {
+		t.Fatalf("a rejection does not invent a run: %+v", rejected)
+	}
+}

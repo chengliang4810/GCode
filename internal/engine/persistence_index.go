@@ -21,9 +21,12 @@ type persistedSnapshot struct {
 	SessionGroups    []contracts.SessionGroup                 `json:"sessionGroups,omitempty"`
 	Settings         contracts.Settings                       `json:"settings"`
 	Runs             []contracts.Run                          `json:"runs"`
-	Terminals        []contracts.Terminal                     `json:"terminals"`
-	Attachments      []contracts.Attachment                   `json:"attachments"`
-	Appshots         []contracts.Attachment                   `json:"appshots"`
+	// 工作流定义与运行是用户自己攒下的事实：定义关了应用还在，运行的历史也要在。
+	WorkflowDefinitions []contracts.WorkflowDefinition `json:"workflowDefinitions,omitempty"`
+	WorkflowRuns        []contracts.WorkflowRun        `json:"workflowRuns,omitempty"`
+	Terminals           []contracts.Terminal           `json:"terminals"`
+	Attachments         []contracts.Attachment         `json:"attachments"`
+	Appshots            []contracts.Attachment         `json:"appshots"`
 }
 
 func persistenceIndex(snapshot contracts.Snapshot) persistedSnapshot {
@@ -44,12 +47,14 @@ func persistenceIndex(snapshot contracts.Snapshot) persistedSnapshot {
 		// idempotency even when conversation bodies are not loaded.
 		runs[i].Error = ""
 	}
+	workflowDefinitions, workflowRuns := cloneWorkflowStateForDisk(snapshot.WorkflowDefinitions, snapshot.WorkflowRuns)
 	return persistedSnapshot{
 		Automations: snapshot.Automations, AutomationRuns: snapshot.AutomationRuns,
 		Metrics: snapshot.Metrics, ApplicationUsage: snapshot.ApplicationUsage,
 		SchemaVersion: snapshot.SchemaVersion, Revision: snapshot.Revision,
 		User: snapshot.User, Projects: projects, Sessions: sessions,
 		SessionGroups: snapshot.SessionGroups, Settings: snapshot.Settings, Runs: runs,
+		WorkflowDefinitions: workflowDefinitions, WorkflowRuns: workflowRuns,
 		Terminals: snapshot.Terminals, Attachments: snapshot.Attachments,
 		Appshots: snapshot.Appshots,
 	}
@@ -64,6 +69,7 @@ func (disk persistedSnapshot) restore(defaults contracts.Snapshot) contracts.Sna
 	defaults.SessionGroups = disk.SessionGroups
 	defaults.Terminals = disk.Terminals
 	defaults.Runs = disk.Runs
+	defaults.WorkflowDefinitions, defaults.WorkflowRuns = disk.WorkflowDefinitions, disk.WorkflowRuns
 	for i := range defaults.Runs {
 		// A stopping run never settles on its own once the host is gone, so it
 		// is normalized exactly like a running one.
@@ -79,4 +85,25 @@ func (disk persistedSnapshot) restore(defaults contracts.Snapshot) contracts.Sna
 		defaults.Projects[i].FilesError = ""
 	}
 	return defaults
+}
+
+// cloneWorkflowStateForDisk 拷贝写盘用的工作流事实。运行里带着阶段、实例与
+// 留白这些嵌套切片，执行线程会就地改写它们，写盘的那份因此必须自成一份。
+func cloneWorkflowStateForDisk(definitions []contracts.WorkflowDefinition, runs []contracts.WorkflowRun) ([]contracts.WorkflowDefinition, []contracts.WorkflowRun) {
+	copiedDefinitions := slices.Clone(definitions)
+	for i := range copiedDefinitions {
+		copiedDefinitions[i].Arguments = slices.Clone(copiedDefinitions[i].Arguments)
+	}
+	copiedRuns := slices.Clone(runs)
+	for i := range copiedRuns {
+		run := &copiedRuns[i]
+		run.Args = slices.Clone(run.Args)
+		run.Phases = slices.Clone(run.Phases)
+		run.Actors = slices.Clone(run.Actors)
+		run.Questions = slices.Clone(run.Questions)
+		run.Holes = slices.Clone(run.Holes)
+		run.Artifacts = slices.Clone(run.Artifacts)
+		run.Edges = slices.Clone(run.Edges)
+	}
+	return copiedDefinitions, copiedRuns
 }

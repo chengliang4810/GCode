@@ -121,6 +121,9 @@ func toolKind(name string) contracts.ToolKind {
 		return contracts.ToolWebFetch
 	case "WebSearch":
 		return contracts.ToolWebSearch
+	case "CreateWorkflow", "AmendWorkflow", "SaveWorkflow", "ListSavedWorkflows", "EvalWorkflowSnippet",
+		"ListWorkflowRuns", "GetWorkflowRun", "ResumeWorkflowRun", "ResolveWorkflowQuestion", "FillWorkflowHole":
+		return contracts.ToolWorkflow
 	default:
 		if strings.HasPrefix(name, "mcp__") {
 			return contracts.ToolMCP

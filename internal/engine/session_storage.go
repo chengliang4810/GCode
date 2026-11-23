@@ -161,6 +161,8 @@ func (e *Engine) installSessionDiskLocked(disk sessionDisk, record string) {
 	e.state.Terminals = append(e.state.Terminals, disk.Terminals...)
 	e.state.Sessions[e.sessionIndex(session.ID)] = disk.Session
 	e.loadedSessions[session.ID] = true
+	// 之前用过工作流的会话不因为重启而失去这个能力。
+	e.activateWorkflowSessionWithHistoryLocked(session.ID)
 	// Record the committed bytes before recovery changes any shared slices.
 	var hash [32]byte
 	decoded, _ := hex.DecodeString(record)

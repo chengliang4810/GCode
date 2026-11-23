@@ -138,7 +138,12 @@ type Engine struct {
 	sessionStarted map[string]bool
 	sessionTools   map[string]*sessionToolSet
 	projectScans   map[string]*projectScan
-	projectScanner func(context.Context, contracts.Project) ([]contracts.File, error)
+	// workflowTasks 是一次运行在主机内的执行句柄；事实仍然在 state 与 journal。
+	workflowTasks     map[string]*workflowTask
+	workflowSequences map[string]uint64
+	// workflowConfirms 是等待用户决定的运行确认；确认通过之前没有运行。
+	workflowConfirms map[string]*workflowConfirmRequest
+	projectScanner   func(context.Context, contracts.Project) ([]contracts.File, error)
 	// background is canceled when the host closes; asynchronous hooks use it
 	// because they outlive the turn that started them.
 	background     context.Context
@@ -168,6 +173,9 @@ func Open(options Options) (*Engine, error) {
 	e.modelFetchRuns, e.modelFetchResults = map[string]*modelFetchRun{}, map[string]contracts.ModelFetch{}
 	e.projectScans = map[string]*projectScan{}
 	e.projectScanner = collectProjectFiles
+	e.workflowTasks = map[string]*workflowTask{}
+	e.workflowSequences = map[string]uint64{}
+	e.workflowConfirms = map[string]*workflowConfirmRequest{}
 	e.naming = map[string]*namingRun{}
 	if err := os.MkdirAll(filepath.Join(options.Storage.ConfigDirectory(), "skills"), 0700); err != nil {
 		return nil, err
@@ -196,6 +204,9 @@ func Open(options Options) (*Engine, error) {
 		e.state.Sessions[i].ModelRetry = nil
 	}
 	if err := e.recoverAutomationsLocked(time.Now()); err != nil {
+		return nil, err
+	}
+	if err := e.recoverWorkflowRunsLocked(time.Now()); err != nil {
 		return nil, err
 	}
 	e.loadStandaloneTerminals()
@@ -411,6 +422,9 @@ func (e *Engine) Close() error {
 	}
 	for _, cancel := range e.pluginOperations {
 		cancel()
+	}
+	for _, task := range e.workflowTasks {
+		task.cancel()
 	}
 	hosts := make([]*terminalhost.Session, 0, len(e.terminals))
 	for _, host := range e.terminals {

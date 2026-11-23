@@ -35,6 +35,7 @@ func (s Server) Handler() (http.Handler, error) {
 	s.modelMetadataHandlers(mux)
 	s.trajectoryHandlers(mux)
 	s.applicationUsageHandlers(mux)
+	s.workflowJournalHandlers(mux)
 	s.instructionHandlers(mux)
 	mux.HandleFunc("GET /v1/snapshot", func(w http.ResponseWriter, r *http.Request) {
 		sessionIDs, err := sessionScopeFromRequest(r)

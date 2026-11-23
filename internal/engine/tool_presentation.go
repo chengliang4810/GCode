@@ -30,6 +30,9 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		SkillArgs   string `json:"args"`
 		Prompt      string `json:"prompt"`
 		AgentType   string `json:"subagent_type"`
+		Name        string `json:"name"`
+		RunID       string `json:"run_id"`
+		Question    string `json:"question"`
 	}
 	if json.Unmarshal([]byte(call.Arguments), &args) != nil {
 		tool.Summary = call.Name
@@ -79,6 +82,9 @@ func toolPresentation(call model.Call, path string, started time.Time) contracts
 		tool.Summary = args.URL
 	case contracts.ToolWebSearch:
 		tool.Summary = args.Query
+	case contracts.ToolWorkflow:
+		// 工具行只说明这一次工具做了什么：运行图由运行卡负责。
+		tool.Summary = firstName(args.Name, args.RunID, args.Question)
 	default:
 		tool.Summary = strings.TrimSpace(call.Name)
 		if tool.Kind == contracts.ToolExec && args.Description != "" {
@@ -104,6 +110,26 @@ func taskStopPresentation(tool *contracts.ToolCall, data any) {
 		tool.Summary = description
 	}
 	tool.Output = ""
+}
+
+// workflowToolPresentation 用工具结果补全工具行的名字。工具行是工具动作的
+// 摘要，不是运行图的复制：脚本正文留在参数里，不塞进这一行。
+func workflowToolPresentation(tool *contracts.ToolCall, data any) {
+	result, ok := data.(map[string]any)
+	if !ok {
+		return
+	}
+	if approved, ok := result["approved"].(bool); ok && !approved {
+		// 被拒绝的运行从来没有开始，这一行只说没被允许。
+		return
+	}
+	if name, ok := result["name"].(string); ok && strings.TrimSpace(name) != "" {
+		tool.Summary = name
+		return
+	}
+	if id, ok := result["run_id"].(string); ok && strings.TrimSpace(id) != "" {
+		tool.Summary = id
+	}
 }
 
 func goalReadPresentation(tool *contracts.ToolCall, data any) {

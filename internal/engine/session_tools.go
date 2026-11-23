@@ -22,6 +22,15 @@ type sessionToolSet struct {
 // Background commands belong to the host session, so a completed model turn or
 // a disconnected client cannot accidentally terminate accepted work.
 func (e *Engine) sessionRuntimeTools(session contracts.Session, envFile string) ([]agent.Tool, error) {
+	base, err := e.sessionBaseTools(session, envFile)
+	if err != nil {
+		return nil, err
+	}
+	return e.workflowSessionTools(session, base), nil
+}
+
+// sessionBaseTools 是会话的常驻工具集。它按会话缓存：后台任务跟着会话走。
+func (e *Engine) sessionBaseTools(session contracts.Session, envFile string) ([]agent.Tool, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if e.closed {

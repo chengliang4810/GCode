@@ -131,11 +131,26 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 			return err
 		}
 	}
+	// /workflow 是用户动作：它先按全局模式打开本会话的工作流能力，再把
+	// 请求展开成设计提示。命令本身不启动任何运行。
+	workflowBody, workflowRequested := workflowCommandText(send.Text)
+	if workflowRequested {
+		if err := e.workflowActivateSession(&session); err != nil {
+			return err
+		}
+	}
 	e.state.Sessions[index] = session
 	prompt := ""
-	if checkout != nil && checkout.input != nil {
+	switch {
+	case workflowRequested:
+		expanded, err := e.expandPromptLocked(session.CWD, workflowBody)
+		if err != nil {
+			return err
+		}
+		prompt = workflowCommandPrompt(expanded)
+	case checkout != nil && checkout.input != nil:
 		prompt = checkout.prompt
-	} else {
+	default:
 		var err error
 		prompt, err = e.expandPromptLocked(session.CWD, send.Text)
 		if err != nil {
@@ -158,7 +173,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		return nil
 	}
 	var message model.Message
-	if checkout != nil && checkout.input != nil {
+	if !workflowRequested && checkout != nil && checkout.input != nil {
 		message = *checkout.input
 	} else {
 		var inputErr error
@@ -1118,6 +1133,9 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				}
 				if block.Tool.Kind == contracts.ToolGoalRead && !event.Error {
 					goalReadPresentation(block.Tool, event.Data)
+				}
+				if block.Tool.Kind == contracts.ToolWorkflow && !event.Error {
+					workflowToolPresentation(block.Tool, event.Data)
 				}
 			}
 		}
