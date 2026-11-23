@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -53,20 +54,21 @@ func (a *App) workflowDirectoryGroup(c *ui.Context, sessionID, heading string, r
 			controlRowButton(c.Key("workflow-runs-row:" + row.RunID)).FillWidth().
 				Label(tr(c, "Open run details")).Children(func() {
 				ui.Row(c).FillWidth().Gap(10).AlignItems(ui.Center).Children(func() {
-					ui.Text(c, a.workflowDirectoryStatusWord(c, row)).Shrink(0).
-						FontSize(design.TextSize(c, design.TextSmall)).
-						TextColor(a.palette.Readable(a.workflowRunStatusColor(workflow.RunView{Status: row.Status})))
 					name := row.Name
 					if name == "" {
 						name = row.RunID
 					}
-					ui.Text(c, name).Grow(1).MinWidth(0).SingleLine()
-					if row.Phases > 0 {
-						ui.Text(c, fmt.Sprintf(tr(c, "%d phases"), row.Phases)).
-							FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).SingleLine()
+					ui.Column(c).Grow(1).MinWidth(0).Gap(2).Children(func() {
+						ui.Text(c, name).FillWidth().SingleLine().Ellipsis("…").Tooltip(name)
+						ui.Text(c, a.workflowDirectoryStatusWord(c, row)).FillWidth().Wrap().
+							FontSize(design.TextSize(c, design.TextSmall)).
+							TextColor(a.palette.Readable(a.workflowRunStatusColor(workflow.RunView{Status: row.Status})))
+					})
+					if !row.UpdatedAt.IsZero() {
+						ui.Text(c, relativeAge(row.UpdatedAt, time.Now(), a.state.Settings.General.Language)).
+							FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum").SingleLine()
 					}
-					ui.Text(c, a.workflowDirectoryElapsed(row)).FontSize(design.TextSize(c, design.TextSmall)).
-						TextColor(a.palette.Muted).FontFeatures("tnum").SingleLine()
+					icon(c, "alt-arrow-right", design.Controls().IconSize)
 				})
 			}).OnClick(func() { a.openWorkflowRun(row.RunID) })
 		}
@@ -92,14 +94,6 @@ func (a *App) workflowDirectoryStatusWord(c *ui.Context, row workflow.RunDirecto
 		return tr(c, "Stopped")
 	}
 	return tr(c, "Workflow ended")
-}
-
-// workflowDirectoryElapsed is one row's duration in whole seconds, or — when
-// the run has not measured one.
-func (a *App) workflowDirectoryElapsed(row workflow.RunDirectoryRow) string {
-	return a.workflowElapsed(workflow.RunView{
-		StartedAt: row.StartedAt, FinishedAt: row.FinishedAt, UpdatedAt: row.UpdatedAt,
-	})
 }
 
 // workflowDirectoryTitle names the directory after the conversation it lists.
