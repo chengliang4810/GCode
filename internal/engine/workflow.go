@@ -324,6 +324,7 @@ func (e *Engine) workflowSuccessorLocked(run contracts.WorkflowRun, modelID stri
 	}
 	successor := run
 	successor.ID = id("workflow-run")
+	successor.PreviousRunID = run.ID
 	successor.Status = contracts.WorkflowStatusPending
 	successor.StopReason, successor.Error, successor.Result = "", "", ""
 	successor.ModelID = modelID

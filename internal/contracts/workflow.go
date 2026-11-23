@@ -139,10 +139,11 @@ type WorkflowDiagnostic struct {
 
 // WorkflowRun 是一次运行的权威事实。对话运行卡、运行详情和运行目录共享同一份。
 type WorkflowRun struct {
-	ID           string `json:"id"`
-	DefinitionID string `json:"definitionId,omitempty"`
-	Name         string `json:"name"`
-	SessionID    string `json:"sessionId,omitempty"`
+	ID            string `json:"id"`
+	DefinitionID  string `json:"definitionId,omitempty"`
+	PreviousRunID string `json:"previousRunId,omitempty"`
+	Name          string `json:"name"`
+	SessionID     string `json:"sessionId,omitempty"`
 	// MessageID 是发起这次运行的那一轮回复。运行卡挂在这一轮的轮尾，
 	// 不是挂在会话的末尾。
 	MessageID   string             `json:"messageId,omitempty"`
