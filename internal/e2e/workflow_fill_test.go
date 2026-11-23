@@ -60,7 +60,7 @@ func (f *workflowFixture) handle(w http.ResponseWriter, r *http.Request) {
 		switch turn {
 		case 0:
 			writeToolCall(w, "CreateWorkflow", map[string]any{
-				"script": f.script, "name": f.name, "question": "Run the review workflow?",
+				"script": f.script, "name": f.name,
 			})
 		default:
 			writeToolCall(w, "FillWorkflowHole", map[string]any{
@@ -182,8 +182,6 @@ func TestDesktopLocalWorkflowFillHoleContinuesTheRun(t *testing.T) {
 			app.act("back-to-conversations", "press", "")
 			app.act("input", "setValue", "Design a review workflow")
 			app.act("send", "press", "")
-			approve := app.awaitKeyPrefix("workflow-confirm-once:")
-			app.act(approve, "press", "")
 
 			app.await("the hole is waiting for the main agent", func() error {
 				state, err := readFixtureSnapshot(data)

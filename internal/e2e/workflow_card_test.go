@@ -18,11 +18,10 @@ import (
 	"gcode/internal/storage"
 )
 
-// TestDesktopLocalWorkflowConfirmationAndRunCard 用真实本机核心走一遍模型发起
-// 工作流的那条路：主代理调用 CreateWorkflow，用户在确认窗里允许一次，运行开始，
-// 运行卡出现在发起它的那一轮末尾，卡上有阶段线。
+// TestDesktopLocalWorkflowDirectRunCard 用真实本机核心验证模型调用 CreateWorkflow
+// 后无需用户操作即启动，且对话中出现运行卡和阶段线。
 // 模型是本地 HTTP 夹具，不代表真实供应商或远程宿主验收。
-func TestDesktopLocalWorkflowConfirmationAndRunCard(t *testing.T) {
+func TestDesktopLocalWorkflowDirectRunCard(t *testing.T) {
 	binary, artifacts := testPaths(t)
 	for _, theme := range []string{"light", "dark"} {
 		t.Run(theme, func(t *testing.T) {
@@ -35,8 +34,7 @@ func TestDesktopLocalWorkflowConfirmationAndRunCard(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/event-stream")
 				if calls.Add(1) == 1 {
-					// 主代理这一轮调用建工作流的工具，脚本与问句都在参数里。
-					args := fmt.Sprintf(`{"script":%s,"name":"Native-card","question":"Run the review workflow?"}`, mustJSONString(script))
+					args := fmt.Sprintf(`{"script":%s,"name":"Native-card"}`, mustJSONString(script))
 					fmt.Fprintf(w, "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"workflow-call\",\"function\":{\"name\":\"CreateWorkflow\",\"arguments\":%s}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n", mustJSONString(args))
 					return
 				}
@@ -85,10 +83,6 @@ func TestDesktopLocalWorkflowConfirmationAndRunCard(t *testing.T) {
 			app.act("back-to-conversations", "press", "")
 			app.act("input", "setValue", "Design a review workflow")
 			app.act("send", "press", "")
-
-			approve := app.awaitKeyPrefix("workflow-confirm-once:")
-			app.capture("workflow-confirm")
-			app.act(approve, "press", "")
 
 			app.await("the workflow run card appears in the conversation", func() error {
 				tree, err := app.client.tree()

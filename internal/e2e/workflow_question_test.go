@@ -63,9 +63,8 @@ func (f *questionFixture) handle(w http.ResponseWriter, r *http.Request) {
 		f.mu.Unlock()
 		if turn == 0 {
 			writeToolCall(w, "CreateWorkflow", map[string]any{
-				"script":   `{"phases":[{"id":"plan","name":"Plan","instances":[{"id":"reviewer","name":"Reviewer","prompt":"Review the change."}]}]}`,
-				"name":     "Native-question",
-				"question": "Run the review workflow?",
+				"script": `{"phases":[{"id":"plan","name":"Plan","instances":[{"id":"reviewer","name":"Reviewer","prompt":"Review the change."}]}]}`,
+				"name":   "Native-question",
 			})
 			return
 		}
@@ -120,8 +119,6 @@ func TestDesktopLocalWorkflowQuestionShowsAndIsAnswered(t *testing.T) {
 			app.act("back-to-conversations", "press", "")
 			app.act("input", "setValue", "Design a review workflow")
 			app.act("send", "press", "")
-			approve := app.awaitKeyPrefix("workflow-confirm-once:")
-			app.act(approve, "press", "")
 
 			app.await("the instance escalated a question", func() error {
 				state, err := readFixtureSnapshot(data)

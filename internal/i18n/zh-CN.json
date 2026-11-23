@@ -1544,7 +1544,7 @@
   "Hide script": "隐藏脚本",
   "The concurrency must be a whole number of at least one.": "并发数必须是不小于一的整数。",
   "Workflows": "工作流",
-  "Workflow runs ask before they start. On demand keeps the workflow tools out of the way until you turn them on.": "工作流运行前会先请求确认。按需模式在你打开之前不会把工作流工具摆到眼前。",
+  "On demand makes workflow tools available when you use /workflow. Always on makes them available in every conversation.": "按需：用 /workflow 在当前会话启用。始终开启：所有会话均可使用。",
   "On demand": "按需",
   "Always on": "始终开启",
   "Resume run": "恢复运行",

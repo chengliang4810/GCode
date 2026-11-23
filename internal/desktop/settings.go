@@ -484,9 +484,11 @@ func (a *App) generalSettings(c *ui.Context) {
 		})
 	})
 	a.settingsCard(c, func() {
-		a.settingsRow(c, "Workflows", "Workflow runs ask before they start. On demand keeps the workflow tools out of the way until you turn them on.", func() {
+		a.settingsRow(c, "Workflows", "On demand makes workflow tools available when you use /workflow. Always on makes them available in every conversation.", func() {
 			a.settingsChoice(c, "Workflows", &a.state.Settings.WorkflowMode, []settingOption{
-				{"disabled", "Off"}, {"onDemand", "On demand"}, {"alwaysOn", "Always on"},
+				{contracts.WorkflowModeOnDemand, "On demand"},
+				{contracts.WorkflowModeAlwaysOn, "Always on"},
+				{contracts.WorkflowModeDisabled, "Off"},
 			}, nil)
 		})
 	})

@@ -119,10 +119,6 @@ func workflowToolPresentation(tool *contracts.ToolCall, data any) {
 	if !ok {
 		return
 	}
-	if approved, ok := result["approved"].(bool); ok && !approved {
-		// 被拒绝的运行从来没有开始，这一行只说没被允许。
-		return
-	}
 	if name, ok := result["name"].(string); ok && strings.TrimSpace(name) != "" {
 		tool.Summary = name
 		return

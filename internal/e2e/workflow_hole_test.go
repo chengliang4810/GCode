@@ -38,7 +38,7 @@ func TestDesktopLocalWorkflowHoleShowsOnTheCard(t *testing.T) {
 				w.Header().Set("Content-Type", "text/event-stream")
 				if first {
 					first = false
-					args := fmt.Sprintf(`{"script":%s,"name":"Native-hole","question":"Run the review workflow?"}`, mustJSONString(script))
+					args := fmt.Sprintf(`{"script":%s,"name":"Native-hole"}`, mustJSONString(script))
 					fmt.Fprintf(w, "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"workflow-call\",\"function\":{\"name\":\"CreateWorkflow\",\"arguments\":%s}}]},\"finish_reason\":\"tool_calls\"}]}\n\ndata: [DONE]\n\n", mustJSONString(args))
 					return
 				}
@@ -87,8 +87,6 @@ func TestDesktopLocalWorkflowHoleShowsOnTheCard(t *testing.T) {
 			app.act("back-to-conversations", "press", "")
 			app.act("input", "setValue", "Design a review workflow")
 			app.act("send", "press", "")
-			approve := app.awaitKeyPrefix("workflow-confirm-once:")
-			app.act(approve, "press", "")
 
 			app.await("the hole is recorded and the run waits for it", func() error {
 				state, err := readFixtureSnapshot(data)

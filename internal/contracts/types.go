@@ -21,48 +21,47 @@ const (
 )
 
 type Snapshot struct {
-	BackgroundTasks       []BackgroundTask               `json:"backgroundTasks,omitempty"`
-	Automations           []Automation                   `json:"automations"`
-	AutomationRuns        []AutomationRun                `json:"automationRuns"`
-	WorkflowRuns          []WorkflowRun                  `json:"workflowRuns"`
-	WorkflowConfirmations []WorkflowConfirmation         `json:"workflowConfirmations,omitempty"`
-	WorkflowDefinitions   []WorkflowDefinition           `json:"workflowDefinitions"`
-	PrivacyModels         []privacy.ModelStatus          `json:"privacyModels"`
-	Metrics               map[string]ConversationMetrics `json:"metrics"`
-	ApplicationUsage      *ApplicationUsage              `json:"applicationUsage,omitempty"`
-	Plugins               PluginState                    `json:"plugins"`
-	UserResources         UserResourceState              `json:"userResources"`
-	Runtime               *RuntimeInfo                   `json:"runtime,omitempty"`
-	CustomProviders       []ProviderConfiguration        `json:"customProviders,omitempty"`
-	Integrations          IntegrationState               `json:"integrations"`
-	ModelCatalog          ModelCatalogState              `json:"modelCatalog"`
-	AppshotCapabilities   AppshotCapabilities            `json:"appshotCapabilities"`
-	ThemeLibrary          []ThemeLibraryEntry            `json:"themeLibrary"`
-	ThemeImport           *ThemeImportPreview            `json:"themeImport,omitempty"`
-	SchemaVersion         int                            `json:"schemaVersion"`
-	Revision              uint64                         `json:"revision"`
-	User                  User                           `json:"user"`
-	Capabilities          Capabilities                   `json:"capabilities"`
-	Projects              []Project                      `json:"projects"`
-	Devices               []Device                       `json:"devices"`
-	Sessions              []Session                      `json:"sessions"`
-	SessionGroups         []SessionGroup                 `json:"sessionGroups,omitempty"`
-	Messages              map[string][]Message           `json:"messages"`
-	Models                []Model                        `json:"models"`
-	Providers             []Provider                     `json:"providers"`
-	Settings              Settings                       `json:"settings"`
-	Files                 []File                         `json:"files"`
-	Changes               []Change                       `json:"changes"`
-	Commits               []Commit                       `json:"commits"`
-	RepoRefs              map[string]RepoRefs            `json:"repoRefs,omitempty"`
-	Terminals             []Terminal                     `json:"terminals"`
-	Queue                 []QueuedMessage                `json:"queue"`
-	Runs                  []Run                          `json:"runs"`
-	ModelRequests         []ModelRequest                 `json:"modelRequests"`
-	Account               Account                        `json:"account"`
-	Appshots              []Attachment                   `json:"appshots"`
-	Attachments           []Attachment                   `json:"attachments"`
-	Update                Update                         `json:"update"`
+	BackgroundTasks     []BackgroundTask               `json:"backgroundTasks,omitempty"`
+	Automations         []Automation                   `json:"automations"`
+	AutomationRuns      []AutomationRun                `json:"automationRuns"`
+	WorkflowRuns        []WorkflowRun                  `json:"workflowRuns"`
+	WorkflowDefinitions []WorkflowDefinition           `json:"workflowDefinitions"`
+	PrivacyModels       []privacy.ModelStatus          `json:"privacyModels"`
+	Metrics             map[string]ConversationMetrics `json:"metrics"`
+	ApplicationUsage    *ApplicationUsage              `json:"applicationUsage,omitempty"`
+	Plugins             PluginState                    `json:"plugins"`
+	UserResources       UserResourceState              `json:"userResources"`
+	Runtime             *RuntimeInfo                   `json:"runtime,omitempty"`
+	CustomProviders     []ProviderConfiguration        `json:"customProviders,omitempty"`
+	Integrations        IntegrationState               `json:"integrations"`
+	ModelCatalog        ModelCatalogState              `json:"modelCatalog"`
+	AppshotCapabilities AppshotCapabilities            `json:"appshotCapabilities"`
+	ThemeLibrary        []ThemeLibraryEntry            `json:"themeLibrary"`
+	ThemeImport         *ThemeImportPreview            `json:"themeImport,omitempty"`
+	SchemaVersion       int                            `json:"schemaVersion"`
+	Revision            uint64                         `json:"revision"`
+	User                User                           `json:"user"`
+	Capabilities        Capabilities                   `json:"capabilities"`
+	Projects            []Project                      `json:"projects"`
+	Devices             []Device                       `json:"devices"`
+	Sessions            []Session                      `json:"sessions"`
+	SessionGroups       []SessionGroup                 `json:"sessionGroups,omitempty"`
+	Messages            map[string][]Message           `json:"messages"`
+	Models              []Model                        `json:"models"`
+	Providers           []Provider                     `json:"providers"`
+	Settings            Settings                       `json:"settings"`
+	Files               []File                         `json:"files"`
+	Changes             []Change                       `json:"changes"`
+	Commits             []Commit                       `json:"commits"`
+	RepoRefs            map[string]RepoRefs            `json:"repoRefs,omitempty"`
+	Terminals           []Terminal                     `json:"terminals"`
+	Queue               []QueuedMessage                `json:"queue"`
+	Runs                []Run                          `json:"runs"`
+	ModelRequests       []ModelRequest                 `json:"modelRequests"`
+	Account             Account                        `json:"account"`
+	Appshots            []Attachment                   `json:"appshots"`
+	Attachments         []Attachment                   `json:"attachments"`
+	Update              Update                         `json:"update"`
 
 	ContextUsage map[string]ContextUsage `json:"contextUsage"`
 }
@@ -156,9 +155,6 @@ type Session struct {
 	// for this session. Activation is one way: compacting the conversation
 	// does not take it away.
 	WorkflowActivated bool `json:"workflowActivated,omitempty"`
-	// WorkflowAutoApprove records that the user allowed workflow runs for the
-	// rest of this session, so later runs start without asking again.
-	WorkflowAutoApprove bool `json:"workflowAutoApprove,omitempty"`
 }
 
 // TopLevel reports whether the session is a conversation the user started on

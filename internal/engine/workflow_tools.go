@@ -38,7 +38,7 @@ func (e *Engine) workflowSessionTools(session contracts.Session, base []agent.To
 	if session.ParentSessionID != "" || session.ParentRunID != "" || session.SubagentType != "" {
 		return base
 	}
-	mode, activated, _ := e.workflowSessionMode(session.ID)
+	mode, activated := e.workflowSessionMode(session.ID)
 	if !workflow.Available(mode, activated) {
 		return base
 	}
@@ -55,12 +55,11 @@ func (t workflowTool) Definition() model.Tool {
 	case "CreateWorkflow":
 		return model.Tool{
 			Name:        t.name,
-			Description: "Compile a workflow script and run it after the user confirms. The script is a JSON object with phases, instances and optional edges. A run executes the program in the background; its card appears at the end of this turn.",
+			Description: "Compile a workflow script and start it in the background. Compilation and argument validation are built in; an unchanged script does not need a separate preflight.",
 			Parameters: workflowSchema(map[string]any{
-				"script":      map[string]any{"type": "string", "description": "The workflow script: a JSON object with phases and instances."},
+				"script":      map[string]any{"type": "string", "description": `JSON text, e.g. {"arguments":[{"name":"target","type":"string"}],"phases":[{"id":"plan","name":"Plan","instances":[{"id":"review","prompt":"Inspect the change"}]}]}. Put optional edges inside their source phase, not at the root. IDs and argument names use ASCII letters, digits, underscores or dashes.`},
 				"name":        text,
-				"question":    map[string]any{"type": "string", "description": "The one sentence the user is asked to confirm."},
-				"arguments":   map[string]any{"type": "object", "additionalProperties": text},
+				"arguments":   map[string]any{"type": "object", "additionalProperties": text, "description": `Runtime values keyed by names declared in the script, e.g. {"target":"the change"}.`},
 				"model":       map[string]any{"type": "string", "description": "Model for the instances; empty keeps the session model."},
 				"concurrency": map[string]any{"type": "integer", "minimum": 1},
 			}, "script"),
@@ -68,11 +67,10 @@ func (t workflowTool) Definition() model.Tool {
 	case "AmendWorkflow":
 		return model.Tool{
 			Name:        t.name,
-			Description: "Revise a workflow run with a new script. The user confirms the revision; the old run is stopped as superseded and a successor run starts.",
+			Description: "Revise a workflow run with a new script. The old run is stopped as superseded and a successor run starts.",
 			Parameters: workflowSchema(map[string]any{
 				"run_id":      map[string]any{"type": "string", "description": "The run to revise."},
 				"script":      map[string]any{"type": "string", "description": "The revised workflow script."},
-				"question":    text,
 				"arguments":   map[string]any{"type": "object", "additionalProperties": text},
 				"model":       text,
 				"concurrency": map[string]any{"type": "integer", "minimum": 1},
@@ -103,7 +101,7 @@ func (t workflowTool) Definition() model.Tool {
 	case "EvalWorkflowSnippet":
 		return model.Tool{
 			Name:        t.name,
-			Description: "Compile a workflow script without running it and report every diagnostic, the phase count and the instance count. Use it to check a script before creating a run.",
+			Description: "Optionally lint a workflow script without running it. Returns diagnostics and phase and instance counts. CreateWorkflow and AmendWorkflow already compile; do not repeat linting an unchanged script that compiled successfully.",
 			Parameters:  workflowSchema(map[string]any{"script": text}, "script"),
 		}
 	case "ListWorkflowRuns":
@@ -219,7 +217,6 @@ func (t workflowTool) create(ctx context.Context, raw json.RawMessage) (model.To
 	var input struct {
 		Script      string            `json:"script"`
 		Name        string            `json:"name"`
-		Question    string            `json:"question"`
 		Arguments   map[string]string `json:"arguments"`
 		Model       string            `json:"model"`
 		Concurrency int               `json:"concurrency"`
@@ -247,7 +244,7 @@ func (t workflowTool) create(ctx context.Context, raw json.RawMessage) (model.To
 		Script:      input.Script,
 		Origin:      "tool",
 	}
-	return t.engine.startWorkflowFromTool(ctx, request, "", input.Question, "", "", compiled)
+	return t.engine.launchWorkflowRun(ctx, request, "", "")
 }
 
 // amend 用新脚本修订一次运行。修订产生后继运行，旧运行被替代。
@@ -255,7 +252,6 @@ func (t workflowTool) amend(ctx context.Context, raw json.RawMessage) (model.Too
 	var input struct {
 		RunID       string            `json:"run_id"`
 		Script      string            `json:"script"`
-		Question    string            `json:"question"`
 		Arguments   map[string]string `json:"arguments"`
 		Model       string            `json:"model"`
 		Concurrency int               `json:"concurrency"`
@@ -298,7 +294,7 @@ func (t workflowTool) amend(ctx context.Context, raw json.RawMessage) (model.Too
 	if len(args) == 0 {
 		request.Args = previous.Args
 	}
-	return t.engine.startWorkflowFromTool(ctx, request, previous.DefinitionID, input.Question, "amend", previous.ID, compiled)
+	return t.engine.launchWorkflowRun(ctx, request, previous.DefinitionID, previous.ID)
 }
 
 // save 保存工作流定义。脚本可以直接给出，也可以用某次运行的有效脚本。

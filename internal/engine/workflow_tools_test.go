@@ -52,25 +52,6 @@ func activateWorkflowSession(t *testing.T, core *Engine) {
 	core.state.Sessions[0].WorkflowActivated = true
 }
 
-// workflowConfirmation 等待一次运行确认出现。
-func workflowConfirmation(t *testing.T, core *Engine) contracts.WorkflowConfirmation {
-	t.Helper()
-	deadline := time.Now().Add(10 * time.Second)
-	for time.Now().Before(deadline) {
-		core.mu.Lock()
-		pending := core.state.WorkflowConfirmations
-		core.mu.Unlock()
-		for _, confirmation := range pending {
-			if confirmation.Status == contracts.WorkflowConfirmationPending {
-				return confirmation
-			}
-		}
-		time.Sleep(20 * time.Millisecond)
-	}
-	t.Fatal("the workflow confirmation never arrived")
-	return contracts.WorkflowConfirmation{}
-}
-
 func TestWorkflowToolsFollowTheSessionMode(t *testing.T) {
 	core := openStorageTestCore(t, t.TempDir())
 	defer core.Close()
@@ -118,7 +99,7 @@ func TestWorkflowCreateReportsDiagnosticsWithoutStartingAnything(t *testing.T) {
 	}
 }
 
-func TestWorkflowCreateWaitsForTheUserAndThenRuns(t *testing.T) {
+func TestWorkflowCreateStartsWithoutUserConfirmation(t *testing.T) {
 	core := openStorageTestCore(t, t.TempDir())
 	defer core.Close()
 	ctx := context.Background()
@@ -129,8 +110,7 @@ func TestWorkflowCreateWaitsForTheUserAndThenRuns(t *testing.T) {
 	tools := workflowToolSet(t, core)
 	create := sessionTestTool(t, tools, "CreateWorkflow")
 	raw, err := json.Marshal(map[string]any{
-		"script":   `{"name":"Two stations","phases":[{"id":"a","name":"A"},{"id":"b","name":"B"}]}`,
-		"question": "Run this workflow?",
+		"script": `{"name":"Two stations","phases":[{"id":"a","name":"A"},{"id":"b","name":"B"}]}`,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -143,93 +123,19 @@ func TestWorkflowCreateWaitsForTheUserAndThenRuns(t *testing.T) {
 		}
 		results <- out
 	}()
-	confirmation := workflowConfirmation(t, core)
-	if confirmation.Question != "Run this workflow?" {
-		t.Fatalf("the confirmation keeps the question, got %q", confirmation.Question)
-	}
-	if confirmation.Name != "Two stations" {
-		t.Fatalf("the confirmation keeps the name, got %q", confirmation.Name)
-	}
-	if len(confirmation.Program.Phases) != 2 {
-		t.Fatalf("the confirmation carries the program, got %d phases", len(confirmation.Program.Phases))
-	}
-	core.mu.Lock()
-	runs := len(core.state.WorkflowRuns)
-	core.mu.Unlock()
-	if runs != 0 {
-		t.Fatal("nothing runs before the user decides")
-	}
-	if err := core.Execute(ctx, contracts.Command{
-		Kind: "workflow.confirm",
-		Workflow: &contracts.WorkflowCommand{Confirmation: &contracts.WorkflowConfirmationDecision{
-			ID: confirmation.ID, Approve: true, Decision: contracts.WorkflowDecisionOnce,
-		}},
-	}); err != nil {
-		t.Fatal(err)
-	}
 	select {
 	case out := <-results:
-		if toolData(t, out)["approved"] != true {
-			t.Fatalf("the tool reports the approval: %#v", out.Data)
+		if runID, _ := toolData(t, out)["run_id"].(string); runID == "" {
+			t.Fatalf("the tool reports the started run: %#v", out.Data)
 		}
 	case <-time.After(15 * time.Second):
-		t.Fatal("the tool did not return after the approval")
+		t.Fatal("the tool did not start the run without user input")
 	}
 	state := waitWorkflowState(t, core, func(state contracts.Snapshot) bool {
 		return len(state.WorkflowRuns) == 1 && state.WorkflowRuns[0].Status == contracts.WorkflowStatusCompleted
 	})
 	if len(state.WorkflowRuns[0].Phases) != 2 {
 		t.Fatalf("the run keeps both stations: %+v", state.WorkflowRuns[0].Phases)
-	}
-}
-
-func TestWorkflowRejectionLeavesNoRun(t *testing.T) {
-	core := openStorageTestCore(t, t.TempDir())
-	defer core.Close()
-	ctx := context.Background()
-	if err := core.Execute(ctx, contracts.Command{Kind: "session.create"}); err != nil {
-		t.Fatal(err)
-	}
-	activateWorkflowSession(t, core)
-	tools := workflowToolSet(t, core)
-	create := sessionTestTool(t, tools, "CreateWorkflow")
-	raw, err := json.Marshal(map[string]any{"script": `{"name":"One","phases":[{"id":"a","name":"A"}]}`})
-	if err != nil {
-		t.Fatal(err)
-	}
-	results := make(chan model.ToolOutput, 1)
-	go func() {
-		out, err := create.Execute(ctx, "", raw)
-		if err != nil {
-			t.Errorf("create workflow: %v", err)
-		}
-		results <- out
-	}()
-	confirmation := workflowConfirmation(t, core)
-	if err := core.Execute(ctx, contracts.Command{
-		Kind: "workflow.confirm",
-		Workflow: &contracts.WorkflowCommand{Confirmation: &contracts.WorkflowConfirmationDecision{
-			ID: confirmation.ID, Approve: false, Decision: contracts.WorkflowDecisionReject, Feedback: "not this time",
-		}},
-	}); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case out := <-results:
-		if toolData(t, out)["approved"] != false {
-			t.Fatalf("the tool reports the rejection: %#v", out.Data)
-		}
-		if toolData(t, out)["feedback"] != "not this time" {
-			t.Fatalf("the feedback goes back to the agent: %#v", out.Data)
-		}
-	case <-time.After(15 * time.Second):
-		t.Fatal("the tool did not return after the rejection")
-	}
-	core.mu.Lock()
-	runs := len(core.state.WorkflowRuns)
-	core.mu.Unlock()
-	if runs != 0 {
-		t.Fatal("a rejected workflow leaves no run behind")
 	}
 }
 

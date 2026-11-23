@@ -304,69 +304,18 @@ type WorkflowDefinitionSave struct {
 	Arguments   []WorkflowArgument `json:"arguments,omitempty"`
 }
 
-// WorkflowConfirmation 是运行确认请求：脚本已经编译，运行还没有开始。
-// 用户批准之前，这次运行只能是待确认的草稿。
-type WorkflowConfirmation struct {
-	ID          string               `json:"id"`
-	SessionID   string               `json:"sessionId,omitempty"`
-	MessageID   string               `json:"messageId,omitempty"`
-	Name        string               `json:"name"`
-	Question    string               `json:"question,omitempty"`
-	Revision    string               `json:"revision,omitempty"`
-	PreviousRun string               `json:"previousRun,omitempty"`
-	Definition  string               `json:"definition,omitempty"`
-	Scope       string               `json:"scope,omitempty"`
-	Program     WorkflowProgram      `json:"program"`
-	Arguments   []WorkflowArgument   `json:"arguments,omitempty"`
-	Args        []WorkflowArgValue   `json:"args,omitempty"`
-	ModelID     string               `json:"modelId,omitempty"`
-	HasModel    bool                 `json:"hasModel,omitempty"`
-	Concurrency int                  `json:"concurrency,omitempty"`
-	Script      string               `json:"script,omitempty"`
-	Diagnostics []WorkflowDiagnostic `json:"diagnostics,omitempty"`
-	CreatedAt   time.Time            `json:"createdAt"`
-	Status      string               `json:"status"`
-	Decision    string               `json:"decision,omitempty"`
-	Feedback    string               `json:"feedback,omitempty"`
-	DecidedAt   *time.Time           `json:"decidedAt,omitempty"`
-}
-
-// 运行确认的状态与决定。
-const (
-	WorkflowConfirmationPending  = "pending"
-	WorkflowConfirmationApproved = "approved"
-	WorkflowConfirmationRejected = "rejected"
-
-	WorkflowDecisionOnce    = "once"
-	WorkflowDecisionSession = "session"
-	WorkflowDecisionReject  = "reject"
-)
-
-// WorkflowConfirmationDecision 是用户对一次运行确认的决定。
-type WorkflowConfirmationDecision struct {
-	ID          string `json:"id"`
-	Approve     bool   `json:"approve"`
-	Decision    string `json:"decision,omitempty"`
-	Feedback    string `json:"feedback,omitempty"`
-	ModelID     string `json:"modelId,omitempty"`
-	HasModel    bool   `json:"hasModel,omitempty"`
-	Concurrency int    `json:"concurrency,omitempty"`
-	HasConc     bool   `json:"hasConc,omitempty"`
-}
-
 // WorkflowCommand 是工作流命令的载荷。具体动作由 Command.Kind 决定。
 type WorkflowCommand struct {
-	Run          *WorkflowRunRequest           `json:"run,omitempty"`
-	Settings     *WorkflowSettingsChange       `json:"settings,omitempty"`
-	Question     *WorkflowQuestionAnswer       `json:"question,omitempty"`
-	Hole         *WorkflowHoleFill             `json:"hole,omitempty"`
-	Definition   *WorkflowDefinitionSave       `json:"definition,omitempty"`
-	Confirmation *WorkflowConfirmationDecision `json:"confirmation,omitempty"`
-	Scope        string                        `json:"scope,omitempty"`
-	ProjectID    string                        `json:"projectId,omitempty"`
-	HostID       string                        `json:"hostId,omitempty"`
-	RunID        string                        `json:"runId,omitempty"`
-	ID           string                        `json:"id,omitempty"`
+	Run        *WorkflowRunRequest     `json:"run,omitempty"`
+	Settings   *WorkflowSettingsChange `json:"settings,omitempty"`
+	Question   *WorkflowQuestionAnswer `json:"question,omitempty"`
+	Hole       *WorkflowHoleFill       `json:"hole,omitempty"`
+	Definition *WorkflowDefinitionSave `json:"definition,omitempty"`
+	Scope      string                  `json:"scope,omitempty"`
+	ProjectID  string                  `json:"projectId,omitempty"`
+	HostID     string                  `json:"hostId,omitempty"`
+	RunID      string                  `json:"runId,omitempty"`
+	ID         string                  `json:"id,omitempty"`
 }
 
 // Clone freezes a workflow payload before it crosses a goroutine or queue boundary.
@@ -379,7 +328,6 @@ func (c *WorkflowCommand) Clone() *WorkflowCommand {
 	v.Settings = copyPointer(c.Settings)
 	v.Question = copyPointer(c.Question)
 	v.Hole = copyPointer(c.Hole)
-	v.Confirmation = copyPointer(c.Confirmation)
 	if c.Definition != nil {
 		d := *c.Definition
 		d.Program = c.Definition.Program.clone()

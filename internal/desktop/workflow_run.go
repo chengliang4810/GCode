@@ -18,9 +18,7 @@ import (
 type workflowUIState struct {
 	expanded map[string]bool
 	settings map[string]*workflowSettingsState
-	// confirm holds the draft of every run waiting for the user's decision.
-	confirm map[string]*workflowConfirmState
-	busy    map[string]bool
+	busy     map[string]bool
 	// scroll remembers how far each run card's stage line was scrolled and
 	// what the shared scrollbar reports back.
 	scroll   map[string]*ui.ScrollState

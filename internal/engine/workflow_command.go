@@ -99,6 +99,6 @@ func workflowCommandPrompt(body string) string {
 	out.WriteString("A workflow runs a program: phases in declaration order, instances inside a phase, and optional edges that may carry a when condition. ")
 	out.WriteString("Decide the topology before writing the script: how many instances, which of them share a phase, and what each one returns. ")
 	out.WriteString("Then write the script as a JSON object with phases and instances and call the CreateWorkflow tool. ")
-	out.WriteString("The user confirms the run before it starts, and the run card appears at the end of this turn.")
+	out.WriteString("CreateWorkflow compiles the script and validates its arguments before starting it in the background. A separate script check is optional.")
 	return out.String()
 }

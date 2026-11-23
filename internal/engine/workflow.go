@@ -38,8 +38,6 @@ func (e *Engine) workflowCommandLocked(command contracts.Command) error {
 		return e.workflowSaveLocked(payload)
 	case "workflow.delete":
 		return e.workflowDeleteLocked(payload)
-	case "workflow.confirm":
-		return e.workflowConfirmLocked(payload)
 	case "workflow.resume":
 		return e.workflowResumeLocked(payload)
 	default:

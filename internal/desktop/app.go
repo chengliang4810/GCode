@@ -1160,7 +1160,6 @@ func (a *App) View(c *ui.Context) {
 	a.workflowSettingsDialog(c)
 	a.workflowSaveDialog(c)
 	a.workflowLaunchDialog(c)
-	a.workflowConfirmationDialog(c)
 	a.toastView(c)
 	a.flushPaneSave(c)
 }

@@ -155,7 +155,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 	switch command.Kind {
 	case "automation.save", "automation.toggle", "automation.delete", "automation.run", "automation.fire":
 		return e.automationCommandLocked(command)
-	case "workflow.run", "workflow.launch", "workflow.stop", "workflow.retune", "workflow.resolve", "workflow.fill", "workflow.save", "workflow.delete", "workflow.confirm", "workflow.resume":
+	case "workflow.run", "workflow.launch", "workflow.stop", "workflow.retune", "workflow.resolve", "workflow.fill", "workflow.save", "workflow.delete", "workflow.resume":
 		return e.workflowCommandLocked(command)
 	case "provider.test":
 		return e.startModelCheckLocked(command.ID)

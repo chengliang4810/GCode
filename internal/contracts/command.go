@@ -138,11 +138,6 @@ func validateWorkflowCommand(kind string, w *WorkflowCommand) error {
 			return errors.New("a workflow definition ID is required")
 		}
 		return nil
-	case "workflow.confirm":
-		if w.Confirmation == nil || w.Confirmation.ID == "" {
-			return errors.New("a workflow confirmation ID is required")
-		}
-		return nil
 	case "workflow.resume":
 		if w.RunID == "" && w.ID == "" {
 			return errors.New("a workflow run ID is required")

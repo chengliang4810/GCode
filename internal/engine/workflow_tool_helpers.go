@@ -1,6 +1,6 @@
 package engine
 
-// 工作流工具用到的引擎侧动作：确认后启动运行、保存定义、读取投影。
+// 工作流工具用到的引擎侧动作：启动运行、保存定义、读取投影。
 // 这些动作和工具共用同一份状态，工具不保存任何副本。
 
 import (
@@ -19,43 +19,11 @@ import (
 	"gcode/internal/workflow"
 )
 
-// startWorkflowFromTool 请求用户确认一次运行，再按决定启动或放弃。
-// 用户拒绝时不留下任何运行：被拒绝的运行从来没开始过。
-func (e *Engine) startWorkflowFromTool(ctx context.Context, request *contracts.WorkflowRunRequest, definitionID, question, revision, previousRun string, compiled workflow.Compiled) (model.ToolOutput, error) {
-	_, _, autoApprove := e.workflowSessionMode(request.SessionID)
-	if autoApprove {
-		return e.launchWorkflowRun(ctx, request, definitionID, previousRun)
-	}
-	confirmation := contracts.WorkflowConfirmation{
-		SessionID: request.SessionID, MessageID: request.MessageID, Name: request.Name,
-		Question: question, Revision: revision, PreviousRun: previousRun, Definition: definitionID,
-		Program: request.Program, Arguments: compiled.Arguments, Args: request.Args,
-		ModelID: request.ModelID, HasModel: request.ModelID != "", Concurrency: request.Concurrency,
-		Script: request.Script, Diagnostics: compiled.Diagnostics,
-	}
-	decision, err := e.addWorkflowConfirmation(ctx, confirmation)
-	if err != nil {
-		return model.ToolOutput{}, err
-	}
-	if !decision.Approve {
-		feedback := strings.TrimSpace(decision.Feedback)
-		text := "The user did not allow this workflow to run."
-		if feedback != "" {
-			text += " Their feedback: " + feedback
-		}
-		return model.ToolOutput{Text: text, Data: map[string]any{"approved": false, "feedback": feedback}}, nil
-	}
-	if decision.HasModel {
-		request.ModelID = decision.ModelID
-	}
-	if decision.HasConc {
-		request.Concurrency = decision.Concurrency
-	}
-	return e.launchWorkflowRun(ctx, request, definitionID, previousRun)
-}
-
 // launchWorkflowRun 真正启动一次运行。修订会先停掉被替代的旧运行。
 func (e *Engine) launchWorkflowRun(ctx context.Context, request *contracts.WorkflowRunRequest, definitionID, previousRun string) (model.ToolOutput, error) {
+	if err := ctx.Err(); err != nil {
+		return model.ToolOutput{}, err
+	}
 	if previousRun != "" {
 		e.markWorkflowSuperseded(previousRun)
 	}
@@ -66,8 +34,8 @@ func (e *Engine) launchWorkflowRun(ctx context.Context, request *contracts.Workf
 		return model.ToolOutput{}, err
 	}
 	return model.ToolOutput{
-		Text: "The workflow run started. Its card appears at the end of this turn; the run executes in the background.",
-		Data: map[string]any{"approved": true, "run_id": runID, "name": request.Name},
+		Text: "The workflow run started and executes in the background. Its card appears beside the launch activity.",
+		Data: map[string]any{"run_id": runID, "name": request.Name},
 	}, nil
 }
 
