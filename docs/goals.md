@@ -96,3 +96,12 @@ engine/agent/contracts/model 全部测试及 Go vet。Linux/amd64 的
 真实本机 Go 核心的原生测试已覆盖编辑、暂停/恢复、完成与清除，深浅主题均通过；
 三协议核心测试同时覆盖编辑冲突、旧目标在途检查失效及新内容进入后续请求。
 原生证据与平台/供应商边界见 [todos.md](todos.md)。
+
+## 目标操作诊断日志
+
+桌面目标管理入口在运行日志中分别记录 `goal action started`、
+`goal action execute finished`、`goal action snapshot finished`。
+记录命令类型、会话 ID、目标 ID、请求 ID（调用方未提供时为空），以及两个阶段各自的
+耗时和错误。执行成功但刷新失败时，执行记录为 `error=<nil>`，刷新记录保留实际错误；
+两个阶段同时失败时分别保留，界面继续显示原始执行错误。日志不记录目标正文。
+默认数据目录下文件为 `~/.gcode/logs/gcode.log`，自定义数据目录以实际运行配置为准。
