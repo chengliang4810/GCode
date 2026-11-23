@@ -834,7 +834,7 @@ func (a *App) themeLibrary(c *ui.Context) {
 				}
 				paths, err := mygo.Dialog.Open(mygo.OpenDialogOptions{Parent: a.win, Title: a.t("Choose Theme Source")})
 				if err != nil {
-					a.notification(err.Error())
+					a.notification(toastError, err.Error())
 				} else if len(paths) > 0 {
 					state.Path = paths[0]
 				}
@@ -942,14 +942,14 @@ func (a *App) recordShortcut(c *ui.Context, id, label string, binding *string) {
 			for _, other := range a.state.Settings.Shortcuts {
 				otherMods, otherKey, valid := parseSettingsShortcut(other.Keys)
 				if other.ID != id && valid && otherMods == mods && otherKey == key {
-					a.notification("That shortcut is already in use.")
+					a.notification(toastWarning, "That shortcut is already in use.")
 					return true
 				}
 			}
 			if id != "captureAppshot" {
 				otherMods, otherKey, valid := parseSettingsShortcut(a.state.Settings.Appshots.Shortcut)
 				if a.state.Capabilities.Appshots && valid && otherMods == mods && otherKey == key {
-					a.notification("That shortcut is already in use.")
+					a.notification(toastWarning, "That shortcut is already in use.")
 					return true
 				}
 			}

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
@@ -1035,3 +1036,24 @@ func controlIslandStop(c *ui.Context, label string) ui.Element {
 	return b
 }
 
+// controlToast uses semantic colors and icons so meaning does not rely on color.
+func controlToast(c *ui.Context, kind toastKind, message string) ui.Element {
+	t := c.Theme()
+	color, glyph := t.Accent, "info-circle"
+	role := ui.RoleStatus
+	switch kind {
+	case toastSuccess:
+		color, glyph = t.Success, "check"
+	case toastWarning:
+		color, glyph, role = t.Warning, "danger-triangle", ui.RoleAlert
+	case toastError:
+		color, glyph, role = t.Danger, "close-circle", ui.RoleAlert
+	}
+	row := ui.Row(c).Role(role).Label(message).Padding(10, 14).Gap(8).AlignItems(ui.Center).
+		Radius(10).Background(color.Alpha(.08).Over(t.Surface)).Border(1, color.Alpha(.4).Over(t.Border))
+	row.Children(func() {
+		ui.Icon(c, assets.Icon(glyph)).Size(16, 16).Shrink(0).TextColor(color)
+		ui.Text(c, message).MinWidth(0).Shrink(1).TextColor(t.Text)
+	})
+	return row
+}

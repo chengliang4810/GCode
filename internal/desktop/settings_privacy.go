@@ -116,7 +116,7 @@ func (a *App) privacyListInput(c *ui.Context, key, label string, values []string
 			set(privacyLines(*state))
 			if err := a.state.Settings.Privacy.Validate(); err != nil {
 				a.state.Settings.Privacy = before
-				a.notification(err.Error())
+				a.notification(toastError, err.Error())
 				return
 			}
 			a.saveSettings()
@@ -193,7 +193,7 @@ func (a *App) privacyRules(c *ui.Context) {
 					}
 					rules, err := redact.CheckRules(next)
 					if err != nil {
-						a.notification(err.Error())
+						a.notification(toastError, err.Error())
 						return
 					}
 					a.state.Settings.Privacy.Rules = rules

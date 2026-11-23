@@ -8,7 +8,7 @@ import (
 func (a *App) loadGlobalAgentsDraft() {
 	service, ok := a.service.(contracts.GlobalInstructionsService)
 	if !ok {
-		a.notification(a.t("Could not save AGENTS.md."))
+		a.notification(toastError, a.t("Could not save AGENTS.md."))
 		return
 	}
 	if a.agentsLoading || a.agentsSaving || a.agentsDraft != a.agentsSaved {
@@ -20,7 +20,7 @@ func (a *App) loadGlobalAgentsDraft() {
 		return func() {
 			a.agentsLoading = false
 			if err != nil {
-				a.notification(err.Error())
+				a.notification(toastError, err.Error())
 				return
 			}
 			a.agentsDraft, a.agentsSaved = text, text
@@ -33,7 +33,7 @@ func (a *App) saveGlobalAgentsDraft() {
 		return
 	}
 	if len(a.agentsDraft) > contracts.MaxGlobalInstructionsBytes {
-		a.notification(a.t("AGENTS.md is too large. The limit is 256 KB."))
+		a.notification(toastWarning, a.t("AGENTS.md is too large. The limit is 256 KB."))
 		return
 	}
 	if a.agentsSaving {
@@ -42,7 +42,7 @@ func (a *App) saveGlobalAgentsDraft() {
 	}
 	service, ok := a.service.(contracts.GlobalInstructionsService)
 	if !ok {
-		a.notification(a.t("Could not save AGENTS.md."))
+		a.notification(toastError, a.t("Could not save AGENTS.md."))
 		return
 	}
 	text := a.agentsDraft
@@ -57,14 +57,14 @@ func (a *App) saveGlobalAgentsDraft() {
 			pending := a.agentsSavePending
 			a.agentsSavePending = false
 			if err != nil {
-				a.notification(err.Error())
+				a.notification(toastError, err.Error())
 				return
 			}
 			a.agentsSaved = text
 			if pending {
 				a.saveGlobalAgentsDraft()
 			} else {
-				a.notification(a.t("Saved"))
+				a.notification(toastSuccess, a.t("Saved"))
 			}
 		}
 	})

@@ -187,6 +187,7 @@ type App struct {
 	renameOpen, projectOpen, attachmentOpen, imageOpen         bool
 	renameID, renameText, imageRef                             string
 	branch, checkout                                           string
+	toastKind                                                  toastKind
 	toastUntil                                                 time.Time
 	palette                                                    design.Tokens
 	services                                                   ui.Services
@@ -541,8 +542,11 @@ func (a *App) applyEvent(event contracts.Event) {
 	if event.Message != nil && !a.sessionScopeContains(event.SessionID) {
 		event.Message = nil
 	}
-	if event.Kind == "session.naming.failed" || event.Kind == "privacy.warning" {
-		a.notification(event.Text)
+	if event.Kind == "session.naming.failed" {
+		a.notification(toastError, event.Text)
+	}
+	if event.Kind == "privacy.warning" {
+		a.notification(toastWarning, event.Text)
 	}
 	if event.Kind == "model.request.recorded" || event.Kind == "run.finished" {
 		if a.menuBar.Tray != nil {
@@ -1015,7 +1019,6 @@ func (a *App) modelLabel() string {
 	}
 	return "Select model"
 }
-func (a *App) notification(s string) { a.toast = s; a.toastUntil = time.Now().Add(3 * time.Second) }
 
 func (a *App) View(c *ui.Context) {
 	localize.Set(c, a.state.Settings.General.Language)
@@ -1141,12 +1144,7 @@ func (a *App) View(c *ui.Context) {
 	a.projectRenameDialog(c)
 	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
-	if a.toast != "" && time.Now().Before(a.toastUntil) {
-		ui.Overlay(c, func() {
-			ui.Text(c, tr(c, a.toast)).Absolute().Bottom(30).AlignSelf(ui.Center).Padding(10, 16).Radius(10).Background(a.palette.Raised).Border(1, a.palette.Border)
-		})
-		c.After(time.Until(a.toastUntil))
-	}
+	a.toastView(c)
 	a.flushPaneSave(c)
 }
 

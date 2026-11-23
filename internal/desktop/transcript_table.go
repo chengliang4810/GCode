@@ -230,7 +230,7 @@ func (a *App) transcriptTableActions(c *ui.Context, table transcriptTableData, s
 	ui.Row(c).FillWidth().Justify(ui.End).Gap(2).Children(func() {
 		iconButton(c.Key(state.key("table-copy")), "copy", tr(c, "Copy table as Markdown")).OnClick(func() {
 			services.WriteClipboard(table.markdownText())
-			a.notification(a.t("Table copied"))
+			a.notification(toastSuccess, a.t("Table copied"))
 		})
 		iconButton(c.Key(state.key("table-export")), "arrow-down", tr(c, "Download table as CSV")).OnClick(func() { a.exportTranscriptTable(table) })
 		iconButton(c.Key(state.key("table-preview")), "expand-arrows", tr(c, "Expand table")).OnClick(func() {
@@ -336,7 +336,7 @@ func (a *App) exportTranscriptTable(table transcriptTableData) {
 			if err != nil {
 				a.errorText = err.Error()
 			} else if path != "" {
-				a.notification(a.t("Table exported"))
+				a.notification(toastSuccess, a.t("Table exported"))
 			}
 		}
 	})
