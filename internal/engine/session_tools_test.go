@@ -38,6 +38,63 @@ func callSessionTestTool(t *testing.T, tools []agent.Tool, name string, args map
 	return out
 }
 
+func TestSessionBackgroundTaskPanelLifecycle(t *testing.T) {
+	core := openStorageTestCore(t, t.TempDir())
+	defer core.Close()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	for range 2 {
+		if err := core.Execute(ctx, contracts.Command{Kind: "session.create"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	session, other := core.state.Sessions[0], core.state.Sessions[1]
+	tools, err := core.sessionRuntimeTools(session, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	events, err := core.Subscribe(ctx, session.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	started := callSessionTestTool(t, tools, "Bash", map[string]any{
+		"command": "sleep 30", "description": "Background check", "run_in_background": true,
+	})
+	id := started.Data.(map[string]any)["backgroundTaskId"].(string)
+	waitFor := func(status string) {
+		t.Helper()
+		for {
+			select {
+			case <-ctx.Done():
+				t.Fatalf("task %s never reached %s", id, status)
+			case event, ok := <-events:
+				if !ok {
+					t.Fatal("subscription closed")
+				}
+				if event.Snapshot != nil {
+					for _, task := range event.Snapshot.BackgroundTasks {
+						if task == (contracts.BackgroundTask{ID: id, SessionID: session.ID, Title: "Background check", Status: status}) {
+							return
+						}
+					}
+				}
+			}
+		}
+	}
+	waitFor("running")
+	snapshot, err := core.Snapshot(ctx, other.ID)
+	if err != nil || len(snapshot.BackgroundTasks) != 0 {
+		t.Fatalf("task leaked into unrelated conversation: %+v, %v", snapshot.BackgroundTasks, err)
+	}
+	if err := core.Execute(ctx, contracts.Command{Kind: "task.stop", SessionID: other.ID, ID: id}); err == nil {
+		t.Fatal("another conversation stopped the task")
+	}
+	if err := core.Execute(ctx, contracts.Command{Kind: "task.stop", SessionID: session.ID, ID: id}); err != nil {
+		t.Fatal(err)
+	}
+	waitFor("killed")
+}
+
 func TestSessionDeleteJoinsBackgroundOwnerOutsideEngineLock(t *testing.T) {
 	core := openStorageTestCore(t, t.TempDir())
 	defer core.Close()

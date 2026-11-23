@@ -5,8 +5,42 @@ import (
 	"testing"
 	"time"
 
+	"gcode/internal/contracts"
+
 	"github.com/egoist/mygo/ui"
 )
+
+func TestSessionInfoBackgroundTasks(t *testing.T) {
+	for _, mode := range []string{"light", "dark"} {
+		for _, width := range []int{900, 1700} {
+			t.Run(fmt.Sprintf("%s-%d", mode, width), func(t *testing.T) {
+				a := testApp(t, "default")
+				a.selectSession("chat-0")
+				a.state.Settings.Appearance.Mode = mode
+				a.state.Settings.Appearance.ThemeID = "rcode-" + mode
+				a.state.Settings.General.Language = "zh-CN"
+				a.right, a.files = false, false
+				a.expanded["session-info-user"], a.expanded["session-info"] = true, true
+				a.state.BackgroundTasks = []contracts.BackgroundTask{
+					{ID: "active", SessionID: "chat-0", Title: "Active check", Status: "running"},
+					{ID: "done", SessionID: "chat-0", Title: "Finished check", Status: "completed"},
+					{ID: "other", SessionID: "chat-1", Title: "Unrelated check", Status: "running"},
+				}
+				tt := ui.NewTester(a.View, width, 880)
+				tt.Advance(300 * time.Millisecond)
+				if !tt.HasText("后台任务") || !tt.HasText("Active check") || !tt.HasText("Finished check") || tt.HasText("Unrelated check") {
+					t.Fatal("background tasks were not displayed for the current conversation")
+				}
+				if _, ok := tt.Find("停止任务: Active check"); !ok {
+					t.Fatal("running task is missing its stop action")
+				}
+				if _, ok := tt.Find("停止任务: Finished check"); ok {
+					t.Fatal("completed task offers a stop action")
+				}
+			})
+		}
+	}
+}
 
 func TestSessionDeleteDialogDimsSessionInfo(t *testing.T) {
 	for _, mode := range []string{"light", "dark"} {

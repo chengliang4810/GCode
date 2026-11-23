@@ -17,6 +17,7 @@ import (
 type sessionToolSet struct {
 	tools   []agent.Tool
 	cleanup func()
+	tasks   agent.BackgroundTasks
 }
 
 // Background commands belong to the host session, so a completed model turn or
@@ -49,15 +50,22 @@ func (e *Engine) sessionBaseTools(session contracts.Session, envFile string) ([]
 	if err != nil {
 		return nil, err
 	}
-	tools, cleanup := agent.RunToolSet(context.Background(), session.CWD, agent.RunToolOptions{Env: environment, EnvFile: envFile,
+	tools, cleanup, tasks := agent.RunToolSetWithTasks(context.Background(), session.CWD, agent.RunToolOptions{Env: environment, EnvFile: envFile,
 		OpenOutput: func() (io.WriteCloser, string, error) { return e.openToolOutput(session) },
+		TaskChanged: func() {
+			e.mu.Lock()
+			defer e.mu.Unlock()
+			if !e.closed && e.sessionTools[session.ID] != nil {
+				e.publishLocked(contracts.Event{Kind: "task.changed", SessionID: session.ID})
+			}
+		},
 	})
 	for i, inner := range tools {
 		if inner.Definition().Name == "TaskOutput" || inner.Definition().Name == "TaskStop" {
 			tools[i] = e.sessionTaskTool(session.ID, inner)
 		}
 	}
-	e.sessionTools[session.ID] = &sessionToolSet{tools: tools, cleanup: cleanup}
+	e.sessionTools[session.ID] = &sessionToolSet{tools: tools, cleanup: cleanup, tasks: tasks}
 	return slices.Clone(tools), nil
 }
 

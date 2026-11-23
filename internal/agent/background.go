@@ -10,18 +10,21 @@ import (
 	"io"
 	"maps"
 	"os/exec"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
 
 // RunToolOptions contains process-local settings owned by the execution host.
 type RunToolOptions struct {
-	Env        map[string]string
-	EnvFile    string
-	OpenOutput func() (io.WriteCloser, string, error)
+	Env         map[string]string
+	EnvFile     string
+	OpenOutput  func() (io.WriteCloser, string, error)
+	TaskChanged func()
 }
 
 const (
@@ -30,17 +33,18 @@ const (
 )
 
 type runTasks struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	cwd        string
-	env        map[string]string
-	openOutput func() (io.WriteCloser, string, error)
-	mu         sync.Mutex
-	closed     bool
-	tasks      map[string]*backgroundTask
-	active     int
-	completed  []string
-	wg         sync.WaitGroup
+	ctx         context.Context
+	cancel      context.CancelFunc
+	cwd         string
+	env         map[string]string
+	openOutput  func() (io.WriteCloser, string, error)
+	taskChanged func()
+	mu          sync.Mutex
+	closed      bool
+	tasks       map[string]*backgroundTask
+	active      int
+	completed   []string
+	wg          sync.WaitGroup
 }
 
 type backgroundTask struct {
@@ -59,6 +63,16 @@ type backgroundTask struct {
 // cancels and joins only processes started by this set; it is safe to repeat.
 // At most 64 tasks run concurrently; the latest 64 completed results remain queryable.
 func RunToolSet(ctx context.Context, cwd string, options ...RunToolOptions) ([]Tool, func()) {
+	tools, cleanup, _ := RunToolSetWithTasks(ctx, cwd, options...)
+	return tools, cleanup
+}
+
+type BackgroundTasks interface {
+	List() []contracts.BackgroundTask
+	Stop(id string) error
+}
+
+func RunToolSetWithTasks(ctx context.Context, cwd string, options ...RunToolOptions) ([]Tool, func(), BackgroundTasks) {
 	ownerCtx, cancel := context.WithCancel(ctx)
 	owner := &runTasks{ctx: ownerCtx, cancel: cancel, cwd: cwd, env: map[string]string{}, tasks: map[string]*backgroundTask{}}
 	for _, option := range options {
@@ -70,6 +84,9 @@ func RunToolSet(ctx context.Context, cwd string, options ...RunToolOptions) ([]T
 		}
 		if option.OpenOutput != nil {
 			owner.openOutput = option.OpenOutput
+		}
+		if option.TaskChanged != nil {
+			owner.taskChanged = option.TaskChanged
 		}
 	}
 	tools := CoreTools()
@@ -88,7 +105,35 @@ func RunToolSet(ctx context.Context, cwd string, options ...RunToolOptions) ([]T
 			owner.mu.Unlock()
 			owner.wg.Wait()
 		})
+	}, owner
+}
+
+func (r *runTasks) List() []contracts.BackgroundTask {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	tasks := make([]contracts.BackgroundTask, 0, len(r.tasks))
+	for _, task := range r.tasks {
+		task.mu.Lock()
+		tasks = append(tasks, contracts.BackgroundTask{ID: task.id, Title: firstTaskTitle(task), Status: task.status})
+		task.mu.Unlock()
 	}
+	slices.SortFunc(tasks, func(a, b contracts.BackgroundTask) int { return strings.Compare(a.ID, b.ID) })
+	return tasks
+}
+
+func firstTaskTitle(task *backgroundTask) string {
+	if task.description != "" {
+		return task.description
+	}
+	return task.command
+}
+
+func (r *runTasks) Stop(id string) error {
+	task, err := r.find(id)
+	if err == nil {
+		task.cancel()
+	}
+	return err
 }
 
 type runBashTool struct {
@@ -149,7 +194,13 @@ func (t runBashTool) Execute(ctx context.Context, _ string, raw json.RawMessage)
 
 func (r *runTasks) start(command, description string, timeout time.Duration) (*backgroundTask, error) {
 	r.mu.Lock()
-	defer r.mu.Unlock()
+	notify := false
+	defer func() {
+		r.mu.Unlock()
+		if notify && r.taskChanged != nil {
+			r.taskChanged()
+		}
+	}()
 	if r.closed {
 		return nil, errors.New("task owner is closed")
 	}
@@ -178,6 +229,7 @@ func (r *runTasks) start(command, description string, timeout time.Duration) (*b
 		return nil, err
 	}
 	r.tasks[task.id] = task
+	notify = true
 	r.active++
 	r.wg.Add(1)
 	go func() {
@@ -207,6 +259,9 @@ func (r *runTasks) start(command, description string, timeout time.Duration) (*b
 			r.completed = r.completed[1:]
 		}
 		r.mu.Unlock()
+		if r.taskChanged != nil {
+			r.taskChanged()
+		}
 	}()
 	return task, nil
 }

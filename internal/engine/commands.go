@@ -41,6 +41,17 @@ func (e *Engine) Execute(ctx context.Context, command contracts.Command) (result
 	if command.Kind == "background.install" || command.Kind == "background.adjust" || command.Kind == "background.remove" {
 		return e.updateBackground(ctx, command)
 	}
+	if command.Kind == "task.stop" {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		if err := e.checkLocked(ctx); err != nil {
+			return err
+		}
+		if owner := e.sessionTools[command.SessionID]; owner != nil {
+			return owner.tasks.Stop(command.ID)
+		}
+		return errors.New("background task not found")
+	}
 	return e.executeCommand(ctx, command, nil)
 }
 

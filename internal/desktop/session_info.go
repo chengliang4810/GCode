@@ -73,6 +73,7 @@ func (a *App) sessionInfo(c *ui.Context) {
 					ui.Text(c, fmt.Sprintf(tr(c, "−%d"), dels)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Readable(a.palette.Danger))
 				})
 			})
+			a.sessionBackgroundTasks(c, s.ID)
 			agents := a.sessionAgents(s.ID)
 			if len(agents) == 0 {
 				return
@@ -81,7 +82,7 @@ func (a *App) sessionInfo(c *ui.Context) {
 				ui.Text(c, tr(c, "Agents")).FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
 				ended := 0
 				for _, child := range agents {
-					if child.Status == contracts.Working {
+					if sessionAgentActive(child) {
 						a.sessionAgentRow(c, child)
 					} else {
 						ended++
@@ -93,7 +94,7 @@ func (a *App) sessionInfo(c *ui.Context) {
 					a.controlSessionAgentGroup(c.Key(key), ended, open).OnClick(func() { a.expanded[key] = !open })
 					if open {
 						for _, child := range agents {
-							if child.Status != contracts.Working {
+							if !sessionAgentActive(child) {
 								a.sessionAgentRow(c, child)
 							}
 						}
@@ -103,6 +104,61 @@ func (a *App) sessionInfo(c *ui.Context) {
 		})
 	})
 }
+
+func (a *App) sessionBackgroundTasks(c *ui.Context, sessionID string) {
+	var active, ended []contracts.BackgroundTask
+	for _, task := range a.state.BackgroundTasks {
+		if task.SessionID != sessionID {
+			continue
+		}
+		if task.Status == "running" {
+			active = append(active, task)
+		} else {
+			ended = append(ended, task)
+		}
+	}
+	if len(active)+len(ended) == 0 {
+		return
+	}
+	ui.Column(c).FillWidth().Radius(10).Background(a.palette.Overlay.Alpha(.85)).Border(1, a.palette.Border).Padding(10, 0).Children(func() {
+		ui.Text(c, tr(c, "Background tasks")).FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
+		ui.Scroll(c.Key("session-background-tasks:" + sessionID)).FillWidth().MaxHeight(180).Children(func() {
+			for _, task := range append(active, ended...) {
+				status := "Running"
+				switch task.Status {
+				case "completed":
+					status = "Completed"
+				case "failed":
+					status = "Failed"
+				case "killed":
+					status = "Stopped"
+				}
+				ui.Row(c.Key("background-task:"+task.ID)).FillWidth().Padding(4, 9).Gap(8).AlignItems(ui.Center).Children(func() {
+					icon(c, "terminal", 16)
+					ui.Column(c).Grow(1).MinWidth(0).Children(func() {
+						ui.Text(c, task.Title).SingleLine()
+						ui.Text(c, tr(c, status)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					})
+					if task.Status == "running" {
+						a.sessionTaskStopButton(c, task.ID, task.Title, func() {
+							a.dispatch(contracts.Command{Kind: "task.stop", SessionID: sessionID, ID: task.ID})
+						})
+					}
+				})
+			}
+		})
+	})
+}
+
+func (a *App) sessionTaskStopButton(c *ui.Context, id, title string, stop func()) {
+	c.Key("session-task-stop:" + id)
+	iconButton(c, "stop", tr(c, "Stop task")).Label(tr(c, "Stop task") + ": " + title).Shrink(0).OnClick(stop)
+}
+
+func sessionAgentActive(child contracts.Session) bool {
+	return child.Status == contracts.Working || child.Status == contracts.AwaitingInput
+}
+
 func (a *App) infoRow(c *ui.Context, glyph, label string) {
 	ui.Row(c).Padding(6, 9).Gap(8).AlignItems(ui.Center).Children(func() {
 		icon(c, glyph, 16)
@@ -113,10 +169,18 @@ func (a *App) infoRow(c *ui.Context, glyph, label string) {
 func (a *App) sessionAgentRow(c *ui.Context, child contracts.Session) {
 	status := sessionAgentStatus(child)
 	duration, known := a.sessionAgentDuration(child.ID)
-	a.controlSessionAgent(c.Key("session-agent:"+child.ID), child.Title, status, metricDuration(duration, known)).
-		OnClick(func() { a.workspace.OpenSession(child.ID) })
-	if child.Status == contracts.Working || child.Status == contracts.AwaitingInput {
+	row := func() {
+		a.controlSessionAgent(c.Key("session-agent:"+child.ID), child.Title, status, metricDuration(duration, known)).
+			OnClick(func() { a.workspace.OpenSession(child.ID) })
+	}
+	if sessionAgentActive(child) {
+		ui.Row(c.Key("session-agent-active:" + child.ID)).FillWidth().AlignItems(ui.Center).Children(func() {
+			ui.Column(c).MinWidth(0).Grow(1).Children(row)
+			a.sessionTaskStopButton(c, child.ID, child.Title, func() { a.stopSideMessage(child.ID) })
+		})
 		c.After(time.Second)
+	} else {
+		row()
 	}
 }
 

@@ -71,6 +71,14 @@ func (e *Engine) snapshotLocked(sessionIDs ...string) contracts.Snapshot {
 // Project once per scope, then deep-copy for every subscriber.
 func (e *Engine) snapshotProjectionLocked(sessionIDs ...string) contracts.Snapshot {
 	snapshot := contracts.SessionProjection(e.state, sessionIDs)
+	for _, sessionID := range sessionIDs {
+		if owner := e.sessionTools[sessionID]; owner != nil {
+			for _, task := range owner.tasks.List() {
+				task.SessionID = sessionID
+				snapshot.BackgroundTasks = append(snapshot.BackgroundTasks, task)
+			}
+		}
+	}
 	snapshot.Messages = maps.Clone(snapshot.Messages)
 	for sessionID, messages := range snapshot.Messages {
 		messages = slices.Clone(messages)
