@@ -206,16 +206,18 @@ func TestGoalEditRejectsStaleDraftAndStaleVerification(t *testing.T) {
 }
 
 func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
-	for _, kind := range []string{"invalid-json", "incomplete-verdict", "trailing", "tool-call", "http-error"} {
+	for _, kind := range []string{"invalid-json", "invalid-json-zh", "incomplete-verdict", "trailing", "tool-call", "http-error"} {
 		t.Run(kind, func(t *testing.T) {
+			var checks atomic.Int32
 			core, workspace := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				body := subagentRequest(t, r)
 				if !isGoalVerification(body) {
 					goalResponse(w, model.Chat, "I think I am done.", nil, true)
 					return
 				}
+				checks.Add(1)
 				switch kind {
-				case "invalid-json":
+				case "invalid-json", "invalid-json-zh":
 					goalResponse(w, model.Chat, "done", nil, true)
 				case "incomplete-verdict":
 					goalResponse(w, model.Chat, `{"passed":false,"reason":"Missing evidence"}`, nil, true)
@@ -227,6 +229,16 @@ func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
 					http.Error(w, "unavailable", http.StatusUnauthorized)
 				}
 			}))
+			prefix := "Completion check error"
+			core.mu.Lock()
+			core.state.Settings.General.Language = "en"
+			core.mu.Unlock()
+			if kind == "invalid-json-zh" {
+				core.mu.Lock()
+				core.state.Settings.General.Language = "zh-CN"
+				core.mu.Unlock()
+				prefix = "完成检查异常"
+			}
 			sendGoal(t, core, "/goal Verify the implementation")
 			summary, err := core.Snapshot(t.Context())
 			if err != nil || len(summary.Sessions) != 1 {
@@ -234,8 +246,15 @@ func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
 			}
 			state := waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
 			goal := state.Sessions[0].Goal
-			if goal == nil || goal.Status != contracts.GoalPaused || !strings.Contains(goal.Reason, "verification failed") {
+			if goal == nil || goal.Status != contracts.GoalPaused || !strings.Contains(goal.Reason, prefix) {
 				t.Fatalf("unreliable verification was accepted: %+v", goal)
+			}
+			expected := int32(3)
+			if kind == "http-error" {
+				expected = 1
+			}
+			if checks.Load() != expected {
+				t.Fatalf("verification requests = %d, want %d", checks.Load(), expected)
 			}
 			if _, err := os.Stat(filepath.Join(workspace, "verifier.txt")); !os.IsNotExist(err) {
 				t.Fatal("completion verifier executed a tool")
@@ -755,5 +774,56 @@ func goalResponse(
 		}
 		sendSSE(w, event)
 		sendSSE(w, map[string]any{"type": "message_stop"})
+	}
+}
+
+func TestGoalVerifierRepairsFormat(t *testing.T) {
+	var checks atomic.Int32
+	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := subagentRequest(t, r)
+		if !isGoalVerification(body) {
+			goalResponse(w, model.Chat, "Work done.", nil, true)
+			return
+		}
+		if checks.Add(1) == 1 {
+			goalResponse(w, model.Chat, "invalid", nil, true)
+			return
+		}
+		goalResponse(w, model.Chat, "```json\n{\"passed\":true,\"reason\":\"Evidence verified\",\"nextAction\":\"\"}\n```", nil, true)
+	}))
+	sendGoal(t, core, "/goal Verify the implementation")
+	summary, _ := core.Snapshot(t.Context())
+	state := waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
+	goal := state.Sessions[0].Goal
+	if goal == nil || goal.Status != contracts.GoalComplete || checks.Load() != 2 || len(goal.Verifications) != 1 {
+		t.Fatalf("format repair did not complete goal: %+v, checks=%d", goal, checks.Load())
+	}
+}
+
+func TestParseGoalVerification(t *testing.T) {
+	valid := `{"passed":false,"reason":"Work remains","nextAction":"Continue"}`
+	for _, tc := range []struct {
+		name  string
+		text  string
+		valid bool
+	}{
+		{"bare", valid, true},
+		{"json fence", "```json\n" + valid + "\n```", true},
+		{"plain fence", "```\n" + valid + "\n```", true},
+		{"CRLF fence", "```json\r\n" + valid + "\r\n```", true},
+		{"extra prose", "Result: " + valid, false},
+		{"trailing prose", "```json\n" + valid + "\n``` done", false},
+		{"multiple blocks", "```json\n" + valid + "\n```\n```json\n" + valid + "\n```", false},
+		{"unknown field", `{"passed":true,"reason":"done","extra":1}`, false},
+		{"wrong type", `{"passed":"true","reason":"done"}`, false},
+		{"missing next action", `{"passed":false,"reason":"pending"}`, false},
+		{"trailing object", valid + valid, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := parseGoalVerification(tc.text)
+			if (err == nil) != tc.valid {
+				t.Fatalf("parse error = %v, valid = %v", err, tc.valid)
+			}
+		})
 	}
 }
