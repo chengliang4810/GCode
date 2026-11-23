@@ -42,7 +42,7 @@ func TestGitHistoryReadsCurrentCheckout(t *testing.T) {
 	}
 	core, _ := newChangeCore(t, sub)
 	result, err = core.ListGitHistory(t.Context(), contracts.GitHistoryRequest{SessionID: "session"})
-	if err != nil || len(result.Commits) != 3 || result.Root != dir || result.Commits[0].Subject != "merge feature" || len(result.Commits[0].Parents) != 2 || result.Commits[0].Author != "历史作者" || len(result.Commits[0].Refs) == 0 || result.Commits[0].AuthoredAt.IsZero() {
+	if err != nil || len(result.Commits) != 3 || !sameCheckoutPath(result.Root, dir) || result.Commits[0].Subject != "merge feature" || len(result.Commits[0].Parents) != 2 || result.Commits[0].Author != "历史作者" || len(result.Commits[0].Refs) == 0 || result.Commits[0].AuthoredAt.IsZero() {
 		t.Fatalf("history: %+v %v", result, err)
 	}
 	if _, err := core.ListGitHistory(t.Context(), contracts.GitHistoryRequest{SessionID: "missing"}); err == nil {
