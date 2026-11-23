@@ -1163,3 +1163,39 @@ macOS 不编译），全部通过：
   页的工作流模块里渲染后全过；新用例断言侧栏没有「Workflows」、自动化页点
   「Workflows」切到模块、模块里列出项目组与本机组定义。
 - `internal/e2e/workflow_test.go` 的原生路径改为「侧栏 → 自动化 → 工作流模块」。
+
+## 27. 合入后端保护改动后的复跑（已落地）
+
+后端保护分支（工作树分组新建、编辑器文件保存复核、目录浏览限额与远程错误
+语义、每轮任务刷新实际 Git 来源）合入主线后，全线重跑了一遍，确认两边的
+行为没有互相踩到。
+
+### 27.1 合并结果
+
+- 合并提交 `89785da`（`Merge branch 'feat/b746iq3tc5sq'`），无冲突：两边改动
+  落在不同文件与不同函数上，`internal/i18n/zh-CN.json` 是双方都改但键不重叠，
+  合并后 1624 个键、无重复键。
+- 合入后 `internal/remote/server.go` 仍然挂着 Git 历史路由，工作流与运行目录
+  的接线也在（`grep 'All runs in this conversation' internal/i18n/zh-CN.json`
+  命中）。
+
+### 27.2 验证证据
+
+- 静态：`go build ./...`、`go vet ./...`、`go vet -tags=e2e ./internal/e2e/`、
+  `gofmt -l internal/ scripts/` 均无输出；`go run ./scripts/check-framework.go`
+  报 MyGo v0.9.1 + rcode-native-ui.28，指纹 `d8cc306d…`，2852 文件。
+- 单元：引擎 401 条按首字母分六批全过（A-D 142s、E-H 281s、I-M 209s、
+  N-R 162s、S-T 148s、U-Z 93s）；`./internal/desktop/` 全量 195s 通过；
+  其余各包（contracts/workflow/i18n/design/workbench/remote/mock/agent/model/
+  linkui 等 40 余个包）全过。
+- 原生：工作流 5 条（`^TestDesktopLocalWorkflow`，含中枢、运行卡、留白、
+  留白补全后继续执行、问题作答）全过，证据
+  `output/desktop-e2e/20261123-104947-3340751509/evidence.json`；
+  与合入改动直接相关的 4 条（`TestDesktopLocalNamingAndWorktree`、
+  `TestDesktopLocalGeneratedFileLink`、
+  `TestDesktopLocalProjectCreationWithIgnoredArtifacts`、
+  `TestDesktopLocalTranscriptLinks`）全过，证据
+  `output/desktop-e2e/20261123-105137-1789413743/evidence.json`。
+- 仍然不算已验收：逐入口 × 逐状态 × 逐尺寸的视觉一致性比对（用户于
+  2026-10-29 暂停），以及真实供应商链路（证据里 `realProvider` 恒为
+  `not-tested`）。
