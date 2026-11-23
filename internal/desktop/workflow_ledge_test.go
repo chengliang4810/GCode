@@ -41,6 +41,30 @@ func ledgeTester(app *App) *ui.Tester {
 	}, 900, 900)
 }
 
+func TestWorkflowTimelineScrollbarMatchesViewport(t *testing.T) {
+	app := ledgeApp(t)
+	run := ledgeRun()
+	var viewport ui.Rect
+	var cWidth float32 = 480
+	tt := ui.NewTester(func(c *ui.Context) {
+		c.SetTheme(app.palette.UI())
+		state, _ := app.workflowTimelineScroll(run.ID)
+		viewport = state.Bounds(c)
+		ui.Column(c).Width(cWidth).Padding(12).Children(func() {
+			app.workflowRunCard(c, run, 720)
+		})
+	}, 900, 900)
+	for _, width := range []float32{480, 320, 600} {
+		cWidth = width
+		tt.Frame()
+		tt.Frame()
+		bar, ok := tt.Find("Scroll the workflow stages")
+		if !ok || viewport.W <= 0 || bar.X != viewport.X || bar.W != viewport.W || bar.X+bar.W > width-12 {
+			t.Fatalf("at width %g, scrollbar %+v (found %v) must match viewport %+v inside card", width, bar, ok, viewport)
+		}
+	}
+}
+
 // 阶段线放不下时，滚到视口外的站折到边檐上，点一下把那一站带回来。
 func TestWorkflowTimelineLedgeFoldsStationsOutsideTheViewport(t *testing.T) {
 	app := ledgeApp(t)

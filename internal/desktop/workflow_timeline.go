@@ -14,7 +14,7 @@ import (
 // the roster of instances that ran in it. The line scrolls sideways when the
 // run has more stations than the card is wide; the scrollbar is the shared
 // thin one, not the native bar.
-func (a *App) workflowRunTimeline(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, expanded bool, viewport float32) {
+func (a *App) workflowRunTimeline(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, expanded bool) {
 	railHeight := workflow.TrackRowHeight
 	arcHeight := workflow.ArcBase + workflow.ArcGap*float32(maxArcLane(timeline))
 	width := workflow.TrackWidth(len(timeline.Stations))
@@ -22,11 +22,12 @@ func (a *App) workflowRunTimeline(c *ui.Context, view workflow.RunView, timeline
 		width += workflow.TailStubWidth
 	}
 	state, position := a.workflowTimelineScroll(view.RunID)
+	viewport := state.Bounds(c).W
 	// 滚到视口外的站折到那一侧的边檐上：同一枚小灯、点一下把它带回来。
 	fold := a.workflowTimelineFold(timeline, state, viewport)
 	ui.Column(c.Key("workflow-timeline:" + view.RunID)).FillWidth().Gap(0).Children(func() {
 		if fold.Folded() {
-			a.workflowTimelineLedge(c, view, timeline, fold, state)
+			a.workflowTimelineLedge(c, view, timeline, fold, state, viewport)
 		}
 		ui.ScrollHorizontal(c.Key("workflow-timeline-scroll:" + view.RunID)).TrackScroll(state).
 			Scrollbars(false).FillWidth().MinWidth(0).Children(func() {
@@ -67,17 +68,17 @@ func (a *App) workflowTimelineFold(timeline workflow.Timeline, state *ui.ScrollS
 // workflowTimelineLedge draws the folded stations of both sides: up to three
 // lamps each, then a count, and choosing one scrolls that station back into
 // view. It is the stage line's own band, so it never covers the rail.
-func (a *App) workflowTimelineLedge(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, fold workflow.TimelineFold, state *ui.ScrollState) {
+func (a *App) workflowTimelineLedge(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, fold workflow.TimelineFold, state *ui.ScrollState, viewport float32) {
 	ui.Row(c.Key("workflow-timeline-ledge:" + view.RunID)).FillWidth().Height(workflow.LedgePitch).
 		AlignItems(ui.Center).Children(func() {
-		a.workflowTimelineLedgeSide(c, view, timeline, fold.Left, workflow.LedgeLeft, state)
+		a.workflowTimelineLedgeSide(c, view, timeline, fold.Left, workflow.LedgeLeft, state, viewport)
 		ui.Spacer(c).Grow(1)
-		a.workflowTimelineLedgeSide(c, view, timeline, fold.Right, workflow.LedgeRight, state)
+		a.workflowTimelineLedgeSide(c, view, timeline, fold.Right, workflow.LedgeRight, state, viewport)
 	})
 }
 
 // workflowTimelineLedgeSide draws one side's lamps and its count.
-func (a *App) workflowTimelineLedgeSide(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, indexes []int, side string, state *ui.ScrollState) {
+func (a *App) workflowTimelineLedgeSide(c *ui.Context, view workflow.RunView, timeline workflow.Timeline, indexes []int, side string, state *ui.ScrollState, viewport float32) {
 	shown, more := workflow.LedgeLamps(indexes, side)
 	if len(shown) == 0 && more == 0 {
 		return
@@ -94,7 +95,7 @@ func (a *App) workflowTimelineLedgeSide(c *ui.Context, view workflow.RunView, ti
 				// 把那一站带回视口：灯心落在视口靠这一侧的边距上。
 				target := workflow.StationCenterX(station.Index) - workflow.LedgeFade
 				if side == workflow.LedgeRight {
-					target = workflow.StationCenterX(station.Index) - a.chatWidth + workflow.LedgeFade
+					target = workflow.StationCenterX(station.Index) - viewport + workflow.LedgeFade
 				}
 				state.ScrollTo(max(0, target), 0, ui.Smooth)
 			})
@@ -151,7 +152,7 @@ func (a *App) workflowTimelineScrollbar(c *ui.Context, view workflow.RunView, st
 	}
 	*position = float64(state.X)
 	controlHorizontalScrollbar(c.Key("workflow-timeline-scrollbar:"+view.RunID), position, state.MaxX, viewport).
-		FillWidth().Label(tr(c, "Scroll the workflow stages")).OnChange(func() {
+		FillWidth().MinWidth(0).Label(tr(c, "Scroll the workflow stages")).OnChange(func() {
 		state.X = float32(*position)
 	})
 }
