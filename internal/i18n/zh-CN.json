@@ -1,4 +1,8 @@
 {
+  "Annotate an element": "标注网页元素",
+  "Stop annotating": "退出元素标注",
+  "Select an element": "选择要标注的元素",
+  "Shift-click to add, Esc to finish": "按住 Shift 点击可连续添加，按 Esc 结束",
   "Project actions": "项目操作",
   "Rename project": "重命名项目",
   "Project name": "项目名称",

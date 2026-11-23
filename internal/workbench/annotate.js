@@ -238,9 +238,11 @@
       @media (prefers-reduced-motion:reduce){.box,.hint{transition:none}}
     `);
     root.innerHTML += `<div class="box"></div><div class="flag"></div>
-      <div class="hint enter"><span class="dot"></span><span class="title">Select an element</span><span class="sep"></span>
-      <span class="keys"><b>Shift</b>-click to add,&ensp;<b>Esc</b> to finish</span></div>`;
+      <div class="hint enter"><span class="dot"></span><span class="title"></span><span class="sep"></span>
+      <span class="keys"></span></div>`;
     ui = { box: root.querySelector('.box'), flag: root.querySelector('.flag'), hint: root.querySelector('.hint'), title: root.querySelector('.title') };
+    ui.title.textContent = theme.messages.select;
+    root.querySelector('.keys').textContent = theme.messages.hint;
     requestAnimationFrame(() => ui && ui.hint.classList.remove('enter'));
     const cursor = document.createElement('style');
     cursor.id = 'rcode-annotator-cursor';
@@ -360,7 +362,7 @@
     if (!el) return;
     picks.push({ ...capture(el), marker: mark(el) });
     if (!e.shiftKey) stop('done');
-    else if (ui) ui.title.textContent = `${picks.length + taken} selected`;
+    else if (ui) ui.title.textContent = theme.messages.selected.replace('%d', String(picks.length + taken));
   };
   const onKey = (e) => { if (e.isTrusted && e.key === 'Escape') { swallow(e); stop('cancelled'); } };
   const LISTEN = [['mousemove', onMove], ['click', onClick], ['mousedown', swallow], ['mouseup', swallow],

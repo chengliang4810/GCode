@@ -14,7 +14,7 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
-// This is the unmodified public-page picker from GCode v0.2.128. It runs only
+// This public-page picker runs only
 // after the user enables annotation in an external browser body, never as UI.
 //
 //go:embed annotate.js
@@ -93,7 +93,11 @@ func (s *State) toggleAnnotation(b *browser) {
 	b.annotation = session
 	p := s.palette()
 	css := func(c ui.Color) string { return fmt.Sprintf("#%02x%02x%02x%02x", c.R, c.G, c.B, c.A) }
-	palette, _ := json.Marshal(map[string]any{"accent": css(p.Accent), "surface": css(p.Dialog), "border": css(p.Border), "text": css(p.Text), "muted": css(p.Muted), "faint": css(p.Faint), "chip": css(sourceInk(p.Dark, .09)), "dark": p.Dark, "font": s.snapshot.Settings.Appearance.Font})
+	palette, _ := json.Marshal(map[string]any{"accent": css(p.Accent), "surface": css(p.Dialog), "border": css(p.Border), "text": css(p.Text), "muted": css(p.Muted), "faint": css(p.Faint), "chip": css(sourceInk(p.Dark, .09)), "dark": p.Dark, "font": s.snapshot.Settings.Appearance.Font, "messages": map[string]string{
+		"select":   s.t("Select an element"),
+		"hint":     s.t("Shift-click to add, Esc to finish"),
+		"selected": s.t("%d selected"),
+	}})
 	go s.pollAnnotations(ctx, b, session, string(palette))
 }
 
