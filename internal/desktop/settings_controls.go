@@ -1021,3 +1021,17 @@ func controlIslandCompact(c *ui.Context, label string) ui.Element {
 	}
 	return b
 }
+
+// controlIslandStop mirrors the composer's round button and square stop glyph.
+func controlIslandStop(c *ui.Context, label string) ui.Element {
+	b := ui.ButtonBase(c).Label(label).Tooltip(label).Size(design.Controls().IconButtonSize, design.Controls().IconButtonSize).
+		Radius(design.Controls().IconButtonSize / 2).Background(c.Theme().Text).Center()
+	if b.Hovered() {
+		b.Background(c.Theme().TextMuted)
+	}
+	b.Children(func() {
+		ui.Box(c).Size(11, 11).Radius(3).Background(c.Theme().Surface)
+	})
+	return b
+}
+

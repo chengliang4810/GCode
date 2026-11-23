@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"gcode/internal/contracts"
+	"gcode/internal/design"
 	"gcode/internal/engine"
 	"gcode/internal/model"
 	"gcode/internal/storage"
@@ -124,7 +125,8 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 					return fmt.Errorf("island missing")
 				})
 			}
-			assertIslandBounds(298, 32)
+			compactWidth, compactHeight := design.IslandGeometry(false, 1)
+			assertIslandBounds(float64(compactWidth), float64(compactHeight))
 			var compactCapture struct {
 				PNG []byte `json:"png"`
 			}
@@ -137,7 +139,8 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 			if err := app.client.call("act", map[string]any{"window": islandID, "key": "island-expand", "action": "press"}, nil); err != nil {
 				t.Fatal(err)
 			}
-			assertIslandBounds(440, 168)
+			expandedWidth, expandedHeight := design.IslandGeometry(true, 1)
+			assertIslandBounds(float64(expandedWidth), float64(expandedHeight))
 			app.await("completed task in island", func() error {
 				var tree accessTree
 				if err := app.client.call("tree", map[string]any{"window": islandID}, &tree); err != nil {
@@ -199,7 +202,8 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 				}
 				return nil
 			})
-			assertIslandBounds(298, 32)
+			compactWidth, compactHeight = design.IslandGeometry(false, 1)
+			assertIslandBounds(float64(compactWidth), float64(compactHeight))
 			move := func(x, y int) {
 				t.Helper()
 				if err := app.client.call("input", map[string]any{"window": islandID, "events": []map[string]any{{"type": "pointerMove", "x": x, "y": y}}}, nil); err != nil {
@@ -207,7 +211,8 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 				}
 			}
 			move(149, 16)
-			assertIslandBounds(440, 168)
+			expandedWidth, expandedHeight = design.IslandGeometry(true, 1)
+			assertIslandBounds(float64(expandedWidth), float64(expandedHeight))
 			var expandedTree accessTree
 			if err := app.client.call("tree", map[string]any{"window": islandID}, &expandedTree); err != nil {
 				t.Fatal(err)
@@ -216,9 +221,11 @@ func TestDesktopLocalAutomationsAndIsland(t *testing.T) {
 				t.Fatal("the island must not provide a close control")
 			}
 			move(200, 100)
-			assertIslandBounds(440, 168)
+			expandedWidth, expandedHeight = design.IslandGeometry(true, 1)
+			assertIslandBounds(float64(expandedWidth), float64(expandedHeight))
 			move(500, 200)
-			assertIslandBounds(298, 32)
+			compactWidth, compactHeight = design.IslandGeometry(false, 1)
+			assertIslandBounds(float64(compactWidth), float64(compactHeight))
 			app.act("island-enabled", "press", "")
 			app.waitChecked("island-enabled", false)
 			app.stop()

@@ -11,7 +11,7 @@ func IslandGeometry(expanded bool, count int) (width, height int) {
 	if count == 0 {
 		return 340, 152
 	}
-	return 440, min(400, 56+count*112)
+	return 440, min(400, 56+count*48)
 }
 
 const (
@@ -21,9 +21,9 @@ const (
 	islandCollapsedRadius float32 = 12
 	// IslandCardPadding is the padding the expanded island's inner card leaves
 	// on every side.
-	IslandCardPadding float32 = 14
+	IslandCardPadding float32 = 10
 	// IslandCardRadius keeps the card's corners concentric with the island's:
-	// the outer radius minus that padding, 24 − 14 = 10. A larger inner radius
+	// the outer radius minus that padding, 24 − 10 = 14. A larger inner radius
 	// would bulge past the outer corner.
 	IslandCardRadius float32 = islandExpandedRadius - IslandCardPadding
 )

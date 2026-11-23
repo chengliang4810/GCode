@@ -11,6 +11,7 @@ import (
 	"gcode/internal/assets"
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/i18n"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
@@ -193,7 +194,7 @@ func TestAgentIslandGeometryAndDisplaySelection(t *testing.T) {
 	for _, test := range []struct {
 		expanded    bool
 		count, w, h int
-	}{{false, 0, 210, 28}, {false, 1, 298, 32}, {true, 0, 340, 152}, {true, 1, 440, 168}, {true, 8, 440, 400}} {
+	}{{false, 0, 210, 28}, {false, 1, 298, 32}, {true, 0, 340, 152}, {true, 1, 440, 104}, {true, 8, 440, 400}} {
 		w, h := design.IslandGeometry(test.expanded, test.count)
 		if w != test.w || h != test.h {
 			t.Fatalf("geometry=%dx%d", w, h)
@@ -252,4 +253,88 @@ func TestAgentIslandSettingsPersistenceAndSoundDecode(t *testing.T) {
 			t.Fatalf("image %v %v", err, closeErr)
 		}
 	}
+}
+
+func TestAgentIslandPointerExitClearsClickAndHoverExpansion(t *testing.T) {
+	for _, clicked := range []bool{false, true} {
+		for _, hovered := range []bool{false, true} {
+			t.Run(fmt.Sprintf("clicked=%t/hovered=%t", clicked, hovered), func(t *testing.T) {
+				now := time.Now()
+				s := agentIslandState{Expanded: clicked, HoverExpanded: hovered, CollapseAt: now.Add(time.Minute)}
+				s.settlePointer(false, now)
+				if s.Expanded || s.HoverExpanded || !s.CollapseAt.IsZero() || !s.HoverCooldown.After(now) {
+					t.Fatalf("pointer exit retained expansion: %+v", s)
+				}
+			})
+		}
+	}
+}
+
+func TestAgentIslandCompactTaskLayout(t *testing.T) {
+	for _, width := range []int{360, 440} {
+		for _, language := range []string{"en", "zh-CN"} {
+			t.Run(fmt.Sprintf("%d/%s", width, language), func(t *testing.T) {
+				app, _ := settingsTestApp(t)
+				app.state.Settings.General.Language = language
+				now := time.Now()
+				app.state.Sessions = []contracts.Session{
+					{ID: "first", Title: "项目情况总结整理", Status: contracts.Working, UpdatedAt: now},
+					{ID: "second", Title: "拉取 ZCode 最新代码并分析工作流复刻方案", Status: contracts.Working, UpdatedAt: now},
+				}
+				app.state.Runs = []contracts.Run{
+					{ID: "run-first", SessionID: "first", Status: "running", StartedAt: now.Add(-8 * time.Minute)},
+					{ID: "run-second", SessionID: "second", Status: "running", StartedAt: now.Add(-33 * time.Minute)},
+				}
+				app.island.Expanded = true
+				_, height := design.IslandGeometry(true, 2)
+				tt := ui.NewTester(app.agentIslandView, width, height)
+				for _, entry := range app.state.Sessions {
+					card, found := tt.Find(entry.Title + " — " + i18n.In(language, "Working"))
+					action, hasAction := tt.Find(i18n.In(language, "Stop"))
+					if entry.ID != "first" {
+						if !found {
+							t.Fatal("second task is not visible")
+						}
+						continue
+					}
+					if !found || !hasAction || action.X < card.X+card.W || action.Y < card.Y || action.Y+action.H > card.Y+card.H {
+						t.Fatalf("task action is not beside card: card=%+v action=%+v", card, action)
+					}
+					red, _, _, alpha := tt.Image().At(int(action.X+action.W/2), int(action.Y+action.H/2)).RGBA()
+					if red > 0x4000 || alpha == 0 {
+						t.Fatal("stop glyph is not visibly dark inside the round button")
+					}
+				}
+				if dir := os.Getenv("GCODE_FEATURE_EVIDENCE"); dir != "" {
+					if err := os.MkdirAll(dir, 0755); err != nil {
+						t.Fatal(err)
+					}
+					file, err := os.Create(filepath.Join(dir, fmt.Sprintf("compact-%d-%s.png", width, language)))
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer file.Close()
+					if err := png.Encode(file, tt.Image()); err != nil {
+						t.Fatal(err)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestAgentIslandClickExpansionSchedulesCollapseOnExit(t *testing.T) {
+	app, _ := settingsTestApp(t)
+	app.island.Expanded = true
+	app.island.Hovered = map[int64]bool{1: true}
+	t.Cleanup(app.island.cancelHoverTimer)
+	app.observeIslandPointer(1, false)
+	if app.island.HoverTimer == nil {
+		t.Fatal("click-expanded panel did not schedule collapse after pointer exit")
+	}
+	app.observeIslandPointer(1, true)
+	if app.island.HoverTimer == nil || !app.island.Expanded {
+		t.Fatal("pointer return did not preserve expansion and replace the exit timer")
+	}
+	app.island.cancelHoverTimer()
 }

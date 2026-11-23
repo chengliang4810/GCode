@@ -204,7 +204,9 @@ func (a *App) setIslandEnabled(enabled bool) {
 
 func (a *App) toggleIslandExpanded() {
 	a.playIslandClick()
-	a.island.Expanded = !a.island.Expanded
+	a.island.Expanded = !(a.island.Expanded || a.island.HoverExpanded)
+	a.island.HoverExpanded = false
+	a.island.cancelHoverTimer()
 	a.island.CollapseAt = time.Time{}
 	a.resizeAgentIsland(len(islandEntries(a.state, time.Now(), a.island.Dismissed)))
 }
@@ -353,7 +355,7 @@ func (a *App) observeIslandPointer(displayID int64, inside bool) {
 		return
 	}
 	s.cancelHoverTimer()
-	if anyInside == s.HoverExpanded {
+	if anyInside == s.HoverExpanded && (anyInside || !s.Expanded) {
 		return
 	}
 	delay := 150 * time.Millisecond
@@ -368,13 +370,20 @@ func (a *App) observeIslandPointer(displayID int64, inside bool) {
 				return
 			}
 			s.HoverTimer = nil
-			s.HoverExpanded = anyInside
-			if !anyInside {
-				s.HoverCooldown = time.Now().Add(150 * time.Millisecond)
-			}
+			s.settlePointer(anyInside, time.Now())
 			a.syncAgentIsland()
 		})
 	})
+}
+
+// Leaving the panel ends both hover and click expansion; clicking does not pin it.
+func (s *agentIslandState) settlePointer(inside bool, now time.Time) {
+	s.HoverExpanded = inside
+	if !inside {
+		s.Expanded = false
+		s.CollapseAt = time.Time{}
+		s.HoverCooldown = now.Add(150 * time.Millisecond)
+	}
 }
 
 func (a *App) agentIslandView(c *ui.Context) {
@@ -447,22 +456,19 @@ func (a *App) renderAgentIsland(c *ui.Context, displayID int64, trackPointer boo
 			}
 			for _, value := range entries {
 				entry := value
-				ui.Column(c.Key("island-session-" + entry.SessionID)).FillWidth().Gap(4).Children(func() {
-					controlIslandCard(c.Key("island-open-"+entry.SessionID), entry.Title).FillWidth().OnClick(func() { a.openIslandSession(entry.SessionID) }).Children(func() {
-						ui.Column(c).FillWidth().Gap(6).Children(func() {
-							ui.Text(c, entry.Title).Bold().SingleLine()
-							ui.Row(c).FillWidth().Gap(8).Children(func() {
-								ui.Text(c, tr(c, entry.Detail)).TextColor(c.Theme().TextMuted)
-								ui.Spacer(c).Grow(1)
-								if entry.Phase == "running" || entry.Phase == "needs-interaction" {
-									ui.Text(c, i18n.Duration(a.state.Settings.General.Language, max(0, time.Since(entry.StartedAt).Milliseconds()))).FontFeatures("tnum").TextColor(c.Theme().TextMuted)
-								}
-							})
+				ui.Row(c.Key("island-session-" + entry.SessionID)).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
+					controlIslandCard(c.Key("island-open-"+entry.SessionID), entry.Title+" — "+tr(c, entry.Detail)).Grow(1).MinWidth(0).Tooltip(entry.Title + " — " + tr(c, entry.Detail)).OnClick(func() { a.openIslandSession(entry.SessionID) }).Children(func() {
+						ui.Row(c).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
+							ui.Box(c).Size(6, 6).Shrink(0).Radius(3).Background(islandStatusColor(c, entry.Phase))
+							ui.Text(c, entry.Title).Bold().SingleLine().Grow(1).MinWidth(0)
+							if entry.Phase == "running" || entry.Phase == "needs-interaction" {
+								ui.Text(c, i18n.Duration(a.state.Settings.General.Language, max(0, time.Since(entry.StartedAt).Milliseconds()))).SingleLine().Shrink(0).FontFeatures("tnum").TextColor(c.Theme().TextMuted)
+							}
 						})
 					})
-					ui.Row(c).FillWidth().Justify(ui.End).Children(func() {
+					ui.Row(c).Shrink(0).Children(func() {
 						if entry.Phase == "running" || entry.Phase == "needs-interaction" {
-							textButton(c.Key("island-stop-"+entry.SessionID), tr(c, "Stop")).OnClick(func() { a.dispatch(contracts.Command{Kind: "message.stop", SessionID: entry.SessionID}) })
+							controlIslandStop(c.Key("island-stop-"+entry.SessionID), tr(c, "Stop")).OnClick(func() { a.dispatch(contracts.Command{Kind: "message.stop", SessionID: entry.SessionID}) })
 						} else {
 							textButton(c.Key("island-dismiss-"+entry.SessionID), tr(c, "Dismiss")).OnClick(func() {
 								if a.island.Dismissed == nil {
@@ -477,6 +483,19 @@ func (a *App) renderAgentIsland(c *ui.Context, displayID int64, trackPointer boo
 			}
 		})
 	})
+}
+
+func islandStatusColor(c *ui.Context, phase string) ui.Color {
+	switch phase {
+	case "running", "completed":
+		return c.Theme().Success
+	case "needs-interaction":
+		return c.Theme().Warning
+	case "error":
+		return c.Theme().Danger
+	default:
+		return c.Theme().TextMuted
+	}
 }
 
 func (a *App) markSessionRead(sessionID string) {
