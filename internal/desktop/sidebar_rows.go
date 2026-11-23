@@ -16,7 +16,7 @@ func (a *App) visibleSessions() []contracts.Session {
 	var result []contracts.Session
 	query := strings.ToLower(strings.TrimSpace(a.search))
 	for _, session := range a.state.Sessions {
-		if session.Archived || session.ParentSessionID != "" || session.SideChat {
+		if session.Archived || !session.TopLevel() {
 			continue
 		}
 		text := session.Title + " " + session.Branch + " " + a.projectNameFor(session.ProjectID) + " " + a.deviceNameFor(session.DeviceID)

@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+// SubagentWorkflow 是工作流实例会话的代理类型。实例会话属于那次运行，
+// 不是对话：它不在对话列表或智能体岛里占一条，也不接受用户直接发消息。
+const SubagentWorkflow = "Workflow"
+
 // 工作流运行状态。pending 表示已接受但尚未运行；running 包含等待问题和等待留白。
 const (
 	WorkflowStatusPending   = "pending"

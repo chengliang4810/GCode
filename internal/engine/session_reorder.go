@@ -73,8 +73,7 @@ func (e *Engine) reorderSessionLocked(command contracts.Command) error {
 // reorderableSession reports whether a conversation can take part in manual
 // session ordering: only active top-level conversations own ordinary positions.
 func reorderableSession(session contracts.Session) bool {
-	return session.ID != "" && !session.Pinned && !session.Archived &&
-		session.ParentSessionID == "" && !session.SideChat
+	return session.ID != "" && !session.Pinned && !session.Archived && session.TopLevel()
 }
 
 // groupMembersLocked lists the reorderable conversations of one group in

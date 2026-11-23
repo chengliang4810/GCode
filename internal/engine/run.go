@@ -26,10 +26,16 @@ import (
 const messagePersistInterval = 2 * time.Second
 
 func (e *Engine) sendLocked(send contracts.SendRequest) error {
-	return e.sendWithCheckoutLocked(send, nil)
+	return e.sendWithCheckoutLocked(send, nil, false)
 }
 
-func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *checkoutResult) error {
+// sendWorkflowActorLocked 由工作流运行器驱动实例会话的一轮。实例会话是只读的
+// 子代理会话：用户和远程客户端不能往里发消息，但那次运行必须能继续驱动它。
+func (e *Engine) sendWorkflowActorLocked(send contracts.SendRequest) error {
+	return e.sendWithCheckoutLocked(send, nil, true)
+}
+
+func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *checkoutResult, workflowActor bool) error {
 	replacing := send.ReplaceMessageID != ""
 	for _, refs := range e.state.RepoRefs {
 		if refs.Scope.ProjectID == send.ProjectID && refs.Switching != "" {
@@ -87,7 +93,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 			}
 		}
 		session = e.state.Sessions[index]
-		if session.SubagentType != "" {
+		if session.SubagentType != "" && !(workflowActor && session.SubagentType == contracts.SubagentWorkflow) {
 			return errors.New("subagent sessions are read-only")
 		}
 	} else {

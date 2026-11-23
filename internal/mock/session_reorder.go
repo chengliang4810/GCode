@@ -80,8 +80,7 @@ func (s *Server) reorderSessionLocked(command contracts.Command) error {
 }
 
 func mockReorderableSession(session contracts.Session) bool {
-	return session.ID != "" && !session.Pinned && !session.Archived &&
-		session.ParentSessionID == "" && !session.SideChat
+	return session.ID != "" && !session.Pinned && !session.Archived && session.TopLevel()
 }
 
 func (s *Server) reorderProjectSessionLocked(input *contracts.ReorderInput) error {

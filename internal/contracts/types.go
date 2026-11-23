@@ -160,6 +160,15 @@ type Session struct {
 	// rest of this session, so later runs start without asking again.
 	WorkflowAutoApprove bool `json:"workflowAutoApprove,omitempty"`
 }
+
+// TopLevel reports whether the session is a conversation the user started on
+// their own. Forks, side chats, subagent tasks and workflow instances belong to
+// another session, so only top-level ones take a place in the conversation list
+// and manual ordering.
+func (s Session) TopLevel() bool {
+	return s.ParentSessionID == "" && !s.SideChat && s.SubagentType == ""
+}
+
 type SessionGroup struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`

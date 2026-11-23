@@ -320,6 +320,9 @@ func (e *Engine) workflowActorSession(runID string, actor contracts.WorkflowActo
 		return contracts.Session{}, err
 	}
 	session.ParentSessionID, session.ParentRunID = run.SessionID, run.ID
+	// 实例会话是这次运行派生的子代理会话，不是用户发起的一轮对话：
+	// 对话列表、智能体岛、通知和自动化计数都靠这个标记把它排除在外。
+	session.SubagentType = contracts.SubagentWorkflow
 	session.Title, session.DeviceID = name, base.DeviceID
 	if base.CWD != "" {
 		session.CWD = base.CWD
@@ -397,14 +400,18 @@ func workflowPhaseName(run contracts.WorkflowRun, phaseID string) string {
 	return phaseID
 }
 
-// workflowAskActor 发送一轮任务并等待实例会话运行结束。
+// workflowAskActor 发送一轮任务并等待实例会话运行结束。实例会话是只读的
+// 子代理会话，这一轮由运行器自己驱动，不走用户消息通道。
 func (e *Engine) workflowAskActor(ctx context.Context, sessionID, runID string, actor contracts.WorkflowActor, text string) (string, error) {
-	requestID := fmt.Sprintf("%s-%s", runID, actor.ID)
-	command := contracts.Command{
-		Kind: "message.send",
-		Send: &contracts.SendRequest{SessionID: sessionID, Text: text, RequestID: requestID + "-" + fmt.Sprint(time.Now().UnixNano())},
+	if err := ctx.Err(); err != nil {
+		return "", err
 	}
-	if err := e.executeCommand(ctx, command, nil); err != nil {
+	requestID := fmt.Sprintf("%s-%s", runID, actor.ID)
+	send := contracts.SendRequest{SessionID: sessionID, Text: text, RequestID: requestID + "-" + fmt.Sprint(time.Now().UnixNano())}
+	e.mu.Lock()
+	err := e.sendWorkflowActorLocked(send)
+	e.mu.Unlock()
+	if err != nil {
 		return "", err
 	}
 	return e.awaitWorkflowSession(ctx, sessionID)

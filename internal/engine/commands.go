@@ -187,7 +187,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if send.ProjectID == "" {
 			send.ProjectID = command.ProjectID
 		}
-		return e.sendWithCheckoutLocked(send, checkout)
+		return e.sendWithCheckoutLocked(send, checkout, false)
 	case "message.stop":
 		if run := e.runs[command.SessionID]; run != nil {
 			if goal := e.goalLocked(run.goal); run.goal.sessionID == command.SessionID && goal != nil &&
