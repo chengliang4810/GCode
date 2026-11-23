@@ -105,45 +105,30 @@ func (a *App) sessionInfo(c *ui.Context) {
 	})
 }
 
+// sessionBackgroundTasks lists only running background tasks, because the
+// group exists so the user can stop work that is still in flight. Finished
+// tasks are dropped instead of shown as history.
 func (a *App) sessionBackgroundTasks(c *ui.Context, sessionID string) {
-	var active, ended []contracts.BackgroundTask
+	var running []contracts.BackgroundTask
 	for _, task := range a.state.BackgroundTasks {
-		if task.SessionID != sessionID {
+		if task.SessionID != sessionID || task.Status != "running" {
 			continue
 		}
-		if task.Status == "running" {
-			active = append(active, task)
-		} else {
-			ended = append(ended, task)
-		}
+		running = append(running, task)
 	}
-	if len(active)+len(ended) == 0 {
+	if len(running) == 0 {
 		return
 	}
 	ui.Column(c).FillWidth().Radius(10).Background(a.palette.Overlay.Alpha(.85)).Border(1, a.palette.Border).Padding(10, 0).Children(func() {
 		ui.Text(c, tr(c, "Background tasks")).FontSize(design.TextSize(c, design.TextSmall)).FontWeight(500).TextColor(a.palette.Muted).Padding(0, 12, 4, 12)
 		ui.Scroll(c.Key("session-background-tasks:" + sessionID)).FillWidth().MaxHeight(180).Children(func() {
-			for _, task := range append(active, ended...) {
-				status := "Running"
-				switch task.Status {
-				case "completed":
-					status = "Completed"
-				case "failed":
-					status = "Failed"
-				case "killed":
-					status = "Stopped"
-				}
+			for _, task := range running {
 				ui.Row(c.Key("background-task:"+task.ID)).FillWidth().Padding(4, 9).Gap(8).AlignItems(ui.Center).Children(func() {
 					icon(c, "terminal", 16)
-					ui.Column(c).Grow(1).MinWidth(0).Children(func() {
-						ui.Text(c, task.Title).SingleLine()
-						ui.Text(c, tr(c, status)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted)
+					ui.Text(c, task.Title).SingleLine().Grow(1)
+					a.sessionTaskStopButton(c, task.ID, task.Title, func() {
+						a.dispatch(contracts.Command{Kind: "task.stop", SessionID: sessionID, ID: task.ID})
 					})
-					if task.Status == "running" {
-						a.sessionTaskStopButton(c, task.ID, task.Title, func() {
-							a.dispatch(contracts.Command{Kind: "task.stop", SessionID: sessionID, ID: task.ID})
-						})
-					}
 				})
 			}
 		})

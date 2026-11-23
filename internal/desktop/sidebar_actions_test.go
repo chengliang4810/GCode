@@ -24,12 +24,19 @@ func TestSessionInfoBackgroundTasks(t *testing.T) {
 				a.state.BackgroundTasks = []contracts.BackgroundTask{
 					{ID: "active", SessionID: "chat-0", Title: "Active check", Status: "running"},
 					{ID: "done", SessionID: "chat-0", Title: "Finished check", Status: "completed"},
+					{ID: "failed", SessionID: "chat-0", Title: "Failed check", Status: "failed"},
 					{ID: "other", SessionID: "chat-1", Title: "Unrelated check", Status: "running"},
 				}
 				tt := ui.NewTester(a.View, width, 880)
 				tt.Advance(300 * time.Millisecond)
-				if !tt.HasText("后台任务") || !tt.HasText("Active check") || !tt.HasText("Finished check") || tt.HasText("Unrelated check") {
-					t.Fatal("background tasks were not displayed for the current conversation")
+				if !tt.HasText("后台任务") || !tt.HasText("Active check") {
+					t.Fatal("running background task was not displayed for the current conversation")
+				}
+				if tt.HasText("Finished check") || tt.HasText("Failed check") {
+					t.Fatal("finished background tasks were displayed")
+				}
+				if tt.HasText("Unrelated check") {
+					t.Fatal("background task of another conversation was displayed")
 				}
 				if _, ok := tt.Find("停止任务: Active check"); !ok {
 					t.Fatal("running task is missing its stop action")
@@ -39,6 +46,22 @@ func TestSessionInfoBackgroundTasks(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+func TestSessionInfoHidesBackgroundTaskGroupWithoutRunningTasks(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	a.state.Settings.General.Language = "zh-CN"
+	a.right, a.files = false, false
+	a.expanded["session-info-user"], a.expanded["session-info"] = true, true
+	a.state.BackgroundTasks = []contracts.BackgroundTask{
+		{ID: "done", SessionID: "chat-0", Title: "Finished check", Status: "completed"},
+	}
+	tt := ui.NewTester(a.View, 1400, 880)
+	tt.Advance(300 * time.Millisecond)
+	if tt.HasText("后台任务") || tt.HasText("Finished check") {
+		t.Fatal("background task group stayed visible without running tasks")
 	}
 }
 
