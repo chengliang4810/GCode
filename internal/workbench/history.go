@@ -143,11 +143,12 @@ func historyGraph(c *ui.Context, row historyRow, columns int, head bool, p desig
 
 func (s *State) historyView(c *ui.Context) {
 	p := s.palette()
-	rows, columns := layoutHistory(s.snapshot.Commits)
+	rows, columns := layoutHistory(s.gitHistory.result.Commits)
 	graphWidth := max(float32(48), float32(columns)*12+18)
 	ui.Row(c).Height(36).Padding(0, 12).AlignItems(ui.Center).Gap(8).Children(func() {
 		ui.Text(c, tr(c, "History")).FontWeight(500)
 		ui.Spacer(c)
+		ui.Button(c.Key("history-refresh"), tr(c, "Refresh")).Disabled(s.gitHistory.loading).OnClick(func() { s.refreshGitHistory(true) })
 		ui.TextInputBase(c, &s.historySearch).Label(tr(c, "Search commits")).Placeholder(tr(c, "Search commits")).Width(196).Padding(5, 8).Radius(6).Background(p.Input)
 	})
 	ui.Row(c).Height(28).Padding(0, 8).TextColor(p.Muted).FontSize(design.TextSize(c, design.TextSmall)).BorderWidth(0, 0, 1, 0).BorderColor(p.Border).Children(func() {
@@ -157,14 +158,45 @@ func (s *State) historyView(c *ui.Context) {
 		ui.Text(c, tr(c, "Date")).Width(88)
 		ui.Text(c, tr(c, "SHA")).Width(74)
 	})
+	if s.gitHistory.loading {
+		ui.Text(c, tr(c, "Loading Git history…"))
+		return
+	}
+	if s.gitHistory.error != "" {
+		ui.Text(c, tr(c, "Could not load Git history")).TextColor(p.Danger)
+		ui.Text(c, s.gitHistory.error)
+		return
+	}
+	if !s.gitHistory.result.Repository {
+		ui.Text(c, tr(c, "The current directory is not a Git repository."))
+		return
+	}
+	if len(s.gitHistory.result.Commits) == 0 {
+		ui.Text(c, tr(c, "This repository has no commits yet."))
+		return
+	}
+	if s.gitHistory.result.Truncated {
+		ui.Text(c, tr(c, "Showing the latest 500 commits."))
+	}
+	matched := false
+	for _, commit := range s.gitHistory.result.Commits {
+		if strings.Contains(strings.ToLower(commit.SHA+commit.Subject+commit.Author), strings.ToLower(s.historySearch)) {
+			matched = true
+			break
+		}
+	}
+	if !matched {
+		ui.Text(c, tr(c, "No matching commits."))
+		return
+	}
 	ui.Scroll(c).Grow(1).FillWidth().Padding(0, 8).Children(func() {
-		for i, commit := range s.snapshot.Commits {
+		for i, commit := range s.gitHistory.result.Commits {
 			if !strings.Contains(strings.ToLower(commit.SHA+commit.Subject+commit.Author), strings.ToLower(s.historySearch)) {
 				continue
 			}
 			c.Key(commit.SHA)
 			ui.ButtonBase(c).Label(commit.Subject).FillWidth().Height(36).OnClick(func() { s.commitID = commit.SHA; s.commitOpen = true }).Children(func() {
-				historyGraph(c, rows[i], columns, i == 0, p)
+				historyGraph(c, rows[i], columns, commitIsHead(commit), p)
 				ui.Row(c).Grow(1).Gap(5).AlignItems(ui.Center).Children(func() {
 					for _, ref := range commit.Refs {
 						ui.Text(c, ref).FontSize(design.TextSize(c, design.TextSmall)).Padding(2, 5).Radius(4).Background(p.Active).TextColor(p.Readable(p.Accent)).SingleLine().MaxWidth(112)
@@ -182,7 +214,7 @@ func (s *State) historyView(c *ui.Context) {
 		}
 	})
 	ui.Modal(c, &s.commitOpen, func() {
-		for _, commit := range s.snapshot.Commits {
+		for _, commit := range s.gitHistory.result.Commits {
 			if commit.SHA != s.commitID {
 				continue
 			}
@@ -199,4 +231,13 @@ func (s *State) historyView(c *ui.Context) {
 			})
 		}
 	})
+}
+
+func commitIsHead(commit contracts.Commit) bool {
+	for _, ref := range commit.Refs {
+		if ref == "HEAD" || strings.HasPrefix(ref, "HEAD -> ") {
+			return true
+		}
+	}
+	return false
 }

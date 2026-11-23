@@ -114,6 +114,7 @@ type State struct {
 	nextBrowser       int
 	pendingTerminal   bool
 	pendingFile       string
+	gitHistory        gitHistoryState
 	historySearch     string
 	commitID          string
 	commitOpen        bool
@@ -154,6 +155,7 @@ func (s *State) Update(snapshot contracts.Snapshot) {
 	s.fileChanges = nil
 	s.fileChildrenIndex = nil
 	s.refreshSessionFiles()
+	s.refreshGitHistory(false)
 	for i := len(s.tabs) - 1; i >= 0; i-- {
 		if s.tabs[i].kind != "trajectory" && s.tabs[i].kind != "goal" {
 			continue
@@ -457,6 +459,7 @@ func (s *State) OpenSurface(kind string) {
 		s.NewTerminal()
 	case "history":
 		s.choose(kind, "history", "History")
+		s.refreshGitHistory(true)
 	case "changes":
 		s.choose(kind, "changes", "Changes")
 	case "files":

@@ -26,6 +26,10 @@ func (s *State) SwitchSession(id string) {
 	if s.closed.Load() || s.scopeID == id {
 		return
 	}
+	if s.gitHistory.cancel != nil {
+		s.gitHistory.cancel()
+	}
+	s.gitHistory = gitHistoryState{generation: s.gitHistory.generation + 1}
 	s.StopAnnotations()
 	s.cancelLink()
 	s.pendingFile, s.pendingNavigation = "", nil

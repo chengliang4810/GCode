@@ -29,6 +29,7 @@ func (s Server) Handler() (http.Handler, error) {
 	streamID := rand.Text()
 	s.resourceHandlers(mux)
 	s.linkedFileHandlers(mux)
+	s.gitHistoryHandlers(mux)
 	s.terminalHandlers(mux)
 	s.providerKeyHandlers(mux)
 	s.providerLogoHandlers(mux)

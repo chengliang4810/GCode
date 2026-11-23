@@ -1,4 +1,11 @@
 {
+  "No matching commits.": "没有匹配的提交。",
+  "Git history is unavailable": "Git 历史暂不可用",
+  "Loading Git history…": "正在加载 Git 历史…",
+  "Could not load Git history": "无法加载 Git 历史",
+  "The current directory is not a Git repository.": "当前目录不是 Git 仓库。",
+  "This repository has no commits yet.": "此仓库尚无提交。",
+  "Showing the latest 500 commits.": "显示最近 500 条提交。",
   "Annotate an element": "标注网页元素",
   "Stop annotating": "退出元素标注",
   "Select an element": "选择要标注的元素",
