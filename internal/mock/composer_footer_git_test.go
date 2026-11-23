@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -38,6 +39,9 @@ func TestComposerFooterNewCheckoutCreatesUniqueWorktreesFromHEAD(t *testing.T) {
 			if tree.ID == session.WorktreeID {
 				created = tree.Path == session.CWD && tree.Branch == session.Branch && tree.BaseRef == "HEAD" && strings.HasPrefix(tree.Branch, "rcode/")
 			}
+		}
+		if path.Dir(session.CWD) != path.Join("~/.gcode", "worktrees", path.Base(project.Path)) {
+			t.Fatalf("mock worktree did not use repository grouping: %q", session.CWD)
 		}
 		if !created || session.SourceContext == nil || session.SourceContext.CheckoutID != session.WorktreeID || session.SourceContext.RepoRoot != session.CWD {
 			t.Fatalf("host did not publish a fresh HEAD-based checkout: %+v", session)

@@ -153,13 +153,25 @@ func (s *Server) ListDirectoryLocations(ctx context.Context, request contracts.D
 	}
 	home := "~/projects"
 	roots := map[string]bool{}
-	for _, project := range s.state.Projects {
+	truncated := false
+	for i, project := range s.state.Projects {
+		if err := ctx.Err(); err != nil {
+			return contracts.DirectoryLocations{}, err
+		}
+		if i == contracts.DirectoryScanLimit {
+			truncated = true
+			break
+		}
 		if project.DeviceID != device.ID {
 			continue
 		}
 		projectPath := path.Clean(strings.ReplaceAll(project.Path, "\\", "/"))
 		home = path.Dir(projectPath)
 		if volume := virtualVolume(projectPath); volume != "" {
+			if !roots[volume] && len(roots) == contracts.DirectoryResultLimit-1 {
+				truncated = true
+				break
+			}
 			roots[volume] = true
 		}
 	}
@@ -168,7 +180,7 @@ func (s *Server) ListDirectoryLocations(ctx context.Context, request contracts.D
 		names = append(names, root)
 	}
 	slices.Sort(names)
-	result := contracts.DirectoryLocations{DeviceID: device.ID}
+	result := contracts.DirectoryLocations{DeviceID: device.ID, Truncated: truncated || len(s.state.Projects) >= contracts.DirectoryScanLimit}
 	result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: "Home", Path: home, Kind: contracts.LocationHome})
 	for _, root := range names {
 		result.Locations = append(result.Locations, contracts.DirectoryLocation{Name: root, Path: root, Kind: contracts.LocationVolume})
@@ -203,55 +215,97 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 		return contracts.DirectoryListing{}, err
 	}
 	home := "~/projects"
+	projects := map[string]string{}
+	projectPaths := []string{}
+	scanned := 0
+	truncated := false
+	// Build a bounded device-scoped index once, rather than scanning all files
+	// again for every project. Mock browsing never touches the host filesystem.
 	for _, project := range s.state.Projects {
-		if project.DeviceID == request.DeviceID {
-			home = path.Dir(strings.ReplaceAll(project.Path, "\\", "/"))
+		if err := ctx.Err(); err != nil {
+			return contracts.DirectoryListing{}, err
+		}
+		if scanned == contracts.DirectoryScanLimit {
+			truncated = true
 			break
 		}
+		scanned++
+		if project.DeviceID != request.DeviceID {
+			continue
+		}
+		projectPath := path.Clean(strings.ReplaceAll(project.Path, "\\", "/"))
+		if len(projectPaths) == 0 {
+			home = path.Dir(projectPath)
+		}
+		projects[project.ID] = projectPath
+		projectPaths = append(projectPaths, projectPath)
 	}
 	current := strings.ReplaceAll(strings.TrimSpace(request.Path), "\\", "/")
-	if current == "" {
+	if current == "" || current == "~" {
 		current = home
 	}
 	current = path.Clean(current)
 	entries := map[string]contracts.DirectoryEntry{}
 	known := current == home || current == "/" || strings.HasSuffix(current, ":")
-	for _, project := range s.state.Projects {
-		if project.DeviceID != request.DeviceID {
-			continue
-		}
-		projectPath := path.Clean(strings.ReplaceAll(project.Path, "\\", "/"))
-		paths := []string{projectPath}
-		for _, file := range s.state.Files {
-			if file.ProjectID == project.ID {
-				relative := file.Path
-				if file.Kind != "directory" {
-					relative = path.Dir(relative)
-				}
-				paths = append(paths, path.Join(projectPath, relative))
-			}
-		}
-		for _, full := range paths {
-			if full == current {
-				known = true
-			}
-			prefix := strings.TrimSuffix(current, "/") + "/"
-			if !strings.HasPrefix(full, prefix) {
-				continue
-			}
+	add := func(full, projectPath string) bool {
+		if full == current {
 			known = true
-			child := strings.Split(strings.TrimPrefix(full, prefix), "/")[0]
-			if child == "" || child == "." {
-				continue
-			}
-			childPath := path.Join(current, child)
-			entries[childPath] = contracts.DirectoryEntry{Name: child, Path: childPath, Hidden: strings.HasPrefix(child, "."), Project: childPath == projectPath}
+		}
+		prefix := strings.TrimSuffix(current, "/") + "/"
+		if !strings.HasPrefix(full, prefix) {
+			return true
+		}
+		known = true
+		child, _, _ := strings.Cut(strings.TrimPrefix(full, prefix), "/")
+		if child == "" || child == "." {
+			return true
+		}
+		childPath := path.Join(current, child)
+		previous, exists := entries[childPath]
+		if !exists && len(entries) == contracts.DirectoryResultLimit {
+			truncated = true
+			return false
+		}
+		entries[childPath] = contracts.DirectoryEntry{Name: child, Path: childPath, Hidden: strings.HasPrefix(child, "."), Project: previous.Project || childPath == projectPath}
+		return true
+	}
+	resultLimit := false
+	for _, projectPath := range projectPaths {
+		if err := ctx.Err(); err != nil {
+			return contracts.DirectoryListing{}, err
+		}
+		if !add(projectPath, projectPath) {
+			resultLimit = true
+			break
 		}
 	}
-	if !known {
+	if !resultLimit {
+		for _, file := range s.state.Files {
+			if err := ctx.Err(); err != nil {
+				return contracts.DirectoryListing{}, err
+			}
+			if scanned == contracts.DirectoryScanLimit {
+				truncated = true
+				break
+			}
+			scanned++
+			projectPath, exists := projects[file.ProjectID]
+			if !exists {
+				continue
+			}
+			relative := strings.ReplaceAll(file.Path, "\\", "/")
+			if file.Kind != "directory" {
+				relative = path.Dir(relative)
+			}
+			if !add(path.Join(projectPath, relative), projectPath) {
+				break
+			}
+		}
+	}
+	if !known && !truncated && scanned < contracts.DirectoryScanLimit {
 		return contracts.DirectoryListing{}, errors.New("folder not found")
 	}
-	listing := contracts.DirectoryListing{DeviceID: request.DeviceID, Path: current, Home: home, Revision: s.state.Revision}
+	listing := contracts.DirectoryListing{DeviceID: request.DeviceID, Path: current, Home: home, Revision: s.state.Revision, Truncated: truncated || scanned == contracts.DirectoryScanLimit}
 	if parent := path.Dir(current); parent != current && parent != "." {
 		listing.Parent = parent
 	}
@@ -259,7 +313,7 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 		listing.Entries = append(listing.Entries, entry)
 	}
 	slices.SortFunc(listing.Entries, func(a, b contracts.DirectoryEntry) int {
-		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
+		return strings.Compare(a.Path, b.Path)
 	})
 	return listing, nil
 }

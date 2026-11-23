@@ -72,7 +72,11 @@ func (c *Client) send(request *http.Request) (*http.Response, error) {
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(response.Body, 2048))
 		_ = response.Body.Close()
-		return nil, fmt.Errorf("remote host returned HTTP %d: %s", response.StatusCode, strings.TrimSpace(string(body)))
+		err := fmt.Errorf("remote host returned HTTP %d: %s", response.StatusCode, strings.TrimSpace(string(body)))
+		if cause := directoryErrorCause(request.URL.Path, response.StatusCode); cause != nil {
+			return nil, fmt.Errorf("%v: %w", err, cause)
+		}
+		return nil, err
 	}
 	return response, nil
 }

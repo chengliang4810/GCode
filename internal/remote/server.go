@@ -85,7 +85,7 @@ func (s Server) Handler() (http.Handler, error) {
 		}
 		result, err := service.ListDirectories(r.Context(), request)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			writeDirectoryError(w, err)
 			return
 		}
 		writeJSON(w, result)
@@ -103,7 +103,7 @@ func (s Server) Handler() (http.Handler, error) {
 		}
 		result, err := service.ListDirectoryLocations(r.Context(), request)
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+			writeDirectoryError(w, err)
 			return
 		}
 		writeJSON(w, result)

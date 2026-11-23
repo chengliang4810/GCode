@@ -202,22 +202,7 @@ func executeFileCommand(command contracts.Command, project contracts.Project, fi
 		if !exists {
 			return result, errors.New("file not found")
 		}
-		info, err := root.Stat(filepath.FromSlash(file.Path))
-		if err != nil {
-			return result, err
-		}
-		if !info.Mode().IsRegular() {
-			// Reading a pipe or device would block this operation.
-			return result, errors.New("file is not a regular file")
-		}
-		current, err := root.ReadFile(filepath.FromSlash(file.Path))
-		if err != nil {
-			return result, err
-		}
-		if fileVersion(current) != command.Version {
-			return result, errors.New("file changed on disk; reopen it before saving")
-		}
-		if err := root.WriteFile(filepath.FromSlash(file.Path), []byte(command.Text), 0644); err != nil {
+		if err := saveEditorFile(root, filepath.FromSlash(file.Path), []byte(command.Text), command.Version, fileSaveIO{}); err != nil {
 			return result, err
 		}
 		file.Content = command.Text

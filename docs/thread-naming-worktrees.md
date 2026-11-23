@@ -58,10 +58,25 @@ choice/switch; a deleted ref produces an error instead of choosing another branc
   registered worktrees in that repository.
 - `newWorktree` resolves the requested base to a commit (`HEAD` when empty), then
   runs `git worktree add -b` with a unique `feat/` branch. Its path is always
-  `<host-data-directory>/worktrees/<short-id>`; there is no custom worktree
-  directory setting. The 12-character ID uses random lowercase letters and digits.
+  `<host-data-directory>/worktrees/<project-name>/<short-id>`; there is no custom
+  worktree directory setting. The project name comes from the actual Git checkout
+  root folder, not the project display name or conversation title. Unicode letters,
+  digits, dots, hyphens and underscores are retained; other characters become hyphens.
+  Leading/trailing dots and hyphens are trimmed, empty names become `project`, and
+  Windows device names are prefixed with `_`. The retained name is capped at 100 UTF-8
+  bytes before the optional device-name prefix. Same-named repositories share the
+  grouping folder, not their individual checkouts. Both managed directory levels
+  must be real directories, not symlinks. The 12-character ID uses cryptographic
+  random lowercase letters and digits and stays independent of conversation titles.
   Creation reserves a new directory atomically and retries directory collisions.
+  This layout applies only to newly created worktrees: existing registered worktrees
+  keep their original paths without migration or layout-specific fallback logic.
   The registered data root must be available and match its stored identity.
+  Before creating any managed directory or branch, the core resolves the physical
+  data root and actual source checkout root. It rejects a grouping directory equal
+  to or inside that checkout, including project subdirectories and path aliases.
+  Sibling/external data directories remain valid; current/reuse choices are not
+  subject to this new-creation rule.
 - `cloud` is rejected by the local host.
 
 The resulting conversation owns its CWD, branch, worktree identity and source
@@ -70,6 +85,18 @@ on its original branch when creating another worktree. Worktrees and conversatio
 ownership survive a host restart. An existing conversation keeps its own checkout
 when a later send carries a draft checkout choice. Duplicate accepted request IDs
 do not create additional worktrees.
+
+Each actual task dispatch (initial, follow-up, queued, goal continuation or
+subagent) re-observes Git from the conversation's execution CWD on its existing
+background worker, before model/tool execution. The Git probe has a three-second
+context budget. Successful observations persist that conversation's branch and
+source context and publish a typed session update; they do not switch branches,
+change checkout selection, or rewrite another conversation/project's observation.
+Failures retain the previous source and its original observation time. Canceled,
+closed, superseded or later-than-newer-refresh results are discarded. Observation
+is not a cross-process Git transaction or a promise that external Git cannot change
+immediately afterwards. Persistence failure keeps the prior in-memory observation
+and does not cancel an already accepted task.
 
 The displayed cached current branch is never inserted as an implicit fixed
 branch/base into a send. An unpicked `newWorktree` base stays empty until the core
@@ -113,11 +140,24 @@ the retained path and branch. Reused checkouts are never rollback targets.
 Verification uses `httptest` for all three model protocols and temporary real Git
 repositories. `go test ./internal/engine -run 'Test(Naming|Worktree|GitRefs)'`
 covers model selection, configured output budgets, naming before the main reply,
-reasoning followed by title text, cancellation, fixed data-root locations,
+reasoning followed by title text, cancellation, project-grouped data-root locations,
+portable project names, same-named repositories, project-subdirectory selection,
+linked-parent rejection at both levels, registered paths outside the new grouping,
 short directory IDs, missing-root rejection, actual Agent writes in the new
 checkout, restart/reuse, duplicate submissions, and dirty
 switch failures. These tests do not constitute real-provider or native desktop
 acceptance.
+
+2026-11-19 project-grouped worktree acceptance passed on macOS through
+`go run ./scripts/desktop-e2e -run '^TestDesktopLocalNamingAndWorktree$' -timeout 4m`.
+The native window uses the real local core and a temporary Git repository; the
+accepted conversation CWD is directly under `worktrees/<repository-folder>/`.
+Evidence is `output/desktop-e2e/20261119-225928-2067203277/evidence.json`.
+Model replies use a local HTTP fixture; this does not verify a real provider,
+remote host, other platforms or visual parity. Worktree/ref race checks,
+contracts/mock/remote regressions and desktop component boundary tests passed.
+The complete engine suite reached its eight-minute suite deadline before finishing;
+this is not a full-engine-suite pass.
 
 2026-11-04 refs refresh acceptance uses a private real Git repository and the
 native local desktop. It starts with a persisted Ready cache for main, switches
