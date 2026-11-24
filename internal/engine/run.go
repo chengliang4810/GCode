@@ -1112,6 +1112,9 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 		if tool.Kind == contracts.ToolMCP && event.DisplayName != "" {
 			tool.Summary = event.DisplayName
 		}
+		if name := e.toolReadableNameLocked(sessionID, tool); name != "" {
+			tool.Summary = name
+		}
 		message.Blocks = append(message.Blocks, contracts.Block{ID: event.Call.ID, Kind: "tool", Tool: &tool})
 	case "tool.input.changed":
 		path := e.beginEditLocked(sessionID, event.Call)
@@ -1120,6 +1123,9 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				projection := toolPresentation(event.Call, path, tool.StartedAt)
 				if tool.Kind == contracts.ToolMCP {
 					projection.Summary = tool.Summary
+				}
+				if name := e.toolReadableNameLocked(sessionID, projection); name != "" {
+					projection.Summary = name
 				}
 				*tool = projection
 			}

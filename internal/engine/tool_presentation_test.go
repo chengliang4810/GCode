@@ -19,8 +19,9 @@ func TestToolPresentationDecodesReadableFieldsAndPreservesArguments(t *testing.T
 		{"directory", "ListDirectory", `{"path":"src"}`, "", "src"},
 		{"invalid", "Bash", `{"command":`, "", "Bash"},
 		{"todo", "TodoWrite", `{"todos":[{"text":"one","status":"completed"},{"text":"two","status":"in_progress"}]}`, "", "1/2"},
-		{"task output", "TaskOutput", `{"task_id":"task-check","block":true}`, "", "task-check"},
-		{"task stop", "TaskStop", `{"task_id":"task-check"}`, "", "task-check"},
+		// 编号不当作名字：任务名由引擎按任务注册表补，这里只留编号字段。
+		{"task output", "TaskOutput", `{"task_id":"task-check","block":true}`, "", ""},
+		{"task stop", "TaskStop", `{"task_id":"task-check"}`, "", ""},
 		{"skill", "Skill", `{"skill":"review-code","args":"src"}`, "src", "review-code"},
 		{"goal", "goal_read", `{}`, "", ""},
 		{"agent", "Agent", `{"description":"Inspect layout","prompt":"Check the controls"}`, "Check the controls", "Inspect layout"},
@@ -151,7 +152,7 @@ func TestTaskOutputPresentationFollowsCommandAndSubagentResults(t *testing.T) {
 				}
 			}
 			got := core.state.Messages["session"][0].Blocks[0].Tool
-			wantSummary := "task-check"
+			wantSummary := ""
 			if test.command != "" {
 				wantSummary = test.command
 			}
@@ -220,8 +221,9 @@ func TestWorkflowToolPresentationKeepsTheRowShort(t *testing.T) {
 	if tool.Summary != "Review" {
 		t.Fatalf("a started run is named by the run: %+v", tool)
 	}
+	// 运行编号不是名字：引擎按运行注册表补名字，补不到就留空。
 	byRun := toolPresentation(model.Call{ID: "call", Name: "GetWorkflowRun", Arguments: `{"run_id":"workflow-run-2"}`}, "", started)
-	if byRun.Summary != "workflow-run-2" {
-		t.Fatalf("a run read is named by the run id: %+v", byRun)
+	if byRun.Summary != "" {
+		t.Fatalf("a run read must not be named by the run id: %+v", byRun)
 	}
 }
