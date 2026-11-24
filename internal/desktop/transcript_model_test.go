@@ -219,6 +219,21 @@ func TestActivityTypedLabelsAndPaths(t *testing.T) {
 	}
 }
 
+// 任务行的名字是任务名或命令行，任务编号只留在参数里。
+func TestTaskRowsNeverNameThemselvesWithTheTaskID(t *testing.T) {
+	const taskID = "task-151080446adf002f0ee65942"
+	for _, kind := range []contracts.ToolKind{contracts.ToolTaskOutput, contracts.ToolTaskStop} {
+		bare := contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{Kind: kind, TaskID: taskID}}
+		if _, detail, _ := activityTitle(bare); detail != "" {
+			t.Fatalf("%v row fell back to the task id: %q", kind, detail)
+		}
+		named := contracts.Block{Kind: "tool", Tool: &contracts.ToolCall{Kind: kind, TaskID: taskID, Summary: "后台校验"}}
+		if _, detail, _ := activityTitle(named); detail != "后台校验" {
+			t.Fatalf("%v row lost the task name: %q", kind, detail)
+		}
+	}
+}
+
 func TestTranscriptToolDetailsRefreshForEqualLengthInputChanges(t *testing.T) {
 	for _, field := range []string{"summary", "command", "path"} {
 		t.Run(field, func(t *testing.T) {

@@ -105,7 +105,8 @@ func readableDetailSource(c *ui.Context, block contracts.Block, live bool) activ
 	switch tool.Category() {
 	case contracts.ToolTaskOutput, contracts.ToolTaskStop:
 		source.args, source.path = "", ""
-		source.command = firstNonempty(tool.Command, tool.TaskID)
+		// 任务的显示名与命令行由核心投影给出；任务编号留在原始参数里。
+		source.command = firstNonempty(tool.Command, tool.Summary)
 		status := tool.TaskStatus
 		switch tool.TaskStatus {
 		case "running":

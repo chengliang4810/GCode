@@ -134,7 +134,12 @@ func (a *App) sidebarStatusGlyph(c *ui.Context, session contracts.Session) {
 func (a *App) sidebarSessionCorner(c *ui.Context, session contracts.Session, hovered bool) {
 	ui.Row(c).MinWidth(design.Sidebar().ConversationTrailingWidth).Shrink(0).Justify(ui.End).AlignItems(ui.Center).Children(func() {
 		if hovered {
-			inlineIconButton(c, "archive-minimalistic", tr(c, "Archive session")+" "+session.ID).Tooltip(tr(c, "Archive session")).OnClick(func() { a.archiveSidebarSession(session.ID) })
+			// 按钮的读屏名字用会话标题定位对话，会话编号不念给用户。
+			label := tr(c, "Archive session")
+			if session.Title != "" {
+				label += " " + session.Title
+			}
+			inlineIconButton(c, "archive-minimalistic", label).Tooltip(tr(c, "Archive session")).OnClick(func() { a.archiveSidebarSession(session.ID) })
 		} else {
 			ui.Text(c, relativeAge(session.UpdatedAt, a.now(), a.state.Settings.General.Language)).FontSize(design.TextSize(c, design.TextSmall)).TextColor(a.palette.Muted).FontFeatures("tnum")
 		}

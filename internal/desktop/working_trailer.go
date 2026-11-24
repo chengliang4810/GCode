@@ -221,6 +221,18 @@ func (a *App) workingStateFor(c *ui.Context, sessionID string) (word, elapsed st
 	return word, i18n.Duration(a.state.Settings.General.Language, milliseconds), true
 }
 
+// activityStatusLabel 是活动状态行的读屏名字：会话标题告诉用户这是哪一段
+// 对话，会话编号不能。没有标题时只报状态，不念编号。
+func (a *App) activityStatusLabel(c *ui.Context, sessionID string) string {
+	label := tr(c, "Activity status")
+	for _, session := range a.state.Sessions {
+		if session.ID == sessionID && session.Title != "" {
+			return label + ": " + session.Title
+		}
+	}
+	return label
+}
+
 func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 	word, elapsed, visible := a.workingStateFor(c, sessionID)
 	if !visible {
@@ -245,7 +257,7 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 		if retry.HTTPStatus > 0 {
 			tooltip += fmt.Sprintf(", HTTP %d", retry.HTTPStatus)
 		}
-		row := ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0)
+		row := ui.Row(c).Label(a.activityStatusLabel(c, sessionID)).FillWidth().Padding(16, 0, 0, 0)
 		row.Children(func() {
 			label := ui.Text(c.Key("model-retry:"+sessionID), caption).Tooltip(tooltip).
 				FontSize(design.TextSize(c, design.TextBase)).FontWeight(500).TextColor(a.palette.Muted)
@@ -262,7 +274,7 @@ func (a *App) workingTrailer(c *ui.Context, sessionID string) {
 	if strings.HasSuffix(word, "…") {
 		caption = tr(c, strings.TrimSuffix(word, "…")) + "…"
 	}
-	ui.Row(c).Label(tr(c, "Activity status: ")+sessionID).FillWidth().Padding(16, 0, 0, 0).Gap(8).AlignItems(ui.Center).Children(func() {
+	ui.Row(c).Label(a.activityStatusLabel(c, sessionID)).FillWidth().Padding(16, 0, 0, 0).Gap(8).AlignItems(ui.Center).Children(func() {
 		a.activityGlyph(c)
 		color := a.palette.Muted
 		ui.Text(c, caption).FontSize(design.TextSize(c, design.TextBase)).TextColor(color).SingleLine().MinWidth(0).Shrink(1)

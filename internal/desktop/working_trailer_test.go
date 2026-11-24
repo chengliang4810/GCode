@@ -11,6 +11,22 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+// activityLabel 是活动状态行给读屏的名字：会话标题，不是会话编号。
+func activityLabel(t *testing.T, a *App, id string) string {
+	t.Helper()
+	for _, session := range a.state.Sessions {
+		if session.ID != id {
+			continue
+		}
+		if session.Title == "" {
+			t.Fatalf("fixture conversation %s has no title", id)
+		}
+		return "Activity status: " + session.Title
+	}
+	t.Fatalf("missing fixture conversation %s", id)
+	return ""
+}
+
 func TestWorkingTrailerShowsContextCompaction(t *testing.T) {
 	for _, appearance := range []string{"light", "dark"} {
 		t.Run(appearance, func(t *testing.T) {
@@ -127,7 +143,8 @@ func TestWorkingTrailerFollowsSessionAndParksAfterCompletion(t *testing.T) {
 	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "status-test", SessionID: "chat-0", StartedAt: started, Status: "running"})
 	builds := 0
 	tt := ui.NewTester(func(c *ui.Context) { builds++; a.View(c) }, 1320, 880)
-	if !tt.HasText("Activity status: chat-0") || !tt.HasText("17s") {
+	label := activityLabel(t, a, "chat-0")
+	if !tt.HasText(label) || !tt.HasText("17s") {
 		t.Fatal("working indicator was not attached to the transcript tail")
 	}
 	if _, _, visible := a.workingState("chat-1"); visible {
@@ -139,7 +156,7 @@ func TestWorkingTrailerFollowsSessionAndParksAfterCompletion(t *testing.T) {
 		}
 	}
 	tt.Frame()
-	if tt.HasText("Activity status: chat-0") {
+	if tt.HasText(label) {
 		t.Fatal("completed run retained a working indicator")
 	}
 	tt.Advance(time.Second)
@@ -188,7 +205,8 @@ func TestSideWorkingTrailerUsesChildRunAndSettlesWithIt(t *testing.T) {
 	}
 	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "main-run", SessionID: a.sessionID, StartedAt: started, Status: "running"})
 	tt.Frame()
-	if tt.HasText("Activity status: " + child.ID) {
+	childLabel := activityLabel(t, a, child.ID)
+	if tt.HasText(childLabel) {
 		t.Fatal("idle child inherited the central conversation's activity")
 	}
 	for i := range a.state.Sessions {
@@ -198,7 +216,7 @@ func TestSideWorkingTrailerUsesChildRunAndSettlesWithIt(t *testing.T) {
 	}
 	a.state.Runs = append(a.state.Runs, contracts.Run{ID: "child-run", SessionID: child.ID, StartedAt: started.Add(6 * time.Second), Status: "running"})
 	tt.Frame()
-	if !tt.HasText("Activity status: "+child.ID) || !tt.HasText("11s") {
+	if !tt.HasText(childLabel) || !tt.HasText("11s") {
 		t.Fatal("side transcript did not show its own working trailer and timer")
 	}
 	for i := range a.state.Sessions {
@@ -207,7 +225,7 @@ func TestSideWorkingTrailerUsesChildRunAndSettlesWithIt(t *testing.T) {
 		}
 	}
 	tt.Frame()
-	if tt.HasText("Activity status: "+child.ID) || !tt.HasText("Activity status: "+a.sessionID) {
+	if tt.HasText(childLabel) || !tt.HasText(activityLabel(t, a, a.sessionID)) {
 		t.Fatal("settling the child affected the wrong activity trailer")
 	}
 }
@@ -232,7 +250,8 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 			state.Draft = "Keep this draft"
 			state.Pending = &sidePendingSend{RequestID: "pending", Draft: state.Draft, Queued: test.queued}
 			tt.Frame()
-			if tt.HasText("Activity status: " + child.ID) {
+			label := activityLabel(t, a, child.ID)
+			if tt.HasText(label) {
 				t.Fatal("pending side send showed a delivery status")
 			}
 			if _, elapsed, _ := a.workingState(child.ID); elapsed != "" {
@@ -243,12 +262,12 @@ func TestSidePendingTrailerSurvivesEmptyTranscriptAndStaleAcknowledgment(t *test
 			if state.Pending == nil || state.Pending.RequestID != "pending" {
 				t.Fatal("stale acknowledgment dismissed the newer pending send")
 			}
-			if tt.HasText("Activity status: " + child.ID) {
+			if tt.HasText(label) {
 				t.Fatal("stale acknowledgment changed the pending trailer")
 			}
 			a.commandFinished(contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: child.ID, RequestID: "pending"}}, errors.New("Delivery failed"))
 			tt.Frame()
-			if tt.HasText("Activity status: "+child.ID) || state.Draft != "Keep this draft" || !tt.HasText("Delivery failed") {
+			if tt.HasText(label) || state.Draft != "Keep this draft" || !tt.HasText("Delivery failed") {
 				t.Fatal("failed side send retained progress or discarded its draft/error")
 			}
 		})

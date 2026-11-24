@@ -516,20 +516,25 @@ func (a *App) activityItem(c *ui.Context, id string, block contracts.Block, cont
 	})
 	root.Children(func() {
 		parts := ui.CollapsibleBaseWithAnimation(c.Key("activity-item-toggle:"+id), open, activityFoldAnimation)
-		accessibleDetail := firstNonempty(detail, block.ID)
+		// 行名由动作词和可读描述拼成，描述缺省时只留动作词：块编号是数据
+		// 标识，读屏念出来对用户没有意义。
+		accessibleDetail := detail
 		if block.Kind == "reasoning" {
-			// A reasoning row that is still streaming keeps its block id as the
-			// accessible detail: the preview line changes with every token, and
-			// a label that churns is worse than one that names the block. Once
-			// it settles, the name is its first line, whether the row is open or
-			// shut: a row's name must not change as it expands.
+			// A reasoning row that is still streaming is named by its first
+			// settled paragraph: the preview line changes with every token, and
+			// a label that churns is worse than one that names only the action.
+			// Once it settles, the name is its first line, whether the row is
+			// open or shut: a row's name must not change as it expands.
 			if live {
-				accessibleDetail = block.ID
+				accessibleDetail = reasoningLead(block.Text)
 			} else {
-				accessibleDetail = firstNonempty(reasoningPreview(block.Text, false), block.ID)
+				accessibleDetail = reasoningPreview(block.Text, false)
 			}
 		}
-		accessibleLabel := tr(c, label) + ": " + accessibleDetail
+		accessibleLabel := tr(c, label)
+		if accessibleDetail != "" {
+			accessibleLabel += ": " + accessibleDetail
+		}
 		if block.Hook != nil {
 			accessibleLabel += ", " + string(block.Hook.Event) + ", " + tr(c, hookStatusLabel(block.Hook.Status))
 		}

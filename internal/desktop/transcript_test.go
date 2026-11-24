@@ -46,7 +46,7 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 	m := activityFixture()
 	tt := transcriptTester(t, a, &m, 760, 900, false)
 	summary := contracts.SummarizeActivity(m.Blocks[:len(m.Blocks)-1]).Label()
-	if tt.HasText("Run") || tt.HasText("Thought process") {
+	if tt.HasText("Run") || tt.HasText("Thought process: I’ll read the layout contract, then run the regression check.") {
 		t.Fatal("settled work starts expanded")
 	}
 	header, ok := tt.Find("Activity: " + summary)
@@ -56,7 +56,7 @@ func TestTranscriptNativeDisclosureAndFixedTreeGeometry(t *testing.T) {
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
-	for _, label := range []string{"Thought process", "Read", "Run", "Edit", "Write", "README.md", "layout.go", "layout_test.go"} {
+	for _, label := range []string{"Thought process: I’ll read the layout contract, then run the regression check.", "Read", "Run", "Edit", "Write", "README.md", "layout.go", "layout_test.go"} {
 		if !tt.HasText(label) {
 			t.Fatalf("missing activity %q: %v", label, tt.Texts())
 		}
@@ -152,14 +152,14 @@ func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.
 	m.Blocks = m.Blocks[:1]
 	m.Streaming = true
 	tt := transcriptTester(t, a, &m, 760, 700, true)
-	if _, exists := tt.Find("Thought process: thought-1"); exists {
+	if _, exists := tt.Find("Thought process: I’ll read the layout contract, then run the regression check."); exists {
 		t.Fatal("live activity group opened without user input")
 	}
 	summary := contracts.SummarizeActivity(m.Blocks).Label()
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
-	if _, exists := tt.Find("Thought process: thought-1"); !exists {
+	if _, exists := tt.Find("Thought process: I’ll read the layout contract, then run the regression check."); !exists {
 		t.Fatal("manual expansion did not show live activity")
 	}
 	if err := tt.Click("Activity: " + summary); err != nil {
@@ -177,7 +177,7 @@ func TestTranscriptExplicitFoldSurvivesStreamingAndVirtualRecreation(t *testing.
 		t.Fatal(err)
 	}
 	tt = transcriptTester(t, a, &m, 760, 700, true)
-	if _, exists := tt.Find("Thought process: thought-1"); !exists {
+	if _, exists := tt.Find("Thought process: I’ll read the layout contract, then run the regression check."); !exists {
 		t.Fatal("virtual row recreation lost manual expansion")
 	}
 	m.Streaming = false
@@ -284,16 +284,16 @@ func TestTranscriptCompactLiveNeverAutoOpensThought(t *testing.T) {
 	m.Streaming = true
 	tt := transcriptTester(t, a, &m, 760, 700, false)
 	summary := contracts.SummarizeActivity(m.Blocks).Label()
-	if _, exists := tt.Find("Thought process: thought-1"); exists {
+	if _, exists := tt.Find("Thought process: I’ll read the layout contract, then run the regression check."); exists {
 		t.Fatal("compact group automatically opened")
 	}
 	if err := tt.Click("Activity: " + summary); err != nil {
 		t.Fatal(err)
 	}
-	if _, exists := tt.Find("Activity detail"); !tt.HasText("Thought process") || exists {
+	if _, exists := tt.Find("Activity detail"); !tt.HasText("Thought process: I’ll read the layout contract, then run the regression check.") || exists {
 		t.Fatal("compact live thought automatically opened its detail")
 	}
-	if err := tt.Click("Thought process: thought-1"); err != nil {
+	if err := tt.Click("Thought process: I’ll read the layout contract, then run the regression check."); err != nil {
 		t.Fatal(err)
 	}
 	if !tt.HasText("I’ll read the layout contract") {
@@ -309,7 +309,7 @@ func TestTranscriptAutoExpandToolGroups(t *testing.T) {
 		m.Blocks = m.Blocks[:1]
 		m.Streaming = true
 		tt := transcriptTester(t, a, &m, 760, 700, false)
-		const liveRow = "Thought process: thought-1"
+		const liveRow = "Thought process: I’ll read the layout contract, then run the regression check."
 		if _, found := tt.Find(liveRow); !found {
 			t.Fatal("enabled setting did not open the current group")
 		}
@@ -742,5 +742,31 @@ func TestTranscriptCopyFeedback(t *testing.T) {
 	tt.Frame()
 	if _, ok := tt.Find("Copy failed. Try again."); !ok {
 		t.Fatal("clipboard failure was not shown or keyboard focus was lost")
+	}
+}
+
+// 活动行的读屏名字说明它做了什么；块编号是数据标识，不念给用户。
+func TestActivityRowsNeverReadOutBlockIDs(t *testing.T) {
+	a := testApp(t, "default")
+	const token = "151080446adf002f0ee65942"
+	m := contracts.Message{ID: "identifiers", Role: "assistant", Streaming: true, Blocks: []contracts.Block{
+		{ID: "thought-" + token, Kind: "reasoning", Text: "Checking the layout"},
+		{ID: "call-" + token, Kind: "tool", Tool: &contracts.ToolCall{
+			ID: "call-" + token, Kind: contracts.ToolTaskOutput, TaskID: "task-" + token,
+			Status: "running", Args: `{"task_id":"task-` + token + `"}`,
+		}},
+	}}
+	tt := transcriptTester(t, a, &m, 900, 700, false)
+	summary := contracts.SummarizeActivity(m.Blocks).Label()
+	if err := tt.Click("Activity: " + summary); err != nil {
+		t.Fatal(err)
+	}
+	if !tt.HasText("Thought process") || !tt.HasText("Read task output") {
+		t.Fatalf("activity rows are missing: %v", tt.Texts())
+	}
+	for _, text := range tt.Texts() {
+		if strings.Contains(text, token) {
+			t.Fatalf("an activity row reads out a block id: %q", text)
+		}
 	}
 }

@@ -532,9 +532,10 @@ func activityTitle(block contracts.Block) (label, detail, glyph string) {
 	case contracts.ToolTodo:
 		return "Todo", firstNonempty(t.Summary, t.Args), "checklist"
 	case contracts.ToolTaskOutput:
-		return "Read task output", firstNonempty(t.Summary, t.Command, t.TaskID), "terminal"
+		// 行里读给用户看的是任务名或命令行；任务编号是数据，不是描述。
+		return "Read task output", firstNonempty(t.Summary, t.Command), "terminal"
 	case contracts.ToolTaskStop:
-		return "Stop task", firstNonempty(t.Summary, t.TaskID), "terminal"
+		return "Stop task", t.Summary, "terminal"
 	case contracts.ToolSkill:
 		return "Use skill", t.Summary, "widget"
 	case contracts.ToolGoalRead:
@@ -585,6 +586,23 @@ func workflowToolTitle(tool *contracts.ToolCall) string {
 	default:
 		return "Fill workflow hole"
 	}
+}
+
+// reasoningLead 是流式思考行可以稳定引用的名字：第一段已经写完（以换行
+// 收尾）的文字。首段还没写完时返回空串，行只报动作词，不念块编号，也不
+// 拿还在追加的半个句子当名字。
+func reasoningLead(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if i == len(lines)-1 && !strings.HasSuffix(text, "\n") {
+			return ""
+		}
+		return strings.Join(strings.Fields(strings.ReplaceAll(line, "**", "")), " ")
+	}
+	return ""
 }
 
 func reasoningPreview(text string, live bool) string {

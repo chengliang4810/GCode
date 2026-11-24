@@ -172,7 +172,7 @@ func TestContextToolsRenderReadableActivity(t *testing.T) {
 						if detail != "" {
 							t.Fatalf("raw tool name leaked into visible detail: %q", detail)
 						}
-						if err := tt.Click(label + ": " + test.name); err != nil {
+						if err := tt.Click(label); err != nil {
 							t.Fatal(err)
 						}
 					}

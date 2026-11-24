@@ -152,7 +152,7 @@ func TestTranscriptReasoningPreviewUpdatesAndManualExpansionPersists(t *testing.
 	if !tt.HasText("Latest update") {
 		t.Fatal("preview waits for a newline")
 	}
-	if err := tt.Click("Thought process: thought"); err != nil {
+	if err := tt.Click("Thought process: First line"); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok := tt.Find("Activity detail"); !ok || !tt.HasText("First line") {
