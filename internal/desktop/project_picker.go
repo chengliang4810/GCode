@@ -15,7 +15,11 @@ import (
 type newProjectState struct {
 	step                              int // devices, locations, folders
 	deviceID, query, typedPath, error string
+	// folderName is the draft name of a folder created inside the browsed
+	// folder; folderForm shows its input, folderBusy blocks resubmission.
+	folderName                        string
 	pathEdit, loading                 bool
+	folderForm, folderBusy            bool
 	locations                         contracts.DirectoryLocations
 	listing                           contracts.DirectoryListing
 	selected                          int
@@ -78,6 +82,7 @@ func (a *App) stopProjectBrowse() {
 	}
 	a.newProject.generation++
 	a.newProject.loading = false
+	a.newProject.folderBusy = false
 }
 
 // chooseProjectDevice opens the location list of one device. Locations are a
@@ -140,6 +145,8 @@ func (a *App) projectBrowse(folder string) {
 	p.selected = 0
 	p.error = ""
 	p.pathEdit = false
+	p.folderForm = false
+	p.folderName = ""
 	if folder != "" {
 		p.typedPath = folder
 	}
@@ -258,6 +265,57 @@ func (a *App) chooseProjectPicker(row projectPickerRow) {
 	}
 	a.projectBrowse("")
 }
+// createProjectFolder creates one folder inside the browsed folder on the
+// device that owns the files, then enters it so it can be added as a project.
+func (a *App) createProjectFolder() {
+	p := &a.newProject
+	name := strings.TrimSpace(p.folderName)
+	if p.step != 2 || p.folderBusy || name == "" || p.listing.Path == "" {
+		return
+	}
+	creator, ok := a.service.(contracts.ProjectDirectoryCreator)
+	if !ok {
+		p.error = a.t("This device cannot create folders")
+		return
+	}
+	a.stopProjectBrowse()
+	p.folderBusy = true
+	p.error = ""
+	ctx, cancel := context.WithCancel(a.ctx)
+	p.cancel = cancel
+	generation := p.generation
+	request := contracts.DirectoryCreateRequest{DeviceID: p.deviceID, Parent: p.listing.Path, Name: name}
+	finish := func(result contracts.DirectoryListing, err error) {
+		if a.closed || ctx.Err() != nil || !a.projectOpen || a.newProject.generation != generation {
+			return
+		}
+		p.folderBusy = false
+		if err != nil {
+			p.error = err.Error()
+			return
+		}
+		p.folderForm = false
+		p.folderName = ""
+		p.query = ""
+		p.selected = 0
+		p.listing = result
+		p.typedPath = result.Path
+	}
+	if a.win == nil {
+		result, err := creator.CreateDirectory(ctx, request)
+		finish(result, err)
+		return
+	}
+	win := a.win
+	go func() {
+		result, err := creator.CreateDirectory(ctx, request)
+		if ctx.Err() != nil {
+			return
+		}
+		win.Update(func() { finish(result, err) })
+	}()
+}
+
 func (a *App) addPickedProject() {
 	p := &a.newProject
 	if p.step != 2 || p.loading || p.error != "" || p.listing.Path == "" {
@@ -337,6 +395,8 @@ func (a *App) projectPickerBack() {
 	p.query = ""
 	p.selected = 0
 	p.error = ""
+	p.folderForm = false
+	p.folderName = ""
 }
 func (a *App) newProjectDialog(c *ui.Context) {
 	if !a.projectOpen {
@@ -407,6 +467,16 @@ func (a *App) newProjectDialog(c *ui.Context) {
 					inlineIconButton(c.Key("project-edit-path"), "pen", tr(c, "Edit path")).OnClick(func() { p.pathEdit = !p.pathEdit; p.typedPath = p.listing.Path })
 				}
 			})
+			if p.step == 2 && p.folderForm {
+				// Cancelling drops the draft name, exactly like reopening the form.
+				closeFolderForm := func() { p.folderForm, p.folderName = false, "" }
+				ui.Row(c).Height(44).Padding(8, 16).Gap(8).AlignItems(ui.Center).BorderWidth(0, 0, 1, 0).BorderColor(a.palette.Border).Children(func() {
+					ui.TextInputBase(c.Key("project-folder-name"), &p.folderName).Label(tr(c, "Folder name")).Placeholder(tr(c, "Folder name")).AutoFocus().Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).
+						OnSubmit(a.createProjectFolder).OnShortcut(0, ui.KeyEscape, closeFolderForm)
+					textButton(c.Key("project-folder-create"), tr(c, "Create folder")).Disabled(p.folderBusy || strings.TrimSpace(p.folderName) == "").OnClick(a.createProjectFolder)
+					textButton(c.Key("project-folder-cancel"), tr(c, "Cancel")).Disabled(p.folderBusy).OnClick(closeFolderForm)
+				})
+			}
 			rows := a.projectPickerRows()
 			p.selected = max(0, min(max(0, len(rows)-1), p.selected))
 			choose := func() {
@@ -514,6 +584,12 @@ func (a *App) newProjectDialog(c *ui.Context) {
 				a.paletteKeyHint(c, "↵", "Open")
 				ui.Box(c).Grow(1)
 				if p.step == 2 {
+					if _, ok := a.service.(contracts.ProjectDirectoryCreator); ok {
+						textButton(c.Key("project-new-folder"), tr(c, "New folder")).Disabled(p.loading || p.error != "" || p.folderBusy || p.listing.Path == "").OnClick(func() {
+							p.folderForm = !p.folderForm
+							p.folderName = ""
+						})
+					}
 					textButton(c.Key("project-add-confirm"), tr(c, "Add project")).Disabled(p.loading || p.error != "" || p.submission != nil || p.listing.Path == "").OnClick(a.addPickedProject)
 				}
 			})

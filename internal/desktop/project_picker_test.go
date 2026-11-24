@@ -293,6 +293,77 @@ func (s *locationRecordingService) ListDirectories(_ context.Context, request co
 	return contracts.DirectoryListing{DeviceID: request.DeviceID, Path: request.Path, Parent: "/", Home: "~/projects"}, nil
 }
 
+func TestNewProjectCreatesFolderInsideTheBrowsedFolder(t *testing.T) {
+	a := testApp(t, "default")
+	before := len(a.state.Projects)
+	a.openNewProject()
+	tt := ui.NewTester(a.View, 1320, 880)
+	tt.Key(0, ui.KeyEnter)
+	tt.Key(0, ui.KeyEnter)
+	if a.newProject.step != 2 || a.newProject.error != "" {
+		t.Fatalf("folder step: %+v", a.newProject)
+	}
+	parent := a.newProject.listing.Path
+	if _, ok := a.service.(contracts.ProjectDirectoryCreator); !ok {
+		t.Fatal("picker backend cannot create folders")
+	}
+	if err := tt.Click("New folder"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if !a.newProject.folderForm {
+		t.Fatal("new folder form did not open")
+	}
+	tt.Type("brand-new")
+	if a.newProject.folderName != "brand-new" || a.newProject.query != "" {
+		t.Fatalf("folder name draft: %+v", a.newProject)
+	}
+	tt.Key(0, ui.KeyEnter)
+	tt.Frame()
+	want := parent + "/brand-new"
+	if a.newProject.folderForm || a.newProject.error != "" || a.newProject.folderName != "" {
+		t.Fatalf("folder creation: %+v", a.newProject)
+	}
+	if a.newProject.listing.Path != want || len(a.newProject.listing.Entries) != 0 {
+		t.Fatalf("new folder listing: %+v", a.newProject.listing)
+	}
+	if err := tt.Click("Add project"); err != nil {
+		t.Fatal(err)
+	}
+	if a.projectOpen || len(a.state.Projects) != before+1 {
+		t.Fatalf("project created from the new folder: open %t, error %s, count %d", a.projectOpen, a.newProject.error, len(a.state.Projects))
+	}
+	project := a.state.Projects[len(a.state.Projects)-1]
+	if project.Path != want || project.Name != "brand-new" || project.DeviceID != "local" {
+		t.Fatalf("created project: %+v", project)
+	}
+}
+func TestNewProjectFolderCreationKeepsThePickerOnRejection(t *testing.T) {
+	a := testApp(t, "default")
+	a.openNewProject()
+	tt := ui.NewTester(a.View, 1320, 880)
+	tt.Key(0, ui.KeyEnter)
+	tt.Key(0, ui.KeyEnter)
+	if a.newProject.step != 2 || a.newProject.error != "" {
+		t.Fatalf("folder step: %+v", a.newProject)
+	}
+	path := a.newProject.listing.Path
+	a.newProject.folderForm = true
+	a.newProject.folderName = "fieldnotes"
+	a.createProjectFolder()
+	tt.Frame()
+	if a.newProject.error == "" || !a.projectOpen || a.newProject.listing.Path != path || a.newProject.folderName != "fieldnotes" {
+		t.Fatalf("rejected folder creation: %+v", a.newProject)
+	}
+	// The draft stays editable so the user can pick another name.
+	if err := tt.Click("Cancel"); err != nil {
+		t.Fatal(err)
+	}
+	tt.Frame()
+	if a.newProject.folderForm || a.newProject.folderName != "" {
+		t.Fatalf("cancel kept the form: %+v", a.newProject)
+	}
+}
 func TestSidebarNewProjectAndOfflineProject(t *testing.T) {
 	a := testApp(t, "default")
 	tt := ui.NewTester(a.View, 1320, 1100)
