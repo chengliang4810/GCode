@@ -5,8 +5,32 @@ import (
 	"slices"
 	"testing"
 
+	"gcode/internal/contracts"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestConversationPressMarksCurrentSessionRead(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	unread := true
+	a.dispatch(contracts.Command{Kind: "session.update", Session: &contracts.SessionUpdate{ID: a.sessionID, Unread: &unread}})
+	tt := ui.NewTester(func(c *ui.Context) {
+		root := ui.Column(c).Size(300, 200)
+		a.acknowledgeConversationPress(c, root)
+	}, 600, 400)
+	tt.Frame()
+	if !a.currentSession().Unread {
+		t.Fatal("rendering the open conversation should not clear unread")
+	}
+	tt.ClickAt(450, 100)
+	if !a.currentSession().Unread {
+		t.Fatal("clicking outside the conversation should not clear unread")
+	}
+	tt.ClickAt(150, 100)
+	if a.currentSession().Unread || a.sessionID != "chat-0" {
+		t.Fatal("clicking the open conversation should mark it read without switching")
+	}
+}
 
 func TestSidebarSessionMenuFlatCopyAndTrajectoryOrder(t *testing.T) {
 	for _, language := range []string{"en", "zh-CN"} {

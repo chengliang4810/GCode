@@ -159,16 +159,17 @@ type App struct {
 	linkSelection                                 *linkui.Selection
 	// transcriptSelections are the selection scopes of the open transcripts
 	// by pane, and transcriptHover the row the pointer is in on each.
-	transcriptSelections map[string]*linkui.Selection
-	transcriptHover      map[string]string
-	sideTranscripts      map[string]*transcriptCache
-	activityDetails      activityDetailsCache
-	transcriptCache      transcriptCache
-	activityMotion       *activityFoldMotion
-	activityReveals      map[string]time.Time
-	composer             ui.Handle
-	composerSurface      ui.Handle
-	conversationViewport ui.Handle
+	transcriptSelections    map[string]*linkui.Selection
+	transcriptHover         map[string]string
+	sideTranscripts         map[string]*transcriptCache
+	activityDetails         activityDetailsCache
+	transcriptCache         transcriptCache
+	activityMotion          *activityFoldMotion
+	activityReveals         map[string]time.Time
+	composer                ui.Handle
+	composerSurface         ui.Handle
+	conversationViewport    ui.Handle
+	conversationPressSerial uint64
 	// composerDock owns the blank-canvas ↔ thread handoff. launchingNewSession
 	// starts it at the send key, before the host mints the session; the
 	// handoff remembers the route being left so the pill morphs its height and

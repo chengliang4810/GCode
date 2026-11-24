@@ -72,6 +72,7 @@ func (a *App) chatView(c *ui.Context) {
 	a.composerFrame = frame
 
 	root := ui.Column(c).Bind(&a.conversationViewport).Grow(1).FillHeight().AlignItems(ui.Stretch).Clip()
+	a.acknowledgeConversationPress(c, root)
 	a.paintConversationBackground(c, root, 1-frame.Dissolve)
 	a.transcriptListScope(c, root, &a.messages, a.sessionID, func() {
 		ui.Column(c).FillWidth().Padding(0, reserve, 0, 0).Children(func() {
@@ -163,6 +164,20 @@ func (a *App) chatView(c *ui.Context) {
 		ui.Box(c).Height(composerBottomInset)
 	})
 	a.interruptedMessageDialog(c)
+}
+
+func (a *App) acknowledgeConversationPress(c *ui.Context, root ui.Element) {
+	input := c.InputActivity()
+	if input.DownSerial == a.conversationPressSerial {
+		return
+	}
+	a.conversationPressSerial = input.DownSerial
+	if !input.PrimaryDown || a.sessionID == "" {
+		return
+	}
+	if _, _, inside := root.PointerPosition(); inside {
+		a.markSessionRead(a.sessionID)
+	}
 }
 
 // userMessage renders a user message's bubble: its blocks, attachments and
