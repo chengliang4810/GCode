@@ -271,10 +271,9 @@ func compilePhases(compiled *Compiled, raw json.RawMessage) contracts.WorkflowPr
 		}
 		seen[id] = true
 		phase := contracts.WorkflowPhaseSpec{ID: id}
+		// 名字保持脚本写下的样子：没写就是空，界面用阶段序号称呼它，
+		// 不拿内部 id 顶替名字。
 		phase.Name, _ = stringField(document, "name")
-		if phase.Name == "" {
-			phase.Name = id
-		}
 		phase.Instances = compileInstances(compiled, document["instances"], id, joinPath(path, "instances"))
 		phase.Edges = compileEdges(compiled, document["edges"], id, joinPath(path, "edges"))
 		phases = append(phases, phase)
@@ -319,10 +318,8 @@ func compileInstances(compiled *Compiled, raw json.RawMessage, phaseID, path str
 		}
 		seen[id] = true
 		instance := contracts.WorkflowActorSpec{ID: id}
+		// 同上：没写名字就留空，界面用实例序号称呼它。
 		instance.Name, _ = stringField(document, "name")
-		if instance.Name == "" {
-			instance.Name = id
-		}
 		instance.Prompt, _ = stringField(document, "prompt")
 		instance.ModelID, _ = stringField(document, "modelId")
 		instance.Static, _ = stringField(document, "static")

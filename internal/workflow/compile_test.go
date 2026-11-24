@@ -59,8 +59,12 @@ func TestCompileScriptBuildsTheDeclaredProgram(t *testing.T) {
 	if collect.ID != "collect" || collect.Name != "Collect" || len(collect.Instances) != 2 {
 		t.Fatalf("first phase = %#v", collect)
 	}
-	if collect.Instances[0].ModelID != "fast" || collect.Instances[1].Name != "scout" {
+	// 没写名字的实例保持空名：界面用它在阶段里的序号称呼它，不拿 id 顶替。
+	if collect.Instances[0].ModelID != "fast" || collect.Instances[1].Name != "" {
 		t.Fatalf("instances = %#v", collect.Instances)
+	}
+	if review := compiled.Program.Phases[1]; review.Name != "" {
+		t.Fatalf("an unnamed phase must keep its empty name: %#v", review)
 	}
 	if len(collect.Edges) != 1 || collect.Edges[0].To != "review" || collect.Edges[0].When == "" {
 		t.Fatalf("edges = %#v", collect.Edges)

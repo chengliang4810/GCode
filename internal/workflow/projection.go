@@ -89,9 +89,6 @@ func ProjectRun(run contracts.WorkflowRun) RunView {
 			Rounds:   phase.Rounds,
 			Roster:   BuildRoster(actors),
 		}
-		if host.Name == "" {
-			host.Name = phase.ID
-		}
 		for _, actor := range actors {
 			host.Actors = append(host.Actors, RunActorView{
 				ID:        actor.ID,

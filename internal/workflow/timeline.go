@@ -38,7 +38,11 @@ type TimelineStation struct {
 	HoleID string
 	Name   string
 	Index  int
-	Status string
+	// PhaseOrdinal 是这一站所属阶段在脚本里的序号，从 1 开始。留白沿用
+	// 它所属阶段的序号；找不到所属阶段时为 0。界面在阶段没写名字时用它
+	// 称呼阶段，不拿内部 id 顶替名字。
+	PhaseOrdinal int
+	Status       string
 	// Track 是这一站所在的轨道号。0 是主线。
 	Track    int
 	Roster   Roster
@@ -71,16 +75,17 @@ func BuildTimeline(run contracts.WorkflowRun) Timeline {
 	for _, actor := range run.Actors {
 		actorsByPhase[actor.PhaseID] = append(actorsByPhase[actor.PhaseID], actor)
 	}
-	for _, phase := range run.Phases {
+	for index, phase := range run.Phases {
 		actors := actorsByPhase[phase.ID]
 		timeline.Stations = append(timeline.Stations, TimelineStation{
-			PhaseID:  phase.ID,
-			Kind:     StationKindPhase,
-			Name:     phaseName(phase),
-			Status:   phaseStatus(phase, actors),
-			Roster:   BuildRoster(actors),
-			Observed: phase.Observed,
-			Settled:  phase.Settled,
+			PhaseID:      phase.ID,
+			Kind:         StationKindPhase,
+			Name:         phase.Name,
+			PhaseOrdinal: index + 1,
+			Status:       phaseStatus(phase, actors),
+			Roster:       BuildRoster(actors),
+			Observed:     phase.Observed,
+			Settled:      phase.Settled,
 		})
 	}
 	timeline.insertHoles(run)
@@ -119,31 +124,28 @@ func (t *Timeline) insertHoles(run contracts.WorkflowRun) {
 			if hole.PhaseID != station.PhaseID {
 				continue
 			}
-			stations = append(stations, holeStation(hole))
+			stations = append(stations, holeStation(hole, station.PhaseOrdinal))
 		}
 	}
 	for _, hole := range run.Holes {
 		if hole.PhaseID != "" && known[hole.PhaseID] {
 			continue
 		}
-		stations = append(stations, holeStation(hole))
+		stations = append(stations, holeStation(hole, 0))
 	}
 	t.Stations = stations
 }
 
 // holeStation 把一处留白折成一站。留白的类型签名不在界面上出现：它是编译
 // 契约，不是给用户读的。
-func holeStation(hole contracts.WorkflowHole) TimelineStation {
-	name := hole.Title
-	if name == "" {
-		name = hole.ID
-	}
+func holeStation(hole contracts.WorkflowHole, ordinal int) TimelineStation {
 	return TimelineStation{
-		PhaseID: hole.PhaseID,
-		Kind:    StationKindHole,
-		HoleID:  hole.ID,
-		Name:    name,
-		Status:  hole.Status,
+		PhaseID:      hole.PhaseID,
+		Kind:         StationKindHole,
+		HoleID:       hole.ID,
+		Name:         hole.Title,
+		PhaseOrdinal: ordinal,
+		Status:       hole.Status,
 	}
 }
 
@@ -161,14 +163,6 @@ func tailStubOf(stations []TimelineStation) string {
 		return TailStubFilled
 	}
 	return TailStubOpen
-}
-
-// phaseName 给阶段一个能读的名字。
-func phaseName(phase contracts.WorkflowPhase) string {
-	if phase.Name != "" {
-		return phase.Name
-	}
-	return phase.ID
 }
 
 // assignTracks 按执行窗口的重叠给站分轨道。重叠是真的事实，不是猜的。
