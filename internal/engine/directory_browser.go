@@ -30,6 +30,8 @@ type directoryBrowser struct {
 	home    func() (string, error)
 	abs     func(string) (string, error)
 	open    func(string) (directoryReader, error)
+	stat    func(string) (fs.FileInfo, error)
+	mkdir   func(string) error
 	roots   func() []string
 }
 
@@ -43,6 +45,8 @@ var hostDirectoryBrowser = directoryBrowser{
 	open: func(path string) (directoryReader, error) {
 		return os.Open(path)
 	},
+	stat:  os.Stat,
+	mkdir: func(path string) error { return os.Mkdir(path, 0o755) },
 	roots: volumeRoots,
 }
 

@@ -101,6 +101,21 @@ type ProjectDirectoryService interface {
 	ListDirectories(context.Context, DirectoryRequest) (DirectoryListing, error)
 	ListDirectoryLocations(context.Context, DirectoryRequest) (DirectoryLocations, error)
 }
+
+// DirectoryCreateRequest asks the host that owns the files to create one
+// folder inside an existing parent folder. Name is a single path segment.
+type DirectoryCreateRequest struct {
+	DeviceID string `json:"deviceId"`
+	Parent   string `json:"parent"`
+	Name     string `json:"name"`
+}
+
+// ProjectDirectoryCreator creates folders on the device that owns the files.
+// It returns the new folder's listing so the picker can enter it right away.
+// Hosts that cannot create folders do not implement it.
+type ProjectDirectoryCreator interface {
+	CreateDirectory(context.Context, DirectoryCreateRequest) (DirectoryListing, error)
+}
 type ProjectCreate struct {
 	DeviceID string `json:"deviceId"`
 	Name     string `json:"name"`
