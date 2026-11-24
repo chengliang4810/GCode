@@ -6,8 +6,19 @@ import (
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
+	"gcode/internal/workflow"
 	"github.com/egoist/mygo/ui"
 )
+
+func TestWorkflowTimelineLedgeDoesNotDuplicateVisibleLamps(t *testing.T) {
+	timeline := workflow.BuildTimeline(ledgeRun())
+	app := ledgeApp(t)
+	viewport := workflow.StationCenterX(2) + 8
+	fold := app.workflowTimelineFold(timeline, &ui.ScrollState{}, viewport)
+	if len(fold.Left) != 0 || len(fold.Right) != 3 || fold.Right[0] != 3 {
+		t.Fatalf("visible stage marker must stay off the ledge: %+v", fold)
+	}
+}
 
 // ledgeRun is a run with enough phases that its stage line cannot fit a card.
 func ledgeRun() contracts.WorkflowRun {

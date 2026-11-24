@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"time"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
@@ -58,11 +59,17 @@ func (a *App) workflowTimelineFold(timeline workflow.Timeline, state *ui.ScrollS
 	if viewport <= 0 || len(timeline.Stations) == 0 {
 		return workflow.TimelineFold{}
 	}
-	lamps := make([]float32, len(timeline.Stations))
+	var fold workflow.TimelineFold
+	// The desktop ledge sits above the rail and does not cover its edges.
 	for i, station := range timeline.Stations {
-		lamps[i] = workflow.StationCenterX(station.Index)
+		x := workflow.StationCenterX(station.Index) - state.X
+		if x < 0 {
+			fold.Left = append(fold.Left, i)
+		} else if x >= viewport {
+			fold.Right = append(fold.Right, i)
+		}
 	}
-	return workflow.FoldStations(lamps, state.X, viewport, -1, 0)
+	return fold
 }
 
 // workflowTimelineLedge draws the folded stations of both sides: up to three
@@ -333,14 +340,25 @@ func (a *App) workflowAgentPill(c *ui.Context, view workflow.RunView, station wo
 	}
 	pill := ui.ButtonBase(c.Key("workflow-pill:"+view.RunID+":"+entry.ActorID)).
 		Height(workflow.PillHeight).Padding(0, 10).Radius(999).Gap(6).AlignItems(ui.Center).
+		Justify(ui.Start).
 		Border(1, a.palette.Border).Background(a.palette.Background).
 		Label(label).TextColor(a.palette.Text)
 	dot := a.workflowActorDotColor(entry.Status)
 	pill.Children(func() {
-		ui.Box(c).Size(8, 8).Shrink(0).Draw(func(painter *ui.Painter, bounds ui.Rect) {
-			painter.FillPath((&ui.Path{}).Circle(bounds.X+bounds.W/2, bounds.Y+bounds.H/2, bounds.W/2), dot)
+		lamp := ui.Box(c).Size(8, 8).Shrink(0)
+		var pulse float32
+		if entry.Status == contracts.WorkflowActorRunning && !a.reduceMotion(c) {
+			pulse = lamp.Timeline("running", ui.TimelineOptions{Repeat: ui.RepeatForever, Alternate: true}).
+				Tween(ui.Tween{From: 0, To: 1, Duration: 900 * time.Millisecond, Ease: ui.EaseInOut})
+		}
+		lamp.Draw(func(painter *ui.Painter, bounds ui.Rect) {
+			x, y := bounds.X+bounds.W/2, bounds.Y+bounds.H/2
+			if pulse > 0 {
+				painter.FillPath((&ui.Path{}).Circle(x, y, 4+3*pulse), dot.Alpha(.48*(1-.5*pulse)))
+			}
+			painter.FillPath((&ui.Path{}).Circle(x, y, 4), dot)
 		})
-		ui.Text(c, label).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+		ui.Text(c, label).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextSmall)).SingleLine().Ellipsis("…")
 	})
 	if actor != nil && actor.SessionID != "" {
 		pill.OnClick(func() { a.workspace.OpenSession(actor.SessionID) })
