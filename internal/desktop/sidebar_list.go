@@ -47,7 +47,7 @@ func (a *App) prepareSidebarList(rows []sidebarRow) {
 	}
 	if request := a.sidebarUI.revealProject; request != nil {
 		for _, project := range a.state.Projects {
-			if project.Path == request.Path && project.DeviceID == request.DeviceID {
+			if contracts.SameProjectPath(project.Path, request.Path) && project.DeviceID == request.DeviceID {
 				for i, row := range rows {
 					if row.Project && row.ProjectID == project.ID {
 						a.sidebarList.ScrollIntoView(i)

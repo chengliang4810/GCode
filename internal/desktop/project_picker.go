@@ -359,7 +359,7 @@ func (a *App) selectCreatedProject() {
 		return
 	}
 	for _, project := range a.state.Projects {
-		if project.Path != request.Path || project.DeviceID != request.DeviceID {
+		if !contracts.SameProjectPath(project.Path, request.Path) || project.DeviceID != request.DeviceID {
 			continue
 		}
 		a.newProject.created = nil
