@@ -17,19 +17,19 @@ type newProjectState struct {
 	deviceID, query, typedPath, error string
 	// folderName is the draft name of a folder created inside the browsed
 	// folder; folderForm shows its input, folderBusy blocks resubmission.
-	folderName                        string
-	pathEdit, loading                 bool
-	folderForm, folderBusy            bool
-	locations                         contracts.DirectoryLocations
-	listing                           contracts.DirectoryListing
-	selected                          int
-	list                              ui.ListState
-	input                             ui.Handle
-	generation                        uint64
-	cancel                            context.CancelFunc
-	submission                        *contracts.ProjectCreate
-	submissionID                      string
-	created                           *contracts.ProjectCreate
+	folderName             string
+	pathEdit, loading      bool
+	folderForm, folderBusy bool
+	locations              contracts.DirectoryLocations
+	listing                contracts.DirectoryListing
+	selected               int
+	list                   ui.ListState
+	input                  ui.Handle
+	generation             uint64
+	cancel                 context.CancelFunc
+	submission             *contracts.ProjectCreate
+	submissionID           string
+	created                *contracts.ProjectCreate
 }
 type projectPickerRow struct {
 	key, title, glyph string
@@ -265,6 +265,7 @@ func (a *App) chooseProjectPicker(row projectPickerRow) {
 	}
 	a.projectBrowse("")
 }
+
 // createProjectFolder creates one folder inside the browsed folder on the
 // device that owns the files, then enters it so it can be added as a project.
 func (a *App) createProjectFolder() {
