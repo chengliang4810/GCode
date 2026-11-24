@@ -40,7 +40,7 @@ func (a *App) openWorkflowSave(runID string) {
 	if !ok {
 		return
 	}
-	// 远端运行只能存进项目：家目录在宿主机器上，本机的中枢读不到它。
+	// 远端运行只能存进项目：家目录在宿主机器上，本机的定义读不到它。
 	scope := workflow.SavedScopeProject
 	draft := workflow.InitialSaveDraft(run.Name, scope)
 	if a.workflowUI.save == nil {
@@ -151,7 +151,7 @@ func (a *App) workflowSaveScopeChoices(c *ui.Context, run contracts.WorkflowRun,
 		{value: workflow.SavedScopeGlobal, label: tr(c, "This machine")},
 	}
 	if run.HostID != "" {
-		// 远端运行不给全局档：家目录在宿主机器上，本机的中枢读不到它。
+		// 远端运行不给全局档：家目录在宿主机器上，本机的定义读不到它。
 		choices = choices[:1]
 	}
 	ui.Row(c.Key("workflow-save-scopes:" + run.ID)).FillWidth().Gap(8).Children(func() {
@@ -246,10 +246,6 @@ func (a *App) workflowCommandFinished(cmd contracts.Command, err error) {
 	case "workflow.launch", "workflow.resume":
 		a.clearWorkflowBusy()
 		if err != nil {
-			if a.workflowUI.hubLaunch != nil || cmd.Workflow != nil && cmd.Workflow.Run != nil && cmd.Workflow.Run.Origin == contracts.WorkflowOriginHub {
-				a.workflowHubLaunchFailed(err)
-				return
-			}
 			a.notification(toastError, err.Error())
 		}
 	}

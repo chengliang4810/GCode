@@ -21,13 +21,7 @@ type automationPageState struct {
 	DeleteID   string
 	SelectedID string
 	Filter     string
-	Module     string
 }
-
-// automationModuleWorkflows 是自动化页里的工作流模块。自动化和工作流是同一类
-// “已保存、可再次运行”的东西，所以切换留在同一页里，不另造一个应用或一条
-// 侧栏入口。
-const automationModuleWorkflows = "workflows"
 
 func (a *App) editAutomation(value *contracts.Automation) {
 	s := &a.automationUI
@@ -76,10 +70,6 @@ func (a *App) automationAction(command contracts.Command, after func()) {
 // automationPage is a master/detail workspace; editing stays in the shared modal.
 func (a *App) automationPage(c *ui.Context) {
 	s := &a.automationUI
-	if s.Module == automationModuleWorkflows {
-		a.automationWorkflowPage(c)
-		return
-	}
 	jobs := []contracts.Automation{}
 	for _, job := range a.state.Automations {
 		if s.Filter == "active" && !job.Enabled || s.Filter == "paused" && job.Enabled {
@@ -106,7 +96,6 @@ func (a *App) automationPage(c *ui.Context) {
 			buttonWithIcon(c.Key("automation-new"), tr(c, "New automation"), "plus", buttonPrimary).Disabled(s.Busy).OnClick(func() { a.editAutomation(nil) })
 		})
 		ui.Box(c).FillWidth().Height(1).Background(c.Theme().Border)
-		a.automationModuleSwitcher(c)
 		if s.Error != "" && !s.Open {
 			ui.Text(c, s.Error).Margin(12, 20).TextColor(a.palette.Readable(a.palette.Danger)).Wrap()
 		}
@@ -349,42 +338,6 @@ func (a *App) automationSelect(c *ui.Context, key, label string, value *string, 
 }
 
 func (a *App) automationsView(c *ui.Context) { a.automationPage(c) }
-
-// automationModuleSwitcher 是自动化页顶部的模块切换。自动化和工作流是同一类
-// “已保存、可再次运行”的东西，所以切换留在同一页里：不另造独立应用，也不占
-// 一条侧栏入口。
-func (a *App) automationModuleSwitcher(c *ui.Context) {
-	s := &a.automationUI
-	ui.Row(c.Key("automation-modules")).FillWidth().Padding(10, 20, 0, 0).Gap(6).Children(func() {
-		for _, module := range []struct{ key, id, label string }{
-			{"automation-module-automations", "", "Automations"},
-			{"automation-module-workflows", automationModuleWorkflows, "Workflows"},
-		} {
-			module := module
-			controlNavButton(c.Key(module.key), tr(c, module.label), s.Module == module.id).Children(func() {
-				ui.Text(c, tr(c, module.label))
-			}).OnClick(func() { s.Module = module.id })
-		}
-	})
-}
-
-// automationWorkflowPage 是自动化页里的工作流模块：已保存的工作流中枢。
-func (a *App) automationWorkflowPage(c *ui.Context) {
-	ui.Column(c.Key("automation-workflow-module")).Fill().Gap(0).Children(func() {
-		ui.Row(c.Key("automation-workflow-header")).FillWidth().Padding(16, 20).Gap(10).AlignItems(ui.Center).Children(func() {
-			icon(c, "checklist", 18)
-			ui.Text(c, tr(c, "Workflows")).Bold()
-			ui.Text(c, fmt.Sprintf("%d", len(a.state.WorkflowDefinitions))).TextColor(c.Theme().TextMuted)
-			ui.Spacer(c).Grow(1)
-			buttonWithIcon(c.Key("automation-new-workflow"), tr(c, "New workflow"), "plus", buttonPrimary).OnClick(func() { a.newWorkflowConversation() })
-		})
-		ui.Box(c).FillWidth().Height(1).Background(c.Theme().Border)
-		a.automationModuleSwitcher(c)
-		ui.Scroll(c.Key("automation-workflow-body")).FillWidth().Grow(1).MinHeight(0).Padding(16, 20).Gap(16).Justify(ui.Start).Children(func() {
-			a.workflowHubView(c)
-		})
-	})
-}
 
 func (a *App) automationFormActions(c *ui.Context) {
 	s := &a.automationUI

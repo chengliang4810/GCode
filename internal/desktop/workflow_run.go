@@ -25,11 +25,7 @@ type workflowUIState struct {
 	scroll   map[string]*ui.ScrollState
 	position map[string]*float64
 	// save holds the draft of every run whose save form is open.
-	save map[string]*workflowSaveState
-	// hub is the saved-workflow hub's own state, and hubLaunch is the launch
-	// it is carrying through the core.
-	hub              workflowHubState
-	hubLaunch        *workflowLaunchPending
+	save             map[string]*workflowSaveState
 	artifactFolds    map[string]bool
 	artifactVersions map[string]int
 }

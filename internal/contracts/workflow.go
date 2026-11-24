@@ -40,9 +40,6 @@ const (
 	WorkflowOriginTool  = "tool"
 	WorkflowOriginAmend = "amend"
 	WorkflowOriginRerun = "rerun"
-	// WorkflowOriginHub 是从工作流中枢直接启动的运行：没有那一轮对话，
-	// 也没有主代理在中间。
-	WorkflowOriginHub = "hub"
 )
 
 // 阶段状态。阶段按图中声明顺序，不因状态变化重新排序。

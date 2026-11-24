@@ -534,7 +534,6 @@ func (a *App) apply(s contracts.Snapshot) {
 	a.reconcileBranchCreation()
 	a.selectCreatedProject()
 	a.reconcileLocalSends()
-	a.syncWorkflowLaunch()
 	a.refreshSessionSubscription()
 	if applySnapshot {
 		a.pruneSessionUIState()
@@ -1159,7 +1158,6 @@ func (a *App) View(c *ui.Context) {
 	a.sidebarMobileDialog(c)
 	a.imageDialog(c)
 	a.workflowSaveDialog(c)
-	a.workflowLaunchDialog(c)
 	a.toastView(c)
 	a.flushPaneSave(c)
 }
