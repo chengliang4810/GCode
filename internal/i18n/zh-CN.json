@@ -1613,5 +1613,18 @@
   "Next version": "下一版本",
   "Previous run": "上次运行",
   "Open restarted run": "打开重新启动的运行",
-  "Older runs are not listed here.": "更早的运行没有列在这里。"
+  "Older runs are not listed here.": "更早的运行没有列在这里。",
+  "Import provider": "导入供应商",
+  "Export provider": "导出供应商",
+  "Choose provider JSON": "选择供应商 JSON 文件",
+  "Provider JSON": "供应商 JSON",
+  "Choose file": "选择文件",
+  "Save as file": "保存为文件",
+  "Reading the API key…": "正在读取 API Key…",
+  "A new provider ID is assigned on import; the API key is stored encrypted.": "导入时会分配新的供应商 ID；API Key 会被加密保存。",
+  "This JSON contains the API key in plain text. Keep the file private.": "此 JSON 包含明文 API Key，请妥善保管该文件。",
+  "The file is too large for a provider configuration": "文件过大，无法作为供应商配置导入",
+  "Provider imported": "已导入供应商",
+  "Provider exported": "已导出供应商",
+  "Export provider as JSON": "导出供应商 JSON"
 }

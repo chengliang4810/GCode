@@ -212,6 +212,7 @@ func (a *App) commandFinished(cmd contracts.Command, err error) {
 	a.capabilityCommandFinished(cmd, err)
 	a.modelSettingsCommandFinished(cmd, err)
 	a.settingsImportCommandFinished(cmd, err)
+	a.providerImportCommandFinished(cmd, err)
 	if a.branchCommandFinished(cmd, err) {
 		return
 	}

@@ -57,6 +57,8 @@ func (a *App) customProviderSettings(c *ui.Context) {
 		ui.Text(c, tr(c, "Manage custom model providers for use in chat.")).Grow(1).MinWidth(0).TextColor(a.palette.Muted).FontSize(design.TextSize(c, design.TextBase))
 		iconButton(c.Key("refresh-providers"), "refresh", tr(c, "Refresh providers")).Shrink(0).
 			OnClick(func() { a.dispatch(contracts.Command{Kind: "providers.refresh"}) })
+		buttonWithIcon(c.Key("import-provider"), tr(c, "Import provider"), "document", buttonSecondary).Shrink(0).
+			Disabled(a.modelSettingsBusy()).OnClick(a.openProviderImport)
 		buttonWithIcon(c.Key("add-provider"), tr(c, "Add provider"), "plus", buttonPrimary).Shrink(0).
 			Disabled(a.modelSettingsBusy()).OnClick(a.addCustomProvider)
 	})
@@ -133,6 +135,8 @@ func (a *App) customProviderSettings(c *ui.Context) {
 	a.modelMetadataDialog(c)
 	a.modelFetchDialog(c)
 	a.providerLogoDialog(c)
+	a.providerImportDialog(c)
+	a.providerExportDialog(c)
 }
 
 func (a *App) syncInlineProvider(config contracts.ProviderConfiguration) {
@@ -225,6 +229,9 @@ func (a *App) customProviderDetail(c *ui.Context, config contracts.ProviderConfi
 			Disabled(a.modelSettingsBusy()).Menu(func(menu *ui.Menu) {
 			if menu.Item(tr(c, "Remove provider")).Chosen() {
 				a.confirmSettingsRemoval("provider", provider.ID, provider.Name)
+			}
+			if menu.Item(tr(c, "Export provider")).Chosen() {
+				a.exportProvider(provider.ID)
 			}
 		})
 	})

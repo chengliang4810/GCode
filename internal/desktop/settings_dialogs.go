@@ -120,6 +120,8 @@ func (a *App) selectSettingsSection(section string) {
 	state.pendingHookSave, state.pendingSubagentSave = nil, nil
 	a.settingsRemoval.Open = false
 	a.settingsImport = settingsImportState{}
+	a.providerImport = providerImportState{}
+	a.providerExport = providerExportState{}
 	a.section = section
 	if section == "Personalization" {
 		a.loadGlobalAgentsDraft()

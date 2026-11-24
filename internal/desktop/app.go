@@ -26,31 +26,34 @@ import (
 )
 
 type App struct {
-	island                agentIslandState
-	automationUI          automationPageState
-	sessionInfoProjection sessionInfoProjection
-	math                  mathViewState
-	notifications         *desktopNotifications
-	wallpaper             wallpaperState
-	checkForUpdates       func()
-	onCloseStart          func()
-	connections           contracts.ConnectionSettingsService
-	runtimeUI             runtimeSettingsState
-	modelsUI              modelSettingsState
-	capabilityUI          capabilitySettingsState
-	settingsRemoval       settingsRemovalState
-	settingsImport        settingsImportState
-	cloudPage             cloudSettingsPageState
-	agentsDraft           string
-	agentsSaved           string
-	agentsLoading         bool
-	agentsSaving          bool
-	agentsSavePending     bool
-	agentsSaveDone        chan struct{}
-	branchCreation        *branchCreation
-	now                   func() time.Time
-	pendingSends          map[string]primaryPendingSend
-	localSends            []*localSend
+	island                                             agentIslandState
+	automationUI                                       automationPageState
+	sessionInfoProjection                              sessionInfoProjection
+	math                                               mathViewState
+	notifications                                      *desktopNotifications
+	wallpaper                                          wallpaperState
+	checkForUpdates                                    func()
+	onCloseStart                                       func()
+	connections                                        contracts.ConnectionSettingsService
+	runtimeUI                                          runtimeSettingsState
+	modelsUI                                           modelSettingsState
+	capabilityUI                                       capabilitySettingsState
+	settingsRemoval                                    settingsRemovalState
+	settingsImport                                     settingsImportState
+	providerImport                                     providerImportState
+	providerExport                                     providerExportState
+	chooseProviderImportPath, chooseProviderExportPath func() (string, error)
+	cloudPage                                          cloudSettingsPageState
+	agentsDraft                                        string
+	agentsSaved                                        string
+	agentsLoading                                      bool
+	agentsSaving                                       bool
+	agentsSavePending                                  bool
+	agentsSaveDone                                     chan struct{}
+	branchCreation                                     *branchCreation
+	now                                                func() time.Time
+	pendingSends                                       map[string]primaryPendingSend
+	localSends                                         []*localSend
 	composerControls
 	footerUsage         composerUsageState
 	appUsage            appUsageState
