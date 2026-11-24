@@ -32,5 +32,5 @@ func Available(mode string, activated bool) bool {
 }
 
 // ActivatesOnCommand 报告一个动作是否会让按需模式在本会话生效。
-// 触发激活的是用户动作：执行 /workflow、恢复运行、改设置、从中枢启动。
+// 触发激活的是用户动作：执行 /workflow、再次运行、恢复运行、改设置。
 func ActivatesOnCommand() bool { return true }

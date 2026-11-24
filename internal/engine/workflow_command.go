@@ -53,7 +53,7 @@ func (e *Engine) workflowActivateSession(session *contracts.Session) error {
 }
 
 // activateWorkflowSessionForRunLocked 让一次运行所属的会话拿到工作流能力。
-// 中枢直接启动和恢复运行都算用户动作：按需模式这时就该打开。关闭模式不动
+// 再次运行和恢复运行都算用户动作：按需模式这时就该打开。关闭模式不动
 // 会话，工具仍然不出现。
 func (e *Engine) activateWorkflowSessionForRunLocked(sessionID string) {
 	if sessionID == "" {

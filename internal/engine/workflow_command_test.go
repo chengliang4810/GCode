@@ -187,7 +187,7 @@ func TestWorkflowCommandIsRejectedWhenWorkflowsAreOff(t *testing.T) {
 	}
 }
 
-// 中枢直接启动和恢复运行也是用户动作：按需模式这时就打开会话能力。
+// 再次运行和恢复运行也是用户动作：按需模式这时就打开会话能力。
 func TestWorkflowRunAndResumeActivateTheSession(t *testing.T) {
 	record := &modelRequest{}
 	core := workflowCommandCore(t, record.handler("Planned the workflow"))

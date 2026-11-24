@@ -398,7 +398,7 @@ func TestWorkflowQuestionEscalatesToMainAgent(t *testing.T) {
 	}
 }
 
-// 定义与运行要跨重启：中枢里那一份是用户攒下的事实，运行过的历史也要在。
+// 定义与运行要跨重启：保存下来的那一份是用户攒下的事实，运行过的历史也要在。
 func TestWorkflowDefinitionsAndRunsSurviveRestart(t *testing.T) {
 	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = subagentRequest(t, r)
