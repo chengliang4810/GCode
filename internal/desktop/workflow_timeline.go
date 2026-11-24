@@ -288,7 +288,7 @@ func (a *App) workflowTimelineStation(c *ui.Context, view workflow.RunView, stat
 	ui.Column(c.Key("workflow-station:" + view.RunID + ":" + workflowStationKey(station))).Width(width).Shrink(0).Gap(workflow.PillGap).Children(func() {
 		ui.Row(c).Height(workflow.PlatformRowHeight).Gap(6).AlignItems(ui.Center).Children(func() {
 			// 名字先让位，留白的提示词保持完整：被截断的是名字，不是状态。
-			ui.Text(c, station.Name).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
+			ui.Text(c, workflowStationLabel(c, station)).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextSmall)).SingleLine()
 			a.workflowStationHoleMeta(c, station)
 		})
 		if station.Kind == workflow.StationKindHole {
@@ -297,8 +297,8 @@ func (a *App) workflowTimelineStation(c *ui.Context, view workflow.RunView, stat
 		if !expanded {
 			return
 		}
-		for _, entry := range station.Roster.Entries {
-			a.workflowAgentPill(c, view, station, entry)
+		for index, entry := range station.Roster.Entries {
+			a.workflowAgentPill(c, view, station, entry, index+1)
 		}
 		if station.Roster.Overflow > 0 {
 			ui.Text(c, tr(c, "and %d more", station.Roster.Overflow)).
@@ -332,12 +332,9 @@ func workflowStationKey(station workflow.TimelineStation) string {
 
 // workflowAgentPill draws one instance of a station. A pill with a session
 // opens that instance's transcript; a pill without one says so.
-func (a *App) workflowAgentPill(c *ui.Context, view workflow.RunView, station workflow.TimelineStation, entry workflow.RosterEntry) {
+func (a *App) workflowAgentPill(c *ui.Context, view workflow.RunView, station workflow.TimelineStation, entry workflow.RosterEntry, order int) {
 	actor := workflowActorOf(view, station.PhaseID, entry.ActorID)
-	label := entry.Name
-	if label == "" {
-		label = entry.ActorID
-	}
+	label := workflowActorLabel(c, order, entry.Name)
 	pill := ui.ButtonBase(c.Key("workflow-pill:"+view.RunID+":"+entry.ActorID)).
 		Height(workflow.PillHeight).Padding(0, 10).Radius(999).Gap(6).AlignItems(ui.Center).
 		Justify(ui.Start).

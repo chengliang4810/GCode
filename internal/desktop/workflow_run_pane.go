@@ -22,7 +22,7 @@ func (a *App) workflowRunView(c *ui.Context, runID string) {
 		return
 	}
 	view := workflow.ProjectRun(run)
-	ui.Column(c.Key("workflow-run:" + runID)).Label(run.Name).Fill().MinWidth(0).Gap(0).Children(func() {
+	ui.Column(c.Key("workflow-run:" + runID)).Label(a.workflowRunLabel(c, view)).Fill().MinWidth(0).Gap(0).Children(func() {
 		ui.Column(c).FillWidth().Shrink(0).Padding(12, 16).Gap(4).Children(func() {
 			a.workflowRunPaneHeader(c, run, view)
 			a.workflowRunStatusLine(c, run, view)
@@ -61,8 +61,10 @@ func (a *App) workflowRunView(c *ui.Context, runID string) {
 func (a *App) workflowRunPaneHeader(c *ui.Context, run contracts.WorkflowRun, view workflow.RunView) {
 	runID := run.ID
 	ui.Row(c).FillWidth().Gap(6).Wrap().AlignItems(ui.Center).Children(func() {
-		ui.Text(c, run.Name).Grow(1).MinWidth(112).FontSize(design.TextSize(c, design.TextLarge)).
-			FontWeight(600).SingleLine().Ellipsis("…").Tooltip(run.Name)
+		// 没有名字的运行说它的状态：面板标题不空着，也不显示运行编号。
+		title := a.workflowRunLabel(c, view)
+		ui.Text(c, title).Grow(1).MinWidth(112).FontSize(design.TextSize(c, design.TextLarge)).
+			FontWeight(600).SingleLine().Ellipsis("…").Tooltip(title)
 		// 保存/再次运行、恢复、配置、停止走与运行卡同一个控制器：
 		// 同一份运行不会一个面上写「保存」、另一个面上写「再次运行」。
 		a.workflowRunControls(c, view, "workflow-pane")
@@ -136,7 +138,7 @@ func (a *App) workflowRunPhases(c *ui.Context, view workflow.RunView) {
 				headerContext := c.Key("workflow-run-phase-toggle:" + view.RunID + ":" + phase.ID)
 				var header ui.Element
 				if hasActors {
-					header = controlRowButton(headerContext).Label(phase.Name).OnClick(func() {
+					header = controlRowButton(headerContext).Label(workflowPhaseLabel(c, phase)).OnClick(func() {
 						if a.workflowUI.foldedPhases == nil {
 							a.workflowUI.foldedPhases = make(map[[2]string]bool)
 						}
@@ -146,7 +148,8 @@ func (a *App) workflowRunPhases(c *ui.Context, view workflow.RunView) {
 					header = ui.Row(headerContext).MinHeight(controls.ButtonHeight).Gap(8).AlignItems(ui.Center)
 				}
 				header.FillWidth().Children(func() {
-					ui.Text(c, phase.Name).Grow(1).MinWidth(0).FontWeight(600).SingleLine().Ellipsis("…").Tooltip(phase.Name)
+					phaseLabel := workflowPhaseLabel(c, phase)
+					ui.Text(c, phaseLabel).Grow(1).MinWidth(0).FontWeight(600).SingleLine().Ellipsis("…").Tooltip(phaseLabel)
 					ui.Text(c, a.workflowPhaseCountLabel(c, phase)).FontSize(design.TextSize(c, design.TextSmall)).
 						TextColor(a.palette.Muted).FontFeatures("tnum").SingleLine()
 					if hasActors {
@@ -159,8 +162,8 @@ func (a *App) workflowRunPhases(c *ui.Context, view workflow.RunView) {
 				})
 				if hasActors && !folded {
 					ui.Column(c).FillWidth().Gap(4).Children(func() {
-						for _, actor := range phase.Actors {
-							a.workflowRunActorRow(c, view, actor)
+						for index, actor := range phase.Actors {
+							a.workflowRunActorRow(c, view, actor, index+1)
 							for _, question := range view.Questions {
 								if question.ActorID == actor.ID {
 									a.workflowRunQuestion(c, view.RunID, question)
@@ -184,11 +187,8 @@ func (a *App) workflowPhaseCountLabel(c *ui.Context, phase workflow.RunPhaseView
 }
 
 // workflowRunActorRow draws one instance row of the detail spine.
-func (a *App) workflowRunActorRow(c *ui.Context, view workflow.RunView, actor workflow.RunActorView) {
-	label := actor.Name
-	if label == "" {
-		label = actor.ID
-	}
+func (a *App) workflowRunActorRow(c *ui.Context, view workflow.RunView, actor workflow.RunActorView, order int) {
+	label := workflowActorLabel(c, order, actor.Name)
 	c = c.Key("workflow-run-actor:" + view.RunID + ":" + actor.ID)
 	var row ui.Element
 	if actor.SessionID != "" {

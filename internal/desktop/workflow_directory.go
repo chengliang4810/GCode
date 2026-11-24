@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"gcode/internal/contracts"
@@ -54,13 +55,20 @@ func (a *App) workflowDirectoryGroup(c *ui.Context, sessionID, heading string, r
 			controlRowButton(c.Key("workflow-runs-row:" + row.RunID)).FillWidth().
 				Label(tr(c, "Open run details")).Children(func() {
 				ui.Row(c).FillWidth().Gap(10).AlignItems(ui.Center).Children(func() {
+					// 没有名字的运行用状态词作标题：运行编号不是名字。
+					status := a.workflowDirectoryStatusWord(c, row)
 					name := row.Name
-					if name == "" {
-						name = row.RunID
+					unnamed := strings.TrimSpace(name) == ""
+					if unnamed {
+						name = status
 					}
 					ui.Column(c).Grow(1).MinWidth(0).Gap(2).Children(func() {
 						ui.Text(c, name).FillWidth().SingleLine().Ellipsis("…").Tooltip(name)
-						ui.Text(c, a.workflowDirectoryStatusWord(c, row)).FillWidth().Wrap().
+						if unnamed {
+							// 状态词已经做了标题，不再重复一行。
+							return
+						}
+						ui.Text(c, status).FillWidth().Wrap().
 							FontSize(design.TextSize(c, design.TextSmall)).
 							TextColor(a.palette.Readable(a.workflowRunStatusColor(workflow.RunView{Status: row.Status})))
 					})

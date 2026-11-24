@@ -139,7 +139,13 @@ func (a *App) workflowRunHeader(c *ui.Context, view workflow.RunView) {
 	ui.Row(c.Key("workflow-card-header:" + view.RunID)).FillWidth().Gap(8).AlignItems(ui.Center).Children(func() {
 		ui.Text(c, a.workflowRunKindWord(c, view)).FontSize(design.TextSize(c, design.TextSmall)).
 			TextColor(a.workflowRunStatusColor(view)).SingleLine()
-		ui.Text(c, view.Name).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).SingleLine()
+		if name := strings.TrimSpace(view.Name); name != "" {
+			ui.Text(c, name).Grow(1).MinWidth(0).FontSize(design.TextSize(c, design.TextBase)).SingleLine()
+		} else {
+			// 卡片头左边已经是这次的运行状态词：没有名字就不再写一遍，
+			// 也不拿运行编号顶替名字。
+			ui.Box(c).Grow(1)
+		}
 		if pending := view.PendingQuestions(); pending > 0 {
 			workflowStatusChip(c, "workflow-card-questions:"+view.RunID, tr(c, "%d questions", pending), p.Readable(p.Warning), "", func() {
 				a.openWorkflowRun(view.RunID)
