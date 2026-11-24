@@ -210,7 +210,8 @@ func TestDesktopLocalSemanticToolLabels(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				for _, text := range []string{"读取任务结果: 后台校验", "停止任务: 后台校验", "读取目标:", "列出目录: .",
+				// 读取目标在无目标时只报动作词：编号和空摘要都不进这一行。
+				for _, text := range []string{"读取任务结果: 后台校验", "停止任务: 后台校验", "读取目标", "列出目录: .",
 					"读取网页:", "使用技能: fixture-review", "搜索网页: local documentation", "调用工具: files: 读取文本", "启动智能体: 调查界面"} {
 					if !activityTreeContains(tree, text) {
 						return fmt.Errorf("missing native semantic label %q", text)
