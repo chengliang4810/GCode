@@ -36,8 +36,11 @@ func ParseActorReply(text string) ActorReply {
 		}
 		text = rest
 		name, content, _ := strings.Cut(strings.TrimSpace(value), "|")
+		if title, body, multiline := strings.Cut(strings.TrimSpace(value), "\n"); multiline && !strings.Contains(title, "|") {
+			name, content = title, body
+		}
 		name, content = strings.TrimSpace(name), strings.TrimSpace(content)
-		if name == "" && content == "" {
+		if content == "" {
 			continue
 		}
 		if name == "" {

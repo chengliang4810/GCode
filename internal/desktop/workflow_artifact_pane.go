@@ -2,13 +2,24 @@ package desktop
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"gcode/internal/contracts"
 	"gcode/internal/design"
 	"github.com/egoist/mygo/ui"
+	"github.com/egoist/mygo/ui/markdown"
 )
+
+func workflowArtifactPreview(artifact contracts.WorkflowArtifact) (title, content string, isMarkdown bool) {
+	title = strings.TrimSpace(artifact.Name)
+	isMarkdown = strings.EqualFold(filepath.Ext(title), ".md") ||
+		strings.EqualFold(filepath.Ext(artifact.Path), ".md") ||
+		strings.EqualFold(strings.TrimSpace(strings.SplitN(artifact.MIME, ";", 2)[0]), "text/markdown")
+	content = artifact.Content
+	return
+}
 
 func (a *App) workflowArtifactView(c *ui.Context, key string) {
 	runID, name, _ := strings.Cut(key, "/")
@@ -35,6 +46,7 @@ func (a *App) workflowArtifactView(c *ui.Context, key string) {
 			}
 		}
 		artifact := versions[index]
+		title, content, isMarkdown := workflowArtifactPreview(artifact)
 		selectVersion := func(index int) {
 			if a.workflowUI.artifactVersions == nil {
 				a.workflowUI.artifactVersions = make(map[string]int)
@@ -42,11 +54,11 @@ func (a *App) workflowArtifactView(c *ui.Context, key string) {
 			a.workflowUI.artifactVersions[key] = versions[index].Version
 		}
 		ui.Row(c).FillWidth().Gap(6).AlignItems(ui.Center).Children(func() {
-			ui.Text(c, name).Grow(1).MinWidth(0).Wrap().FontWeight(600)
+			ui.Text(c, title).Grow(1).MinWidth(0).SingleLine().Ellipsis("…").Tooltip(title).FontWeight(600)
 			iconButton(c.Key("run:"+key), "alt-arrow-left", tr(c, "Open run details")).OnClick(func() { a.openWorkflowRun(runID) })
-			if artifact.Content != "" {
+			if content != "" {
 				services := c.Services()
-				iconButton(c.Key("copy:"+key), "copy", tr(c, "Copy")).OnClick(func() { services.WriteClipboard(artifact.Content) })
+				iconButton(c.Key("copy:"+key), "copy", tr(c, "Copy")).OnClick(func() { services.WriteClipboard(content) })
 			}
 		})
 		if len(versions) > 1 {
@@ -63,7 +75,20 @@ func (a *App) workflowArtifactView(c *ui.Context, key string) {
 		}
 		ui.Divider(c)
 		ui.Scroll(c.Key("preview:" + artifact.ID)).FillWidth().Grow(1).Children(func() {
-			ui.Text(c, artifact.Content).FillWidth().Wrap().Selectable().
+			if strings.TrimSpace(content) == "" {
+				message := "No preview available for this file."
+				if strings.TrimSpace(artifact.Path) == "" {
+					message = "This artifact was published without content or a file."
+				}
+				ui.Text(c, tr(c, message)).FillWidth().Wrap().TextColor(a.palette.Muted)
+				return
+			}
+			if isMarkdown {
+				options := markdown.Options{Theme: a.md.Theme, Extensions: a.md.Extensions, CodeBlock: design.MarkdownCodeBlock}
+				markdown.View(c, content, &options).FillWidth().Selectable()
+				return
+			}
+			ui.Text(c, content).FillWidth().Wrap().Selectable().
 				FontSize(design.TextSize(c, design.TextSmall))
 		})
 	})

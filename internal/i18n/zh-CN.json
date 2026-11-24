@@ -1525,6 +1525,8 @@
   "Artifacts": "产物",
   "Error": "错误",
   "Result": "结果",
+  "No preview available for this file.": "此文件暂无预览。",
+  "This artifact was published without content or a file.": "发布这个产物时未附正文或文件。",
   "Show agents": "展开子代理",
   "Hide agents": "收起子代理",
   "%d tokens": "%d Token",
@@ -1627,5 +1629,10 @@
   "Workflow runs": "工作流运行",
   "Runs of %s": "%s 的运行",
   "This conversation has not run a workflow": "这条对话还没有跑过工作流",
+  "No artifacts": "暂无产物",
+  "Previous version": "上一版本",
+  "Next version": "下一版本",
+  "Previous run": "上次运行",
+  "Open restarted run": "打开重新启动的运行",
   "Older runs are not listed here.": "更早的运行没有列在这里。"
 }

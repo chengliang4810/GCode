@@ -281,7 +281,7 @@ func (a *App) workflowRunSummary(c *ui.Context, view workflow.RunView, toggle fu
 func (a *App) workflowArtifactStrip(c *ui.Context, view workflow.RunView) {
 	ui.Row(c.Key("workflow-card-artifacts:" + view.RunID)).FillWidth().Gap(6).Wrap().AlignItems(ui.Center).Children(func() {
 		for _, artifact := range view.Artifacts.Shown {
-			textButton(c.Key("workflow-artifact:"+view.RunID+":"+artifact.ID), artifact.Name).OnClick(func() {
+			workflowArtifactTag(c.Key("workflow-artifact:"+view.RunID+":"+artifact.ID), artifact.Name).OnClick(func() {
 				a.openWorkflowArtifact(view.RunID, artifact)
 			})
 		}
@@ -421,7 +421,8 @@ func (a *App) openWorkflowRun(runID string) {
 
 // openWorkflowArtifact opens the artifact in the run detail tab.
 func (a *App) openWorkflowArtifact(runID string, artifact contracts.WorkflowArtifact) {
-	a.workspace.OpenWorkflowArtifact(runID+"/"+artifact.Name, artifact.Name)
+	title, _, _ := workflowArtifactPreview(artifact)
+	a.workspace.OpenWorkflowArtifact(runID+"/"+artifact.Name, title)
 }
 
 // workflowElapsed is the run's own duration, rounded to whole seconds.

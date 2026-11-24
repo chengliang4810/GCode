@@ -83,6 +83,17 @@ func textButton(c *ui.Context, label string) ui.Element {
 	return controlButton(c, label, buttonPlain).Children(func() { ui.Text(c, label).SingleLine() })
 }
 
+func workflowArtifactTag(c *ui.Context, label string) ui.Element {
+	button := controlButton(c, label, buttonPlain).MaxWidth(250).MaxWidthPercent(100).MinWidth(0).Tooltip(label)
+	if !button.Hovered() && !button.Pressed() {
+		button.Background(c.Theme().Surface)
+	}
+	return button.Children(func() {
+		icon(c, "document", design.Controls().IconSize)
+		ui.Text(c, label).MinWidth(0).SingleLine().Ellipsis("…")
+	})
+}
+
 func compactTextButton(c *ui.Context, label string) ui.Element {
 	s := design.Controls()
 	return controlButton(c, label, buttonPlain).Padding(s.ButtonPaddingY, s.CompactButtonPaddingX).
