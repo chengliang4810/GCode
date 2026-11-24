@@ -27,7 +27,7 @@ GCode 使用仓库内 MyGo v0.10.0 的 `plugins/updater/native`。
 发布仓库为公开的 `chengliang4810/GCode`。更新器使用无需凭据的正式 Release
 下载地址，不向客户端嵌入 GitHub token。版本从 `0.0.1-beta` 开始；`beta`
 仅标记快速迭代阶段，Release 始终使用 `prerelease=false`，并设为 latest。
-当前版本是 `0.0.7-beta`（见 `mygo.json`），后续按 `0.0.8-beta` 递增，
+当前版本是 `0.0.8-beta`（见 `mygo.json`），后续按 `0.0.9-beta` 递增，
 继续走同一个正式更新通道。
 
 ## 更新签名
