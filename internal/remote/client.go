@@ -150,6 +150,18 @@ func (c *Client) ListDirectoryLocations(ctx context.Context, request contracts.D
 	err = json.NewDecoder(response.Body).Decode(&result)
 	return result, err
 }
+func (c *Client) CreateDirectory(ctx context.Context, request contracts.DirectoryCreateRequest) (contracts.DirectoryListing, error) {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	response, err := c.request(ctx, http.MethodPost, "/v1/directory-create", request)
+	if err != nil {
+		return contracts.DirectoryListing{}, err
+	}
+	defer response.Body.Close()
+	var result contracts.DirectoryListing
+	err = json.NewDecoder(response.Body).Decode(&result)
+	return result, err
+}
 func (c *Client) Subscribe(ctx context.Context, sessionIDs ...string) (<-chan contracts.Event, error) {
 	path, err := scopedPath("/v1/events", sessionIDs...)
 	if err != nil {

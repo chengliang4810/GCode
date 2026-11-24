@@ -68,6 +68,86 @@ func TestDirectoryMockScanBudgetIncludesProjectsAndUnrelatedFiles(t *testing.T) 
 	}
 }
 
+func TestDirectoryMockCreateFolder(t *testing.T) {
+	s := directoryTestServer()
+	ctx := context.Background()
+	created, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "local", Parent: "/workspace", Name: "fresh"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Path != "/workspace/fresh" || created.DeviceID != "local" || len(created.Entries) != 0 {
+		t.Fatalf("created listing: %+v", created)
+	}
+	parent, err := s.ListDirectories(ctx, contracts.DirectoryRequest{DeviceID: "local", Path: "/workspace"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, entry := range parent.Entries {
+		if entry.Name == "fresh" && entry.Path == "/workspace/fresh" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("created folder missing from its parent: %+v", parent.Entries)
+	}
+	if _, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "local", Parent: "/workspace", Name: "fresh"}); err == nil {
+		t.Fatal("the same folder name was created twice")
+	}
+	for _, name := range []string{"", "  ", ".", "..", "nested/folder"} {
+		if _, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "local", Parent: "/workspace", Name: name}); err == nil {
+			t.Fatalf("name %q was accepted", name)
+		}
+	}
+	if _, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "offline", Parent: "/workspace", Name: "offline-folder"}); err == nil {
+		t.Fatal("a folder was created for an offline device")
+	}
+	if _, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "local", Parent: "/missing", Name: "orphan"}); err == nil {
+		t.Fatal("a folder was created inside a missing parent")
+	}
+}
+
+func TestDirectoryMockCreatedFolderBecomesProject(t *testing.T) {
+	s, err := New(Options{Instant: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	ctx := context.Background()
+	created, err := s.CreateDirectory(ctx, contracts.DirectoryCreateRequest{DeviceID: "local", Parent: "~/projects", Name: "brand-new"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Path != "~/projects/brand-new" {
+		t.Fatalf("created folder path: %q", created.Path)
+	}
+	if err := s.Execute(ctx, contracts.Command{Kind: "project.create", ProjectCreate: &contracts.ProjectCreate{DeviceID: "local", Path: created.Path, Name: "Brand new"}}); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := s.Snapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var registered bool
+	for _, project := range snapshot.Projects {
+		if project.Path == created.Path && project.DeviceID == "local" {
+			registered = true
+		}
+	}
+	if !registered {
+		t.Fatalf("folder was not registered as a project: %+v", snapshot.Projects)
+	}
+	parent, err := s.ListDirectories(ctx, contracts.DirectoryRequest{DeviceID: "local", Path: "~/projects"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range parent.Entries {
+		if entry.Path == created.Path && !entry.Project {
+			t.Fatalf("registered folder lost its project marker: %+v", entry)
+		}
+	}
+}
+
 func TestDirectoryMockPreservesProjectMarkersAndDeviceIsolation(t *testing.T) {
 	s := directoryTestServer()
 	s.state.Projects = append(s.state.Projects,

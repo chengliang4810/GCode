@@ -22,7 +22,9 @@ func writeDirectoryError(w http.ResponseWriter, err error) {
 }
 
 func directoryErrorCause(path string, status int) error {
-	if path != "/v1/directories" && path != "/v1/directory-locations" {
+	switch path {
+	case "/v1/directories", "/v1/directory-locations", "/v1/directory-create":
+	default:
 		return nil
 	}
 	switch status {

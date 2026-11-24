@@ -64,6 +64,9 @@ type Server struct {
 	integrationJobs map[string]uint64
 	gitJobs         map[string]uint64
 	contextSessions map[string]contextSession
+	// createdDirectories holds the virtual folders the picker created in this
+	// run. They live in the mock's tree, not on the host filesystem.
+	createdDirectories map[string]bool
 }
 
 var _ contracts.Service = (*Server)(nil)

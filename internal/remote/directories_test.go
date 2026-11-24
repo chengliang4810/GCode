@@ -74,6 +74,39 @@ func TestRemoteDirectoryLocationsComeFromTheHost(t *testing.T) {
 	}
 }
 
+// The creation route must write on the host that owns the files, and the client
+// must learn the new folder's listing instead of guessing it.
+func TestRemoteDirectoryCreationWritesOnTheHost(t *testing.T) {
+	store, err := storage.Open(storage.Options{Home: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err := engine.Open(engine.Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer core.Close()
+	client := remoteDirectoryTestClient(t, core)
+	parent := t.TempDir()
+	created, err := client.CreateDirectory(context.Background(), contracts.DirectoryCreateRequest{DeviceID: "local", Parent: parent, Name: "remote-folder"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.ToSlash(filepath.Join(parent, "remote-folder"))
+	if created.Path != want || created.DeviceID != "local" || len(created.Entries) != 0 {
+		t.Fatalf("remote creation: %+v", created)
+	}
+	if info, err := os.Stat(filepath.Join(parent, "remote-folder")); err != nil || !info.IsDir() {
+		t.Fatalf("folder was not created on the host: %v", err)
+	}
+	if _, err := client.CreateDirectory(context.Background(), contracts.DirectoryCreateRequest{DeviceID: "local", Parent: parent, Name: "remote-folder"}); err == nil {
+		t.Fatal("the host accepted a duplicate folder name")
+	}
+	if _, err := client.CreateDirectory(context.Background(), contracts.DirectoryCreateRequest{DeviceID: "local", Parent: parent, Name: "../escape"}); err == nil {
+		t.Fatal("the host accepted a nested folder name")
+	}
+}
+
 // This fixture proves protocol field and cancellation transport only; the test
 // above exercises the actual host filesystem and its bounded directory scan.
 type remoteDirectoryFixture struct {

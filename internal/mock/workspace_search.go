@@ -211,6 +211,10 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 	if s.closed {
 		return contracts.DirectoryListing{}, ErrClosed
 	}
+	return s.listDirectoriesLocked(ctx, request)
+}
+
+func (s *Server) listDirectoriesLocked(ctx context.Context, request contracts.DirectoryRequest) (contracts.DirectoryListing, error) {
 	if _, err := s.directoryDeviceLocked(request.DeviceID); err != nil {
 		return contracts.DirectoryListing{}, err
 	}
@@ -279,6 +283,24 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 			break
 		}
 	}
+	// Folders the picker created in this run belong to the virtual tree: they
+	// are browsable and can be registered as a project.
+	if !resultLimit {
+		for created := range s.createdDirectories {
+			if err := ctx.Err(); err != nil {
+				return contracts.DirectoryListing{}, err
+			}
+			if scanned == contracts.DirectoryScanLimit {
+				truncated = true
+				break
+			}
+			scanned++
+			if !add(created, "") {
+				resultLimit = true
+				break
+			}
+		}
+	}
 	if !resultLimit {
 		for _, file := range s.state.Files {
 			if err := ctx.Err(); err != nil {
@@ -316,4 +338,42 @@ func (s *Server) ListDirectories(ctx context.Context, request contracts.Director
 		return strings.Compare(a.Path, b.Path)
 	})
 	return listing, nil
+}
+
+// CreateDirectory adds one folder to the virtual tree and returns its
+// listing, so the picker can enter the new folder like a real host folder.
+func (s *Server) CreateDirectory(ctx context.Context, request contracts.DirectoryCreateRequest) (contracts.DirectoryListing, error) {
+	if err := ctx.Err(); err != nil {
+		return contracts.DirectoryListing{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return contracts.DirectoryListing{}, ErrClosed
+	}
+	if _, err := s.directoryDeviceLocked(request.DeviceID); err != nil {
+		return contracts.DirectoryListing{}, err
+	}
+	name := strings.TrimSpace(request.Name)
+	if name == "" || name == "." || name == ".." || strings.ContainsAny(name, `/\`) {
+		return contracts.DirectoryListing{}, errors.New("enter a folder name")
+	}
+	parent, err := s.listDirectoriesLocked(ctx, contracts.DirectoryRequest{DeviceID: request.DeviceID, Path: request.Parent})
+	if err != nil {
+		return contracts.DirectoryListing{}, err
+	}
+	created := path.Join(parent.Path, name)
+	if s.createdDirectories[created] {
+		return contracts.DirectoryListing{}, errors.New("a folder with this name already exists")
+	}
+	for _, project := range s.state.Projects {
+		if project.DeviceID == request.DeviceID && path.Clean(strings.ReplaceAll(project.Path, "\\", "/")) == created {
+			return contracts.DirectoryListing{}, errors.New("a folder with this name already exists")
+		}
+	}
+	if s.createdDirectories == nil {
+		s.createdDirectories = map[string]bool{}
+	}
+	s.createdDirectories[created] = true
+	return s.listDirectoriesLocked(ctx, contracts.DirectoryRequest{DeviceID: request.DeviceID, Path: created})
 }

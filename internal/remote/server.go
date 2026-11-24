@@ -108,6 +108,24 @@ func (s Server) Handler() (http.Handler, error) {
 		}
 		writeJSON(w, result)
 	})
+	mux.HandleFunc("POST /v1/directory-create", func(w http.ResponseWriter, r *http.Request) {
+		service, ok := s.Core.(contracts.ProjectDirectoryCreator)
+		if !ok {
+			http.Error(w, "directory creation unavailable", http.StatusNotImplemented)
+			return
+		}
+		var request contracts.DirectoryCreateRequest
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&request); err != nil {
+			http.Error(w, "invalid directory request", 400)
+			return
+		}
+		result, err := service.CreateDirectory(r.Context(), request)
+		if err != nil {
+			writeDirectoryError(w, err)
+			return
+		}
+		writeJSON(w, result)
+	})
 	mux.HandleFunc("GET /v1/events", func(w http.ResponseWriter, r *http.Request) {
 		sessionIDs, err := sessionScopeFromRequest(r)
 		if err != nil {

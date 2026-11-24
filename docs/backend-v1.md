@@ -310,6 +310,7 @@ go run ./cmd/rcode --local
 | `GET /v1/instructions` / `PUT /v1/instructions` | 读取与原子保存宿主全局指令 |
 | `POST /v1/directories` | 宿主目录选择数据 |
 | `POST /v1/directory-locations` | 宿主的可选位置（Home 与磁盘卷） |
+| `POST /v1/directory-create` | 在宿主已有目录下新建一个文件夹 |
 | `POST /v1/search` | 宿主项目搜索 |
 | `POST /v1/attachments` | 单附件原始二进制上传（24 MiB），不接受 JSON/base64 或宿主路径 |
 | `GET /v1/resources?ref=...` | 读取托管附件 |
@@ -332,6 +333,10 @@ go run ./cmd/rcode --local
 `context.DeadlineExceeded` / `contracts.ErrDirectoryBrowseBusy` 的错误判别语义；
 此映射不影响其他远程业务端点。本轮实际证据及未验收范围见
 [文件、工作树与目录浏览保护验收](backend-file-worktree-safety.md)。
+
+新建文件夹同样由宿主执行并沿用同一组 worker 与超时：请求只提交已有父目录和一个
+路径段名称，宿主拒绝分隔符、`.`、`..`、超长及同名目录，创建成功后返回新目录的
+列表，客户端不自行拼接或猜测路径。目录创建是唯一的写操作，其他浏览查询仍只读。
 
 附件上传使用 `Content-Type: application/octet-stream`，查询参数 `name`、
 可选 `mime` 和 `sessionId` 传递元数据。客户端先检查整个批次（最多 20 个、
