@@ -143,6 +143,29 @@ func TestCreatedProjectSelectsNewConversationWithoutChangingExistingSession(t *t
 	}
 }
 
+// A host stores the absolute path it resolved itself. A Windows host answers
+// with backslashes for the slashes the folder browser reported, and the reply
+// can reach the picker before the snapshot carrying the new project's ID.
+func TestCreatedProjectMatchesHostNormalizedPathSeparators(t *testing.T) {
+	a := testApp(t, "default")
+	request := contracts.ProjectCreate{DeviceID: "local", Name: "notes", Path: "C:/Users/uhgskdjr/notes"}
+	project := contracts.Project{ID: "windows-host", DeviceID: request.DeviceID, Path: `C:\Users\uhgskdjr\notes`, Name: request.Name, Branch: "main"}
+	a.state.Projects = append(a.state.Projects, project)
+	stabilizeFixtureSnapshot(t, a)
+	a.newProject.submission, a.newProject.submissionID = &request, "create"
+	a.projectOpen = true
+	a.projectCommandFinished(contracts.Command{Kind: "project.create", ID: "create", ProjectCreate: &request}, nil)
+	if a.sessionID != "" || a.projectID != project.ID || a.deviceID != project.DeviceID || a.newProject.created != nil {
+		t.Fatalf("host-normalized path did not select the created project: project %q device %q created %+v", a.projectID, a.deviceID, a.newProject.created)
+	}
+	rows := []sidebarRow{{Project: true, ProjectID: project.ID}}
+	a.sidebarUI.revealProject = &request
+	a.prepareSidebarList(rows)
+	if a.sidebarUI.revealProject != nil {
+		t.Fatal("sidebar did not reveal the project created from a host-normalized path")
+	}
+}
+
 func TestNewProjectDeviceFolderKeyboardAndSubmit(t *testing.T) {
 	a := testApp(t, "default")
 	before := len(a.state.Projects)
