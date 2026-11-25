@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	"gcode/internal/contracts"
@@ -128,7 +129,7 @@ func queueBranchCreation(t *testing.T, a *App) contracts.Command {
 	t.Helper()
 	// Hold just dispatch in its native queue; deliver ACKs/snapshots explicitly.
 	a.win = &mygo.Window{}
-	a.createRelatedSession(a.sessionID, true)
+	a.createSideChat(a.sessionID)
 	a.win = nil
 	select {
 	case job := <-a.jobs:
@@ -211,29 +212,99 @@ func TestSideCreationFailureCanRetry(t *testing.T) {
 	a.selectSession("chat-0")
 	backend := a.service
 	a.service = failedBranchService{backend}
-	a.createRelatedSession("chat-0", true)
+	a.createSideChat("chat-0")
 	if a.branchCreation != nil || a.pendingNew || a.errorText != "branch unavailable" {
 		t.Fatal("creation error did not release the pending state")
 	}
 	a.service = backend
-	a.createRelatedSession("chat-0", true)
+	a.createSideChat("chat-0")
 	if a.branchCreation != nil || a.workspace.ActiveKind() != "session" {
 		t.Fatal("retry did not open the side chat")
 	}
 }
 
-func TestForkCreationOpensCopiedConversationAndRestoresParentDraft(t *testing.T) {
+func TestBranchCreationOpensCopiedTopLevelConversation(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession("chat-0")
 	a.draft = "Parent draft"
-	count := len(a.state.Messages["chat-0"])
-	a.createRelatedSession("chat-0", false)
-	if a.sessionID == "chat-0" || a.sessionID == "" || len(a.state.Messages[a.sessionID]) != count || a.branchCreation != nil || a.pendingNew {
-		t.Fatal("fork did not open its copied conversation")
+	parent := sidebarSession(t, a, "chat-0")
+	count := len(a.state.Messages[parent.ID])
+	a.branchSession(parent, false)
+	opened := sidebarSession(t, a, a.sessionID)
+	if a.sessionID == parent.ID || a.sessionID == "" || len(a.state.Messages[opened.ID]) != count || a.branchCreation != nil || a.pendingNew {
+		t.Fatal("branch did not open its copied conversation")
 	}
-	a.selectSession("chat-0")
+	if !opened.TopLevel() || opened.SideChat || opened.ParentSessionID != "" {
+		t.Fatalf("branch is not a conversation of its own: %+v", opened)
+	}
+	if !slices.ContainsFunc(a.visibleSessions(), func(session contracts.Session) bool { return session.ID == opened.ID }) {
+		t.Fatal("branch did not appear in the conversation list")
+	}
+	if opened.Title != "Branch of "+parent.Title || opened.CreationRequestID == "" {
+		t.Fatalf("branch did not keep its creation identity: %+v", opened)
+	}
+	a.selectSession(parent.ID)
 	if a.draft != "Parent draft" {
-		t.Fatal("fork discarded the parent draft")
+		t.Fatal("branch discarded the parent draft")
+	}
+}
+
+func TestSidebarBranchMenuOffersBothBranchActions(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	tt := ui.NewTester(a.View, 1320, 880)
+	parent := sidebarSession(t, a, "chat-0")
+	if err := rightClickAccessible(tt, ui.RoleButton, parent.Title); err != nil {
+		t.Fatal(err)
+	}
+	labels := tt.Menu()
+	if !slices.Contains(labels, a.t("Branch chat")) || !slices.Contains(labels, a.t("Branch chat in a new worktree")) {
+		t.Fatalf("conversation menu lacks the branch actions: %v", labels)
+	}
+	if err := tt.ChooseMenuItem(a.t("Branch chat in a new worktree")); err != nil {
+		t.Fatal(err)
+	}
+	opened := sidebarSession(t, a, a.sessionID)
+	if opened.ID == parent.ID || !opened.TopLevel() || a.branchCreation != nil {
+		t.Fatalf("worktree branch did not open as its own conversation: %+v", opened)
+	}
+	if opened.WorktreeID == "" || opened.WorktreeID == parent.WorktreeID || opened.Branch == "" || opened.Branch == parent.Branch {
+		t.Fatalf("worktree branch did not take a new worktree and branch: %+v", opened)
+	}
+	if opened.ProjectID != parent.ProjectID {
+		t.Fatalf("worktree branch left its project: %+v", opened)
+	}
+}
+
+func TestSidebarBranchWorktreeNeedsGitRepository(t *testing.T) {
+	a := testApp(t, "default")
+	a.selectSession("chat-0")
+	parent := sidebarSession(t, a, "chat-0")
+	for i := range a.state.Projects {
+		if a.state.Projects[i].ID == parent.ProjectID {
+			a.state.Projects[i].GitDetected = false
+		}
+	}
+	if a.canBranchSessionWorktree(parent) {
+		t.Fatal("a project without Git offered the worktree variant")
+	}
+	tt := ui.NewTester(a.View, 1320, 880)
+	if err := rightClickAccessible(tt, ui.RoleButton, parent.Title); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.ChooseMenuItem(a.t("Branch chat in a new worktree")); err == nil {
+		t.Fatal("the worktree variant was usable without Git")
+	}
+	tt.CloseMenu()
+	tt.Frame()
+	if err := rightClickAccessible(tt, ui.RoleButton, parent.Title); err != nil {
+		t.Fatal(err)
+	}
+	if err := tt.ChooseMenuItem(a.t("Branch chat")); err != nil {
+		t.Fatal(err)
+	}
+	if opened := sidebarSession(t, a, a.sessionID); opened.ID == parent.ID || opened.WorktreeID != parent.WorktreeID {
+		t.Fatalf("plain branch changed its worktree: %+v", opened)
 	}
 }
 
@@ -247,7 +318,7 @@ func TestSideCreationSnapshotFailureDoesNotStayPending(t *testing.T) {
 	a := testApp(t, "default")
 	a.selectSession("chat-0")
 	a.service = failedBranchSnapshotService{a.service}
-	a.createRelatedSession("chat-0", true)
+	a.createSideChat("chat-0")
 	if a.branchCreation != nil || a.workspace.TabCount() != 0 || a.errorText != "snapshot unavailable" {
 		t.Fatal("snapshot failure left the entry pending or opened stale content")
 	}

@@ -40,6 +40,14 @@ func (a *App) sessionRow(c *ui.Context, session contracts.Session) {
 		if menu.Item(tr(c, "Archive")).Chosen() {
 			a.archiveSidebarSession(session.ID)
 		}
+		if a.canBranchSession(session) {
+			if menu.Item(tr(c, "Branch chat")).Chosen() {
+				a.branchSession(session, false)
+			}
+			if menu.Item(tr(c, "Branch chat in a new worktree")).Disabled(!a.canBranchSessionWorktree(session)).Chosen() {
+				a.branchSession(session, true)
+			}
+		}
 		if menu.Item(tr(c, "Copy title")).Chosen() {
 			c.Services().WriteClipboard(session.Title)
 		}
