@@ -37,7 +37,9 @@ The child inherits the model and workspace configuration, but no Goal, queued
 input, active run, archive, unread or pin state. Its system instructions treat
 parent history as reference, require a new side-chat request, and allow workspace
 modifications only when requested there. Both sessions use the same files.
-A regular fork also copies the visible conversation transcript.
+`session.branch` instead copies the visible transcript into a top-level
+conversation of its own; an optional `checkout` plan of kind `newWorktree` gives
+it a fresh worktree and branch from the parent project's HEAD.
 Desktop sends generate a fresh random request ID for each new action, including
 after relaunch or recreating a side composer. Re-delivery of that same command
 retains its ID so the engine's durable deduplication still prevents a second run.
@@ -49,9 +51,11 @@ it. Removing a queued message prevents its execution.
 
 Desktop side-chat creation lives in the right workspace's empty launcher and
 its `+` menu. Each explicit action creates a new child tab and focuses its
-independent composer without replacing the parent selection or draft. Session
-information keeps existing-child navigation and the regular fork action, with
-no side-chat creation action. See [side-chats.md](side-chats.md).
+independent composer without replacing the parent selection or draft.
+A conversation's sidebar context menu offers `Branch chat` and
+`Branch chat in a new worktree`; both create top-level conversations, and the
+worktree item needs a project with Git detected. Session information only
+navigates to existing children. See [side-chats.md](side-chats.md).
 
 ## Live capabilities
 

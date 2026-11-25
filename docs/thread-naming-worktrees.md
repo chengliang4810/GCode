@@ -119,10 +119,10 @@ send retains that root instead of relocating or reinterpreting the attachment.
 An independent conversation without a project owns
 `<bound-data-root>/workspaces/<conversation-id>` instead of sharing a workspace.
 Its ID is also a 12-character random lowercase letter/digit identifier and does
-not change with its title. Side chats, forks and subagents inherit the parent's
+not change with its title. Side chats, branches and subagents inherit the parent's
 working directory so that they can cooperate on its files; separate conversation
 records do not imply separate working directories. A user-created side chat or
-fork records its new history in the active root; an engine-created subagent keeps
+branch records its new history in the active root; an engine-created subagent keeps
 the parent's storage root. Old roots must remain available to read referenced
 history, attachments and working files; missing roots are reported as unavailable.
 
