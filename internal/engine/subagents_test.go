@@ -459,7 +459,7 @@ func TestSubagentRestartAndForkRebuildExecutionState(t *testing.T) {
 		selection.ModelID != "configured/model" || selection.Reasoning != "Max" {
 		t.Fatal("restart lost the explicit profile selection")
 	}
-	for _, kind := range []string{"session.fork", "session.sidechat"} {
+	for _, kind := range []string{"session.branch", "session.sidechat"} {
 		if err = core.Execute(context.Background(), contracts.Command{Kind: kind, SessionID: child.ID}); err != nil {
 			t.Fatal(err)
 		}

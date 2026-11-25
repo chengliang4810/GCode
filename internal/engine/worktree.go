@@ -299,6 +299,95 @@ func sourceContext(repo *gitRepository, cwd, treeID string) *contracts.Conversat
 	return &contracts.ConversationSourceContext{CheckoutID: treeID, RepoRoot: repo.root, CWD: cwd, Branch: repo.branch, HeadSHA: repo.head, ObservedAt: time.Now()}
 }
 
+// A conversation branch that needs its own worktree prepares the checkout on
+// the service caller's worker, outside the state mutex, then creates the
+// conversation under that mutex. The new conversation is a top-level one, so a
+// failed creation must release the checkout it never accepted.
+func (e *Engine) branchCheckout(ctx context.Context, command contracts.Command) error {
+	e.mu.Lock()
+	if err := e.checkLocked(ctx); err != nil {
+		e.mu.Unlock()
+		return err
+	}
+	parentID := command.SessionID
+	if parentID == "" {
+		parentID = command.ID
+	}
+	index := e.sessionIndex(parentID)
+	if index < 0 {
+		e.mu.Unlock()
+		return errors.New("parent session not found")
+	}
+	parent := e.state.Sessions[index]
+	var project contracts.Project
+	for _, candidate := range e.state.Projects {
+		if candidate.ID == parent.ProjectID {
+			project = candidate
+			break
+		}
+	}
+	if project.ID == "" {
+		e.mu.Unlock()
+		return errors.New("choose a project before branching into a new worktree")
+	}
+	for _, refs := range e.state.RepoRefs {
+		if refs.Scope.ProjectID == project.ID && refs.Switching != "" {
+			e.mu.Unlock()
+			return errors.New("wait for the project's branch switch to finish")
+		}
+	}
+	if command.RequestID != "" {
+		for _, session := range e.state.Sessions {
+			if session.CreationRequestID == command.RequestID {
+				e.mu.Unlock()
+				return nil
+			}
+		}
+		if e.checkoutRequests[command.RequestID] {
+			e.mu.Unlock()
+			return errors.New("this request's checkout is already being prepared")
+		}
+	}
+	storageRootID := e.storage.ActiveRootID()
+	dataDirectory, err := e.storage.Resolve(storageRootID)
+	if err != nil {
+		e.mu.Unlock()
+		return err
+	}
+	if e.checkoutProjects == nil {
+		e.checkoutProjects = map[string]int{}
+	}
+	e.checkoutProjects[project.ID]++
+	if e.checkoutRequests == nil {
+		e.checkoutRequests = map[string]bool{}
+	}
+	if command.RequestID != "" {
+		e.checkoutRequests[command.RequestID] = true
+	}
+	jobCtx, finish := e.gitOperationLocked(ctx)
+	e.mu.Unlock()
+	defer finish()
+	defer func() {
+		e.mu.Lock()
+		e.checkoutProjects[project.ID]--
+		delete(e.checkoutRequests, command.RequestID)
+		e.mu.Unlock()
+	}()
+	checkout, err := prepareCheckout(jobCtx, project, *command.Checkout, dataDirectory)
+	if err != nil {
+		return errors.Join(err, cleanupUnacceptedCheckout(checkout))
+	}
+	checkout.projectID, checkout.projectPath = project.ID, project.Path
+	checkout.storageRootID = storageRootID
+	if err := e.executeCommand(jobCtx, command, checkout); err != nil {
+		return errors.Join(err, cleanupUnacceptedCheckout(checkout))
+	}
+	if checkout.owned && !checkout.accepted {
+		return errors.Join(errors.New("the conversation branch did not accept the prepared checkout"), cleanupUnacceptedCheckout(checkout))
+	}
+	return nil
+}
+
 // Checkout preparation runs on the service caller's worker, outside the state
 // mutex. The UI still communicates with this core using typed Go commands.
 func (e *Engine) checkoutSend(ctx context.Context, command contracts.Command) error {

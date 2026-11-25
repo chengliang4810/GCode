@@ -36,7 +36,7 @@ func TestGeneratedConversationIDsAreLowercase(t *testing.T) {
 	}
 	snapshot, _ := core.Snapshot(ctx)
 	parent := snapshot.Sessions[0].ID
-	for _, kind := range []string{"session.sidechat", "session.fork"} {
+	for _, kind := range []string{"session.sidechat", "session.branch"} {
 		if err = core.Execute(ctx, contracts.Command{Kind: kind, SessionID: parent}); err != nil {
 			t.Fatal(err)
 		}

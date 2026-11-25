@@ -114,7 +114,7 @@ func TestModelRequestsAccountRetriesToolsModelsAndRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 	// A fork inherits text, never the original conversation's billable requests.
-	if err := core.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: sessionID}); err != nil {
+	if err := core.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: sessionID}); err != nil {
 		t.Fatal(err)
 	}
 	if err := core.Close(); err != nil {

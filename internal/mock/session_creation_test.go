@@ -54,11 +54,11 @@ func TestBranchCreationRequestPersistsAndRetriesWithoutDuplicates(t *testing.T) 
 		}
 	}
 	conflict := command
-	conflict.Kind = "session.fork"
+	conflict.Kind = "session.branch"
 	if err := s.Execute(ctx, conflict); err == nil {
 		t.Fatal("same request ID was accepted for a different operation")
 	}
-	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: child.ID}); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: child.ID}); err != nil {
 		t.Fatal(err)
 	}
 	legacy, _ := s.Snapshot(ctx)

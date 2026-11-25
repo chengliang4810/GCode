@@ -585,7 +585,7 @@ func (s *Server) applyLocked(c contracts.Command) error {
 			return errors.New("unknown Appshots permission")
 		}
 		return nil
-	case "session.fork", "session.sidechat":
+	case "session.branch", "session.sidechat":
 		return s.branchSessionLocked(c)
 	case "theme.analyze", "theme.select", "theme.import", "theme.remove", "theme.reload", "theme.duplicate":
 		return s.themeMutationLocked(c)

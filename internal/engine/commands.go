@@ -38,6 +38,9 @@ func (e *Engine) Execute(ctx context.Context, command contracts.Command) (result
 	if command.Kind == "message.send" && command.Send != nil && command.Send.SessionID == "" && command.Send.Checkout != nil {
 		return e.checkoutSend(ctx, command)
 	}
+	if command.Kind == "session.branch" && command.Checkout != nil {
+		return e.branchCheckout(ctx, command)
+	}
 	if command.Kind == "background.install" || command.Kind == "background.adjust" || command.Kind == "background.remove" {
 		return e.updateBackground(ctx, command)
 	}
@@ -413,7 +416,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			return err
 		}
 		e.state.Sessions[e.sessionIndex(session.ID)].CreationRequestID = command.RequestID
-	case "session.sidechat", "session.fork":
+	case "session.branch", "session.sidechat":
 		parentID := command.SessionID
 		if parentID == "" {
 			parentID = command.ID
@@ -435,18 +438,24 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		if err != nil {
 			return err
 		}
+		side := command.Kind == "session.sidechat"
 		session := parent
 		session.ID = sessionID
 		session.StorageRootID = e.storage.ActiveRootID()
 		session.StorageError = ""
 		e.loadedSessions[session.ID] = true
-		session.ParentSessionID = parentID
+		// A side chat stays a child of its parent; a branch is the user's own
+		// conversation and takes a place in the conversation list.
+		session.ParentSessionID = ""
+		if side {
+			session.ParentSessionID = parentID
+		}
 		session.SubagentType = ""
 		session.ParentRunID = ""
 		session.RunningSubagents = 0
 		session.Goal = nil
 		session.CreationRequestID = command.RequestID
-		session.SideChat = command.Kind == "session.sidechat"
+		session.SideChat = side
 		session.Title = command.Name
 		session.Status = contracts.Idle
 		session.Pinned = false
@@ -457,7 +466,16 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		session.CreatedAt = time.Now()
 		session.UpdatedAt = session.CreatedAt
 		if session.Title == "" {
-			session.Title = "Side chat"
+			session.Title = "Branch chat"
+			if side {
+				session.Title = "Side chat"
+			}
+		}
+		if checkout != nil {
+			session.ProjectID = checkout.projectID
+			session.CWD, session.Branch, session.WorktreeID = checkout.cwd, checkout.branch, checkout.worktreeID
+			session.SourceContext = checkout.source
+			checkout.accepted = true
 		}
 		e.state.Sessions = append([]contracts.Session{session}, e.state.Sessions...)
 		e.prompts[session.ID] = model.ClonePrompt(e.prompts[parent.ID])
@@ -465,7 +483,7 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 			e.contextMemories = map[string]agent.ContextMemory{}
 		}
 		e.contextMemories[session.ID] = agent.CloneContextMemory(e.contextMemories[parent.ID])
-		if session.SideChat {
+		if side {
 			e.history[session.ID], e.context[session.ID] = e.sideChatSnapshotLocked(parent.ID)
 			e.contextMemories[session.ID] = agent.ContextMemoryForView(e.contextMemories[parent.ID], e.context[session.ID])
 			e.state.Messages[session.ID] = []contracts.Message{}
@@ -479,6 +497,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 				messages[i].Streaming = false
 			}
 			e.state.Messages[session.ID] = messages
+		}
+		if checkout != nil {
+			e.applyGitProjectLocked(session.ProjectID, checkout.repo)
 		}
 		e.markSessionDirtyLocked(session.ID)
 	case "session.update":

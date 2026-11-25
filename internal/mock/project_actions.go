@@ -16,10 +16,11 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 	if i < 0 {
 		return ErrNotFound
 	}
+	side := c.Kind == "session.sidechat"
 	if c.RequestID != "" {
 		for _, session := range s.state.Sessions {
 			if session.CreationRequestID == c.RequestID {
-				if session.ParentSessionID != id || session.SideChat != (c.Kind == "session.sidechat") {
+				if session.SideChat != side || side && session.ParentSessionID != id || !side && session.ParentSessionID != "" {
 					return errors.New("conversation request ID is already in use")
 				}
 				return nil
@@ -29,9 +30,14 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 	v := s.state.Sessions[i]
 	parent := v.ID
 	v.ID = s.idLocked("session")
-	v.ParentSessionID = parent
+	// A side chat stays a child of its parent; a branch is the user's own
+	// conversation and takes a place in the conversation list.
+	v.ParentSessionID = ""
+	if side {
+		v.ParentSessionID = parent
+	}
 	v.CreationRequestID = c.RequestID
-	v.SideChat = c.Kind == "session.sidechat"
+	v.SideChat = side
 	v.Status = contracts.Idle
 	v.Archived = false
 	v.Pinned = false
@@ -48,7 +54,17 @@ func (s *Server) branchSessionLocked(c contracts.Command) error {
 	} else if v.SideChat {
 		v.Title = "Side chat"
 	} else {
-		v.Title = "Fork of " + v.Title
+		v.Title = "Branch of " + v.Title
+	}
+	if c.Checkout != nil {
+		project, _ := s.gitProjectLocked(v.ProjectID)
+		resolved, err := s.resolveNewCheckoutLocked(project, v.ID, contracts.SendRequest{DeviceID: v.DeviceID, Checkout: c.Checkout})
+		if err != nil {
+			return err
+		}
+		v.ProjectID, v.DeviceID = resolved.ProjectID, resolved.DeviceID
+		v.CWD, v.Branch, v.WorktreeID = resolved.CWD, resolved.Branch, resolved.WorktreeID
+		v.SourceContext = resolved.SourceContext
 	}
 	ms := []contracts.Message{}
 	if !v.SideChat {

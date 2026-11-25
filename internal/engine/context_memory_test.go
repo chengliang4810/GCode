@@ -66,7 +66,7 @@ func TestContextMemoryPersistsAcrossDisableResumeAndFork(t *testing.T) {
 	if err := core.Execute(t.Context(), contracts.Command{Kind: "settings.update", Settings: &settings}); err != nil {
 		t.Fatal(err)
 	}
-	if err := core.Execute(context.Background(), contracts.Command{Kind: "session.fork", ID: id}); err != nil {
+	if err := core.Execute(context.Background(), contracts.Command{Kind: "session.branch", ID: id}); err != nil {
 		t.Fatal(err)
 	}
 	child := core.state.Sessions[0].ID

@@ -25,6 +25,7 @@ func (c Command) Clone() Command {
 	}
 	c.Provider = copyPointer(c.Provider)
 	c.Reorder = copyPointer(c.Reorder)
+	c.Checkout = copyPointer(c.Checkout)
 	if c.Provider != nil {
 		c.Provider.Provider = model.CloneProvider(c.Provider.Provider)
 	}
@@ -259,7 +260,7 @@ func (c Command) Validate() error {
 		}
 		return nil
 	}
-	if c.RequestID != "" && c.Kind != "session.sidechat" && c.Kind != "session.fork" && c.Kind != "session.create" {
+	if c.RequestID != "" && c.Kind != "session.sidechat" && c.Kind != "session.branch" && c.Kind != "session.create" {
 		return errors.New("conversation request ID does not match command")
 	}
 	if c.Git != nil && !IsComposerGitCommand(c.Kind) {
@@ -275,6 +276,9 @@ func (c Command) Validate() error {
 		if err := c.Send.Checkout.Validate(); err != nil {
 			return err
 		}
+	}
+	if c.Checkout != nil && c.Kind != "session.branch" {
+		return errors.New("checkout payload does not match command")
 	}
 	if c.ProjectCreate != nil && c.Kind != "project.create" {
 		return errors.New("project create payload does not match command")
@@ -339,7 +343,20 @@ func (c Command) Validate() error {
 			return errors.New("unknown Appshots permission")
 		}
 		return nil
-	case "session.fork", "session.sidechat":
+	case "session.branch":
+		if c.SessionID == "" && c.ID == "" {
+			return errors.New("parent session ID is required")
+		}
+		if c.Checkout != nil {
+			if err := c.Checkout.Validate(); err != nil {
+				return err
+			}
+			if c.Checkout.Kind != CheckoutNew {
+				return errors.New("a new conversation branch requires a new checkout")
+			}
+		}
+		return nil
+	case "session.sidechat":
 		if c.SessionID == "" && c.ID == "" {
 			return errors.New("parent session ID is required")
 		}

@@ -77,6 +77,22 @@ func TestComposerFooterCommandCloneOwnsNestedPayloads(t *testing.T) {
 			t.Fatal("worker mutation reached caller send")
 		}
 	})
+	t.Run("branch checkout plan", func(t *testing.T) {
+		t.Parallel()
+		original := Command{Kind: "session.branch", SessionID: "parent", Checkout: &CheckoutPlan{Kind: CheckoutNew, Base: "main"}}
+		frozen := original.Clone()
+		if frozen.Checkout == original.Checkout {
+			t.Fatal("cloned branch command shares its checkout plan")
+		}
+		original.Checkout.Base = "caller-base"
+		if frozen.Checkout.Base != "main" {
+			t.Fatalf("caller mutation reached frozen branch: %+v", frozen.Checkout)
+		}
+		frozen.Checkout.Kind = CheckoutCurrent
+		if original.Checkout.Kind != CheckoutNew {
+			t.Fatal("worker mutation reached caller branch")
+		}
+	})
 }
 
 func TestComposerFooterCommandValidateTypedPayloads(t *testing.T) {
@@ -99,6 +115,10 @@ func TestComposerFooterCommandValidateTypedPayloads(t *testing.T) {
 		{name: "switch rejects blank ref", command: Command{Kind: "git.ref.switch", Git: &GitRequest{Scope: scope, Ref: " \t"}}, wantErr: true},
 		{name: "send rejects invalid checkout variant", command: Command{Kind: "message.send", Send: &SendRequest{Checkout: &CheckoutPlan{Kind: CheckoutNew, Path: "/wt/old"}}}, wantErr: true},
 		{name: "send payload on another command", command: Command{Kind: "session.create", Send: &SendRequest{Checkout: &CheckoutPlan{Kind: CheckoutCurrent}}}, wantErr: true},
+		{name: "branch in a new worktree", command: Command{Kind: "session.branch", SessionID: "parent", Checkout: &CheckoutPlan{Kind: CheckoutNew, Base: "main"}}},
+		{name: "branch in an existing checkout", command: Command{Kind: "session.branch", SessionID: "parent", Checkout: &CheckoutPlan{Kind: CheckoutCurrent}}, wantErr: true},
+		{name: "branch without parent", command: Command{Kind: "session.branch", Checkout: &CheckoutPlan{Kind: CheckoutNew}}, wantErr: true},
+		{name: "checkout payload on side chat", command: Command{Kind: "session.sidechat", SessionID: "parent", Checkout: &CheckoutPlan{Kind: CheckoutNew}}, wantErr: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

@@ -616,6 +616,7 @@ type Command struct {
 	Settings        *Settings             `json:"settings,omitempty"`
 	Session         *SessionUpdate        `json:"session,omitempty"`
 	Attachment      *Attachment           `json:"attachment,omitempty"`
+	Checkout        *CheckoutPlan         `json:"checkout,omitempty"`
 }
 
 type TerminalSize struct {

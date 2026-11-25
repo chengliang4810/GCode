@@ -164,18 +164,20 @@ func TestRelatedSessionsPreserveContextAndParent(t *testing.T) {
 	s := newTestServer(t, Options{})
 	ctx := context.Background()
 	created := snapshotForSessions(t, s, "chat-0")
-	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
 	summary, _ := s.Snapshot(ctx)
-	fork := summary.Sessions[0]
-	forked := snapshotForSessions(t, s, "chat-0", fork.ID)
-	if fork.ParentSessionID != "chat-0" || fork.SideChat || len(forked.Messages[fork.ID]) != len(created.Messages["chat-0"]) {
-		t.Fatal("fork lost context or parent association")
+	branch := summary.Sessions[0]
+	forked := snapshotForSessions(t, s, "chat-0", branch.ID)
+	// A branch is the user's own conversation: it copies the transcript but
+	// takes a place in the conversation list instead of hanging under a parent.
+	if branch.ParentSessionID != "" || branch.SideChat || !branch.TopLevel() || len(forked.Messages[branch.ID]) != len(created.Messages["chat-0"]) {
+		t.Fatal("branch lost context or parent association")
 	}
-	for i, m := range forked.Messages[fork.ID] {
-		if m.ID == created.Messages["chat-0"][i].ID || m.SessionID != fork.ID || m.Streaming {
-			t.Fatal("fork reused mutable/current-run message identity")
+	for i, m := range forked.Messages[branch.ID] {
+		if m.ID == created.Messages["chat-0"][i].ID || m.SessionID != branch.ID || m.Streaming {
+			t.Fatal("branch reused mutable/current-run message identity")
 		}
 	}
 	if err := s.Execute(ctx, contracts.Command{Kind: "session.sidechat", SessionID: "chat-0"}); err != nil {

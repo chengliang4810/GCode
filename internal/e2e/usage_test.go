@@ -124,7 +124,7 @@ func TestDesktopLocalApplicationUsage(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if err := core.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: sessionID}); err != nil {
+			if err := core.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: sessionID}); err != nil {
 				t.Fatal(err)
 			}
 			if err := core.Close(); err != nil {

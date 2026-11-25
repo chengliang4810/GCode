@@ -127,7 +127,7 @@ func TestAgentScenesAndForkKeepTurnOwnership(t *testing.T) {
 	}
 	s := newTestServer(t, Options{})
 	ctx := context.Background()
-	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
 	snapshot := snapshotWithAllSessions(t, s)
@@ -292,7 +292,7 @@ func TestActiveToolCancellationAndForkHaveSettledTiming(t *testing.T) {
 				value := true
 				err = s.UpdateSession(ctx, contracts.SessionUpdate{ID: "chat-0", Archived: &value})
 			case "fork":
-				err = s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"})
+				err = s.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: "chat-0"})
 			}
 			if err != nil {
 				t.Fatal(err)

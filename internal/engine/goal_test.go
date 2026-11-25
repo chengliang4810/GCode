@@ -481,7 +481,7 @@ func TestGoalRestartPausesAndSettlesToLastHeartbeat(t *testing.T) {
 		goal.TimeUsedMS != 16000 || goal.TokensUsed != 27 || goal.Iteration != 2 || len(state.Runs) != 0 {
 		t.Fatalf("restart inferred completion or resumed execution: %+v", goal)
 	}
-	if err = core.Execute(context.Background(), contracts.Command{Kind: "session.fork", SessionID: session.ID}); err != nil {
+	if err = core.Execute(context.Background(), contracts.Command{Kind: "session.branch", SessionID: session.ID}); err != nil {
 		t.Fatal(err)
 	}
 	state, _ = core.Snapshot(context.Background(), session.ID)

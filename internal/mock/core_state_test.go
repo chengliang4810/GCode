@@ -84,7 +84,7 @@ func TestSavedFileUpdatesChangesData(t *testing.T) {
 func TestForkCannotAnswerParentsPendingRequest(t *testing.T) {
 	s := newTestServer(t, Options{Scenario: "questions", TokenInterval: time.Hour})
 	ctx := context.Background()
-	if err := s.Execute(ctx, contracts.Command{Kind: "session.fork", SessionID: "chat-0"}); err != nil {
+	if err := s.Execute(ctx, contracts.Command{Kind: "session.branch", SessionID: "chat-0"}); err != nil {
 		t.Fatal(err)
 	}
 	summary, _ := s.Snapshot(ctx)
