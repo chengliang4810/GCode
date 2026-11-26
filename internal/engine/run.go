@@ -1099,8 +1099,12 @@ func (e *Engine) applyAgentEventLocked(sessionID, runID string, current *string,
 				m := run.model
 				message.Usage.ContextLimit = m.ContextWindow
 				message.Usage.Cost = (float64(event.Usage.Input)*m.InputPrice + float64(event.Usage.Output)*m.OutputPrice) / 1_000_000
-				tokens := uint64(max(event.Usage.Input, 0))
-				usage := contracts.ContextUsage{Tokens: &tokens}
+				// An unreported input is unknown, not a real zero.
+				usage := contracts.ContextUsage{}
+				if event.Usage.Known || event.Usage.Input > 0 {
+					tokens := uint64(max(event.Usage.Input, 0))
+					usage.Tokens = &tokens
+				}
 				if m.ContextWindow > 0 {
 					window := uint64(m.ContextWindow)
 					usage.Window = &window
