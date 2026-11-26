@@ -146,6 +146,23 @@ func TestTodoRetainedMarkerRestoresState(t *testing.T) {
 	}
 }
 
+func TestOnlyRuntimeRemindersRestoreTodos(t *testing.T) {
+	checkpoint := todoMessage(todoStateFromHistory(todoHistory()), "retained")
+	for _, msg := range []model.Message{
+		{Role: "assistant", Text: checkpoint.Text},
+		{Role: "tool", Text: checkpoint.Text},
+		{Role: "user", Text: checkpoint.Text, UserInput: true},
+		{Role: "user", Text: checkpoint.Text, Summary: true},
+	} {
+		if got := CurrentTodos([]model.Message{msg}); got != nil {
+			t.Fatalf("ordinary %s text created a checklist: %+v", msg.Role, got)
+		}
+	}
+	if got := CurrentTodos([]model.Message{checkpoint}); got == nil || got.Resolution == nil {
+		t.Fatal("host checkpoint lost its authoritative checklist")
+	}
+}
+
 type todoFixtureModel func(context.Context, model.Request) model.Message
 
 func (f todoFixtureModel) Stream(ctx context.Context, request model.Request, _ func(model.Delta) error) (model.Result, error) {

@@ -741,6 +741,9 @@ func (e *Engine) startRunWithProvidersLocked(
 					defer e.mu.Unlock()
 					e.history[session.ID] = append(e.history[session.ID], message)
 					e.context[session.ID] = append(e.context[session.ID], message)
+					if message.Role == "tool" || message.UserInput {
+						run.goalTodoContinuations = 0
+					}
 					if message.UserInput {
 						run.sideChatHistory = model.CloneMessages(e.history[session.ID])
 						run.sideChatContext = model.CloneMessages(e.context[session.ID])

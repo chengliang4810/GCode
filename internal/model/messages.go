@@ -97,6 +97,9 @@ func (messagesAdapter) encode(r Request, target adapterTarget) (map[string]any, 
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}
+	if r.RequiredTool != "" {
+		body["tool_choice"] = map[string]any{"type": "tool", "name": r.RequiredTool, "disable_parallel_tool_use": true}
+	}
 	switch effort {
 	case "":
 	case "none":

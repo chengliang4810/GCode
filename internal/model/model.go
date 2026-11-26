@@ -288,6 +288,9 @@ type Request struct {
 	History []Message
 	Tools   []Tool
 	Effort  string
+	// RequiredTool requests exactly one call to the named tool. An empty
+	// name leaves ordinary tool selection and parallelism to the model.
+	RequiredTool string
 	// ContextChange explains an intentional cache baseline change. It is
 	// diagnostic metadata, not a provider parameter.
 	ContextChange string

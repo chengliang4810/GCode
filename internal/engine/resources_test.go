@@ -134,7 +134,7 @@ func TestGoalPreservesInlineReferencesAndExecutionInstructions(t *testing.T) {
 	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body := subagentRequest(t, r)
 		if isGoalVerification(body) {
-			goalResponse(w, model.Chat, `{"passed":true,"reason":"The requested comparison was completed."}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"The requested comparison was completed."}`, true)
 			return
 		}
 		payload, _ := json.Marshal(body)

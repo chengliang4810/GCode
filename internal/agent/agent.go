@@ -598,7 +598,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				// A stop with unfinished todos and no resolution continues the
 				// run once more: finish the work or record a resolution. After
 				// the bound, a model that keeps ignoring the reminder stops.
-				if _, hasTodos := tools["TodoWrite"]; !options.OwnsCompletion && hasTodos && todoClosures < todoClosureLimit {
+				if _, hasTodos := tools["TodoWrite"]; !options.OwnsCompletion && hasTodos && todoClosures < TodoClosureLimit {
 					if state := todoStateFromHistory(request.History); state.unfinished() && state.Current.Resolution == nil {
 						if err := record(todoMessage(state, "closure")); err != nil {
 							return err

@@ -44,8 +44,8 @@ func TestGoalRealCoreComposerCreationPauseResumeAndStop(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "text/event-stream")
 		if strings.HasPrefix(system, "Review whether the objective below is fully satisfied") {
-			if len(request.Tools) != 0 {
-				http.Error(w, "the verifier must not receive tools", http.StatusBadRequest)
+			if len(request.Tools) != 1 || !strings.Contains(string(request.Tools[0]), "submit_goal_verdict") {
+				http.Error(w, "the verifier must receive only the verdict tool", http.StatusBadRequest)
 				return
 			}
 			verificationCalls.Add(1)

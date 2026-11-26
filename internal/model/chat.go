@@ -99,6 +99,10 @@ func (chatAdapter) encode(r Request, target adapterTarget) (map[string]any, erro
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}
+	if r.RequiredTool != "" {
+		body["tool_choice"] = map[string]any{"type": "function", "function": map[string]any{"name": r.RequiredTool}}
+		body["parallel_tool_calls"] = false
+	}
 	if target.model.MaxOutput > 0 {
 		body["max_completion_tokens"] = target.model.MaxOutput
 	}

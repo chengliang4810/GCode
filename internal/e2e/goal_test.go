@@ -37,7 +37,7 @@ func TestDesktopLocalGoalTodoStack(t *testing.T) {
 				n := calls.Add(1)
 				w.Header().Set("Content-Type", "text/event-stream")
 				if strings.Contains(string(body), "Review whether the objective below") {
-					fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"{\\\"passed\\\":true,\\\"reason\\\":\\\"The edited objective was checked.\\\"}\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+					fmt.Fprint(w, `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"goal-verdict","function":{"name":"submit_goal_verdict","arguments":"{\"passed\":true,\"reason\":\"The edited objective was checked.\"}"}}]},"finish_reason":"tool_calls"}]}`+"\n\ndata: [DONE]\n\n")
 					return
 				}
 				if n == 2 || n == 3 {

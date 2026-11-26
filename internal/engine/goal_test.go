@@ -45,7 +45,7 @@ func TestGoalSelectedCommandPosition(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if isGoalVerification(subagentRequest(t, r)) {
-					goalResponse(w, model.Chat, `{"passed":true,"reason":"Checked"}`, nil, true)
+					goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Checked"}`, true)
 				} else {
 					goalResponse(w, model.Chat, "Checked the project", nil, true)
 				}
@@ -81,15 +81,27 @@ func TestGoalExecutesVerifiesAndContinuesAcrossProtocols(t *testing.T) {
 			core, workspace := goalTestCore(t, protocol, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				body := subagentRequest(t, r)
 				if isGoalVerification(body) {
-					if tools, _ := body["tools"].([]any); len(tools) != 0 {
-						t.Error("completion verifier was given tools")
+					if tools, _ := body["tools"].([]any); len(tools) != 1 || !strings.Contains(fmt.Sprint(tools[0]), goalVerdictTool) {
+						t.Error("completion verifier must receive only the verdict tool")
+					}
+					choice, _ := json.Marshal(body["tool_choice"])
+					wantChoice := map[model.Protocol]string{
+						model.Chat:      `{"function":{"name":"submit_goal_verdict"},"type":"function"}`,
+						model.Responses: `{"name":"submit_goal_verdict","type":"function"}`,
+						model.Messages:  `{"disable_parallel_tool_use":true,"name":"submit_goal_verdict","type":"tool"}`,
+					}
+					if string(choice) != wantChoice[protocol] || (protocol != model.Messages && body["parallel_tool_calls"] != false) {
+						t.Errorf("verifier did not require a single verdict call: %s", choice)
 					}
 					if checks.Add(1) == 1 {
-						goalResponse(w, protocol, `{"passed":false,"reason":"The second file is missing.","nextAction":"Write second.txt and verify both files."}`, nil, true)
+						goalVerdictResponse(w, protocol, `{"passed":false,"reason":"The second file is missing.","nextAction":"Write second.txt and verify both files."}`, true)
 					} else {
-						goalResponse(w, protocol, `{"passed":true,"reason":"Both requested files were written and verified."}`, nil, true)
+						goalVerdictResponse(w, protocol, `{"passed":true,"reason":"Both requested files were written and verified."}`, true)
 					}
 					return
+				}
+				if _, forced := body["tool_choice"]; forced {
+					t.Error("worker inherited a verifier-only tool choice")
 				}
 				switch workCalls.Add(1) {
 				case 1:
@@ -157,7 +169,7 @@ func TestGoalEditRejectsStaleDraftAndStaleVerification(t *testing.T) {
 							return
 						}
 					}
-					goalResponse(w, protocol, `{"passed":true,"reason":"Evidence checked."}`, nil, true)
+					goalVerdictResponse(w, protocol, `{"passed":true,"reason":"Evidence checked."}`, true)
 					return
 				}
 				if work.Add(1) == 2 {
@@ -220,7 +232,7 @@ func TestGoalVerifierErrorsPauseInsteadOfCompleting(t *testing.T) {
 				case "invalid-json", "invalid-json-zh":
 					goalResponse(w, model.Chat, "done", nil, true)
 				case "incomplete-verdict":
-					goalResponse(w, model.Chat, `{"passed":false,"reason":"Missing evidence"}`, nil, true)
+					goalVerdictResponse(w, model.Chat, `{"passed":false,"reason":"Missing evidence"}`, true)
 				case "trailing":
 					goalResponse(w, model.Chat, `{"passed":true,"reason":"Done"} additional text`, nil, true)
 				case "tool-call":
@@ -269,7 +281,7 @@ func TestGoalBudgetIncludesVerificationAndRejectsBypassResume(t *testing.T) {
 		body := subagentRequest(t, r)
 		calls.Add(1)
 		if isGoalVerification(body) {
-			goalResponse(w, model.Chat, `{"passed":false,"reason":"More work remains","nextAction":"Continue inspection"}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":false,"reason":"More work remains","nextAction":"Continue inspection"}`, true)
 		} else {
 			goalResponse(w, model.Chat, "Partial result", nil, true)
 		}
@@ -306,7 +318,7 @@ func TestGoalUnknownUsageDoesNotBecomeZeroBudgetCost(t *testing.T) {
 				body := subagentRequest(t, r)
 				calls.Add(1)
 				if isGoalVerification(body) {
-					goalResponse(w, model.Chat, `{"passed":true,"reason":"Evidence is sufficient"}`, nil, false)
+					goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Evidence is sufficient"}`, false)
 				} else {
 					goalResponse(w, model.Chat, "Completed task", nil, false)
 				}
@@ -355,7 +367,7 @@ func TestGoalNewInputDuringVerificationTakesPriority(t *testing.T) {
 					return
 				}
 			}
-			goalResponse(w, model.Chat, `{"passed":true,"reason":"Reviewed all evidence"}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Reviewed all evidence"}`, true)
 			return
 		}
 		if work.Add(1) == 2 {
@@ -559,7 +571,7 @@ func TestGoalWaitsForChildAndAcceptsNewInputBeforeChildFinishes(t *testing.T) {
 		body := subagentRequest(t, r)
 		if isGoalVerification(body) {
 			checks.Add(1)
-			goalResponse(w, model.Chat, `{"passed":true,"reason":"Child results and user requirements were processed."}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Child results and user requirements were processed."}`, true)
 			return
 		}
 		switch parentCalls.Add(1) {
@@ -715,6 +727,10 @@ func isGoalVerification(body map[string]any) bool {
 	return strings.HasPrefix(system, "Review whether the objective below is fully satisfied")
 }
 
+func goalVerdictResponse(w http.ResponseWriter, protocol model.Protocol, arguments string, known bool) {
+	goalResponse(w, protocol, "", &model.Call{ID: "goal-verdict", Name: goalVerdictTool, Arguments: arguments}, known)
+}
+
 func goalResponse(
 	w http.ResponseWriter,
 	protocol model.Protocol,
@@ -786,10 +802,10 @@ func TestGoalVerifierRepairsFormat(t *testing.T) {
 			return
 		}
 		if checks.Add(1) == 1 {
-			goalResponse(w, model.Chat, "invalid", nil, true)
+			goalResponse(w, model.Chat, "<｜DSML｜ calls>", nil, true)
 			return
 		}
-		goalResponse(w, model.Chat, "```json\n{\"passed\":true,\"reason\":\"Evidence verified\",\"nextAction\":\"\"}\n```", nil, true)
+		goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Evidence verified"}`, true)
 	}))
 	sendGoal(t, core, "/goal Verify the implementation")
 	summary, _ := core.Snapshot(t.Context())
@@ -797,6 +813,50 @@ func TestGoalVerifierRepairsFormat(t *testing.T) {
 	goal := state.Sessions[0].Goal
 	if goal == nil || goal.Status != contracts.GoalComplete || checks.Load() != 2 || len(goal.Verifications) != 1 {
 		t.Fatalf("format repair did not complete goal: %+v, checks=%d", goal, checks.Load())
+	}
+}
+
+func TestGoalVerifierFailureContinuesKnownWorkOnce(t *testing.T) {
+	for _, recoverVerdict := range []bool{true, false} {
+		t.Run(fmt.Sprint(recoverVerdict), func(t *testing.T) {
+			var checks, work atomic.Int32
+			core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body := subagentRequest(t, r)
+				if isGoalVerification(body) {
+					n := checks.Add(1)
+					switch {
+					case n == 1:
+						goalVerdictResponse(w, model.Chat, `{"passed":false,"reason":"Evidence missing","nextAction":"Verify the second file"}`, true)
+					case n == 5 && recoverVerdict:
+						goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Both files verified"}`, true)
+					default:
+						goalResponse(w, model.Chat, "<｜DSML｜ calls>", nil, true)
+					}
+					return
+				}
+				if n := work.Add(1); n >= 2 {
+					raw, _ := json.Marshal(body)
+					if !strings.Contains(string(raw), "Verify the second file") {
+						t.Error("worker did not receive the known next action")
+					}
+				}
+				goalResponse(w, model.Chat, "Work evidence", nil, true)
+			}))
+			sendGoal(t, core, "/goal Verify both files")
+			summary, _ := core.Snapshot(t.Context())
+			state := waitSubagentState(t, core, runsFinished, summary.Sessions[0].ID)
+			goal := state.Sessions[0].Goal
+			if work.Load() != 3 {
+				t.Fatalf("worker calls = %d, want 3", work.Load())
+			}
+			if recoverVerdict {
+				if goal.Status != contracts.GoalComplete || checks.Load() != 5 || len(goal.Verifications) != 2 {
+					t.Fatalf("goal did not recover: %+v, checks=%d", goal, checks.Load())
+				}
+			} else if goal.Status != contracts.GoalPaused || checks.Load() != 7 || len(goal.Verifications) != 1 {
+				t.Fatalf("failed completion check was not bounded: %+v, checks=%d", goal, checks.Load())
+			}
+		})
 	}
 }
 
@@ -808,9 +868,6 @@ func TestParseGoalVerification(t *testing.T) {
 		valid bool
 	}{
 		{"bare", valid, true},
-		{"json fence", "```json\n" + valid + "\n```", true},
-		{"plain fence", "```\n" + valid + "\n```", true},
-		{"CRLF fence", "```json\r\n" + valid + "\r\n```", true},
 		{"extra prose", "Result: " + valid, false},
 		{"trailing prose", "```json\n" + valid + "\n``` done", false},
 		{"multiple blocks", "```json\n" + valid + "\n```\n```json\n" + valid + "\n```", false},

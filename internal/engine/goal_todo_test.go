@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
 )
@@ -26,13 +27,16 @@ func TestGoalUsesAuthoritativeTodosAndPausesOnResolution(t *testing.T) {
 						if !strings.Contains(string(raw), "currentTodos") || !strings.Contains(string(raw), "Verify the files") {
 							t.Error("verifier did not receive the current structured todo state")
 						}
-						if n > 2 {
+						if work.Load() < 6 {
+							t.Error("requested a completion check with executable todos")
+							goalResponse(w, protocol, "Here is my progress report.", nil, true)
+							return
+						}
+						if n > 1 {
 							http.Error(w, "completion did not settle", http.StatusBadRequest)
 							return
 						}
-						// The first verdict is deliberately wrong: the runtime must
-						// reject it while the authoritative checklist is unfinished.
-						goalResponse(w, protocol, `{"passed":true,"reason":"All done."}`, nil, true)
+						goalVerdictResponse(w, protocol, `{"passed":true,"reason":"All done."}`, true)
 						return
 					}
 					n := work.Add(1)
@@ -43,11 +47,14 @@ func TestGoalUsesAuthoritativeTodosAndPausesOnResolution(t *testing.T) {
 							args = fmt.Sprintf(`{"todos":[{"text":"Verify the files","status":"pending"}],"resolution":{"kind":%q,"reason":"Waiting for required access."}}`, resolution)
 						}
 						goalResponse(w, protocol, "", &model.Call{ID: "pending", Name: "TodoWrite", Arguments: args}, true)
-					case 2, 4:
+					case 2, 4, 6:
 						goalResponse(w, protocol, "Ready for review.", nil, true)
 					case 3:
+						goalResponse(w, protocol, "", &model.Call{ID: "partial", Name: "TodoWrite",
+							Arguments: `{"todos":[{"text":"Verify the files","status":"in_progress"},{"text":"Verify the last file","status":"pending"}]}`}, true)
+					case 5:
 						goalResponse(w, protocol, "", &model.Call{ID: "done", Name: "TodoWrite",
-							Arguments: `{"todos":[{"text":"Verify the files","status":"completed"}]}`}, true)
+							Arguments: `{"todos":[{"text":"Verify the files","status":"completed"},{"text":"Verify the last file","status":"completed"}]}`}, true)
 					default:
 						http.Error(w, "ordinary closure restarted a settled goal", http.StatusBadRequest)
 					}
@@ -65,12 +72,68 @@ func TestGoalUsesAuthoritativeTodosAndPausesOnResolution(t *testing.T) {
 						work.Load() != 2 || checks.Load() != 0 || len(goal.Verifications) != 0 {
 						t.Fatalf("resolution was ignored or marked complete: goal=%+v work=%d checks=%d", goal, work.Load(), checks.Load())
 					}
-				} else if goal.Status != contracts.GoalComplete || work.Load() != 4 || checks.Load() != 2 ||
-					len(goal.Verifications) != 2 || goal.Verifications[0].Passed || !goal.Verifications[1].Passed {
+				} else if goal.Status != contracts.GoalComplete || work.Load() != 6 || checks.Load() != 1 ||
+					goal.Iteration != 3 || len(goal.Verifications) != 1 || !goal.Verifications[0].Passed {
 					t.Fatalf("unfinished list passed verification: goal=%+v work=%d checks=%d", goal, work.Load(), checks.Load())
 				}
 			})
 		}
+	}
+}
+
+func TestGoalPausesOnRepeatedIdleAndResumesTheAuthoritativeTodo(t *testing.T) {
+	var work, checks, resumed atomic.Int32
+	const active = "Finish the running check"
+	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := subagentRequest(t, r)
+		if isGoalVerification(body) {
+			checks.Add(1)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Evidence verified"}`, true)
+			return
+		}
+		if work.Add(1) == 1 {
+			goalResponse(w, model.Chat, "", &model.Call{ID: "todo", Name: "TodoWrite",
+				Arguments: `{"todos":[{"text":"Later task","status":"pending"},{"text":"Finish the running check","status":"in_progress"}]}`}, true)
+			return
+		}
+		if resumed.CompareAndSwap(1, 2) {
+			messages := body["messages"].([]any)
+			last := messages[len(messages)-1].(map[string]any)
+			if text, _ := last["content"].(string); !strings.Contains(text, `"nextAction":"`+active+`"`) {
+				t.Error("resume omitted the saved in-progress item from the worker's first request")
+			}
+			goalResponse(w, model.Chat, "", &model.Call{ID: "finished", Name: "TodoWrite", Arguments: `{"todos":[]}`}, true)
+			return
+		}
+		goalResponse(w, model.Chat, "Stage report.", nil, true)
+	}))
+	sendGoal(t, core, "/goal Finish the checklist")
+	summary, _ := core.Snapshot(t.Context())
+	id := summary.Sessions[0].ID
+	state := waitSubagentState(t, core, runsFinished, id)
+	goal := state.Sessions[0].Goal
+	if work.Load() != agent.TodoClosureLimit+2 || checks.Load() != 0 || goal.Status != contracts.GoalPaused || goal.NextAction != active {
+		t.Fatalf("unbounded or premature stop: work=%d checks=%d goal=%+v", work.Load(), checks.Load(), goal)
+	}
+	// The incident record has a checklist and an empty saved next action.
+	func() {
+		core.mu.Lock()
+		defer core.mu.Unlock()
+		if err := core.ensureSessionDataLocked(id); err != nil {
+			t.Fatal(err)
+		}
+		core.state.Sessions[core.sessionIndex(id)].Goal.NextAction = ""
+		if err := core.persistLocked(id); err != nil {
+			t.Fatal(err)
+		}
+	}()
+	resumed.Store(1)
+	if err := core.Execute(t.Context(), contracts.Command{Kind: "goal.resume", SessionID: id, ID: goal.ID}); err != nil {
+		t.Fatal(err)
+	}
+	state = waitSubagentState(t, core, runsFinished, id)
+	if state.Sessions[0].Goal.Status != contracts.GoalComplete || checks.Load() != 1 {
+		t.Fatalf("resume did not finish: checks=%d goal=%+v", checks.Load(), state.Sessions[0].Goal)
 	}
 }
 
@@ -87,7 +150,7 @@ func TestGoalRevisionRejectsEditsAndVerdictsAfterObjectiveChangesBack(t *testing
 					return
 				}
 			}
-			goalResponse(w, model.Chat, `{"passed":true,"reason":"Verified."}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Verified."}`, true)
 			return
 		}
 		work.Add(1)
@@ -134,7 +197,7 @@ func TestGoalCommandsReadAndExplicitReplacePreserveUserIntent(t *testing.T) {
 	var work atomic.Int32
 	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if isGoalVerification(subagentRequest(t, r)) {
-			goalResponse(w, model.Chat, `{"passed":true,"reason":"Verified."}`, nil, true)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Verified."}`, true)
 			return
 		}
 		n := work.Add(1)
@@ -199,7 +262,7 @@ func TestGoalEditedDuringWorkReachesExecutorBeforeVerification(t *testing.T) {
 					if work.Load() < 2 {
 						t.Error("the old work answer reached verification before executing the edited objective")
 					}
-					goalResponse(w, protocol, `{"passed":true,"reason":"New requirements verified."}`, nil, true)
+					goalVerdictResponse(w, protocol, `{"passed":true,"reason":"New requirements verified."}`, true)
 					return
 				}
 				if work.Add(1) == 1 {

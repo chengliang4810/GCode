@@ -20,9 +20,9 @@ const (
 	// TodoMaxItems caps one update: a longer list means the model is dumping
 	// work instead of tracking it.
 	TodoMaxItems = 100
-	// todoClosureLimit bounds consecutive closure continuations, mirroring the
-	// Stop hook limit: a model that ignores the reminder still gets to stop.
-	todoClosureLimit = 8
+	// TodoClosureLimit bounds consecutive checklist reminders without a tool
+	// round in both ordinary conversations and goal execution.
+	TodoClosureLimit = 8
 )
 
 type TodoStatus string
@@ -124,7 +124,7 @@ func todoStateFromHistory(history []model.Message) todoState {
 	nextCall, latestSuccess := 0, 0
 	for i := range history {
 		message := history[i]
-		if strings.Contains(message.Text, todoStateMarker) && strings.HasPrefix(message.Text, "<system-reminder>") {
+		if message.Role == "user" && !message.UserInput && !message.Summary && strings.HasPrefix(message.Text, "<system-reminder>") {
 			if restored := parseTodoStateMessage(message.Text); restored != nil {
 				state = *restored
 				calls = map[string]ordered{}

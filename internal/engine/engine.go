@@ -68,6 +68,11 @@ type activeRun struct {
 	// lastPersist bounds how often a running turn rewrites the conversation.
 	// It is guarded by Engine.mu.
 	lastPersist time.Time
+
+	goalCheckRecovered        bool // bounded fallback after a failed completion check; guarded by Engine.mu
+	goalCheckRecoveryRevision uint64
+	goalTodoContinuations     int  // consecutive checklist handoffs without a tool result or human input
+	verifierAutoChoice        bool // worker-owned; this run's bound model rejected forced tool choice
 }
 
 type Engine struct {

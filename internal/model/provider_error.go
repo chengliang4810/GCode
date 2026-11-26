@@ -27,6 +27,27 @@ func IsContextOverflow(err error) bool {
 		(body.Error.Type == "invalid_request_error" && strings.HasPrefix(strings.ToLower(body.Error.Message), "prompt is too long"))
 }
 
+// IsToolChoiceRejected identifies a request rejected specifically for its
+// forced tool selection. Other invalid requests must keep their original error.
+func IsToolChoiceRejected(err error) bool {
+	var e *ProviderError
+	if !errors.As(err, &e) || (e.HTTPStatus != 400 && e.HTTPStatus != 422) {
+		return false
+	}
+	var body struct {
+		Message string
+		Error   struct{ Param, Message string }
+	}
+	message := e.detail
+	if json.Unmarshal([]byte(message), &body) == nil {
+		message = body.Error.Param + " " + body.Error.Message + " " + body.Message
+	}
+	message = strings.ToLower(message)
+	return strings.Contains(message, "tool_choice") || strings.Contains(message, "tool choice") ||
+		strings.Contains(message, "forced tool use") || strings.Contains(message, "forcing tool use") ||
+		strings.Contains(message, "parallel_tool_calls")
+}
+
 const maxProviderErrorBytes = 64 << 10
 
 // ProviderError contains provider diagnostics safe to publish to the UI and

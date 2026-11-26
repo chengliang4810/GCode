@@ -217,6 +217,9 @@ func (g *Gateway) StreamWithAttempts(ctx context.Context, input Request, emit fu
 	if err := ctx.Err(); err != nil {
 		return Result{}, err
 	}
+	if input.RequiredTool != "" && !slices.ContainsFunc(input.Tools, func(tool Tool) bool { return tool.Name == input.RequiredTool }) {
+		return Result{}, fmt.Errorf("required tool %q is not in the request", input.RequiredTool)
+	}
 	target := g.target
 	target.model.MaxOutput = target.model.RequestOutputLimit(g.provider.Protocol, input.ContextChange == "summary")
 	payload, err := g.adapter.encode(input, target)

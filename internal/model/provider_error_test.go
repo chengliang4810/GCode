@@ -31,6 +31,25 @@ func TestContextOverflowNeedsExplicitProviderError(t *testing.T) {
 	}
 }
 
+func TestToolChoiceRejectionRequiresParameterSpecificRequestError(t *testing.T) {
+	for _, tc := range []struct {
+		status int
+		body   string
+		want   bool
+	}{
+		{400, `{"error":{"param":"tool_choice","message":"Unsupported value"}}`, true},
+		{422, `{"error":{"message":"Thinking does not support forcing tool use"}}`, true},
+		{400, "Unsupported parameter: parallel_tool_calls", true},
+		{400, `{"error":{"message":"prompt is too long"},"request":{"tool_choice":"required"}}`, false},
+		{401, `{"error":{"message":"No access to tool_choice"}}`, false},
+		{500, "tool_choice error", false},
+	} {
+		if got := IsToolChoiceRejected(&ProviderError{HTTPStatus: tc.status, detail: tc.body}); got != tc.want {
+			t.Errorf("status=%d body=%q: got %t", tc.status, tc.body, got)
+		}
+	}
+}
+
 func TestProviderHTTPErrorPreservesOriginalBody(t *testing.T) {
 	for _, protocol := range []Protocol{Chat, Responses, Messages} {
 		for _, body := range []string{

@@ -104,6 +104,8 @@ func (m sessionModel) Stream(ctx context.Context, request model.Request, emit fu
 		source = "subagent"
 	} else if m.run.compacting {
 		source = "compact"
+	} else if request.ContextChange == goalVerificationContext {
+		source = goalVerificationContext
 	}
 	gateway.Observe = e.trajectoryRecorder(session, m.run.id, source)
 	if m.trackReply && emit != nil {
