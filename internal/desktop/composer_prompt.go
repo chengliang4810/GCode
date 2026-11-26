@@ -384,8 +384,12 @@ func (a *App) promptPanel(c *ui.Context, anchor ui.Element, p composerSurfacePro
 				button := controlPromptChoice(c.Key(key), i == s.selected).FillWidth().Label(choice.ref.Label)
 				button.Children(func() {
 					icon(c, promptGlyph(choice.ref), 15)
-					ui.Text(c, choice.ref.Label).Grow(1).MinWidth(0).SingleLine()
+					// 名称是这一行的主标识：它按内容定宽、不参与压缩，中间
+					// 的空档吃掉剩余宽度，长描述只能压缩自己。否则一条长
+					// 描述会把名称挤成省略号，候选行看起来没有名字。
+					ui.Text(c, choice.ref.Label).MinWidth(0).Shrink(0).SingleLine()
 					if choice.description != "" {
+						ui.Box(c).Grow(1)
 						ui.Text(c, choice.description).MinWidth(0).Shrink(1).SingleLine().TextColor(a.palette.Muted)
 					}
 				})
