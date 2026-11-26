@@ -140,7 +140,7 @@ func (e *Engine) evictIdleSessionsLocked() {
 			continue
 		}
 		goal := e.state.Sessions[index].Goal
-		if goal != nil && (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying) {
+		if goal != nil && (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying || goal.Status == contracts.GoalResumePending) {
 			continue
 		}
 		e.evictSessionLocked(id, index)

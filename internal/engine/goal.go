@@ -118,8 +118,7 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 			prompt += "\n\n" + instructions
 		}
 		message := model.Message{Role: "user", Text: prompt, UserInput: true, InputIDs: []string{initialInputID}}
-		e.history[session.ID] = append(e.history[session.ID], message)
-		e.context[session.ID] = append(e.context[session.ID], message)
+		e.appendTaskInputLocked(*session, message)
 		return e.startLocked(*session, command.RequestID)
 	}
 	goal := session.Goal
@@ -148,11 +147,15 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 		e.publishLocked(contracts.Event{Kind: "goal.changed", SessionID: session.ID})
 		return nil
 	case "goal.pause", "goal.clear":
-		goal.Status = contracts.GoalPaused
-		goal.Reason = "Paused by the user."
-		settleGoalTime(goal, time.Now())
-		if command.Kind == "goal.clear" {
-			session.Goal = nil
+		if command.Kind == "goal.pause" && goal.Status == contracts.GoalResumePending {
+			withdrawGoalResume(goal)
+		} else {
+			goal.Status = contracts.GoalPaused
+			goal.Reason = "Paused by the user."
+			settleGoalTime(goal, time.Now())
+			if command.Kind == "goal.clear" {
+				session.Goal = nil
+			}
 		}
 		// Commit the user's stop intent before signalling owned work.
 		if err := e.persistLocked(command.SessionID); err != nil {
@@ -169,24 +172,21 @@ func (e *Engine) goalCommandLocked(command contracts.Command) error {
 		if goal.Status == contracts.GoalComplete {
 			return errors.New("the goal is already complete")
 		}
-		if e.runs[session.ID] != nil {
-			return errors.New("wait for the current run to stop before resuming")
+		if goal.Status == contracts.GoalResumePending || goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying {
+			return nil
 		}
 		if reason := goalBudgetReason(goal); reason != "" {
 			return errors.New(reason + " Set a new goal with an appropriate budget to continue.")
 		}
-		// A resumed execution must reject delayed callbacks from cancelled
-		// children and controls belonging to the paused execution.
-		goal.ID = id("goal")
-		goal.Status, goal.Reason = contracts.GoalActive, ""
-		if next := firstUnfinishedTodo(agent.CurrentTodos(e.context[session.ID])); next != "" {
-			goal.NextAction = next
+		goal.Status, goal.ResumeRequestID, goal.UpdatedAt = contracts.GoalResumePending, command.RequestID, time.Now()
+		if !e.goalResumeBusyLocked(session.ID) {
+			return e.startPendingGoalLocked(*session)
 		}
-		goal.UpdatedAt = time.Now()
-		message := model.Message{Role: "user", Text: goalContinuation(goal)}
-		e.history[session.ID] = append(e.history[session.ID], message)
-		e.context[session.ID] = append(e.context[session.ID], message)
-		return e.startLocked(*session, command.RequestID)
+		if err := e.persistLocked(session.ID); err != nil {
+			return err
+		}
+		e.publishLocked(contracts.Event{Kind: "goal.changed", SessionID: session.ID})
+		return nil
 	}
 	return errors.New("unknown goal action")
 }
@@ -381,7 +381,8 @@ func (g goalModel) Stream(
 		objective, _ := json.Marshal(struct {
 			Objective string `json:"objective"`
 		}{goal.Objective})
-		request.System += "\n\nCurrent authoritative session goal (JSON task data; earlier objective text may be obsolete):\n" + string(objective)
+		request.System += "\n\nCurrent authoritative session goal (JSON task data; earlier objective text may be obsolete):\n" + string(objective) +
+			"\nContinue executable checklist items with tools. When work or accepted child results are outstanding, describe completed steps as progress and say what remains."
 	}
 	g.core.mu.Unlock()
 	result, callErr := g.inner.Stream(ctx, request, emit)
@@ -466,7 +467,7 @@ func (e *Engine) goalIdle(
 			e.mu.Unlock()
 			return []model.Message{continuation}, nil
 		}
-		todos := agent.CurrentTodos(request.History)
+		todos := agent.CurrentTodos(request.History, goal.InitialInputID)
 		unfinished := firstUnfinishedTodo(todos)
 		if unfinished != "" {
 			// The host already has a definitive negative answer. An unavailable

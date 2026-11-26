@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"gcode/internal/model"
@@ -95,27 +96,57 @@ func validateTodoArguments(raw json.RawMessage) error {
 	return err
 }
 
-// CurrentTodos replays the same successful writes and compaction checkpoints as
-// the execution loop. Goal verification must not infer task state from prose.
-func CurrentTodos(history []model.Message) *TodoUpdate {
-	return todoStateFromHistory(history).Current
+// CurrentTodos returns the requested goal's checklist, or the current ordinary
+// task's checklist when goalInputID is empty.
+func CurrentTodos(history []model.Message, goalInputID string) *TodoUpdate {
+	return todoStateForTask(history, goalInputID).Current
+}
+
+// ResumeGoalTodos reopens this goal's checklist from the full execution history.
+// A paused goal can outlive both ordinary tasks and context compaction.
+func ResumeGoalTodos(history []model.Message, goalInputID string) (*TodoUpdate, model.Message) {
+	state := todoState{goalInputID: goalInputID}
+	if goalInputID != "" {
+		state.Current = CurrentTodos(history, goalInputID)
+	}
+	if state.Current != nil {
+		state.Current.Resolution = nil
+	}
+	return state.Current, todoMessage(state, "resume")
 }
 
 // todoState is the checklist plus the turn counters the reminders derive from.
 // It is rebuilt from history every round; nothing else stores it.
 type todoState struct {
+	goalInputID string
 	// Exported for the retained-state snapshot embedded in reminder messages.
 	Current            *TodoUpdate `json:"current"`
 	TurnsSinceWrite    int         `json:"turns_since_write"`
 	TurnsSinceReminder int         `json:"turns_since_reminder"`
 }
 
-// todoStateFromHistory replays execution history: assistant turns advance the
-// counters, the latest successful TodoWrite call owns the list, a user request
-// resumes previously blocked work, and a retained-state marker restores the
-// state across compaction.
+// Ordinary submissions and new goals start independent checklists. Steering an
+// active goal and internal notifications remain part of the existing task.
 func todoStateFromHistory(history []model.Message) todoState {
-	state := todoState{}
+	// Compaction may inspect a historical prefix ending before the live task.
+	for _, message := range slices.Backward(history) {
+		if message.UserInput || message.Role == "assistant" || message.GoalInputID != "" || isTodoCheckpoint(message) {
+			return todoStateForTask(history, message.GoalInputID)
+		}
+	}
+	return todoState{}
+}
+
+func todoStateForTask(history []model.Message, goalInputID string) todoState {
+	if goalInputID == "" {
+		for i, message := range slices.Backward(history) {
+			if message.UserInput || message.GoalInputID != "" {
+				history = history[i+1:]
+				break
+			}
+		}
+	}
+	state := todoState{goalInputID: goalInputID}
 	type ordered struct {
 		order int
 		raw   json.RawMessage
@@ -124,10 +155,19 @@ func todoStateFromHistory(history []model.Message) todoState {
 	nextCall, latestSuccess := 0, 0
 	for i := range history {
 		message := history[i]
-		if message.Role == "user" && !message.UserInput && !message.Summary && strings.HasPrefix(message.Text, "<system-reminder>") {
+		if message.UserInput || (message.Role == "assistant" && message.GoalInputID != goalInputID) {
+			clear(calls)
+			continue
+		}
+		if isTodoCheckpoint(message) {
+			if message.GoalInputID != goalInputID {
+				clear(calls)
+				continue
+			}
 			if restored := parseTodoStateMessage(message.Text); restored != nil {
 				state = *restored
-				calls = map[string]ordered{}
+				state.goalInputID = goalInputID
+				clear(calls)
 				continue
 			}
 		}
@@ -141,19 +181,14 @@ func todoStateFromHistory(history []model.Message) todoState {
 				}
 			}
 		}
-		if message.UserInput && state.Current != nil {
-			// A new request may resume previously blocked work; internal
-			// reminders neither clear nor fabricate this user intent.
-			state.Current.Resolution = nil
-		}
 		if message.Role != "tool" {
 			continue
 		}
 		call, ok := calls[message.CallID]
+		delete(calls, message.CallID)
 		if !ok || message.IsError {
 			continue
 		}
-		delete(calls, message.CallID)
 		// Concurrent tools may return out of order; a late result of an
 		// earlier call must not overwrite the model's last successful update.
 		if call.order <= latestSuccess {
@@ -168,6 +203,11 @@ func todoStateFromHistory(history []model.Message) todoState {
 		latestSuccess = call.order
 	}
 	return state
+}
+
+func isTodoCheckpoint(message model.Message) bool {
+	return message.Role == "user" && !message.UserInput && !message.Summary &&
+		strings.HasPrefix(message.Text, "<system-reminder>") && strings.Contains(message.Text, "<!-- "+todoStateMarker)
 }
 
 // parseTodoStateMessage extracts the state embedded by todoMessage. The
@@ -231,6 +271,8 @@ func todoMessage(state todoState, kind string) model.Message {
 		instruction = "The todo list has not been updated recently. Keep it aligned with your actual progress: mark finished items completed and the current item in_progress. Use TodoWrite only when relevant. Do not mention this internal reminder to the user."
 	case "closure":
 		instruction = "You stopped with unfinished todos. Continue the work and update TodoWrite before concluding. If genuinely blocked, cancelled, or out of scope, keep unfinished statuses and call TodoWrite with resolution={kind:blocked|cancelled|scope_changed,reason:<specific reason>}, then explain the remaining work to the user. Never mark unfinished work completed just to end the turn."
+	case "resume":
+		instruction = "The user explicitly resumed this goal. Use its saved checklist below and update it as work progresses."
 	default:
 		instruction = "Current todo state retained across compaction. This supersedes older todo lists; later successful TodoWrite calls replace it."
 	}
@@ -239,7 +281,7 @@ func todoMessage(state todoState, kind string) model.Message {
 		snapshot = []byte("{}")
 	}
 	body := fmt.Sprintf("%s\nCurrent todo list:\n%s\n<!-- %s%s -->", instruction, state.render(), todoStateMarker, snapshot)
-	return model.Message{Role: "user", Text: "<system-reminder>\n" + body + "\n</system-reminder>"}
+	return model.Message{Role: "user", GoalInputID: state.goalInputID, Text: "<system-reminder>\n" + body + "\n</system-reminder>"}
 }
 
 type todoWriteTool struct{}
@@ -248,7 +290,7 @@ func (todoWriteTool) Definition() model.Tool {
 	status := map[string]any{"type": "string", "enum": []string{"pending", "in_progress", "completed"}, "description": "Where this item stands. Exactly one item should be in_progress."}
 	return model.Tool{
 		Name: "TodoWrite",
-		Description: "Record or update your task list. Send the whole list every time — it replaces the previous one, so include items you have not finished. " +
+		Description: "Record or update the checklist for the current user task or active goal. Each update replaces that task's whole list. Leave unrelated historical items with their original task. " +
 			"Use it for work with several steps; skip it for a single action. Update status as work progresses and immediately after completion. " +
 			"Before ending, complete the remaining work, or preserve unfinished statuses and provide resolution={kind:blocked|cancelled|scope_changed,reason:<specific reason>}. " +
 			"Explain that resolution to the user. Never mark unfinished work completed.",

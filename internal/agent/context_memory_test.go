@@ -492,12 +492,23 @@ func TestContextMemoryRangeDiagnosticsAndSafeRanges(t *testing.T) {
 }
 
 func TestCompressContextPreservesTodoState(t *testing.T) {
-	for _, source := range []string{"write", "checkpoint", "newer-tail"} {
+	for _, source := range []string{"write", "checkpoint", "newer-tail", "goal-steer"} {
 		t.Run(source, func(t *testing.T) {
 			history := contextMemoryHistory()
+			history[len(history)-1] = model.Message{Role: "user", Text: "The accepted child finished."}
 			todo := todoHistory()
 			todo[1].Calls[0].Arguments = `{"todos":[{"text":"unfinished work","status":"in_progress"}]}`
 			history[1], history[2] = todo[1], todo[2]
+			if source == "goal-steer" {
+				const goal = "goal-input"
+				for i := range history {
+					if history[i].Role != "tool" {
+						history[i].GoalInputID = goal
+					}
+				}
+				history[0].InputIDs = []string{goal}
+				history[len(history)-1] = model.Message{Role: "user", Text: "Additional requirement.", UserInput: true, InputIDs: []string{"steer"}, GoalInputID: goal}
+			}
 			if source == "checkpoint" {
 				retained := todoMessage(todoStateFromHistory(history[:3]), "retained")
 				history[1] = retained
@@ -542,6 +553,7 @@ func TestCompressContextPreservesTodoState(t *testing.T) {
 
 func TestRunTodoReminderSurvivesManualContextCompression(t *testing.T) {
 	history := contextMemoryHistory()
+	history[len(history)-1] = model.Message{Role: "user", Text: "The accepted child finished."}
 	initial := todoHistory()
 	initial[1].Calls[0].Arguments = `{"todos":[{"text":"finish implementation","status":"in_progress"}]}`
 	history[1], history[2] = initial[1], initial[2]
@@ -574,7 +586,7 @@ func TestRunTodoReminderSurvivesManualContextCompression(t *testing.T) {
 				raw, _ := json.Marshal(map[string]string{"start_ref": history[1].ContextRef, "end_ref": history[9].ContextRef, "summary": "Earlier implementation evidence."})
 				return model.Result{Message: model.Message{Role: "assistant", Calls: []model.Call{{ID: "fold-with-todos", Name: "CompressContext", Arguments: string(raw)}}}}, nil
 			}
-			if state := CurrentTodos(request.History); state == nil || state.Todos[0].Text != "finish implementation" {
+			if state := CurrentTodos(request.History, ""); state == nil || state.Todos[0].Text != "finish implementation" {
 				t.Fatal("executor lost its checklist after compression")
 			}
 			if completed {
@@ -589,5 +601,36 @@ func TestRunTodoReminderSurvivesManualContextCompression(t *testing.T) {
 	})
 	if err != nil || reminders != 1 || !completed {
 		t.Fatalf("reminder/update cycle failed: err=%v reminders=%d completed=%t", err, reminders, completed)
+	}
+}
+
+func TestCompactingATaskBoundaryDoesNotReviveOlderTodos(t *testing.T) {
+	history := contextMemoryHistory()
+	todo := todoHistory()
+	history[1], history[2] = todo[1], todo[2]
+	history[6] = model.Message{Role: "user", UserInput: true, Text: "An independent question."}
+	AssignContextRefs(history)
+	// A later protected human input lets the intermediate boundary be folded.
+	folded, _, err := foldContext(history, ContextMemory{}, 4, 11, "Answered a separate question.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Inspect before the final protected input so it cannot hide a stale list.
+	if got := CurrentTodos(folded[:len(folded)-1], ""); got != nil {
+		t.Fatalf("folding the new input reactivated an older list: %+v", got)
+	}
+
+	summary := testModel{stream: func(model.Request) (model.Result, error) {
+		return model.Result{Message: model.Message{Role: "assistant", Text: "Earlier work."}}, nil
+	}}
+	for _, independent := range []bool{false, true} {
+		history[6].UserInput = independent
+		view, err := Compact(t.Context(), summary, model.Request{History: history[:len(history)-1]})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := CurrentTodos(view, ""); independent && got != nil || !independent && (got == nil || got.Resolution == nil) {
+			t.Fatalf("manual compaction lost the task boundary: independent=%t todos=%+v", independent, got)
+		}
 	}
 }

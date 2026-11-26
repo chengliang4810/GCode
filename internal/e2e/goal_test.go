@@ -26,6 +26,8 @@ func TestDesktopLocalGoalTodoStack(t *testing.T) {
 		t.Run(appearance, func(t *testing.T) {
 			binary, artifacts := testPaths(t)
 			var calls atomic.Int32
+			var ordinaryRunning atomic.Bool
+			finishOrdinary := make(chan struct{})
 			release := make(chan struct{}, 1)
 			shutdown := make(chan struct{})
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,12 +36,22 @@ func TestDesktopLocalGoalTodoStack(t *testing.T) {
 					t.Error(err)
 					return
 				}
-				n := calls.Add(1)
 				w.Header().Set("Content-Type", "text/event-stream")
 				if strings.Contains(string(body), "Review whether the objective below") {
 					fmt.Fprint(w, `data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"goal-verdict","function":{"name":"submit_goal_verdict","arguments":"{\"passed\":true,\"reason\":\"The edited objective was checked.\"}"}}]},"finish_reason":"tool_calls"}]}`+"\n\ndata: [DONE]\n\n")
 					return
 				}
+				if !strings.Contains(string(body), "Current authoritative session goal") {
+					ordinaryRunning.Store(true)
+					select {
+					case <-finishOrdinary:
+						fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ORDINARY_TASK_ANSWERED\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n")
+					case <-r.Context().Done():
+					case <-shutdown:
+					}
+					return
+				}
+				n := calls.Add(1)
 				if n == 2 || n == 3 {
 					select {
 					case <-release:
@@ -261,7 +273,44 @@ func TestDesktopLocalGoalTodoStack(t *testing.T) {
 					pausedGoalID = session.Goal.ID
 				}
 			}
+			app.act("input", "setValue", "Answer an independent question")
+			app.act("send", "press", "")
+			app.await("ordinary task is running with the goal paused", func() error {
+				if !ordinaryRunning.Load() {
+					return fmt.Errorf("ordinary worker has not started")
+				}
+				return nil
+			})
+			app.act("input", "setValue", "Keep the message draft")
+			waitToggle := func(status contracts.GoalStatus, english, chinese string) {
+				t.Helper()
+				app.await("goal toggle shows "+english+" while the ordinary task is running", func() error {
+					state, err := readFixtureSnapshot(data)
+					if err != nil {
+						return err
+					}
+					tree, err := app.client.tree()
+					if err != nil {
+						return err
+					}
+					for _, session := range state.Sessions {
+						if session.ID == sessionID && session.Status == contracts.Working && session.Goal != nil &&
+							session.Goal.Status == status && session.Goal.ID == pausedGoalID &&
+							(activityTreeContains(tree, english) || activityTreeContains(tree, chinese)) {
+							return nil
+						}
+					}
+					return fmt.Errorf("waiting for %s", status)
+				})
+			}
 			app.act("goal-toggle:"+sessionID, "press", "")
+			waitToggle(contracts.GoalResumePending, "Cancel pending resume", "取消自动恢复")
+			app.capture("goal-resume-pending")
+			app.act("goal-toggle:"+sessionID, "press", "")
+			waitToggle(contracts.GoalPaused, "Resume goal", "恢复目标")
+			app.act("goal-toggle:"+sessionID, "press", "")
+			waitToggle(contracts.GoalResumePending, "Cancel pending resume", "取消自动恢复")
+			close(finishOrdinary)
 			release <- struct{}{}
 			app.await("goal completes after resume", func() error {
 				state, err := readFixtureSnapshot(data)

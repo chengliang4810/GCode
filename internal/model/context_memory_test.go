@@ -15,7 +15,8 @@ func TestContextReferencesStayOffAllProviderWires(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			body, err := test.wire.encode(Request{History: []Message{
-				{Role: "user", Text: "task", ContextRef: "private-context-ref"},
+				{Role: "user", Text: "task", ContextRef: "private-context-ref", GoalInputID: "private-goal-input"},
+				{Role: "assistant", Text: "Working.", GoalInputID: "private-goal-input"},
 			}}, adapterTarget{model: Model{ID: "fixture"}})
 			if err != nil {
 				t.Fatal(err)
@@ -24,8 +25,10 @@ func TestContextReferencesStayOffAllProviderWires(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if strings.Contains(string(raw), "private-context-ref") || strings.Contains(string(raw), "contextRef") {
-				t.Fatal("host identity leaked to provider", string(raw))
+			for _, private := range []string{"private-context-ref", "contextRef", "private-goal-input", "goalInputId"} {
+				if strings.Contains(string(raw), private) {
+					t.Fatal("host identity leaked to provider", string(raw))
+				}
 			}
 		})
 	}

@@ -12,6 +12,7 @@ import (
 	"gcode/internal/agent"
 	"gcode/internal/contracts"
 	"gcode/internal/model"
+	"gcode/internal/storage"
 )
 
 func TestGoalUsesAuthoritativeTodosAndPausesOnResolution(t *testing.T) {
@@ -134,6 +135,104 @@ func TestGoalPausesOnRepeatedIdleAndResumesTheAuthoritativeTodo(t *testing.T) {
 	state = waitSubagentState(t, core, runsFinished, id)
 	if state.Sessions[0].Goal.Status != contracts.GoalComplete || checks.Load() != 1 {
 		t.Fatalf("resume did not finish: checks=%d goal=%+v", checks.Load(), state.Sessions[0].Goal)
+	}
+}
+
+func TestPausedGoalAndOrdinaryTasksOwnTheirChecklists(t *testing.T) {
+	var phase, calls, checks atomic.Int32
+	const device = "Verify frames on the physical phone"
+	core, _ := goalTestCore(t, model.Chat, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body := subagentRequest(t, r)
+		if isGoalVerification(body) {
+			checks.Add(1)
+			goalVerdictResponse(w, model.Chat, `{"passed":true,"reason":"Verified."}`, true)
+			return
+		}
+		n := calls.Add(1)
+		messages := body["messages"].([]any)
+		last := messages[len(messages)-1].(map[string]any)
+		content, _ := last["content"].(string)
+		reply := func(text string) { goalResponse(w, model.Chat, text, nil, true) }
+		write := func(id, args string) {
+			goalResponse(w, model.Chat, "", &model.Call{ID: id, Name: "TodoWrite", Arguments: args}, true)
+		}
+		switch phase.Load() {
+		case 0:
+			if n == 1 {
+				write("device", `{"todos":[{"text":"Verify frames on the physical phone","status":"pending"}],"resolution":{"kind":"blocked","reason":"Phone disconnected."}}`)
+			} else {
+				reply("The phone is disconnected.")
+			}
+		case 1:
+			reply("The host checks ran.")
+		case 2:
+			switch n {
+			case 1:
+				write("host", `{"todos":[{"text":"Check the host","status":"in_progress"}]}`)
+			case 2:
+				reply("Host progress.")
+			case 3:
+				if !strings.Contains(content, "You stopped with unfinished todos") || !strings.Contains(content, "Check the host") || strings.Contains(content, device) {
+					t.Error("ordinary closure did not contain just its own work")
+				}
+				write("host-blocked", `{"todos":[{"text":"Check the host","status":"pending"}],"resolution":{"kind":"blocked","reason":"Host offline."}}`)
+			default:
+				reply("Host offline.")
+			}
+		case 3:
+			switch n {
+			case 1, 2:
+				if !strings.Contains(content, `"nextAction":"`+device+`"`) {
+					t.Error("resumed worker did not receive its own pending item")
+				}
+				if n == 1 {
+					reply("Resuming the device check.")
+				} else {
+					write("verified", `{"todos":[{"text":"Verify frames on the physical phone","status":"completed"}]}`)
+				}
+			default:
+				reply("Device verified.")
+			}
+		}
+	}))
+	sendGoal(t, core, "/goal Verify the device")
+	summary, _ := core.Snapshot(t.Context())
+	id := summary.Sessions[0].ID
+	wait := func() *contracts.SessionGoal {
+		return waitSubagentState(t, core, runsFinished, id).Sessions[0].Goal
+	}
+	run := func(next int32, text string) *contracts.SessionGoal {
+		phase.Store(next)
+		calls.Store(0)
+		if err := core.Execute(t.Context(), contracts.Command{Kind: "message.send", Send: &contracts.SendRequest{SessionID: id, Text: text}}); err != nil {
+			t.Fatal(err)
+		}
+		return wait()
+	}
+	if goal := wait(); goal.Status != contracts.GoalPaused || goal.NextAction != device || calls.Load() != 2 {
+		t.Fatalf("expected physical-device block: %+v calls=%d", goal, calls.Load())
+	}
+	if goal := run(1, "Which checks ran?"); goal.Status != contracts.GoalPaused || goal.Reason != "Phone disconnected." || calls.Load() != 1 || checks.Load() != 0 {
+		t.Fatalf("unrelated question restarted old work: goal=%+v calls=%d checks=%d", goal, calls.Load(), checks.Load())
+	}
+	if goal := run(2, "Check the host separately"); goal.Status != contracts.GoalPaused || calls.Load() != 4 || checks.Load() != 0 {
+		t.Fatalf("new work did not close independently: goal=%+v calls=%d checks=%d", goal, calls.Load(), checks.Load())
+	}
+	dir := core.storage.ConfigDirectory()
+	if err := core.Close(); err != nil {
+		t.Fatal(err)
+	}
+	store, err := storage.Open(storage.Options{Directory: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	core, err = openExecutionFixture(t, Options{Storage: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = core.Close() })
+	if goal := run(3, "/goal resume"); goal.Status != contracts.GoalComplete || calls.Load() != 3 || checks.Load() != 1 {
+		t.Fatalf("resumed goal lost or mixed its checklist: goal=%+v calls=%d checks=%d", goal, calls.Load(), checks.Load())
 	}
 }
 

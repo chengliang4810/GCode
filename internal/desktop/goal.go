@@ -19,6 +19,8 @@ func goalStatusLabel(status contracts.GoalStatus) string {
 		return "Verifying"
 	case contracts.GoalPaused:
 		return "Paused"
+	case contracts.GoalResumePending:
+		return "Waiting to resume"
 	case contracts.GoalBudgetLimited:
 		return "Budget reached"
 	case contracts.GoalComplete:
@@ -36,6 +38,8 @@ func goalHeaderLabel(status contracts.GoalStatus) string {
 		return "Verifying goal"
 	case contracts.GoalPaused:
 		return "Paused goal"
+	case contracts.GoalResumePending:
+		return "Goal waiting to resume"
 	case contracts.GoalBudgetLimited:
 		return "Goal budget reached"
 	case contracts.GoalComplete:
@@ -113,6 +117,8 @@ func (a *App) goalBanner(c *ui.Context, session contracts.Session) {
 		row := ui.Row(c).FillWidth().MinHeight(s.Height-s.Overlap-2).Padding(0, s.HeaderPadding).Gap(s.Gap).AlignItems(ui.Center)
 		if goal.Status == contracts.GoalPaused && goal.Reason != "" {
 			row.Tooltip(goal.Reason)
+		} else if goal.Status == contracts.GoalResumePending {
+			row.Tooltip(tr(c, "Resume after current tasks finish"))
 		}
 		row.Children(func() {
 			icon(c, "goal", 13)
@@ -125,7 +131,13 @@ func (a *App) goalBanner(c *ui.Context, session contracts.Session) {
 			case contracts.GoalActive, contracts.GoalVerifying:
 				inlineIconButton(c.Key("goal-toggle:"+session.ID), "stop", tr(c, "Pause goal")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.pause", SessionID: session.ID, ID: goal.ID}) })
 			case contracts.GoalPaused:
-				inlineIconButton(c.Key("goal-toggle:"+session.ID), "action-play", tr(c, "Resume goal")).Disabled(pending || session.Status == contracts.Working || session.Status == contracts.AwaitingInput).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.resume", SessionID: session.ID, ID: goal.ID}) })
+				button := inlineIconButton(c.Key("goal-toggle:"+session.ID), "action-play", tr(c, "Resume goal")).Disabled(pending)
+				if session.Status == contracts.Working || session.Status == contracts.AwaitingInput || session.RunningSubagents > 0 {
+					button.Tooltip(tr(c, "Resume after current tasks finish"))
+				}
+				button.OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.resume", SessionID: session.ID, ID: goal.ID}) })
+			case contracts.GoalResumePending:
+				inlineIconButton(c.Key("goal-toggle:"+session.ID), "stop", tr(c, "Cancel pending resume")).Disabled(pending).OnClick(func() { a.updateGoal(contracts.Command{Kind: "goal.pause", SessionID: session.ID, ID: goal.ID}) })
 			}
 			inlineIconButton(c.Key("goal-edit:"+session.ID), "expand-arrows", tr(c, "Edit goal")).OnClick(func() { a.openGoalEditor(session.ID) })
 		})

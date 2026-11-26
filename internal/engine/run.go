@@ -190,8 +190,7 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		}
 	}
 	message.SourceText = send.Text
-	e.history[sessionID] = append(e.history[sessionID], message)
-	e.context[sessionID] = append(e.context[sessionID], message)
+	e.appendTaskInputLocked(session, message)
 	e.appendUserLocked(sessionID, send.Text)
 	messages := e.state.Messages[sessionID]
 	messages[len(messages)-1].RequestID = send.RequestID
@@ -212,6 +211,14 @@ func (e *Engine) sendWithCheckoutLocked(send contracts.SendRequest, checkout *ch
 		e.startNamingLocked(session, send.Text)
 	}
 	return nil
+}
+
+func (e *Engine) appendTaskInputLocked(session contracts.Session, message model.Message) {
+	if goal := session.Goal; goal != nil && goal.Status == contracts.GoalActive {
+		message.GoalInputID = goal.InitialInputID
+	}
+	e.history[session.ID] = append(e.history[session.ID], message)
+	e.context[session.ID] = append(e.context[session.ID], message)
 }
 
 func (e *Engine) appendUserLocked(sessionID, text string) {
@@ -301,10 +308,12 @@ func (e *Engine) startRunWithProvidersLocked(
 		selection: contracts.ModelSelection{ModelID: session.ModelID, Reasoning: session.ReasoningLevel},
 		profiles:  contracts.EffectiveSubagentProfiles(e.state.Settings.Subagents), model: m,
 	}
+	goalInputID := ""
 	if child != nil {
 		run.goal = child.goal
 	} else if session.Goal != nil && session.Goal.Status == contracts.GoalActive {
 		run.goal = goalScope{session.ID, session.Goal.ID}
+		goalInputID = session.Goal.InitialInputID
 	}
 	for _, provider := range providers {
 		run.providers = append(run.providers, model.CloneProvider(provider))
@@ -797,7 +806,7 @@ func (e *Engine) startRunWithProvidersLocked(
 					}
 					return e.goalIdle(ctx, run, auxiliary, request)
 				},
-				OwnsCompletion: run.goal.id != "" && child == nil,
+				GoalInputID: goalInputID,
 				Emit: func(event agent.Event) error {
 					e.mu.Lock()
 					defer e.mu.Unlock()
@@ -929,9 +938,8 @@ func (e *Engine) startRunWithProvidersLocked(
 			e.finishSubagentLocked(session, run, runErr)
 		}
 		e.refreshProjectFilesLocked(session.ProjectID)
-		terminalSaved := true
-		if persistErr := e.persistLocked(session.ID); persistErr != nil {
-			terminalSaved = false
+		persistErr := e.persistLocked(session.ID)
+		if persistErr != nil {
 			runErr = errors.Join(runErr, fmt.Errorf("cannot save execution history: %w", persistErr))
 			for i := range e.state.Runs {
 				if e.state.Runs[i].ID == run.id {
@@ -952,9 +960,11 @@ func (e *Engine) startRunWithProvidersLocked(
 		run.err = runErr
 		if child != nil {
 			e.publishLocked(contracts.Event{Kind: "subagent.finished", SessionID: child.parentSessionID})
-			if terminalSaved {
-				e.resumeSubagentParentLocked(run)
+			parentErr := persistErr
+			if parentErr == nil {
+				parentErr = e.resumeSubagentParentLocked(run)
 			}
+			e.settlePendingGoalResumeLocked(child.parentSessionID, parentErr)
 		}
 		e.publishLocked(contracts.Event{Kind: "run.finished", SessionID: session.ID, RunID: run.id, RequestID: requestID})
 		close(run.done)
@@ -967,28 +977,23 @@ func (e *Engine) startRunWithProvidersLocked(
 		}
 		nextInput := run.nextInput
 		run.nextInput = nil
+		handoffErr := persistErr
 		if nextInput != nil {
 			admitted := runErr == nil || run.inputInterrupt && errors.Is(runErr, context.Canceled)
-			if !e.closed && terminalSaved && goalHandoff && admitted {
+			if !e.closed && persistErr == nil && goalHandoff && admitted {
 				e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.ID == nextInput.ID })
-				_ = e.handoffQueuedLocked(session.ID, *nextInput)
+				handoffErr = e.handoffQueuedLocked(session.ID, *nextInput)
 			} else {
 				if !slices.ContainsFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.ID == nextInput.ID }) {
 					e.state.Queue = append([]contracts.QueuedMessage{*nextInput}, e.state.Queue...)
 				}
 			}
-		} else if runErr == nil && !e.closed && goalHandoff {
+		} else if runErr == nil && persistErr == nil && !e.closed && goalHandoff {
 			// A message can arrive after the final idle drain but before the
 			// runtime is retired. Hand it to a new run rather than stranding it.
-			for i, queued := range e.state.Queue {
-				internal := queued.Source == "subagent" || queued.Source == "hook"
-				if queued.SessionID == session.ID && (!humanOnly || !internal) {
-					e.state.Queue = append(e.state.Queue[:i], e.state.Queue[i+1:]...)
-					_ = e.handoffQueuedLocked(session.ID, queued)
-					break
-				}
-			}
+			_, handoffErr = e.handoffNextQueuedLocked(session.ID, humanOnly)
 		}
+		e.settlePendingGoalResumeLocked(session.ID, handoffErr)
 	}()
 	return nil
 }

@@ -94,7 +94,7 @@ func TestTodoStateFromHistoryLatestSuccessWins(t *testing.T) {
 	}
 }
 
-func TestTodoStateCountersAndResolutionResume(t *testing.T) {
+func TestTodoStateCountersAndTaskBoundary(t *testing.T) {
 	history := todoHistory()
 	for i := 0; i < 3; i++ {
 		history = append(history, model.Message{Role: "assistant", Text: "thinking"})
@@ -119,14 +119,14 @@ func TestTodoStateCountersAndResolutionResume(t *testing.T) {
 	if state.TurnsSinceWrite < TodoReminderInterval || state.reminderDue() {
 		t.Fatalf("resolution failed to suppress the reminder: %+v", state)
 	}
-	// …and a new user request resumes blocked work, making it due again.
-	history = append(history, model.Message{Role: "user", Text: "go on", UserInput: true})
+	// A later question has its own task, even after the reminder interval.
+	history = append(history, model.Message{Role: "user", Text: "Which checks ran?", UserInput: true})
 	state = todoStateFromHistory(history)
-	if state.Current.Resolution != nil {
-		t.Fatal("user request did not clear the resolution")
+	if state.Current != nil || state.reminderDue() || state.TurnsSinceWrite != 0 || state.TurnsSinceReminder != 0 {
+		t.Fatalf("new question inherited old work: %+v", state)
 	}
-	if !state.reminderDue() {
-		t.Fatal("reminder not due after the interval")
+	if old := CurrentTodos(history[:len(history)-1], ""); old == nil || old.Resolution == nil || old.Resolution.Kind != "blocked" {
+		t.Fatalf("old task lost its resolution: %+v", old)
 	}
 }
 
@@ -146,6 +146,47 @@ func TestTodoRetainedMarkerRestoresState(t *testing.T) {
 	}
 }
 
+func TestGoalSteeringAndInternalResultsKeepTodoOwnership(t *testing.T) {
+	for _, kind := range []string{"blocked", "cancelled", "scope_changed"} {
+		t.Run(kind, func(t *testing.T) {
+			const goal = "original-input"
+			history := todoHistory()
+			history[0].InputIDs, history[0].GoalInputID = []string{goal}, goal
+			history[1].GoalInputID = goal
+			history[1].Calls[0].Arguments = strings.Replace(history[1].Calls[0].Arguments, "blocked", kind, 1)
+			history = append(history,
+				model.Message{Role: "user", Text: "Child finished."},
+				model.Message{Role: "user", Text: "Keep the current criteria.", UserInput: true, InputIDs: []string{"steer"}, GoalInputID: goal},
+			)
+			if got := CurrentTodos(history, goal); got == nil || got.Resolution == nil || got.Resolution.Kind != kind {
+				t.Fatalf("goal steering lost the checklist or its resolution: %+v", got)
+			}
+			if got := todoStateForTask(history, ""); got.Current != nil {
+				t.Fatalf("ordinary worker inherited goal work on an internal wake: %+v", got.Current)
+			}
+			failed := history[1]
+			failed.GoalInputID = ""
+			history = append(history, model.Message{Role: "user", UserInput: true, Text: "An independent task."}, failed,
+				model.Message{Role: "tool", CallID: "c1", IsError: true})
+			if got := CurrentTodos(history, ""); got != nil {
+				t.Fatalf("failed write activated work: %+v", got)
+			}
+			resumed, checkpoint := ResumeGoalTodos(history, goal)
+			if resumed == nil || resumed.Resolution != nil || len(resumed.Todos) != 2 {
+				t.Fatalf("explicit resume failed to reopen the goal: %+v", resumed)
+			}
+			history = append(history, checkpoint, model.Message{Role: "user", Text: "Child finished."})
+			if state := todoStateFromHistory(history); !state.unfinished() || state.Current.Resolution != nil || state.reminderDue() {
+				t.Fatalf("resumed work lost its state: %+v", state)
+			}
+			history = append(history, model.Message{Role: "user", UserInput: true, GoalInputID: "replacement", InputIDs: []string{"replacement"}})
+			if got := CurrentTodos(history, "replacement"); got != nil {
+				t.Fatalf("replacement goal inherited previous work: %+v", got)
+			}
+		})
+	}
+}
+
 func TestOnlyRuntimeRemindersRestoreTodos(t *testing.T) {
 	checkpoint := todoMessage(todoStateFromHistory(todoHistory()), "retained")
 	for _, msg := range []model.Message{
@@ -154,11 +195,11 @@ func TestOnlyRuntimeRemindersRestoreTodos(t *testing.T) {
 		{Role: "user", Text: checkpoint.Text, UserInput: true},
 		{Role: "user", Text: checkpoint.Text, Summary: true},
 	} {
-		if got := CurrentTodos([]model.Message{msg}); got != nil {
+		if got := CurrentTodos([]model.Message{msg}, ""); got != nil {
 			t.Fatalf("ordinary %s text created a checklist: %+v", msg.Role, got)
 		}
 	}
-	if got := CurrentTodos([]model.Message{checkpoint}); got == nil || got.Resolution == nil {
+	if got := CurrentTodos([]model.Message{checkpoint}, ""); got == nil || got.Resolution == nil {
 		t.Fatal("host checkpoint lost its authoritative checklist")
 	}
 }

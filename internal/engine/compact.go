@@ -163,7 +163,8 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 		}
 		e.state.Messages[sessionID] = append(e.state.Messages[sessionID], contracts.Message{ID: id("message"), SessionID: sessionID, TurnID: run.id, Role: "assistant", CreatedAt: time.Now(), Blocks: []contracts.Block{{ID: id("block"), Kind: "text", Text: label}}})
 		delete(e.runs, sessionID)
-		if persistErr := e.persistLocked(sessionID); persistErr != nil {
+		persistErr := e.persistLocked(sessionID)
+		if persistErr != nil {
 			e.context[sessionID], e.history[sessionID] = previousContext, previousHistory
 			e.contextMemories[sessionID] = previousMemory
 			e.state.Messages[sessionID][len(e.state.Messages[sessionID])-1].Blocks[0].Text = "Context compaction could not be saved: " + persistErr.Error()
@@ -179,13 +180,15 @@ func (e *Engine) compactLocked(sessionID, requestID string) error {
 			e.refreshStatisticsLocked()
 		}
 		e.publishLocked(contracts.Event{Kind: "run.finished", SessionID: sessionID, RunID: run.id, RequestID: requestID})
-		if !e.closed && slices.ContainsFunc(e.state.Queue, func(message contracts.QueuedMessage) bool {
+		handoffErr := persistErr
+		if handoffErr == nil && !e.closed && slices.ContainsFunc(e.state.Queue, func(message contracts.QueuedMessage) bool {
 			return message.SessionID == sessionID && message.Source == "hook" && strings.HasPrefix(message.ID, "hook-rewake-")
 		}) {
 			if index := e.sessionIndex(sessionID); index >= 0 && !e.state.Sessions[index].Archived {
-				_ = e.startAutomaticLocked(e.state.Sessions[index], "")
+				handoffErr = e.startAutomaticLocked(e.state.Sessions[index], "")
 			}
 		}
+		e.settlePendingGoalResumeLocked(sessionID, handoffErr)
 	}()
 	return nil
 }

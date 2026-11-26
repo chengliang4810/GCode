@@ -28,8 +28,9 @@ func (e *Engine) reconcileSessionLocked(sessionID string) {
 			settleGoalTime(goal, lastSeen)
 			dirty = true
 		}
-		if goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying {
+		if goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying || goal.Status == contracts.GoalResumePending {
 			goal.Status = contracts.GoalPaused
+			goal.ResumeRequestID = ""
 			goal.Reason = "The host stopped; inspect the saved work before resuming."
 			dirty = true
 		}

@@ -374,8 +374,9 @@ func (e *Engine) finishSubagentLocked(session contracts.Session, run *activeRun,
 	}
 	e.updateRunningSubagentsLocked(child.parentSessionID)
 	index := e.sessionIndex(child.parentSessionID)
-	goalStillExists := run.goal.id == "" || e.goalLocked(run.goal) != nil
-	if child.background && index >= 0 && !e.state.Sessions[index].Archived && goalStillExists {
+	goal := e.goalLocked(run.goal)
+	acceptsResult := run.goal.id == "" || goal != nil && (goal.Status == contracts.GoalActive || goal.Status == contracts.GoalVerifying)
+	if child.background && index >= 0 && !e.state.Sessions[index].Archived && acceptsResult {
 		result := contracts.QueuedMessage{
 			ID: "subagent-result-" + run.id, SessionID: child.parentSessionID, Source: "subagent", Delivery: "steer",
 			Text:      "Background subagent result:\n" + subagentResult(session.ID, summary, runErr),
@@ -392,21 +393,23 @@ func (e *Engine) finishSubagentLocked(session contracts.Session, run *activeRun,
 	}
 }
 
-func (e *Engine) resumeSubagentParentLocked(run *activeRun) {
+func (e *Engine) resumeSubagentParentLocked(run *activeRun) error {
 	child := run.subagent
 	index := e.sessionIndex(child.parentSessionID)
 	if !child.background || index < 0 || e.closed || e.runs[child.parentSessionID] != nil ||
 		e.state.Sessions[index].Archived || e.state.Sessions[index].LastOutcome != "completed" {
-		return
+		return nil
 	}
 	if run.goal.id != "" {
 		if goal := e.goalLocked(run.goal); goal == nil || goal.Status != contracts.GoalActive {
-			return
+			return nil
 		}
 	}
 	if err := e.startAutomaticLocked(e.state.Sessions[index], ""); err != nil {
 		e.failSubagentContinuationLocked(child.parentSessionID, err)
+		return err
 	}
+	return nil
 }
 
 func (e *Engine) failSubagentContinuationLocked(parentID string, err error) {

@@ -73,9 +73,9 @@ type Options struct {
 	// introducing application state or goal semantics into the Agent loop.
 	BeforeStep func(context.Context, bool) (bool, error)
 	Idle       func(context.Context, model.Request) ([]model.Message, error)
-	// OwnsCompletion lets an owner such as a goal runtime make the sole idle
-	// continuation decision, including its unfinished-todo policy.
-	OwnsCompletion bool
+	// GoalInputID scopes a goal worker's checklist to its original input.
+	// The goal runtime owns that worker's idle continuation decisions.
+	GoalInputID string
 	// Hook runs user-configured lifecycle policies outside the model protocol.
 	Hook             func(context.Context, HookInput) (HookResult, error)
 	HookSource       string
@@ -312,7 +312,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				// authoritative checklist state beside the summary.
 				var retained *model.Message
 				if _, hasTodos := tools["TodoWrite"]; hasTodos {
-					if state := todoStateFromHistory(request.History); state.Current != nil {
+					if state := todoStateForTask(request.History, options.GoalInputID); state.Current != nil {
 						message := todoMessage(state, "retained")
 						retained = &message
 					}
@@ -486,7 +486,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 		// The checklist lives in the history, not in a separate store: rebuild
 		// it each round so reminders and the stop check track real progress.
 		if _, hasTodos := tools["TodoWrite"]; hasTodos {
-			if state := todoStateFromHistory(request.History); state.reminderDue() {
+			if state := todoStateForTask(request.History, options.GoalInputID); state.reminderDue() {
 				if err := record(todoMessage(state, "reminder")); err != nil {
 					return err
 				}
@@ -512,6 +512,7 @@ func Run(ctx context.Context, options Options) (runErr error) {
 			}
 			return err
 		}
+		result.Message.GoalInputID = options.GoalInputID
 		result.Message.ContextUsage = &model.ContextUsage{
 			Known: result.Usage.Known, InputTokens: result.Usage.Input, OutputTokens: result.Usage.Output,
 			HistoryLength: len(request.History), ModelKey: limits.ModelKey, PromptHash: promptHash(request),
@@ -598,8 +599,8 @@ func Run(ctx context.Context, options Options) (runErr error) {
 				// A stop with unfinished todos and no resolution continues the
 				// run once more: finish the work or record a resolution. After
 				// the bound, a model that keeps ignoring the reminder stops.
-				if _, hasTodos := tools["TodoWrite"]; !options.OwnsCompletion && hasTodos && todoClosures < TodoClosureLimit {
-					if state := todoStateFromHistory(request.History); state.unfinished() && state.Current.Resolution == nil {
+				if _, hasTodos := tools["TodoWrite"]; options.GoalInputID == "" && hasTodos && todoClosures < TodoClosureLimit {
+					if state := todoStateForTask(request.History, ""); state.unfinished() && state.Current.Resolution == nil {
 						if err := record(todoMessage(state, "closure")); err != nil {
 							return err
 						}

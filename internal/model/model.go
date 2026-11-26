@@ -226,6 +226,9 @@ type Message struct {
 	// UserInput distinguishes human submissions from host-generated context,
 	// goal continuations and subagent notifications. Providers never receive it.
 	UserInput bool `json:"userInput,omitempty"`
+	// GoalInputID identifies the goal owning an input, worker response or
+	// checklist checkpoint. It stays stable across executions and is host-only.
+	GoalInputID string `json:"goalInputId,omitempty"`
 	// InputIDs track accepted queued inputs through compaction. Adapters do
 	// not send these host-owned identifiers to providers.
 	InputIDs     []string      `json:"inputIds,omitempty"`

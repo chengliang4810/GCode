@@ -564,6 +564,9 @@ func (e *Engine) executeCommand(ctx context.Context, command contracts.Command, 
 		e.state.Sessions[index].Archived = command.Enabled
 		if command.Enabled {
 			e.state.Queue = slices.DeleteFunc(e.state.Queue, func(q contracts.QueuedMessage) bool { return q.SessionID == command.ID })
+			if goal := e.state.Sessions[index].Goal; goal != nil && goal.Status == contracts.GoalResumePending {
+				withdrawGoalResume(goal)
+			}
 		}
 	case "group.create":
 		title := strings.TrimSpace(command.Text)

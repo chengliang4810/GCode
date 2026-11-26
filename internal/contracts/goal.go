@@ -14,6 +14,7 @@ const (
 	GoalActive        GoalStatus = "active"
 	GoalVerifying     GoalStatus = "verifying"
 	GoalPaused        GoalStatus = "paused"
+	GoalResumePending GoalStatus = "resume_pending"
 	GoalBudgetLimited GoalStatus = "budget_limited"
 	GoalComplete      GoalStatus = "complete"
 )
@@ -61,6 +62,7 @@ type SessionGoal struct {
 	Instructions      string             `json:"instructions,omitempty"`
 	ID                string             `json:"id"`
 	InitialInputID    string             `json:"initialInputId"`
+	ResumeRequestID   string             `json:"resumeRequestId,omitempty"`
 	Objective         string             `json:"objective"`
 	Revision          uint64             `json:"revision"`
 	Status            GoalStatus         `json:"status"`

@@ -229,7 +229,7 @@ func foldContext(history []model.Message, state ContextMemory, start, end int, s
 	replacements := []model.Message{replacement}
 	// Restore state at the folded boundary, before replaying the unchanged tail.
 	// The model's prose summary is not authoritative checklist state.
-	if todos := todoStateFromHistory(history[:end]); todos.Current != nil {
+	if todos := todoStateFromHistory(history[:end]); todos.Current != nil || todoStateFromHistory(history[:start]).Current != nil {
 		retained := todoMessage(todos, "retained")
 		retained.ContextRef = "m_" + hookUUID()
 		replacements = append(replacements, retained)

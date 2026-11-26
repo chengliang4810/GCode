@@ -103,6 +103,17 @@ func (e *Engine) sendQueuedNowLocked(id string) error {
 	return nil
 }
 
+func (e *Engine) handoffNextQueuedLocked(sessionID string, humanOnly bool) (bool, error) {
+	for i, queued := range e.state.Queue {
+		internal := queued.Source == "subagent" || queued.Source == "hook"
+		if queued.SessionID == sessionID && (!humanOnly || !internal) {
+			e.state.Queue = slices.Delete(e.state.Queue, i, i+1)
+			return true, e.handoffQueuedLocked(sessionID, queued)
+		}
+	}
+	return false, nil
+}
+
 // handoffQueuedLocked opens a session's next turn with a queue row that has
 // already left the queue. The row returns to the queue if the turn cannot
 // start, mirroring the automatic handoff at the end of a run.
@@ -165,8 +176,7 @@ func (e *Engine) startQueuedUserLocked(sessionID string, queued contracts.Queued
 		return err
 	}
 	message.SourceText, message.InputIDs = queued.Text, []string{queued.ID}
-	e.history[sessionID] = append(e.history[sessionID], message)
-	e.context[sessionID] = append(e.context[sessionID], message)
+	e.appendTaskInputLocked(session, message)
 	e.appendUserLocked(sessionID, queued.Text)
 	messages := e.state.Messages[sessionID]
 	messages[len(messages)-1].ID = queued.ID

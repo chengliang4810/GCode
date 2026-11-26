@@ -99,5 +99,13 @@ func compact(ctx context.Context, client Model, request model.Request, automatic
 	messages := []model.Message{{Role: "user", Summary: true, InputIDs: inputIDs, Text: "Earlier conversation summary:\n" + result.Message.Text}}
 	retainUserInputs(&messages[0], request.History[:cut])
 	retainWorkEvidence(&messages[0], request.History[:cut])
+	// A manual compact can fold the current task's write into the summary.
+	// Restore its state at the cut so later inputs and writes still take effect.
+	// Automatic compaction checkpoints the final state in Run.
+	if !automatic {
+		if state := todoStateFromHistory(request.History[:cut]); state.Current != nil {
+			messages = append(messages, todoMessage(state, "retained"))
+		}
+	}
 	return retainReferencedImages(request.History, append(messages, model.CloneMessages(request.History[cut:])...)), nil
 }

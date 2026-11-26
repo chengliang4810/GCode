@@ -177,18 +177,35 @@ func TestGoalBudgetAndIncompleteUsage(t *testing.T) {
 	if _, ok := tt.Find("Resume goal"); ok {
 		t.Fatal("budget-limited goal offered resume")
 	}
-	goal.Status = contracts.GoalPaused
-	for i := range a.state.Sessions {
-		if a.state.Sessions[i].ID == a.sessionID {
-			a.state.Sessions[i].Status = contracts.Working
-		}
-	}
-	service := &goalUIService{Service: a.service}
-	a.service = service
-	tt.Frame()
-	_ = tt.Click("Resume goal")
-	if len(service.commands) != 0 {
-		t.Fatal("resume was allowed while an ordinary turn was running")
+}
+
+func TestGoalResumeControlWhileSessionBusy(t *testing.T) {
+	for _, status := range []contracts.SessionStatus{contracts.Working, contracts.AwaitingInput} {
+		t.Run(string(status), func(t *testing.T) {
+			a := testApp(t, "default")
+			a.selectSession("chat-0")
+			goal := &contracts.SessionGoal{ID: "paused", Status: contracts.GoalPaused, Objective: "Original goal"}
+			setGoalFixture(a, a.sessionID, goal)
+			for i := range a.state.Sessions {
+				if a.state.Sessions[i].ID == a.sessionID {
+					a.state.Sessions[i].Status = status
+				}
+			}
+			service := &goalUIService{Service: a.service}
+			a.service = service
+			tt := ui.NewTester(a.View, 900, 600)
+			if err := tt.Click("Resume goal"); err != nil || len(service.commands) != 1 || service.commands[0].Kind != "goal.resume" {
+				t.Fatalf("busy goal toggle did not request resume: commands=%v err=%v", service.commands, err)
+			}
+			goal.Status = contracts.GoalResumePending
+			tt.Frame()
+			if !tt.HasText("Goal waiting to resume") {
+				t.Fatal("waiting state was not displayed")
+			}
+			if err := tt.Click("Cancel pending resume"); err != nil || len(service.commands) != 2 || service.commands[1].Kind != "goal.pause" {
+				t.Fatalf("toggle did not cancel just the goal resume: commands=%v err=%v", service.commands, err)
+			}
+		})
 	}
 }
 
