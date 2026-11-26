@@ -102,6 +102,70 @@ func TestMessagesCacheOnlyUsageRemainsPartial(t *testing.T) {
 	}
 }
 
+func TestMessagesDeltaUsageCompletesPlaceholderInput(t *testing.T) {
+	t.Parallel()
+	// A compatible endpoint reports a placeholder zero at message_start and
+	// the real cumulative counters in message_delta.
+	fixture := `data: {"type":"message_start","message":{"usage":{"input_tokens":0,"output_tokens":0}}}` + "\n\n" +
+		`data: {"type":"content_block_start","index":0,"content_block":{"type":"tool_use","id":"call","name":"Read","input":{}}}` + "\n\n" +
+		`data: {"type":"message_delta","delta":{"stop_reason":"tool_use"},"usage":{"input_tokens":1142,"output_tokens":689,"cache_read_input_tokens":74752}}` + "\n\n" +
+		"data: {\"type\":\"message_stop\"}\n\n"
+	result, err := decodeStream(strings.NewReader(fixture), messagesAdapter{}.decoder(), nil)
+	want := Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 75894, Output: 689, Cached: 74752}
+	if err != nil || result.Usage != want {
+		t.Fatalf("placeholder input was kept: %+v, error = %v; want %+v", result.Usage, err, want)
+	}
+}
+
+func TestMessagesInputUsageMergesEveryEvent(t *testing.T) {
+	t.Parallel()
+	const stop = `data: {"type":"message_stop"}` + "\n\n"
+	cases := []struct {
+		name, fixture string
+		interrupted   bool
+		want          Usage
+	}{
+		{
+			name: "delta reports input only",
+			fixture: `data: {"type":"message_start","message":{"usage":{"output_tokens":0}}}` + "\n\n" +
+				`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":12,"output_tokens":7}}` + "\n\n" + stop,
+			want: Usage{Known: true, OutputKnown: true, Input: 12, Output: 7},
+		},
+		{
+			name: "split across events keeps each component",
+			fixture: `data: {"type":"message_start","message":{"usage":{"cache_read_input_tokens":20,"cache_creation_input_tokens":30}}}` + "\n\n" +
+				`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":12,"output_tokens":7}}` + "\n\n" + stop,
+			want: Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 62, Output: 7, Cached: 20},
+		},
+		{
+			name: "smaller delta counters never lower the report",
+			fixture: `data: {"type":"message_start","message":{"usage":{"input_tokens":12,"cache_read_input_tokens":20,"cache_creation_input_tokens":30,"output_tokens":1}}}` + "\n\n" +
+				`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":3,"cache_read_input_tokens":null,"cache_creation_input_tokens":0,"output_tokens":7}}` + "\n\n" + stop,
+			want: Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 62, Output: 7, Cached: 20},
+		},
+		{
+			name:    "negative delta cache is ignored",
+			fixture: `data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"input_tokens":12,"cache_read_input_tokens":-1,"output_tokens":7}}` + "\n\n" + stop,
+			want:    Usage{Known: true, OutputKnown: true, Input: 12, Output: 7},
+		},
+		{
+			name:        "interrupted stream retains delta input",
+			fixture:     `data: {"type":"message_delta","usage":{"input_tokens":12,"cache_read_input_tokens":20,"output_tokens":7}}` + "\n\n",
+			interrupted: true,
+			want:        Usage{Known: true, OutputKnown: true, CacheKnown: true, Input: 32, Output: 7, Cached: 20},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			result, err := decodeStream(strings.NewReader(tc.fixture), messagesAdapter{}.decoder(), nil)
+			if (err != nil) != tc.interrupted || result.Usage != tc.want {
+				t.Fatalf("usage = %+v, error = %v; want %+v (interrupted %v)", result.Usage, err, tc.want, tc.interrupted)
+			}
+		})
+	}
+}
+
 func TestMessagesInitialOutputPlaceholderDoesNotMakeUsageKnown(t *testing.T) {
 	t.Parallel()
 	fixture := `data: {"type":"message_start","message":{"usage":{"input_tokens":12,"output_tokens":0}}}` + "\n\n" +

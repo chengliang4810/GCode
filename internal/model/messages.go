@@ -207,6 +207,56 @@ type messageBlock struct {
 type messagesDecoder struct {
 	streamState
 	blocks map[int]*messageBlock
+	input  messageInput
+}
+
+// messageUsageCounters is the usage object of both message_start and
+// message_delta. Every field is cumulative, never an increment.
+type messageUsageCounters struct {
+	Input    *int `json:"input_tokens"`
+	Output   *int `json:"output_tokens"`
+	Cached   *int `json:"cache_read_input_tokens"`
+	Creation int  `json:"cache_creation_input_tokens"`
+}
+
+// messageInput keeps each input component at the largest value any event has
+// reported. Official endpoints report the real counters in message_start;
+// some compatible ones send a placeholder zero there and the real counters in
+// message_delta. Reading either event alone loses one of the two.
+type messageInput struct {
+	uncached, cached, creation int
+	inputKnown, cacheKnown     bool
+}
+
+func (in *messageInput) merge(usage messageUsageCounters) {
+	if usage.Input != nil {
+		in.inputKnown = true
+		in.uncached = max(in.uncached, *usage.Input)
+	}
+	if usage.Cached != nil && *usage.Cached >= 0 {
+		in.cacheKnown = true
+		in.cached = max(in.cached, *usage.Cached)
+	}
+	in.creation = max(in.creation, usage.Creation)
+}
+
+// record applies the input counters reported so far. Anthropic input_tokens
+// excludes cache reads and writes:
+// https://platform.claude.com/docs/en/build-with-claude/prompt-caching
+// Without input_tokens the other counters stay a lower bound, not a report.
+func (in *messageInput) record(s *streamState) {
+	total := in.uncached + in.cached + in.creation
+	var cached *int
+	if in.cacheKnown {
+		value := in.cached
+		cached = &value
+	}
+	if in.inputKnown {
+		s.recordUsage(&total, nil, cached)
+		return
+	}
+	s.result.Usage.Input = max(s.result.Usage.Input, total)
+	s.recordUsage(nil, nil, cached)
 }
 
 func (d *messagesDecoder) consume(payload string) (Delta, error) {
@@ -223,16 +273,9 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 			Stop      string `json:"stop_reason"`
 		} `json:"delta"`
 		Message struct {
-			Usage struct {
-				Input    *int `json:"input_tokens"`
-				Output   *int `json:"output_tokens"`
-				Cached   *int `json:"cache_read_input_tokens"`
-				Creation int  `json:"cache_creation_input_tokens"`
-			} `json:"usage"`
+			Usage messageUsageCounters `json:"usage"`
 		} `json:"message"`
-		Usage struct {
-			Output *int `json:"output_tokens"`
-		} `json:"usage"`
+		Usage messageUsageCounters `json:"usage"`
 	}
 	if err := json.Unmarshal([]byte(payload), &event); err != nil {
 		return Delta{}, errors.New("invalid model streaming event")
@@ -242,24 +285,12 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 	case "error":
 		return Delta{}, &streamProviderError{payload: payload}
 	case "message_start":
-		// Anthropic input_tokens excludes cache reads and writes:
-		// https://platform.claude.com/docs/en/build-with-claude/prompt-caching
-		usage := event.Message.Usage
-		input := usage.Creation
-		if usage.Cached != nil {
-			input += max(0, *usage.Cached)
-		}
-		if usage.Input != nil {
-			input += *usage.Input
-			d.recordUsage(&input, nil, usage.Cached)
-		} else {
-			d.result.Usage.Input = max(d.result.Usage.Input, input)
-			d.recordUsage(nil, nil, usage.Cached)
-		}
-		if usage.Output != nil {
+		d.input.merge(event.Message.Usage)
+		d.input.record(&d.streamState)
+		if event.Message.Usage.Output != nil {
 			// Initial output is only a lower bound; final output reporting arrives
 			// in message_delta and is required before Usage.Known becomes true.
-			d.result.Usage.Output = max(d.result.Usage.Output, *usage.Output)
+			d.result.Usage.Output = max(d.result.Usage.Output, *event.Message.Usage.Output)
 		}
 	case "content_block_start":
 		block := event.ContentBlock
@@ -317,7 +348,9 @@ func (d *messagesDecoder) consume(payload string) (Delta, error) {
 		default:
 			d.stopErr = fmt.Errorf("unsupported model stop reason %q", event.Delta.Stop)
 		}
-		// message_delta usage is cumulative, not an increment.
+		// Both usage objects are cumulative, not increments.
+		d.input.merge(event.Usage)
+		d.input.record(&d.streamState)
 		d.recordUsage(nil, event.Usage.Output, nil)
 	case "message_stop":
 		d.complete = true
