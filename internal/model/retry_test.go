@@ -105,7 +105,8 @@ func TestRetryMixedFailuresShareOneRequestAndBudget(t *testing.T) {
 			response.Header.Set("Retry-After", "0")
 			return response, nil
 		case 3:
-			return retryResponse(200, "data: {\"choices\":[{\"delta\":{\"content\":\"discard this\",\"tool_calls\":[{\"index\":0,\"id\":\"incomplete\",\"function\":{\"name\":\"Write\",\"arguments\":\"{}\"}}]}}],\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":2}}\n\n"), nil
+			return retryResponse(200, "data: {\"choices\":[{\"delta\":{\"content\":\"discard this\",\"tool_calls\":[{\"index\":0,\"id\":\"incomplete\",\"function\":{\"name\":\"Write\",\"arguments\":\"{}\"}}]}}],\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":2}}\n\n"+
+				`data: {"choices":[{"delta":{"tool_calls":[{"`), nil
 		default:
 			return retryResponse(200, "data: {\"choices\":[{\"delta\":{\"content\":\"complete\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"), nil
 		}
@@ -133,6 +134,10 @@ func TestRetryMixedFailuresShareOneRequestAndBudget(t *testing.T) {
 		if state.Attempt != i+1 || state.MaxRetries != 10 || traces[i].ID != traces[3].ID || traces[i].Attempt != i+1 {
 			t.Fatalf("budget/trajectory split: states=%+v traces=%+v", states, traces)
 		}
+	}
+	if states[2].Reason != "stream_interrupted" || len(attempts[2].Message.Calls) != 0 {
+		t.Fatalf("truncated stream exposed calls or used the wrong retry reason: retry=%+v calls=%+v",
+			states[2], attempts[2].Message.Calls)
 	}
 	if attempts[2].Usage.Input != 7 || attempts[2].Usage.Output != 2 {
 		t.Fatal("discarded generation lost its observed billable usage")

@@ -201,7 +201,7 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 	scanner.Buffer(make([]byte, 4096), maxStreamEventBytes)
 	var data []string
 	eventBytes := 0
-	process := func() error {
+	process := func(atEOF bool) error {
 		if len(data) == 0 {
 			return nil
 		}
@@ -210,6 +210,14 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		eventBytes = 0
 		delta, err := decoder.consume(payload)
 		if err != nil {
+			if atEOF && !decoder.completed() {
+				// A cut-off JSON value in an unframed tail is a stream
+				// interruption even when the HTTP body ended cleanly.
+				var raw json.RawMessage
+				if decodeErr := json.NewDecoder(strings.NewReader(payload)).Decode(&raw); errors.Is(decodeErr, io.ErrUnexpectedEOF) {
+					return ErrStreamInterrupted
+				}
+			}
 			return err
 		}
 		if firstOutput.IsZero() && (delta.Output || delta.Text != "" || delta.Reasoning != "") {
@@ -235,7 +243,7 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 	for scanner.Scan() {
 		line := scanner.Text()
 		if line == "" {
-			if err := process(); err != nil {
+			if err := process(false); err != nil {
 				return decoder.snapshot(), err
 			}
 			if decoder.completed() {
@@ -259,7 +267,7 @@ func decodeStream(reader io.Reader, decoder streamDecoder, emit func(Delta) erro
 		}
 		return decoder.snapshot(), &streamReadError{cause: err}
 	}
-	if err := process(); err != nil {
+	if err := process(true); err != nil {
 		return decoder.snapshot(), err
 	}
 	return finish()
